@@ -1,0 +1,121 @@
+{$DEFINE SRLT_INTERFACE_CONTROLS_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  TRSButton = record
+    EnabledColors: array of record
+      Color: Integer;
+      Tolerance: Single;
+    end;
+
+    Index: Integer;
+    Bounds: TBox;
+    Center: TPoint;
+  end;
+
+  TRSButtonArray = array of TRSButton;
+
+
+function TRSButton.Enabled(): Boolean;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self.EnabledColors) do
+    if Target.CountColor(Self.EnabledColors[i].Color, Self.EnabledColors[i].Tolerance, Self.Bounds) > 0 then
+      Exit(True);
+end;
+
+function TRSButton.WaitEnabled(time: Integer; interval: Integer = 50): Boolean;
+begin
+  Result := SleepUntil(Self.Enabled(), interval, time);
+end;
+
+procedure TRSButton.Click(mouseButton: EMouseButton = EMouseButton.LEFT);
+begin
+  Mouse.Click(Self.Bounds, mouseButton);
+end;
+
+function TRSButton.Enable(): Boolean;
+begin
+  if Self.Enabled() then Exit(True);
+  Self.Click();
+  Result := Self.WaitEnabled(600);
+end;
+
+function TRSButton.Disable(): Boolean;
+begin
+  if Self.Enabled() then Exit(True);
+  Self.Click();
+  Result := SleepUntil(Self.Enabled(), 50, 600);
+end;
+
+
+procedure TRSButton.Draw(img: TImage; color: Integer = $00FFFF);
+var
+  oldSize: Single;
+  oldColor: Integer;
+  oldAntialiasing: Boolean;
+begin
+  oldSize := img.FontSize;
+  oldAntialiasing := img.FontAntialiasing;
+  oldColor := img.DrawColor;
+
+  img.FontSize := 20;
+  img.FontAntialiasing := True;
+  img.DrawColor := color;
+
+  img.DrawBox(Self.Bounds);
+  img.DrawText(ToStr(Self.Index), Self.Bounds, [EImageTextAlign.CENTER]);
+
+  img.FontSize := oldSize;
+  img.FontAntialiasing := oldAntialiasing;
+  img.DrawColor := oldColor;
+end;
+
+procedure ShowOnClient(button: TRSButton); overload;
+var
+  img: TImage;
+begin
+  img := TImage.CreateFromTarget();
+  button.Draw(img);
+  img.Show();
+  img.Free();
+end;
+
+procedure TRSButtonArray.Draw(img: TImage; color: Integer = $00FFFF);
+var
+  oldSize: Single;
+  oldColor: Integer;
+  oldAntialiasing: Boolean;
+  button: TRSButton;
+begin
+  oldSize := img.FontSize;
+  oldAntialiasing := img.FontAntialiasing;
+  oldColor := img.DrawColor;
+
+  img.FontSize := 20;
+  img.FontAntialiasing := True;
+  img.DrawColor := color;
+
+  for button in Self do
+  begin
+    img.DrawBox(button.Bounds);
+    img.DrawText(ToString(button.Index), button.Bounds, [EImageTextAlign.CENTER]);
+  end;
+
+  img.FontSize := oldSize;
+  img.FontAntialiasing := oldAntialiasing;
+  img.DrawColor := oldColor;
+end;
+
+procedure ShowOnClient(buttons: TRSButtonArray); overload;
+var
+  img: TImage;
+begin
+  img := TImage.CreateFromTarget();
+  buttons.Draw(img);
+  img.Show();
+  img.Free();
+end;

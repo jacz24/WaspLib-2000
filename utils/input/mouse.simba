@@ -1,0 +1,442 @@
+(*
+# Mouse
+Methods to interact with the mouse.
+*)
+
+{$DEFINE SRLT_MOUSE_INCLUDED}
+{$IFNDEF SRLT_UTILS}
+  {$I SRLT/utils.simba}
+{$ENDIF}
+
+{.$DEFINE DEBUG_MOUSE} // Enable me to record mouse path + clicks. Will be displayed when script terminates.
+
+{$IFDEF SIMBAHEADLESS}
+  {$UNDEF DEBUG_MOUSE}
+{$ENDIF}
+
+(*
+## EMouseDistribution
+```pascal
+EMouseDistribution = enum(
+  DEFAULT, // Use Mouse.Distribution
+  RANDOM,  // Completely random point
+  GAUSS,   // Weighted towards the center
+  SKEWED,  // Weighted torwards current mouse position
+  ROWP     // Weighted torwards current mouse position but more "rounded" compared to SKEWED
+);
+The available distributions used to generate a point in a box.
+```
+*)
+type
+  EMouseDistribution = enum(DEFAULT, RANDOM, GAUSS, SKEWED, ROWP);
+
+(*
+## TMouse
+```pascal
+TMouse = record(TSRLBaseRecord)
+  Speed: Double;                     // Overall mouse speed (Default: 12)
+  Gravity, Wind: Double;             // Gravity & Wind for generating mouse path (Default: 9 & 5)
+  Distribution: EMouseDistribution;  // Default distribution to use (Default: MOUSE_DISTRIBUTION_ROWP)
+  MissChance: Double;                // Percentage chance to "Miss" the mouse (Default: 10)
+  IdleInterval: Double;              // Distance to travel before calling Mouse.Idle() (Default: 0)
+  IdleProgress: Double;
+  IdleGoal: Double;
+  OnMoving: TMouseMovingEvent;       // Callback while mouse is being moved
+  OnTeleport: TMouseTeleportEvent;   // Callback when mouse is teleported
+end;
+```
+*)
+  PMouse = ^TMouse;
+
+  TMouse = record
+    Distribution: EMouseDistribution;
+
+    MissChance: Double;
+    IdleInterval, IdleProgress, IdleGoal: Double;
+    CanIdle: Boolean;
+
+    {$IFDEF DEBUG_MOUSE}
+    DebugMovement: TSingleMatrix;
+    DebugClicks: TSingleMatrix;
+    {$ENDIF}
+  end;
+
+{$IFDEF DEBUG_MOUSE}
+procedure TMouse._Debug();
+var
+  p: TPoint;
+  i,x,y,wid,hei: Int32;
+  clr, tol,heat: Int32;
+  hue,sat: Double;
+  m: TSingleMatrix;
+  mats: array of TSingleMatrix;
+  tmp,ClientBitmap, DebugBitmap: TImage;
+  TPA: TPointArray;
+  function AlphaColor(A,B: TColor; Weight: Double): TColor;
+  var R1,R2,G1,G2,B1,B2: Int32;
+  begin
+    ColorToRGB(A, R1,G1,B1);
+    ColorToRGB(A, R1,G1,B1);
+    Result := RGBtoColor(Round(R1*weight+R2*(1-Weight)), Round(G1*weight+G2*(1-Weight)), Round(B1*weight+B2*(1-Weight)))
+  end;
+begin
+  self.DebugLn('Generating a heatmap from clicks and movements...');
+
+  ClientBitmap := TImage.CreateFromTarget();
+  DebugBitmap := ClientBitmap.Copy();
+  wid := DebugBitmap.GetWidth();
+  hei := DebugBitmap.GetHeight();
+  DebugBitmap.SetSize(wid*2, hei);
+  ClientBitmap.DrawTransparent(wid, 0, DebugBitmap);
+
+  mats := [Self.DebugClicks, Self.DebugMovement];
+  for i:=0 to High(mats) do
+  begin
+    SetLength(m, 0);
+    SetLength(m, Length(mats[i]));
+    for x:=0 to High(m) do m[x] := Copy(mats[i][x]);
+    for 0 to 2 do m.Smoothen(3);
+    if Length(m) = 0 then
+	  continue;
+
+    tmp.Init();
+    tmp.DrawMatrix(m, 1);
+
+    for y:=0 to tmp.GetHeight() - 1 do
+      for x:=0 to tmp.GetWidth() - 1 do
+        if tmp.GetPixel(x,y) <> 0 then
+        begin
+          heat := tmp.GetPixel(x,y);
+          ACA([0,heat], 1, clr, tol, hue, sat);
+
+          if tol < 20 then DebugBitmap.SetPixel(x+wid*i,y, AlphaColor(ClientBitmap.GetPixel(x,y), heat, 1-tol/20))
+          else             DebugBitmap.SetPixel(x+wid*i,y,tmp.GetPixel(x,y));
+        end;
+    tmp.Free();
+  end;
+
+  ShowBitmap(DebugBitmap);
+  ClientBitmap.Free();
+  DebugBitmap.Free();
+end;
+
+procedure TMouse._DebugCallback(Sender: PMouse; X, Y: Int32); static;
+var
+  w,h: Int32;
+begin
+  GetClientDimensions(W,H);
+  if Sender^.DebugMovement = nil then
+  begin
+    Sender^.DebugMovement.SetSize(W,H);
+    AddOnTerminate(@Sender^._Debug);
+  end;
+
+  if InRange(x,0,W-1) and InRange(y,0,H-1) then
+    Sender^.DebugMovement[y,x] += 1;
+end;
+{$ENDIF}
+
+(*
+## Mouse.Setup()
+```pascal
+procedure TMouse.Setup;
+```
+Initializes mouse variables.
+
+```{note}
+This is automatically called on the **Mouse** variable.
+```
+*)
+procedure TMouse.Setup();
+begin
+  Target.MouseOptions.Speed := 12;
+  Target.MouseOptions.Gravity := 9;
+  Target.MouseOptions.Wind := 5;
+
+
+  Self.Distribution := EMouseDistribution.ROWP;
+  Self.CanIdle := True;
+
+  {$IFDEF DEBUG_MOUSE}
+  Self.OnTeleport := @Self._DebugCallback;
+  {$ENDIF}
+end;
+
+(*
+## Mouse.Teleport()
+```pascal
+procedure TMouse.Teleport(coordinate: TPoint);
+```
+Teleport the mouse to the desired `coordinate`.
+
+Example:
+```pascal
+Mouse.Teleport(50, 50);
+```
+*)
+procedure TMouse.Teleport(coordinate: TPoint);
+begin
+  Target.MouseTeleport(coordinate);
+end;
+
+(*
+## Mouse.Position()
+```pascal
+function TMouse.Position(): TPoint;
+```
+Returns the mouse current position as a `TPoint`.
+
+Example:
+```pascal
+var p: TPoint;
+begin
+  p := Mouse.Position();
+  WriteLn('X: ', p.X, ' Y: ', p.Y);
+end;
+```
+*)
+function TMouse.Position(): TPoint;
+begin
+  Result := Target.MouseXY;
+end;
+
+(*
+## Mouse.Hold()
+```pascal
+procedure TMouse.Hold(button: EMouseButton);
+```
+Holds the desired mouse button down. The button will continue to be held down until {ref}`Mouse.Release()` is called.
+
+Example:
+```pascal
+Mouse.Hold(EMouseButton.LEFT); // The mouse is now holding down left click.
+```
+*)
+procedure TMouse.Hold(button: EMouseButton);
+begin
+  Target.MouseDown(button);
+end;
+
+(*
+## Mouse.Release()
+```pascal
+procedure TMouse.Release(button: EMouseButton);
+```
+Releases the desired mouse button which has been previously held.
+
+Example:
+```pascal
+Mouse.Release(EMouseButton.LEFT);
+```
+*)
+procedure TMouse.Release(button: EMouseButton);
+begin
+  Target.MouseUp(button);
+end;
+
+
+(*
+## Mouse.Idle()
+```pascal
+procedure TMouse.Idle();
+```
+When **IdleInterval** is reached this is called. Override to change behavior.
+- An **IdleInterval** of **1.0** equals to the distance between the top left and bottom right of the client.
+- Assuming the client dimensions are 500,500 the distance between (0,0) and (500,500) is ~700.
+   With an **IdleInterval** of **2.0** this would automatically be called every time the mouse has travelled ~1400 pixels.
+*)
+procedure TMouse.Idle();
+var
+  t: UInt64 := RandomLeft(1000, 20000);
+begin
+  WriteLn(GetDebugLn('Mouse', 'Idle: ' + ToString(t) + ' ms'));
+  Sleep(t);
+end;
+
+(*
+## Mouse.Miss()
+```pascal
+function TMouse.Miss(P: TPoint): TPoint;
+```
+"Misses" the destination point **P**. Will stop somewhere along the path or overshoot.
+Returns the position the mouse was moved to.
+
+This could automatically be called depending on **Mouse.MissChance**.
+*)
+function TMouse.Miss(destination: TPoint): TPoint;
+var
+  range: Int32;
+  miss: Double;
+  Temp: Double := Self.MissChance;
+begin
+  Self.MissChance := 0; // prevent recursion
+
+  try
+    range := Trunc(Power(Self.Position().DistanceTo(destination), 0.80)); // how much possible range to miss
+    miss := RandomMode(0.9, 0.1, 1.5); // Where miss will happen. 1 = destination.
+    Result.X := Trunc((1-miss)*Self.Position().X + miss*destination.X);
+    Result.Y := Trunc((1-miss)*Self.Position().Y + miss*destination.Y);
+
+    Result := Result.Random(range);
+  finally
+    Self.MissChance := Temp;
+  end;
+end;
+
+
+(*
+## Mouse.Move()
+```pascal
+procedure TMouse.Move(destination: TPoint);
+procedure TMouse.Move(circle: TCircle; forcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
+procedure TMouse.Move(b: TBox; forcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
+procedure TMouse.Move(quad: TQuad; forcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
+```
+Moves the mouse to the desired destination.
+This method has several overloads available that are self explanatory.
+
+Example:
+```pascal
+var p: TPoint;
+begin
+  p := TPoint.Create(50, 50);
+  Mouse.Move(p); // The mouse is now at 50,50
+end;
+```
+*)
+procedure TMouse.Move(destination: TPoint);
+var
+  start: TPoint;
+  w, h: Int32;
+begin
+  if Self.CanIdle and (Self.IdleInterval > 0) then
+  begin
+    start := Target.MouseXY;
+    w := Target.Width;
+    h := Target.Height;
+
+    if w < 0 then Exit;
+    if h < 0 then Exit;
+
+    if Self.IdleProgress = 0 then
+      Self.IdleGoal := GaussRand(Self.IdleInterval, Self.IdleInterval * 0.20)
+    else
+    if Self.IdleProgress > Self.IdleGoal then
+    begin
+      Self.Idle();
+      Self.IdleProgress := 0;
+
+      if RandomBoolean(0.1) then // rarely throw a short interval in
+        Self.IdleGoal := GaussRand(Self.IdleInterval / 2, Self.IdleInterval / 2 * 0.20)
+      else
+        Self.IdleGoal := GaussRand(Self.IdleInterval, Self.IdleInterval * 0.20);
+    end;
+
+    Self.IdleProgress += Hypot(start.X - destination.X, start.Y - destination.Y) / Hypot(w, h);
+  end;
+
+  if RandomBoolean(Self.MissChance) then
+  begin
+    Self.Move(Self.Miss(destination));
+    if RandomBoolean(0.25) then
+      Sleep(0, 5000, ERandomDir.LEFT);
+  end;
+
+  Target.MouseMove(destination);
+end;
+
+procedure TMouse.Move(circle: TCircle; forcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
+begin
+  if not forcedMove and circle.Contains(Target.MouseXY) then
+    Exit;
+
+  if distribution = EMouseDistribution.DEFAULT then
+    distribution := Self.Distribution;
+
+  case distribution of
+    EMouseDistribution.RANDOM: Self.Move(circle.RandomPoint());
+    EMouseDistribution.GAUSS:  Self.Move(circle.RandomPointCenter());
+    EMouseDistribution.SKEWED: Self.Move(circle.RandomPointCenter()); //TODO
+    EMouseDistribution.ROWP:   Self.Move(circle.RandomPointCenter()); //TODO
+  end;
+end;
+
+procedure TMouse.Move(b: TBox; forcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
+begin
+  if not forcedMove and b.Contains(Target.MouseXY) then
+    Exit;
+
+  if distribution = EMouseDistribution.DEFAULT then
+    distribution := Self.Distribution;
+
+  case distribution of
+    EMouseDistribution.RANDOM: Self.Move(b.RandomPoint());
+    EMouseDistribution.GAUSS:  Self.Move(b.RandomPointCenter());
+    EMouseDistribution.SKEWED: Self.Move(b.RandomPointCenter()); //TODO
+    EMouseDistribution.ROWP:   Self.Move(b.RandomPointCenter()); //TODO
+  end;
+end;
+
+procedure TMouse.Move(quad: TQuad; ForcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
+begin
+  if not ForcedMove and quad.Contains(Target.MouseXY) then
+    Exit;
+
+  if distribution = EMouseDistribution.DEFAULT then
+    distribution := Self.Distribution;
+
+  case distribution of
+    EMouseDistribution.RANDOM: Self.Move(quad.RandomPoint());
+    EMouseDistribution.GAUSS:  Self.Move(quad.RandomPointCenter());
+    EMouseDistribution.SKEWED: Self.Move(quad.RandomPointCenter()); //TODO
+    EMouseDistribution.ROWP:   Self.Move(quad.RandomPointCenter()); //TODO
+  end;
+end;
+
+
+(*
+## Mouse.Click()
+```pascal
+procedure TMouse.Click(destination: TPoint; button: EMouseButton);
+procedure TMouse.Click(circle: TCircle; button: EMouseButton; forcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
+procedure TMouse.Click(b: TBox; button: EMouseButton; forcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
+procedure TMouse.Click(quad: TQuad; button: EMouseButton; forcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
+```
+Moves and clicks the mouse on the desired `destination` with the desired `button`.
+This method has several overloads available that are self explanatory.
+
+Example:
+```pascal
+var p: TPoint;
+begin
+  p := TPoint.Create(50, 50);
+  Mouse.Click(p, EMouseButton.LEFT); // Moves and clicks the mouse left button at 50,50
+end;
+```
+*)
+procedure TMouse.Click(destination: TPoint; button: EMouseButton);
+begin
+  Self.Move(destination);
+  Target.MouseClick(button);
+end;
+
+procedure TMouse.Click(circle: TCircle; button: EMouseButton; forcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
+begin
+  Self.Move(circle, forcedMove, distribution);
+  Target.MouseClick(button);
+end;
+
+procedure TMouse.Click(b: TBox; button: EMouseButton; forcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
+begin
+  Self.Move(b, forcedMove, distribution);
+  Target.MouseClick(button);
+end;
+
+procedure TMouse.Click(quad: TQuad; button: EMouseButton; ForcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
+begin
+  Self.Move(quad, forcedMove, distribution);
+  Target.MouseClick(button);
+end;
+
+var
+  Mouse: TMouse;

@@ -1,0 +1,169 @@
+(*
+# RSClient
+Methods relating to targeting the RS client and detecting client states.
+
+if `SRL_DISABLE_REMOTEINPUT` is defined. RemoteInput plugin will not be loaded.
+if `SRL_USE_REMOTEINPUT` is defined. RemoteInput will be automatically setup.
+if `SRL_USE_REMOTEINPUT_DEBUG` is defined. Debug() calls will drawn on the RS client.
+*)
+
+{$DEFINE SRLT_RSCLIENT_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+
+(*
+## ERSClientMode
+```pascal
+ERSClientMode = (
+    UNKNOWN,            // Unable to detect mode (likely not logged in yet)
+    FIXED,              // Fixed mode
+    RESIZABLE_CLASSIC,  // Resizable with "classic" gametabs or "fixed mode gametabs"
+    RESIZABLE_MODERN    // Resizable with gametabs being grouped together at the bottom
+  );
+```
+The modes of the client.
+*)
+type
+  ERSClient = enum(UNKNOWN, LEGACY, RUNELITE, OFFICIAL);
+  ERSClientMode = enum(UNKNOWN, FIXED, RESIZABLE_CLASSIC, RESIZABLE_MODERN);
+
+  TRSClient = record
+    Client: ERSClient;
+    Mode: ERSClientMode;
+
+    Bounds: TBox;
+
+    InterfaceSetupQueue: array of procedure () of object;
+  end;
+
+(*
+## RSClient.DetectClientMode()
+```pascal
+function TRSClient.DetectClientMode(update: Boolean): ERSClientMode;
+```
+Detects the client mode. If **update** is True ClientModeChanged will be called.
+Uses the music tab so will return RS_CLIENT_UNKNOWN when not logged in.
+Are there any other cases where music tab won't be visible?
+*)
+function TRSClient.DetectClientMode(update: Boolean = False): ERSClientMode;
+begin
+  // Music tab in each mode there are different colors at W-4, H-21
+  // Two colors each because tab can be active(red) or not(grey)
+
+  case Target.GetColor([Target.Width-4, Target.Height-21]) of
+    2435372, 658467: Result := ERSClientMode.FIXED;
+    3555653, 922425: Result := ERSClientMode.RESIZABLE_MODERN;
+    2896180, 790059: Result := ERSClientMode.RESIZABLE_CLASSIC;
+  end;
+
+  if update then
+  begin
+    Self.Mode   := Result;
+    Self.Bounds := Target.Bounds;
+  end;
+end;
+
+(*
+## RSClient.ClientModeChanged()
+```pascal
+procedure TRSClient.ClientModeChanged();
+```
+Anything that needs an alert when the client mode changes should override this.
+*)
+procedure TRSClient.ClientModeChanged();
+var
+  i: Int32;
+begin
+  WriteLn(GetDebugLn('RSClient', 'Client mode changed: ' + ToString(Self.Mode)));
+
+  for i := 0 to High(Self.InterfaceSetupQueue) do
+    Self.InterfaceSetupQueue[i]();
+end;
+
+(*
+## RSClient.IsLoggedIn()
+```pascal
+function TRSClient.IsLoggedIn(): Boolean;
+function TRSClient.IsLoggedIn(waitTime: Int32; interval: Int32 = -1): Boolean; overload;
+```
+Returns true/false whether there's a player logged in or not.
+
+Example:
+```pascal
+WriteLn RSClient.IsLoggedIn();
+```
+*)
+function TRSClient.IsLoggedIn(): Boolean;
+var
+  mode: ERSClientMode;
+begin
+  mode := Self.DetectClientMode();
+  if (mode <> ERSClientMode.UNKNOWN) and (mode <> Self.Mode) then
+  begin
+    Self.Mode := mode;
+    Self.ClientModeChanged();
+  end;
+
+  Result := mode <> ERSClientMode.UNKNOWN;
+end;
+
+function TRSClient.IsLoggedIn(waitTime: Int32; interval: Int32 = -1): Boolean; overload;
+begin
+  if interval = -1 then
+    interval := RandomLeft(50, 1500);
+
+  Result := SleepUntil(Self.IsLoggedIn(), interval, waitTime);
+end;
+
+(*
+## RSClient.LoseFocus()
+```pascal
+procedure TRSClient.LoseFocus();
+procedure TRSClient.LoseFocus(delay: Int32);
+```
+Loses focus if available. Maybe useful for antiban.
+You can optionally delay losing focus by passing in a `delay`.
+*)
+procedure TRSClient.LoseFocus();
+begin
+  {$IFDEF SRLT_REMOTEINPUT_INCLUDED}
+  RemoteInput.LoseFocus();
+  Exit;
+  {$ENDIF}
+  WriteLn(GetDebugLn('RSClient', 'LoseFocus method is not implemented.', EErrorLevel.WARN));
+end;
+
+procedure TRSClient.LoseFocus(delay: UInt32); overload;
+begin
+  Sleep(delay);
+  Self.LoseFocus();
+end;
+
+(*
+## RSClient.Setup()
+```pascal
+procedure TRSClient.Setup();
+```
+RSClient setup method.
+
+```{note}
+This is automatically called on the **RSClient** variable.
+```
+*)
+procedure TRSClient.Setup();
+begin
+  Self.Mode := Self.DetectClientMode();
+  if Self.Mode = ERSClientMode.UNKNOWN then
+    Self.Mode := ERSClientMode.FIXED; // Fixed as default so we can login if needed
+
+  Self.ClientModeChanged();
+end;
+
+var
+  RSClient: TRSClient;
+
+begin
+  SRLT.SetupQueue += @RSClient.Setup;
+end;

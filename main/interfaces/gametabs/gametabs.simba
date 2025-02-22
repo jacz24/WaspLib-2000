@@ -1,0 +1,146 @@
+(*
+# GameTabs
+Methods to interact with the gametab buttons
+*)
+{$DEFINE SRLT_GAMETABS_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  ERSGameTab = enum(
+    NONE,
+    COMBAT, STATS, ACHIEVEMENTS, INVENTORY, EQUIPMENT, PRAYER, MAGIC,
+    CLAN, FRIENDS, ACCOUNT, LOGOUT, OPTIONS, EMOTES, MUSIC
+  );
+
+  TRSGameTabs = record
+    RSInterface: TRSInterface;
+    Tabs: TBoxArray;
+    const ActiveColor: TColorTolerance = [$14194A, 1.235, EColorSpace.HSL, [1.631, 1.084, 0.286]];
+  end;
+
+procedure TRSGameTabs.SetupInterface();
+var
+  b: TBox;
+  tab: ERSGameTab;
+begin
+  b.Y2 := RootInterface.Bounds.Y2;
+
+  case RSClient.Mode of
+    ERSClientMode.FIXED:
+    begin
+      b.X1 := RootInterface.Bounds.X2 - 242;
+      b.X2 := RootInterface.Bounds.X2 - 2;
+      b.Y1 := RootInterface.Bounds.Y2 - 334;
+    end;
+
+    ERSClientMode.RESIZABLE_CLASSIC:
+    begin
+      b.X1 := RootInterface.Bounds.X2 - 240;
+      b.X2 := RootInterface.Bounds.X2;
+      b.Y1 := RootInterface.Bounds.Y2 - 334;
+    end;
+
+    ERSClientMode.RESIZABLE_MODERN:
+    begin
+      b.X2 := RootInterface.Bounds.X2;
+
+      //Needed because depending on the client width the tabs stack into row(s)
+      if RootInterface.Width >= 948 then
+      begin
+        b.X1 := RootInterface.Bounds.X2 - 428;
+        b.Y1 := RootInterface.Bounds.Y2 - 35;
+      end
+      else
+      begin
+        b.X1 := RootInterface.Bounds.X2 - 230;
+        b.Y1 := RootInterface.Bounds.Y2 - 71;
+      end;
+    end;
+  end;
+
+  Self.RSInterface.Setup(b);
+
+  case RSClient.Mode of
+    ERSClientMode.FIXED, ERSClientMode.RESIZABLE_CLASSIC:
+      Self.Tabs := TBoxArray.Create(Self.RSInterface.TopLeft.Offset(6,1), 7, 2, 30, 33, [3, 265]);
+
+    ERSClientMode.RESIZABLE_MODERN:
+      begin
+        // One row
+        if RootInterface.Width >= 948 then
+        begin
+          Self.Tabs := TBoxArray.Create(Self.RSInterface.BottomLeft.Offset(0,-35), 14, 1, 30, 33, [3, 0]);
+          for tab := ERSGameTab.MUSIC downto ERSGameTab.FRIENDS - 1 do
+            Self.Tabs[tab-1] := Self.Tabs[tab-2];
+        end
+        else // Two rows
+          Self.Tabs := TBoxArray.Create(Self.RSInterface.BottomLeft.Offset(0,-70), 7, 2, 30, 33, [3, 3]);
+
+        // Logout button is moved to top right corner
+        Self.Tabs[7] := Self.Tabs[10];
+        Self.Tabs[10].X1 := RootInterface.Bounds.X2 - 19;
+        Self.Tabs[10].Y1 := RootInterface.Bounds.Y1 + 9;
+        Self.Tabs[10].X2 := RootInterface.Bounds.X2 - 10;
+        Self.Tabs[10].Y2 := RootInterface.Bounds.Y1 + 18;
+      end;
+  end;
+end;
+
+
+function TRSGameTabs.Get(const tab: ERSGameTab): TBox;
+begin
+  Result := Self.Tabs[tab-1];
+end;
+
+function TRSGameTabs.GetCurrent(): ERSGametab;
+var
+  tab: ERSGameTab;
+begin
+  if (RSClient.Mode = ERSClientMode.RESIZABLE_MODERN) and (Target.CountColor(8639715, 0, Self.Tabs[ERSGameTab.LOGOUT-1]) > 0) then
+    Exit(ERSGameTab.LOGOUT);
+
+  for tab := ERSGameTab.COMBAT to High(ERSGameTab) do
+    if (Target.CountColor(Self.ActiveColor, Self.Tabs[tab-1]) > 50) then
+      Exit(tab);
+end;
+
+
+function TRSGameTabs.IsOpen(const tab: ERSGameTab): Boolean;
+begin
+  Result := Self.GetCurrent() = tab;
+end;
+
+function TRSGameTabs.WaitOpen(const tab: ERSGameTab; const time: Integer = 600; interval: Integer = -1): Boolean;
+begin
+  if interval = -1 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsOpen(tab), interval, time);
+end;
+
+function TRSGameTabs.Open(const tab: ERSGameTab): Boolean;
+begin
+  if Self.IsOpen(tab) then Exit(True);
+
+  for 1 to 3 do
+  begin
+    ShowOnClient(Self.Tabs[tab-1]);
+    Mouse.Click(Self.Tabs[tab-1], EMouseButton.LEFT, RandomBoolean());
+    if Self.WaitOpen(tab, 2000) then Exit(True);
+  end;
+end;
+
+
+procedure TRSGameTabs.Draw(img: TImage);
+begin
+  Self.RSInterface.Draw(img);
+  img.DrawBoxArray(Self.Tabs, False);
+end;
+
+
+var
+  GameTabs: TRSGameTabs;
+
+begin
+  RSClient.InterfaceSetupQueue += @GameTabs.SetupInterface;
+end;

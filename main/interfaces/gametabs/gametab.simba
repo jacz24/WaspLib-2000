@@ -1,0 +1,61 @@
+(*
+# GameTab
+Gametabs interfaces core
+*)
+{$DEFINE SRLT_GAMETAB_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  TRSGameTab = type TRSInterface;
+
+procedure TRSGameTab.Setup(); overload;
+var
+  b: TBox;
+begin
+  case RSClient.Mode of
+    ERSClientMode.FIXED:
+    begin
+      b.X1 := RootInterface.Bounds.X2 - 214;
+      b.X2 := RootInterface.Bounds.X2 - 31;
+      b.Y1 := RootInterface.Bounds.Y2 - 298;
+      b.Y2 := RootInterface.Bounds.Y2 - 37;
+    end;
+
+    ERSClientMode.RESIZABLE_CLASSIC:
+    begin
+      b.X1 := RootInterface.Bounds.X2 - 212;
+      b.X2 := RootInterface.Bounds.X2 - 29;
+      b.Y1 := RootInterface.Bounds.Y2 - 298;
+      b.Y2 := RootInterface.Bounds.Y2 - 37;
+    end;
+
+    ERSClientMode.RESIZABLE_MODERN:
+    begin
+      b.X1 := RootInterface.Bounds.X2 - 193;
+      b.X2 := RootInterface.Bounds.X2 - 10;
+      b.Y1 := GameTabs.RSInterface.Bounds.Y1 - 269;
+      b.Y2 := GameTabs.RSInterface.Bounds.Y1 - 7;
+    end;
+  end;
+
+  Self.Bounds := b;
+  Self.Width  := b.Width;
+  Self.Height := b.Height;
+  Self.Center := b.Center;
+
+  Self.TopLeft     := b.TopLeft;
+  Self.TopRight    := b.TopRight;
+  Self.BottomRight := b.BottomRight;
+  Self.BottomLeft  := b.BottomLeft;
+
+  Self.Quad := [b.TopLeft, b.TopRight, b.BottomRight, b.BottomLeft];
+end;
+
+var
+  GameTab: TRSGameTab;
+
+begin
+  RSClient.InterfaceSetupQueue += @GameTab.Setup;
+end;

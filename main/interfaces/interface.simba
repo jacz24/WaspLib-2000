@@ -1,0 +1,118 @@
+(*
+# Interface
+Interface core .
+*)
+
+{$DEFINE SRLT_INTERFACE_CORE_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  TRSInterface = record
+    Bounds: TBox;
+    Width, Height: Integer;
+    Center, TopLeft, TopRight, BottomRight, BottomLeft: TPoint;
+    Quad: TQuad;
+  end;
+
+  PRSInterface = ^TRSInterface;
+
+procedure TRSInterface.Setup(bounds: TBox; maxWidth, maxHeight: Integer = 0);
+begin
+  Self.Bounds := bounds;
+  Self.Width  := bounds.Width;
+  Self.Height := bounds.Height;
+  Self.Center := bounds.Center;
+
+  Self.TopLeft     := bounds.TopLeft;
+  Self.TopRight    := bounds.TopRight;
+  Self.BottomRight := bounds.BottomRight;
+  Self.BottomLeft  := bounds.BottomLeft;
+
+  Self.Quad := [bounds.TopLeft, bounds.TopRight, bounds.BottomRight, bounds.BottomLeft];
+end;
+
+procedure TRSInterface.Draw(img: TImage);
+begin
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
+end;
+
+
+type
+  TRSInterfaceTitle = record
+    Bounds, CloseButton: TBox;
+    TitleOCR: TOCRInvertColorFilter;
+  end;
+
+procedure TRSInterfaceTitle.Setup(interfaceBounds: TBox);
+begin
+  Self.Bounds.X1 := interfaceBounds.X1 + 50;
+  Self.Bounds.Y1 := interfaceBounds.Y1 + 10;
+  Self.Bounds.X2 := interfaceBounds.X2 - 50;
+  Self.Bounds.Y2 := Self.Bounds.Y1 + 15;
+
+  Self.CloseButton.X1 := interfaceBounds.X2-28;
+  Self.CloseButton.X2 := interfaceBounds.X2-6;
+  Self.CloseButton.Y1 := interfaceBounds.Y1+6;
+  Self.CloseButton.Y2 := interfaceBounds.Y1+28;
+
+  Self.TitleOCR := TOCRInvertColorFilter.Create([3358536, 0], [5, 0]) ;
+end;
+
+
+function TRSInterfaceTitle.IsOpen(): Boolean;
+begin
+  Result := Target.CountColor($010000, 0, Self.CloseButton) > 80;
+end;
+
+function TRSInterfaceTitle.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
+begin
+  if interval = -1 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsOpen(), interval, time);
+end;
+
+
+function TRSInterfaceTitle.GetTitle(): String;
+begin
+  Result := OCR.Recognize(Self.Bounds, Self.TitleOCR, RSFonts.BOLD_12);
+end;
+
+function TRSInterfaceTitle.IsTitle(text: String; minMatch: Single = 0.8): Boolean;
+begin
+  Result := OCR.Locate(Self.Bounds, text, RSFonts.BOLD_12, Self.TitleOCR) >= minMatch;
+end;
+
+function TRSInterfaceTitle.WaitTitle(text: String; minMatch: Single = 0.8; waitTime: Integer = 600; interval: Integer = 100): Boolean; overload;
+begin
+  Result := SleepUntil(Self.IsTitle(text, minMatch), interval, waitTime);
+end;
+
+
+function TRSInterfaceTitle.Close(escape: Boolean = False): Boolean;
+begin
+  if not Self.IsOpen() then Exit(True);
+
+  case escape of
+    False: Mouse.Click(Self.CloseButton, EMouseButton.LEFT);
+    True:  Target.KeyPress(EKeyCode.ESCAPE);
+  end;
+
+  Result := SleepUntil(not Self.IsOpen(), 50, 600);
+end;
+
+type
+  TRSRootInterface = type TRSInterface;
+
+procedure TRSRootInterface.Setup(); overload;
+begin
+  Self.Setup(Target.Bounds);
+end;
+
+var
+  RootInterface: TRSRootInterface;
+
+begin
+  RSClient.InterfaceSetupQueue += @RootInterface.Setup;
+end;

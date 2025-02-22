@@ -1,0 +1,293 @@
+(*
+# ChooseOption
+Methods to interact with the runescape context menu.
+*)
+
+{$DEFINE SRLT_CHOOSEOPTION_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  TRSOption = record
+    Text: String;
+    Bounds: TBox;
+    StringIndex: Integer;
+  end;
+
+  TRSOptionArray = array of TRSOption;
+
+  TRSChooseOption = record
+    Bounds: TBox;
+    OCRFilter: TOCRInvertColorFilter;
+    const TitleImg: TImage = ImageFromString('IMG:AQAAAGYAAAASAAAAAAAAAP21aQABAAAAIKprAAEAAADI5D8BAAAAAM0CAQABAAAAOIe7BgAAAAAApLsGAAAAADQBAACYAQAAOIe7BgAAAAABAAAAZgAAABIAAAAYAAAAAAAAAAAAAAAAAAAAAwAAABgIEAgICAAAAAEAAAIAAAAAAAAAAAAAAAAAAAAAiVBORw0KGgoAAAANSUhEUgAAAGYAAAASCAIAAAAmDjziAAAAzUlEQVR4nO2U0Q2AMAhE3c4F/HX/NYzxo9oWvAO0mkBqoqTA9Qmd1mXORa1pf9IoS2S0JTLaWmRlaK+ed3X1rdU2RkT1eXjOysarvMoA9TwlG+mmLyAzNH4iC0AWcxAcWfce8fjb0sqRdGSenEpUP5BCVu3xvEs4wE63lcOjtEuTHUwnJuXH4hpspf3iSxZJVkglPCcyRGZJkeKlpFGYPMMohRjwRYpvXdTgSN2hDODtfgUfG1s5EfEWZL8zsEkj671X7BlLZLQNQJaLWhvxdfuwwsTSHQAAAABJRU5ErkJggg==');
+  end;
+
+(*
+## ChooseOption.IsOpen
+```pascal
+function TRSChooseOption.IsOpen(): Boolean;
+function TRSChooseOption.IsOpen(WaitTime: Int32; Interval: Int32 = -1): Boolean; overload;
+```
+Returns True/False if the choose option menu is currently visible/open.
+
+Example:
+```pascal
+WriteLn ChooseOption.IsOpen();
+```
+*)
+function TRSChooseOption.IsOpen(): Boolean;
+var
+  tpa: TPointArray;
+  p: TPoint;
+begin
+  p := Target.FindImage(Self.TitleImg, 0);
+  if p = [-1,-1] then Exit;
+
+  p.X += 1;
+  p.Y += Self.TitleImg.Height;
+
+  tpa := Target.FindColor(Colors.BLACK, 0, [P.X, P.Y, Target.Width - 1, Target.Height - 1]);
+
+  Result := tpa <> [];
+  if Result then
+    Self.Bounds := tpa.Cluster(1, 1).SortFromFirstPoint(p)[0].Bounds().Expand(-1);
+end;
+
+function TRSChooseOption.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
+begin
+  if interval = -1 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsOpen(), interval, time);
+end;
+
+(*
+## ChooseOption.IsOpen
+```pascal
+function TRSChooseOption.Open(): Boolean;
+```
+Opens the choose option context menu if it's not currently open.
+
+Example:
+```pascal
+WriteLn ChooseOption.Open();
+```
+*)
+function TRSChooseOption.Open(): Boolean;
+begin
+  if Self.IsOpen() then Exit(True);
+
+  Target.MouseClick(EMouseButton.LEFT);
+  Result := Self.WaitOpen(600);
+end;
+
+(*
+## ChooseOption.Setup
+```pascal
+procedure TRSChooseOption.Setup();
+```
+TRSChooseOption setup method.
+This is responsible for loading the needed bitmaps into memory and is automatically called for you when a script is ran so you
+don't have to call it.
+*)
+procedure TRSChooseOption.Setup();
+begin
+  Self.OCRFilter := TOCRInvertColorFilter.Create([4674653, 0]);
+end;
+
+(*
+## ChooseOption.GetOptions
+```pascal
+function TRSChooseOption.GetOptions(): TRSChooseOption_OptionArray;
+```
+Returns a `TRSChooseOption_OptionArray` of all available options in the Choose Option context menu.
+This is a internal method, you probably don't need to call it.
+*)
+function TRSChooseOption.GetOptions(): TRSOptionArray;
+var
+  i: Int32;
+  b: TBox;
+begin
+  if not Self.Open() then Exit;
+  if Self.Bounds.Height < 15 then Exit;
+
+  SetLength(Result, Self.Bounds.Height div 15);
+
+  b.X1 := Self.Bounds.X1;
+  b.X2 := Self.Bounds.X2;
+
+  for i := 0 to High(Result) do
+  begin
+    b.Y1 := Self.Bounds.Y1 + (i * 15);
+    b.Y2 := b.Y1 + 15;
+    if b.Y2 > Self.Bounds.Y2 then Exit;
+
+    Result[i].Text := OCR.RecognizeStatic(b, Self.OCRFilter, RSFonts.BOLD_12_SHADOW);
+    Result[i].Bounds := b;
+  end;
+end;
+
+(*
+## ChooseOption.Close
+```pascal
+function TRSChooseOption.Close(): Boolean;
+```
+Closes the Choose option context menu if it's open.
+Returns True on success.
+
+Example:
+```pascal
+WriteLn ChooseOption.Close();
+```
+*)
+function TRSChooseOption.Close(): Boolean;
+var
+  boxes: TBoxArray;
+  space: TBox;
+begin
+  if not Self.IsOpen() then Exit(True);
+
+  space := Self.Bounds.Expand(100);
+  space.Clip(Target.Bounds);
+
+  boxes := Self.Bounds.Expand(50).Invert(space);
+  if boxes = [] then
+    raise GetDebugLn('ChooseOption', 'No space found to move mouse');
+
+  Target.MouseMove(boxes.Random(), False);
+  Result := SleepUntil(not Self.IsOpen(), 50, 600);
+end;
+
+
+(*
+## ChooseOption.HasOption
+```pascal
+function TRSChooseOption.HasOption(text: TStringArray; out option: TRSChooseOption_Option; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean;
+function TRSChooseOption.HasOption(text: TStringArray; out index: Int32; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
+function TRSChooseOption.HasOption(text: TStringArray; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
+function TRSChooseOption.HasOption(text: String; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
+```
+Methods to check if an option is available in the choose option context menu.
+Returns true if the option specified is available.
+
+Example:
+```pascal
+WriteLn ChooseOption.HasOption('Take');
+```
+*)
+function TRSChooseOption.Find(text: TStringArray; out option: TRSOption; caseSensitive: Boolean = True; closeOnFalse: Boolean = True): Boolean;
+var
+  i, j: Int32;
+  boxes: TBoxArray;
+begin
+  if not Self.Open() then Exit;
+  if Self.Bounds.Height < 15 then Exit;
+
+  SetLength(boxes, Self.Bounds.Height div 15);
+
+  option.Bounds.X1 := Self.Bounds.X1;
+  option.Bounds.X2 := Self.Bounds.X2;
+
+  for i := 0 to High(boxes) do
+  begin
+    option.Bounds.Y1 := Self.Bounds.Y1 + (i * 15);
+    option.Bounds.Y2 := option.Bounds.Y1 + 15;
+    if option.Bounds.Y2 > Self.Bounds.Y2 then Exit;
+
+    option.Text := OCR.RecognizeStatic(option.Bounds, Self.OCRFilter, RSFonts.BOLD_12_SHADOW);
+
+    if option.Text.ContainsAny(text, caseSensitive) then
+      Exit(True);
+  end;
+
+  if closeOnFalse then
+  begin
+    Sleep(250, 600);
+    Self.Close();
+  end;
+end;
+
+function TRSChooseOption.Find(text: TStringArray; caseSensitive, closeOnFalse: Boolean = True): Boolean; overload;
+var
+  option: TRSOption;
+begin
+  Result := Self.Find(text, option, caseSensitive, closeOnFalse);
+end;
+
+function TRSChooseOption.Find(text: String; caseSensitive, closeOnFalse: Boolean = True): Boolean; overload;
+begin
+  Result := Self.Find([text], caseSensitive, closeOnFalse);
+end;
+
+
+(*
+## ChooseOption.Select
+```pascal
+procedure TRSChooseOption.Select(option: TRSChooseOption_Option; mouseAction: Int32 = MOUSE_LEFT);
+function TRSChooseOption.Select(text: TStringArray; mouseAction: Int32 = MOUSE_LEFT; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
+function TRSChooseOption.Select(text: String; mouseAction: Int32 = MOUSE_LEFT; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
+```
+Selects the specified option if it exists on the Choose option context menu.
+
+Example:
+```pascal
+WriteLn ChooseOption.Select('Take Bones');
+```
+*)
+procedure TRSChooseOption.Hover(option: TRSOption);
+begin
+  option.Bounds.Expand(-1);
+  Target.MouseMove(option.Bounds);
+  Target.MouseClick(EMouseButton.LEFT);
+end;
+
+function TRSChooseOption.Hover(text: TStringArray; caseSensitive, closeOnFalse: Boolean = True): Boolean; overload;
+var
+  option: TRSOption;
+begin
+  Result := Self.Find(text, option, caseSensitive, closeOnFalse);
+  if Result then Self.Hover(option);
+end;
+
+function TRSChooseOption.Hover(text: String; caseSensitive, closeOnFalse: Boolean = True): Boolean; overload;
+begin
+  Result := Self.Hover([text], caseSensitive, closeOnFalse);
+end;
+
+
+(*
+## ChooseOption.Select
+```pascal
+procedure TRSChooseOption.Select(option: TRSChooseOption_Option; mouseAction: Int32 = MOUSE_LEFT);
+function TRSChooseOption.Select(text: TStringArray; mouseAction: Int32 = MOUSE_LEFT; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
+function TRSChooseOption.Select(text: String; mouseAction: Int32 = MOUSE_LEFT; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
+```
+Selects the specified option if it exists on the Choose option context menu.
+
+Example:
+```pascal
+WriteLn ChooseOption.Select('Take Bones');
+```
+*)
+procedure TRSChooseOption.Select(option: TRSOption);
+begin
+  Self.Select(option);
+  Target.MouseClick(EMouseButton.LEFT);
+end;
+
+function TRSChooseOption.Select(text: TStringArray; caseSensitive, closeOnFalse: Boolean = True): Boolean; overload;
+begin
+  Result := Self.Hover(text, caseSensitive, closeOnFalse);
+  Target.MouseClick(EMouseButton.LEFT);
+end;
+
+function TRSChooseOption.Select(text: String; caseSensitive, closeOnFalse: Boolean = True): Boolean; overload;
+begin
+  Result := Self.Select([text], caseSensitive, closeOnFalse);
+end;
+
+
+var
+  ChooseOption: TRSChooseOption;
+begin
+  SRLT.SetupQueue += @ChooseOption.Setup;
+end;

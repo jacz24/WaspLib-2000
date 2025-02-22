@@ -1,0 +1,35 @@
+{$DEFINE SRLT_BASE_INCLUDED}
+{$IFNDEF SRLT_UTILS}
+  {$I SRLT/utils.simba}
+{$ENDIF}
+
+type
+  EErrorLevel = enum(SUCCESS, WARN, ERROR);
+
+function GetDebugLn(text: String): String;
+begin
+  Result := TimeStamp() + ': ' + text;
+end;
+
+function GetDebugLn(name, text: String): String; overload;
+begin
+  Result := TimeStamp() + ':[' + name + ']: ' + text;
+end;
+
+function GetDebugLn(text: String; level: EErrorLevel): String; overload;
+begin
+  case level of
+    EErrorLevel.SUCCESS: Result := #0#0'000008' + TimeStamp() + ': ' + text;
+    EErrorLevel.WARN:    Result := #0#0'000002' + TimeStamp() + ': ' + text;
+    EErrorLevel.ERROR:   Result := #0#0'000004' + TimeStamp() + ': ' + text;
+  end;
+end;
+
+function GetDebugLn(name, text: String; level: EErrorLevel): String; overload;
+begin
+  case level of
+    EErrorLevel.SUCCESS: Result := #0#0'000008' + TimeStamp() + ':[' + name + ']: ' + text;
+    EErrorLevel.WARN:    Result := #0#0'000002' + TimeStamp() + ':[' + name + ']: ' + text;
+    EErrorLevel.ERROR:   Result := #0#0'000004' + TimeStamp() + ':[' + name + ']: ' + text;
+  end;
+end;

@@ -1,0 +1,9 @@
+{$DEFINE SRLT_TIME_INCLUDED}
+{$IFNDEF SRLT_UTILS}
+  {$I SRLT/utils.simba}
+{$ENDIF}
+
+function TimeStamp(): String;
+begin
+  Result := FormatMilliseconds(GetTimeRunning(), '[hh:mm:ss:uu]');
+end;

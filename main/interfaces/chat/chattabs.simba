@@ -1,0 +1,108 @@
+{$DEFINE SRLT_CHAT_TABS_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  ERSChatTab = enum(NONE, ALL, GAME, PUBLIC_, PRIVATE_, CHANNEL, CLAN, TRADE);
+  ERSChatTabState = (NONE, ENABLED, FILTERED, DISABLED, HIDE, AUTOCHAT);
+
+  TRSChatTab = record
+    Tab: ERSChatTab;
+    Button: TRSButton;
+  end;
+
+  TRSChatTabs = record
+    RSInterface: TRSInterface;
+    Tabs: array [0..7] of TRSChatTab;
+  end;
+
+procedure TRSChatTabs.SetupInterface();
+var
+  b: TBox;
+  i: Int32;
+begin
+  b.X1 := RootInterface.Bounds.X1;
+  b.X2 := RootInterface.Bounds.X1 + 518;
+  b.Y1 := RootInterface.Bounds.Y2 - 22;
+  b.Y2 := RootInterface.Bounds.Y2;
+
+  Self.RSInterface.Setup(b);
+
+  with Self.RSInterface.Bounds do
+    for i := 0 to 6 do
+    begin
+      Self.Tabs[i].Tab := ERSChatTab(i+1);
+      Self.Tabs[i].Button.Index := i;
+      Self.Tabs[i].Button.EnabledColors := [[1555,6], [5399922, 0], [795452, 0]];
+      Self.Tabs[i].Button.Bounds := Box(X1 + 3 + (i * 62), Y1, X1 + 58 + (i * 62), Y2 - 1);
+    end;
+end;
+
+function TRSChatTabs.Get(tab: ERSChatTab): TRSChatTab;
+begin
+  Result := Self.Tabs[tab-1];
+end;
+
+
+function TRSChatTabs.GetActive(): ERSChatTab;
+var
+  tab: ERSChatTab;
+begin
+  for tab := ERSChatTab.ALL to High(ERSChatTab) do
+    if Self.Get(tab).Button.Enabled() then
+      Exit(tab);
+end;
+
+function TRSChatTabs.IsActive(tab: ERSChatTab): Boolean;
+begin
+  Result := Self.Get(tab).Button.Enabled();
+end;
+
+
+function TRSChatTabs.Open(tab: ERSChatTab): Boolean;
+begin
+  Result := Self.Get(tab).Button.Enable();
+end;
+
+
+function TRSChatTab._GetState(): ERSChatTabState;
+const
+  COLORS: array [1..5] of Integer = [65280, 65535, 255, 16776960, 16756480];
+var
+  state: ERSChatTabState;
+begin
+  Result := ERSChatTabState.NONE;
+  if Self.Tab = ERSChatTab.ALL then Exit;
+
+  for state := ERSChatTabState.ENABLED to High(ERSChatTabState) do
+    if Target.CountColor(COLORS[state], 0, Self.Button.Bounds) > 0 then
+      Exit(state);
+end;
+
+function TRSChatTabs.GetState(tab: ERSChatTab): ERSChatTabState;
+begin
+  Result := Self.Get(tab)._GetState();
+end;
+
+function TRSChatTabs.ChangeState(tab: ERSChatTab; state: ERSChatTabState): Boolean;
+var
+  chatTab: TRSChatTab;
+begin
+  chatTab := Self.Get(tab);
+  if chatTab._GetState() = state then Exit(True);
+
+  chatTab.Button.Click(EMouseButton.RIGHT);
+
+  if not ChooseOption.WaitOpen(200) then Exit;
+
+  case state of
+    ERSChatTabState.ENABLED:  ChooseOption.Select(['Filter', 'standard', 'all']);
+    ERSChatTabState.FILTERED: ChooseOption.Select(['Filter', 'friends']);
+    ERSChatTabState.DISABLED: ChooseOption.Select(['none']);
+    ERSChatTabState.HIDE:     ChooseOption.Select(['Hide']);
+    ERSChatTabState.AUTOCHAT: ChooseOption.Select(['autochat']);
+  end;
+
+  Result := chatTab._GetState() = state;
+end;

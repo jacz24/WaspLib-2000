@@ -1,0 +1,27 @@
+{$DEFINE SRLT_UTILS}
+
+type
+  TSRLT = record
+    IsSetup: Boolean;
+    SetupQueue, PauseQueue, ResumeQueue, TerminateQueue: array of procedure () of object;
+  end;
+
+var
+  SRLT: TSRLT;
+
+{$IFNDEF SRLT_SRLTENV_INCLUDED}   {$I utils/srltenv.simba}
+{$IFNDEF SRLT_RANDOM_INCLUDED}    {$I utils/random.simba}
+{$IFNDEF SRLT_TIME_INCLUDED}      {$I utils/time.simba}
+{$IFNDEF SRLT_BASE_INCLUDED}      {$I utils/base.simba}
+{$IFNDEF SRLT_MOUSE_INCLUDED}     {$I utils/input/mouse.simba}
+{$IFNDEF SRLT_KEYBOARD_INCLUDED}  {$I utils/input/keyboard.simba}
+{$IFNDEF SRLT_ITEM_INCLUDED}      {$I utils/item.simba}
+
+
+{$ELSE}{$ENDIF}
+{$ELSE}{$ENDIF}
+{$ELSE}{$ENDIF}
+{$ELSE}{$ENDIF}
+{$ELSE}{$ENDIF}
+{$ELSE}{$ENDIF}
+{$ELSE}{$ENDIF}

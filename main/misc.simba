@@ -1,0 +1,102 @@
+(*
+Misc
+====
+*)
+
+{$DEFINE SRLT_MISC_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  RSColors = record
+    const ITEM_SHADOW = $202030;
+    const ITEM_BORDER = $010000;
+    const ITEM_YELLOW_STACK = $00FFFF;
+    const ITEM_WHITE_STACK  = $FFFFFF;
+    const ITEM_GREEN_STACK  = $80FF00;
+  end;
+
+(*
+SRL.GetXPAtLevel
+~~~~~~~~~~~~~~~~
+.. pascal:: function TSRL.GetXPAtLevel(level:Int32): Int32;
+
+Given a level it returns the minimum XP needed for it.
+*)
+function TSRLT.GetXPAtLevel(level: Int32): Int32;
+var
+  total:Double;
+  i:Int32;
+begin
+  for i:=1 to level-1 do
+    total += Floor(i + 300 * 2 ** (i / 7));
+  Result := Floor(total / 4);
+end;
+
+(*
+SRL.GetLevelAtXP
+~~~~~~~~~~~~~~~~
+.. pascal:: function TSRL.GetLevelAtXP(XP:UInt32): Int32;
+
+Given some XP, it returns what level that is.
+*)
+function TSRLT.GetLevelAtXP(xp: UInt32): Int32;
+var
+  total:Double;
+begin
+  while (total < xp*4+1) do
+  begin
+    Inc(Result);
+    total += Floor(Result + 300 * 2 ** (Result / 7));
+  end;
+end;
+
+(*
+SRL.GetItemAmountBox
+~~~~~~~~~~~~~~~~~~~~
+.. pascal:: function TSRL.GetItemAmountBox(constref area: TBox): TBox;
+
+Returns the correct text box of an item's amount text based on the item box.
+*)
+function TSRLT.GetItemAmountBox(constref area: TBox): TBox;
+begin
+  Result := area;
+  Result.X2 := Result.X1 + 35;
+  Result.Y2 := Result.Y1 + 7;
+end;
+
+(*
+SRL.GetItemAmount
+~~~~~~~~~~~~~~~~~
+.. pascal:: function TSRL.GetItemAmount(area: TBox): Int32;
+
+For use with items in like bankscreen, inventory, shops and so on to
+get the number of stacked items there are.
+*)
+function TSRLT.GetItemAmount(area: TBox): Int32;
+begin
+  area := SRL.GetItemAmountBox(area);
+  if Finder.CountColor(RSColors.ITEM_YELLOW_STACK, 0, area) then
+    Exit(OCR.RecognizeNumber(area, TOCRColorFilter.Create([RSColors.ITEM_YELLOW_STACK]), RSFonts.PLAIN_11));
+
+  if Finder.CountColor(RSColors.ITEM_WHITE_STACK, 0, area) then
+    Exit(OCR.RecognizeNumber(area, TOCRColorFilter.Create([RSColors.ITEM_WHITE_STACK]), RSFonts.PLAIN_11) * 1000);
+
+  if Finder.CountColor(RSColors.ITEM_GREEN_STACK, 0, area) then
+    Exit(OCR.RecognizeNumber(area, TOCRColorFilter.Create([RSColors.ITEM_GREEN_STACK]), RSFonts.PLAIN_11) * 1000000);
+end;
+
+function TSRLT.FormatNumber(n: Double; dec:Byte = 3): String;
+var
+  i: Int32;
+  f: Double := n;
+begin
+  while (Abs(f) >= 1000) do
+  begin
+    Inc(i);
+    f := f / 1000;
+  end;
+
+  Result := FloatToStr(Round(f,dec)) + (['','K','M','B','T'])[i];
+end;

@@ -1,0 +1,417 @@
+{$DEFINE SRLT_CHAT_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  ERSChatColor = enum(
+    BLACK, MAROON, BLUE, PURPLE, RED, LIGHT_RED,
+    WHITE, LIGHT_PURPLE, NAVY, GREEN
+  );
+
+  ERSChatColorArray = array of ERSChatColor;
+
+  ERSIronMan = enum(NONE, IRONMAN, HARDCORE, ULTIMATE, GROUP, HARCORE_GROUP, UNRANKED_GROUP);
+
+  TRSChat = record
+    Tabs: TRSChatTabs;
+    RSInterface: TRSInterface;
+    MessageLines: TBoxArray;
+    InputLine: TBox;
+    ReportButton: TRSButton;
+    const Colors: array [ERSChatColor] of Integer = [$000000, $7F0000, $FF0000, $7F007F, $2010EF, $0000FF, $FFFFFF, $FF9090, $800000, $005F00];
+  end;
+
+procedure TRSChat.SetupInterface();
+var
+  b: TBox;
+begin
+  Self.Tabs.SetupInterface();
+
+  Self.ReportButton.Index := 0;
+  Self.ReportButton.EnabledColors := [[1555,6], [5399922, 0], [795452, 0]];
+
+  with Self.Tabs.RSInterface.Bounds do
+  begin
+    Self.ReportButton.Bounds := Box(X1 + 436, Y1,  X1 + 515, Y2 - 1);
+    b.X1 := X1;
+    b.X2 := X2;
+    b.Y1 := Y1 - 142;
+    b.Y2 := Y1 - 1;
+  end;
+
+  Self.RSInterface.Setup(b);
+
+  //Self.ScrollArea := Self.Bounds;
+  with Self.RSInterface do
+    Self.MessageLines := TBoxArray.Create(TopLeft + [10, 8], 1, 9, Width - 35, 13, [0, 1]);
+
+  Self.InputLine := Self.MessageLines.Pop;
+  Self.InputLine.Y2 += 2;
+end;
+
+function TRSChat.GetColors(colors: ERSChatColorArray): TIntegerArray;
+var
+  c: ERSChatColor;
+begin
+  for c in colors do Result += Self.Colors[c];
+end;
+
+
+function TRSChat.GetDisplayNameBox(out color: Integer): TBox;
+var
+  b: TBox;
+  tpa: TPointArray;
+begin
+  b.X1 := Self.InputLine.X1;
+  b.Y1 := Self.InputLine.Y1;
+  b.X2 := b.X1 + Self.InputLine.Width div 4;
+  b.Y2 := Self.InputLine.Y2;
+
+  for color in [$FFFFFF, $000000] do
+  begin
+    tpa := Target.FindColor(color, 0, b);
+    if tpa <> [] then Exit(tpa.Bounds());
+  end;
+end;
+
+function TRSChat.GetDisplayNameBox(): TBox; overload;
+var
+  color: Integer;
+begin
+  Result := Self.GetDisplayNameBox(color);
+end;
+
+function TRSChat.GetDisplayName(): String;
+var
+  b: TBox;
+begin
+  b.X1 := Self.InputLine.X1;
+  b.Y1 := Self.InputLine.Y1;
+  b.X2 := b.X1 + Self.InputLine.Width div 4;
+  b.Y2 := Self.InputLine.Y2;
+
+  Result := OCR.RecognizeStatic(b, TOCRColorFilter.Create([$FFFFFF, $000000]), RSFonts.PLAIN_12);
+
+  if ':' in Result then
+    Result := Result.Before(':');
+end;
+
+
+function TRSChat.GetIronManType() : ERSIronMan;
+var
+  b: TBox;
+begin
+  b.X1 := Self.InputLine.X1;
+  b.Y1 := Self.InputLine.Y1;
+  b.X2 := Self.InputLine.X1 + 10;
+  b.Y2 := Self.InputLine.Y2;
+  //If Ironman Grey then we're at least a regular Ironman.
+  //Check for the accent of the other Ironman types.
+
+  raise GetDebugLn('Chat', 'Chat.GetIronManType() does not have colors yet!');
+  (*
+  if Target.CountColor(CTS2(5262159, 9, 4.91, 0.28), b) > 1 then
+  begin
+    if Target.CountColor(CTS2(1710709, 6, 0.05, 2.15), b) > 1 then
+      Exit(ERSIronMan.HARCORE_GROUP);
+    if Target.CountColor(CTS2(8338202, 6, 0.06, 0.18), b) > 1 then
+      Exit(ERSIronMan.GROUP);
+    if Target.CountColor(CTS2(5995801, 1, 0.01, 0.01), b) > 1 then
+      Exit(ERSIronMan.UNRANKED_GROUP);
+
+    Exit(ERSIronMan.IRONMAN);
+  end;
+
+  if Target.CountColor(CTS2(1318997, 6, 0.61, 1.74), b) > 1 then
+    Exit(ERSIronMan.HARDCORE);
+
+  if Target.CountColor(CTS2(12566728, 23, 0.83, 0.34), b) > 1 then
+    Exit(ERSIronMan.ULTIMATE);
+  *)
+end;
+
+
+function TRSChat.IsTransparent(): Boolean;
+var
+  b: TBox;
+begin
+  b.X1 := Self.InputLine.X1;
+  b.Y1 := Self.InputLine.Y1;
+  b.X2 := b.X1 + Self.InputLine.Width div 4;
+  b.Y2 := Self.InputLine.Y2;
+
+  Result := Target.CountColor($FFFFFF, 0, b) > 0;
+end;
+
+
+function TRSChat.IsOpen(): Boolean;
+begin
+  if RSClient.Mode = ERSClientMode.FIXED then Exit(True);
+  Result := Self.Tabs.GetActive() <> ERSChatTab.NONE;
+end;
+
+
+function TRSChat.Close(): Boolean;
+begin
+  if RSClient.Mode = ERSClientMode.FIXED then Exit(False);
+  if Self.Tabs.GetActive() = ERSChatTab.NONE then Exit(True);
+
+  Self.Tabs.Get(Self.Tabs.GetActive()).Button.Click();
+  Result := Self.Tabs.GetActive() = ERSChatTab.NONE;
+end;
+
+
+function TRSChat.GetQuery(): String;
+const
+  FILTER: TOCRColorFilter := TOCRColorFilter.Create([$000000]);
+begin
+  Result := OCR.Recognize(Self.RSInterface.Bounds, FILTER, RSFonts.BOLD_12);
+end;
+
+function TRSChat.GetQueryAnswer(): String;
+var
+  FILTER: TOCRColorFilter := TOCRColorFilter.Create([8388608]);
+begin
+  Result := OCR.Recognize(Self.RSInterface.Bounds, FILTER, RSFonts.BOLD_12);
+end;
+
+function TRSChat.FindQuery(query: String; caseSensitive: Boolean = False): Boolean;
+begin
+  Result := Self.GetQuery().Contains(query, caseSensitive);
+end;
+
+function TRSChat.WaitQuery(query: String; caseSensitive: Boolean = False; time: Integer = 600; interval: Integer = -1): Boolean;
+begin
+  if interval = -1 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.FindQuery(query, caseSensitive), interval, time);
+end;
+
+function TRSChat.AnswerQuery(query, answer: String; waitTime: Integer; interval: Integer = -1): Boolean;
+begin
+  Result := Self.WaitQuery(query, False, waitTime, interval);
+  if not Result then Exit;
+
+  if Self.GetQueryAnswer() <> Answer then
+    while Self.GetQueryAnswer() <> '*' do
+      Target.KeyPress(EKeyCode.BACK);
+
+  Target.KeySend(answer);
+  Target.KeyPress(EKeyCode.RETURN);
+end;
+
+
+type
+  TRSChatOption = record
+    Text: String;
+    Bounds: TBox;
+    Key: EKeyCode;
+  end;
+  TRSChatOptionArray = array of TRSChatOption;
+
+
+function TRSChat.GetOptions(colors: TIntegerArray = []): TRSChatOptionArray;
+var
+  strings: TStringArray;
+  boxes: TBoxArray;
+  i: Int32;
+  tpa, tmp: TPointArray;
+  b: TBox;
+begin
+  if colors = [] then
+    colors := Self.GetColors([ERSChatColor.BLACK, ERSChatColor.WHITE]);
+
+  for i := 0 to High(colors) do
+    tpa += Target.FindColor(colors[i], 0, Self.RSInterface.Bounds);
+
+  b := tpa.Bounds();
+  strings := OCR.RecognizeLines(b, TOCRColorFilter.Create(colors), RSFonts.QUILL_8);
+
+  boxes := b.Partition(strings.Length, 1);
+
+  SetLength(Result, Length(boxes));
+
+  for i := 0 to High(boxes) do
+  begin
+    tmp := tpa.ExtractBox(boxes[i]);
+    Result[i].Bounds := tmp.Bounds();
+    Result[i].Text := strings[i];
+
+    if ('Click here to continue' in Result[i].Text) then
+      Result[i].Key := EKeyCode.SPACE
+    else
+      Result[i].Key := EKeyCode(Ord(EKeyCode.NUM_1) + i);
+  end;
+
+end;
+
+
+function TRSChat.FindOption(chatOption: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): TRSChatOption;
+var
+  option: TRSChatOption;
+begin
+  if colors = [] then
+    colors := Self.GetColors([ERSChatColor.BLACK, ERSChatColor.WHITE, ERSChatColor.BLUE]);
+  for option in Self.GetOptions(colors) do
+    if option.Text.Contains(chatOption, caseSensitive) then
+      Exit(option);
+end;
+
+function TRSChat.ContainsOption(chatOption: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): Boolean;
+begin
+  if colors = [] then
+    colors := Self.GetColors([ERSChatColor.BLACK, ERSChatColor.WHITE, ERSChatColor.BLUE]);
+  Result := Self.FindOption(chatOption, caseSensitive, colors) <> [];
+end;
+
+function TRSChat.WaitOption(chatOption: String; caseSensitive: Boolean = False; colors: TIntegerArray = []; time: Integer = 600; interval: Integer = -1): Boolean;
+begin
+  if colors = [] then
+    colors := Self.GetColors([ERSChatColor.BLACK, ERSChatColor.WHITE, ERSChatColor.BLUE]);
+  if interval = -1 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.ContainsOption(chatOption, caseSensitive, colors), time, interval);
+end;
+
+
+function TRSChat.Select(chatOption: String; caseSensitive: Boolean = False; keyboardProbability: Single = -1; colors: TIntegerArray = []): Boolean;
+var
+  option: TRSChatOption;
+begin
+  if colors = [] then
+    colors := Self.GetColors([ERSChatColor.BLACK, ERSChatColor.WHITE]);
+  option := Self.FindOption(chatOption, caseSensitive, colors);
+  if option = [] then Exit;
+
+  Result := True;
+  if Keyboard.UseKeyboard(keyboardProbability) then
+    Keyboard.PressKey(option.Key)
+  else
+    Mouse.Click(option.Bounds, EMouseButton.LEFT);
+end;
+
+function TRSChat.ContinueChat(keyboardProbability: Single = -1): Boolean;
+var
+  colors: TIntegerArray;
+begin
+  colors := Self.GetColors([ERSChatColor.BLUE, ERSChatColor.WHITE]);
+  if not Self.Select('Click here to continue', True, keyboardProbability, colors) then
+    Exit;
+
+  Result := Self.WaitOption('Please wait', True, colors, 3000) and
+            SleepUntil(not Self.ContainsOption('Please wait', True, colors), RandomMode(100, 50, 1500), 3000);
+end;
+
+
+function TRSChat.ContinueUntilOption(Option: String; timeout: Integer = 10000): Boolean;
+begin
+  timeout += GetTickCount();
+  while (GetTickCount() < timeout) do
+  begin
+    if Self.ContainsOption(option) then Break;
+    Self.ContinueChat();
+    Sleep(0, 2500, ERandomDir.LEFT);
+  end;
+
+  Result := Self.Select(option);
+end;
+
+(*
+## Chat.GetMessage
+```pascal
+function TRSChat.GetMessage(Line: Int32; Colors: TIntegerArray = CHAT_MESSAGE_COLORS): String;
+```
+
+Get the message in the specified **Line**.
+
+Example:
+```pascal
+WriteLn Chat.GetMessage(5);
+```
+*)
+function TRSChat.GetMessage(line: Int32; colors: TIntegerArray = []): String;
+const
+  STATIC_OFFSET = 2; // Make static text placement so RecognizeStatic can be used
+var
+  b: TBox;
+  x: Int32;
+  transparent: Boolean;
+  matrix: T2DIntegerArray;
+begin
+  if colors = [] then colors := Self.Colors;
+
+  b := Self.MessageLines[line];
+  b.Y1 -= STATIC_OFFSET;
+
+  transparent := Self.IsTransparent();
+  if transparent then
+    colors.Remove(Self.Colors[ERSChatColor.BLACK]);
+
+  if Length(colors) = 0 then Exit;
+
+  matrix := Target.GetColorsMatrix(b);
+
+  // Shadow from above line draws over our line.
+  // Mark the shadow as a match since OCR requires 100% character match.
+  if transparent then
+    for x := 0 to High(matrix[STATIC_OFFSET]) do
+      if (matrix[STATIC_OFFSET, x] = Self.Colors[ERSChatColor.BLACK]) then
+        matrix[STATIC_OFFSET, x] := colors[0];
+
+  //TODO:
+  //Result := OCR.RecognizeStatic(matrix, TOCRColorFilter.Create(colors), RS_FONT_PLAIN_12);
+end;
+
+function TRSChat.FindMessageLine(msg: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): Integer;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self.MessageLines) do
+    if Self.GetMessage(i, colors).Contains(msg, caseSensitive) then
+      Exit(i);
+  Result := -1;
+end;
+
+function TRSChat.ContainsMessage(msg: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): Boolean;
+begin
+  Result := Self.FindMessageLine(msg, caseSensitive, colors) > -1;
+end;
+
+
+function TRSChat.GetChat(): String;
+var
+  option: TRSChatOption;
+begin
+  for option in Self.GetOptions() do
+  begin
+    if Result <> '' then Result += LINE_SEP;
+    Result += option.Text;
+  end;
+end;
+
+
+function TRSChat.GetChatTitle(): String;
+var
+  options: TRSChatOptionArray;
+begin
+  options := Self.GetOptions([$000080]);
+  if Length(options) > 0 then
+    Result := options[0].Text;
+end;
+
+
+procedure TRSChat.Draw(img: TImage);
+begin
+  if not Self.IsOpen() then Exit;
+
+  Self.RSInterface.Draw(img);
+  img.DrawBoxArray(Self.MessageLines, False);
+  img.DrawBox(Self.InputLine);
+end;
+
+
+var
+  Chat: TRSChat;
+
+begin
+  RSClient.InterfaceSetupQueue += @Chat.SetupInterface;
+end;

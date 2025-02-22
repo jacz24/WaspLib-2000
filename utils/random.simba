@@ -1,0 +1,26 @@
+{$DEFINE SRLT_RANDOM_INCLUDED}
+{$IFNDEF SRLT_UTILS}
+  {$I SRLT/utils.simba}
+{$ENDIF}
+
+type
+  ERandomDir = enum(LEFT, MEAN, RIGHT);
+
+function RandomBoolean(): Boolean;
+begin
+  Result := Boolean(Random(0,1));
+end;
+
+function RandomBoolean(probability: Double): Boolean; overload;
+begin
+  Result := Random() <= probability;
+end;
+
+procedure Sleep(min, max: UInt32; dir: ERandomDir = ERandomDir.LEFT); overload;
+begin
+  case dir of
+    ERandomDir.LEFT:  Sleep(RandomLeft(min, max));
+    ERandomDir.MEAN:  Sleep(Random(min, max));
+    ERandomDir.RIGHT: Sleep(RandomRight(min, max));
+  end;
+end;

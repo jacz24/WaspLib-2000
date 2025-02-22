@@ -1,0 +1,49 @@
+(*
+OCR
+===
+*)
+{$DEFINE SRLT_OCR_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+{$loadlib ../../plugins/libsimpleocr/libsimpleocr}
+
+type
+  TRSFonts = record
+    PLAIN_11:       TFontSet;
+    PLAIN_12:       TFontSet;
+    BOLD_12:        TFontSet;
+    BOLD_12_SHADOW: TFontSet;
+    QUILL_8:        TFontSet;
+    QUILL:          TFontSet;
+    const PATH = SRLTEnv.CachePath + 'fonts' + PATH_SEP;
+  end;
+
+procedure TRSFonts.Setup();
+begin
+  if DirList(Self.PATH) = [] then
+  begin
+    if not DirCreate(Self.PATH) then
+      raise GetDebugLn('OCR', 'Failed to create path: ' + Self.PATH);
+    if not ZipExtract({$MACRO DIR} + 'fonts.zip', Self.PATH) then
+      raise GetDebugLn('OCR', 'Failed to unzip fonts');
+  end;
+
+  Self.PLAIN_11 := TFontSet.Create(Self.PATH + 'Plain 11');
+  Self.PLAIN_12 := TFontSet.Create(Self.PATH + 'Plain 12');
+
+  Self.BOLD_12  := TFontSet.Create(Self.PATH + 'Bold 12');
+  Self.BOLD_12_SHADOW := TFontSet.Create(Self.PATH + 'Bold 12 Shadow');
+
+  Self.QUILL_8 := TFontSet.Create(Self.PATH + 'Quill 8');
+  Self.QUILL := TFontSet.Create(Self.PATH + 'Quill');
+end;
+
+var
+  RSFonts: TRSFonts;
+  OCR: TSimpleOCR;
+
+begin
+  SRLT.SetupQueue += @RSFonts.Setup;
+end;

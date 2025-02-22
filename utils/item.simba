@@ -1,0 +1,8 @@
+{$DEFINE SRLT_BASE_INCLUDED}
+{$IFNDEF SRLT_UTILS}
+  {$I SRLT/utils.simba}
+{$ENDIF}
+
+type
+  TRSItem = Variant;
+  TRSItemArray = array of TRSItem;

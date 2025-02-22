@@ -1,0 +1,10 @@
+{$DEFINE SRLT_SRLTENV_INCLUDED}
+{$IFNDEF SRLT_UTILS}
+  {$I SRLT/utils.simba}
+{$ENDIF}
+
+type
+  SRLTEnv = record
+    const ConfigsPath: String = SimbaEnv.SimbaPath + 'Configs' + PATH_SEP;
+    const CachePath: String = SimbaEnv.DataPath + 'cache' + PATH_SEP;
+  end;
