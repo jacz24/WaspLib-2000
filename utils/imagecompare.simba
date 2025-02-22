@@ -1,0 +1,173 @@
+{$DEFINE SRLT_IMAGECOMPARE_INCLUDED}
+{$IFNDEF SRLT_UTILS}
+  {$I SRLT/utils.simba}
+{$ENDIF}
+
+type
+  TImageCompareMatch = record
+    ImageIndex, TemplateIndex: Integer;
+    Match: Single;
+  end;
+
+  TImageCompareMatchArray = array of TImageCompareMatch;
+
+  TImageCompareUtils = record
+    CleanImage, CleanTemplate: procedure (image: TImage) of object;
+    Align: procedure (image, template: TImage) of object;
+    Filter: procedure(constref image, template: TImage) of object;
+  end;
+
+function TImageCompareUtils.Compare(image, template: TImage; var similarity: Single): Boolean;
+var
+  match: Single;
+begin
+  if @Self.CleanImage <> nil then Self.CleanImage(image);
+  if @Self.CleanTemplate <> nil then Self.CleanTemplate(template);
+  if @Self.Align <> nil then Self.Align(image, template);
+  if @Self.Filter <> nil then Self.Filter(image, template);
+
+  if similarity = 1 then
+    Exit(image.Equals(template));
+
+  match := image.Compare(template);
+  Result := match >= similarity;
+  similarity := match;
+end;
+
+function TImageCompareUtils.Compare(image: TImage; slot: TBox; out similarity: Single): Boolean; overload;
+var
+  template: TImage;
+begin
+  template := TImage.CreateFromTarget(slot);
+  Result := Self.Compare(image, template, similarity);
+  template.Free();
+end;
+
+
+function TImageCompareUtils.FindAny(image: TImage; templates: TImageArray; similarity: Single = 0.8): Integer;
+var
+  i: Integer;
+  match: Single;
+begin
+  for i := 0 to High(templates) do
+  begin
+    match := similarity;
+    if Self.Compare(image, templates[i], match) then
+      Exit(i);
+  end;
+  Result := -1;
+end;
+
+function TImageCompareUtils.FindAny(image: TImage; slots: TBoxArray; similarity: Single = 0.8): Integer; overload;
+var
+  i: Integer;
+  match: Single;
+begin
+  for i := 0 to High(slots) do
+  begin
+    match := similarity;
+    if Self.Compare(image, slots[i], match) then
+      Exit(i);
+  end;
+  Result := -1;
+end;
+
+
+function TImageCompareUtils.FindAll(image: TImage; templates: TImageArray; similarity: Single = 0.8): TIntegerArray;
+var
+  i: Integer;
+  match: Single;
+begin
+  for i := 0 to High(templates) do
+  begin
+    match := similarity;
+    if Self.Compare(image, templates[i], match) then
+      Result += i;
+  end;
+end;
+
+function TImageCompareUtils.FindAll(image: TImage; slots: TBoxArray; similarity: Single = 0.8): TIntegerArray; overload;
+var
+  i: Integer;
+  match: Single;
+begin
+  for i := 0 to High(slots) do
+  begin
+    match := similarity;
+    if Self.Compare(image, slots[i], match) then
+      Result += i;
+  end;
+end;
+
+
+function TImageCompareUtils.MatchAny(images, templates: TImageArray; similarity: Single = 0.8): TImageCompareMatch;
+var
+  i, j: Integer;
+  match: Single;
+begin
+  for i := 0 to High(images) do
+    for j := 0 to High(templates) do
+    begin
+      match := similarity;
+      if Self.Compare(images[i], templates[j], match) then
+        Exit([i, j, match]);
+    end;
+  Result := [-1, -1, 0];
+end;
+
+function TImageCompareUtils.MatchAny(images: TImageArray; slots: TBoxArray; similarity: Single = 0.8): TImageCompareMatch; overload;
+var
+  i, j: Integer;
+  match: Single;
+  template: TImage;
+begin
+  for i := 0 to High(slots) do
+  begin
+    template := TImage.CreateFromTarget(slots[i]);
+    for j := 0 to High(images) do
+    begin
+      match := similarity;
+      if Self.Compare(images[j], template, match) then
+      begin
+        template.Free();
+        Exit([j, i, match]);
+      end;
+    end;
+    template.Free();
+  end;
+  Result := [-1, -1, 0];
+end;
+
+
+function TImageCompareUtils.MatchAll(images, templates: TImageArray; similarity: Single = 0.8): TImageCompareMatchArray;
+var
+  i, j: Integer;
+  match: Single;
+begin
+  for i := 0 to High(images) do
+    for j := 0 to High(templates) do
+    begin
+      match := similarity;
+      if Self.Compare(images[i], templates[j], match) then
+        Result += [i, j, match];
+    end;
+end;
+
+function TImageCompareUtils.MatchAll(images: TImageArray; slots: TBoxArray; similarity: Single = 0.8): TImageCompareMatchArray; overload;
+var
+  i, j: Integer;
+  match: Single;
+  template: TImage;
+begin
+  for i := 0 to High(slots) do
+  begin
+    template := TImage.CreateFromTarget(slots[i]);
+    for j := 0 to High(images) do
+    begin
+      match := similarity;
+      if Self.Compare(images[j], template, match) then
+        Result += [j, i, match];
+    end;
+    template.Free();
+  end;
+end;

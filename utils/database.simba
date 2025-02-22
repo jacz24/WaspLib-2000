@@ -1,0 +1,29 @@
+{$DEFINE SRLT_DATABASE_INCLUDED}
+{$IFNDEF SRLT_UTILS}
+  {$I SRLT/utils.simba}
+{$ENDIF}
+
+type
+  TDatabase = record
+    Columns: TStringArray;
+    Data: TStringMap<TMap<Int32, Variant>>;
+    const PATH: String = {$MACRO DIR};
+  end;
+
+procedure TDatabase.Setup(columns: TStringArray);
+var
+  i, idx: Int32;
+  strings: TStringArray;
+begin
+  SetLength(Self.Columns, Length(columns));
+
+  for i := 0 to High(columns) do
+  begin
+    Self.Columns[i] := columns[i];
+
+    strings := FileReadLines(Self.PATH + columns[i]);
+
+    for idx := 0 to High(strings) do
+      Self.Data.Value[columns[i]].Value[idx] := strings[idx];
+  end;
+end;
