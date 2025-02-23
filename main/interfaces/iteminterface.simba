@@ -10,28 +10,25 @@ Methods to interact item interfaces.
 
 type
   TRSItemInterface = record
-    Slots: TRSSlotInterface;
+    Slots: ^TRSSlotInterface;
   end;
 
 
 function TRSItemInterface.IndexOf(items: TRSItemArray): Integer;
 var
-  match: TImageCompareMatchBox;
+  match: TImageMatch;
 begin
-  if ItemFinder.Find(items, Self.Slots.GetSlots(), Match) then
-    Exit(Match.Index);
-  eResult := -1;
+  if ItemCompare.Find(items, Self.Slots^.GetSlots(), match) then
+    Exit(match.Index);
+  Result := -1;
 end;
 
 function TRSItemInterface.IndicesOf(items: TRSItemArray): TIntegerArray;
 var
-  matches: TRSItemFinderMatchArray;
-  I: Integer;
+  matches: TImageMatchArray;
+  i: Integer;
 begin
-  if (@Self.SlotBoxesFunction = nil) then
-    RaiseException(Self.Name + '.SlotBoxesFunction = nil');
-
-  matches := ItemFinder.FindAll(items, Self.SlotBoxesFunction());
+  matches := ItemCompare.FindAll(items, Self.Slots^.GetSlots());
 
   SetLength(Result, Length(matches));
   for I := 0 to High(matches) do
@@ -43,9 +40,9 @@ end;
 function TRSItemInterface.Find(items: TRSItemArray; out slot: TBox): Boolean;
 var
   slots: TBoxArray;
-  match: TImageCompareMatchBox;
+  match: TImageMatch;
 begin
-  slots := Self.Slots.GetSlots();
+  slots := Self.Slots^.GetSlots();
   Result := ItemCompare.Find(items, slots, match);
   if Result then
     slot := match.Box;
@@ -54,20 +51,20 @@ end;
 
 function TRSItemInterface.FindAll(items: TRSItemArray): TBoxArray;
 var
-  matches: TImageCompareMatchBoxArray;
+  matches: TImageMatchArray;
   i: Integer;
 begin
-  matches := ItemCompare.FindAll(items, Self.Slots.GetSlots());
+  matches := ItemCompare.FindAll(items, Self.Slots^.GetSlots());
   for i := 0 to High(matches) do
     Result += matches[i].Box;
 end;
 
 function TRSItemInterface.FindAll(items: TRSItemArray; out boxes: TBoxArray): Boolean; overload;
 var
-  matches: TImageCompareMatchBoxArray;
+  matches: TImageMatchArray;
   i: Integer;
 begin
-  if not ItemCompare.FindAll(items, Self.Slots.GetSlots(), matches) then Exit;
+  if not ItemCompare.FindAll(items, Self.Slots^.GetSlots(), matches) then Exit;
 
   Result := True;
   for i := 0 to High(matches) do
@@ -75,16 +72,16 @@ begin
 end;
 
 
-function TRSItemInterface.FindAny(items: TRSItemArray): TImageCompareMatchBox;
+function TRSItemInterface.FindAny(items: TRSItemArray): TImageMatch;
 begin
-  ItemCompare.Find(items, Self.Slots.GetSlots(), Result);
+  ItemCompare.Find(items, Self.Slots^.GetSlots(), Result);
 end;
 
 function TRSItemInterface.FindAny(items: TRSItemArray; out box: TBox): Boolean; overload;
 var
-  match: TImageCompareMatchBox;
+  match: TImageMatch;
 begin
-  Result := ItemCompare.Find(items, Self.Slots.GetSlots(), match);
+  Result := ItemCompare.Find(items, Self.Slots^.GetSlots(), match);
   if Result then box := match.Box;
 end;
 
@@ -101,8 +98,8 @@ end;
 
 function TRSItemInterface.ContainsAll(items: TRSItemArray): Boolean;
 var
-  matches: TImageCompareMatchBoxArray;
+  matches: TImageMatchArray;
 begin
-  Result := ItemCompare.FindAll(items, Self.Slots.GetSlots(), matches);
+  Result := ItemCompare.FindAll(items, Self.Slots^.GetSlots(), matches);
 end;
 
