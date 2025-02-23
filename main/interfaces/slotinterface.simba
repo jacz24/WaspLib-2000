@@ -9,25 +9,145 @@ Methods to interact slotted interfaces.
 {$ENDIF}
 
 type
-  TSlotInterface = record
+  TRSSlotInterface = record
     Name: String;
     Slots: TBoxArray;
     SlotBoxesFunction: function (): TBoxArray of object;
   end;
 
-function TSlotInterface.GetSlotBoxes(slots: TIntegerArray): TBoxArray;
+function TRSSlotInterface.GetSlots(): TBoxArray;
 var
   boxes: TBoxArray;
-  i: Int32;
+  i: Integer;
 begin
   if @Self.SlotBoxesFunction <> nil then
-    boxes := Self.SlotBoxesFunction()
+    Result := Self.SlotBoxesFunction()
   else
-    boxes := Self.Slots;
+    Result := Self.Slots;
 
-  if boxes = [] then
+  if Result = [] then
     raise GetDebugLn(Self.Name, 'Slots and SlotBoxesFunction are not set!');
+end;
 
+function TRSSlotInterface.GetSlots(slots: TIntegerArray): TBoxArray; overload;
+var
+  boxes: TBoxArray;
+  i: Integer;
+begin
+  boxes := Self.GetSlots();
   for i := 0 to High(slots) do
     Result += boxes[slots[i]];
 end;
+
+function TRSSlotInterface.GetSlot(slot: Integer): TBox;
+begin
+  Result := Self.GetSlots()[slot];
+end;
+
+
+function TRSSlotInterface.Near(slot: Integer; slots: TIntegerArray; maxDist: Single = 32): TIntegerArray;
+var
+  i: Integer;
+  boxes: TBoxArray;
+  center: TPoint;
+begin
+  slots.Remove(slot);
+
+  if Length(slots) = 0 then
+    raise GetDebugLn(Self.Name, 'RandomSlotNearby: No slots to choose from');
+
+  boxes := Self.GetSlots();
+  center := boxes[slot].Center;
+
+  for i := 0 to High(slots) do
+    if center.DistanceTo(boxes[slots[i]].Center) <= maxDist then
+      Result += slots[i];
+end;
+
+function TRSSlotInterface.RandomNear(slot: Integer; slots: TIntegerArray; maxDist: Single = 32): Integer;
+begin
+  Result := Self.Near(slot, slots, maxDist).Random();
+end;
+
+
+function TRSSlotInterface.GetUnder(p: TPoint): Integer;
+var
+  i: Integer;
+  slots: TBoxArray;
+begin
+  slots := Self.GetSlots();
+  for i := 0 to High(slots) do
+    if slots[i].Contains(p) then
+      Exit(i);
+  Result := -1;
+end;
+
+
+function TRSSlotInterface.GetUsed(): TIntegerArray;
+var
+  slots: TBoxArray;
+  i: Integer;
+begin
+  slots := Self.GetSlots();
+  for i := 0 to High(slots) do
+    if Target.HasColor(RSColors.ITEM_BORDER, 8.5, 1, slots[i]) or
+       Target.HasColor(RSColors.ITEM_BORDER_WHITE, 0, 1, slots[i]) then
+      Result += i;
+end;
+
+function TRSSlotInterface.GetEmpty(): TIntegerArray;
+var
+  slots: TBoxArray;
+  i: Integer;
+begin
+  slots := Self.GetSlots();
+  for i := 0 to High(slots) do
+    if not Target.HasColor(RSColors.ITEM_BORDER, 8.5, 1, slots[i]) and
+       not Target.HasColor(RSColors.ITEM_BORDER_WHITE, 0, 1, slots[i]) then
+      Result += i;
+end;
+
+
+function TRSSlotInterface.IsUsed(slot: Integer): Boolean;
+var
+  b: TBox;
+begin
+  b := Self.GetSlot(slot);
+  Result := Target.HasColor(RSColors.ITEM_BORDER, 8.5, 1, b) or
+            Target.HasColor(RSColors.ITEM_BORDER_WHITE, 0, 1, b);
+end;
+
+function TRSSlotInterface.IsEmpty(slot: Integer): Boolean;
+var
+  b: TBox;
+begin
+  b := Self.GetSlot(slot);
+  Result := not Target.HasColor(RSColors.ITEM_BORDER, 8.5, 1, b) and
+            not Target.HasColor(RSColors.ITEM_BORDER_WHITE, 0, 1, b);
+end;
+
+
+function TRSSlotInterface.GetShift(slot: Integer; waitTime: Integer): Integer;
+begin
+  Result := Target.GetPixelDifference(waitTime, Self.GetSlot(slot));
+end;
+
+function TRSSlotInterface.IsFading(slot: Integer; waitTime: Integer = 5): Boolean;
+begin
+  Result := Self.GetShift(slot, waitTime) > 0;
+end;
+
+function TRSSlotInterface.WaitFade(slot: Integer; waitTime: Integer = 200): Boolean;
+var
+  b: TBox;
+begin
+  b := Self.GetSlot(slot);
+  if not SleepUntil(Target.GetPixelDifference(5, b) > 5, 0, waitTime) then
+    Exit;
+
+  Result := SleepUntil(
+              Target.HasColor(RSColors.ITEM_BORDER, 8.5, 1, b) or
+              Target.HasColor(RSColors.ITEM_BORDER_WHITE, 0, 1, b), 100, 1000
+            );
+end;
+

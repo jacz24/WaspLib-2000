@@ -132,50 +132,61 @@ begin
 end;
 
 
-function TItemCompare.FindAll(items: TRSItemArray; boxes: TBoxArray; maxToFind: Integer = 0): TImageCompareMatchArray;
+function TItemCompare.FindAll(items: TRSItemArray; boxes: TBoxArray; maxToFind: Integer = 0): TImageMatchArray;
 var
   item: TRSItem;
-  compareArray: array of record
-    Filter: TImageCompareFilter;
-    Images: TImageArray;
-  end;
-  i, j: Int32;
-  template: TImage;
-  b: TBox;
+  slots: TBoxArray;
+  results: TImageMatchArray;
+  i: Integer;
 begin
+  slots := Copy(boxes);
   for item in items do
   begin
-     item := LowerCase(items[i]);
-     compareArray += [@Self.GetFilter(item), Self.GetImages(item)];
-  end;
+     item := LowerCase(item);
+     Self.ImageCompare.Filter := @Self.GetFilter(item);
+     results := Self.ImageCompare.MatchAll(Self.GetImages(item), slots, Self.Similarity);
+     Result += results;
+     if Length(Result) >= maxToFind then Exit;
 
-  for i := 0 to High(boxes) do
-  begin
-    b.X1 := boxes[i].X1;
-    b.Y1 := boxes[i].Y1;
-    b.X2 := boxes[i].X1 + 36;
-    b.X2 := boxes[i].X2;
-
-    template := TImage.CreateFromTarget(b);
-
-    for j := 0 to High(compareArray) do
-    begin
-      Self.ImageCompare.Filter := @compareArray[j].Filter;
-      Result += Self.ImageCompare.MatchAll(compareArray[j].Images, [template], Self.Similarity);
-    end;
-    template.Free();
+     for i := 0 to High(results) do
+       slots.Remove(results[i].Box);
   end;
 end;
 
-function TItemCompare.Find(items: TRSItemArray; boxes: TBoxArray; out match: TImageCompareMatch): Boolean;
+function TItemCompare.FindAll(items: TRSItemArray; boxes: TBoxArray; out matches: TImageMatchArray): Boolean; overload;
 var
-  matches: TImageCompareMatchArray;
+  item: TRSItem;
+  slots: TBoxArray;
+  results: TImageMatchArray;
+  i: Integer;
 begin
-  matches := Self.FindAll(items, boxes, 1);
+  slots := Copy(boxes);
+  for item in items do
+  begin
+    if slots = [] then Exit;
+    item := LowerCase(item);
+    Self.ImageCompare.Filter := @Self.GetFilter(item);
+    results := Self.ImageCompare.MatchAll(Self.GetImages(item), slots, Self.Similarity);
+    if results = [] then Exit;
 
-  Result := Length(matches) = 1;
-  if Result then
-    match := matches[0];
+    matches += results;
+    for i := 0 to High(results) do
+      slots.Remove(results[i].Box);
+  end;
+  Result := True;
+end;
+
+function TItemCompare.Find(items: TRSItemArray; boxes: TBoxArray; out match: TImageMatch): Boolean;
+var
+  item: TRSItem;
+begin
+  for item in items do
+  begin
+     item := LowerCase(item);
+     Self.ImageCompare.Filter := @Self.GetFilter(item);
+     match := Self.ImageCompare.MatchAny(Self.GetImages(item), boxes, Self.Similarity);
+     if match.Index > -1 then Exit(True);
+  end;
 end;
 
 
