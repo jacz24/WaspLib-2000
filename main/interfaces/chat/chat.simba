@@ -411,7 +411,3 @@ end;
 
 var
   Chat: TRSChat;
-
-begin
-  RSClient.InterfaceSetupQueue += @Chat.SetupInterface;
-end;

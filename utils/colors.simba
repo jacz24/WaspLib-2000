@@ -1,0 +1,19 @@
+{$DEFINE SRLT_COLORS_INCLUDED}
+{$IFNDEF SRLT_UTILS}
+  {$I SRLT/utils.simba}
+{$ENDIF}
+
+type
+  RSColors = record
+    const ITEM_SHADOW: TColor = $202030;
+    const ITEM_BORDER: TColor = $010000;
+    const ITEM_BORDER_WHITE: TColor = $FFFFFF;
+
+    const ITEM_TEXT_YELLOW: TColor = $00FFFF;
+    const ITEM_TEXT_WHITE: TColor  = $FFFFFF;
+    const ITEM_TEXT_GREEN: TColor  = $80FF00;
+    const ITEM_STACK_COLORS: TColorArray = [$00FFFF, $FFFFFF, $80FF00];
+
+    const TEXT_ORANGE: TColor = $1F98FF;
+    const TEXT_GREY: TColor   = $9F9F9F;
+  end;

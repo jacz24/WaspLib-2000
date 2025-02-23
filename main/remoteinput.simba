@@ -48,5 +48,5 @@ var
   RemoteInput: TRemoteInput;
 
 begin
-  SRLT.SetupQueue += @RemoteInput.Setup;
+  RemoteInput.Setup();
 end;

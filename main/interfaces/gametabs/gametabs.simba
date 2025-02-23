@@ -137,10 +137,5 @@ begin
   img.DrawBoxArray(Self.Tabs, False);
 end;
 
-
 var
   GameTabs: TRSGameTabs;
-
-begin
-  RSClient.InterfaceSetupQueue += @GameTabs.SetupInterface;
-end;

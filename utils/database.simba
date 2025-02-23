@@ -5,25 +5,281 @@
 
 type
   TDatabase = record
+    Name: String;
     Columns: TStringArray;
-    Data: TStringMap<TMap<Int32, Variant>>;
-    const PATH: String = {$MACRO DIR};
+    Data: TStringMap<TStringArray>;
+    Rows: TStringMap<TStringArray>;
+
+    DataDir, CacheDir: String;
   end;
 
-procedure TDatabase.Setup(columns: TStringArray);
+function TDatabase._ValueWeight(const str: String): Int32;
+var
+  i: Int32;
+begin
+  for i := 1 to Length(str) do
+    Result += Ord(str[i]);
+end;
+
+procedure TDatabase.Setup(name: String; columns: TStringArray; path, version: String);
+var
+  i: Int32;
+  dir, tmp, column: String;
+  data, rows: TStringArray;
+  weights: TIntegerArray;
+begin
+  Self.Name := name + '.database';
+  Self.CacheDir := SRLTEnv.CacheDir + 'databases' + PATH_SEP + name + PATH_SEP;
+
+  //Delete old cache files if they exist
+  for dir in DirList(Self.CacheDir) do
+  begin
+    tmp := Copy(dir, 1, Length(dir)-Length(version));
+    if tmp = version then Continue;
+    DirDelete(dir, False);
+  end;
+
+  Self.CacheDir += version + PATH_SEP;
+
+  if not DirCreate(Self.CacheDir) then
+    raise GetDebugLn(Self.Name, 'Failed to create cache directory: ' + Self.CacheDir);
+
+  Self.DataDir := path;
+
+  for column in columns do
+  begin
+    Self.Columns += column;
+
+    //use cached files that are already sorted if they exist
+    if FileExists(Self.CacheDir + column) then
+    begin
+      Self.Data.Value[column]    := FileReadLines(Self.CacheDir + column);
+      Self.Rows.Value[column] := FileReadLines(Self.CacheDir + column + '.rows');
+      Continue;
+    end;
+
+    //no cache files found, we need to setup the column from scratch
+    //check if column data file exists
+    if not FileExists(Self.DataDir + column) then
+      raise GetDebugLn(Self.Name, 'Failed to find data file: ' + Self.DataDir + column);
+
+    //load the file data
+    data := FileReadLines(Self.DataDir + column);
+
+    //create rows data, basically just the index of each line of the data file
+    //to save time, we measure the weight of each data row for sorting later
+    for i := 0 to High(data) do
+    begin
+      weights += Self._ValueWeight(data[i]);
+      rows += ToStr(i);
+    end;
+
+    //sort both the data and the rows by the data weights
+    data.Sort(weights, True);
+    rows.Sort(weights, True);
+
+
+    //set the column data and rows
+    Self.Data.Value[column] := data;
+    Self.Rows.Value[column] := rows;
+
+    //at this point, our database column is setup.
+    //when you want to look for something it works as follows:
+    //- You look for the value you know on the column you know and find it's index
+    //- You then retrieve row that matches that index because the Data and Rows
+    //  were both sorted with the same weights, their indices match and the row you get back is the original row
+    //  your value was at before sorting.
+    //- After you have the original row value, you can look the column you want to get a value from
+    //  search that columns rows for the matching original row number you have and save it's index
+    //- You then go to your Data at that index and you have the matching data you are looking for.
+
+    //Cache files so we don't have to sort stuff everytime
+    if not FileWrite(Self.CacheDir + column, data.Join(LINE_SEP)) then
+      raise GetDebugLn(Self.Name, 'Failed to create cache file: ' + Self.CacheDir + column);
+    if not FileWrite(Self.CacheDir + column + '.rows', rows.Join(LINE_SEP)) then
+      raise GetDebugLn(Self.Name, 'Failed to create cache file: ' + Self.CacheDir + column + '.rows');
+
+    //reset variables.
+    SetLength(weights, 0);
+    SetLength(data, 0);
+    SetLength(rows, 0);
+  end;
+end;
+
+
+function TDatabase.GetRow(value, column: String): Integer;
+var
+  idx: Int32;
+  rows: TStringArray;
+begin
+  idx := Self.Data.Value[column].IndexOf(value);
+  if idx = -1 then Exit(-1);
+
+  rows := Self.Rows.Value[column];
+  Result := StrToInt(rows[idx]);
+end;
+
+function TDatabase.GetRows(value, column: String): TIntegerArray;
+var
+  indices: TIntegerArray;
+  idx: Int32;
+  rows: TStringArray;
+begin
+  indices := Self.Data.Value[column].IndicesOf(value);
+  if indices = [] then Exit;
+
+  rows := Self.Rows.Value[column];
+
+  for idx in indices do
+    Result += StrToInt(rows[idx]);
+end;
+
+
+function TDatabase.GetValue(idx: Integer; column: String): String;
+var
+  data: TStringArray;
+begin
+  idx := Self.Rows.Value[column].IndexOf(ToStr(idx));
+  if idx = -1 then Exit;
+  data := Self.Data.Value[column];
+  Result := data[idx];
+end;
+
+function TDatabase.GetValues(indices: TIntegerArray; column: String): TStringArray;
+var
+  idx: Int32;
+  data: TStringArray;
+begin
+  data := Self.Data.Value[column];
+
+  for idx in indices do
+  begin
+    idx := Self.Rows.Value[column].IndexOf(ToStr(idx));
+    if idx = -1 then
+      Result += ''
+    else
+      Result += data[idx];
+  end;
+end;
+
+
+function TDatabase.Contains(value, column: String): Boolean;
+begin
+  Result := Self.Data.Value[column].Contains(value);
+end;
+
+
+function TDatabase.Get(value, valueColumn, resultColumn: String): String;
+var
+  idx: Int32;
+  rows, data: TStringArray;
+begin
+  idx := Self.Data.Value[valueColumn].IndexOf(value);
+  if idx = -1 then Exit;
+
+  rows := Self.Rows.Value[valueColumn];
+  data := Self.Data.Value[resultColumn];
+
+  idx := Self.Rows.Value[resultColumn].IndexOf(rows[idx]);
+  Result := data[idx];
+end;
+
+function TDatabase.GetAll(value, valueColumn, resultColumn: String): TStringArray;
+var
+  indices: TIntegerArray;
+  idx: Integer;
+  rows, data: TStringArray;
+begin
+  indices := Self.Data.Value[valueColumn].IndicesOf(value);
+  if indices = [] then Exit;
+
+  rows := Self.Rows.Value[valueColumn];
+  data := Self.Data.Value[resultColumn];
+
+  for idx in indices do
+  begin
+    idx := Self.Rows.Value[resultColumn].IndexOf(rows[idx]);
+    Result += data[idx];
+  end;
+end;
+
+
+function TDatabase.GetRowData(value, column: String): TStringArray;
+var
+  i, idx, row: Int32;
+  rows, data: TStringArray;
+begin
+  idx := Self.Data.Value[column].IndexOf(value);
+  if idx = -1 then Exit;
+
+  rows := Self.Rows.Value[column];
+
+  for column in Self.Columns do
+  begin
+    row := Self.Rows.Value[column].IndexOf(rows[idx]);
+    data := Self.Data.Value[column];
+    Result += data[row];
+  end;
+end;
+
+function TDatabase.GetRowsData(value, column: String): T2DStringArray;
+var
+  indices: TIntegerArray;
+  i, idx, row: Int32;
+  rows, data: TStringArray;
+begin
+  indices := Self.Data.Value[column].IndicesOf(value);
+  if indices = [] then Exit;
+
+  rows := Self.Rows.Value[column];
+
+  SetLength(Result, Length(indices));
+
+  for i := 0 to High(indices) do
+    for column in Self.Columns do
+    begin
+      row := Self.Rows.Value[column].IndexOf(rows[indices[i]]);
+      data := Self.Data.Value[column];
+      Result[i] += data[row];
+    end;
+end;
+
+
+//didn't test this one, might be broken:
+procedure TDatabase.AddRow(values: TStringArray; saveCache: Boolean = False);
 var
   i, idx: Int32;
-  strings: TStringArray;
+  value, column: String;
+  data, rows: TStringArray;
+  weights: TIntegerArray;
 begin
-  SetLength(Self.Columns, Length(columns));
+  if Length(values) <> Length(Self.Columns) then
+    raise GetDebugLn(Self.Name, 'The values being added are not the same length as the existing columns.');
 
-  for i := 0 to High(columns) do
+  for i := 0 to High(values) do
   begin
-    Self.Columns[i] := columns[i];
+    column := Self.Columns[i];
+    value := values[i];
+    idx := Self.Data.Value[column].Length;
 
-    strings := FileReadLines(Self.PATH + columns[i]);
+    Self.Data.Value[column].Insert(value, idx);
+    Self.Rows.Value[column].Insert(value, idx);
 
-    for idx := 0 to High(strings) do
-      Self.Data.Value[columns[i]].Value[idx] := strings[idx];
+    data := Self.Data.Value[column];
+    rows := Self.Rows.Value[column];
+
+    for idx to High(data) do
+      weights += Self._ValueWeight(data[idx]);
+
+    Self.Data.Value[column].Sort(weights, True);
+    Self.Rows.Value[column].Sort(weights, True);
+
+    if saveCache then
+    begin
+      if not FileWrite(Self.CacheDir + column, Self.Data.Value[column].Join(LINE_SEP)) then
+        raise GetDebugLn(Self.Name, 'Failed to create cache file: ' + Self.CacheDir + column);
+      if not FileWrite(Self.CacheDir + column + '.rows', Self.rows.Value[column].Join(LINE_SEP)) then
+        raise GetDebugLn(Self.Name, 'Failed to create cache file: ' + Self.CacheDir + column + '.rows');
+    end;
   end;
 end;

@@ -17,7 +17,7 @@ type
     BOLD_12_SHADOW: TFontSet;
     QUILL_8:        TFontSet;
     QUILL:          TFontSet;
-    const PATH = SRLTEnv.CachePath + 'fonts' + PATH_SEP;
+    const PATH = SRLTEnv.CacheDir + 'fonts' + PATH_SEP;
   end;
 
 procedure TRSFonts.Setup();
@@ -45,5 +45,5 @@ var
   OCR: TSimpleOCR;
 
 begin
-  SRLT.SetupQueue += @RSFonts.Setup;
+  RSFonts.Setup();
 end;

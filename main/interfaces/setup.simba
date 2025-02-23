@@ -1,0 +1,24 @@
+//Design by olly.
+{$DEFINE SRLT_SETUP_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+procedure SetupInterfaces();
+begin
+  RSClient.DetectClientMode(True);
+  RootInterface.Setup(Target.Bounds);
+  GameTabs.SetupInterface();
+  GameTab.SetupInterface();
+  Chat.SetupInterface();
+end;
+
+procedure TargetResized(var Target: TTarget; Data: TTargetEventData);
+begin
+  SetupInterfaces();
+end;
+
+begin
+  Target.AddEvent(ETargetEvent.TARGET_RESIZE, @TargetResized);
+  SetupInterfaces();
+end;

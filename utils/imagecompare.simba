@@ -11,19 +11,29 @@ type
 
   TImageCompareMatchArray = array of TImageCompareMatch;
 
+  TImageCompareFilter = procedure(constref image, template: TImage) of object;
+
   TImageCompareUtils = record
-    CleanImage, CleanTemplate: procedure (image: TImage) of object;
+    Clean: procedure (image, template: TImage) of object;
     Align: procedure (image, template: TImage) of object;
-    Filter: procedure(constref image, template: TImage) of object;
+    Filter: TImageCompareFilter;
   end;
 
 function TImageCompareUtils.Compare(image, template: TImage; var similarity: Single): Boolean;
 var
   match: Single;
 begin
-  if @Self.CleanImage <> nil then Self.CleanImage(image);
-  if @Self.CleanTemplate <> nil then Self.CleanTemplate(template);
   if @Self.Align <> nil then Self.Align(image, template);
+
+  if (template.Width < image.Width) or (template.Height < image.Height) then
+  begin
+    similarity := 0;
+    Exit;
+  end;
+
+  template.SetSize(image.Width, image.Height);
+
+  if @Self.Clean <> nil then Self.Clean(image, template);
   if @Self.Filter <> nil then Self.Filter(image, template);
 
   if similarity = 1 then

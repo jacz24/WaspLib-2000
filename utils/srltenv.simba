@@ -6,5 +6,5 @@
 type
   SRLTEnv = record
     const ConfigsPath: String = SimbaEnv.SimbaPath + 'Configs' + PATH_SEP;
-    const CachePath: String = SimbaEnv.DataPath + 'cache' + PATH_SEP;
+    const CacheDir:    String = SimbaEnv.DataPath + 'cache' + PATH_SEP;
   end;

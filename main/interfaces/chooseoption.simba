@@ -289,5 +289,5 @@ end;
 var
   ChooseOption: TRSChooseOption;
 begin
-  SRLT.SetupQueue += @ChooseOption.Setup;
+  ChooseOption.Setup();
 end;

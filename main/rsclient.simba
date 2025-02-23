@@ -32,10 +32,7 @@ type
   TRSClient = record
     Client: ERSClient;
     Mode: ERSClientMode;
-
     Bounds: TBox;
-
-    InterfaceSetupQueue: array of procedure () of object;
   end;
 
 (*
@@ -77,9 +74,6 @@ var
   i: Int32;
 begin
   WriteLn(GetDebugLn('RSClient', 'Client mode changed: ' + ToString(Self.Mode)));
-
-  for i := 0 to High(Self.InterfaceSetupQueue) do
-    Self.InterfaceSetupQueue[i]();
 end;
 
 (*
@@ -165,5 +159,5 @@ var
   RSClient: TRSClient;
 
 begin
-  SRLT.SetupQueue += @RSClient.Setup;
+  RSClient.Setup();
 end;

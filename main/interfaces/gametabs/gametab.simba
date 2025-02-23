@@ -10,7 +10,7 @@ Gametabs interfaces core
 type
   TRSGameTab = type TRSInterface;
 
-procedure TRSGameTab.Setup(); overload;
+procedure TRSGameTab.SetupInterface();
 var
   b: TBox;
 begin
@@ -55,7 +55,3 @@ end;
 
 var
   GameTab: TRSGameTab;
-
-begin
-  RSClient.InterfaceSetupQueue += @GameTab.Setup;
-end;

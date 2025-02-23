@@ -1,0 +1,183 @@
+(*
+# ItemCompare
+Methods to find and compare item images
+*)
+
+{$DEFINE SRLT_ITEMCOMPARE_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  TItemCompare = record
+    ItemImages: TStringMap<TImage>;
+    Filters: array of record
+      Name: String;
+      Filter: TImageCompareFilter;
+    end;
+    Version: String;
+    Similarity: Single;
+    ImageCompare: TImageCompareUtils;
+    Database: TDatabase;
+    CacheDir: String;
+    const ZIP: String = {$MACRO DIR} + 'images.zip';
+  end;
+
+
+procedure TItemCompare.Align(image, template: TImage);
+var
+  borderA, borderB: TPointArray;
+begin
+  borderA  := image.FindColor(RSColors.ITEM_BORDER, 0);
+  borderB := template.FindColor(RSColors.ITEM_BORDER, 0) + template.FindColor(RSColors.ITEM_BORDER_WHITE, 0);
+
+  image.Crop(borderA.Bounds());
+  template.Crop(borderB.Bounds());
+end;
+
+procedure TItemCompare.Clean(image, template: TImage);
+var
+  color: TColor;
+  tpa: TPointArray;
+begin
+  image.DrawColor := $0;
+  template.DrawColor := $0;
+
+  template.DrawTPA(image.FindColor($0, 0));
+
+  for color in RSColors.ITEM_STACK_COLORS do
+  begin
+    tpa := template.FindColor(color, 0);
+    if tpa = [] then Continue;
+    image.DrawTPA(tpa);
+    template.DrawTPA(tpa);
+  end;
+end;
+
+procedure TItemCompare.Setup();
+var
+  dir, tmp: String;
+begin
+  Self.Version := HashFile(EHashAlgo.MD5, Self.ZIP);
+  SetLength(Self.Version, 6);
+  Self.Database.Setup('ItemCompare', ['id', 'item', 'hash'], {$MACRO DIR} + 'data' + PATH_SEP, Self.Version);
+
+  if Self.Similarity = 0 then //only set similarity if the user didn't set it already
+    Self.Similarity := 0.999;
+
+  Self.ItemImages.CaseSens := False;
+
+  Self.ImageCompare.Align := @Self.Align;
+  Self.ImageCompare.Clean := @Self.Clean;
+
+  Self.CacheDir := SRLTEnv.CacheDir + 'itemcompare' + PATH_SEP;
+
+  //Delete old cache files if they exist
+  for dir in DirList(Self.CacheDir) do
+  begin
+    tmp := Copy(dir, 1, Length(dir)-Length(Self.Version));
+    if tmp = Self.Version then Continue;
+    DirDelete(dir, False);
+  end;
+
+  Self.CacheDir += Self.Version + PATH_SEP;
+
+  if not DirCreate(Self.CacheDir) then
+    raise GetDebugLn('ItemCompare', 'Failed to create cache directory: ' + Self.CacheDir);
+end;
+
+
+function TItemCompare.GetFilter(item: String): TImageCompareFilter;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self.Filters) do
+    if Self.Filters[i].Name = item then
+      Exit(@Self.Filters[i].Filter);
+end;
+
+function TItemCompare.GetImage(id: String): TImage;
+var
+  path: String;
+begin
+  if not Self.ItemImages.Exists(id) then
+    Self.ItemImages.Value[id] := nil;
+
+  if Self.ItemImages.Value[id] = nil then
+  begin
+    path := Self.CacheDir + id + '.png';
+    if FileExists(path) then
+      Self.ItemImages.Value[id].Load(path)
+    else
+    begin
+      Self.ItemImages.Value[id].CreateFromZip(Self.ZIP, id + '.png');
+      Self.ItemImages.Value[id].Save(path);
+    end;
+    Self.ItemImages.Value[id].FreeOnTerminate := True;
+  end;
+
+  Result := Self.ItemImages.Value[id];
+end;
+
+function TItemCompare.GetImages(item: String): TImageArray;
+var
+  ids: TStringArray;
+  id: String;
+begin
+  if item.IsNumeric then ids := [item]
+  else ids := Self.Database.GetAll(item, 'item', 'id');
+
+  for id in ids do
+    Result += Self.GetImage(id);
+end;
+
+
+function TItemCompare.FindAll(items: TRSItemArray; boxes: TBoxArray; maxToFind: Integer = 0): TImageCompareMatchArray;
+var
+  item: TRSItem;
+  compareArray: array of record
+    Filter: TImageCompareFilter;
+    Images: TImageArray;
+  end;
+  i, j: Int32;
+  template: TImage;
+  b: TBox;
+begin
+  for item in items do
+  begin
+     item := LowerCase(items[i]);
+     compareArray += [@Self.GetFilter(item), Self.GetImages(item)];
+  end;
+
+  for i := 0 to High(boxes) do
+  begin
+    b.X1 := boxes[i].X1;
+    b.Y1 := boxes[i].Y1;
+    b.X2 := boxes[i].X1 + 36;
+    b.X2 := boxes[i].X2;
+
+    template := TImage.CreateFromTarget(b);
+
+    for j := 0 to High(compareArray) do
+    begin
+      Self.ImageCompare.Filter := @compareArray[j].Filter;
+      Result += Self.ImageCompare.MatchAll(compareArray[j].Images, [template], Self.Similarity);
+    end;
+    template.Free();
+  end;
+end;
+
+function TItemCompare.Find(items: TRSItemArray; boxes: TBoxArray; out match: TImageCompareMatch): Boolean;
+var
+  matches: TImageCompareMatchArray;
+begin
+  matches := Self.FindAll(items, boxes, 1);
+
+  Result := Length(matches) = 1;
+  if Result then
+    match := matches[0];
+end;
+
+
+var
+  ItemCompare: TItemCompare;
