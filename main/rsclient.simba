@@ -1,10 +1,6 @@
 (*
 # RSClient
 Methods relating to targeting the RS client and detecting client states.
-
-if `SRL_DISABLE_REMOTEINPUT` is defined. RemoteInput plugin will not be loaded.
-if `SRL_USE_REMOTEINPUT` is defined. RemoteInput will be automatically setup.
-if `SRL_USE_REMOTEINPUT_DEBUG` is defined. Debug() calls will drawn on the RS client.
 *)
 
 {$DEFINE SRLT_RSCLIENT_INCLUDED}
@@ -15,15 +11,6 @@ if `SRL_USE_REMOTEINPUT_DEBUG` is defined. Debug() calls will drawn on the RS cl
 
 (*
 ## ERSClientMode
-```pascal
-ERSClientMode = (
-    UNKNOWN,            // Unable to detect mode (likely not logged in yet)
-    FIXED,              // Fixed mode
-    RESIZABLE_CLASSIC,  // Resizable with "classic" gametabs or "fixed mode gametabs"
-    RESIZABLE_MODERN    // Resizable with gametabs being grouped together at the bottom
-  );
-```
-The modes of the client.
 *)
 type
   ERSClient = enum(UNKNOWN, LEGACY, RUNELITE, OFFICIAL);

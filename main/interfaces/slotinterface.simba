@@ -1,0 +1,33 @@
+(*
+# SlotInterface
+Methods to interact slotted interfaces.
+*)
+
+{$DEFINE SRLT_SLOT_INTERFACE_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  TSlotInterface = record
+    Name: String;
+    Slots: TBoxArray;
+    SlotBoxesFunction: function (): TBoxArray of object;
+  end;
+
+function TSlotInterface.GetSlotBoxes(slots: TIntegerArray): TBoxArray;
+var
+  boxes: TBoxArray;
+  i: Int32;
+begin
+  if @Self.SlotBoxesFunction <> nil then
+    boxes := Self.SlotBoxesFunction()
+  else
+    boxes := Self.Slots;
+
+  if boxes = [] then
+    raise GetDebugLn(Self.Name, 'Slots and SlotBoxesFunction are not set!');
+
+  for i := 0 to High(slots) do
+    Result += boxes[slots[i]];
+end;

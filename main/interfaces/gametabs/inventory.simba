@@ -1,0 +1,17 @@
+(*
+# Inventory
+Methods to interact with the inventory gametab.
+*)
+
+{$DEFINE SRLT_INVENTORY_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  TRSInventory = record
+    GameTab: TRSGameTab;
+    //Slots: SlotInterface;
+    //Items: ItemInterface;
+    ShiftEnabled: Boolean;
+  end;

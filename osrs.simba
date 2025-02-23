@@ -17,8 +17,11 @@
 {$IFNDEF SRLT_INTERFACE_CONTROLS_INCLUDED}  {$I main/interfaces/interfacecontrols.simba}
 {$IFNDEF SRLT_CHOOSEOPTION_INCLUDED}        {$I main/interfaces/chooseoption.simba}
 
+{$IFNDEF SRLT_SLOT_INTERFACE_INCLUDED}      {$I main/interfaces/slotinterface.simba}
+{$IFNDEF SRLT_ITEM_INTERFACE_INCLUDED}      {$I main/interfaces/iteminterface.simba}
 {$IFNDEF SRLT_GAMETABS_INCLUDED}            {$I main/interfaces/gametabs/gametabs.simba}
 {$IFNDEF SRLT_GAMETAB_INCLUDED}             {$I main/interfaces/gametabs/gametab.simba}
+{$IFNDEF SRLT_INVENTORY_INCLUDED}           {$I main/interfaces/gametabs/inventory.simba}
 
 {$IFNDEF SRLT_CHAT_TABS_INCLUDED}           {$I main/interfaces/chat/chattabs.simba}
 {$IFNDEF SRLT_CHAT_INCLUDED}                {$I main/interfaces/chat/chat.simba}
@@ -32,7 +35,9 @@
 
 
 
-
+{$ELSE}{$ENDIF}
+{$ELSE}{$ENDIF}
+{$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}

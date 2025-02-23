@@ -1,0 +1,11 @@
+(*
+# ItemInterface
+Methods to interact item interfaces.
+*)
+
+{$DEFINE SRLT_ITEM_INTERFACE_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+
