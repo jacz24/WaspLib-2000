@@ -1,0 +1,9 @@
+(*
+# SpellFinder
+Methods to find and compare spell images
+*)
+
+{$DEFINE SRLT_SPELLFINDER_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}

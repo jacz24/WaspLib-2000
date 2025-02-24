@@ -7,34 +7,36 @@
 // The following allows individual include files to compile on their own with just having {$I SRLT/osr.simba}
 // Summary: It includes this file until the current file is reached.
 
-{$IFNDEF SRLT_OCR_INCLUDED}                 {$I main/ocr/ocr.simba}
-{$IFNDEF SRLT_REMOTEINPUT_INCLUDED}         {.$I main/remoteinput.simba}
-{$IFNDEF SRLT_RSCLIENT_INCLUDED}            {$I main/rsclient.simba}
+{$IFNDEF SRLT_OCR_INCLUDED}                 {$I osrs/ocr/ocr.simba}
+{$IFNDEF SRLT_REMOTEINPUT_INCLUDED}         {.$I osrs/remoteinput.simba}
+{$IFNDEF SRLT_RSCLIENT_INCLUDED}            {$I osrs/rsclient.simba}
 
-{$IFNDEF SRLT_ITEMCOMPARE_INCLUDED}         {$I main/compare/items/itemcompare.simba}
+{$IFNDEF SRLT_ITEMFINDER_INCLUDED}         {$I osrs/finders/items/itemfinder.simba}
+{$IFNDEF SRLT_SPELLFINDER_INCLUDED}         {$I osrs/finders/spells/spellfinder.simba}
 
-{$IFNDEF SRLT_INTERFACE_CORE_INCLUDED}      {$I main/interfaces/interface.simba}
-{$IFNDEF SRLT_INTERFACE_CONTROLS_INCLUDED}  {$I main/interfaces/interfacecontrols.simba}
-{$IFNDEF SRLT_CHOOSEOPTION_INCLUDED}        {$I main/interfaces/chooseoption.simba}
+{$IFNDEF SRLT_INTERFACE_CORE_INCLUDED}      {$I osrs/interfaces/interface.simba}
+{$IFNDEF SRLT_INTERFACE_CONTROLS_INCLUDED}  {$I osrs/interfaces/interfacecontrols.simba}
+{$IFNDEF SRLT_CHOOSEOPTION_INCLUDED}        {$I osrs/interfaces/chooseoption.simba}
 
-{$IFNDEF SRLT_SLOT_INTERFACE_INCLUDED}      {$I main/interfaces/slotinterface.simba}
-{$IFNDEF SRLT_ITEM_INTERFACE_INCLUDED}      {$I main/interfaces/iteminterface.simba}
-{$IFNDEF SRLT_GAMETABS_INCLUDED}            {$I main/interfaces/gametabs/gametabs.simba}
-{$IFNDEF SRLT_GAMETAB_INCLUDED}             {$I main/interfaces/gametabs/gametab.simba}
-{$IFNDEF SRLT_INVENTORY_INCLUDED}           {$I main/interfaces/gametabs/inventory.simba}
+{$IFNDEF SRLT_SLOT_INTERFACE_INCLUDED}      {$I osrs/interfaces/slotinterface.simba}
+{$IFNDEF SRLT_ITEM_INTERFACE_INCLUDED}      {$I osrs/interfaces/iteminterface.simba}
+{$IFNDEF SRLT_GAMETABS_INCLUDED}            {$I osrs/interfaces/gametabs/gametabs.simba}
+{$IFNDEF SRLT_GAMETAB_INCLUDED}             {$I osrs/interfaces/gametabs/gametab.simba}
+{$IFNDEF SRLT_INVENTORY_INCLUDED}           {$I osrs/interfaces/gametabs/inventory.simba}
 
-{$IFNDEF SRLT_CHAT_TABS_INCLUDED}           {$I main/interfaces/chat/chattabs.simba}
-{$IFNDEF SRLT_CHAT_INCLUDED}                {$I main/interfaces/chat/chat.simba}
+{$IFNDEF SRLT_CHAT_TABS_INCLUDED}           {$I osrs/interfaces/chat/chattabs.simba}
+{$IFNDEF SRLT_CHAT_INCLUDED}                {$I osrs/interfaces/chat/chat.simba}
 
 
 
 
 {$IFNDEF SRLT_SETUP_INCLUDED}
-{$I main/interfaces/setup.simba}
+{$I osrs/interfaces/setup.simba}
 {$ELSE}{$ENDIF}
 
 
 
+{$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
