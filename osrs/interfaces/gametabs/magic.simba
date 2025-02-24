@@ -1,0 +1,42 @@
+(*
+# Magic
+Methods to interact with the magic gametab.
+*)
+
+{$DEFINE SRLT_MAGIC_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  TRSMagic = record
+    Slots: TBoxArray;
+  end;
+
+procedure TRSMagic.SetupInterface();
+begin
+  Self.Slots := TBoxArray.Create(GameTab.TopLeft.Offset(2,1), 7, 10, 23, 23, [3, 1]);
+  Self.Slots := TBoxArray.Create(GameTab.TopLeft.Offset(0,1), 6, 9, 23, 23, [9, 4]);
+  Self.Slots := TBoxArray.Create(GameTab.TopLeft.Offset(2,18), 7, 8, 23, 23, [3, 3]);
+  Self.Slots := TBoxArray.Create(GameTab.TopLeft.Offset(2,18), 7, 8, 23, 23, [3, 3]);
+  //Self.Slots := TBoxArray.Create(GameTab.TopLeft.Offset(18,1), 4, 7, 23, 23, [18, 13]);
+end;
+
+function TRSMagic.GetSlots(): TBoxArray;
+var
+  tpa: TPointArray;
+  atpa: T2DPointArray;
+  color: TColorTolerance;
+begin
+  color := ColorTolerance($17090A, 4.546, EColorSpace.RGB, [1.140, 1.330, 0.532]);
+  tpa := Target.FindColor(color, GameTab.Bounds);
+  if tpa = [] then Exit;
+  atpa := tpa.Cluster(4);
+  atpa := atpa.ExtractDimensions(5,5,23,23);
+  Result := atpa.BoundsArray();
+
+end;
+
+var
+  Magic: TRSMagic;
+

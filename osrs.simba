@@ -8,10 +8,10 @@
 // Summary: It includes this file until the current file is reached.
 
 {$IFNDEF SRLT_OCR_INCLUDED}                 {$I osrs/ocr/ocr.simba}
-{$IFNDEF SRLT_REMOTEINPUT_INCLUDED}         {.$I osrs/remoteinput.simba}
+{$IFNDEF SRLT_REMOTEINPUT_INCLUDED}         {$I osrs/remoteinput.simba}
 {$IFNDEF SRLT_RSCLIENT_INCLUDED}            {$I osrs/rsclient.simba}
 
-{$IFNDEF SRLT_ITEMFINDER_INCLUDED}         {$I osrs/finders/items/itemfinder.simba}
+{$IFNDEF SRLT_ITEMFINDER_INCLUDED}          {$I osrs/finders/items/itemfinder.simba}
 {$IFNDEF SRLT_SPELLFINDER_INCLUDED}         {$I osrs/finders/spells/spellfinder.simba}
 
 {$IFNDEF SRLT_INTERFACE_CORE_INCLUDED}      {$I osrs/interfaces/interface.simba}
@@ -23,6 +23,7 @@
 {$IFNDEF SRLT_GAMETABS_INCLUDED}            {$I osrs/interfaces/gametabs/gametabs.simba}
 {$IFNDEF SRLT_GAMETAB_INCLUDED}             {$I osrs/interfaces/gametabs/gametab.simba}
 {$IFNDEF SRLT_INVENTORY_INCLUDED}           {$I osrs/interfaces/gametabs/inventory.simba}
+{$IFNDEF SRLT_MAGIC_INCLUDED}               {$I osrs/interfaces/gametabs/magic.simba}
 
 {$IFNDEF SRLT_CHAT_TABS_INCLUDED}           {$I osrs/interfaces/chat/chattabs.simba}
 {$IFNDEF SRLT_CHAT_INCLUDED}                {$I osrs/interfaces/chat/chat.simba}
@@ -36,6 +37,7 @@
 
 
 
+{$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}

@@ -22,6 +22,7 @@ begin
   GameTabs.SetupInterface();
   GameTab.SetupInterface();
   Inventory.SetupInterface();
+  Magic.SetupInterface();
   Chat.SetupInterface();
 end;
 

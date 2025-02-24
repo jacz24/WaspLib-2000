@@ -62,14 +62,6 @@ begin
   SetLength(Self.Version, 6);
   Self.Database.Setup('ItemFinder', ['id', 'item', 'hash'], {$MACRO DIR} + 'data' + PATH_SEP, Self.Version);
 
-  if Self.Similarity = 0 then //only set similarity if the user didn't set it already
-    Self.Similarity := 0.999;
-
-  Self.ItemImages.CaseSens := False;
-
-  Self.ImageCompare.Align := @Self.Align;
-  Self.ImageCompare.Clean := @Self.Clean;
-
   Self.CacheDir := SRLTEnv.CacheDir + 'ItemFinder' + PATH_SEP;
 
   //Delete old cache files if they exist
@@ -84,6 +76,15 @@ begin
 
   if not DirCreate(Self.CacheDir) then
     raise GetDebugLn('ItemFinder', 'Failed to create cache directory: ' + Self.CacheDir);
+
+  //only set similarity if the user didn't set it already
+  if Self.Similarity = 0 then
+    Self.Similarity := 0.999;
+
+  Self.ItemImages.CaseSens := False;
+
+  Self.ImageCompare.Align := @Self.Align;
+  Self.ImageCompare.Clean := @Self.Clean;
 end;
 
 

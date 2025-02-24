@@ -12,30 +12,29 @@ type
   end;
 
 procedure TRemoteInput.Setup();
-var
-  T: UInt64 := GetTickCount() + 3000;
+const
+  TIMEOUT: UInt64 := GetTickCount() + 3000;
 begin
   RIInject(GetSimbaTargetPID());
-  while (T > GetTickCount()) do
-  begin
-    Self.EIOS := EIOS_PairClient(GetSimbaTargetPID());
-    if (Self.EIOS <> nil) then
-      Break;
-  end;
 
-  Target.SetPlugin({$MACRO LOADEDLIB(libremoteinput)}, ToStr(GetSimbaTargetPID()), Self.Canvas);
+  repeat
+    Self.EIOS := EIOS_PairClient(GetSimbaTargetPID());
+    if Self.EIOS <> nil then Break;
+  until GetTickCount() > TIMEOUT;
+
+  Target.SetEIOS({$MACRO LOADEDLIB(libremoteinput)}, ToString(GetSimbaTargetPID()));
+  //Target.SetPlugin({$MACRO LOADEDLIB(libremoteinput)}, ToStr(GetSimbaTargetPID()), Self.Canvas);
 end;
 
-procedure TRemoteInput.LoseFocus(); overload;
+procedure TRemoteInput.LoseFocus();
 var
-  Space: TBoxArray;
+  space: TBoxArray;
 begin
-  Space := Target.Bounds.Expand(50).Invert(Target.Bounds.Expand(500));
-  if Length(Space) > 0 then
-  begin
-    Target.MouseMove(Space.Random());
-    Target.MouseClick(EMouseButton.LEFT);
-  end;
+  space := Target.Bounds.Expand(50).Invert(Target.Bounds.Expand(500));
+  if Length(space) = 0 then Exit;
+
+  Target.MouseMove(Space.Random());
+  Target.MouseClick(EMouseButton.LEFT);
 end;
 
 procedure TRemoteInput.LoseFocus(delay: Integer); overload;
