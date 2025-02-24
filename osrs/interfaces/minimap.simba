@@ -1,0 +1,195 @@
+(*
+# Minimap
+Methods to interact with the minimap.
+*)
+
+{$DEFINE SRLT_MINIMAP_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  ERSMinimapDot  = (PLAYER, NPC, ITEM);
+  ERSMinimapDots = set of ERSMinimapDot;
+  ERSMinimapOrb  = (HITPOINTS, PRAYER, ENERGY, SPECIAL);
+
+  TRSMinimap = record
+    RSInterface: TRSInterface;
+    Orbs: TCircleArray;
+    Polygon: TPolygon;
+
+    Compass: record
+      Previous: Single;
+      Circle: TCircle;
+    end;
+
+    Masks: record //Thanks to Olly
+      const RESIZABLE: TImage = ImageFromString('IMG:AQAAAJgAAACYAAAAAAAAAJDjPwEAAAAAwQIJAAEAAACQ4z8BAAAAALEMAQABAAAAkOmCAQAAAACQoM4JAAAAAGACAABgAgAAkOmCAQAAAAABAAAAmAAAAJgAAAAgAAAAAAAAAAAAAAAAAAAAAwAAACAIEAgICAAIGAAAAAAAAAAAAAAAAAAAAAAAAAAAiVBORw0KGgoAAAANSUhEUgAAAJgAAACYCAIAAACXoLd2AAAABnRSTlMAAAAAAABupgeRAAACi0lEQVR4nO3cQZLiMBBEUbj/pXszM00w2NhSqSor9X8QbFhYzrfrxjwej6fLa6zyY4fdfvkJMtmMaetPoIBngFp/AjW8o8qnaAmpXPk4DSB7VT6XImTfyqdTgfSofkYIA9sO0rstIPfJGXK3DCF3zgSSnn/fG0PSa10h6f+aQdJ5PSDpSuqQdD1dSLqbIiSNpQVJM6lA0nz1kBRVJSTFVgNJK8qGpHXlQdLqMiApJyBNWgtJma2CpPziIakqIE2KhKTagDQpBpIUmoUknYA0aRyS1ALSpBFI0gxIk+5BknJAmnQVkvQD0qTvkNQlIE0C0qQzSOoVkCYBaRKQPgFpEpAmAWkSkD4BaRKQJr1DUtOA9AlIk34hqXVAmvQHkroHpEkgEhERERERERERERG9xB/OTeIfyyYBaRJfvjIJSJOANIhHBkwC0iQgTQLSJCBNAtIhHnQ1CUiTeNDVJCAd+vDzLNQxIE0C0iR++cqhJ5AeAWnSISSWjXqHA7JpQJr0BRLLFn1QA7JjlyCxFO8zGZDtugGJpWyHXkcfYKnZCCSWap1JnUNiKdUUJJYifTECsksBkFiW9x0ISP0uAQEp2EWUEUgscxogBFKrYUIghZpUvAeJ5aLmFW9DYhleiCKQxUUpjkBiGVWg4iAkliFJQGI5WaziFCSWM2lBYjlWuGIAJJYDiUJieTddSERv1QASziu1gcTyvE6QWJ7UDBLLo/pBYvnWwp1XQ2L5r7UjJ0Bi+UhYGMjVJS2cc5k9OVO3zbzYVpbZwyZfbwfOmklLrurKWTlm4bWdOOtnLD9Bd+byiXpAKouWb9ISUoezfAQHyELL8ht3g8y0LL9Tc8illuW3thdkFG35sWNePwzzFBo2j8O9AAAAAElFTkSuQmCC');
+      const FIXED:     TImage = ImageFromString('IMG:AQAAAJEAAACXAAAAAAAAAIDjPwEAAAAA7joBAAEAAACQ4z8BAAAAALEMAQABAAAArNaCAQAAAADsLIQBAAAAAEQCAABEAgAArNaCAQAAAAABAAAAkQAAAJcAAAAgAAAAAAAAAAAAAAAAAAAAAwAAACAIEAgICAAIGAAAAAAAAAAAAAAAAAAAAAAAAAAAiVBORw0KGgoAAAANSUhEUgAAAJEAAACXCAIAAACa4y5pAAAABnRSTlMAAAAAAABupgeRAAACqElEQVR4nO3bS27kMBAE0db9L+3FDGDD7taHLDIzyQjoAKp8MHojv16vY6HnPPnrlZ0pf4NClZ7kp61mNjP5sdlm2uTnJ5m5JR/E18w/+UQuZonta5beXmYrtYXZeq1stnarme3TCmZ7Fmy2c5FmlGRGPwswo79Zm9GnTM3oPC8zup+FGT1NbEZtycyoJ4EZ9TfVjKqaZEa1YZbXcDMa0UAzGtcQMxpdsRnNCbO8ysxoZgVmNL8uM1KFWV6NZqQNs7wem5FDmOX1wIx8umVGbmGW14UZeYZZXh/NyDnM8sIsrzdm5B9meWGWF2aRYZbXtxmlhFlemGUGWF6YERFRevyW5YVZXpjlhVlemOWFWV6Y5YVZXpjlhVlemOWFWV6Y5fX/2wJK6cAsroNveOLCLC/M8uJ7/bwwywuzsPg/z7wwywuzvDDLC7O8fpuRf/ydhXVgFhdmeb03g822A7O4MMvrzAw2ww7M4sIsr2sz2Kz6q4OZe3fNYDPpLQ1m1j0zg03eJxfMfGsxg03YCcqFGWySzkWuzWCb3CUHZnbVmME2rTsWd81gm9BNiAdmsA3tvsIzM+RG9HT/FjPYCmsYv9EMtpLalm83Q66nns17zWBrqHPwAjPwbla1c6UZcp+qXbjeDLZflc87xAy5fw0adqDZ5mzjVh1rtqfc6D1nmG3FNmHMSWY7yE2bcarZqnKTBxSYLcY2fz2N2Rpyqt2UZtFswtHEZoly8rkszILY5EMZmUWwySeyMzNnk49jambLJp/F2syQTT5IgJkVm3yKGDMTNvkIYWZyNvn5kWZCNvnhwWYSNvnJmGGGmcGjfwMrNvmxmGGGmcejfwMfNvmZS5lNYJMfuKDZODn5UYublbPJz8EMM+NnT61ss042+ctvavbmmHWdvp8vL+MYGlUk74gAAAAASUVORK5CYII=');
+    end;
+
+    const FLAG: TImage = ImageFromString('IMG:AQAAAAIAAAACAAAAAAAAAIDjPwEAAAAA7joBAAEAAACQ4z8BAAAAALEMAQABAAAAgH8GCQAAAAAAiAYJAAAAAAgAAAAIAAAAgH8GCQAAAAABAAAAAgAAAAIAAAAYAAAAAAAAAAAAAAAAAAAAAwAAABgIEAgICAAAAAEAAAIAAAAAAAAAAAAAAAAAAAAAiVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFUlEQVR4nGP4z8AQayzIcCyMBUgBABrmA2K2r4OdAAAAAElFTkSuQmCC');
+  end;
+
+procedure TRSMinimap.SetupInterface();
+var
+  b: TBox;
+  tpa: TPointArray;
+begin
+  case RSClient.Mode of
+    ERSClientMode.RESIZABLE_CLASSIC, ERSClientMode.RESIZABLE_MODERN:
+    begin
+      b.X1 := RootInterface.Bounds.X2 - 157;
+      b.X2 := RootInterface.Bounds.X2 - 6;
+      b.Y1 := RootInterface.Bounds.Y1 + 8;
+      b.Y2 := RootInterface.Bounds.Y1 + 159;
+    end;
+
+    ERSClientMode.FIXED:
+    begin
+      b.X1 := RootInterface.Bounds.X2 - 195;
+      b.X2 := RootInterface.Bounds.X2 - 50;
+      b.Y1 := RootInterface.Bounds.Y1 + 8;
+      b.Y2 := RootInterface.Bounds.Y1 + 159;
+    end;
+  end;
+
+  Self.RSInterface.Setup(b);
+
+  SetLength(Self.Orbs, Ord(High(ERSMinimapOrb))+1);
+
+  with Self.RSInterface.Bounds do
+    case RSClient.Mode of
+      ERSClientMode.RESIZABLE_CLASSIC, ERSClientMode.RESIZABLE_MODERN:
+      begin
+        Self.Compass.Circle := [X1 - 2,  Y1 + 14,  17];
+        Self.Orbs[ERSMinimapOrb.HITPOINTS] := [X1 - 13, Y1 + 55,  12];
+        Self.Orbs[ERSMinimapOrb.PRAYER]    := [X1 - 13, Y1 + 90,  12];
+        Self.Orbs[ERSMinimapOrb.ENERGY]    := [X1 - 3,  Y1 + 121, 12];
+        Self.Orbs[ERSMinimapOrb.SPECIAL]   := [X1 + 19, Y1 + 148, 12];
+        tpa := [[0, -76], [21, -73], [40, -64], [56, -51], [68, -33], [75, -1], [68, 31], [50, 43], [40, 62], [21, 71], [0, 74], [-21, 71], [-40, 62], [-56, 49], [-68, 31], [-75, -1], [-68, -33], [-56, -51], [-40, -64], [-21, -73]];
+      end;
+
+      ERSClientMode.FIXED:
+      begin
+        Self.Compass.Circle := [X1 - 8,  Y1 + 12,  17];
+        Self.Orbs[ERSMinimapOrb.HITPOINTS] := [X1 - 13, Y1 + 49,  12];
+        Self.Orbs[ERSMinimapOrb.PRAYER]    := [X1 - 13, Y1 + 84,  12];
+        Self.Orbs[ERSMinimapOrb.ENERGY]    := [X1 - 3,  Y1 + 116, 12];
+        Self.Orbs[ERSMinimapOrb.SPECIAL]   := [X1 + 19, Y1 + 142, 12];
+        tpa := [[21, -71], [39, -62], [55, -49], [67, -32], [70, 0], [66, 19], [57, 32], [41, 43], [20, 58], [12, 71], [0, 74], [-11, 72], [-24, 55], [-47, 39], [-60, 31], [-66, 22], [-71, 0], [-72, -14], [-67, -32], [-55, -49], [-39, -62], [-21, -71], [0, -74]];
+      end;
+    end;
+
+  Self.Polygon := tpa.Offset(Self.RSInterface.Center);
+end;
+
+function TRSMinimap.Contains(p: TPoint): Boolean;
+begin
+  Result := Self.Polygon.Contains(p);
+end;
+
+function TRSMinimap.Filter(tpa: TPointArray): TPointArray;
+var
+  p: TPoint;
+begin
+  for p in tpa do
+    if Self.Contains(p) then
+      Result += p;
+end;
+
+
+function TRSMinimap.RandomPoint(p: TPoint; randomness: Int32): TPoint;
+begin
+  if not Self.Contains(p) then
+    raise GetDebugLn('Minimap', ToStr(p) + ' is not a valid point to generate a random point.');
+
+  while not Self.Contains(Result) do
+    Result := p.Random(-randomness, randomness);
+end;
+
+
+function TRSMinimap.Poisoned(): Boolean;
+begin
+  Result := Target.HasColor(16391, 3, 1, Self.Orbs[ERSMinimapOrb.HITPOINTS].Bounds);
+end;
+
+function TRSMinimap.Envenomed(): Boolean;
+begin
+  Result := Target.HasColor(1515790, 9, 1, Self.Orbs[ERSMinimapOrb.HITPOINTS].Bounds);
+end;
+
+function TRSMinimap.RunEnabled(): Boolean;
+begin
+  Result := Target.HasColor(ColorTolerance($58B1CB, 4.504, EColorSpace.HSV, [1.869, 0.609, 0.524]), 1, Self.Orbs[ERSMinimapOrb.ENERGY].Bounds);
+end;
+
+function TRSMinimap.HasStamina(): Boolean;
+begin
+  Result := Target.HasColor(ColorTolerance($2D61C1, 1.475, EColorSpace.HSV, [2.455, 0.300, 0.247]), 1, Self.Orbs[ERSMinimapOrb.ENERGY].Bounds);
+end;
+
+function TRSMinimap.PrayerEnabled(): Boolean;
+begin
+  Result := Target.HasColor(ColorTolerance($2188AB, 10.980, EColorSpace.HSV, [1.317, 1.076, 0.609]), 1, Self.Orbs[ERSMinimapOrb.PRAYER].Bounds);
+end;
+
+function TRSMinimap.SpecialEnabled(): Boolean;
+begin
+  Result := Target.HasColor(ColorTolerance($999273, 1.308, EColorSpace.RGB, [0.122, 0.640, 2.240]), 1, Self.Orbs[ERSMinimapOrb.SPECIAL].Bounds);
+end;
+
+function TRSMinimap.HasSpecialWeapon(): Boolean;
+begin
+  Result := Target.HasColor(ColorTolerance($A68F56, 5.999, EColorSpace.RGB, [0.270, 1.494, 1.237]), 1, Self.Orbs[ERSMinimapOrb.SPECIAL].Bounds);
+end;
+
+
+function TRSMinimap.Toggle(orb: ERSMinimapOrb): Boolean;
+var
+  state: Boolean;
+begin
+  case orb of
+    ERSMinimapOrb.HITPOINTS: Exit;
+    ERSMinimapOrb.PRAYER:  state := Self.PrayerEnabled();
+    ERSMinimapOrb.ENERGY:  state := Self.RunEnabled();
+    ERSMinimapOrb.SPECIAL:
+      if not Self.HasSpecialWeapon() then
+        Exit
+      else
+        state := Self.SpecialEnabled();
+  end;
+
+  Mouse.Click(Self.Orbs[orb], EMouseButton.LEFT);
+
+  case orb of
+    ERSMinimapOrb.HITPOINTS: Exit;
+    ERSMinimapOrb.PRAYER:  Result := Self.PrayerEnabled() <> state;
+    ERSMinimapOrb.ENERGY:  Result := Self.RunEnabled() <> state;
+    ERSMinimapOrb.SPECIAL: Result := Self.SpecialEnabled() <> state;
+  end;
+end;
+
+
+function TRSMinimap.FindFlag(out p: TPoint): Boolean;
+begin
+  p := Target.FindImage(Self.FLAG, 0, Self.RSInterface.Bounds);
+  Result := Self.Polygon.Contains(p);
+end;
+
+function TRSMinimap.HasFlag(): Boolean;
+var
+  p: TPoint;
+begin
+  Result := Self.FindFlag(p);
+end;
+
+function TRSMinimap.WaitFlag(time: Integer = 600; interval: Integer = -1): Boolean;
+begin
+  if interval = -1 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.HasFlag(), interval, time);
+end;
+
+
+var
+  Minimap: TRSMinimap;

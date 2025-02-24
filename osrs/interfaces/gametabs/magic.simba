@@ -22,6 +22,7 @@ begin
   //Self.Slots := TBoxArray.Create(GameTab.TopLeft.Offset(18,1), 4, 7, 23, 23, [18, 13]);
 end;
 
+//TODO:
 function TRSMagic.GetSlots(): TBoxArray;
 var
   tpa: TPointArray;
@@ -36,6 +37,20 @@ begin
   Result := atpa.BoundsArray();
 
 end;
+
+
+function TRSMagic.IsOpen(): Boolean;
+begin
+  Result := GameTabs.IsOpen(ERSGameTab.MAGIC);
+end;
+
+function TRSMagic.Open(): Boolean;
+begin
+  Result := GameTabs.Open(ERSGameTab.MAGIC);
+end;
+
+
+
 
 var
   Magic: TRSMagic;
