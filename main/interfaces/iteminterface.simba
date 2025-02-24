@@ -10,40 +10,41 @@ Methods to interact item interfaces.
 
 type
   TRSItemInterface = record
+    Name: String;
     Slots: ^TRSSlotInterface;
+    DiscoverOffset: TBox;
   end;
 
+procedure TRSItemInterface.Setup(name: String; slots: ^TRSSlotInterface; discoverOffset: TBox);
+begin
+  Self.Name := name;
+  Self.Slots := slots;
+  Self.DiscoverOffset := discoverOffset;
+end;
 
 function TRSItemInterface.IndexOf(items: TRSItemArray): Integer;
 var
   match: TImageMatch;
 begin
-  if ItemCompare.Find(items, Self.Slots^.GetSlots(), match) then
+  if ItemFinder.Find(items, Self.Slots^.Boxes(), match) then
     Exit(match.Index);
   Result := -1;
 end;
 
 function TRSItemInterface.IndicesOf(items: TRSItemArray): TIntegerArray;
 var
-  matches: TImageMatchArray;
-  i: Integer;
+  match: TImageMatch;
 begin
-  matches := ItemCompare.FindAll(items, Self.Slots^.GetSlots());
-
-  SetLength(Result, Length(matches));
-  for I := 0 to High(matches) do
-    Result[I] := matches[I].Index;
+  for match in ItemFinder.FindAll(items, Self.Slots^.Boxes()) do
+    Result += match.Index;
 end;
-
 
 
 function TRSItemInterface.Find(items: TRSItemArray; out slot: TBox): Boolean;
 var
-  slots: TBoxArray;
   match: TImageMatch;
 begin
-  slots := Self.Slots^.GetSlots();
-  Result := ItemCompare.Find(items, slots, match);
+  Result := ItemFinder.Find(items, Self.Slots^.Boxes(), match);
   if Result then
     slot := match.Box;
 end;
@@ -51,12 +52,10 @@ end;
 
 function TRSItemInterface.FindAll(items: TRSItemArray): TBoxArray;
 var
-  matches: TImageMatchArray;
-  i: Integer;
+  match: TImageMatch;
 begin
-  matches := ItemCompare.FindAll(items, Self.Slots^.GetSlots());
-  for i := 0 to High(matches) do
-    Result += matches[i].Box;
+  for match in ItemFinder.FindAll(items, Self.Slots^.Boxes()) do
+    Result += match.Box;
 end;
 
 function TRSItemInterface.FindAll(items: TRSItemArray; out boxes: TBoxArray): Boolean; overload;
@@ -64,9 +63,10 @@ var
   matches: TImageMatchArray;
   i: Integer;
 begin
-  if not ItemCompare.FindAll(items, Self.Slots^.GetSlots(), matches) then Exit;
+  Result := ItemFinder.FindAll(items, Self.Slots^.Boxes(), matches);
 
-  Result := True;
+  if not Result then Exit;
+
   for i := 0 to High(matches) do
     boxes += matches[i].Box;
 end;
@@ -74,14 +74,14 @@ end;
 
 function TRSItemInterface.FindAny(items: TRSItemArray): TImageMatch;
 begin
-  ItemCompare.Find(items, Self.Slots^.GetSlots(), Result);
+  ItemFinder.Find(items, Self.Slots^.Boxes(), Result);
 end;
 
 function TRSItemInterface.FindAny(items: TRSItemArray; out box: TBox): Boolean; overload;
 var
   match: TImageMatch;
 begin
-  Result := ItemCompare.Find(items, Self.Slots^.GetSlots(), match);
+  Result := ItemFinder.Find(items, Self.Slots^.Boxes(), match);
   if Result then box := match.Box;
 end;
 
@@ -100,6 +100,164 @@ function TRSItemInterface.ContainsAll(items: TRSItemArray): Boolean;
 var
   matches: TImageMatchArray;
 begin
-  Result := ItemCompare.FindAll(items, Self.Slots^.GetSlots(), matches);
+  Result := ItemFinder.FindAll(items, Self.Slots^.Boxes(), matches);
 end;
+
+
+function TRSItemInterface.DiscoverAllEx(): array of TRSItemArray;
+var
+  b: TBox;
+  img: TImage;
+begin
+  for b in Self.Slots^.Boxes() do
+  begin
+    b.X1 += Self.DiscoverOffset.X1;
+    b.Y1 += Self.DiscoverOffset.Y1;
+    b.X2 += Self.DiscoverOffset.X2;
+    b.Y2 += Self.DiscoverOffset.Y2;
+
+    if (b.Width <> 36) or (b.Height <> 23) then
+      raise GetDebugLn(Self.Name, 'DiscoverAllEx box has to be 36x23. You passed w: ' + ToStr(b.Width) + ' h: ' + ToStr(b.Height));
+
+    img := TImage.CreateFromTarget(b);
+    //TODO:
+    //if ItemFinder.CleanItemBitmap(img) then
+    //  Result += ItemFinder.GetHashItems(ItemFinder.GetHash(bmp));
+    img.Free();
+  end;
+end;
+
+function TRSItemInterface.DiscoverAll(): TRSItemArray;
+var
+  b: TBox;
+  img: TImage;
+begin
+  for b in Self.Slots^.Boxes() do
+  begin
+    b.X1 += Self.DiscoverOffset.X1;
+    b.Y1 += Self.DiscoverOffset.Y1;
+    b.X2 += Self.DiscoverOffset.X2;
+    b.Y2 += Self.DiscoverOffset.Y2;
+
+    if (b.Width <> 36) or (b.Height <> 23) then
+      raise GetDebugLn(Self.Name, 'DiscoverAll box has to be 36x23. You passed w: ' + ToStr(b.Width) + ' h: ' + ToStr(b.Height));
+
+    img := TImage.CreateFromTarget(b);
+    //TODO:
+    //if ItemFinder.CleanItemBitmap(img) then
+    //  Result += ItemFinder.GetHashItems(ItemFinder.GetHash(img));
+    img.Free();
+  end;
+end;
+
+function TRSItemInterface.Discover(slot: Int32): TRSItemArray;
+var
+  b: TBox;
+  img: TImage;
+begin
+  b := Self.Slots^.Box(slot);
+  b.X1 += Self.DiscoverOffset.X1;
+  b.Y1 += Self.DiscoverOffset.Y1;
+  b.X2 += Self.DiscoverOffset.X2;
+  b.Y2 += Self.DiscoverOffset.Y2;
+
+  if (b.Width <> 36) or (b.Height <> 23) then
+    raise GetDebugLn(Self.Name, 'Discover box has to be 36x23. You passed w: ' + ToStr(b.Width) + ' h: ' + ToStr(b.Height));
+
+  img := TImage.CreateFromTarget(b);
+  //TODO:
+  //if ItemFinder.CleanItemBitmap(img) then
+  //  Result := ItemFinder.GetHashItems(ItemFinder.GetHash(img));
+  img.Free();
+end;
+
+
+
+function TRSItemInterface.FindDifferent(items: TRSItemArray): TIntegerArray;
+begin
+  Result := Self.Slots^.GetUsed().Difference(Self.IndicesOf(items));
+end;
+
+function TRSItemInterface.ContainsDifferent(items: TRSItemArray): Boolean;
+begin
+  Result := Self.FindDifferent(items) <> [];
+end;
+
+
+function TRSItemInterface.Count(items: TRSItemArray): Integer;
+begin
+  Result := Length(Self.IndicesOf(items));
+end;
+
+function TRSItemInterface.WaitCount(items: TRSItemArray; count: Int32; time: Int32 = 600; interval: Int32 = -1): Boolean;
+begin
+  if interval = -1 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.Count(items) = count, interval, time);
+end;
+
+
+function TRSItemInterface.ReadStack(item: TRSItem): Integer; overload;
+var
+  b: TBox;
+begin
+  if not Self.Find([item], b) then Exit(-1);
+  Result := Self.Slots^.ReadStack(b);
+end;
+
+
+function TRSItemInterface.Hover(item: TRSItem): Boolean;
+var
+  box: TBox;
+begin
+  Result := Self.Find([item], box);
+  if Result then Mouse.Move(box);
+end;
+
+function TRSItemInterface.Click(item: TRSItem; button: EMouseButton = EMouseButton.LEFT): Boolean;
+begin
+  Result := Self.Hover(item);
+  if Result then Target.MouseClick(button);
+end;
+
+function TRSItemInterface.Move(item: TRSItem; destination: Integer): Boolean; overload;
+var
+  slots: TBoxArray;
+  matches: TImageMatchArray;
+  i, n: Integer;
+  center: TPoint;
+  dist, closest: Double;
+begin
+  slots := Self.Slots^.Boxes();
+  if not ItemFinder.FindAll([item], slots, matches) then Exit;
+
+  center := slots[destination].Center;
+  closest := $FFFFFF;
+
+  for i := 0 to High(matches) do
+  begin
+    if matches[i].Index = destination then
+      Exit(True);
+
+    dist := matches[i].Box.Center.DistanceTo(center);
+    if dist < closest then
+    begin
+      closest := dist;
+      n := matches[i].Index;
+    end;
+  end;
+
+  Result := Self.Slots^.Move(n, destination);
+end;
+
+function TRSItemInterface.Interact(item: TRSItem; option: String = ''): Boolean;
+begin
+  if not Self.Hover(item) then Exit;
+
+  if option <> '' then
+    Exit(ChooseOption.Select(option));
+
+  Target.MouseClick(EMouseButton.LEFT);
+  Result := True;
+end;
+
 

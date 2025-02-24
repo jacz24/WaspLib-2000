@@ -5,11 +5,23 @@
 {$ENDIF}
 
 procedure SetupInterfaces();
+var
+  mode: ERSClientMode;
 begin
-  RSClient.DetectClientMode(True);
+  mode := RSClient.DetectClientMode();
+  if mode = ERSClientMode.UNKNOWN then
+  begin
+    SetupInterfaces();
+    Exit;
+  end;
+
+  RSCLient.Mode := mode;
+  WriteLn(GetDebugLn('RSClient', 'Target bounds were updated, client mode is: ' + ToStr(mode), EErrorLevel.SUCCESS));
+
   RootInterface.Setup(Target.Bounds);
   GameTabs.SetupInterface();
   GameTab.SetupInterface();
+  Inventory.SetupInterface();
   Chat.SetupInterface();
 end;
 

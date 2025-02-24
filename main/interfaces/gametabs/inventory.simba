@@ -10,8 +10,273 @@ Methods to interact with the inventory gametab.
 
 type
   TRSInventory = record
-    GameTab: TRSGameTab;
-    //Slots: SlotInterface;
-    //Items: ItemInterface;
+    Slots: TRSSlotInterface;
+    Items: TRSItemInterface;
     ShiftEnabled: Boolean;
   end;
+
+procedure TRSInventory.SetupInterface();
+begin
+  Self.Slots.Setup('Inventory.Slots', TBoxArray.Create(GameTab.TopLeft.Offset(13,9), 4, 7, 31, 31, [11, 5]));
+  Self.Items.Setup('Inventory.Items', @Self.Slots, [0, 9, 4, 0]);
+  Self.ShiftEnabled := True;
+end;
+
+
+function TRSInventory.IsOpen(): Boolean;
+begin
+  Result := GameTabs.IsOpen(ERSGameTab.INVENTORY);
+end;
+
+function TRSInventory.Open(): Boolean;
+begin
+  Result := GameTabs.Open(ERSGameTab.INVENTORY);
+end;
+
+
+function TRSInventory.IsFull(): Boolean;
+begin
+  Result := Self.Slots.Count() > 27;
+end;
+
+
+function TRSInventory.IsSelected(slot: TBox): Boolean;
+begin
+  slot.Y1 += 8;
+  Result := Target.HasColor(RSColors.ITEM_BORDER_WHITE, 0, 1, slot);
+end;
+
+function TRSInventory.IsSelected(slot: Integer): Boolean; overload;
+begin
+  Result := Self.IsSelected(Self.Slots.Box(slot));
+end;
+
+function TRSInventory.GetSelected(): Integer;
+var
+  slots: TBoxArray;
+begin
+  slots := Self.Slots.Boxes();
+  for Result := 0 to High(slots) do
+    if Self.IsSelected(slots[Result]) then
+      Exit;
+  Result := -1;
+end;
+
+function TRSInventory.IsSelected(item: TRSItem): Boolean; overload;
+var
+  selected: Integer;
+  slots: TIntegerArray;
+begin
+  selected := Self.GetSelected();
+  if selected = -1 then Exit;
+  slots := Self.Items.IndicesOf([item]);
+  Result := slots.Contains(selected);
+end;
+
+
+function TRSInventory.Select(slot: Integer; wait: Boolean = False): Boolean;
+var
+  boxes: TBoxArray;
+  b, tmp: TBox;
+begin
+  boxes := Self.Slots.Boxes();
+  if slot > -1 then
+  begin
+    b := boxes[slot];
+    if Self.IsSelected(b) then Exit(True);
+    Delete(boxes, slot, 1);
+  end;
+
+  for tmp in boxes do
+    if Self.IsSelected(tmp) then
+    begin
+      Mouse.Click(tmp, EMouseButton.LEFT);
+      if slot = -1 then Exit(True);
+      Break;
+    end;
+
+  Mouse.Click(b, EMouseButton.LEFT);
+  Result := not wait or SleepUntil(Self.IsSelected(b), 50, RandomMode(800, 600, 1400));
+end;
+
+function TRSInventory.Select(item: TRSItem; wait: Boolean = False): Boolean; overload;
+var
+  selected: Integer;
+  slots: TIntegerArray;
+begin
+  selected := Self.GetSelected();
+  slots := Self.Items.IndicesOf([item]);
+
+  if slots = [] then Exit;
+  if (selected > -1) and slots.Contains(selected) then
+    Exit(True);
+
+  Result := Self.Select(slots.Random(), wait);
+end;
+
+
+
+function TRSInventory.Combine(slotA, slotB: Integer): Boolean;
+begin
+  Result := Self.Select(slotA);
+  if Result then
+  begin
+    Sleep(0, 500, ERandomDir.LEFT);
+    Self.Slots.Click(slotB, EMouseButton.LEFT);
+  end;
+end;
+
+function TRSInventory.Combine(itemA, itemB: TRSItem): Boolean; overload;
+var
+  slotsA, slotsB: TIntegerArray;
+  bestA, bestB: Integer;
+  dist, best: Double;
+  boxes: TBoxArray;
+  centers: TPointArray;
+  i, j: Integer;
+begin
+  slotsA := Self.Items.IndicesOf([itemA]);
+  if slotsA = [] then Exit;
+
+  slotsB := Self.Items.IndicesOf([itemB]);
+  if slotsB = [] then Exit;
+
+  best := $FFFFFF;
+  centers := Self.Slots.Boxes().Centers();
+
+  for i := 0 to High(slotsA) do
+    for j := 0 to High(slotsB) do
+    begin
+      dist := centers[slotsA[i]].DistanceTo(centers[slotsB[j]]);
+      if dist < best then
+      begin
+        best := dist;
+        bestA := slotsA[i];
+        bestB := slotsB[j];
+      end;
+    end;
+
+  Result := Self.Combine(bestA, bestB);
+end;
+
+
+function TRSInventory.Drop(slots: TIntegerArray; attempts: Integer = 5): Boolean;
+var
+  boxes: TBoxArray;
+  b: TBox;
+  i, j: Integer;
+  circle: TCircle;
+begin
+  if Length(slots) = 0 then Exit(True);
+
+  boxes := Self.Slots.Boxes();
+  for 1 to attempts do
+  begin
+    for i := 0 to High(slots) do
+    begin
+      if Self.GetSelected() > -1 then
+      begin
+        Self.Select(-1);
+        Continue(2);
+      end;
+
+      b := boxes[slots[i]];
+      if not Self.Slots.IsUsed(b) then Continue;
+
+      Mouse.Move(b);
+      ChooseOption.Select('Drop');
+
+      if RandomBoolean(0.03) then
+        for j := 1 to RandomMode(1, 0, 2) do
+        begin
+          circle := TCircle.Create(Target.MouseX, Target.MouseY, 5);
+          Mouse.Click(circle, EMouseButton.LEFT, True);
+        end;
+
+      Sleep(0, 250, ERandomDir.LEFT);
+    end;
+
+    Exit(True);
+  end;
+end;
+
+function TRSInventory.Drop(items: TRSItemArray; pattern: TIntegerArray = []): Boolean; overload;
+var
+  slots: TIntegerArray;
+begin
+  if pattern = [] then pattern := Self.Slots.RandomPattern();
+  slots := Self.Items.IndicesOf(items);
+  Result := (slots <> []) and Self.Drop(pattern.Intersection(slots));
+end;
+
+
+function TRSInventory.ShiftDrop(slots: TIntegerArray; attempts: Integer = 5): Boolean;
+var
+  boxes: TBoxArray;
+  b: TBox;
+  i, j: Integer;
+  circle: TCircle;
+begin
+  if Length(slots) = 0 then Exit(True);
+
+  if not Self.ShiftEnabled then Exit(Self.Drop(slots));
+
+  boxes := Self.Slots.Boxes();
+  for 1 to attempts do
+  begin
+    for i := 0 to High(slots) do
+    begin
+      if Self.GetSelected() > -1 then
+      begin
+        Self.Select(-1);
+        Continue(2);
+      end;
+
+      b := boxes[slots[i]];
+      if not Self.Slots.IsUsed(b) then Continue;
+
+      if not Keyboard.IsKeyDown(EKeyCode.LSHIFT) then
+      begin
+        Keyboard.KeyDown(EKeyCode.LSHIFT);
+        Sleep(95, 170, ERandomDir.LEFT); //Wait for SHIFT to be registered before the click (important).
+      end;
+
+      Mouse.Click(b, EMouseButton.LEFT);
+
+      if RandomBoolean(0.03) then
+        for j := 1 to RandomMode(1, 0, 2) do
+        begin
+          circle := TCircle.Create(Target.MouseX, Target.MouseY, 5);
+          Mouse.Click(circle, EMouseButton.LEFT, True);
+        end;
+
+      Sleep(0, 250, ERandomDir.LEFT);
+    end;
+
+    if Keyboard.IsKeyDown(EKeyCode.LSHIFT) then
+      Keyboard.KeyUp(EKeyCode.LSHIFT);
+    Exit(True);
+  end;
+
+  if Keyboard.IsKeyDown(EKeyCode.LSHIFT) then
+      Keyboard.KeyUp(EKeyCode.LSHIFT);
+
+  WriteLn GetDebugLn('Inventory', 'Shift drop is not enabled, consider enabling it for better performance.' , EErrorLevel.WARN);
+  Self.ShiftEnabled := False;
+end;
+
+function TRSInventory.ShiftDrop(slots, pattern: TIntegerArray): Boolean; overload;
+begin
+  Result := Self.ShiftDrop(pattern.Intersection(slots));
+end;
+
+function TRSInventory.ShiftDrop(items: TRSItemArray; pattern: TIntegerArray): Boolean; overload;
+var
+  slots: TIntegerArray;
+begin
+  slots := Self.Items.IndicesOf(items);
+  Result := (slots <> []) and Self.ShiftDrop(pattern.Intersection(slots));
+end;
+
+var
+  Inventory: TRSInventory;

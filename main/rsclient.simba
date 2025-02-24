@@ -19,7 +19,6 @@ type
   TRSClient = record
     Client: ERSClient;
     Mode: ERSClientMode;
-    Bounds: TBox;
   end;
 
 (*
@@ -35,7 +34,6 @@ function TRSClient.DetectClientMode(update: Boolean = False): ERSClientMode;
 begin
   // Music tab in each mode there are different colors at W-4, H-21
   // Two colors each because tab can be active(red) or not(grey)
-
   case Target.GetColor([Target.Width-4, Target.Height-21]) of
     2435372, 658467: Result := ERSClientMode.FIXED;
     3555653, 922425: Result := ERSClientMode.RESIZABLE_MODERN;
@@ -44,23 +42,9 @@ begin
 
   if update then
   begin
-    Self.Mode   := Result;
-    Self.Bounds := Target.Bounds;
+    Self.Mode := Result;
+    WriteLn(GetDebugLn('RSClient', 'Client mode changed: ' + ToStr(Self.Mode), EErrorLevel.SUCCESS));
   end;
-end;
-
-(*
-## RSClient.ClientModeChanged()
-```pascal
-procedure TRSClient.ClientModeChanged();
-```
-Anything that needs an alert when the client mode changes should override this.
-*)
-procedure TRSClient.ClientModeChanged();
-var
-  i: Int32;
-begin
-  WriteLn(GetDebugLn('RSClient', 'Client mode changed: ' + ToString(Self.Mode)));
 end;
 
 (*
@@ -84,7 +68,7 @@ begin
   if (mode <> ERSClientMode.UNKNOWN) and (mode <> Self.Mode) then
   begin
     Self.Mode := mode;
-    Self.ClientModeChanged();
+    WriteLn(GetDebugLn('RSClient', 'Client mode changed: ' + ToStr(Self.Mode), EErrorLevel.SUCCESS));
   end;
 
   Result := mode <> ERSClientMode.UNKNOWN;
@@ -135,11 +119,8 @@ This is automatically called on the **RSClient** variable.
 *)
 procedure TRSClient.Setup();
 begin
-  Self.Mode := Self.DetectClientMode();
-  if Self.Mode = ERSClientMode.UNKNOWN then
+  if Self.DetectClientMode(True) = ERSClientMode.UNKNOWN then
     Self.Mode := ERSClientMode.FIXED; // Fixed as default so we can login if needed
-
-  Self.ClientModeChanged();
 end;
 
 var

@@ -4,5 +4,10 @@
 {$ENDIF}
 
 type
-  TRSItem = Variant;
+  TRSItem = String;
   TRSItemArray = array of TRSItem;
+
+function TRSItem.HasAmount(): Boolean;
+begin
+  Self.EndsWith(')', True);
+end;
