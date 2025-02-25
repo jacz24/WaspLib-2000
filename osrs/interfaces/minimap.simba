@@ -21,7 +21,7 @@ type
     Polygon: TPolygon;
 
     Compass: record
-      Previous: Single;
+      PreviousRadians: Single;
       Circle: TCircle;
     end;
 
@@ -58,9 +58,9 @@ begin
 
     ERSClientMode.FIXED:
     begin
-      b.X1 := Target.Bounds.X2 - 195;
+      b.X1 := Target.Bounds.X2 - 194;
       b.X2 := Target.Bounds.X2 - 50;
-      b.Y1 := Target.Bounds.Y1 + 8;
+      b.Y1 := Target.Bounds.Y1 + 9;
       b.Y2 := Target.Bounds.Y1 + 159;
     end;
   end;
@@ -118,6 +118,120 @@ begin
   while not Self.Contains(Result) do
     Result := p.Random(-randomness, randomness);
 end;
+
+
+function TRSMinimap.GetCompassAngle(asDegrees: Boolean = True): Single;
+var
+  dotpts: TPointArray;
+  g: T2DPointArray;
+begin
+  with Self.Compass.Circle do
+  begin
+    dotpts := Target.FindColor(ColorTolerance($2220A1, 0.811, EColorSpace.HSL, [2.608, 0.137, 0.256]), Bounds); // red
+    if dotpts = [] then Exit;
+
+    g := dotpts.ExtractDist([X,Y], 12, Radius).Cluster(4);
+
+    if Length(g) < 3 then Exit;
+
+    if (g[0].Mean().DistanceTo(g[1].Mean()) > 25) then Swap(g[0], g[2]);
+    if (g[0].Mean().DistanceTo(g[2].Mean()) > 25) then Swap(g[0], g[1]);
+
+    if Abs(DeltaAngle(ArcTan2(g[1,0].Y - Y, g[1,0].X - X)+PI/2, ArcTan2(g[0,0].Y - Y, g[0,0].X - X), 2*PI)) > PI/2 then
+      Swap(g[1], g[2]);
+
+    Result := RadNormalize(ArcTan2(g[1].Mean().Y - g[2].Mean().Y, g[1].Mean().X - g[2].Mean().X));
+
+    Self.Compass.PreviousRadians := Result;
+
+    if asDegrees then
+      Result := radToDeg(Result);
+  end;
+end;
+
+(*
+## Minimap.SetCompassAngle
+```pascal
+procedure TRSMinimap.SetCompassAngleEx(degrees, accuracy: Double);
+procedure TRSMinimap.SetCompassAngle(degrees: Double);
+procedure TRSMinimap.SetCompassAngle(minDegrees, maxDegrees: Double); overload;
+```
+Sets the current compass angle.
+If you specify a minimum and a maximum angle a gaussian distribution will be used.
+
+Example:
+```pascal
+Minimap.SetCompassAngle(180);
+```
+*)
+function TRSMinimap.SetCompassAngleEx(degrees, accuracy: Single): Boolean;
+const
+  DEG_PER_PIXEL = 2.83;
+var
+  available: TBox;
+  remaining: Int32;
+  left2right: Boolean;
+  destination: TPoint;
+  pixels: Int32;
+  timeout: UInt64;
+begin
+  available := Target.Bounds.Expand(-10);
+  degrees := DegNormalize(degrees);
+  timeout := GetTickCount() + RandomMean(6000, 8000);
+
+  repeat
+    remaining := Round(DeltaAngle(Self.GetCompassAngle(), degrees));
+    if Abs(remaining) <= accuracy then Exit(True);
+
+    pixels := Round(Abs(DeltaAngle(Self.GetCompassAngle(), degrees)) * DEG_PER_PIXEL);
+    left2right := InRange(remaining, 1, 180) or (remaining < -180);
+
+    if left2right then
+    begin
+      if (not available.Contains(Target.MouseXY)) or ((Target.MouseY + 200 > available.Y2) or (Target.MouseX + pixels > available.X2)) then
+        Target.MouseMove([available.X1, available.Y1, available.X1 + 200, available.Y1 + 200]);
+
+      destination.X := Target.MouseX + pixels;
+    end
+    else
+    begin
+      if (not available.Contains(Target.MouseXY)) or ((Target.MouseY + 200 > available.Y2) or (Target.MouseX - pixels < available.X1)) then
+        Target.MouseMove([available.X2 - 200, available.Y1, available.X2, available.Y1 + 200]);
+
+      destination.X := Target.MouseX - Pixels;
+    end;
+
+    destination.Y := Random(Target.MouseY + 100, available.Y2);
+
+    Target.MouseDown(EMouseButton.MIDDLE);
+    Target.MouseMove(destination);
+    Target.MouseUp(EMouseButton.MIDDLE);
+
+    Sleep(100, 1000, ERandomDir.LEFT);
+  until GetTickCount() > timeout;
+
+  WriteLn GetDebugLn('Minimap', 'SetCompassAngle timed out.', EErrorLevel.WARN);
+
+  //TODO:
+  //if not RSClient.IsLoggedIn() then
+  //  Login.LoginPlayer()
+  //else
+  //  Self.DebugLn('Make sure the setting "Middle mouse button controls the camera" is enabled in the game settings.');
+end;
+
+function TRSMinimap.SetCompassAngle(degrees: Single): Boolean;
+begin
+  Result := Self.SetCompassAngleEx(degrees, 5);
+end;
+
+function TRSMinimap.SetCompassAngle(minDegrees, maxDegrees: Single; accuracy: Single = 5): Boolean; overload;
+var
+  degrees: Single;
+begin
+  degrees := RandomMean(DegNormalize(minDegrees), DegNormalize(maxDegrees));
+  Result := Self.SetCompassAngleEx(degrees, accuracy);
+end;
+
 
 
 function TRSMinimap.Poisoned(): Boolean;
@@ -226,6 +340,87 @@ function TRSMinimap.GetDots(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER, ERSMin
 begin
   Result := Self.GetDots(dots, Self.Polygon.Bounds());
 end;
+
+
+function TRSMinimap.CleanImage(img: TImage): TImage;
+
+  procedure _Paint(p: TPoint);
+  var
+    area: TBox;
+    pixel: Int32;
+    x, y: Int32;
+  begin
+    area := TBox.Create(p.X - 2, p.Y - 2, p.X + 2, p.Y + 3);
+    area := area.Clip([0,0,img.Width-1, img.Height-1]);
+
+    for y := area.Y1 to area.Y2 do
+      for x := area.X1 to area.X2 do
+      begin
+        pixel := img.Pixel[x, y];
+
+        if SimilarColors($FFFFFF, pixel, 30) then
+          img.Pixel[x, y] := 0;
+
+        if SimilarColors($00FFFF, pixel, 30) then
+          img.Pixel[x, y] := 0;
+
+        if SimilarColors($0000FF, pixel, 30) then
+          img.Pixel[x, y] := 0;
+
+        if SimilarColors($000000, pixel, 1) then
+          img.Pixel[x, y] := 0;
+      end;
+  end;
+
+var
+  dots: TRSMinimapDotArray;
+  dot: ERSMinimapDot;
+  topLeft, p: TPoint;
+  tpa: TPointArray;
+  blend: TImage;
+begin
+  topLeft := Self.Polygon.Bounds().TopLeft;
+
+  dots := Self.GetDots();
+  for dot := ERSMinimapDot.PLAYER to ERSMinimapDot.ITEM do
+    for p in dots[dot] do
+      _Paint(p.Offset(-topLeft.X, -topLeft.Y));
+  _Paint(img.Center); // our own player
+
+
+  // TODO: account for tolerance
+  img.ReplaceColor(255,0);
+  img.ReplaceColor(284358,0);
+  img.ReplaceColor(1127261,0);
+
+  img.DrawColor := 0;
+
+  case RSClient.Mode of
+    ERSClientMode.FIXED: img.DrawImage(Self.Masks.FIXED, [0,0]);
+    ERSClientMode.RESIZABLE_CLASSIC, ERSCLientMode.RESIZABLE_MODERN: img.DrawImage(Self.Masks.RESIZABLE, [0,0]);
+  end;
+
+  tpa := img.FindColor(0).SortFrom(img.Center);
+
+  Result := img.Blend(tpa, 5);
+  Result.Pad(10);
+end;
+
+function TRSMinimap.GetCleanImage(angle: Single = $FFFF): TImage;
+var
+  img, clean: TImage;
+begin
+  img := TImage.CreateFromTarget(Self.RSInterface.Bounds);
+  img.ReplaceColor(0, 1);
+
+  clean := Self.CleanImage(img);
+  img.Free();
+
+  if angle = $FFFF then angle := Self.GetCompassAngle(False);
+  Result := clean.Rotate(EImageRotateAlgo.BILINEAR, angle, False);
+  clean.Free();
+end;
+
 
 var
   Minimap: TRSMinimap;
