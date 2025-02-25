@@ -18,8 +18,8 @@ begin
   RSCLient.Mode := mode;
   WriteLn(GetDebugLn('RSClient', 'Target bounds were updated, client mode is: ' + ToStr(mode), EErrorLevel.SUCCESS));
 
-  RootInterface.Setup(Target.Bounds);
   Minimap.SetupInterface();
+  MainScreen.SetupInterface();
   GameTabs.SetupInterface();
   GameTab.SetupInterface();
   Inventory.SetupInterface();

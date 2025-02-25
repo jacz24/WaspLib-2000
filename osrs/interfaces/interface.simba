@@ -64,7 +64,7 @@ end;
 
 function TRSInterfaceTitle.IsOpen(): Boolean;
 begin
-  Result := Target.CountColor($010000, 0, Self.CloseButton) > 80;
+  Result := Target.HasColor($010000, 0, 80, Self.CloseButton);
 end;
 
 function TRSInterfaceTitle.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
@@ -102,9 +102,3 @@ begin
 
   Result := SleepUntil(not Self.IsOpen(), 50, 600);
 end;
-
-type
-  TRSRootInterface = type TRSInterface;
-
-var
-  RootInterface: TRSRootInterface;

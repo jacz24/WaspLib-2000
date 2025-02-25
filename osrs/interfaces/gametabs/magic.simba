@@ -9,6 +9,9 @@ Methods to interact with the magic gametab.
 {$ENDIF}
 
 type
+  ERSSpellBook = enum(UNKNOWN, STANDARD, ANCIENT, LUNAR, ARCEUUS);
+  TRSSpellSet = set of ERSSpell;
+
   TRSMagic = record
     Slots: TBoxArray;
   end;
@@ -28,14 +31,47 @@ var
   tpa: TPointArray;
   atpa: T2DPointArray;
   color: TColorTolerance;
+  i, j: Integer;
+  weights: TIntegerArray;
+  rows, cols: Integer;
+  offset: TPoint;
+  b: TBox;
 begin
   color := ColorTolerance($17090A, 4.546, EColorSpace.RGB, [1.140, 1.330, 0.532]);
   tpa := Target.FindColor(color, GameTab.Bounds);
   if tpa = [] then Exit;
-  atpa := tpa.Cluster(4);
-  atpa := atpa.ExtractDimensions(5,5,23,23);
-  Result := atpa.BoundsArray();
 
+  atpa := tpa.Cluster(4).ExtractDimensions(5,5,23,23);
+  if Length(atpa) < 2 then Exit;
+
+  tpa := atpa.Means();
+
+  SetLength(weights, Length(tpa));
+
+  for i := 0 to High(tpa) do
+  begin
+    weights[i] := tpa[i].X + (tpa[i].Y * 10);
+
+    for j := 0 to High(tpa) do
+      if Abs(tpa[i].Y - tpa[j].Y) < 8 then
+        weights[i] := tpa[i].X + (tpa[j].Y * 10);
+  end;
+
+  tpa.Sort(weights, True);
+  atpa.Sort(weights, True);
+
+  cols := Length(tpa.Cluster(4, 100));
+  rows := Length(tpa.Cluster(100, 4));
+
+  b := GameTab.Bounds;
+  b.Y2 -= 5;
+  offset.X := (GameTab.Width - (cols * 23)) div cols;
+  offset.Y := (b.Height - (rows * 23)) div rows;
+
+  WriteLn offset;
+  WriteLn(GameTab.Width,' ', GameTab.Height-2);
+  Result := TBoxArray.Create([0,0], cols, rows, 23, 23, offset);
+  Result := Result.Offset(GameTab.TopLeft);
 end;
 
 
@@ -49,8 +85,33 @@ begin
   Result := GameTabs.Open(ERSGameTab.MAGIC);
 end;
 
+{%codetools off}
+function TRSMagic._IsSpellBook(book: ERSSpellBook; bounds: TBox): Boolean;
+begin
+  case book of
+    ERSSpellBook.STANDARD: Result := Target.HasColor(ColorTolerance($3177A6, 5.708, EColorSpace.HSL, [1.162, 0.601, 1.238]), 1, bounds);
+    ERSSpellBook.ANCIENT:  Result := Target.HasColor(ColorTolerance($77284E, 5.697, EColorSpace.HSV, [0.890, 0.672, 1.439]), 1, bounds);
+    ERSSpellBook.LUNAR:    Result := Target.HasColor(ColorTolerance($BEC9C6, 7.014, EColorSpace.HSV, [0.072, 1.950, 0.980]), 1, bounds);
+    ERSSpellBook.ARCEUUS:  Result := Target.HasColor(ColorTolerance($928F36, 9.554, EColorSpace.HSV, [1.352, 1.063, 0.586]), 1, bounds);
+  end;
+end;
+{%codetools on}
 
+function TRSMagic.IsSpellBook(book: ERSSpellBook): Boolean;
+begin
+  Result := Self._IsSpellBook(book, GameTabs.Get(ERSGameTab.MAGIC).Expand(-5));
+end;
 
+function TRSMagic.GetSpellBook(): ERSSpellBook;
+var
+  bounds: TBox;
+  book: ERSSpellBook;
+begin
+  bounds := GameTabs.Get(ERSGameTab.MAGIC).Expand(-5);
+  for book := ERSSpellBook.STANDARD to High(ERSSpellBook) do
+    if Self._IsSpellBook(book, bounds) then
+      Exit(book);
+end;
 
 var
   Magic: TRSMagic;

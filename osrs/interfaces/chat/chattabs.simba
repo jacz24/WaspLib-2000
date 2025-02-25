@@ -22,10 +22,10 @@ var
   b: TBox;
   i: Int32;
 begin
-  b.X1 := RootInterface.Bounds.X1;
-  b.X2 := RootInterface.Bounds.X1 + 518;
-  b.Y1 := RootInterface.Bounds.Y2 - 22;
-  b.Y2 := RootInterface.Bounds.Y2;
+  b.X1 := Target.Bounds.X1;
+  b.X2 := Target.Bounds.X1 + 518;
+  b.Y1 := Target.Bounds.Y2 - 22;
+  b.Y2 := Target.Bounds.Y2;
 
   Self.RSInterface.Setup(b);
 

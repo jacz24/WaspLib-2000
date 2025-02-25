@@ -16,7 +16,9 @@ type
 
   TRSGameTabs = record
     RSInterface: TRSInterface;
+    {%codetools off}
     Tabs: TBoxArray;
+    {%codetools on}
     const ActiveColor: TColorTolerance = [$14194A, 1.235, EColorSpace.HSL, [1.631, 1.084, 0.286]];
   end;
 
@@ -25,37 +27,37 @@ var
   b: TBox;
   tab: ERSGameTab;
 begin
-  b.Y2 := RootInterface.Bounds.Y2;
+  b.Y2 := Target.Bounds.Y2;
 
   case RSClient.Mode of
     ERSClientMode.FIXED:
     begin
-      b.X1 := RootInterface.Bounds.X2 - 242;
-      b.X2 := RootInterface.Bounds.X2 - 2;
-      b.Y1 := RootInterface.Bounds.Y2 - 334;
+      b.X1 := Target.Bounds.X2 - 242;
+      b.X2 := Target.Bounds.X2 - 2;
+      b.Y1 := Target.Bounds.Y2 - 334;
     end;
 
     ERSClientMode.RESIZABLE_CLASSIC:
     begin
-      b.X1 := RootInterface.Bounds.X2 - 240;
-      b.X2 := RootInterface.Bounds.X2;
-      b.Y1 := RootInterface.Bounds.Y2 - 334;
+      b.X1 := Target.Bounds.X2 - 240;
+      b.X2 := Target.Bounds.X2;
+      b.Y1 := Target.Bounds.Y2 - 334;
     end;
 
     ERSClientMode.RESIZABLE_MODERN:
     begin
-      b.X2 := RootInterface.Bounds.X2;
+      b.X2 := Target.Bounds.X2;
 
       //Needed because depending on the client width the tabs stack into row(s)
-      if RootInterface.Width >= 948 then
+      if Target.Width >= 948 then
       begin
-        b.X1 := RootInterface.Bounds.X2 - 428;
-        b.Y1 := RootInterface.Bounds.Y2 - 35;
+        b.X1 := Target.Bounds.X2 - 428;
+        b.Y1 := Target.Bounds.Y2 - 35;
       end
       else
       begin
-        b.X1 := RootInterface.Bounds.X2 - 230;
-        b.Y1 := RootInterface.Bounds.Y2 - 71;
+        b.X1 := Target.Bounds.X2 - 230;
+        b.Y1 := Target.Bounds.Y2 - 71;
       end;
     end;
   end;
@@ -69,7 +71,7 @@ begin
     ERSClientMode.RESIZABLE_MODERN:
       begin
         // One row
-        if RootInterface.Width >= 948 then
+        if Target.Width >= 948 then
         begin
           Self.Tabs := TBoxArray.Create(Self.RSInterface.BottomLeft.Offset(0,-35), 14, 1, 30, 33, [3, 0]);
           for tab := ERSGameTab.MUSIC downto ERSGameTab.FRIENDS - 1 do
@@ -80,10 +82,10 @@ begin
 
         // Logout button is moved to top right corner
         Self.Tabs[7] := Self.Tabs[10];
-        Self.Tabs[10].X1 := RootInterface.Bounds.X2 - 19;
-        Self.Tabs[10].Y1 := RootInterface.Bounds.Y1 + 9;
-        Self.Tabs[10].X2 := RootInterface.Bounds.X2 - 10;
-        Self.Tabs[10].Y2 := RootInterface.Bounds.Y1 + 18;
+        Self.Tabs[10].X1 := Target.Bounds.X2 - 19;
+        Self.Tabs[10].Y1 := Target.Bounds.Y1 + 9;
+        Self.Tabs[10].X2 := Target.Bounds.X2 - 10;
+        Self.Tabs[10].Y2 := Target.Bounds.Y1 + 18;
       end;
   end;
 end;

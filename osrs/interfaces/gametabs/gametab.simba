@@ -11,46 +11,43 @@ type
   TRSGameTab = type TRSInterface;
 
 procedure TRSGameTab.SetupInterface();
-var
-  b: TBox;
 begin
   case RSClient.Mode of
     ERSClientMode.FIXED:
     begin
-      b.X1 := RootInterface.Bounds.X2 - 214;
-      b.X2 := RootInterface.Bounds.X2 - 31;
-      b.Y1 := RootInterface.Bounds.Y2 - 298;
-      b.Y2 := RootInterface.Bounds.Y2 - 37;
+      Self.Bounds.X1 := Target.Bounds.X2 - 214;
+      Self.Bounds.X2 := Target.Bounds.X2 - 31;
+      Self.Bounds.Y1 := Target.Bounds.Y2 - 298;
+      Self.Bounds.Y2 := Target.Bounds.Y2 - 37;
     end;
 
     ERSClientMode.RESIZABLE_CLASSIC:
     begin
-      b.X1 := RootInterface.Bounds.X2 - 212;
-      b.X2 := RootInterface.Bounds.X2 - 29;
-      b.Y1 := RootInterface.Bounds.Y2 - 298;
-      b.Y2 := RootInterface.Bounds.Y2 - 37;
+      Self.Bounds.X1 := Target.Bounds.X2 - 212;
+      Self.Bounds.X2 := Target.Bounds.X2 - 29;
+      Self.Bounds.Y1 := Target.Bounds.Y2 - 298;
+      Self.Bounds.Y2 := Target.Bounds.Y2 - 37;
     end;
 
     ERSClientMode.RESIZABLE_MODERN:
     begin
-      b.X1 := RootInterface.Bounds.X2 - 193;
-      b.X2 := RootInterface.Bounds.X2 - 10;
-      b.Y1 := GameTabs.RSInterface.Bounds.Y1 - 269;
-      b.Y2 := GameTabs.RSInterface.Bounds.Y1 - 7;
+      Self.Bounds.X1 := Target.Bounds.X2 - 193;
+      Self.Bounds.X2 := Target.Bounds.X2 - 10;
+      Self.Bounds.Y1 := GameTabs.RSInterface.Bounds.Y1 - 269;
+      Self.Bounds.Y2 := GameTabs.RSInterface.Bounds.Y1 - 7;
     end;
   end;
 
-  Self.Bounds := b;
-  Self.Width  := b.Width;
-  Self.Height := b.Height;
-  Self.Center := b.Center;
+  Self.Width  := Self.Bounds.Width;
+  Self.Height := Self.Bounds.Height;
+  Self.Center := Self.Bounds.Center;
 
-  Self.TopLeft     := b.TopLeft;
-  Self.TopRight    := b.TopRight;
-  Self.BottomRight := b.BottomRight;
-  Self.BottomLeft  := b.BottomLeft;
+  Self.TopLeft     := Self.Bounds.TopLeft;
+  Self.TopRight    := Self.Bounds.TopRight;
+  Self.BottomRight := Self.Bounds.BottomRight;
+  Self.BottomLeft  := Self.Bounds.BottomLeft;
 
-  Self.Quad := [b.TopLeft, b.TopRight, b.BottomRight, b.BottomLeft];
+  Self.Quad := [Self.TopLeft, Self.TopRight, Self.BottomRight, Self.BottomLeft];
 end;
 
 var

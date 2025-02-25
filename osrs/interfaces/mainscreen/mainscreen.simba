@@ -1,0 +1,181 @@
+(*
+# MainScreen
+Methods to interact with the mainscreen.
+*)
+
+{.$DEFINE DEBUG_UPTEXT}
+
+{$DEFINE SRLT_MAINSCREEN_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  TRSMainScreen = record
+    RSInterface: TRSInterface;
+    UpTextImageBuffer: TImage;
+    UpTextBox: TBox;
+    UpTextFilter: TOCRFilter;
+
+    HighestPitch: Boolean;
+  end;
+
+procedure TRSMainScreen.Setup();
+begin
+  Self.UptextFilter := TOCRAnyColorFilter.Create(85, 60);
+  Self.UptextFilter.Blacklist := ',.'+#39+#34;
+end;
+
+procedure TRSMainScreen.SetupInterface();
+var
+  b: TBox;
+begin
+  case RSClient.Mode of
+    ERSClientMode.RESIZABLE_CLASSIC, ERSClientMode.RESIZABLE_MODERN: b := Target.Bounds;
+    ERSClientMode.FIXED: b := TBox.Create(4,4,515,337);
+  end;
+
+  Self.RSInterface.Setup(b);
+
+  Self.UpTextBox.X1 := Self.RSInterface.Bounds.X1 + 3;
+  Self.UpTextBox.Y1 := Self.RSInterface.Bounds.Y1 + 3;
+  Self.UpTextBox.X2 := Self.RSInterface.Bounds.X1 + 500;
+  Self.UpTextBox.Y2 := Self.RSInterface.Bounds.Y1 + 21;
+end;
+
+
+function TRSMainScreen.GetUpText(): String;
+begin
+   if RSClient.Mode = ERSClientMode.FIXED then
+    Result := OCR.RecognizeStatic(Self.UpTextBox, Self.UptextFilter, RSFonts.BOLD_12_SHADOW)
+  else
+    Result := OCR.RecognizeStatic(Self.UpTextBox, Self.UptextFilter, RSFonts.BOLD_12_SHADOW);
+
+  {$IFDEF DEBUG_UPTEXT}
+  WriteLn GetDebugLn('MainScreen', 'UpText: ' + Result);
+  {$ENDIF}
+end;
+
+
+function TRSMainScreen.IsUpText(text: String; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean; overload;
+var
+  upText: String;
+begin
+  if caseSensitive then
+    upText := Self.GetUpText()
+  else
+  begin
+    text := LowerCase(text);
+    upText := LowerCase(Self.GetUpText());
+  end;
+
+  upText := Copy(upText, 1, Length(text));
+  Result := text.Similarity(upText) >= similarity;
+end;
+
+function TRSMainScreen.IsUpText(strings: TStringArray; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean; overload;
+var
+  upText, str, tmp: String;
+begin
+  if caseSensitive then
+    upText := Self.GetUpText()
+  else
+    upText := LowerCase(Self.GetUpText());
+
+  for str in strings do
+  begin
+    if not caseSensitive then str := LowerCase(str);
+
+    tmp := Copy(upText, 1, Length(str));
+    if str.Similarity(tmp) >= similarity then
+      Exit(True);
+  end;
+end;
+
+procedure TRSMainScreen.SetHighestPitch();
+var
+  i, area: Integer;
+begin
+  Keyboard.KeyDown(EKeyCode.UP);
+
+  area := Self.RSInterface.Bounds.Area * 100;
+  for i := 1 to 10 do // 2500ms timeout
+    if (Target.GetPixelDifference(250, Self.RSInterface.Bounds) / area) < 10 then // less than 10% of the screen changed in 250ms
+      Break;
+
+  Keyboard.KeyUp(EKeyCode.UP);
+  Self.HighestPitch := True;
+end;
+
+
+function TRSMainScreen.IsVisible(p: TPoint): Boolean;
+begin
+  Result := Self.RSInterface.Bounds.Expand(-10).Contains(p);
+
+  if not Result or (RSClient.Mode = ERSClientMode.FIXED) then
+    Exit;
+
+  if Chat.RSInterface.Bounds.Expand(5).Contains(p) and Chat.IsOpen() then
+    Exit(False);
+  if Chat.Tabs.RSInterface.Bounds.Expand(5).Contains(p) then
+    Exit(False);
+  if Minimap.RSInterface.Bounds.Expand(55).Contains(p) then
+    Exit(False);
+  if GameTabs.RSInterface.Bounds.Expand(5).Contains(p) then
+    Exit(False);
+end;
+
+{%codetools off}
+function TRSMainScreen._RedClicked(area: TBox): Boolean;
+begin
+  Result := Target.HasColor(255, 0, 1, area) or Target.HasColor(262600, 0, 1, area);
+end;
+{%codetools on}
+
+function TRSMainScreen.RedClicked(): Boolean;
+var
+  area: TBox;
+begin
+  area := TBox.Create(Target.MouseXY, 10, 10).Clip(Self.RSInterface.Bounds);
+  Result := Self._RedClicked(area);
+end;
+
+function TRSMainScreen.WaiRedClick(time: Integer = 250): Boolean;
+var
+  area: TBox;
+begin
+  area := TBox.Create(Target.MouseXY, 10, 10).Clip(Self.RSInterface.Bounds);
+  Result := SleepUntil(Self._RedClicked(area), 50, time);
+end;
+
+
+{%codetools off}
+function TRSMainScreen._YellowClicked(area: TBox): Boolean;
+begin
+  Result := Target.HasColor(65535, 0, 1, area);
+end;
+{%codetools on}
+
+function TRSMainScreen.YellowClicked(): Boolean;
+var
+  area: TBox;
+begin
+  area := TBox.Create(Target.MouseXY, 10, 10).Clip(Self.RSInterface.Bounds);
+  Result := Self._YellowClicked(area);
+end;
+
+function TRSMainScreen.WaiYellowClick(time: Integer = 250): Boolean;
+var
+  area: TBox;
+begin
+  area := TBox.Create(Target.MouseXY, 10, 10).Clip(Self.RSInterface.Bounds);
+  Result := SleepUntil(Self._YellowClicked(area), 50, time);
+end;
+
+
+var
+  MainScreen: TRSMainScreen;
+
+begin
+  MainScreen.Setup();
+end;
