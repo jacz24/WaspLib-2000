@@ -14,61 +14,29 @@ type
   TRSMinimapDotArray = array [ERSMinimapDot] of TPointArray;
 
 function TRSMinimap.GetDots(dot: ERSMinimapDot; bounds: TBox): TPointArray;
-var
-  img: TImage;
-  p, offset: TPoint;
 begin
-  bounds := bounds.Clip(Self.RSInterface.Bounds);
-  offset := bounds.TopLeft;
-  img := TImage.CreateFromTarget(bounds);
-
-  img.DrawColor := $0;
-
-  while True do
-  begin
-    p := img.FindImage(Self.DOTS[dot], 0);
-    if p = [-1,-1] then Break;
-    img.DrawBox([p.X, p.Y, p.X + 1, p.Y + 1]);
-    Result += p.Offset(offset);
-  end;
-
-  img.Free();
+  bounds := bounds.Clip(Self.Polygon.Bounds());
+  Result := Target.FindDTMEx(Self.DotDTMS[dot], -1, bounds);
 end;
 
 function TRSMinimap.GetDots(dot: ERSMinimapDot): TPointArray; overload;
 begin
-  Result := Self.GetDots(dot, Self.RSInterface.Bounds);
+  Result := Self.GetDots(dot, Self.Polygon.Bounds());
 end;
 
 
 function TRSMinimap.GetDots(dots: ERSMinimapDots; bounds: TBox): TRSMinimapDotArray; overload;
 var
-  img: TImage;
   dot: ERSMinimapDot;
-  p, offset: TPoint;
+  offset: TPoint;
 begin
-  bounds := bounds.Clip(Self.RSInterface.Bounds);
-  offset := bounds.TopLeft;
-  img := TImage.CreateFromTarget(bounds);
-
-  img.DrawColor := $0;
+  bounds := bounds.Clip(Self.Polygon.Bounds());
 
   for dot in dots do
-    while True do
-    begin
-      p := img.FindImage(Self.DOTS[dot], 0);
-      if p = [-1,-1] then Break;
-      img.DrawBox([p.X, p.Y, p.X + 1, p.Y + 1]);
-      Result[dot] += p.Offset(offset);
-    end;
-
-  img.Free();
+    Result[dot] += Target.FindDTMEx(Self.DotDTMS[dot], -1, bounds);
 end;
 
 function TRSMinimap.GetDots(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER, ERSMinimapDot.NPC, ERSMinimapDot.ITEM]): TRSMinimapDotArray; overload;
 begin
-  Result := Self.GetDots(dots, Self.RSInterface.Bounds);
+  Result := Self.GetDots(dots, Self.Polygon.Bounds());
 end;
-
-
-
