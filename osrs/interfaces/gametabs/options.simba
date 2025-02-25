@@ -1,0 +1,118 @@
+(*
+# Options
+Methods to interact with the options gametab.
+*)
+
+{$DEFINE SRLT_OPTIONS_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  ERSOptionsTab = (CONTROLS, AUDIO, DISPLAY);
+  ERSOptionsSlider = (BRIGHTNESS, ZOOM);
+  ERSOptionsButton = (AID, RUN, HOUSE, BOND);
+  ERSHouseOptionsButton = (CLOSE, VIEWER, EXPEL, SERVANT, LEAVE);
+
+  TRSOptions = record
+    Tabs: TBoxArray;
+    Sliders: array [ERSOptionsSlider] of TRSSlider;
+    Buttons, HouseButtons: TRSButtonArray;
+  end;
+
+procedure TRSOptions.SetupInterface();
+var
+  b: TBox;
+var
+  boxes: TBoxArray;
+  i: Int32;
+begin
+  Self.Tabs := TBoxArray.Create(GameTab.TopLeft.Offset(0, 5), 3, 1, 55, 24, [9,0]);
+
+  with Self.Sliders[ERSOptionsSlider.BRIGHTNESS] do
+  begin
+    Bounds.X1 := GameTab.Bounds.X1 + 57;
+    Bounds.Y1 := GameTab.Bounds.Y1 + 72;
+    Bounds.X2 := Bounds.X1 + 96;
+    Bounds.Y2 := Bounds.Y1 + 9;
+    Color := 2040359;
+    Width := Bounds.Width - 1;
+  end;
+
+  with Self.Sliders[ERSOptionsSlider.ZOOM] do
+  begin
+    Bounds.X1 := Self.Sliders[ERSOptionsSlider.BRIGHTNESS].Bounds.X1;
+    Bounds.Y1 := GameTab.Bounds.Y1 + 109;
+    Bounds.X2 := Self.Sliders[ERSOptionsSlider.BRIGHTNESS].Bounds.X2;
+    Bounds.Y2 := Bounds.Y1 + 9;
+    Color := 2106152;
+    Width := Bounds.Width - 1;
+  end;
+end;
+
+
+function TRSOptions.IsOpen(): Boolean;
+begin
+  Result := GameTabs.IsOpen(ERSGameTab.OPTIONS);
+end;
+
+function TRSOptions.Open(): Boolean;
+begin
+  Result := GameTabs.Open(ERSGameTab.OPTIONS);
+end;
+
+
+function TRSOptions.IsHouseOptionsOpen(): Boolean;
+begin
+  //TODO:
+  //Result := SRL.CountColor(CTS2(4630611, 23, 0.04, 0.79), Self.Bounds) = 148;
+end;
+
+function TRSOptions.OpenHouseOptions(): Boolean;
+begin
+  if Self.IsHouseOptionsOpen() then Exit(True);
+  if not Self.Open() or not Self.OpenTab(ERSOptionsTab.CONTROLS) then Exit;
+
+  Self.Buttons[ERSOptionsButton.HOUSE].Click();
+  Result := SleepUntil(Self.IsHouseOptionsOpen(), RandomMode(100, 50, 1500), 600);
+end;
+
+function TRSOptions.CloseHouseOptions(): Boolean;
+begin
+  if not Self.IsHouseOptionsOpen() then Exit(True);
+  Self.HouseButtons[ERSHouseOptionsButton.CLOSE].Click();
+  Result := SleepUntil(not Self.IsHouseOptionsOpen(), RandomMode(100, 50, 1500), 600);
+end;
+
+
+function TRSOptions.GetTab(): ERSOptionsTab;
+var
+  tab: ERSOptionsTab;
+begin
+  for tab := Low(ERSOptionsTab) to High(ERSOptionsTab) do
+    if not Target.HasColor($48585D, 0, 50, Self.Tabs[tab]) and
+       not Target.HasColor($1E2528, 0, 50, Self.Tabs[tab]) then //transparent bg
+      Exit(tab);
+end;
+
+function TRSOptions.OpenTab(tab: ERSOptionsTab): Boolean;
+begin
+  if not Self.Open() then Exit;
+  if not Self.CloseHouseOptions() then Exit;
+  if Self.GetTab() = tab then Exit(True);
+
+  Mouse.Click(Self.Tabs[tab], EMouseButton.LEFT);
+  Result := SleepUntil(Self.GetTab() = tab, RandomMode(100, 50, 1500), 600);
+end;
+
+var
+  Options: TRSOptions;
+
+function TRSGameTabs.GetCurrent(): ERSGameTab; override;
+begin
+  Result := inherited;
+
+  if Result <> ERSGameTab.NONE then Exit;
+  if Options.IsHouseOptionsOpen() then
+    Result := ERSGameTab.OPTIONS;
+end;

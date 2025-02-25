@@ -17,7 +17,6 @@ type
 
   TRSButtonArray = array of TRSButton;
 
-
 function TRSButton.Enabled(): Boolean;
 var
   i: Integer;
@@ -118,4 +117,45 @@ begin
   buttons.Draw(img);
   img.Show();
   img.Free();
+end;
+
+
+type
+  TRSSlider = record
+    Color: TColor;
+    Bounds: TBox;
+    Width: Integer;
+  end;
+
+function TRSSlider.GetLevel(): Integer;
+var
+  tpa: TPointArray;
+begin
+  tpa := Target.FindColor(Self.Color, 0, Self.Bounds.Expand(10));
+  if tpa = [] then Exit(-1);
+  Result := (tpa.Mean().X - Self.Bounds.X1) * 100 div Self.Width;
+end;
+
+function TRSSlider.SetLevel(level: Integer): Boolean;
+var
+  current: Integer;
+  p: TPoint;
+begin
+  current := Self.GetLevel();
+
+  case Abs(current - level) of
+    0..1:  Exit(True);
+    2..20:
+      begin
+        //Move slider away so we can click the level
+        if (current + 40 < 100) then
+          Self.SetLevel(current + Random(20, 40))
+        else
+          Self.SetLevel(current - Random(20, 40));
+      end;
+  end;
+
+  p := Self.Bounds.TopLeft.Offset(level * Self.Width div 100 + 1, Random(Self.Bounds.Height));
+  Mouse.Click(p, EMouseButton.LEFT);
+  Result := SleepUntil(Abs(Self.GetLevel()-level) < 2, RandomMode(100, 50, 1500), 600);
 end;

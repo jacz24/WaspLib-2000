@@ -32,6 +32,7 @@
 
 {$IFNDEF SRLT_INVENTORY_INCLUDED}           {$I osrs/interfaces/gametabs/inventory.simba}
 {$IFNDEF SRLT_MAGIC_INCLUDED}               {$I osrs/interfaces/gametabs/magic.simba}
+{$IFNDEF SRLT_OPTIONS_INCLUDED}             {$I osrs/interfaces/gametabs/options.simba}
 
 
 
@@ -41,6 +42,7 @@
 
 
 
+{$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}

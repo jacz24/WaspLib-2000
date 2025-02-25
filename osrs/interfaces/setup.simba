@@ -18,11 +18,14 @@ begin
   RSCLient.Mode := mode;
   WriteLn(GetDebugLn('RSClient', 'Target bounds were updated, client mode is: ' + ToStr(mode), EErrorLevel.SUCCESS));
 
+  //interfaces that depend on other's bounds need to be in the right order
+  //e.g., gametabs need to go after GameTab and GameTab after GameTabs.
   Minimap.SetupInterface();
   MainScreen.SetupInterface();
   GameTabs.SetupInterface();
   GameTab.SetupInterface();
   Inventory.SetupInterface();
+  Options.SetupInterface();
   Magic.SetupInterface();
   Chat.SetupInterface();
 end;

@@ -421,6 +421,33 @@ begin
   clean.Free();
 end;
 
+function TRSMinimap.ScaleMinimap(img: TImage; scaling: Integer; radius: Integer = 67): TImage;
+var
+  center: TPoint;
+  tmp, blend: TImage;
+  tpa: TPointArray;
+begin
+  tmp := img.Copy();
+
+  center := tmp.Center;
+  if RSClient.Mode = ERSClientMode.FIXED then
+    center := center.Offset(0, -8).Rotate(-Self.GetCompassAngle(False), center);
+
+  tmp.DrawColor := $0;
+  tmp.DrawCircleInverted(center, radius);
+
+  radius += 3;
+
+  tmp.Crop(Box(center, radius, radius));
+  tpa := tmp.FindColor(0).SortFrom(tmp.Center);
+  blend := tmp.Blend(tpa, 3);
+  tmp.Free();
+
+  blend.DrawCircleInverted(blend.Center, radius);
+
+  Result := blend.Downsample(scaling);
+  blend.Free();
+end;
 
 var
   Minimap: TRSMinimap;
