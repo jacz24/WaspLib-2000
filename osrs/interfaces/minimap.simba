@@ -9,6 +9,10 @@ Methods to interact with the minimap.
 {$ENDIF}
 
 type
+  ERSMinimapDot  = (PLAYER, NPC, ITEM);
+  ERSMinimapDots = set of ERSMinimapDot;
+  TRSMinimapDotArray = array [ERSMinimapDot] of TPointArray;
+
   ERSMinimapOrb  = (HITPOINTS, PRAYER, ENERGY, SPECIAL);
 
   TRSMinimap = record
@@ -26,17 +30,16 @@ type
       const RESIZABLE: TImage = ImageFromString('IMG:AQAAAJgAAACYAAAAAAAAAJDjPwEAAAAAwQIJAAEAAACQ4z8BAAAAALEMAQABAAAAkOmCAQAAAACQoM4JAAAAAGACAABgAgAAkOmCAQAAAAABAAAAmAAAAJgAAAAgAAAAAAAAAAAAAAAAAAAAAwAAACAIEAgICAAIGAAAAAAAAAAAAAAAAAAAAAAAAAAAiVBORw0KGgoAAAANSUhEUgAAAJgAAACYCAIAAACXoLd2AAAABnRSTlMAAAAAAABupgeRAAACi0lEQVR4nO3cQZLiMBBEUbj/pXszM00w2NhSqSor9X8QbFhYzrfrxjwej6fLa6zyY4fdfvkJMtmMaetPoIBngFp/AjW8o8qnaAmpXPk4DSB7VT6XImTfyqdTgfSofkYIA9sO0rstIPfJGXK3DCF3zgSSnn/fG0PSa10h6f+aQdJ5PSDpSuqQdD1dSLqbIiSNpQVJM6lA0nz1kBRVJSTFVgNJK8qGpHXlQdLqMiApJyBNWgtJma2CpPziIakqIE2KhKTagDQpBpIUmoUknYA0aRyS1ALSpBFI0gxIk+5BknJAmnQVkvQD0qTvkNQlIE0C0qQzSOoVkCYBaRKQPgFpEpAmAWkSkD4BaRKQJr1DUtOA9AlIk34hqXVAmvQHkroHpEkgEhERERERERERERG9xB/OTeIfyyYBaRJfvjIJSJOANIhHBkwC0iQgTQLSJCBNAtIhHnQ1CUiTeNDVJCAd+vDzLNQxIE0C0iR++cqhJ5AeAWnSISSWjXqHA7JpQJr0BRLLFn1QA7JjlyCxFO8zGZDtugGJpWyHXkcfYKnZCCSWap1JnUNiKdUUJJYifTECsksBkFiW9x0ISP0uAQEp2EWUEUgscxogBFKrYUIghZpUvAeJ5aLmFW9DYhleiCKQxUUpjkBiGVWg4iAkliFJQGI5WaziFCSWM2lBYjlWuGIAJJYDiUJieTddSERv1QASziu1gcTyvE6QWJ7UDBLLo/pBYvnWwp1XQ2L5r7UjJ0Bi+UhYGMjVJS2cc5k9OVO3zbzYVpbZwyZfbwfOmklLrurKWTlm4bWdOOtnLD9Bd+byiXpAKouWb9ISUoezfAQHyELL8ht3g8y0LL9Tc8illuW3thdkFG35sWNePwzzFBo2j8O9AAAAAElFTkSuQmCC');
       const FIXED:     TImage = ImageFromString('IMG:AQAAAJEAAACXAAAAAAAAAIDjPwEAAAAA7joBAAEAAACQ4z8BAAAAALEMAQABAAAArNaCAQAAAADsLIQBAAAAAEQCAABEAgAArNaCAQAAAAABAAAAkQAAAJcAAAAgAAAAAAAAAAAAAAAAAAAAAwAAACAIEAgICAAIGAAAAAAAAAAAAAAAAAAAAAAAAAAAiVBORw0KGgoAAAANSUhEUgAAAJEAAACXCAIAAACa4y5pAAAABnRSTlMAAAAAAABupgeRAAACqElEQVR4nO3bS27kMBAE0db9L+3FDGDD7taHLDIzyQjoAKp8MHojv16vY6HnPPnrlZ0pf4NClZ7kp61mNjP5sdlm2uTnJ5m5JR/E18w/+UQuZonta5beXmYrtYXZeq1stnarme3TCmZ7Fmy2c5FmlGRGPwswo79Zm9GnTM3oPC8zup+FGT1NbEZtycyoJ4EZ9TfVjKqaZEa1YZbXcDMa0UAzGtcQMxpdsRnNCbO8ysxoZgVmNL8uM1KFWV6NZqQNs7wem5FDmOX1wIx8umVGbmGW14UZeYZZXh/NyDnM8sIsrzdm5B9meWGWF2aRYZbXtxmlhFlemGUGWF6YERFRevyW5YVZXpjlhVlemOWFWV6Y5YVZXpjlhVlemOWFWV6Y5fX/2wJK6cAsroNveOLCLC/M8uJ7/bwwywuzsPg/z7wwywuzvDDLC7O8fpuRf/ydhXVgFhdmeb03g822A7O4MMvrzAw2ww7M4sIsr2sz2Kz6q4OZe3fNYDPpLQ1m1j0zg03eJxfMfGsxg03YCcqFGWySzkWuzWCb3CUHZnbVmME2rTsWd81gm9BNiAdmsA3tvsIzM+RG9HT/FjPYCmsYv9EMtpLalm83Q66nns17zWBrqHPwAjPwbla1c6UZcp+qXbjeDLZflc87xAy5fw0adqDZ5mzjVh1rtqfc6D1nmG3FNmHMSWY7yE2bcarZqnKTBxSYLcY2fz2N2Rpyqt2UZtFswtHEZoly8rkszILY5EMZmUWwySeyMzNnk49jambLJp/F2syQTT5IgJkVm3yKGDMTNvkIYWZyNvn5kWZCNvnhwWYSNvnJmGGGmcGjfwMrNvmxmGGGmcejfwMfNvmZS5lNYJMfuKDZODn5UYublbPJz8EMM+NnT61ss042+ctvavbmmHWdvp8vL+MYGlUk74gAAAAASUVORK5CYII=');
     end;
-    DotDTMS: array of TDTM;
+    DotDTMS: array [ERSMinimapDot] of TDTM;
     const FLAG: TImage = ImageFromString('IMG:AQAAAAIAAAACAAAAAAAAAIDjPwEAAAAA7joBAAEAAACQ4z8BAAAAALEMAQABAAAAgH8GCQAAAAAAiAYJAAAAAAgAAAAIAAAAgH8GCQAAAAABAAAAAgAAAAIAAAAYAAAAAAAAAAAAAAAAAAAAAwAAABgIEAgICAAAAAEAAAIAAAAAAAAAAAAAAAAAAAAAiVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFUlEQVR4nGP4z8AQayzIcCyMBUgBABrmA2K2r4OdAAAAAElFTkSuQmCC');
     {%codetools on}
   end;
 
 procedure TRSMinimap.Setup();
 begin
-  SetLength(Self.DotDTMS, 3);
-  Self.DotDTMS[0].FromString('DTM:eJxjZmBgmMHEwDATikMZIDgEiP/9+8fw5s0bMI0LAACgeQuK');
-  Self.DotDTMS[1].FromString('DTM:eJxjZmBgWMbEwLAcioOB/CAGCP3nDxPD168MDG/fMuAEAE+zCLQ=');
-  Self.DotDTMS[2].FromString('DTM:eJxjZmBgmMnEwDALiqMZIDgKiP+wsTF8hNK4AAD13gXo');
+  Self.DotDTMS[ERSMinimapDot.PLAYER].FromString('DTM:eJxjZmBgmMHEwDATikMZIDgEiP/9+8fw5s0bMI0LAACgeQuK');
+  Self.DotDTMS[ERSMinimapDot.NPC].FromString('DTM:eJxjZmBgWMbEwLAcioOB/CAGCP3nDxPD168MDG/fMuAEAE+zCLQ=');
+  Self.DotDTMS[ERSMinimapDot.ITEM].FromString('DTM:eJxjZmBgmMnEwDALiqMZIDgKiP+wsTF8hNK4AAD13gXo');
 end;
 
 procedure TRSMinimap.SetupInterface();
@@ -196,6 +199,32 @@ function TRSMinimap.WaitFlag(time: Integer = 600; interval: Integer = -1): Boole
 begin
   if interval = -1 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.HasFlag(), interval, time);
+end;
+
+
+function TRSMinimap.GetDots(dot: ERSMinimapDot; bounds: TBox): TPointArray;
+begin
+  bounds := bounds.Clip(Self.Polygon.Bounds());
+  Result := Target.FindDTMEx(Self.DotDTMS[dot], -1, bounds);
+end;
+
+function TRSMinimap.GetDots(dot: ERSMinimapDot): TPointArray; overload;
+begin
+  Result := Self.GetDots(dot, Self.Polygon.Bounds());
+end;
+
+function TRSMinimap.GetDots(dots: ERSMinimapDots; bounds: TBox): TRSMinimapDotArray; overload;
+var
+  dot: ERSMinimapDot;
+begin
+  bounds := bounds.Clip(Self.Polygon.Bounds());
+  for dot in dots do
+    Result[dot] += Target.FindDTMEx(Self.DotDTMS[dot], -1, bounds);
+end;
+
+function TRSMinimap.GetDots(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER, ERSMinimapDot.NPC, ERSMinimapDot.ITEM]): TRSMinimapDotArray; overload;
+begin
+  Result := Self.GetDots(dots, Self.Polygon.Bounds());
 end;
 
 var
