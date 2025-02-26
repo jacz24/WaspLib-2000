@@ -377,7 +377,6 @@ var
   dot: ERSMinimapDot;
   topLeft, p: TPoint;
   tpa: TPointArray;
-  blend: TImage;
 begin
   topLeft := Self.Polygon.Bounds().TopLeft;
 

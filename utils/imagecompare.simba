@@ -49,7 +49,7 @@ function TImageCompareUtils.Compare(image: TImage; slot: TBox; out similarity: S
 var
   template: TImage;
 begin
-  template := TImage.CreateFromTarget(slot);
+  template := TImage.CreateFromTarget([slot.X1, slot.Y1, slot.X1 + 36, slot.Y2]);
   Result := Self.Compare(image, template, similarity);
   template.Free();
 end;

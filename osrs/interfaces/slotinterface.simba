@@ -28,9 +28,6 @@ begin
 end;
 
 function TRSSlotInterface.Boxes(): TBoxArray;
-var
-  boxes: TBoxArray;
-  i: Integer;
 begin
   if @Self.SlotsFunction <> nil then
     Result := Self.SlotsFunction()

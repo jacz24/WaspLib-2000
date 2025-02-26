@@ -18,7 +18,7 @@ type
 
   PRSInterface = ^TRSInterface;
 
-procedure TRSInterface.Setup(bounds: TBox; maxWidth, maxHeight: Integer = 0);
+procedure TRSInterface.Setup(bounds: TBox);
 begin
   Self.Bounds := bounds;
   Self.Width  := bounds.Width;

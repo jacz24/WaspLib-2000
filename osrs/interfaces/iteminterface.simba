@@ -64,9 +64,7 @@ var
   i: Integer;
 begin
   Result := ItemFinder.FindAll(items, Self.Slots^.Boxes(), matches);
-
   if not Result then Exit;
-
   for i := 0 to High(matches) do
     boxes += matches[i].Box;
 end;
@@ -150,7 +148,7 @@ begin
   end;
 end;
 
-function TRSItemInterface.Discover(slot: Int32): TRSItemArray;
+function TRSItemInterface.Discover(slot: Integer): TRSItemArray;
 var
   b: TBox;
   img: TImage;
@@ -189,10 +187,21 @@ begin
   Result := Length(Self.IndicesOf(items));
 end;
 
-function TRSItemInterface.WaitCount(items: TRSItemArray; count: Int32; time: Int32 = 600; interval: Int32 = -1): Boolean;
+function TRSItemInterface.Count(item: TRSItem): Integer; overload;
+begin
+  Result := Length(Self.IndicesOf([item]));
+end;
+
+function TRSItemInterface.WaitCount(items: TRSItemArray; count: Integer; time: Integer = 600; interval: Integer = -1): Boolean;
 begin
   if interval = -1 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.Count(items) = count, interval, time);
+end;
+
+function TRSItemInterface.WaitCount(item: TRSItem; count: Integer; time: Integer = 600; interval: Integer = -1): Boolean; overload;
+begin
+  if interval = -1 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.Count(item) = count, interval, time);
 end;
 
 

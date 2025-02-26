@@ -9,5 +9,5 @@ type
 
 function TRSItem.HasAmount(): Boolean;
 begin
-  Self.EndsWith(')', True);
+  Result := Self.EndsWith(')', True);
 end;

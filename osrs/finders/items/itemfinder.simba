@@ -45,13 +45,12 @@ begin
 
   template.DrawTPA(image.FindColor($0, 0));
 
+  tpa := image.FindColor(RSColors.ITEM_SHADOW, 0);
   for color in RSColors.STACK_COLORS do
-  begin
-    tpa := template.FindColor(color, 0);
-    if tpa = [] then Continue;
-    image.DrawTPA(tpa);
-    template.DrawTPA(tpa);
-  end;
+    tpa += template.FindColor(color, 0);
+
+  image.DrawTPA(tpa);
+  template.DrawTPA(tpa);
 end;
 
 procedure TItemFinder.Setup();
@@ -101,20 +100,17 @@ function TItemFinder.GetImage(id: String): TImage;
 var
   path: String;
 begin
-  if not Self.ItemImages.Exists(id) then
-    Self.ItemImages.Value[id] := nil;
-
-  if Self.ItemImages.Value[id] = nil then
+  if not Self.ItemImages.Exists(id) or
+    (Self.ItemImages.Value[id] = nil) then
   begin
     path := Self.CacheDir + id + '.png';
-    if FileExists(path) then
-      Self.ItemImages.Value[id].Load(path)
-    else
-    begin
-      Self.ItemImages.Value[id].CreateFromZip(Self.ZIP, id + '.png');
-      Self.ItemImages.Value[id].Save(path);
-    end;
+
+    if not FileExists(path) then
+      ZipExtractEntry(Self.ZIP, id + '.png', Self.CacheDir);
+
+    Self.ItemImages.Value[id] := TImage.Create();
     Self.ItemImages.Value[id].FreeOnTerminate := True;
+    Self.ItemImages.Value[id].Load(path);
   end;
 
   Result := Self.ItemImages.Value[id];
@@ -125,8 +121,10 @@ var
   ids: TStringArray;
   id: String;
 begin
-  if item.IsNumeric then ids := [item]
-  else ids := Self.Database.GetAll(item, 'item', 'id');
+  if item.IsNumeric then
+    ids := [item]
+  else
+    ids := Self.Database.GetAll(item, 'item', 'id');
 
   for id in ids do
     Result += Self.GetImage(id);
@@ -136,60 +134,122 @@ end;
 function TItemFinder.FindAll(items: TRSItemArray; boxes: TBoxArray; maxToFind: Integer = 0): TImageMatchArray;
 var
   item: TRSItem;
-  slots: TBoxArray;
-  results: TImageMatchArray;
+  img: TImage;
   i: Integer;
+  skip: TBooleanArray;
+  match: Single;
 begin
-  slots := Copy(boxes);
+  SetLength(skip, Length(boxes));
+
   for item in items do
   begin
-     item := LowerCase(item);
-     Self.ImageCompare.Filter := @Self.GetFilter(item);
-     results := Self.ImageCompare.MatchAll(Self.GetImages(item), slots, Self.Similarity);
-     Result += results;
-     if Length(Result) >= maxToFind then Exit;
+    item := LowerCase(item);
+    Self.ImageCompare.Filter := @Self.GetFilter(item);
 
-     for i := 0 to High(results) do
-       slots.Remove(results[i].Box);
+    for img in Self.GetImages(item) do
+      for i := 0 to High(boxes) do
+      begin
+        if skip[i] then Continue;
+        if not RSColors.HasItem(boxes[i]) then
+        begin
+          skip[i] := True;
+          Continue;
+        end;
+
+        match := Self.Similarity;
+        if Self.ImageCompare.Compare(img, boxes[i], match) then
+        begin
+          Result += [i, boxes[i], match];
+          if (maxToFind > 0) and (Length(Result) >= maxToFind) then Exit;
+          skip[i] := True;
+        end;
+      end;
   end;
 end;
 
 function TItemFinder.FindAll(items: TRSItemArray; boxes: TBoxArray; out matches: TImageMatchArray): Boolean; overload;
 var
   item: TRSItem;
-  slots: TBoxArray;
   results: TImageMatchArray;
   i: Integer;
+  img: TImage;
+  match: Single;
+  skip: TBooleanArray;
 begin
-  slots := Copy(boxes);
+  SetLength(skip, Length(boxes));
+
   for item in items do
   begin
-    if slots = [] then Exit;
     item := LowerCase(item);
     Self.ImageCompare.Filter := @Self.GetFilter(item);
-    results := Self.ImageCompare.MatchAll(Self.GetImages(item), slots, Self.Similarity);
+
+    for img in Self.GetImages(item) do
+      for i := 0 to High(boxes) do
+      begin
+        if skip[i] then Continue;
+        if not RSColors.HasItem(boxes[i]) then
+        begin
+          skip[i] := True;
+          Continue;
+        end;
+
+        match := Self.Similarity;
+        if Self.ImageCompare.Compare(img, boxes[i], match) then
+        begin
+          results += [i, boxes[i], match];
+          skip[i] := True;
+        end;
+      end;
+
     if results = [] then Exit;
 
     matches += results;
-    for i := 0 to High(results) do
-      slots.Remove(results[i].Box);
+    results := [];
   end;
+
   Result := True;
 end;
 
 function TItemFinder.Find(items: TRSItemArray; boxes: TBoxArray; out match: TImageMatch): Boolean;
 var
   item: TRSItem;
+  img: TImage;
+  i: Integer;
+  similarity: Single;
+  skip: TBooleanArray;
 begin
+  SetLength(skip, Length(boxes));
+
   for item in items do
   begin
-     item := LowerCase(item);
-     Self.ImageCompare.Filter := @Self.GetFilter(item);
-     match := Self.ImageCompare.MatchAny(Self.GetImages(item), boxes, Self.Similarity);
-     if match.Index > -1 then Exit(True);
+    item := LowerCase(item);
+    Self.ImageCompare.Filter := @Self.GetFilter(item);
+
+    for img in Self.GetImages(item) do
+    begin
+      for i := 0 to High(boxes) do
+      begin
+        if skip[i] then Continue;
+        if not RSColors.HasItem(boxes[i]) then
+        begin
+          skip[i] := True;
+          Continue;
+        end;
+
+        similarity := Self.Similarity;
+        if Self.ImageCompare.Compare(img, boxes[i], similarity) then
+        begin
+          match := [i, boxes[i], similarity];
+          Exit(True);
+        end;
+      end;
+    end;
   end;
 end;
 
-
 var
   ItemFinder: TItemFinder;
+
+begin
+  ItemFinder.Setup();
+end;

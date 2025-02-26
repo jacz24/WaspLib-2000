@@ -176,7 +176,7 @@ WriteLn ChooseOption.HasOption('Take');
 *)
 function TRSChooseOption.Find(text: TStringArray; out option: TRSOption; caseSensitive: Boolean = True; closeOnFalse: Boolean = True): Boolean;
 var
-  i, j: Int32;
+  i: Int32;
   boxes: TBoxArray;
 begin
   if not Self.Open() then Exit;

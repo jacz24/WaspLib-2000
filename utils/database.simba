@@ -206,7 +206,7 @@ end;
 
 function TDatabase.GetRowData(value, column: String): TStringArray;
 var
-  i, idx, row: Int32;
+  idx, row: Int32;
   rows, data: TStringArray;
 begin
   idx := Self.Data.Value[column].IndexOf(value);
@@ -225,7 +225,7 @@ end;
 function TDatabase.GetRowsData(value, column: String): T2DStringArray;
 var
   indices: TIntegerArray;
-  i, idx, row: Int32;
+  idx, row: Int32;
   rows, data: TStringArray;
 begin
   indices := Self.Data.Value[column].IndicesOf(value);
@@ -235,12 +235,12 @@ begin
 
   SetLength(Result, Length(indices));
 
-  for i := 0 to High(indices) do
+  for idx := 0 to High(indices) do
     for column in Self.Columns do
     begin
-      row := Self.Rows.Value[column].IndexOf(rows[indices[i]]);
+      row := Self.Rows.Value[column].IndexOf(rows[indices[idx]]);
       data := Self.Data.Value[column];
-      Result[i] += data[row];
+      Result[idx] += data[row];
     end;
 end;
 

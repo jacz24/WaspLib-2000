@@ -6,6 +6,7 @@
 type
   RSColors = record
     const ITEM_SHADOW: TColor = $202030;
+    const ITEM_SHADOW_GRAY: TColor = $333333;
     const ITEM_BORDER: TColor = $010000;
     const ITEM_BORDER_WHITE: TColor = $FFFFFF;
 
@@ -17,3 +18,9 @@ type
     const TEXT_ORANGE: TColor = $1F98FF;
     const TEXT_GREY: TColor   = $9F9F9F;
   end;
+
+function RSColors.HasItem(bounds: TBox): Boolean; static;
+begin
+  Result := Target.HasColor(RSColors.ITEM_BORDER, 0, 1, bounds) or
+            Target.HasColor(RSColors.ITEM_BORDER_WHITE, 0, 1, bounds);
+end;
