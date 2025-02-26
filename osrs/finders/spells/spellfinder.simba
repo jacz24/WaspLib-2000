@@ -100,7 +100,7 @@ begin
   slots := Copy(boxes);
   for spell in spells do
   begin
-     results := Self.ImageCompare.MatchAll(Self.GetImages(spell), slots, Self.Similarity);
+     //results := Self.ImageCompare.MatchAll(Self.GetImages(spell), slots, Self.Similarity);
      Result += results;
      if Length(Result) >= maxToFind then Exit;
 
@@ -115,7 +115,7 @@ var
 begin
   for spell in spells do
   begin
-     match := Self.ImageCompare.MatchAny(Self.GetImages(spell), boxes, Self.Similarity);
+     //match := Self.ImageCompare.MatchAny(Self.GetImages(spell), boxes, Self.Similarity);
      if match.Index > -1 then Exit(True);
   end;
 end;
