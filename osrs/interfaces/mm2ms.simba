@@ -21,9 +21,9 @@ type
     Projector: TMM2MSProjector;
   end;
 
-function TMM2MS.Run(arr: Vector3Array; roll: Single = $FFFF): TPointArray;
+function TMM2MS.Run(arr: Vector3Array; roll: Single): TPointArray;
 var
-  i: Int32;
+  i: Integer;
 begin
   Self.Projector.UpdateZoom(Options.GetZoomLevel(True));
 
@@ -37,38 +37,97 @@ end;
 var
   MM2MS: TMM2MS;
 
-function TRSMinimap.VectorToMSRect(vector: Vector3; size: Vector2 = [1,1]; roll: Single = $FFFF): TQuad;
+function TRSMinimap.Vectors2MS(vectors: Vector3Array; angle: Single): TPointArray;
+var
+  i: Integer;
+begin
+  for i := 0 to High(vectors) do
+    vectors[i] := vectors[i].RotateXY(PI*2 - angle, Self.RSInterface.Center);
+  Result := MM2MS.Run(vectors, angle);
+end;
+
+function TRSMinimap.Vector2MS(vector: Vector3; angle: Single): TPoint;
+begin
+  with vector.RotateXY(PI*2-angle, Self.RSInterface.Center) do
+    Result := MM2MS.Run([vector], angle)[0];
+end;
+
+
+function TRSMinimap.Points2MS(points: TPointArray; angle: Single = $FFFF): TPointArray;
+var
+  vectors: Vector3Array;
+  i: Integer;
+  rotation: Single;
+begin
+  if (angle = $FFFF) then
+    angle := Self.GetCompassAngle(False);
+
+  SetLength(vectors, Length(points));
+
+  rotation := PI*2 - angle;
+  for i := 0 to High(points) do
+  begin
+    vectors[i].X := points[i].X;
+    vectors[i].Y := points[i].Y;
+    vectors[i] := vectors[i].RotateXY(rotation, Self.RSInterface.Center);
+  end;
+
+  Result := MM2MS.Run(vectors, angle);
+end;
+
+function TRSMinimap.Point2MS(pt: TPoint; angle: Single = $FFFF): TPoint;
+begin
+  if (angle = $FFFF) then angle := Self.GetCompassAngle(False);
+  with pt.Rotate(PI*2-angle, Self.RSInterface.Center) do
+    Result := MM2MS.Run([Vec3(X, Y, 0)], angle)[0];
+end;
+
+function TRSMinimap.ATPA2MS(atpa: T2DPointArray; angle: Single = $FFFF): T2DPointArray; overload;
+var
+  tpa: TPointArray;
+begin
+  if angle = $FFFF then
+    angle := Self.GetCompassAngle(False);
+  for tpa in atpa do
+    Result += Self.Points2MS(tpa, angle);
+end;
+
+
+function TRSMinimap.Vector2MSQuad(vector: Vector3; size: Vector2 = [1,1]; angle: Single): TQuad;
 var
   arr: TPointArray;
 begin
   if size.X <= 0 then size.X := 1;
   if size.Y <= 0 then size.Y := 1;
 
-  //tiles are roughly 4 pixels height and width in the minimap.
-  //so for our coordinate we will want to "expand" each tile 2 pixels north, south, east and west.
   size.X := 2 * size.X;
   size.Y := 2 * size.Y;
 
-  if (roll = $FFFF) then roll := Self.GetCompassAngle(False);
-
-  vector := vector.RotateXY(PI * 2 - roll, Self.RSInterface.Center);
+  vector := vector.RotateXY(PI*2- angle, Self.RSInterface.Center);
   arr := MM2MS.Run([Vec3(vector.X-size.X, vector.Y-size.Y, vector.Z),
                     Vec3(vector.X+size.X, vector.Y-size.Y, vector.Z),
                     Vec3(vector.X+size.X, vector.Y+size.Y, vector.Z),
-                    Vec3(vector.X-size.X, vector.Y+size.Y, vector.Z)], roll);
+                    Vec3(vector.X-size.X, vector.Y+size.Y, vector.Z)], angle);
 
   Result := [arr[0], arr[1], arr[2], arr[3]];
 end;
 
-procedure TRSMinimap.DebugTiles(drawDots: Boolean; angle: Single = $FFFF);
+function TRSMinimap.Point2MSQuad(pt: TPoint; size: Vector2 = [1,1]; angle: Single = $FFFF): TQuad;
+begin
+  if angle = $FFFF then angle := Self.GetCompassAngle(False);
+  Result := Self.Vector2MSQuad(Vec3(pt.X, pt.Y, 0), size, angle);
+end;
+
+
+procedure TRSMinimap.DebugTiles(drawDots: Boolean);
 var
   img: TImage;
   x, y: Integer;
   tile: Vector3;
   dot: TPoint;
+  angle: Single;
 begin
-  if angle = $FFFF then
-    angle := Self.GetCompassAngle(False);
+  angle := Self.GetCompassAngle(False);
 
   img := TImage.CreateFromTarget();
   img.DrawColor := $00FF00;
@@ -77,24 +136,25 @@ begin
     for y := Self.RSInterface.Center.Y - 25 * 4 to Self.RSInterface.Center.Y + 25 * 4 with 4 do
     begin
       tile := Vec3(x, y).RotateXY(angle, Self.RSInterface.Center);
-      img.DrawQuad(Self.VectorToMSRect(tile, [1,1], angle));
+      img.DrawQuad(Self.Vector2MSQuad(tile, [1,1], angle));
     end;
 
   if drawDots then
   begin
     img.DrawColor := $00FFFF;
     for dot in Self.GetDots(ERSMinimapDot.NPC) do
-      img.DrawQuad(Self.VectorToMSRect([dot.X+2, dot.Y], [1,1], angle));
+      img.DrawQuad(Self.Vector2MSQuad([dot.X+2, dot.Y], [1,1], angle));
 
     img.DrawColor := $0000FF;
     for dot in Self.GetDots(ERSMinimapDot.ITEM) do
-      img.DrawQuad(Minimap.VectorToMSRect([dot.X+2, dot.Y], [1,1], angle));
+      img.DrawQuad(Minimap.Vector2MSQuad([dot.X+2, dot.Y], [1,1], angle));
 
     img.DrawColor := $FFFFFF;
     for dot in Self.GetDots(ERSMinimapDot.PLAYER) do
-      img.DrawQuad(Self.VectorToMSRect([dot.X+2, dot.Y], [1,1], angle));
+      img.DrawQuad(Self.Vector2MSQuad([dot.X+2, dot.Y], [1,1], angle));
   end;
 
   img.Show();
   img.Free();
 end;
+
