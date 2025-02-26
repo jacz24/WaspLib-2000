@@ -1,0 +1,100 @@
+(*
+# MM2MS
+The core for our minimap to mainscreen projection.
+Supports rotation, and zoom, and resizable client.
+
+MM2MS extends the Minimap interface as well as the mainscreen interface with
+functionality to convert coordinates to & from the minimap to the mainscreen.
+
+Original work done by slacky
+*)
+
+{$DEFINE SRLT_MM2MS_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  TMM2MS = record
+    ZoomRectangles: array [0..100] of TQuad;
+    PlayerBoxes: array [0..100] of TBox;
+    Projector: TMM2MSProjector;
+  end;
+
+function TMM2MS.Run(arr: Vector3Array; roll: Single = $FFFF): TPointArray;
+var
+  i: Int32;
+begin
+  Self.Projector.UpdateZoom(Options.GetZoomLevel(True));
+
+  with Minimap.RSInterface.Center do
+    for i := 0 to High(arr) do
+      arr[i] := [arr[i].X - X, Y - arr[i].Y, arr[i].Z];
+
+  Result := Self.Projector.Run(arr, Vec3(0, 0, PI*2 - roll));
+end;
+
+var
+  MM2MS: TMM2MS;
+
+function TRSMinimap.VectorToMSRect(vector: Vector3; size: Vector2 = [1,1]; roll: Single = $FFFF): TQuad;
+var
+  arr: TPointArray;
+begin
+  if size.X <= 0 then size.X := 1;
+  if size.Y <= 0 then size.Y := 1;
+
+  //tiles are roughly 4 pixels height and width in the minimap.
+  //so for our coordinate we will want to "expand" each tile 2 pixels north, south, east and west.
+  size.X := 2 * size.X;
+  size.Y := 2 * size.Y;
+
+  if (roll = $FFFF) then roll := Self.GetCompassAngle(False);
+
+  vector := vector.RotateXY(PI * 2 - roll, Self.RSInterface.Center);
+  arr := MM2MS.Run([Vec3(vector.X-size.X, vector.Y-size.Y, vector.Z),
+                    Vec3(vector.X+size.X, vector.Y-size.Y, vector.Z),
+                    Vec3(vector.X+size.X, vector.Y+size.Y, vector.Z),
+                    Vec3(vector.X-size.X, vector.Y+size.Y, vector.Z)], roll);
+
+  Result := [arr[0], arr[1], arr[2], arr[3]];
+end;
+
+procedure TRSMinimap.DebugTiles(drawDots: Boolean; angle: Single = $FFFF);
+var
+  img: TImage;
+  x, y: Integer;
+  tile: Vector3;
+  dot: TPoint;
+begin
+  if angle = $FFFF then
+    angle := Self.GetCompassAngle(False);
+
+  img := TImage.CreateFromTarget();
+  img.DrawColor := $00FF00;
+
+  for x := Self.RSInterface.Center.X - 25 * 4 to Self.RSInterface.Center.X + 25 * 4 with 4 do
+    for y := Self.RSInterface.Center.Y - 25 * 4 to Self.RSInterface.Center.Y + 25 * 4 with 4 do
+    begin
+      tile := Vec3(x, y).RotateXY(angle, Self.RSInterface.Center);
+      img.DrawQuad(Self.VectorToMSRect(tile, [1,1], angle));
+    end;
+
+  if drawDots then
+  begin
+    img.DrawColor := $00FFFF;
+    for dot in Self.GetDots(ERSMinimapDot.NPC) do
+      img.DrawQuad(Self.VectorToMSRect([dot.X+2, dot.Y], [1,1], angle));
+
+    img.DrawColor := $0000FF;
+    for dot in Self.GetDots(ERSMinimapDot.ITEM) do
+      img.DrawQuad(Minimap.VectorToMSRect([dot.X+2, dot.Y], [1,1], angle));
+
+    img.DrawColor := $FFFFFF;
+    for dot in Self.GetDots(ERSMinimapDot.PLAYER) do
+      img.DrawQuad(Self.VectorToMSRect([dot.X+2, dot.Y], [1,1], angle));
+  end;
+
+  img.Show();
+  img.Free();
+end;

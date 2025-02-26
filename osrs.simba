@@ -34,14 +34,16 @@
 {$IFNDEF SRLT_MAGIC_INCLUDED}               {$I osrs/interfaces/gametabs/magic.simba}
 {$IFNDEF SRLT_OPTIONS_INCLUDED}             {$I osrs/interfaces/gametabs/options.simba}
 
-
+{$IFNDEF SRLT_MM2MS_PROJECTOR_INCLUDED}     {$I osrs/interfaces/mm2ms_projector.simba}
+{$IFNDEF SRLT_MM2MS_INCLUDED}               {$I osrs/interfaces/mm2ms.simba}
 
 {$IFNDEF SRLT_SETUP_INCLUDED}
 {$I osrs/interfaces/setup.simba}
 {$ELSE}{$ENDIF}
 
 
-
+{$ELSE}{$ENDIF}
+{$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}

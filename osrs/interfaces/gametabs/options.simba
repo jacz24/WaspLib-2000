@@ -18,6 +18,7 @@ type
     Tabs: TBoxArray;
     Sliders: array [ERSOptionsSlider] of TRSSlider;
     Buttons, HouseButtons: TRSButtonArray;
+    ZoomLevel: Integer;
   end;
 
 procedure TRSOptions.SetupInterface();
@@ -105,6 +106,24 @@ begin
   Result := SleepUntil(Self.GetTab() = tab, RandomMode(100, 50, 1500), 600);
 end;
 
+
+
+function TRSOptions.GetZoomLevel(useCache: Boolean = True): Integer;
+begin
+  if useCache and (Self.ZoomLevel > -1) then
+    Exit(Self.ZoomLevel);
+
+  WriteLn GetDebugLn('Options', 'Unknown zoom level, reading from the gametab...');
+  if Self.OpenTab(ERSOptionsTab.DISPLAY) then
+    Self.ZoomLevel := Self.Sliders[ERSOptionsSlider.ZOOM].GetLevel();
+  if Self.ZoomLevel = -1 then
+    WriteLn GetDebugLn('Options', 'Failed to read zoom!', EErrorLevel.ERROR)
+  else
+    WriteLn GetDebugLn('Options', 'Current zoom level: ' + ToString(Self.ZoomLevel), EErrorLevel.SUCCESS);
+
+  Result := Self.ZoomLevel;
+end;
+
 var
   Options: TRSOptions;
 
@@ -115,4 +134,8 @@ begin
   if Result <> ERSGameTab.NONE then Exit;
   if Options.IsHouseOptionsOpen() then
     Result := ERSGameTab.OPTIONS;
+end;
+
+begin
+  Options.ZoomLevel := -1;
 end;

@@ -2,6 +2,7 @@
 
 {$IFNDEF SRLT_SRLTENV_INCLUDED}      {$I utils/srltenv.simba}
 {$IFNDEF SRLT_RANDOM_INCLUDED}       {$I utils/random.simba}
+{$IFNDEF SRLT_VECTOR_INCLUDED}       {$I utils/vector.simba}
 {$IFNDEF SRLT_TIME_INCLUDED}         {$I utils/time.simba}
 {$IFNDEF SRLT_BASE_INCLUDED}         {$I utils/base.simba}
 {$IFNDEF SRLT_COLORS_INCLUDED}       {$I utils/colors.simba}
@@ -12,6 +13,7 @@
 {$IFNDEF SRLT_IMAGECOMPARE_INCLUDED} {$I utils/imagecompare.simba}
 
 
+{$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}

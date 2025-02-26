@@ -58,9 +58,11 @@ end;
 function TImageCompareUtils.FindMatch(image: TImage; bounds: TBox; out similarity: Single): Boolean;
 var
   container: TImage;
+  matrix: TSingleMatrix;
 begin
   container := TImage.CreateFromTarget(bounds);
-  //templatematch!?!?!?! where???
+  matrix := MatchTemplate(container, image, ETMFormula.TM_CCOEFF_NORMED);
+  WriteLn matrix.ArgMax();
   container.Free();
 end;
 

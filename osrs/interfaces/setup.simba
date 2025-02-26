@@ -26,6 +26,7 @@ begin
   GameTab.SetupInterface();
   Inventory.SetupInterface();
   Options.SetupInterface();
+  MM2MS.Projector.SetupProjection();
   Magic.SetupInterface();
   Chat.SetupInterface();
 end;

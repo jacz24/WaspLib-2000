@@ -126,8 +126,7 @@ begin
 
   for 1 to 3 do
   begin
-    ShowOnClient(Self.Tabs[tab-1]);
-    Mouse.Click(Self.Tabs[tab-1], EMouseButton.LEFT, RandomBoolean());
+    Mouse.Click(Self.Tabs[tab-1], EMouseButton.LEFT);
     if Self.WaitOpen(tab, 2000) then Exit(True);
   end;
 end;

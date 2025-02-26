@@ -399,7 +399,7 @@ begin
     ERSClientMode.RESIZABLE_CLASSIC, ERSCLientMode.RESIZABLE_MODERN: img.DrawImage(Self.Masks.RESIZABLE, [0,0]);
   end;
 
-  tpa := img.FindColor(0).SortFrom(img.Center);
+  tpa := img.FindColor($0, 0).SortFrom(img.Center);
 
   Result := img.Blend(tpa, 5);
   Result.Pad(10);
@@ -438,7 +438,7 @@ begin
   radius += 3;
 
   tmp.Crop(Box(center, radius, radius));
-  tpa := tmp.FindColor(0).SortFrom(tmp.Center);
+  tpa := tmp.FindColor($0, 0).SortFrom(tmp.Center);
   blend := tmp.Blend(tpa, 3);
   tmp.Free();
 
