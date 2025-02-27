@@ -56,13 +56,12 @@ begin
 end;
 
 function TMM2MSProjector.Transform(coord: Vector3; matrix: TMatrix4): Vector3;
-var
-  p: Vector3;
-  scale: Double;
 begin
-  p := Vector3.TransformCoordinate(coord, matrix);
-  Result.X := (+p.X * Self.Transformer.X) + MainScreen.RSInterface.Center.X;
-  Result.Y := (-p.Y * Self.Transformer.Y) + Self.Transformer.Z;
+  with Vector3.TransformCoordinate(coord, matrix) do
+  begin
+    Result.X := (+X * Self.Transformer.X) + MainScreen.RSInterface.Center.X;
+    Result.Y := (-Y * Self.Transformer.Y) + Self.Transformer.Z;
+  end;
 end;
 
 function TMM2MSProjector.Run(coords: Vector3Array; rotation: Vector3): TPointArray;

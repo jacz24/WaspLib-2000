@@ -131,7 +131,6 @@ var
   slotsA, slotsB: TIntegerArray;
   bestA, bestB: Integer;
   dist, best: Double;
-  boxes: TBoxArray;
   centers: TPointArray;
   i, j: Integer;
 begin

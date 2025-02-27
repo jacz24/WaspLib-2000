@@ -22,8 +22,8 @@ end;
 
 function TCuboid.Center(): TPoint;
 begin
-  with Self.Bottom.Mean + Self.Top.Mean do
-    Result := [X div 2, Y div 2];
+  Result := Self.Bottom.Mean + Self.Top.Mean;
+  Result := [Result.X div 2, Result.Y div 2];
 end;
 
 function TCuboid.Bounds(): TBox;

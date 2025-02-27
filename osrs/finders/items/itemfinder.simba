@@ -108,9 +108,8 @@ begin
     if not FileExists(path) then
       ZipExtractEntry(Self.ZIP, id + '.png', Self.CacheDir);
 
-    Self.ItemImages.Value[id] := TImage.Create();
+    Self.ItemImages.Value[id] := TImage.Create(path);
     Self.ItemImages.Value[id].FreeOnTerminate := True;
-    Self.ItemImages.Value[id].Load(path);
   end;
 
   Result := Self.ItemImages.Value[id];

@@ -262,7 +262,7 @@ function TRSItemInterface.Interact(item: TRSItem; option: String = ''): Boolean;
 begin
   if not Self.Hover(item) then Exit;
 
-  if option <> '' then
+  if (option <> '') and not MainScreen.IsUpText(option) then
     Exit(ChooseOption.Select(option));
 
   Target.MouseClick(EMouseButton.LEFT);

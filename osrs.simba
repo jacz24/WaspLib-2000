@@ -19,16 +19,13 @@
 {$IFNDEF SRLT_CHOOSEOPTION_INCLUDED}        {$I osrs/interfaces/chooseoption.simba}
 {$IFNDEF SRLT_MINIMAP_INCLUDED}             {$I osrs/interfaces/minimap.simba}
 
-{$IFNDEF SRLT_SLOT_INTERFACE_INCLUDED}      {$I osrs/interfaces/slotinterface.simba}
-{$IFNDEF SRLT_ITEM_INTERFACE_INCLUDED}      {$I osrs/interfaces/iteminterface.simba}
-
 {$IFNDEF SRLT_GAMETABS_INCLUDED}            {$I osrs/interfaces/gametabs/gametabs.simba}
 {$IFNDEF SRLT_GAMETAB_INCLUDED}             {$I osrs/interfaces/gametabs/gametab.simba}
-
-
 {$IFNDEF SRLT_CHAT_TABS_INCLUDED}           {$I osrs/interfaces/chat/chattabs.simba}
 {$IFNDEF SRLT_CHAT_INCLUDED}                {$I osrs/interfaces/chat/chat.simba}
 {$IFNDEF SRLT_MAINSCREEN_INCLUDED}          {$I osrs/interfaces/mainscreen/mainscreen.simba}
+{$IFNDEF SRLT_SLOT_INTERFACE_INCLUDED}      {$I osrs/interfaces/slotinterface.simba}
+{$IFNDEF SRLT_ITEM_INTERFACE_INCLUDED}      {$I osrs/interfaces/iteminterface.simba}
 
 {$IFNDEF SRLT_INVENTORY_INCLUDED}           {$I osrs/interfaces/gametabs/inventory.simba}
 {$IFNDEF SRLT_MAGIC_INCLUDED}               {$I osrs/interfaces/gametabs/magic.simba}

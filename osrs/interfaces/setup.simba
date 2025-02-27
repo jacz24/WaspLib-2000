@@ -27,14 +27,15 @@ begin
   Inventory.SetupInterface();
   Options.SetupInterface();
   MM2MS.Projector.SetupProjection();
-  Magic.SetupInterface();
   Chat.SetupInterface();
 end;
 
+{$H-}
 procedure TargetResized(var Target: TTarget; Data: TTargetEventData);
 begin
   SetupInterfaces();
 end;
+{$H+}
 
 begin
   Target.AddEvent(ETargetEvent.TARGET_RESIZE, @TargetResized);

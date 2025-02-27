@@ -56,7 +56,7 @@ begin
 
   //only set similarity if the user didn't set it already
   if Self.Similarity = 0 then
-    Self.Similarity := 0.999;
+    Self.Similarity := 0.85;
 end;
 
 function TRSSpellFinder.GetImages(spell: ERSSpell): array [0..1] of TImage;
@@ -73,53 +73,50 @@ begin
   begin
     name := LowerCase(ToStr(spell)) + SIZES[i];
     path := Self.CacheDir + name;
-    if FileExists(path) then
-    begin
-      Self.SpellImages[spell][i].Load(path);
-      Continue;
-    end;
 
-    Self.SpellImages[spell][i].CreateFromZip(Self.ZIP, name);
-    Self.SpellImages[spell][i].Save(path);
+    if not FileExists(path) then
+      ZipExtractEntry(Self.ZIP, name, Self.CacheDir);
+
+    Self.SpellImages[spell][i] := TImage.Create(path);
+    Self.SpellImages[spell][i].FreeOnTerminate := True;
   end;
-
-  Self.SpellImages[spell][0].FreeOnTerminate := True;
-  Self.SpellImages[spell][1].FreeOnTerminate := True;
 
   Result := Self.SpellImages[spell];
 end;
 
 
-function TRSSpellFinder.FindAll(spells: array of ERSSpell; boxes: TBoxArray; maxToFind: Integer = 0): TImageMatchArray;
+function TRSSpellFinder.FindAll(spells: array of ERSSpell; bounds: TBox; maxToFind: Integer = 0): TImageMatchArray;
 var
   spell: ERSSpell;
-  slots: TBoxArray;
-  results: TImageMatchArray;
-  i: Integer;
+  img: TImage;
+  match: TImageMatch;
 begin
-  slots := Copy(boxes);
   for spell in spells do
-  begin
-     //results := Self.ImageCompare.MatchAll(Self.GetImages(spell), slots, Self.Similarity);
-     Result += results;
-     if Length(Result) >= maxToFind then Exit;
-
-     for i := 0 to High(results) do
-       slots.Remove(results[i].Box);
-  end;
+    for img in Self.GetImages(spell) do
+    begin
+      match.Match := Self.Similarity;
+      if Self.ImageCompare.FindMatch(img, bounds, match) then
+      begin
+        Result += match;
+        if (maxToFind > 0) and (Length(Result) > maxToFind) then
+          Exit;
+      end;
+    end;
 end;
 
-function TRSSpellFinder.Find(spells: array of ERSSpell; boxes: TBoxArray; out match: TImageMatch): Boolean;
+function TRSSpellFinder.Find(spells: array of ERSSpell; bounds: TBox; out match: TImageMatch): Boolean;
 var
   spell: ERSSpell;
+  img: TImage;
 begin
   for spell in spells do
-  begin
-     //match := Self.ImageCompare.MatchAny(Self.GetImages(spell), boxes, Self.Similarity);
-     if match.Index > -1 then Exit(True);
-  end;
+    for img in Self.GetImages(spell) do
+    begin
+      match.Match := Self.Similarity;
+      if Self.ImageCompare.FindMatch(img, bounds, match) then
+        Exit(True);
+    end;
 end;
-
 
 var
   SpellFinder: TRSSpellFinder;

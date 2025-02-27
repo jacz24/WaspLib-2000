@@ -22,11 +22,6 @@ type
   end;
 
 procedure TRSOptions.SetupInterface();
-var
-  b: TBox;
-var
-  boxes: TBoxArray;
-  i: Int32;
 begin
   Self.Tabs := TBoxArray.Create(GameTab.TopLeft.Offset(0, 5), 3, 1, 55, 24, [9,0]);
 

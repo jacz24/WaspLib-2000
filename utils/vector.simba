@@ -227,17 +227,18 @@ begin
   Result.Z := Self.Z;
 end;
 
-function Vector3.TransformCoordinate(Coordinate: Vector3; Transform: TMatrix4): Vector3; static;
-var vec: Vector4;
+function Vector3.TransformCoordinate(coordinate: Vector3; Transform: TMatrix4): Vector3; static;
+var
+  vec: Vector4;
 begin
   vec.X := (coordinate.X * transform.M11) + (coordinate.Y * transform.M21) + (coordinate.Z * transform.M31) + transform.M41;
   vec.Y := (coordinate.X * transform.M12) + (coordinate.Y * transform.M22) + (coordinate.Z * transform.M32) + transform.M42;
   vec.Z := (coordinate.X * transform.M13) + (coordinate.Y * transform.M23) + (coordinate.Z * transform.M33) + transform.M43;
   vec.W := 1.0 / ((coordinate.X * transform.M14) + (coordinate.Y * transform.M24) + (coordinate.Z * transform.M34) + transform.M44);
 
-  Result.x := vec.X * vec.W;
-  Result.y := vec.Y * vec.W;
-  Result.z := vec.Z * vec.W;
+  Result.X := vec.X * vec.W;
+  Result.Y := vec.Y * vec.W;
+  Result.Z := vec.Z * vec.W;
 end;
 
 
