@@ -316,10 +316,68 @@ begin
 end;
 
 
+function TRSMinimap.GetGridStep1(angle: Single): TPointArray;
+var
+  y, x: Integer;
+begin
+  for y := Self.RSInterface.Center.Y - 80 to Self.RSInterface.Center.Y + 80 with 4 do
+    for x := Self.RSInterface.Center.X - 80 to Self.RSInterface.Center.X + 80 with 4 do
+      Result += Point(x,y);
+end;
+
+function TRSMinimap.GetGrid(angle: Single): TPointArray;
+var
+  y, x: Integer;
+begin
+  for y := Self.RSInterface.Center.Y - 80 to Self.RSInterface.Center.Y + 80 with 4 do
+    for x := Self.RSInterface.Center.X - 80 to Self.RSInterface.Center.X + 80 with 4 do
+      Result += Point(x,y).Rotate(angle, Self.RSInterface.Center);
+end;
+
+
+function TRSMinimap.NormalizeStep1(pt: TPoint; angle: Single): TPoint;
+begin
+  Result := pt.Rotate(-angle, Self.RSInterface.Center);
+end;
+
+function TRSMinimap.NormalizeStep2(pt: TPoint; angle: Single): TPoint;
+begin
+  Result.X := ((pt.X - Self.RSInterface.Center.X) div 4) * 4 + Self.RSInterface.Center.X;
+  Result.Y := ((pt.Y - Self.RSInterface.Center.Y) div 4) * 4 + Self.RSInterface.Center.Y;
+end;
+
+function TRSMinimap.NormalizeStep3(pt: TPoint; angle: Single): TPoint;
+begin
+  Result := pt.Rotate(angle, Self.RSInterface.Center);
+end;
+
+
+function TRSMinimap.Normalize(pt: TPoint; angle: Single): TPoint;
+var
+  vector: Vector2;
+begin
+  with Vec2(pt.X, pt.Y).Rotate(-angle, Self.RSInterface.Center) do
+  begin
+    vector.X := Round((X - Self.RSInterface.Center.X) / 4) * 4 + Self.RSInterface.Center.X;
+    vector.Y := Round((Y - Self.RSInterface.Center.Y) / 4) * 4 + Self.RSInterface.Center.Y;
+  end;
+
+  Result := vector.Rotate(angle, Self.RSInterface.Center).ToPoint();
+end;
+
+function TRSMinimap.Normalize(pts: TPointArray; angle: Single): TPointArray; overload;
+var
+  i: Integer;
+begin
+  for i := 0 to High(pts) do
+    Result += Self.Normalize(pts[i], angle);
+end;
+
+
 function TRSMinimap.GetDots(dot: ERSMinimapDot; bounds: TBox): TPointArray;
 begin
-  bounds := bounds.Clip(Self.Polygon.Bounds());
-  Result := Target.FindDTMEx(Self.DotDTMS[dot], -1, bounds);
+  Result := Target.FindDTMEx(Self.DotDTMS[dot], -1, bounds.Clip(Self.Polygon.Bounds()));
+  Result := Self.Normalize(Result, Self.GetCompassAngle(False));
 end;
 
 function TRSMinimap.GetDots(dot: ERSMinimapDot): TPointArray; overload;
@@ -330,10 +388,14 @@ end;
 function TRSMinimap.GetDots(dots: ERSMinimapDots; bounds: TBox): TRSMinimapDotArray; overload;
 var
   dot: ERSMinimapDot;
+  angle: Single;
 begin
-  bounds := bounds.Clip(Self.Polygon.Bounds());
+  angle := Self.GetCompassAngle(False);
   for dot in dots do
-    Result[dot] += Target.FindDTMEx(Self.DotDTMS[dot], -1, bounds);
+  begin
+    Result[dot] := Target.FindDTMEx(Self.DotDTMS[dot], -1, bounds.Clip(Self.Polygon.Bounds()));
+    Result[dot] := Self.Normalize(Result[dot], angle);
+  end;
 end;
 
 function TRSMinimap.GetDots(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER, ERSMinimapDot.NPC, ERSMinimapDot.ITEM]): TRSMinimapDotArray; overload;
