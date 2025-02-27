@@ -136,7 +136,7 @@ begin
     if dotpts = [] then Exit;
 
     g := dotpts.ExtractDist([X,Y], 10, Radius).Cluster(4);
-    ShowOnClient(g);
+
     if Length(g) < 3 then Exit;
 
     if (g[0].Mean().DistanceTo(g[1].Mean()) > 25) then Swap(g[0], g[2]);
@@ -340,42 +340,23 @@ begin
 end;
 
 
-function TRSMinimap.NormalizeStep1(pt: TPoint; angle: Single): TPoint;
-begin
-  Result := pt.Rotate(-angle, Self.RSInterface.Center);
-end;
-
-function TRSMinimap.NormalizeStep2(pt: TPoint; angle: Single): TPoint;
-begin
-  Result.X := ((pt.X - Self.RSInterface.Center.X) div 4) * 4 + Self.RSInterface.Center.X;
-  Result.Y := ((pt.Y - Self.RSInterface.Center.Y) div 4) * 4 + Self.RSInterface.Center.Y;
-end;
-
-function TRSMinimap.NormalizeStep3(pt: TPoint; angle: Single): TPoint;
-begin
-  Result := pt.Rotate(angle, Self.RSInterface.Center);
-end;
-
-
 function TRSMinimap.Normalize(pt: TPoint; angle: Single): TPoint;
-var
-  vector: Vector2;
 begin
-  with Vec2(pt.X, pt.Y).Rotate(-angle, Self.RSInterface.Center) do
+  with pt.Rotate(-angle, Self.RSInterface.Center) do
   begin
-    vector.X := Round((X - Self.RSInterface.Center.X) / 4) * 4 + Self.RSInterface.Center.X;
-    vector.Y := Round((Y - Self.RSInterface.Center.Y) / 4) * 4 + Self.RSInterface.Center.Y;
+    pt.X := ((X - Self.RSInterface.Center.X) div 4) * 4 + Self.RSInterface.Center.X;
+    pt.Y := ((Y - Self.RSInterface.Center.Y) div 4) * 4 + Self.RSInterface.Center.Y;
   end;
 
-  Result := vector.Rotate(angle, Self.RSInterface.Center).ToPoint();
+  Result := pt.Rotate(angle, Self.RSInterface.Center);
 end;
 
 function TRSMinimap.Normalize(pts: TPointArray; angle: Single): TPointArray; overload;
 var
-  i: Integer;
+  pt: TPoint;
 begin
-  for i := 0 to High(pts) do
-    Result += Self.Normalize(pts[i], angle);
+  for pt in pts do
+    Result += Self.Normalize(pt, angle);
 end;
 
 

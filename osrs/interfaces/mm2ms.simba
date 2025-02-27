@@ -16,7 +16,7 @@ Original work done by slacky
 
 type
   TMM2MS = record
-    ZoomRectangles: array [0..100] of TQuad;
+    ZoomQuads: array [0..100] of TQuad;
     PlayerBoxes: array [0..100] of TBox;
     Projector: TMM2MSProjector;
   end;
@@ -125,70 +125,118 @@ begin
 end;
 
 
-procedure TRSMinimap.DebugTiles(drawDots: Boolean);
+
+function TRSMainScreen.Point2MM(pt: TPoint; height: Integer; angle: Single; accuracy: Single = 0.2): Vector3;
+  function FindNearest(Area, Step: Single; FromMM: Vector3; IsFinal: Boolean): Vector3;
+  var
+    i: Int32;
+    tpa: TPointArray;
+    arr, raw: Vector3Array;
+    best: TPoint;
+    x,y: single;
+  begin
+    best := Point(-9999, -9999);
+    x := FromMM.X-Area;
+    while x <= FromMM.X+Area do
+    begin
+      y := FromMM.Y-Area;
+      while y <= FromMM.Y+Area do
+      begin
+        raw += Vector3([x,y,height]);
+        arr += raw[High(raw)].RotateXY(-angle, Minimap.RSInterface.Center);
+        y += Step;
+      end;
+      x += Step;
+    end;
+
+    TPA := Minimap.Vectors2MS(Copy(arr), angle);
+    if not IsFinal then Swap(arr, raw);
+    for i:=0 to High(TPA) do
+      if Distance(TPA[i], pt) < Distance(best, pt) then
+      begin
+        best := TPA[i];
+        Result := arr[i];
+      end;
+    Result.z := Height;
+  end;
+
+var
+  area: Single;
+begin
+  area := 48;
+  Result := FindNearest(area, area, Vec3(Minimap.RSInterface.Center.X, Minimap.RSInterface.Center.Y), False);
+  while area > accuracy do
+  begin
+    Result := FindNearest(area, area, Result, False);
+    area /= 2;
+  end;
+  Result := FindNearest(area, accuracy, Result, True);
+end;
+
+
+function TRSMinimap.GetZoomQuad(): TQuad;
+var
+  angle: Single;
+begin
+  if MM2MS.ZoomQuads[Options.GetZoomLevel(True)] <> [] then
+    Exit(MM2MS.ZoomQuads[Options.ZoomLevel]);
+
+  angle := Self.GetCompassAngle(False);
+
+  Result := [
+    MainScreen.Point2MM(MainScreen.RSInterface.TopLeft, 0, angle).ToPoint(),
+    MainScreen.Point2MM(MainScreen.RSInterface.TopRight, 0, angle).ToPoint(),
+    MainScreen.Point2MM(MainScreen.RSInterface.BottomRight, 0, angle).ToPoint(),
+    MainScreen.Point2MM(MainScreen.RSInterface.BottomLeft, 0, angle).ToPoint()
+  ];
+  MM2MS.ZoomQuads[Options.ZoomLevel] := Result;
+end;
+
+function TRSMinimap.PointOnZoomQuad(pt: TPoint): Boolean;
+begin
+  Result := Self.GetZoomQuad().Contains(pt);
+end;
+
+
+procedure TRSMinimap.DebugTiles(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER, ERSMinimapDot.NPC, ERSMinimapDot.ITEM]);
+const DOT_COLORS: TColorArray = [$FFFFFF, $00FFFF, $0000FF];
 var
   img: TImage;
-  x, y: Integer;
-  tile: Vector3;
-  dot: TPoint;
+  p: TPoint;
+  vector: Vector3;
+  quad: TQuad;
+  dot: ERSMinimapDot;
   angle: Single;
+  tpa: TPointArray;
 begin
   angle := Self.GetCompassAngle(False);
 
   img := TImage.CreateFromTarget();
   img.DrawColor := $00FF00;
 
-  for x := Self.RSInterface.Center.X - 25 * 4 to Self.RSInterface.Center.X + 25 * 4 with 4 do
-    for y := Self.RSInterface.Center.Y - 25 * 4 to Self.RSInterface.Center.Y + 25 * 4 with 4 do
+  for p.X := Self.RSInterface.Center.X - 25 * 4 to Self.RSInterface.Center.X + 25 * 4 with 4 do
+    for p.Y := Self.RSInterface.Center.Y - 25 * 4 to Self.RSInterface.Center.Y + 25 * 4 with 4 do
     begin
-      tile := Vec3(x, y).RotateXY(angle, Self.RSInterface.Center);
-      img.DrawQuad(Self.Vector2MSQuad(tile, angle, [1,1]));
+      vector := Vec3(p.X, p.Y).RotateXY(angle, Self.RSInterface.Center);
+      if not Self.PointOnZoomQuad(vector.ToPoint()) then Continue;
+      quad := Self.Vector2MSQuad(vector, angle, [1,1]);
+      tpa := quad.Corners.Connect();
+      img.DrawTPA(tpa.ExtractBox(MainScreen.RSInterface.Bounds));
     end;
 
-  if drawDots then
+  for dot in dots do
   begin
-    img.DrawColor := $00FFFF;
-    for dot in Self.GetDots(ERSMinimapDot.NPC) do
-      img.DrawQuad(Self.Vector2MSQuad(Vec3(dot.X, dot.Y, 0), angle, [1,1]));
-
-    img.DrawColor := $0000FF;
-    for dot in Self.GetDots(ERSMinimapDot.ITEM) do
-      img.DrawQuad(Self.Vector2MSQuad(Vec3(dot.X, dot.Y, 0), angle, [1,1]));
-
-    img.DrawColor := $FFFFFF;
-    for dot in Self.GetDots(ERSMinimapDot.PLAYER) do
-      img.DrawQuad(Self.Vector2MSQuad(Vec3(dot.X, dot.Y, 0), angle, [1,1]));
+    img.DrawColor := DOT_COLORS[dot];
+    for p in Self.GetDots(dot) do
+    begin
+      vector := Vec3(p.X, p.Y, 0);
+      quad := Self.Vector2MSQuad(vector, angle, [1,1]);
+      if not MainScreen.RSInterface.Bounds.Contains(quad.Mean) then Continue;
+      tpa := quad.Corners.Connect().Grow(1);
+      img.DrawTPA(tpa.ExtractBox(MainScreen.RSInterface.Bounds));
+    end;
   end;
 
   img.Show();
   img.Free();
 end;
-
-procedure TRSMinimap.DebugDots();
-var
-  img: TImage;
-  x, y: Integer;
-  tile: Vector3;
-  dot: TPoint;
-  angle: Single;
-begin
-  angle := Self.GetCompassAngle(False);
-
-  img := TImage.CreateFromTarget();
-
-  img.DrawColor := $00FFFF;
-  for dot in Self.GetDots(ERSMinimapDot.NPC) do
-    img.DrawQuad(Self.Vector2MSQuad(Vec3(dot.X, dot.Y, 0), angle, [1,1]));
-
-  img.DrawColor := $0000FF;
-  for dot in Self.GetDots(ERSMinimapDot.ITEM) do
-    img.DrawQuad(Self.Vector2MSQuad(Vec3(dot.X, dot.Y, 0), angle, [1,1]));
-
-  img.DrawColor := $FFFFFF;
-  for dot in Self.GetDots(ERSMinimapDot.PLAYER) do
-    img.DrawQuad(Self.Vector2MSQuad(Vec3(dot.X, dot.Y, 0), angle, [1,1]));
-
-  img.Show();
-  img.Free();
-end;
-
