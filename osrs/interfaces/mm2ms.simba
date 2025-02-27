@@ -230,12 +230,18 @@ begin
     for p in Self.GetDots(dot) do
     begin
       vector := Vec3(p.X, p.Y, 0);
+      if not Self.PointOnZoomQuad(vector.ToPoint()) then Continue;
       quad := Self.Vector2MSQuad(vector, angle, [1,1]);
-      if not MainScreen.RSInterface.Bounds.Contains(quad.Mean) then Continue;
       tpa := quad.Corners.Connect().Grow(1);
       img.DrawTPA(tpa.ExtractBox(MainScreen.RSInterface.Bounds));
     end;
   end;
+
+  img.DrawColor := $FF0000;
+  vector := Vec3(Self.RSInterface.Center.X, Self.RSInterface.Center.Y);
+  quad := Self.Vector2MSQuad(vector, angle, [1,1]);
+  tpa := quad.Corners.Connect().Grow(1);
+  img.DrawTPA(tpa);
 
   img.Show();
   img.Free();

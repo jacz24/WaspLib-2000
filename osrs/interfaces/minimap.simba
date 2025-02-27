@@ -344,10 +344,9 @@ function TRSMinimap.Normalize(pt: TPoint; angle: Single): TPoint;
 begin
   with pt.Rotate(-angle, Self.RSInterface.Center) do
   begin
-    pt.X := ((X - Self.RSInterface.Center.X) div 4) * 4 + Self.RSInterface.Center.X;
-    pt.Y := ((Y - Self.RSInterface.Center.Y) div 4) * 4 + Self.RSInterface.Center.Y;
+    pt.X := Round((X - Self.RSInterface.Center.X) / 4) * 4 + Self.RSInterface.Center.X;
+    pt.Y := Round((Y - Self.RSInterface.Center.Y) / 4) * 4 + Self.RSInterface.Center.Y;
   end;
-
   Result := pt.Rotate(angle, Self.RSInterface.Center);
 end;
 
@@ -375,7 +374,7 @@ begin
   for y := 0 to img.Height-2 do
     for x := 0 to img.Width-2 do
       if (img.Pixel[x,y] = COLORS[dot][0]) and (img.Pixel[x+1,y] = COLORS[dot][1]) then
-        Result += [x + bounds.X1, y + bounds.Y1];
+        Result += [x + bounds.X1+2, y + bounds.Y1-1];
   img.Free();
 
   Result := Self.Normalize(Result, Self.GetCompassAngle(False));
