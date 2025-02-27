@@ -1,4 +1,4 @@
-{$DEFINE SRLT_CUBOID_INCLUDED}
+{$DEFINE SRLT_GEOMETRY_INCLUDED}
 {$IFNDEF SRLT_UTILS}
   {$I SRLT/utils.simba}
 {$ENDIF}
@@ -9,17 +9,21 @@ type
   end;
   TCuboidArray = array of TCuboid;
 
-function TCuboid.ConvexHull(): TPolygon;
+function TCuboid.Corners(): TPointArray;
 begin
-  Result := TPointArray(Self.Top.Corners + Self.Bottom.Corners).ConvexHull();
+  Result := Self.Top.Corners + Self.Bottom.Corners;
+  Result := Result.ConvexHull();
+end;
+
+function TCuboid.Polygon(): TPolygon;
+begin
+  Result := Self.Corners();
 end;
 
 function TCuboid.Center(): TPoint;
-var
-  tpa: TPointArray;
 begin
-  tpa := [Self.Bottom.Mean, Self.Top.Mean];
-  Result := tpa.Mean();
+  with Self.Bottom.Mean + Self.Top.Mean do
+    Result := [X div 2, Y div 2];
 end;
 
 function TCuboid.Bounds(): TBox;
@@ -29,7 +33,7 @@ end;
 
 function TCuboid.Edges(): TPointArray;
 begin
-  Result := Self.ConvexHull().Connect();
+  Result := Self.Corners().Connect();
 end;
 
 function TCuboid.ShapeFill(): TPointArray;
@@ -40,5 +44,5 @@ end;
 
 function TCuboid.Filter(arr: TPointArray): TPointArray;
 begin
-  Result := arr.ExcludePolygon(Self.ConvexHull());
+  Result := arr.ExcludePolygon(Self.Polygon());
 end;

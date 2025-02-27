@@ -42,14 +42,19 @@ var
   i: Integer;
 begin
   for i := 0 to High(vectors) do
-    vectors[i] := vectors[i].RotateXY(PI*2 - angle, Self.RSInterface.Center);
+    with Self.NormalizeEx([vectors[i].X, vectors[i].Y], angle) do
+    begin
+      vectors[i].X := X;
+      vectors[i].Y := Y;
+    end;
+
   Result := MM2MS.Run(vectors, angle);
 end;
 
 function TRSMinimap.Vector2MS(vector: Vector3; angle: Single): TPoint;
 begin
-  with vector.RotateXY(PI*2-angle, Self.RSInterface.Center) do
-    Result := MM2MS.Run([vector], angle)[0];
+  with Self.NormalizeEx([vector.X, vector.Y], angle) do
+    Result := MM2MS.Run([[X, Y, vector.Z]], angle)[0];
 end;
 
 
@@ -64,13 +69,12 @@ begin
 
   SetLength(vectors, Length(points));
 
-  rotation := PI*2 - angle;
   for i := 0 to High(points) do
-  begin
-    vectors[i].X := points[i].X;
-    vectors[i].Y := points[i].Y;
-    vectors[i] := vectors[i].RotateXY(rotation, Self.RSInterface.Center);
-  end;
+    with Self.Normalize(points[i], angle) do
+    begin
+      vectors[i].X := X;
+      vectors[i].Y := Y;
+    end;
 
   Result := MM2MS.Run(vectors, angle);
 end;
@@ -78,7 +82,7 @@ end;
 function TRSMinimap.Point2MS(pt: TPoint; angle: Single = $FFFF): TPoint;
 begin
   if (angle = $FFFF) then angle := Self.GetCompassAngle(False);
-  with pt.Rotate(PI*2-angle, Self.RSInterface.Center) do
+  with Self.Normalize(pt, angle) do
     Result := MM2MS.Run([Vec3(X, Y, 0)], angle)[0];
 end;
 
@@ -95,8 +99,8 @@ end;
 
 function TRSMinimap.Vector2MSQuad(vector: Vector3; angle: Single; size: Vector2 = [1,1]; offset: Vector3 = [0,0,0]): TQuad;
 var
-  arr: TPointArray;
   v1, v2: Vector2;
+  arr: TPointArray;
 begin
   size.X := 2 * size.X;
   size.Y := 2 * size.Y;
@@ -125,7 +129,47 @@ end;
 function TRSMinimap.Point2MSQuad(pt: TPoint; size: Vector2 = [1,1]; angle: Single = $FFFF): TQuad;
 begin
   if angle = $FFFF then angle := Self.GetCompassAngle(False);
-  Result := Self.Vector2MSQuad(Vec3(pt.X, pt.Y, 0), angle, size);
+  Result := Self.Vector2MSQuad(Vec3(pt.X, pt.Y), angle, size);
+end;
+
+
+function TRSMinimap.Vector2MSCuboid(vector, size: Vector3; angle: Single; offset: Vector3 = [0,0,0]): TCuboid;
+var
+  v1, v2: Vector2;
+  arr: TPointArray;
+begin
+  size.X := 2 * size.X;
+  size.Y := 2 * size.Y;
+
+  vector.X += offset.X;
+  vector.Y += offset.Y;
+  vector.Z += offset.Z;
+
+  with Self.NormalizeEx([vector.X, vector.Y], angle) do
+  begin
+    vector.X := X;
+    vector.Y := Y;
+  end;
+
+  v1 := [vector.X-size.X, vector.Y-size.Y];
+  v2 := [vector.X+size.X, vector.Y+size.Y];
+
+  arr := MM2MS.Run([
+                Vec3(v1.X, v1.Y, vector.Z+size.Z), Vec3(v2.X, v1.Y, vector.Z+size.Z),
+                Vec3(v2.X, v2.Y, vector.Z+size.Z), Vec3(v1.X, v2.Y, vector.Z+size.Z),
+
+                Vec3(v1.X, v1.Y, vector.Z), Vec3(v2.X, v1.Y, vector.Z),
+                Vec3(v2.X, v2.Y, vector.Z), Vec3(v1.X, v2.Y, vector.Z)
+         ], angle);
+
+  Result.Top := [arr[0], arr[1], arr[2], arr[3]];
+  Result.Bottom := [arr[4], arr[5], arr[6], arr[7]];
+end;
+
+function TRSMinimap.Point2MSCuboid(pt: TPoint; size: Vector3; angle: Single = $FFFF): TCuboid;
+begin
+  if angle = $FFFF then angle := Self.GetCompassAngle(False);
+  Result := Self.Vector2MSCuboid(Vec3(pt.X, pt.Y), size, angle);
 end;
 
 
