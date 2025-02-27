@@ -105,7 +105,11 @@ begin
   vector.Y += offset.Y;
   vector.Z += offset.Z;
 
-  vector := vector.RotateXY(PI*2- angle, Self.RSInterface.Center);
+  with Self.NormalizeEx([vector.X, vector.Y], angle) do
+  begin
+    vector.X := X;
+    vector.Y := Y;
+  end;
 
   v1 := [vector.X-size.X, vector.Y-size.Y];
   v2 := [vector.X+size.X, vector.Y+size.Y];
