@@ -12,7 +12,10 @@ Methods to interact with the mainscreen.
 
 type
   TRSMainScreen = record
-    RSInterface: TRSInterface;
+    Bounds: TBox;
+    Center: TPoint;
+    TopLeft, TopRight, BottomRight, BottomLeft: TPoint;
+
     UpTextImageBuffer: TImage;
     UpTextBox: TBox;
     UpTextFilter: TOCRFilter;
@@ -27,20 +30,24 @@ begin
 end;
 
 procedure TRSMainScreen.SetupInterface();
-var
-  b: TBox;
 begin
   case RSClient.Mode of
-    ERSClientMode.RESIZABLE_CLASSIC, ERSClientMode.RESIZABLE_MODERN: b := Target.Bounds;
-    ERSClientMode.FIXED: b := TBox.Create(4,4,515,337);
+    ERSClientMode.FIXED: Self.Bounds := TBox.Create(4,4,515,337);
+    ERSClientMode.RESIZABLE_CLASSIC, ERSClientMode.RESIZABLE_MODERN:
+      Self.Bounds := Target.Bounds;
   end;
 
-  Self.RSInterface.Setup(b);
+  Self.Center := Self.Bounds.Center;
 
-  Self.UpTextBox.X1 := Self.RSInterface.Bounds.X1 + 3;
-  Self.UpTextBox.Y1 := Self.RSInterface.Bounds.Y1 + 3;
-  Self.UpTextBox.X2 := Self.RSInterface.Bounds.X1 + 500;
-  Self.UpTextBox.Y2 := Self.RSInterface.Bounds.Y1 + 21;
+  Self.TopLeft     := Self.Bounds.TopLeft;
+  Self.TopRight    := Self.Bounds.TopRight;
+  Self.BottomRight := Self.Bounds.BottomRight;
+  Self.BottomLeft  := Self.Bounds.BottomLeft;
+
+  Self.UpTextBox.X1 := Self.Bounds.X1 + 3;
+  Self.UpTextBox.Y1 := Self.Bounds.Y1 + 3;
+  Self.UpTextBox.X2 := Self.Bounds.X1 + 500;
+  Self.UpTextBox.Y2 := Self.Bounds.Y1 + 21;
 end;
 
 
@@ -98,9 +105,9 @@ var
 begin
   Keyboard.KeyDown(EKeyCode.UP);
 
-  area := Self.RSInterface.Bounds.Area * 100;
+  area := Self.Bounds.Area * 100;
   for i := 1 to 10 do // 2500ms timeout
-    if (Target.GetPixelDifference(250, Self.RSInterface.Bounds) / area) < 10 then // less than 10% of the screen changed in 250ms
+    if (Target.GetPixelDifference(250, Self.Bounds) / area) < 10 then // less than 10% of the screen changed in 250ms
       Break;
 
   Keyboard.KeyUp(EKeyCode.UP);
@@ -110,18 +117,21 @@ end;
 
 function TRSMainScreen.IsVisible(p: TPoint): Boolean;
 begin
-  Result := Self.RSInterface.Bounds.Expand(-10).Contains(p);
+  Result := Self.Bounds.Expand(-10).Contains(p);
 
   if not Result or (RSClient.Mode = ERSClientMode.FIXED) then
     Exit;
 
-  if Chat.RSInterface.Bounds.Expand(5).Contains(p) and Chat.IsOpen() then
+  if Chat.Bounds.Expand(5).Contains(p) and Chat.IsOpen() then
     Exit(False);
-  if Chat.Tabs.RSInterface.Bounds.Expand(5).Contains(p) then
+  if Chat.Tabs.Bounds.Expand(5).Contains(p) then
     Exit(False);
-  if Minimap.RSInterface.Bounds.Expand(55).Contains(p) then
+  if Minimap.Bounds.Expand(55).Contains(p) then
     Exit(False);
-  if GameTabs.RSInterface.Bounds.Expand(5).Contains(p) then
+
+  if GameTab.Bounds.Expand(5).Contains(p) then
+    Exit(False);
+  if GameTabs.Bounds.Expand(5).Contains(p) then
     Exit(False);
 end;
 
@@ -136,7 +146,7 @@ function TRSMainScreen.RedClicked(): Boolean;
 var
   area: TBox;
 begin
-  area := TBox.Create(Target.MouseXY, 10, 10).Clip(Self.RSInterface.Bounds);
+  area := TBox.Create(Target.MouseXY, 10, 10).Clip(Self.Bounds);
   Result := Self._RedClicked(area);
 end;
 
@@ -144,7 +154,7 @@ function TRSMainScreen.WaiRedClick(time: Integer = 250): Boolean;
 var
   area: TBox;
 begin
-  area := TBox.Create(Target.MouseXY, 10, 10).Clip(Self.RSInterface.Bounds);
+  area := TBox.Create(Target.MouseXY, 10, 10).Clip(Self.Bounds);
   Result := SleepUntil(Self._RedClicked(area), 50, time);
 end;
 
@@ -160,7 +170,7 @@ function TRSMainScreen.YellowClicked(): Boolean;
 var
   area: TBox;
 begin
-  area := TBox.Create(Target.MouseXY, 10, 10).Clip(Self.RSInterface.Bounds);
+  area := TBox.Create(Target.MouseXY, 10, 10).Clip(Self.Bounds);
   Result := Self._YellowClicked(area);
 end;
 
@@ -168,7 +178,7 @@ function TRSMainScreen.WaiYellowClick(time: Integer = 250): Boolean;
 var
   area: TBox;
 begin
-  area := TBox.Create(Target.MouseXY, 10, 10).Clip(Self.RSInterface.Bounds);
+  area := TBox.Create(Target.MouseXY, 10, 10).Clip(Self.Bounds);
   Result := SleepUntil(Self._YellowClicked(area), 50, time);
 end;
 

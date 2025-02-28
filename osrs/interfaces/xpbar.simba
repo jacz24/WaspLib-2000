@@ -1,0 +1,259 @@
+(*
+# XPBar
+Methods to interact with the XP bar.
+*)
+
+{$DEFINE SRLT_XPBAR_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  ERSXPBarSize = enum(UNKNOWN, SMALL, MEDIUM, LARGE);
+  ERSXPBarPosition = enum(UNKNOWN, LEFT, CENTER, RIGHT);
+
+  TRSXPBar = record
+    Size: ERSXPBarSize;
+    Position: ERSXPBarPosition;
+
+    Bounds: TBoxArray;
+    Button: TCircle;
+    OCRFilter: TOCRColorFilter;
+
+    SetupAttempts: Integer;
+
+    Tracker: record
+      Start: UInt64;
+      Current: UInt64;
+      Previous: UInt64;
+    end;
+  end;
+
+procedure TRSXPBar.SetupInterface();
+begin
+  case RSClient.Mode of
+    ERSClientMode.RESIZABLE_CLASSIC, ERSClientMode.RESIZABLE_MODERN:
+      Self.Button := [Minimap.Bounds.X1 - 40, Minimap.Bounds.Y1 + 32,  11];
+
+    ERSClientMode.FIXED:
+      Self.Button := [Minimap.Bounds.X1 - 40, Minimap.Bounds.Y1 + 26,  11];
+  end;
+
+  SetLength(Self.Bounds, 3);
+
+  with Self.Bounds[ERSXPBarPosition.LEFT-1] do
+  begin
+    X1 := MainScreen.Bounds.X1 + 3;
+    X2 := X1 + 138;
+    Y1 := MainScreen.Bounds.Y1 + 25;
+    Y2 := Y1 + 28;
+  end;
+
+  with Self.Bounds[ERSXPBarPosition.CENTER-1] do
+  begin
+    X1 := MainScreen.Bounds.X1;
+    X2 := GameTab.Bounds.X1 - 10;
+    Y1 := MainScreen.Bounds.Y1 + 25;
+    Y2 := Y1 + 28;
+
+    X1 := X1 + (X2 - X1) div 2 - 75;
+    X2 := X1 + 138;
+  end;
+
+  with Self.Bounds[ERSXPBarPosition.RIGHT-1] do
+  begin
+    X2 := GameTab.Bounds.X1 - 40;
+    X1 := X2 - 138;
+    Y1 := MainScreen.Bounds.Y1 + 2;
+    Y2 := Y1 + 27;
+  end;
+end;
+
+
+(*
+## XPBar.IsOpen
+```pascal
+function TRSXPBar.IsOpen(): Boolean;
+```
+Checks if the XPBar circle is enabled.
+This does not mean that the XPBar is actually visible, simply that according to the
+XPBar circle, it is enabled.
+
+Example:
+```pascal
+WriteLn XPBar.IsEnabled();
+```
+*)
+function TRSXPBar.IsOpen(): Boolean;
+begin
+  Result := Target.HasColor($B0E4EF, 0, 50, Self.Button.Bounds);
+end;
+
+(*
+## XPBar.WaitOpen
+```pascal
+function TRSXPBar.WaitOpen(): Boolean;
+```
+Waits for the XPBar to be open.
+This does not mean that the XPBar is actually visible, simply that according to the
+XPBar button, it is enabled.
+
+Example:
+```pascal
+WriteLn XPBar.WaitOpen();
+```
+*)
+function TRSXPBar.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
+begin
+  if interval = -1 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsOpen(), interval, time);
+end;
+
+(*
+## XPBar.Open
+```pascal
+function TRSXPBar.Open(): Boolean;
+```
+Opens the XPBar by clicking the XPBar circle.
+
+Example:
+```pascal
+if not XPBar.IsOpen() then
+  WriteLn XPBar.Open();
+```
+*)
+function TRSXPBar.Open(): Boolean;
+begin
+  if Self.IsOpen() then Exit(True);
+  Mouse.Click(Self.Button, EMouseButton.LEFT);
+  Result := Self.WaitOpen();
+end;
+
+
+(*
+## XPBar.Setup
+```pascal
+function TRSXPBar.Setup(): Boolean;
+```
+Internal method automatically called by SRLT once when attempting to read the XPBar.
+*)
+function TRSXPBar.Setup(): Boolean;
+var
+  position: ERSXPBarPosition;
+  tpa: TPointArray;
+begin
+  if not Self.Open() then Exit;
+  if (Self.Size <> ERSXPBarSize.UNKNOWN) and (Self.Position <> ERSXPBarPosition.UNKNOWN) then
+    Exit(True);
+
+  Self.SetupAttempts += 1;
+
+  for position := ERSXPBarPosition.LEFT to ERSXPBarPosition.RIGHT do
+  begin
+    tpa := Target.FindColor($FFFFFF, 0, Self.Bounds[position-1]);
+    if tpa = [] then Continue;
+    if not Target.HasColor($233038, 0, 30, Self.Bounds[position-1]) then Continue;
+
+    case tpa.Bounds().Height of
+      8, 11, 10: ;
+      else Continue;
+    end;
+
+    Self.Position := position;
+    Self.OCRFilter := TOCRColorFilter.Create([$FFFFFF]);
+
+    Exit(True);
+  end;
+
+  if Self.SetupAttempts < 3 then Exit;
+  WriteLn GetDebugLn('XPBar', 'Something seems to be wrong with your XPBar.', EErrorLevel.WARN);
+  WriteLn GetDebugLn('XPBar', 'If you keep seeing this message fix your XPBar settings!', EErrorLevel.WARN);
+end;
+
+
+(*
+## XPBar.Read
+```pascal
+function TRSXPBar.Read(): Integer;
+```
+Reads the XP in the XPBar.
+
+Example:
+```pascal
+WriteLn XPBar.Read();
+```
+*)
+function TRSXPBar.Read(): UInt64;
+var
+  str: String;
+begin
+  if not Self.Setup() then Exit;
+
+  case Self.Size of
+    ERSXPBarSize.SMALL:  str := OCR.Recognize(Self.Bounds[Self.Position-1], Self.OCRFilter, RSFonts.PLAIN_11);
+    ERSXPBarSize.MEDIUM: str := OCR.Recognize(Self.Bounds[Self.Position-1], Self.OCRFilter, RSFonts.PLAIN_12);
+    ERSXPBarSize.LARGE:  str := OCR.Recognize(Self.Bounds[Self.Position-1], Self.OCRFilter, RSFonts.BOLD_12);
+  end;
+
+  Result := str.ExtractInteger(0);
+  if Result = 0 then Exit;
+
+  //$010000
+
+  if Self.Tracker.Start = 0 then Self.Tracker.Start := Result;
+  if Self.Tracker.Previous = 0 then Self.Tracker.Previous := Result;
+  Self.Tracker.Current := Result;
+end;
+
+(*
+## XPBar.EarnedXP
+```pascal
+function TRSXPBar.EarnedXP(): Boolean;
+```
+Returns True/False if we earned XP since the last time this, XPBar.Read() or XPBar.WaitXP() were called.
+
+Example:
+```pascal
+while True do
+  WriteLn XPBar.EarnedXP();
+```
+*)
+function TRSXPBar.EarnedXP(): Boolean;
+begin
+  Result := Self.Read() > Self.Tracker.Previous;
+
+  if Result then
+    Self.Tracker.Previous := Self.Tracker.Current;
+end;
+
+(*
+## XPBar.WaitXP
+```pascal
+function TRSXPBar.WaitXP(time: Integer = 600; interval: Integer = -1): Boolean;
+```
+Waits a set amount of time until XPBar.EarnedXP() is true.
+*)
+function TRSXPBar.WaitXP(time: Integer = 600; interval: Integer = -1): Boolean;
+begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.EarnedXP(), interval, time);
+end;
+
+
+(*
+## XPBar.TotalEarnedXP
+```pascal
+function TRSXPBar.TotalEarnedXP(update: Boolean = False): UInt64;
+```
+Returns the total amount of earned experience tracked since the script started running.
+This is pretty reliable but should be taken with a grain of salt since XPBar can be misread
+due to several reasons, like open interfaces.
+*)
+function TRSXPBar.TotalEarnedXP(update: Boolean = True): UInt64;
+begin
+  if update then Self.Read();
+  Result := Self.Tracker.Current - Self.Tracker.Start;
+end;
+
+var
+  XPBar: TRSXPBar;

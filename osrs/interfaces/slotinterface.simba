@@ -180,7 +180,7 @@ end;
 
 function TRSSlotInterface.WaitCount(count: Int32; time: Int32 = 600; interval: Int32 = -1): Boolean;
 begin
-  if interval = -1 then interval := RandomMode(100, 50, 1500);
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.Count() = count, interval, time);
 end;
 

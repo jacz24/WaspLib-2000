@@ -24,6 +24,8 @@
 {$IFNDEF SRLT_CHAT_TABS_INCLUDED}           {$I osrs/interfaces/chat/chattabs.simba}
 {$IFNDEF SRLT_CHAT_INCLUDED}                {$I osrs/interfaces/chat/chat.simba}
 {$IFNDEF SRLT_MAINSCREEN_INCLUDED}          {$I osrs/interfaces/mainscreen/mainscreen.simba}
+{$IFNDEF SRLT_INTERFACE_AREA_INCLUDED}      {$I osrs/interfaces/interfacearea.simba}
+
 {$IFNDEF SRLT_SLOT_INTERFACE_INCLUDED}      {$I osrs/interfaces/slotinterface.simba}
 {$IFNDEF SRLT_ITEM_INTERFACE_INCLUDED}      {$I osrs/interfaces/iteminterface.simba}
 
@@ -31,14 +33,18 @@
 {$IFNDEF SRLT_MAGIC_INCLUDED}               {$I osrs/interfaces/gametabs/magic.simba}
 {$IFNDEF SRLT_OPTIONS_INCLUDED}             {$I osrs/interfaces/gametabs/options.simba}
 
+
 {$IFNDEF SRLT_MM2MS_PROJECTOR_INCLUDED}     {$I osrs/interfaces/mm2ms_projector.simba}
 {$IFNDEF SRLT_MM2MS_INCLUDED}               {$I osrs/interfaces/mm2ms.simba}
+{$IFNDEF SRLT_XPBAR_INCLUDED}               {$I osrs/interfaces/xpbar.simba}
 
 {$IFNDEF SRLT_SETUP_INCLUDED}
 {$I osrs/interfaces/setup.simba}
 {$ELSE}{$ENDIF}
 
 
+{$ELSE}{$ENDIF}
+{$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}

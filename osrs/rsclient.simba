@@ -76,7 +76,7 @@ end;
 
 function TRSClient.IsLoggedIn(waitTime: Int32; interval: Int32 = -1): Boolean; overload;
 begin
-  if interval = -1 then
+  if interval < 0 then
     interval := RandomLeft(50, 1500);
 
   Result := SleepUntil(Self.IsLoggedIn(), interval, waitTime);

@@ -31,9 +31,9 @@ begin
   Result := SleepUntil(Self.Enabled(), interval, time);
 end;
 
-procedure TRSButton.Click(mouseButton: EMouseButton = EMouseButton.LEFT);
+procedure TRSButton.Click(button: EMouseButton = EMouseButton.LEFT);
 begin
-  Mouse.Click(Self.Bounds, mouseButton);
+  Mouse.Click(Self.Bounds, button);
 end;
 
 function TRSButton.Enable(): Boolean;

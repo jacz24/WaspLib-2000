@@ -24,15 +24,15 @@ begin
   case RSClient.Mode of
     ERSClientMode.FIXED:
     begin
-      Self.ScaleMin := 0.83 * MainScreen.RSInterface.Height / 503; // fixed client height
-      Self.ScaleMax := 6.32 * MainScreen.RSInterface.Height / 503; // fixed client height
+      Self.ScaleMin := 0.83 * MainScreen.Bounds.Height / 503; // fixed client height
+      Self.ScaleMax := 6.32 * MainScreen.Bounds.Height / 503; // fixed client height
       Self.ViewMatrix := TMatrix4.LookAtRH([0,-28,61],[0,0,1.0], VECTOR3_UNIT_Y);
     end;
 
     ERSCLientMode.RESIZABLE_CLASSIC, ERSClientMode.RESIZABLE_MODERN:
     begin
-      Self.ScaleMin := 0.635 * MainScreen.RSInterface.Height / 503; // fixed client height
-      Self.ScaleMax := 4.90 * MainScreen.RSInterface.Height / 503; // fixed client height
+      Self.ScaleMin := 0.635 * MainScreen.Bounds.Height / 503; // fixed client height
+      Self.ScaleMax := 4.90 * MainScreen.Bounds.Height / 503; // fixed client height
       Self.ViewMatrix := TMatrix4.LookAtRH([0,-21,61],[0,0,1.0], VECTOR3_UNIT_Y);
     end;
   end;
@@ -52,14 +52,14 @@ begin
   scale := Self.ScaleMin + Self.RSZoom * (Self.ScaleMax - Self.ScaleMin);
   Self.Transformer.X := 513 * scale; // fixed mainscreen width
   Self.Transformer.Y := 335 * scale;
-  Self.Transformer.Z := MainScreen.RSInterface.Center.Y + (Self.RSZoom * 24); // fixed mainscreen height, y shift
+  Self.Transformer.Z := MainScreen.Center.Y + (Self.RSZoom * 24); // fixed mainscreen height, y shift
 end;
 
 function TMM2MSProjector.Transform(coord: Vector3; matrix: TMatrix4): Vector3;
 begin
   with Vector3.TransformCoordinate(coord, matrix) do
   begin
-    Result.X := (+X * Self.Transformer.X) + MainScreen.RSInterface.Center.X;
+    Result.X := (+X * Self.Transformer.X) + MainScreen.Center.X;
     Result.Y := (-Y * Self.Transformer.Y) + Self.Transformer.Z;
   end;
 end;

@@ -194,13 +194,13 @@ end;
 
 function TRSItemInterface.WaitCount(items: TRSItemArray; count: Integer; time: Integer = 600; interval: Integer = -1): Boolean;
 begin
-  if interval = -1 then interval := RandomMode(100, 50, 1500);
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.Count(items) = count, interval, time);
 end;
 
 function TRSItemInterface.WaitCount(item: TRSItem; count: Integer; time: Integer = 600; interval: Integer = -1): Boolean; overload;
 begin
-  if interval = -1 then interval := RandomMode(100, 50, 1500);
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.Count(item) = count, interval, time);
 end;
 

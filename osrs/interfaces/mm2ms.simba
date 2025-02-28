@@ -27,7 +27,7 @@ var
 begin
   Self.Projector.UpdateZoom(Options.GetZoomLevel(True));
 
-  with Minimap.RSInterface.Center do
+  with Minimap.Center do
     for i := 0 to High(arr) do
       arr[i] := [arr[i].X - X, Y - arr[i].Y, arr[i].Z];
 
@@ -191,7 +191,7 @@ function TRSMainScreen.Point2MM(pt: TPoint; height: Integer; angle: Single; accu
       while y <= FromMM.Y+Area do
       begin
         raw += Vector3([x,y,height]);
-        arr += raw[High(raw)].RotateXY(-angle, Minimap.RSInterface.Center);
+        arr += raw[High(raw)].RotateXY(-angle, Minimap.Center);
         y += Step;
       end;
       x += Step;
@@ -212,7 +212,7 @@ var
   area: Single;
 begin
   area := 48;
-  Result := FindNearest(area, area, Vec3(Minimap.RSInterface.Center.X, Minimap.RSInterface.Center.Y), False);
+  Result := FindNearest(area, area, Vec3(Minimap.Center.X, Minimap.Center.Y), False);
   while area > accuracy do
   begin
     Result := FindNearest(area, area, Result, False);
@@ -232,10 +232,10 @@ begin
   angle := Self.GetCompassAngle(False);
 
   Result := [
-    MainScreen.Point2MM(MainScreen.RSInterface.TopLeft, 0, angle).ToPoint(),
-    MainScreen.Point2MM(MainScreen.RSInterface.TopRight, 0, angle).ToPoint(),
-    MainScreen.Point2MM(MainScreen.RSInterface.BottomRight, 0, angle).ToPoint(),
-    MainScreen.Point2MM(MainScreen.RSInterface.BottomLeft, 0, angle).ToPoint()
+    MainScreen.Point2MM(MainScreen.TopLeft, 0, angle).ToPoint(),
+    MainScreen.Point2MM(MainScreen.TopRight, 0, angle).ToPoint(),
+    MainScreen.Point2MM(MainScreen.BottomRight, 0, angle).ToPoint(),
+    MainScreen.Point2MM(MainScreen.BottomLeft, 0, angle).ToPoint()
   ];
   MM2MS.ZoomQuads[Options.ZoomLevel] := Result;
 end;
@@ -262,14 +262,14 @@ begin
   img := TImage.CreateFromTarget();
   img.DrawColor := $00FF00;
 
-  for p.X := Self.RSInterface.Center.X - 25 * 4 to Self.RSInterface.Center.X + 25 * 4 with 4 do
-    for p.Y := Self.RSInterface.Center.Y - 25 * 4 to Self.RSInterface.Center.Y + 25 * 4 with 4 do
+  for p.X := Self.Center.X - 25 * 4 to Self.Center.X + 25 * 4 with 4 do
+    for p.Y := Self.Center.Y - 25 * 4 to Self.Center.Y + 25 * 4 with 4 do
     begin
-      vector := Vec3(p.X, p.Y).RotateXY(angle, Self.RSInterface.Center);
+      vector := Vec3(p.X, p.Y).RotateXY(angle, Self.Center);
       if not Self.PointOnZoomQuad(vector.ToPoint()) then Continue;
       quad := Self.Vector2MSQuad(vector, angle, [1,1]);
       tpa := quad.Corners.Connect();
-      img.DrawTPA(tpa.ExtractBox(MainScreen.RSInterface.Bounds));
+      img.DrawTPA(tpa.ExtractBox(MainScreen.Bounds));
     end;
 
   for dot in dots do
@@ -281,12 +281,12 @@ begin
       if not Self.PointOnZoomQuad(vector.ToPoint()) then Continue;
       quad := Self.Vector2MSQuad(vector, angle, [1,1]);
       tpa := quad.Corners.Connect().Grow(1);
-      img.DrawTPA(tpa.ExtractBox(MainScreen.RSInterface.Bounds));
+      img.DrawTPA(tpa.ExtractBox(MainScreen.Bounds));
     end;
   end;
 
   img.DrawColor := $FF0000;
-  vector := Vec3(Self.RSInterface.Center.X, Self.RSInterface.Center.Y);
+  vector := Vec3(Self.Center.X, Self.Center.Y);
   quad := Self.Vector2MSQuad(vector, angle, [1,1]);
   tpa := quad.Corners.Connect().Grow(1);
   img.DrawTPA(tpa);

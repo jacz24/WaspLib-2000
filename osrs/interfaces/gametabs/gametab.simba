@@ -33,8 +33,8 @@ begin
     begin
       Self.Bounds.X1 := Target.Bounds.X2 - 193;
       Self.Bounds.X2 := Target.Bounds.X2 - 10;
-      Self.Bounds.Y1 := GameTabs.RSInterface.Bounds.Y1 - 269;
-      Self.Bounds.Y2 := GameTabs.RSInterface.Bounds.Y1 - 7;
+      Self.Bounds.Y1 := GameTabs.Bounds.Y1 - 269;
+      Self.Bounds.Y2 := GameTabs.Bounds.Y1 - 7;
     end;
   end;
 

@@ -14,8 +14,9 @@ type
   ERSIronMan = enum(NONE, IRONMAN, HARDCORE, ULTIMATE, GROUP, HARCORE_GROUP, UNRANKED_GROUP);
 
   TRSChat = record
+    Bounds: TBox;
     Tabs: TRSChatTabs;
-    RSInterface: TRSInterface;
+
     MessageLines: TBoxArray;
     InputLine: TBox;
     ReportButton: TRSButton;
@@ -31,19 +32,17 @@ begin
   Self.ReportButton.Index := 0;
   Self.ReportButton.EnabledColors := [[1555,6], [5399922, 0], [795452, 0]];
 
-  with Self.Tabs.RSInterface.Bounds do
+  with Self.Tabs.Bounds do
   begin
-    Self.ReportButton.Bounds := Box(X1 + 436, Y1,  X1 + 515, Y2 - 1);
-    b.X1 := X1;
-    b.X2 := X2;
-    b.Y1 := Y1 - 142;
-    b.Y2 := Y1 - 1;
+    Self.ReportButton.Bounds := TBox.Create(X1 + 436, Y1,  X1 + 515, Y2 - 1);
+    Self.Bounds.X1 := X1;
+    Self.Bounds.X2 := X2;
+    Self.Bounds.Y1 := Y1 - 142;
+    Self.Bounds.Y2 := Y1 - 1;
   end;
 
-  Self.RSInterface.Setup(b);
-
   //Self.ScrollArea := Self.Bounds;
-  with Self.RSInterface do
+  with Self.Bounds do
     Self.MessageLines := TBoxArray.Create(TopLeft + [10, 8], 1, 9, Width - 35, 13, [0, 1]);
 
   Self.InputLine := Self.MessageLines.Pop;
@@ -166,14 +165,14 @@ function TRSChat.GetQuery(): String;
 const
   FILTER: TOCRColorFilter := TOCRColorFilter.Create([$000000]);
 begin
-  Result := OCR.Recognize(Self.RSInterface.Bounds, FILTER, RSFonts.BOLD_12);
+  Result := OCR.Recognize(Self.Bounds, FILTER, RSFonts.BOLD_12);
 end;
 
 function TRSChat.GetQueryAnswer(): String;
 var
   FILTER: TOCRColorFilter := TOCRColorFilter.Create([8388608]);
 begin
-  Result := OCR.Recognize(Self.RSInterface.Bounds, FILTER, RSFonts.BOLD_12);
+  Result := OCR.Recognize(Self.Bounds, FILTER, RSFonts.BOLD_12);
 end;
 
 function TRSChat.FindQuery(query: String; caseSensitive: Boolean = False): Boolean;
@@ -183,7 +182,7 @@ end;
 
 function TRSChat.WaitQuery(query: String; caseSensitive: Boolean = False; time: Integer = 600; interval: Integer = -1): Boolean;
 begin
-  if interval = -1 then interval := RandomMode(100, 50, 1500);
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.FindQuery(query, caseSensitive), interval, time);
 end;
 
@@ -222,7 +221,7 @@ begin
     colors := Self.GetColors([ERSChatColor.BLACK, ERSChatColor.WHITE]);
 
   for i := 0 to High(colors) do
-    tpa += Target.FindColor(colors[i], 0, Self.RSInterface.Bounds);
+    tpa += Target.FindColor(colors[i], 0, Self.Bounds);
 
   b := tpa.Bounds();
   strings := OCR.RecognizeLines(b, TOCRColorFilter.Create(colors), RSFonts.QUILL_8);
@@ -268,7 +267,7 @@ function TRSChat.WaitOption(chatOption: String; caseSensitive: Boolean = False; 
 begin
   if colors = [] then
     colors := Self.GetColors([ERSChatColor.BLACK, ERSChatColor.WHITE, ERSChatColor.BLUE]);
-  if interval = -1 then interval := RandomMode(100, 50, 1500);
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.ContainsOption(chatOption, caseSensitive, colors), time, interval);
 end;
 
@@ -403,7 +402,8 @@ procedure TRSChat.Draw(img: TImage);
 begin
   if not Self.IsOpen() then Exit;
 
-  Self.RSInterface.Draw(img);
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
   img.DrawBoxArray(Self.MessageLines, False);
   img.DrawBox(Self.InputLine);
 end;

@@ -56,7 +56,7 @@ end;
 
 function TRSChooseOption.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
 begin
-  if interval = -1 then interval := RandomMode(100, 50, 1500);
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsOpen(), interval, time);
 end;
 

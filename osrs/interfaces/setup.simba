@@ -28,6 +28,9 @@ begin
   Options.SetupInterface();
   MM2MS.Projector.SetupProjection();
   Chat.SetupInterface();
+  InterfaceArea.SetupInterface();
+  RSInterface.SetupInterface();
+  XPBar.SetupInterface();
 end;
 
 {$H-}

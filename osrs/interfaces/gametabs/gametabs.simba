@@ -15,7 +15,7 @@ type
   );
 
   TRSGameTabs = record
-    RSInterface: TRSInterface;
+    Bounds: TBox;
     {%codetools off}
     Tabs: TBoxArray;
     {%codetools on}
@@ -27,58 +27,56 @@ var
   b: TBox;
   tab: ERSGameTab;
 begin
-  b.Y2 := Target.Bounds.Y2;
+  Self.Bounds.Y2 := Target.Bounds.Y2;
 
   case RSClient.Mode of
     ERSClientMode.FIXED:
     begin
-      b.X1 := Target.Bounds.X2 - 242;
-      b.X2 := Target.Bounds.X2 - 2;
-      b.Y1 := Target.Bounds.Y2 - 334;
+      Self.Bounds.X1 := Target.Bounds.X2 - 242;
+      Self.Bounds.X2 := Target.Bounds.X2 - 2;
+      Self.Bounds.Y1 := Target.Bounds.Y2 - 334;
     end;
 
     ERSClientMode.RESIZABLE_CLASSIC:
     begin
-      b.X1 := Target.Bounds.X2 - 240;
-      b.X2 := Target.Bounds.X2;
-      b.Y1 := Target.Bounds.Y2 - 334;
+      Self.Bounds.X1 := Target.Bounds.X2 - 240;
+      Self.Bounds.X2 := Target.Bounds.X2;
+      Self.Bounds.Y1 := Target.Bounds.Y2 - 334;
     end;
 
     ERSClientMode.RESIZABLE_MODERN:
     begin
-      b.X2 := Target.Bounds.X2;
+      Self.Bounds.X2 := Target.Bounds.X2;
 
       //Needed because depending on the client width the tabs stack into row(s)
       if Target.Width >= 948 then
       begin
-        b.X1 := Target.Bounds.X2 - 428;
-        b.Y1 := Target.Bounds.Y2 - 35;
+        Self.Bounds.X1 := Target.Bounds.X2 - 428;
+        Self.Bounds.Y1 := Target.Bounds.Y2 - 35;
       end
       else
       begin
-        b.X1 := Target.Bounds.X2 - 230;
-        b.Y1 := Target.Bounds.Y2 - 71;
+        Self.Bounds.X1 := Target.Bounds.X2 - 230;
+        Self.Bounds.Y1 := Target.Bounds.Y2 - 71;
       end;
     end;
   end;
 
-  Self.RSInterface.Setup(b);
-
   case RSClient.Mode of
     ERSClientMode.FIXED, ERSClientMode.RESIZABLE_CLASSIC:
-      Self.Tabs := TBoxArray.Create(Self.RSInterface.TopLeft.Offset(6,1), 7, 2, 30, 33, [3, 265]);
+      Self.Tabs := TBoxArray.Create(Self.Bounds.TopLeft.Offset(6,1), 7, 2, 30, 33, [3, 265]);
 
     ERSClientMode.RESIZABLE_MODERN:
       begin
         // One row
         if Target.Width >= 948 then
         begin
-          Self.Tabs := TBoxArray.Create(Self.RSInterface.BottomLeft.Offset(0,-35), 14, 1, 30, 33, [3, 0]);
+          Self.Tabs := TBoxArray.Create(Self.Bounds.BottomLeft.Offset(0,-35), 14, 1, 30, 33, [3, 0]);
           for tab := ERSGameTab.MUSIC downto ERSGameTab.FRIENDS - 1 do
             Self.Tabs[tab-1] := Self.Tabs[tab-2];
         end
         else // Two rows
-          Self.Tabs := TBoxArray.Create(Self.RSInterface.BottomLeft.Offset(0,-70), 7, 2, 30, 33, [3, 3]);
+          Self.Tabs := TBoxArray.Create(Self.Bounds.BottomLeft.Offset(0,-70), 7, 2, 30, 33, [3, 3]);
 
         // Logout button is moved to top right corner
         Self.Tabs[7] := Self.Tabs[10];
@@ -116,7 +114,7 @@ end;
 
 function TRSGameTabs.WaitOpen(const tab: ERSGameTab; const time: Integer = 600; interval: Integer = -1): Boolean;
 begin
-  if interval = -1 then interval := RandomMode(100, 50, 1500);
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsOpen(tab), interval, time);
 end;
 
@@ -134,7 +132,7 @@ end;
 
 procedure TRSGameTabs.Draw(img: TImage);
 begin
-  Self.RSInterface.Draw(img);
+  img.DrawBox(Self.Bounds);
   img.DrawBoxArray(Self.Tabs, False);
 end;
 

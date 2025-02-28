@@ -30,7 +30,7 @@ begin
   Self.BottomRight := bounds.BottomRight;
   Self.BottomLeft  := bounds.BottomLeft;
 
-  Self.Quad := [bounds.TopLeft, bounds.TopRight, bounds.BottomRight, bounds.BottomLeft];
+  Self.Quad := TQuad.CreateFromBox(bounds);
 end;
 
 procedure TRSInterface.Draw(img: TImage);
@@ -69,7 +69,7 @@ end;
 
 function TRSInterfaceTitle.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
 begin
-  if interval = -1 then interval := RandomMode(100, 50, 1500);
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsOpen(), interval, time);
 end;
 
@@ -86,12 +86,12 @@ end;
 
 function TRSInterfaceTitle.WaitTitle(text: String; minMatch: Single = 0.8; waitTime: Integer = 600; interval: Integer = -1): Boolean; overload;
 begin
-  if interval = -1 then interval := RandomMode(100, 50, 1500);
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsTitle(text, minMatch), interval, waitTime);
 end;
 
 
-function TRSInterfaceTitle.Close(escape: Boolean = False): Boolean;
+function TRSInterfaceTitle.Close(escape: Boolean = True): Boolean;
 begin
   if not Self.IsOpen() then Exit(True);
 

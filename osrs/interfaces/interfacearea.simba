@@ -1,0 +1,102 @@
+(*
+# InterfaceArea
+*)
+
+{$DEFINE SRLT_INTERFACE_AREA_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  ERSInterfaceType = (CLASSIC, PAPER, ANY);
+
+  TRSInterfaceArea = type TRSInterface;
+
+procedure TRSInterfaceArea.SetupInterface();
+begin
+  Self.Bounds.Y1 := MainScreen.Bounds.Y1;
+  Self.Bounds.X1 := MainScreen.Bounds.X1;
+
+  case RSClient.Mode of
+    ERSClientMode.FIXED:
+    begin
+      Self.Bounds.X2 := MainScreen.Bounds.X2;
+      Self.Bounds.Y2 := MainScreen.Bounds.Y2;
+    end;
+
+    ERSClientMode.RESIZABLE_CLASSIC:
+    begin
+      Self.Bounds.X2 := GameTabs.Bounds.X1 - 10;
+      Self.Bounds.Y2 := Chat.Bounds.Y1;
+    end;
+
+    ERSClientMode.RESIZABLE_MODERN:
+    begin
+      Self.Bounds.X2 := GameTab.Bounds.X1 - 22;
+      Self.Bounds.Y2 := Chat.Bounds.Y1;
+    end;
+  end;
+
+  Self.Width  := Self.Bounds.Width;
+  Self.Height := Self.Bounds.Height;
+  Self.Center := Self.Bounds.Center;
+
+  Self.TopLeft     := Self.Bounds.TopLeft;
+  Self.TopRight    := Self.Bounds.TopRight;
+  Self.BottomRight := Self.Bounds.BottomRight;
+  Self.BottomLeft  := Self.Bounds.BottomLeft;
+
+  Self.Quad := TQuad.CreateFromBox(Self.Bounds);
+end;
+
+
+(*
+## TRSInterfaceArea.IsOpen
+```pascal
+function TRSInterfaceArea.IsOpen(interfaceType: ERSInterfaceType = ERSInterfaceType.ANY): Boolean;
+```
+Returns True/False if any interface is found open.
+*)
+function TRSInterfaceArea.IsOpen(interfaceType: ERSInterfaceType = ERSInterfaceType.ANY): Boolean;
+begin
+  case interfaceType of
+    ERSInterfaceType.CLASSIC: Result := Target.HasColor(3358536, 2, 10000, Self.Bounds);
+    ERSInterfaceType.PAPER:   Result := False;//TODO: SRL.CountColor(CTS2(8693433, 5, 0.10, 1.17), Self.Bounds) > 35000;
+    ERSInterfaceType.ANY:     Result := Self.IsOpen(ERSInterfaceType.CLASSIC) or Self.IsOpen(ERSInterfaceType.PAPER);
+  end;
+end;
+
+(*
+## TRSInterfaceArea.IsOpen
+```pascal
+function TRSInterfaceArea.IsOpen(interfaceType: ERSInterfaceType = ERSInterfaceType.ANY): Boolean;
+```
+Returns True/False if any interface is found open.
+*)
+function TRSInterfaceArea.WaitOpenOpen(interfaceType: ERSInterfaceType = ERSInterfaceType.ANY; time: Integer; interval: Integer = -1): Boolean;
+begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsOpen(interfaceType), interval, time);
+end;
+
+
+function TRSInterfaceArea.GetCloseButton(): TRSButton;
+begin
+  Result := [];
+end;
+
+function TRSInterfaceArea.Close(escape: Boolean = True): Boolean;
+begin
+  if not Self.IsOpen() then Exit(True);
+
+  case escape of
+    False: Self.GetCloseButton().Click();
+    True:  Target.KeyPress(EKeyCode.ESCAPE);
+  end;
+
+  Result := SleepUntil(not Self.IsOpen(), 50, 600);
+end;
+
+var
+  InterfaceArea: TRSInterfaceArea;
+  RSInterface: TRSInterfaceArea;

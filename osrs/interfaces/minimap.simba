@@ -16,8 +16,9 @@ type
   ERSMinimapOrb  = (HITPOINTS, PRAYER, ENERGY, SPECIAL);
 
   TRSMinimap = record
-    RSInterface: TRSInterface;
     Orbs: TCircleArray;
+    Bounds: TBox;
+    Center: TPoint;
     Polygon: TPolygon;
 
     Compass: record
@@ -41,32 +42,29 @@ type
 
 procedure TRSMinimap.SetupInterface();
 var
-  b: TBox;
   tpa: TPointArray;
 begin
   case RSClient.Mode of
     ERSClientMode.RESIZABLE_CLASSIC, ERSClientMode.RESIZABLE_MODERN:
     begin
-      b.X1 := Target.Bounds.X2 - 157;
-      b.X2 := Target.Bounds.X2 - 6;
-      b.Y1 := Target.Bounds.Y1 + 8;
-      b.Y2 := Target.Bounds.Y1 + 159;
+      Self.Bounds.X1 := Target.Bounds.X2 - 157;
+      Self.Bounds.X2 := Target.Bounds.X2 - 6;
+      Self.Bounds.Y1 := Target.Bounds.Y1 + 8;
+      Self.Bounds.Y2 := Target.Bounds.Y1 + 159;
     end;
 
     ERSClientMode.FIXED:
     begin
-      b.X1 := Target.Bounds.X2 - 194;
-      b.X2 := Target.Bounds.X2 - 50;
-      b.Y1 := Target.Bounds.Y1 + 9;
-      b.Y2 := Target.Bounds.Y1 + 159;
+      Self.Bounds.X1 := Target.Bounds.X2 - 194;
+      Self.Bounds.X2 := Target.Bounds.X2 - 50;
+      Self.Bounds.Y1 := Target.Bounds.Y1 + 9;
+      Self.Bounds.Y2 := Target.Bounds.Y1 + 159;
     end;
   end;
 
-  Self.RSInterface.Setup(b);
-
   SetLength(Self.Orbs, Ord(High(ERSMinimapOrb))+1);
 
-  with Self.RSInterface.Bounds do
+  with Self.Bounds do
     case RSClient.Mode of
       ERSClientMode.RESIZABLE_CLASSIC, ERSClientMode.RESIZABLE_MODERN:
       begin
@@ -89,7 +87,8 @@ begin
       end;
     end;
 
-  Self.Polygon := tpa.Offset(Self.RSInterface.Center);
+  Self.Center := Self.Bounds.Center;
+  Self.Polygon := tpa.Offset(Self.Center);
 end;
 
 function TRSMinimap.Contains(p: TPoint): Boolean;
@@ -295,7 +294,7 @@ end;
 
 function TRSMinimap.FindFlag(out p: TPoint): Boolean;
 begin
-  p := Target.FindImage(Self.FLAG, 0, Self.RSInterface.Bounds);
+  p := Target.FindImage(Self.FLAG, 0, Self.Bounds);
   Result := Self.Polygon.Contains(p);
 end;
 
@@ -308,7 +307,7 @@ end;
 
 function TRSMinimap.WaitFlag(time: Integer = 600; interval: Integer = -1): Boolean;
 begin
-  if interval = -1 then interval := RandomMode(100, 50, 1500);
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.HasFlag(), interval, time);
 end;
 
@@ -316,19 +315,19 @@ end;
 //Normalize TPoint for 0º
 function TRSMinimap.Normalize(pt: TPoint; angle: Single): TPoint;
 begin
-  with pt.Rotate(-angle, Self.RSInterface.Center) do
+  with pt.Rotate(-angle, Self.Center) do
   begin
-    Result.X := Round((X - Self.RSInterface.Center.X) / 4) * 4 + Self.RSInterface.Center.X;
-    Result.Y := Round((Y - Self.RSInterface.Center.Y) / 4) * 4 + Self.RSInterface.Center.Y;
+    Result.X := Round((X - Self.Center.X) / 4) * 4 + Self.Center.X;
+    Result.Y := Round((Y - Self.Center.Y) / 4) * 4 + Self.Center.Y;
   end;
 end;
 
 function TRSMinimap.NormalizeEx(vector: Vector2; angle: Single): Vector2;
 begin
-  with vector.Rotate(-angle, Self.RSInterface.Center) do
+  with vector.Rotate(-angle, Self.Center) do
   begin
-    Result.X := Round((X - Self.RSInterface.Center.X) / 4) * 4 + Self.RSInterface.Center.X;
-    Result.Y := Round((Y - Self.RSInterface.Center.Y) / 4) * 4 + Self.RSInterface.Center.Y;
+    Result.X := Round((X - Self.Center.X) / 4) * 4 + Self.Center.X;
+    Result.Y := Round((Y - Self.Center.Y) / 4) * 4 + Self.Center.Y;
   end;
 end;
 
@@ -440,7 +439,7 @@ function TRSMinimap.GetCleanImage(angle: Single = $FFFF): TImage;
 var
   img, clean: TImage;
 begin
-  img := TImage.CreateFromTarget(Self.RSInterface.Bounds);
+  img := TImage.CreateFromTarget(Self.Bounds);
   img.ReplaceColor(0, 1);
 
   clean := Self.CleanImage(img);

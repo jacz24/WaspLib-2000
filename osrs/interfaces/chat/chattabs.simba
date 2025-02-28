@@ -13,23 +13,20 @@ type
   end;
 
   TRSChatTabs = record
-    RSInterface: TRSInterface;
+    Bounds: TBox;
     Tabs: array [0..7] of TRSChatTab;
   end;
 
 procedure TRSChatTabs.SetupInterface();
 var
-  b: TBox;
   i: Int32;
 begin
-  b.X1 := Target.Bounds.X1;
-  b.X2 := Target.Bounds.X1 + 518;
-  b.Y1 := Target.Bounds.Y2 - 22;
-  b.Y2 := Target.Bounds.Y2;
+  Self.Bounds.X1 := Target.Bounds.X1;
+  Self.Bounds.X2 := Target.Bounds.X1 + 518;
+  Self.Bounds.Y1 := Target.Bounds.Y2 - 22;
+  Self.Bounds.Y2 := Target.Bounds.Y2;
 
-  Self.RSInterface.Setup(b);
-
-  with Self.RSInterface.Bounds do
+  with Self.Bounds do
     for i := 0 to 6 do
     begin
       Self.Tabs[i].Tab := ERSChatTab(i+1);
