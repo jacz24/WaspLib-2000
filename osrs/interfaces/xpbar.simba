@@ -16,7 +16,11 @@ type
     Size: ERSXPBarSize;
     Position: ERSXPBarPosition;
 
-    Bounds: TBoxArray;
+    Bounds: TBox;
+    Font: TFontSet;
+
+    AvailableBounds: TBoxArray;
+
     Button: TCircle;
     OCRFilter: TOCRColorFilter;
 
@@ -29,6 +33,40 @@ type
     end;
   end;
 
+
+procedure TRSXPBar.UpdateSize();
+var
+  i: Integer;
+begin
+  case Self.Size of
+    ERSXPBarSize.UNKNOWN: Exit;
+    ERSXPBarSize.SMALL:
+    begin
+      with Self.AvailableBounds[ERSXPBarPosition.LEFT-1] do X2 := X1 + 118;
+      with Self.AvailableBounds[ERSXPBarPosition.RIGHT-1] do X1 := X2 - 118;
+      with Self.AvailableBounds[ERSXPBarPosition.CENTER-1] do
+      begin
+        X1 += 10;
+        X2 -= 11;
+      end;
+    end;
+
+    ERSXPBarSize.MEDIUM:
+    begin
+      with Self.AvailableBounds[ERSXPBarPosition.LEFT-1] do X2 := X1 + 128;
+      with Self.AvailableBounds[ERSXPBarPosition.RIGHT-1] do X1 := X2 - 128;
+      with Self.AvailableBounds[ERSXPBarPosition.CENTER-1] do
+      begin
+        X1 += 5;
+        X2 -= 6;
+      end;
+    end;
+  end;
+
+  if Self.Position <> ERSXPBarPosition.UNKNOWN then
+    Self.Bounds := Self.AvailableBounds[Self.Position-1];
+end;
+
 procedure TRSXPBar.SetupInterface();
 begin
   case RSClient.Mode of
@@ -39,34 +77,41 @@ begin
       Self.Button := [Minimap.Bounds.X1 - 40, Minimap.Bounds.Y1 + 26,  11];
   end;
 
-  SetLength(Self.Bounds, 3);
+  SetLength(Self.AvailableBounds, 3);
 
-  with Self.Bounds[ERSXPBarPosition.LEFT-1] do
+  with Self.AvailableBounds[ERSXPBarPosition.LEFT-1] do
   begin
-    X1 := MainScreen.Bounds.X1 + 3;
-    X2 := X1 + 138;
+    X1 := MainScreen.Bounds.X1 + 2;
+    X2 := X1 + 139;
     Y1 := MainScreen.Bounds.Y1 + 25;
-    Y2 := Y1 + 28;
+    Y2 := Y1 + 27;
   end;
 
-  with Self.Bounds[ERSXPBarPosition.CENTER-1] do
+  with Self.AvailableBounds[ERSXPBarPosition.CENTER-1] do
   begin
-    X1 := MainScreen.Bounds.X1;
-    X2 := GameTab.Bounds.X1 - 10;
+    X1 := InterfaceArea.Bounds.X1;
+    X2 := InterfaceArea.Bounds.X2;
     Y1 := MainScreen.Bounds.Y1 + 25;
-    Y2 := Y1 + 28;
+    Y2 := Y1 + 27;
 
-    X1 := X1 + (X2 - X1) div 2 - 75;
-    X2 := X1 + 138;
+    case RSClient.Mode of
+      ERSClientMode.FIXED: X1 := X1 + (X2 - X1) div 2 - 69;
+      ERSClientMode.RESIZABLE_CLASSIC: X1 := X1 + (X2 - X1) div 2 - 69;
+      ERSClientMode.RESIZABLE_MODERN: X1 := X1 + (X2 - X1) div 2 - 69;
+    end;
+
+    X2 := X1 + 139;
   end;
 
-  with Self.Bounds[ERSXPBarPosition.RIGHT-1] do
+  with Self.AvailableBounds[ERSXPBarPosition.RIGHT-1] do
   begin
-    X2 := GameTab.Bounds.X1 - 40;
-    X1 := X2 - 138;
+    X2 := InterfaceArea.Bounds.X2 - 2;
+    X1 := X2 - 139;
     Y1 := MainScreen.Bounds.Y1 + 2;
     Y2 := Y1 + 27;
   end;
+
+  Self.UpdateSize();
 end;
 
 
@@ -136,6 +181,7 @@ end;
 function TRSXPBar.Setup(): Boolean;
 ```
 Internal method automatically called by SRLT once when attempting to read the XPBar.
+Should only ever run once.
 *)
 function TRSXPBar.Setup(): Boolean;
 var
@@ -150,17 +196,36 @@ begin
 
   for position := ERSXPBarPosition.LEFT to ERSXPBarPosition.RIGHT do
   begin
-    tpa := Target.FindColor($FFFFFF, 0, Self.Bounds[position-1]);
+    tpa := Target.FindColor($FFFFFF, 0, Self.AvailableBounds[position-1]);
     if tpa = [] then Continue;
-    if not Target.HasColor($233038, 0, 30, Self.Bounds[position-1]) then Continue;
+    if not Target.HasColor($233038, 0, 30, Self.AvailableBounds[position-1]) then Continue;
 
     case tpa.Bounds().Height of
-      8, 11, 10: ;
+      8:
+      begin
+        Self.Size := ERSXPBarSize.SMALL;
+        Self.Font := RSFonts.PLAIN_11;
+      end;
+
+      11:
+      begin
+        Self.Size := ERSXPBarSize.MEDIUM;
+        Self.Font := RSFonts.PLAIN_12;
+      end;
+
+      10:
+      begin
+        Self.Size := ERSXPBarSize.LARGE;
+        Self.Font := RSFonts.BOLD_12;
+      end;
+
       else Continue;
     end;
 
     Self.Position := position;
     Self.OCRFilter := TOCRColorFilter.Create([$FFFFFF]);
+
+    Self.UpdateSize();
 
     Exit(True);
   end;
@@ -189,16 +254,16 @@ var
 begin
   if not Self.Setup() then Exit;
 
-  case Self.Size of
-    ERSXPBarSize.SMALL:  str := OCR.Recognize(Self.Bounds[Self.Position-1], Self.OCRFilter, RSFonts.PLAIN_11);
-    ERSXPBarSize.MEDIUM: str := OCR.Recognize(Self.Bounds[Self.Position-1], Self.OCRFilter, RSFonts.PLAIN_12);
-    ERSXPBarSize.LARGE:  str := OCR.Recognize(Self.Bounds[Self.Position-1], Self.OCRFilter, RSFonts.BOLD_12);
-  end;
+  str := OCR.Recognize(Self.Bounds, Self.OCRFilter, Self.Font);
 
   Result := str.ExtractInteger(0);
   if Result = 0 then Exit;
 
-  //$010000
+  if Target.CountColor($010000, 0, Self.Bounds) <> 45 then
+  begin
+    WriteLn GetDebugLn('XPBar', 'Your XPBar doesn''t seem to be set to count "Total Experience"', EErrorLevel.WARN);
+    WriteLn GetDebugLn('XPBar', 'XP Tracking won''t be used, this can cause issues.', EErrorLevel.WARN);
+  end;
 
   if Self.Tracker.Start = 0 then Self.Tracker.Start := Result;
   if Self.Tracker.Previous = 0 then Self.Tracker.Previous := Result;

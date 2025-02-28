@@ -39,7 +39,7 @@ begin
   Self.Version := HashFile(EHashAlgo.MD5, Self.ZIP);
   SetLength(Self.Version, 6);
 
-  Self.CacheDir := SRLTEnv.CacheDir + 'SpellFinder' + PATH_SEP;
+  Self.CacheDir := SRLTEnv.CacheDir + 'spellfinder' + PATH_SEP;
 
   //Delete old cache files if they exist
   for dir in DirList(Self.CacheDir) do
