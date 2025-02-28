@@ -151,17 +151,105 @@ begin
 end;
 
 
+const
+  LOGIN_MESSAGES = [
+    'Welcome to RuneScape'
+    'Connecting to server',
+    'Invalid credentials',
+    'Incorrect username or password',
+    'You need a skill total of',
+    'Please enter your username/email',
+    'Error connecting to server',
+    'Your account has not logged out',
+    'Login server offline',
+    'Error loading your profile',
+    'Connection timed out',
+    'Login limit exceeded',
+    'This world is full',
+    'Your account has been',
+    'You need a members account',
+    'You are standing in a members-only area',
+    'Authenticator',
+    ''
+  ];
+
 type
+  ERSLoginServerMessage = enum(
+    WELCOME, CONNECTING, INVALID, INCORRECT, SKILL_TOTAL, ENTER_CREDENTIALS,
+    ERROR_CONNECTING, ACCOUNT_ONLINE, SERVER_OFFLINE, ERROR_LOADING, TIMED_OUT,
+    LIMIT_EXCEEDED, WORLD_FULL, BANNED, NOT_MEMBER, ON_MEMBER_AREA,
+    AUTHENTICATOR, NONE
+  );
+
   TRSLogin = record
     WorldSwitcher: TRSLoginWorldSwitcher;
     Bounds: TBox;
-    WhiteOCRFilter, YellowOCRFilter: TOCRColorFilter;
+    ButtonOCRFilter, DialogOCRFilter: TOCRColorFilter;
   end;
 
 procedure TRSLogin.Setup();
 begin
+  Self.ButtonOCRFilter := TOCRColorFilter.Create([$FFFFFF]);
+  Self.DialogOCRFilter := TOCRColorFilter.Create([$00FFFF]);
+
   Self.WorldSwitcher.Setup();
-  Self.Bounds := Self.WorldSwitcher.Bounds;
+
+  Self.Bounds.X1 := Target.Bounds.Width div 2 - 176;
+  Self.Bounds.Y1 := Target.Bounds.Y1 + 172;
+  Self.Bounds.X2 := Target.Bounds.Width div 2 + 176;
+  Self.Bounds.Y2 := Self.Bounds.Y1 + 194;
+end;
+
+
+function TRSLogin.EnterCredentials(): Boolean;
+begin
+
+end;
+
+
+function TRSLogin.GetDialog(): String;
+begin
+  Result := OCR.RecognizeLines(Self.Bounds, Self.DialogOCRFilter, RSFonts.BOLD_12_SHADOW).Join(' ');
+end;
+
+function TRSLogin.GetState(): ERSLoginServerMessage;
+var
+  dialog: String;
+  msg: ERSLoginServerMessage;
+begin
+  dialog := Self.GetDialog();
+
+  for msg := Low(ERSLoginServerMessage) to High(ERSLoginServerMessage) do
+    if dialog.Contains(LOGIN_MESSAGES[msg]) then
+      Exit(msg);
+end;
+
+function TRSLogin.HandleState(msg: ERSLoginServerMessage): Boolean;
+var
+  dialog: String;
+begin
+  case msg of
+    ERSLoginServerMessage.WELCOME:    Result := SleepUntil(msg <> Self.GetState(), RandomMode(100, 50, 1500), 600);
+    ERSLoginServerMessage.CONNECTING: Result := SleepUntil(msg <> Self.GetState(), RandomMode(100, 50, 1500), 50000); //50 secs
+    ERSLoginServerMessage.INVALID: ;
+    ERSLoginServerMessage.INCORRECT: ;
+    ERSLoginServerMessage.ENTER_CREDENTIALS: Result := Self.EnterCredentials();
+    ERSLoginServerMessage.ACCOUNT_ONLINE: ;
+    ERSLoginServerMessage.TIMED_OUT: ;
+    ERSLoginServerMessage.LIMIT_EXCEEDED: ;
+    ERSLoginServerMessage.WORLD_FULL: ;
+    ERSLoginServerMessage.SKILL_TOTAL:      raise GetDebugLn('Login', 'We are trying to login into a total level world you can''t login to.');
+    ERSLoginServerMessage.ERROR_CONNECTING: raise GetDebugLn('Login', 'Error connecting. The game might have been updated or your internet is down.');
+    ERSLoginServerMessage.SERVER_OFFLINE:   raise GetDebugLn('Login', 'Login server offline. The game is/was probably updated.');
+    ERSLoginServerMessage.ERROR_LOADING:    raise GetDebugLn('Login', 'Game loading error. It was probably updated.');
+    ERSLoginServerMessage.BANNED:           raise GetDebugLn('Login', 'Account seems to be banned or disabled.');
+    ERSLoginServerMessage.NOT_MEMBER:       raise GetDebugLn('Login', 'Account is not members and we are trying to login into a P2P world.');
+    ERSLoginServerMessage.ON_MEMBER_AREA:   raise GetDebugLn('Login', 'Account is on a P2P area and we are trying to login into a F2P world.');
+    ERSLoginServerMessage.AUTHENTICATOR:    raise GetDebugLn('Login', 'Account needs authenticator to login.');
+    ERSLoginServerMessage.NONE:             raise GetDebugLn('Login', 'Unknown login state.');
+  end;
+
+
 end;
 
 var
