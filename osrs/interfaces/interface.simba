@@ -18,7 +18,7 @@ type
 
   PRSInterface = ^TRSInterface;
 
-procedure TRSInterface.Setup(bounds: TBox);
+procedure TRSInterface.Setup(const bounds: TBox);
 begin
   Self.Bounds := bounds;
   Self.Width  := bounds.Width;
@@ -46,17 +46,17 @@ type
     TitleOCR: TOCRInvertColorFilter;
   end;
 
-procedure TRSInterfaceTitle.Setup(interfaceBounds: TBox);
+procedure TRSInterfaceTitle.Setup(const bounds: TBox);
 begin
-  Self.Bounds.X1 := interfaceBounds.X1 + 50;
-  Self.Bounds.Y1 := interfaceBounds.Y1 + 10;
-  Self.Bounds.X2 := interfaceBounds.X2 - 50;
+  Self.Bounds.X1 := bounds.X1 + 50;
+  Self.Bounds.Y1 := bounds.Y1 + 10;
+  Self.Bounds.X2 := bounds.X2 - 50;
   Self.Bounds.Y2 := Self.Bounds.Y1 + 15;
 
-  Self.CloseButton.X1 := interfaceBounds.X2-28;
-  Self.CloseButton.X2 := interfaceBounds.X2-6;
-  Self.CloseButton.Y1 := interfaceBounds.Y1+6;
-  Self.CloseButton.Y2 := interfaceBounds.Y1+28;
+  Self.CloseButton.X1 := bounds.X2-28;
+  Self.CloseButton.X2 := bounds.X2-6;
+  Self.CloseButton.Y1 := bounds.Y1+6;
+  Self.CloseButton.Y2 := bounds.Y1+28;
 
   Self.TitleOCR := TOCRInvertColorFilter.Create([3358536, 0], [5, 0]) ;
 end;
@@ -67,7 +67,7 @@ begin
   Result := Target.HasColor($010000, 0, 80, Self.CloseButton);
 end;
 
-function TRSInterfaceTitle.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
+function TRSInterfaceTitle.WaitOpen(const time: Integer = 600; interval: Integer = -1): Boolean;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsOpen(), interval, time);
@@ -79,19 +79,19 @@ begin
   Result := OCR.Recognize(Self.Bounds, Self.TitleOCR, RSFonts.BOLD_12);
 end;
 
-function TRSInterfaceTitle.IsTitle(text: String; minMatch: Single = 0.8): Boolean;
+function TRSInterfaceTitle.IsTitle(const text: String; const similarity: Single = 0.8): Boolean;
 begin
-  Result := OCR.Locate(Self.Bounds, text, RSFonts.BOLD_12, Self.TitleOCR) >= minMatch;
+  Result := OCR.Locate(Self.Bounds, text, RSFonts.BOLD_12, Self.TitleOCR) >= similarity;
 end;
 
-function TRSInterfaceTitle.WaitTitle(text: String; minMatch: Single = 0.8; waitTime: Integer = 600; interval: Integer = -1): Boolean; overload;
+function TRSInterfaceTitle.WaitTitle(const text: String; const similarity: Single = 0.8; const time: Integer = 600; interval: Integer = -1): Boolean; overload;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
-  Result := SleepUntil(Self.IsTitle(text, minMatch), interval, waitTime);
+  Result := SleepUntil(Self.IsTitle(text, similarity), interval, time);
 end;
 
 
-function TRSInterfaceTitle.Close(escape: Boolean = True): Boolean;
+function TRSInterfaceTitle.Close(const escape: Boolean = True): Boolean;
 begin
   if not Self.IsOpen() then Exit(True);
 

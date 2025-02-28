@@ -30,7 +30,7 @@ Detects the client mode. If **update** is True ClientModeChanged will be called.
 Uses the music tab so will return RS_CLIENT_UNKNOWN when not logged in.
 Are there any other cases where music tab won't be visible?
 *)
-function TRSClient.DetectClientMode(update: Boolean = False): ERSClientMode;
+function TRSClient.DetectClientMode(): ERSClientMode;
 begin
   // Music tab in each mode there are different colors at W-4, H-21
   // Two colors each because tab can be active(red) or not(grey)
@@ -38,12 +38,6 @@ begin
     2435372, 658467: Result := ERSClientMode.FIXED;
     3555653, 922425: Result := ERSClientMode.RESIZABLE_MODERN;
     2896180, 790059: Result := ERSClientMode.RESIZABLE_CLASSIC;
-  end;
-
-  if update then
-  begin
-    Self.Mode := Result;
-    WriteLn(GetDebugLn('RSClient', 'Client mode changed: ' + ToStr(Self.Mode), EErrorLevel.SUCCESS));
   end;
 end;
 
@@ -61,25 +55,14 @@ WriteLn RSClient.IsLoggedIn();
 ```
 *)
 function TRSClient.IsLoggedIn(): Boolean;
-var
-  mode: ERSClientMode;
 begin
-  mode := Self.DetectClientMode();
-  if (mode <> ERSClientMode.UNKNOWN) and (mode <> Self.Mode) then
-  begin
-    Self.Mode := mode;
-    WriteLn(GetDebugLn('RSClient', 'Client mode changed: ' + ToStr(Self.Mode), EErrorLevel.SUCCESS));
-  end;
-
-  Result := mode <> ERSClientMode.UNKNOWN;
+  Result := Self.DetectClientMode() <> ERSClientMode.UNKNOWN;
 end;
 
-function TRSClient.IsLoggedIn(waitTime: Int32; interval: Int32 = -1): Boolean; overload;
+function TRSClient.WaitLoggedIn(time: Integer = 2000; interval: Integer = -1): Boolean;
 begin
-  if interval < 0 then
-    interval := RandomLeft(50, 1500);
-
-  Result := SleepUntil(Self.IsLoggedIn(), interval, waitTime);
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsLoggedIn(), interval, time);
 end;
 
 (*
@@ -106,26 +89,5 @@ begin
   Self.LoseFocus();
 end;
 
-(*
-## RSClient.Setup()
-```pascal
-procedure TRSClient.Setup();
-```
-RSClient setup method.
-
-```{note}
-This is automatically called on the **RSClient** variable.
-```
-*)
-procedure TRSClient.Setup();
-begin
-  if Self.DetectClientMode(True) = ERSClientMode.UNKNOWN then
-    Self.Mode := ERSClientMode.FIXED; // Fixed as default so we can login if needed
-end;
-
 var
   RSClient: TRSClient;
-
-begin
-  RSClient.Setup();
-end;

@@ -15,6 +15,7 @@
 {$IFNDEF SRLT_SPELLFINDER_INCLUDED}         {$I osrs/finders/spells/spellfinder.simba}
 
 {$IFNDEF SRLT_INTERFACE_CORE_INCLUDED}      {$I osrs/interfaces/interface.simba}
+{$IFNDEF SRLT_LOGIN_INCLUDED}               {$I osrs/interfaces/login.simba}
 {$IFNDEF SRLT_INTERFACE_CONTROLS_INCLUDED}  {$I osrs/interfaces/interfacecontrols.simba}
 {$IFNDEF SRLT_CHOOSEOPTION_INCLUDED}        {$I osrs/interfaces/chooseoption.simba}
 {$IFNDEF SRLT_MINIMAP_INCLUDED}             {$I osrs/interfaces/minimap.simba}
@@ -43,6 +44,7 @@
 {$ELSE}{$ENDIF}
 
 
+{$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}

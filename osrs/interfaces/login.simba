@@ -1,0 +1,171 @@
+{$DEFINE SRLT_LOGIN_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  TRSLoginWorldSwitcher = record
+    Bounds: TBox;
+    OpenButton, CancelButton: TBox;
+    CurrentOCRFilter, WorldOCRFilter: TOCRColorFilter;
+    CurrentWorld: Integer;
+    WorldBoxes: TBoxArray;
+
+    AllowDangerousWorlds: Boolean;
+  end;
+
+procedure TRSLoginWorldSwitcher.Setup();
+begin
+  Self.CurrentOCRFilter := TOCRColorFilter.Create([$FFFFFF]);
+  Self.WorldOCRFilter := TOCRColorFilter.Create([$000000, $0000FF]);
+
+  Self.Bounds.X1 := Target.Bounds.Width div 2 - 382;
+  Self.Bounds.X2 := Target.Bounds.Width div 2 + 382;
+  Self.Bounds.Y1 := Target.Bounds.Y1;
+  Self.Bounds.Y2 := Self.Bounds.Y1 + 502;
+
+  Self.CancelButton.X1 := Self.Bounds.X2 - 57;
+  Self.CancelButton.Y1 := Self.Bounds.Y1 + 4;
+  Self.CancelButton.X2 := Self.Bounds.X2 - 8;
+  Self.CancelButton.Y2 := Self.Bounds.Y1 + 19;
+
+  Self.OpenButton.X1 := Self.Bounds.X1 + 14;
+  Self.OpenButton.Y1 := Self.Bounds.Y2 - 34;
+  Self.OpenButton.X2 := Self.OpenButton.X1 + 79;
+  Self.OpenButton.Y2 := Self.OpenButton.Y1 + 23;
+
+  Self.WorldBoxes := TBoxArray.Create(Self.Bounds.TopLeft.Offset(62, 35), 7, 24, 84, 18, [9, 1]);
+end;
+
+function TRSLoginWorldSwitcher.IsOpen(): Boolean;
+begin
+  Result := Target.HasColor($FFFFFF, 0, 61, Self.CancelButton);
+end;
+
+function TRSLoginWorldSwitcher.WaitOpen(const time: Integer = 600; interval: Integer = -1): Boolean;
+begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsOpen(), interval, time);
+end;
+
+function TRSLoginWorldSwitcher.Close(): Boolean;
+begin
+  if not Self.IsOpen() then Exit(True);
+  Mouse.Click(Self.CancelButton, EMouseButton.LEFT);
+  Result := SleepUntil(not Self.IsOpen(), RandomMode(100, 50, 1500), 600);
+end;
+
+function TRSLoginWorldSwitcher.Open(): Boolean;
+begin
+  if Self.IsOpen() then Exit(True);
+  Mouse.Click(Self.OpenButton, EMouseButton.LEFT);
+  Result := Self.WaitOpen();
+end;
+
+
+function TRSLoginWorldSwitcher.LeftButton(): TBox;
+begin
+  Result.X1 := Target.Bounds.X1 + 9;
+  Result.Y1 := Target.Bounds.Height div 2 - 10;
+  Result.X2 := Result.X1 + 42;
+  Result.Y2 := Result.Y1 + 28;
+end;
+
+function TRSLoginWorldSwitcher.RightButton(): TBox;
+begin
+  Result.X2 := Target.Bounds.X2 - 7;
+  Result.Y1 := Target.Bounds.Height div 2 - 10;
+  Result.X1 := Result.X2 - 42;
+  Result.Y2 := Result.Y1 + 28;
+end;
+
+
+function TRSLoginWorldSwitcher.Read(index: Integer): Integer;
+begin
+  Result := OCR.RecognizeNumber(Self.WorldBoxes[index], Self.WorldOCRFilter, RSFonts.BOLD_12);
+end;
+
+
+function TRSLoginWorldSwitcher.PreviousPage(): Boolean;
+var
+  first: Integer;
+begin
+  first := Self.Read(0);
+  Mouse.Click(Self.LeftButton(), EMouseButton.LEFT);
+  Result := SleepUntil(Self.Read(0) <> first, RandomMode(100, 50, 1500), 600);
+  Sleep(400, 1200);
+end;
+
+function TRSLoginWorldSwitcher.NextPage(): Boolean;
+var
+  first: Integer;
+begin
+  if Target.HasColor($0, 0, 1615, Self.WorldBoxes[High(Self.WorldBoxes)]) then Exit;
+
+  first := Self.Read(0);
+  Mouse.Click(Self.RightButton(), EMouseButton.LEFT);
+  Result := SleepUntil(Self.Read(0) <> first, RandomMode(100, 50, 1500), 600);
+  Sleep(400, 1200);
+end;
+
+
+function TRSLoginWorldSwitcher.GetCurrent(): Integer;
+begin
+  if not Self.Close() then Exit;
+  Result := OCR.RecognizeNumber(Self.OpenButton, Self.CurrentOCRFilter, RSFonts.BOLD_12_SHADOW);
+  if InRange(Self.CurrentWorld, 301, 580) then Self.CurrentWorld := Result;
+end;
+
+
+function TRSLoginWorldSwitcher.Find(world: Integer; out index: Integer): Boolean;
+begin
+  repeat
+    for index := 0 to High(Self.WorldBoxes) do
+      if OCR.RecognizeNumber(Self.WorldBoxes[index], Self.WorldOCRFilter, RSFonts.BOLD_12) = world then
+        Exit(True);
+  until not Self.NextPage();
+
+  Self.Close();
+  index := -1;
+end;
+
+function TRSLoginWorldSwitcher.Switch(world: Integer): Boolean;
+var
+  idx: Integer;
+begin
+  if Self.CurrentWorld = world then Exit(True);
+  if not InRange(Self.CurrentWorld, 301, 580) and not Self.IsOpen() and
+    (Self.GetCurrent() = world) then
+    Exit(True);
+
+  if not Self.Open() then Exit;
+  if not Self.Find(world, idx) then Exit;
+
+  if not Self.AllowDangerousWorlds and
+     not Target.HasColor(ColorTolerance($878254, 14.762, EColorSpace.LCH, [1.077, 1.714, 0.211]), 500, Self.WorldBoxes[idx]) then
+      raise GetDebugLn('Login.WorldSwitcher', 'You are trying to login into a dangerous world! If this is intentional, enable dangerous worlds.');
+
+  Mouse.Click(Self.WorldBoxes[idx], EMouseButton.LEFT);
+
+  Result := SleepUntil(not Self.IsOpen(), 50, 600) and (Self.GetCurrent() = world);
+end;
+
+
+type
+  TRSLogin = record
+    WorldSwitcher: TRSLoginWorldSwitcher;
+    Bounds: TBox;
+    WhiteOCRFilter, YellowOCRFilter: TOCRColorFilter;
+  end;
+
+procedure TRSLogin.Setup();
+begin
+  Self.WorldSwitcher.Setup();
+  Self.Bounds := Self.WorldSwitcher.Bounds;
+end;
+
+var
+  Login: TRSLogin;
+begin
+  Login.Setup();
+end;

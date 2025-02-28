@@ -262,7 +262,7 @@ begin
   if Target.CountColor($010000, 0, Self.Bounds) <> 45 then
   begin
     WriteLn GetDebugLn('XPBar', 'Your XPBar doesn''t seem to be set to count "Total Experience"', EErrorLevel.WARN);
-    WriteLn GetDebugLn('XPBar', 'XP Tracking won''t be used, this can cause issues.', EErrorLevel.WARN);
+    WriteLn GetDebugLn('XPBar', 'XP Tracking won''t be used and this can cause issues.', EErrorLevel.WARN);
   end;
 
   if Self.Tracker.Start = 0 then Self.Tracker.Start := Result;

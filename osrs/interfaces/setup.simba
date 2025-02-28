@@ -5,19 +5,7 @@
 {$ENDIF}
 
 procedure SetupInterfaces();
-var
-  mode: ERSClientMode;
 begin
-  mode := RSClient.DetectClientMode();
-  if mode = ERSClientMode.UNKNOWN then
-  begin
-    SetupInterfaces();
-    Exit;
-  end;
-
-  RSCLient.Mode := mode;
-  WriteLn(GetDebugLn('RSClient', 'Target bounds were updated, client mode is: ' + ToStr(mode), EErrorLevel.SUCCESS));
-
   //interfaces that depend on other's bounds need to be in the right order
   //e.g., gametabs need to go after GameTab and GameTab after GameTabs.
   Minimap.SetupInterface();
@@ -33,9 +21,24 @@ begin
   XPBar.SetupInterface();
 end;
 
-{$H-}
-procedure TargetResized(var Target: TTarget; Data: TTargetEventData);
+function TRSClient.IsLoggedIn(): Boolean; override;
+var
+  mode: ERSClientMode;
 begin
+  mode := Self.DetectClientMode();
+
+  if (mode <> ERSClientMode.UNKNOWN) and (mode <> Self.Mode) then
+  begin
+    Self.Mode := mode;
+    WriteLn(GetDebugLn('RSClient', 'Client mode changed: ' + ToStr(Self.Mode), EErrorLevel.SUCCESS));
+    SetupInterfaces();
+  end;
+end;
+
+{$H-}
+procedure TargetResized(var sender: TTarget; data: TTargetEventData);
+begin
+  if RSClient.Mode = ERSClientMode.UNKNOWN then Exit;
   SetupInterfaces();
 end;
 {$H+}
