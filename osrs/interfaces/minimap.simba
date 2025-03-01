@@ -9,11 +9,11 @@ Methods to interact with the minimap.
 {$ENDIF}
 
 type
-  ERSMinimapDot  = (PLAYER, NPC, ITEM);
+  ERSMinimapDot  = enum(PLAYER, NPC, ITEM);
   ERSMinimapDots = set of ERSMinimapDot;
   TRSMinimapDotArray = array [ERSMinimapDot] of TPointArray;
 
-  ERSMinimapOrb  = (HITPOINTS, PRAYER, ENERGY, SPECIAL);
+  ERSMinimapOrb  = enum(HITPOINTS, PRAYER, ENERGY, SPECIAL);
 
   TRSMinimap = record
     Orbs: TCircleArray;

@@ -22,24 +22,73 @@ begin
   Self.ShiftEnabled := True;
 end;
 
+(*
+## Inventory.IsOpen
+```pascal
+function TRSInventory.IsOpen(): Boolean;
+```
+Returns true/false if the inventory is open.
 
+Example:
+```pascal
+WriteLn Inventory.IsOpen();
+```
+*)
 function TRSInventory.IsOpen(): Boolean;
 begin
   Result := GameTabs.IsOpen(ERSGameTab.INVENTORY);
 end;
 
+(*
+## Inventory.Open
+```pascal
+function TRSInventory.Open(): Boolean;
+```
+Attempts to open the inventory gametab.
+
+Example:
+```pascal
+WriteLn Inventory.Open();
+```
+*)
 function TRSInventory.Open(): Boolean;
 begin
   Result := GameTabs.Open(ERSGameTab.INVENTORY);
 end;
 
 
+(*
+## Inventory.IsFull
+```pascal
+function TRSInventory.IsFull(): Boolean;
+```
+Returns true/false if the inventory is full.
+
+Example:
+```pascal
+WriteLn Inventory.IsFull();
+```
+*)
 function TRSInventory.IsFull(): Boolean;
 begin
   Result := Self.Slots.Count() > 27;
 end;
 
 
+(*
+## Inventory.IsSelected
+```pascal
+function TRSInventory.IsSelected(slot: TBox): Boolean;
+function TRSInventory.IsSelected(slot: Integer): Boolean; overload;
+function TRSInventory.IsSelected(item: TRSItem): Boolean; overload;
+```
+Returns true/false if the specified `slot` or `item` is currently selected.
+
+Example:
+```pascal
+WriteLn Inventory.IsSelected('Vial');
+```
+*)
 function TRSInventory.IsSelected(slot: TBox): Boolean;
 begin
   slot.Y1 += 8;
@@ -51,6 +100,18 @@ begin
   Result := Self.IsSelected(Self.Slots.Box(slot));
 end;
 
+(*
+## Inventory.GetSelected
+```pascal
+function TRSInventory.GetSelected(): Integer;
+```
+Returns the selected slot number if any. -1 is returned if no selected slot is found.
+
+Example:
+```pascal
+WriteLn Inventory.GetSelected();
+```
+*)
 function TRSInventory.GetSelected(): Integer;
 var
   slots: TBoxArray;
@@ -74,6 +135,20 @@ begin
 end;
 
 
+(*
+## Inventory.Select
+```pascal
+function TRSInventory.Select(slot: Integer; wait: Boolean = False): Boolean;
+function TRSInventory.Select(item: TRSItem; wait: Boolean = False): Boolean; overload;
+```
+Attempts to select the specified `slot` or `item`.
+If `wait` is set to true we wait for confirmation that we succeeded.
+
+Example:
+```pascal
+WriteLn Inventory.Select('Coins');
+```
+*)
 function TRSInventory.Select(slot: Integer; wait: Boolean = False): Boolean;
 var
   boxes: TBoxArray;
@@ -115,7 +190,19 @@ begin
 end;
 
 
+(*
+## Inventory.Combine
+```pascal
+function TRSInventory.Combine(slotA, slotB: Integer): Boolean;
+function TRSInventory.Combine(itemA, itemB: TRSItem): Boolean; overload;
+```
+Attempts to combine 2 slots or 2 items.
 
+Example:
+```pascal
+WriteLn Inventory.Combine('Coins', 'Asgarnian ale');
+```
+*)
 function TRSInventory.Combine(slotA, slotB: Integer): Boolean;
 begin
   Result := Self.Select(slotA);
@@ -159,6 +246,19 @@ begin
 end;
 
 
+(*
+## Inventory.Drop
+```pascal
+function TRSInventory.Drop(slots: TIntegerArray; attempts: Integer = 5): Boolean;
+function TRSInventory.Drop(items: TRSItemArray; pattern: TIntegerArray = []): Boolean; overload;
+```
+Attempts to drop the specified `slots` or `items`.
+
+Example:
+```pascal
+WriteLn Inventory.Drop('Oak logs');
+```
+*)
 function TRSInventory.Drop(slots: TIntegerArray; attempts: Integer = 5): Boolean;
 var
   boxes: TBoxArray;
@@ -209,6 +309,21 @@ begin
 end;
 
 
+(*
+## Inventory.ShiftDrop
+```pascal
+function TRSInventory.ShiftDrop(slots: TIntegerArray; attempts: Integer = 5): Boolean;
+function TRSInventory.ShiftDrop(slots, pattern: TIntegerArray): Boolean; overload;
+function TRSInventory.ShiftDrop(items: TRSItemArray; pattern: TIntegerArray): Boolean; overload;
+```
+Attempts to shift drop the specified `slots` or `items`.  You can optionally specify a "drop" pattern.
+If we determine that we can't shift drop because the setting is off, `TRSInventory.Drop()` is used as a fallback.
+
+Example:
+```pascal
+WriteLn Inventory.ShiftDrop('Maple logs');
+```
+*)
 function TRSInventory.ShiftDrop(slots: TIntegerArray; attempts: Integer = 5): Boolean;
 var
   boxes: TBoxArray;
@@ -278,4 +393,9 @@ begin
 end;
 
 var
+(*
+(Inventory)=
+## var Inventory
+Global TRSInventory variable.
+*)
   Inventory: TRSInventory;

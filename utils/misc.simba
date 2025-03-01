@@ -1,4 +1,4 @@
-{$DEFINE SRLT_COLORS_INCLUDED}
+{$DEFINE SRLT_MISC_INCLUDED}
 {$IFNDEF SRLT_UTILS}
   {$I SRLT/utils.simba}
 {$ENDIF}
@@ -24,3 +24,49 @@ begin
   Result := Target.HasColor(RSColors.ITEM_BORDER, 0, 1, bounds) or
             Target.HasColor(RSColors.ITEM_BORDER_WHITE, 0, 1, bounds);
 end;
+
+(*
+## Level2XP
+```pascal
+function Level2XP(level: Integer): Integer;
+```
+Converts a level to the xp required for that level.
+
+Example:
+```pascal
+  WriteLn Level2XP(70);
+```
+*)
+function Level2XP(level: Integer): Integer;
+var
+  total:Double;
+  i:Int32;
+begin
+  for i := 1 to level-1 do
+    total += Floor(i + 300 * 2 ** (i / 7));
+  Result := Floor(total / 4);
+end;
+
+(*
+## XP2Level
+```pascal
+function XP2Level(xp: Integer): Integer;
+```
+Converts XP to the respective level.
+
+Example:
+```pascal
+  WriteLn XP2Level(100000);
+```
+*)
+function XP2Level(xp: Integer): Integer;
+var
+  total: Double;
+begin
+  while (total < xp*4+1) do
+  begin
+    Inc(Result);
+    total += Floor(Result + 300 * 2 ** (Result / 7));
+  end;
+end;
+

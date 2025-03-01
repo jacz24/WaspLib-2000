@@ -1,0 +1,274 @@
+(*
+# Stats
+Methods responsible for dealing with the stats tab.
+*)
+{$DEFINE SRLT_STATS_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+(*
+(ERSSKILL)=
+## type ERSSkill
+```pascal
+ERSSkill = (ATTACK, HITPOINTS, MINING, STRENGTH, AGILITY, SMITHING, DEFENCE, HERBLORE, FISHING, RANGE, THIEVING, COOKING, PRAYER, CRAFTING, FIREMAKING, MAGIC, FLETCHING, WOODCUTTING, RUNECRAFTING, SLAYER, FARMING, CONSTRUCTION, HUNTER, TOTAL);
+```
+*)
+  ERSSkill = enum(
+    ATTACK, HITPOINTS, MINING, AGILITY, SMITHING, DEFENCE, HERBLORE, FISHING,
+    RANGE, THIEVING, COOKING, PRAYER, CRAFTING, FIREMAKING, MAGIC, FLETCHING,
+    WOODCUTTING, RUNECRAFTING, SLAYER, FARMING, CONSTRUCTION, HUNTER, TOTAL
+  );
+
+(*
+(TRSSkillInfo)=
+## type TRSSkillInfo
+```pascal
+TRSSkillInfo = record
+  Level:     Integer;
+  XP:        Integer;
+  Next:      Integer;
+  Remainder: Integer;
+end;
+```
+*)
+  TRSSkillInfo = record
+    Level:     Integer;
+    XP:        Integer;
+    Next:      Integer;
+    Remainder: Integer;
+  end;
+
+(*
+(TRSStats)=
+## type TRSStats
+```pascal
+TRSStats = record
+  Levels: array [ERSSkill] of Integer;
+  Skills: TBoxArray;
+  StatsOCR, InfoOCR: TOCRColorFilter;
+end;
+```
+*)
+  TRSStats = record
+    Levels: array [ERSSkill] of Integer;
+    Skills: TBoxArray;
+    StatsOCR, InfoOCR: TOCRColorFilter;
+  end;
+
+(*
+## Stats.Setup()
+```pascal
+procedure TRSStats.Setup(); override;
+```
+Internal method responsible for setting up Stats.
+It's automatically called for you when the file is included.
+*)
+procedure TRSStats.Setup();
+begin
+  Self.StatsOCR := TOCRColorFilter.Create([65535]);
+  Self.InfoOCR := TOCRColorFilter.Create([0]);
+end;
+
+
+(*
+## Stats.SetupInterface
+```pascal
+procedure TRSStats.SetupInterface();
+```
+Internal method automatically called for you responsible for setting up the tab coordinates.
+*)
+procedure TRSStats.SetupInterface();
+begin
+  Self.Skills := TBoxArray.Create(GameTab.TopLeft.Offset(2, 6), 3, 8, 53, 23, [10, 9]);
+end;
+
+
+(*
+## Stats.IsOpen
+```pascal
+function TRSStats.IsOpen(): Boolean;
+```
+Returns true/false if the stats gametab is open or not.
+
+Example:
+```pascal
+WriteLn Stats.IsOpen();
+```
+*)
+function TRSStats.IsOpen(): Boolean;
+begin
+  Result := GameTabs.IsOpen(ERSGameTab.STATS);
+end;
+
+(*
+## Stats.Open
+```pascal
+function TRSStats.Open(): Boolean;
+```
+Attempts to open the stats gametab.
+
+Example:
+```pascal
+WriteLn Stats.Open();
+```
+*)
+function TRSStats.Open(): Boolean;
+begin
+  Result := GameTabs.Open(ERSGameTab.STATS);
+end;
+
+(*
+## Stats.Hover
+```pascal
+function TRSStats.Hover(skill: ERSSkill): Boolean;
+```
+Moves the mouse over to a skill box.
+
+Example:
+```pascal
+WriteLn Stats.Hover(ERSSkill.CONSTRUCTION);
+```
+*)
+function TRSStats.Hover(skill: ERSSkill): Boolean;
+begin
+  Result := Self.Open();
+  if Result then
+    Mouse.Move(Self.Skills[skill]);
+end;
+
+
+(*
+## Stats.FindSkillInfo
+```pascal
+function TRSStats.FindSkillInfo(skill: ERSSkill; out skillInfo: TRSSkillInfo): Boolean;
+```
+Find and return a TRSSkillInfo if it matches the one we are looking for.
+*)
+function TRSStats.FindSkillInfo(skill: ERSSkill; out skillInfo: TRSSkillInfo): Boolean;
+var
+  tpa: TPointArray;
+  lines: TStringArray;
+  b: TBox;
+  i: Integer;
+begin
+  tpa := Target.FindColor($A0FFFF, 0, GameTab.Bounds);
+  if tpa = [] then Exit;
+
+  b := tpa.Bounds();
+  SetLength(lines, b.Height div 12);
+  if lines = [] then Exit;
+
+  for i := 0 to High(lines) do
+    lines[i] := OCR.Recognize([b.X1, b.Y1 + (i * 12), b.X2, b.Y1 + ((i+1) * 12) + 3],  Self.InfoOCR, RSFonts.PLAIN_12);
+
+  if not (ToStr(skill).Capitalize() in lines[0]) then Exit;
+
+  skillInfo.XP := lines[0].ExtractInteger(0);
+  skillInfo.Level := XP2Level(skillInfo.XP);
+
+  if Length(lines) = 3 then
+  begin
+    skillInfo.Next := lines[1].ExtractInteger(0);
+    skillInfo.Remainder := lines[2].ExtractInteger(0);
+  end;
+
+  Result := True;
+end;
+
+(*
+## Stats.GetSkillInfo
+```pascal
+function TRSStats.GetSkillInfo(skill: ERSSkill; waitTime: Integer = 1000): TRSSkillInfo;
+```
+Get the skill information about a skill when you hover it.
+
+Example:
+```pascal
+WriteLn Stats.GetSkillInfo(ERSSkill.CONSTRUCTION);
+```
+*)
+function TRSStats.GetSkillInfo(skill: ERSSkill; time: Integer = 1000): TRSSkillInfo;
+begin
+  if not Self.Hover(skill) then Exit;
+  SleepUntil(Self.FindSkillInfo(skill, Result), RandomMode(100, 50, 1500) , time);
+end;
+
+
+(*
+## Stats.GetLevel
+```pascal
+function TRSStats.GetLevel(skill: ERSSkill; useCache: Boolean = True): Integer;
+```
+Get the level of the specified **skill**. By default uses the levels cached in the Stats.Levels array.
+When using the cached methods, it can be used to retrieve the level of a skill while the gametab is open assuming the level is already cached.
+
+Example:
+```pascal
+WriteLn Stats.GetLevel(ERSSkill.HITPOINTS);
+```
+*)
+function TRSStats.GetLevel(skill: ERSSkill; useCache: Boolean = True): Integer;
+begin
+  if useCache then
+  begin
+    Result := Self.Levels[skill];
+    if Result > 0 then Exit;
+  end;
+
+  if not Self.Open() then Exit(-1);
+
+  with Self.Skills[skill] do
+    Result := OCR.RecognizeNumber([X1, Y2 - (Height div 2), X2, Y2], Self.StatsOCR, RSFonts.PLAIN_11);
+
+  if Result > 0 then
+    Self.Levels[skill] := Result;
+end;
+
+(*
+## Stats.CacheStats
+```pascal
+procedure TRSStats.CacheStats();
+```
+Method to update all cached levels.
+*)
+procedure TRSStats.CacheStats();
+var
+  i: Integer;
+begin
+  for i := 0 to Ord(High(ERSSkill)) do
+    Self.GetLevel(ERSSkill(i), False);
+end;
+
+(*
+## Stats.IncrementCachedLevel
+```pascal
+procedure TRSStats.IncrementCachedLevel(skill: ERSSkill);
+```
+Internal method to update cached levels. This is automatically called by Chat.LeveledUp().
+
+Example:
+```pascal
+WriteLn Stats.GetCurrentLevel(ERSSkill.PRAYER);
+Stats.IncrementLevel(ERSSkill.PRAYER);
+WriteLn Stats.GetCurrentLevel(ERSSkill.PRAYER);
+```
+*)
+procedure TRSStats.IncrementCachedLevel(skill: ERSSkill);
+begin
+  if Self.Levels[skill] > 0 then Self.Levels[skill] += 1;
+end;
+
+
+var
+(*
+(Stats)=
+## var Stats
+Global TRSStats variable.
+*)
+  Stats: TRSStats;
+
+begin
+  Stats.Setup();
+end;
