@@ -4,6 +4,66 @@
 {$ENDIF}
 
 type
+  TRSLoginLobby = record
+    Bounds, Button: TBox;
+    OCRFilter: TOCRColorFilter;
+  end;
+
+procedure TRSLoginLobby.Setup();
+begin
+  Self.OCRFilter := TOCRColorFilter.Create([$FFFFFF]);
+
+  Self.Bounds.X1 := Target.Bounds.Width div 2 - 382;
+  Self.Bounds.X2 := Target.Bounds.Width div 2 + 382;
+  Self.Bounds.Y1 := Target.Bounds.Y1;
+  Self.Bounds.Y2 := Self.Bounds.Y1 + 502;
+
+  with Self.Button do
+  begin
+    X1 := Self.Bounds.X1 + 268;
+    Y1 := Self.Bounds.Y1 + 294;
+    X2 := X1 + 228;
+    Y2 := Y1 + 89;
+  end;
+end;
+
+
+function TRSLoginLobby.IsOpen(): Boolean;
+begin
+  Result := 1 = OCR.Locate(Self.Button, 'CLICK HERE TO PLAY', RSFonts.BOLD_12_SHADOW,Self.OCRFilter);
+end;
+
+function TRSLoginLobby.WaitOpen(const time: Integer = 600; interval: Integer = -1): Boolean;
+begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsOpen(), interval, time);
+end;
+
+(*
+## Lobby.EnterGame
+```pascal
+function TRSLoginLobby.EnterGame(): Boolean;
+```
+Attempts to enter the game from the lobby.
+This is automatically called for you with `Login.DoLogin()`.
+
+Example:
+```pascal
+WriteLn Lobby.EnterGame();
+```
+*)
+function TRSLoginLobby.EnterGame(): Boolean;
+begin
+  if RSClient.IsLoggedIn() then Exit(True);
+  WriteLn GetDebugLn('Lobby', 'Entering the game.');
+  Mouse.Click(Self.Button, EMouseButton.LEFT);
+  Result := RSClient.WaitLoggedIn(3000);
+end;
+
+var
+  Lobby: TRSLoginLobby;
+
+type
   TRSLoginWorldSwitcher = record
     Bounds: TBox;
     OpenButton, CancelButton: TBox;
@@ -143,7 +203,7 @@ begin
 
   if not Self.AllowDangerousWorlds and
      not Target.HasColor(ColorTolerance($878254, 14.762, EColorSpace.LCH, [1.077, 1.714, 0.211]), 500, Self.WorldBoxes[idx]) then
-      raise GetDebugLn('Login.WorldSwitcher', 'You are trying to login into a dangerous world! If this is intentional, enable dangerous worlds.');
+      raise GetDebugLn('Login.WorldPicker', 'You are trying to login into a dangerous world! If this is intentional, enable dangerous worlds.');
 
   Mouse.Click(Self.WorldBoxes[idx], EMouseButton.LEFT);
 
@@ -169,23 +229,25 @@ const
     'Your account has been',
     'You need a members account',
     'You are standing in a members-only area',
-    'Authenticator',
-    ''
+    'Authenticator'
   ];
 
 type
-  ERSLoginMode = enum(UNKNOWN, LEGACY, LAUNCHER);
-  ERSLoginButton = enum(LAUNCHER, EXISTING_USER, LOGIN, RETRY);
-  ERSLoginInput = enum(USERNAME, PASSWORD);
+  ERSLoginMode    = enum(UNKNOWN, LEGACY, LAUNCHER);
+  ERSLoginButton  = enum(LAUNCHER, EXISTING_USER, LOGIN, RETRY, OKAY);
+  ERSLoginInput   = enum(USERNAME, PASSWORD);
   ERSLoginMessage = enum(
+    UNKNOWN,
     WELCOME, CONNECTING, INVALID, INCORRECT, SKILL_TOTAL, ENTER_CREDENTIALS,
     ERROR_CONNECTING, ACCOUNT_ONLINE, SERVER_OFFLINE, ERROR_LOADING, TIMED_OUT,
     LIMIT_EXCEEDED, WORLD_FULL, BANNED, NOT_MEMBER, ON_MEMBER_AREA,
-    AUTHENTICATOR, NONE
+    AUTHENTICATOR
   );
 
   TRSLogin = record
+    Lobby: TRSLoginLobby;
     WorldSwitcher: TRSLoginWorldSwitcher;
+
     Bounds: TBox;
     WhiteOCR, YellowOCR: TOCRColorFilter;
 
@@ -203,10 +265,11 @@ type
 
 procedure TRSLogin.Setup();
 begin
+  Self.WorldSwitcher.Setup();
+  Self.Lobby.Setup();
+
   Self.WhiteOCR := TOCRColorFilter.Create([$FFFFFF]);
   Self.YellowOCR := TOCRColorFilter.Create([$00FFFF]);
-
-  Self.WorldSwitcher.Setup();
 
   Self.Bounds.X1 := Target.Bounds.Width div 2 - 176;
   Self.Bounds.Y1 := Target.Bounds.Y1 + 172;
@@ -228,7 +291,6 @@ begin
     X2 := X1 + 204;
     Y2 := Y1 + 13;
   end;
-
 
   with Self.Buttons[ERSLoginButton.LAUNCHER] do
   begin
@@ -264,6 +326,15 @@ begin
     Bounds.X2 := Self.Bounds.X2 - 110;
     Bounds.Y2 := Bounds.Y1 + 32;
     Text := 'Try again';
+  end;
+
+  with Self.Buttons[ERSLoginButton.OKAY] do
+  begin
+    Bounds.X1 := Self.Bounds.X1 + 109;
+    Bounds.Y1 := Self.Bounds.Y1 + 113;
+    Bounds.X2 := Bounds.X1 + 134;
+    Bounds.Y2 := Bounds.Y1 + 32;
+    Text := 'Ok';
   end;
 end;
 
@@ -382,6 +453,12 @@ begin
   end;
 end;
 
+function TRSLogin.BackToWelcome(): Boolean;
+begin
+  if not Self.ClickButton(ERSLoginButton.OKAY) then Exit;
+  Result := SleepUntil(Self.GetMessage() = ERSLoginMessage.WELCOME, RandomMode(100, 50, 1500), 600);
+end;
+
 
 function TRSLogin.EnterCredentials(username, password: String): Boolean;
 var
@@ -397,6 +474,7 @@ begin
   if not Self.FillInput(ERSLoginInput.PASSWORD, password) then Exit;
   Result := SleepUntil(Self.GetMessage() <> ERSLoginMessage.ENTER_CREDENTIALS, RandomMode(100, 50, 1500), 600);
 end;
+
 
 
 function TRSLogin.Retry(msg: ERSLoginMessage): Boolean;
@@ -451,24 +529,30 @@ begin
     ERSLoginMessage.NOT_MEMBER:       raise GetDebugLn('Login', 'Account is not members and we are trying to login into a P2P world.');
     ERSLoginMessage.ON_MEMBER_AREA:   raise GetDebugLn('Login', 'Account is on a P2P area and we are trying to login into a F2P world.');
     ERSLoginMessage.AUTHENTICATOR:    raise GetDebugLn('Login', 'Account needs authenticator to login.');
-    ERSLoginMessage.NONE:             raise GetDebugLn('Login', 'Unknown login state.');
+    ERSLoginMessage.UNKNOWN:          if RSClient.IsLoggedIn() or Lobby.IsOpen() then Exit(True) else raise GetDebugLn('Login', 'Unknown login state.');
   end;
 end;
 
 
 function TRSLogin.DoLogin(account: TRSAccount): Boolean;
 begin
-  while not RSClient.IsLoggedIn() do
+  while not RSClient.IsLoggedIn() or not Lobby.IsOpen() do
   begin
     if not Self.HandleMessage(Self.GetMessage(), account.Username, account.Password) then Exit;
     Sleep(600, 1200);
   end;
 
   Self.Attempts := 0;
+
+  if Lobby.IsOpen() then
+    Lobby.EnterGame();
+
+  Result := RSClient.IsLoggedIn();
 end;
 
 var
   Login: TRSLogin;
 begin
   Login.Setup();
+  WriteLn Login.Lobby.IsOpen();
 end;
