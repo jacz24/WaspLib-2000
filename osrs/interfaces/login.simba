@@ -213,7 +213,7 @@ end;
 
 const
   LOGIN_MESSAGES = [
-    'Welcome to RuneScape'
+    'Welcome to RuneScape',
     'Connecting to server',
     'Invalid credentials',
     'Incorrect username or password',
@@ -224,6 +224,7 @@ const
     'Login server offline',
     'Error loading your profile',
     'Connection timed out',
+    'You were disconnected',
     'Login limit exceeded',
     'This world is full',
     'Your account has been',
@@ -234,12 +235,13 @@ const
 
 type
   ERSLoginMode    = enum(UNKNOWN, LEGACY, LAUNCHER);
-  ERSLoginButton  = enum(LAUNCHER, EXISTING_USER, LOGIN, RETRY, OKAY);
+  ERSLoginButton  = enum(LAUNCHER, EXISTING_USER, LOGIN, RETRY, OKAY, CONTINUE);
   ERSLoginInput   = enum(USERNAME, PASSWORD);
   ERSLoginMessage = enum(
     UNKNOWN,
     WELCOME, CONNECTING, INVALID, INCORRECT, SKILL_TOTAL, ENTER_CREDENTIALS,
     ERROR_CONNECTING, ACCOUNT_ONLINE, SERVER_OFFLINE, ERROR_LOADING, TIMED_OUT,
+    DISCONNECTED,
     LIMIT_EXCEEDED, WORLD_FULL, BANNED, NOT_MEMBER, ON_MEMBER_AREA,
     AUTHENTICATOR
   );
@@ -409,9 +411,12 @@ var
   dialog: String;
 begin
   dialog := OCR.RecognizeLines(Self.Bounds, Self.YellowOCR, RSFonts.BOLD_12_SHADOW).Join(' ');
+  if dialog = '' then
+    dialog := OCR.RecognizeLines(Self.Bounds, Self.WhiteOCR, RSFonts.BOLD_12_SHADOW).Join(' ');
+  if dialog = '' then Exit;
 
-  for Result := Low(ERSLoginMessage) to High(ERSLoginMessage) do
-    if dialog.Contains(LOGIN_MESSAGES[Result]) then
+  for Result := ERSLoginMessage.WELCOME to High(ERSLoginMessage)-1 do
+    if dialog.Contains(LOGIN_MESSAGES[Result-1]) then
       Exit;
 end;
 
@@ -453,7 +458,7 @@ begin
   end;
 end;
 
-function TRSLogin.BackToWelcome(): Boolean;
+function TRSLogin.Back2Welcome(): Boolean;
 begin
   if not Self.ClickButton(ERSLoginButton.OKAY) then Exit;
   Result := SleepUntil(Self.GetMessage() = ERSLoginMessage.WELCOME, RandomMode(100, 50, 1500), 600);
@@ -474,7 +479,6 @@ begin
   if not Self.FillInput(ERSLoginInput.PASSWORD, password) then Exit;
   Result := SleepUntil(Self.GetMessage() <> ERSLoginMessage.ENTER_CREDENTIALS, RandomMode(100, 50, 1500), 600);
 end;
-
 
 
 function TRSLogin.Retry(msg: ERSLoginMessage): Boolean;
@@ -513,10 +517,11 @@ end;
 function TRSLogin.HandleMessage(msg: ERSLoginMessage; username, password: String): Boolean;
 begin
   case msg of
-    ERSLoginMessage.WELCOME:    Result := Self.HandleWelcome();
-    ERSLoginMessage.CONNECTING: Result := SleepUntil(msg <> Self.GetMessage(), RandomMode(100, 50, 1500), 50000); //50 secs
-    ERSLoginMessage.INVALID, ERSLoginMessage.INCORRECT:  Result := Self.Retry(msg);
+    ERSLoginMessage.WELCOME:           Result := Self.HandleWelcome();
+    ERSLoginMessage.CONNECTING:        Result := SleepUntil(msg <> Self.GetMessage(), RandomMode(100, 50, 1500), 50000); //50 secs
+    ERSLoginMessage.DISCONNECTED:      Result := Self.Back2Welcome();
     ERSLoginMessage.ENTER_CREDENTIALS: Result := Self.EnterCredentials(username, password);
+    ERSLoginMessage.INVALID, ERSLoginMessage.INCORRECT:  Result := Self.Retry(msg);
 
     ERSLoginMessage.ERROR_CONNECTING,ERSLoginMessage.LIMIT_EXCEEDED,
     ERSLoginMessage.ACCOUNT_ONLINE, ERSLoginMessage.WORLD_FULL,
@@ -535,17 +540,36 @@ end;
 
 
 function TRSLogin.DoLogin(account: TRSAccount): Boolean;
+var
+  timeout: UInt64;
 begin
+  timeout := GetTickCount() + 40000;
+
   while not RSClient.IsLoggedIn() or not Lobby.IsOpen() do
   begin
+    if GetTickCount() > timeout then
+    begin
+      WriteLn GetDebugLn('Login', 'Timed out trying to login.', EErrorLevel.ERROR);
+      Exit;
+    end;
+
     if not Self.HandleMessage(Self.GetMessage(), account.Username, account.Password) then Exit;
     Sleep(600, 1200);
   end;
 
   Self.Attempts := 0;
 
-  if Lobby.IsOpen() then
-    Lobby.EnterGame();
+  timeout := GetTickCount() + 15000;
+  while Lobby.IsOpen() do
+  begin
+    if GetTickCount() > timeout then
+    begin
+      WriteLn GetDebugLn('Login', 'Timed out trying to handle the lobbyscreen.', EErrorLevel.ERROR);
+      Exit;
+    end;
+
+    if Lobby.EnterGame() then Exit(True);
+  end;
 
   Result := RSClient.IsLoggedIn();
 end;
@@ -554,5 +578,4 @@ var
   Login: TRSLogin;
 begin
   Login.Setup();
-  WriteLn Login.Lobby.IsOpen();
 end;
