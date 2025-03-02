@@ -523,7 +523,7 @@ for pt in tpa do
 ShowOnClient(boxes);
 ```
 *)
-function TRSMinimap.GetDots(dot: ERSMinimapDot; bounds: TBox): TPointArray;
+function TRSMinimap.GetDots(const dot: ERSMinimapDot; bounds: TBox): TPointArray;
 const
   COLORS: array [ERSMinimapDot] of array [0..1] of TColor = [
     [$FEFEFE, $ECECEC], [$02FCFC, $00EDED], [$0606FC, $0000F1]
@@ -542,12 +542,12 @@ begin
   img.Free();
 end;
 
-function TRSMinimap.GetDots(dot: ERSMinimapDot): TPointArray; overload;
+function TRSMinimap.GetDots(const dot: ERSMinimapDot): TPointArray; overload;
 begin
   Result := Self.GetDots(dot, Self.Polygon.Bounds());
 end;
 
-function TRSMinimap.GetDots(dots: ERSMinimapDots; bounds: TBox): TRSMinimapDotArray; overload;
+function TRSMinimap.GetDots(const dots: ERSMinimapDots; const bounds: TBox): TRSMinimapDotArray; overload;
 var
   dot: ERSMinimapDot;
   angle: Single;
@@ -557,7 +557,7 @@ begin
     Result[dot] := Target.FindImageEx(Self.DotIMGs[dot], 0, -1, bounds.Clip(Self.Polygon.Bounds()));
 end;
 
-function TRSMinimap.GetDots(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER, ERSMinimapDot.NPC, ERSMinimapDot.ITEM]): TRSMinimapDotArray; overload;
+function TRSMinimap.GetDots(const dots: ERSMinimapDots = [ERSMinimapDot.PLAYER, ERSMinimapDot.NPC, ERSMinimapDot.ITEM]): TRSMinimapDotArray; overload;
 begin
   Result := Self.GetDots(dots, Self.Polygon.Bounds());
 end;
@@ -719,6 +719,26 @@ begin
   Result := blend.Downsample(scaling);
   blend.Free();
 end;
+
+
+(*
+## Minimap.IsPlayerMoving
+```pascal
+function TRSMinimap.IsPlayerMoving(const minShift: Integer = 500): Boolean;
+```
+Returns whether the player is moving or not according to the specified minimum pixel shift.
+
+Example:
+```pascal
+WriteLn Minimap.IsPlayerMoving();
+```
+*)
+function TRSMinimap.IsPlayerMoving(const minShift: Integer = 500): Boolean;
+begin
+  with Self.Center do
+    Result := Target.GetPixelDifference(300, TBox.Create([X,Y], 40, 40)) >= minShift;
+end;
+
 
 var
 (*

@@ -243,19 +243,6 @@ begin
 end;
 
 function TWebGraph.FindNearestNodes(p: TPoint; amount: Integer): TIntegerArray;
-  function InSameTPA(const atpa: T2DPointArray; const p, q: TPoint): Boolean;
-  var
-    i: Integer;
-    b: TBox;
-  begin
-    for i := 0 to High(atpa) do
-      with atpa[i].Bounds() do
-        if Contains(p) and Contains(q) then
-          case Length(atpa[i].Intersection([p, q])) of
-            1: if p = q then Exit(True);
-            2: Exit(True);
-          end;
-  end;
 
 var
   i: Integer;
@@ -272,7 +259,7 @@ begin
 
   for i := 0 to High(tpa) do
   begin
-    if not Self.UseCollisionData or InSameTPA(Self.WalkableClusters, p, tpa[i]) then
+    if not Self.UseCollisionData or Self.WalkableClusters.InSameTPA(p, tpa[i]) then
     begin
       Result += Self.Nodes.IndexOf(tpa[i]);
       weights += Round(p.DistanceTo(tpa[i]));

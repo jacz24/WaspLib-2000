@@ -86,3 +86,24 @@ begin
   Result := AStarTPA(Self, start, goal, diagonalTravel);
 end;
 
+function T2DPointArray.InSameTPA(p, q: TPoint): Boolean;
+var
+  i: Int32;
+begin
+  for i := 0 to High(Self) do
+    with Self[i].Bounds() do
+      if Contains(p) and Contains(q) then
+        case Length(Self[i].Intersection([p, q])) of
+          1: if p = q then Exit(True);
+          2: Exit(True);
+        end;
+end;
+
+function TPointArray.TotalDistance(): Double;
+var
+  i: Int32;
+begin
+  for i := 0 to High(Self) do
+    if i < High(Self) then
+      Result += Self[i].DistanceTo(Self[i+1]);
+end;
