@@ -1,0 +1,119 @@
+(*
+# PrayerFinder
+Methods to find and compare spell images
+*)
+
+{$DEFINE SRLT_PRAYERFINDER_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  ERSPrayer = (
+    UNKOWN,
+
+    THICK_SKIN,           BURST_OF_STRENGTH,  CLARITY_OF_THOUGHT,
+    SHARP_EYE,            MYSTIC_WILL,        ROCK_SKIN,
+    SUPERHUMAN_STRENGTH,  IMPROVED_REFLEXES,  RAPID_RESTORE,
+    RAPID_HEAL,           PROTECT_ITEM,       HAWK_EYE,
+    MYSTIC_LORE,          STEEL_SKIN,         ULTIMATE_STRENGTH,
+    INCREDIBLE_REFLEXES,  PROTECT_FROM_MAGIC, PROTECT_FROM_MISSILES,
+    PROTECT_FROM_MELEE,   EAGLE_EYE,          MYSTIC_MIGHT,
+    RETRIBUTION,          REDEMPTION,         SMITE,
+    PRESERVE,             CHIVALRY,           PIETY,
+    RIGOUR,               AUGURY
+
+    //TODO Add npc prayers/overheads for mainscreen searching
+  );
+
+  TRSPrayerFinder = record
+    PrayerImages: array [ERSPrayer] of TImage;
+
+    Version: String;
+    Similarity: Single;
+    ImageCompare: TImageCompareUtils;
+
+    CacheDir: String;
+    const ZIP: String = {$MACRO DIR} + 'images.zip';
+  end;
+
+procedure TRSPrayerFinder.Setup();
+var
+  dir, tmp: String;
+begin
+  Self.Version := HashFile(EHashAlgo.MD5, Self.ZIP);
+  SetLength(Self.Version, 6);
+
+  Self.CacheDir := SRLTEnv.CacheDir + 'prayerfinder' + PATH_SEP;
+
+  //Delete old cache files if they exist
+  for dir in DirList(Self.CacheDir) do
+  begin
+    tmp := Copy(dir, 1, Length(dir)-Length(Self.Version));
+    if tmp = Self.Version then Continue;
+    DirDelete(dir, False);
+  end;
+
+  Self.CacheDir += Self.Version + PATH_SEP;
+
+  if not DirCreate(Self.CacheDir) then
+    raise GetDebugLn('PrayerFinder', 'Failed to create cache directory: ' + Self.CacheDir);
+
+  //only set similarity if the user didn't set it already
+  if Self.Similarity = 0 then
+    Self.Similarity := 0.5;
+end;
+
+function TRSPrayerFinder.GetImage(prayer: ERSPrayer): TImage;
+var
+  path: String;
+begin
+  if Self.PrayerImages[prayer] <> nil then
+    Exit(Self.PrayerImages[prayer]);
+
+  path := Self.CacheDir + LowerCase(ToStr(prayer)) + '.png';
+  if not FileExists(path) then
+    ZipExtractEntry(Self.ZIP, LowerCase(ToStr(prayer)) + '.png', Self.CacheDir);
+
+  Self.PrayerImages[prayer] := TImage.Create(path);
+  Self.PrayerImages[prayer].FreeOnTerminate := True;
+
+  Result := Self.PrayerImages[prayer];
+end;
+
+
+function TRSPrayerFinder.FindAll(prayers: set of ERSPrayer; bounds: TBox; maxToFind: Integer = 0): TImageMatchArray;
+var
+  prayer: ERSPrayer;
+  match: TImageMatch;
+begin
+  for prayer in prayers do
+  begin
+    match.Match := Self.Similarity;
+    if Self.ImageCompare.FindMatch(Self.GetImage(prayer), bounds, match) then
+    begin
+      Result += match;
+      if (maxToFind > 0) and (Length(Result) > maxToFind) then
+        Exit;
+    end;
+  end;
+end;
+
+function TRSPrayerFinder.Find(prayers: set of ERSPrayer; bounds: TBox; out match: TImageMatch): Boolean;
+var
+  prayer: ERSPrayer;
+begin
+  for prayer in prayers do
+  begin
+    match.Match := Self.Similarity;
+    if Self.ImageCompare.FindMatch(Self.GetImage(prayer), bounds, match) then
+      Exit(True);
+  end;
+end;
+
+var
+  PrayerFinder: TRSPrayerFinder;
+
+begin
+  PrayerFinder.Setup();
+end;
