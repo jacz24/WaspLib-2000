@@ -21,6 +21,8 @@ type
     Center: TPoint;
     Polygon: TPolygon;
 
+    OrbOCR: TOCRShadowFilter;
+
     Compass: record
       PreviousRadians: Single;
       Circle: TCircle;
@@ -40,6 +42,13 @@ type
     {%codetools on}
   end;
 
+(*
+## Minimap.SetupInterface
+```pascal
+procedure TRSMinimap.SetupInterface();
+```
+Internal method used to setup the interface coordinates.
+*)
 procedure TRSMinimap.SetupInterface();
 var
   tpa: TPointArray;
@@ -91,31 +100,84 @@ begin
   Self.Polygon := tpa.Offset(Self.Center);
 end;
 
-function TRSMinimap.Contains(p: TPoint): Boolean;
+(*
+## Minimap.Contains
+```pascal
+function TRSMinimap.Contains(pt: TPoint): Boolean;
+```
+Returns True/False if a point `pt` is on the minimap.
+
+Example:
+```pascal
+WriteLn Minimap.Contains([100,100]);
+```
+*)
+function TRSMinimap.Contains(pt: TPoint): Boolean;
 begin
-  Result := Self.Polygon.Contains(p);
+  Result := Self.Polygon.Contains(pt);
 end;
 
+(*
+## Minimap.Filter
+```pascal
 function TRSMinimap.Filter(tpa: TPointArray): TPointArray;
-var
-  p: TPoint;
+```
+Returns a TPA of the points from `tpa` that are within the minimap.
+
+Example:
+```pascal
+tpa := TPointArray.CreateFromBox(Minimap.Bounds);
+ShowOnClient(Minimap.Filter(tpa));
+```
+*)
+function TRSMinimap.Filter(tpa: TPointArray): TPointArray;
 begin
-  for p in tpa do
-    if Self.Contains(p) then
-      Result += p;
+  Result := tpa.ExtractPolygon(Self.Polygon);
 end;
 
 
-function TRSMinimap.RandomPoint(p: TPoint; randomness: Int32): TPoint;
-begin
-  if not Self.Contains(p) then
-    raise GetDebugLn('Minimap', ToStr(p) + ' is not a valid point to generate a random point.');
+(*
+## Minimap.RandomPoint
+```pascal
+function TRSMinimap.RandomPoint(pt: TPoint; randomness: Integer): TPoint;
+```
+Generates a random point on the minimap based on the point `pt` passed.
+The distance of this random point will be within `randomness` amount of distance
+from `pt`.
 
-  while not Self.Contains(Result) do
-    Result := p.Random(-randomness, randomness);
+Example:
+```pascal
+while True do
+  ShowOnClient(Minimap.RandomPoint(Minimap.Center, 30));
+```
+*)
+function TRSMinimap.RandomPoint(pt: TPoint; randomness: Integer): TPoint;
+begin
+  if not Self.Polygon.Contains(pt) then
+    raise GetDebugLn('Minimap', ToStr(pt) + ' is not a valid point to generate a random point.');
+
+  repeat
+    Result := pt.Random(-randomness, randomness);
+  until Self.Polygon.Contains(Result);
 end;
 
 
+
+(*
+## Minimap.GetCompassAngle
+```pascal
+function TRSMinimap.GetCompassAngle(asDegrees: Boolean = True): Single;
+```
+Returns the minimap compass angle either in radians or degrees.
+By default, degrees are used.
+
+Credits: slacky
+
+Example:
+```pascal
+WriteLn Minimap.GetCompassAngle();
+```
+*)
 function TRSMinimap.GetCompassAngle(asDegrees: Boolean = True): Single;
 var
   dotpts: TPointArray;
@@ -145,12 +207,13 @@ begin
   end;
 end;
 
+
 (*
 ## Minimap.SetCompassAngle
 ```pascal
-procedure TRSMinimap.SetCompassAngleEx(degrees, accuracy: Double);
-procedure TRSMinimap.SetCompassAngle(degrees: Double);
-procedure TRSMinimap.SetCompassAngle(minDegrees, maxDegrees: Double); overload;
+function TRSMinimap.SetCompassAngleEx(degrees, accuracy: Single): Boolean;
+function TRSMinimap.SetCompassAngle(degrees: Single): Boolean;
+function TRSMinimap.SetCompassAngle(minDegrees, maxDegrees: Single; accuracy: Single = 5): Boolean; overload;
 ```
 Sets the current compass angle.
 If you specify a minimum and a maximum angle a gaussian distribution will be used.
@@ -165,10 +228,10 @@ const
   DEG_PER_PIXEL = 2.83;
 var
   available: TBox;
-  remaining: Int32;
+  remaining: Integer;
   left2right: Boolean;
   destination: TPoint;
-  pixels: Int32;
+  pixels: Integer;
   timeout: UInt64;
 begin
   available := Target.Bounds.Expand(-10);
@@ -229,7 +292,42 @@ begin
 end;
 
 
+(*
+## Minimap.GetLevel
+```pascal
+function TRSMinimap.GetLevel(orb: ERSMinimapOrb): Integer;
+```
+Returns the level of the specified orb.
 
+Example:
+```pascal
+WriteLn Minimap.GetLevel(ERSMinimapOrb.PRAYER);
+```
+*)
+function TRSMinimap.GetLevel(orb: ERSMinimapOrb): Integer;
+begin
+  Result := OCR.RecognizeNumber([Self.Orbs[orb].X-35, Self.Orbs[orb].Y-1, Self.Orbs[orb].X-15, Self.Orbs[orb].Y+9], Self.OrbOCR, RSFonts.PLAIN_11);
+end;
+
+
+(*
+## Minimap Orb Status
+```pascal
+function TRSMinimap.Poisoned(): Boolean;
+function TRSMinimap.Envenomed(): Boolean;
+function TRSMinimap.RunEnabled(): Boolean;
+function TRSMinimap.HasStamina(): Boolean;
+function TRSMinimap.PrayerEnabled(): Boolean;
+function TRSMinimap.SpecialEnabled(): Boolean;
+function TRSMinimap.HasSpecialWeapon(): Boolean;
+```
+Returns a status from a minimap orb.
+
+Example:
+```pascal
+WriteLn Minimap.Poisoned();
+```
+*)
 function TRSMinimap.Poisoned(): Boolean;
 begin
   Result := Target.HasColor(16391, 3, 1, Self.Orbs[ERSMinimapOrb.HITPOINTS].Bounds);
@@ -266,6 +364,19 @@ begin
 end;
 
 
+(*
+## Minimap.Toggle
+```pascal
+function TRSMinimap.Toggle(orb: ERSMinimapOrb): Boolean;
+```
+Toggles a minimap orb. All orbs can be toggled except `ERSMinimapOrb.HITPOINTS`.
+
+Example:
+```pascal
+if not Minimap.PrayerEnabled() then
+  Minimap.Toggle(ERSMinimapOrb.PRAYER);
+```
+*)
 function TRSMinimap.Toggle(orb: ERSMinimapOrb): Boolean;
 var
   state: Boolean;
@@ -292,12 +403,39 @@ begin
 end;
 
 
-function TRSMinimap.FindFlag(out p: TPoint): Boolean;
+(*
+## Minimap.FindFlag
+```pascal
+function TRSMinimap.FindFlag(out pt: TPoint): Boolean;
+```
+Returns True/False if the minimap walking flag is visible on the minimap.
+`pt` will return the coordinate where the flag was found.
+
+Example:
+```pascal
+if Minimap.FindFlag(flagPt) then
+  ShowOnClient(TCircle.Create(flagPt.X, flagPt.Y, 6));
+```
+*)
+function TRSMinimap.FindFlag(out pt: TPoint): Boolean;
 begin
-  p := Target.FindImage(Self.FLAG, 0, Self.Bounds);
-  Result := Self.Polygon.Contains(p);
+  pt := Target.FindImage(Self.FLAG, 0, Self.Bounds);
+  Result := Self.Polygon.Contains(pt);
 end;
 
+(*
+## Minimap.HasFlag
+```pascal
+function TRSMinimap.HasFlag(): Boolean;
+```
+Returns True/False if the minimap walking flag is visible on the minimap.
+Same as `Minimap.FindFlag()` but without the need for parameters.
+
+Example:
+```pascal
+WriteLn Minimap.HasFlag();
+```
+*)
 function TRSMinimap.HasFlag(): Boolean;
 var
   p: TPoint;
@@ -305,14 +443,47 @@ begin
   Result := Self.FindFlag(p);
 end;
 
-function TRSMinimap.WaitFlag(time: Integer = 600; interval: Integer = -1): Boolean;
+(*
+## Minimap.WaitFlag
+```pascal
+function TRSMinimap.WaitFlag(const time: Integer = 600; interval: Integer = -1): Boolean;
+```
+Returns True/False if the minimap walking flag becomes (or already is) visible
+within `time` milliseconds.
+
+Example:
+```pascal
+pt := Minimap.RandomPoint(Minimap.Center, 30);
+Mouse.Click(pt, EMouseButton.LEFT);
+WriteLn Minimap.WaitFlag(2000);
+```
+*)
+function TRSMinimap.WaitFlag(const time: Integer = 600; interval: Integer = -1): Boolean;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.HasFlag(), interval, time);
 end;
 
 
-//Normalize TPoint for 0º
+(*
+## Minimap.Normalize
+```pascal
+function TRSMinimap.Normalize(pt: TPoint; angle: Single): TPoint;
+function TRSMinimap.NormalizeEx(vector: Vector2; angle: Single): Vector2;
+```
+Normalizes minimap coordinates to 0º.
+Basically, whatever `pt` or `vector` you pass into this, will be rotated to it's
+position on the minimap at 0º.
+`angle` should be in radians.
+
+Example:
+```pascal
+pt := Minimap.RandomPoint(Minimap.Center, 30);
+angle := Minimap.GetCompassAngle(False);
+pt := Minimap.Normalize(pt, angle);
+ShowOnClient(TCircle.Create(pt.X, pt.Y, 6));
+```
+*)
 function TRSMinimap.Normalize(pt: TPoint; angle: Single): TPoint;
 begin
   with pt.Rotate(-angle, Self.Center) do
@@ -332,6 +503,26 @@ begin
 end;
 
 
+(*
+## Minimap.GetDots
+```pascal
+function TRSMinimap.GetDots(dot: ERSMinimapDot; bounds: TBox): TPointArray;
+function TRSMinimap.GetDots(dot: ERSMinimapDot): TPointArray; overload;
+function TRSMinimap.GetDots(dots: ERSMinimapDots; bounds: TBox): TRSMinimapDotArray; overload;
+function TRSMinimap.GetDots(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER, ERSMinimapDot.NPC, ERSMinimapDot.ITEM]): TRSMinimapDotArray; overload;
+```
+Returns minimap dots found.
+You can specify which dots you want to look for in `dot` or `dots`.
+You can also optionalyl specify `bounds` to returns minimap dots from just a region of the minimap.
+
+Example:
+```pascal
+tpa := Minimap.GetDots(ERSMinimapDot.NPC);
+for pt in tpa do
+  boxes += TBox.Create(pt, 6, 6);
+ShowOnClient(boxes);
+```
+*)
 function TRSMinimap.GetDots(dot: ERSMinimapDot; bounds: TBox): TPointArray;
 const
   COLORS: array [ERSMinimapDot] of array [0..1] of TColor = [
@@ -372,13 +563,32 @@ begin
 end;
 
 
+(*
+## Minimap.CleanImage
+```pascal
+function TRSMinimap.CleanImage(img: TImage): TImage;
+```
+Cleans a TImage of the minimap you pass into it.
+"Clean" means that minimap dots are removed and the colors around it will be
+blended in.
+
+Example:
+```pascal
+rawIMG := TImage.CreateFromTarget(Minimap.Bounds);
+cleanIMG := Minimap.CleanImage(rawIMG);
+rawIMG.Free();
+
+cleanIMG.Show();
+cleanIMG.Free();
+```
+*)
 function TRSMinimap.CleanImage(img: TImage): TImage;
 
   procedure _Paint(p: TPoint);
   var
     area: TBox;
-    pixel: Int32;
-    x, y: Int32;
+    pixel: Integer;
+    x, y: Integer;
   begin
     area := TBox.Create(p.X - 2, p.Y - 2, p.X + 2, p.Y + 3);
     area := area.Clip([0,0,img.Width-1, img.Height-1]);
@@ -435,6 +645,21 @@ begin
   Result.Pad(10);
 end;
 
+(*
+## Minimap.GetCleanImage
+```pascal
+function TRSMinimap.GetCleanImage(angle: Single = $FFFF): TImage;
+```
+Returns a clean TImage of the minimap. Read `Minimap.CleanImage()` for more information.
+The image returns is also rotated to 0º.
+
+Example:
+```pascal
+img := Minimap.GetCleanImage();
+img.Show();
+img.Free();
+```
+*)
 function TRSMinimap.GetCleanImage(angle: Single = $FFFF): TImage;
 var
   img, clean: TImage;
@@ -450,6 +675,23 @@ begin
   clean.Free();
 end;
 
+(*
+## Minimap.ScaleMinimap
+```pascal
+function TRSMinimap.ScaleMinimap(img: TImage; scaling: Integer; radius: Integer = 67): TImage;
+```
+Scales down a minimap TImage passed in the `img` parameter.
+
+Example:
+```pascal
+cleanIMG := TImage.GetCleanImage();
+scaledIMG := Minimap.ScaleMinimap(cleanIMG, 4);
+cleanIMG.Free();
+
+scaledIMG.Show();
+scaledIMG.Free();
+```
+*)
 function TRSMinimap.ScaleMinimap(img: TImage; scaling: Integer; radius: Integer = 67): TImage;
 var
   center: TPoint;
@@ -479,4 +721,13 @@ begin
 end;
 
 var
+(*
+(Minimap)=
+## var Minimap
+Global TRSMinimap variable.
+*)
   Minimap: TRSMinimap;
+
+begin
+  Minimap.OrbOCR := TOCRShadowFilter.Create();
+end;

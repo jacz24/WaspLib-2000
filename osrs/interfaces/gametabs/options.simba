@@ -9,11 +9,26 @@ Methods to interact with the options gametab.
 {$ENDIF}
 
 type
+(*
+## Options Enums
+```pascal
+ERSOptionsTab = (CONTROLS, AUDIO, DISPLAY);
+ERSOptionsSlider = (BRIGHTNESS, ZOOM);
+ERSOptionsButton = (AID, RUN, HOUSE, BOND);
+ERSHouseOptionsButton = (CLOSE, VIEWER, EXPEL, SERVANT, LEAVE);
+```
+It should be self explanatory what they represent.
+*)
   ERSOptionsTab = (CONTROLS, AUDIO, DISPLAY);
   ERSOptionsSlider = (BRIGHTNESS, ZOOM);
   ERSOptionsButton = (AID, RUN, HOUSE, BOND);
   ERSHouseOptionsButton = (CLOSE, VIEWER, EXPEL, SERVANT, LEAVE);
 
+(*
+(TRSOptions)=
+## type TRSOptions
+Main record responsible with interacting with the options gametab.
+*)
   TRSOptions = record
     Tabs: TBoxArray;
     Sliders: array [ERSOptionsSlider] of TRSSlider;
@@ -21,6 +36,13 @@ type
     ZoomLevel: Integer;
   end;
 
+(*
+## Options.SetupInterface
+```pascal
+procedure TRSOptions.SetupInterface();
+```
+Internal method used to setup the gametab coordinates.
+*)
 procedure TRSOptions.SetupInterface();
 begin
   Self.Tabs := TBoxArray.Create(GameTab.TopLeft.Offset(0, 5), 3, 1, 55, 24, [9,0]);
@@ -47,23 +69,71 @@ begin
 end;
 
 
+(*
+## Options.IsOpen
+```pascal
+function TRSOptions.IsOpen(): Boolean;
+```
+Returns true/false if the options gametab is open or not.
+
+Example:
+```pascal
+WriteLn Options.IsOpen();
+```
+*)
 function TRSOptions.IsOpen(): Boolean;
 begin
   Result := GameTabs.IsOpen(ERSGameTab.OPTIONS);
 end;
 
+(*
+## Options.Open
+```pascal
+function TRSOptions.Open(): Boolean;
+```
+Attempts to open the options gametab.
+
+Example:
+```pascal
+WriteLn Options.Open();
+```
+*)
 function TRSOptions.Open(): Boolean;
 begin
   Result := GameTabs.Open(ERSGameTab.OPTIONS);
 end;
 
 
+(*
+## Options.IsHouseOptionsOpen
+```pascal
+function TRSOptions.IsHouseOptionsOpen(): Boolean;
+```
+Returns True/False on whether the house options are open on the gametab.
+
+Example:
+```pascal
+WriteLn Options.IsHouseOptionsOpen();
+```
+*)
 function TRSOptions.IsHouseOptionsOpen(): Boolean;
 begin
   //TODO:
   //Result := SRL.CountColor(CTS2(4630611, 23, 0.04, 0.79), Self.Bounds) = 148;
 end;
 
+(*
+## Options.OpenHouseOptions
+```pascal
+function TRSOptions.OpenHouseOptions(): Boolean;
+```
+Attempts to open the house options.
+
+Example:
+```pascal
+WriteLn Options.OpenHouseOptions();
+```
+*)
 function TRSOptions.OpenHouseOptions(): Boolean;
 begin
   if Self.IsHouseOptionsOpen() then Exit(True);
@@ -73,6 +143,18 @@ begin
   Result := SleepUntil(Self.IsHouseOptionsOpen(), RandomMode(100, 50, 1500), 600);
 end;
 
+(*
+## Options.CloseHouseOptions
+```pascal
+function TRSOptions.CloseHouseOptions(): Boolean;
+```
+Attempts to close the house options.
+
+Example:
+```pascal
+WriteLn Options.CloseHouseOptions();
+```
+*)
 function TRSOptions.CloseHouseOptions(): Boolean;
 begin
   if not Self.IsHouseOptionsOpen() then Exit(True);
@@ -81,6 +163,18 @@ begin
 end;
 
 
+(*
+## Options.GetTab
+```pascal
+function TRSOptions.GetTab(): ERSOptionsTab;
+```
+Returns the currently active `ERSOptionsTab`.
+
+Example:
+```pascal
+WriteLn Options.GetTab();
+```
+*)
 function TRSOptions.GetTab(): ERSOptionsTab;
 var
   tab: ERSOptionsTab;
@@ -91,7 +185,19 @@ begin
       Exit(tab);
 end;
 
-function TRSOptions.OpenTab(tab: ERSOptionsTab): Boolean;
+(*
+## Options.OpenTab
+```pascal
+function TRSOptions.OpenTab(const tab: ERSOptionsTab): Boolean;
+```
+Attempts to open the specified `tab` `ERSOptionsTab`.
+
+Example:
+```pascal
+WriteLn Options.OpenTab(ERSOptionsTab.DISPLAY);
+```
+*)
+function TRSOptions.OpenTab(const tab: ERSOptionsTab): Boolean;
 begin
   if not Self.Open() then Exit;
   if not Self.CloseHouseOptions() then Exit;
@@ -102,8 +208,22 @@ begin
 end;
 
 
+(*
+## Options.GetZoomLevel
+```pascal
+function TRSOptions.GetZoomLevel(const useCache: Boolean = True): Integer;
+```
+Retrieves the current zoom level.
+By default it uses the value cached in `TRSOptions.ZoomLevel` if it is already set.
+If it's not set or if you decide to use this with `useCache` set to `False`,
+`TRSOptions.ZoomLevel` will be updated with the value this returns.
 
-function TRSOptions.GetZoomLevel(useCache: Boolean = True): Integer;
+Example:
+```pascal
+WriteLn Options.GetZoomLevel();
+```
+*)
+function TRSOptions.GetZoomLevel(const useCache: Boolean = True): Integer;
 begin
   if useCache and (Self.ZoomLevel > -1) then
     Exit(Self.ZoomLevel);
@@ -119,7 +239,37 @@ begin
   Result := Self.ZoomLevel;
 end;
 
+(*
+## Options.SetZoomLevel
+```pascal
+function TRSOptions.SetZoomLevel(const level: Integer): Boolean;
+```
+Sets a new zoom level through the options gametab.
+If we successfully update the zoom level we update the cached
+`TRSOptions.ZoomLevel`, if we don't, we reset it to `-1`.
+
+Example:
+```pascal
+Options.SetZoomLevel(30);
+```
+*)
+function TRSOptions.SetZoomLevel(const level: Integer): Boolean;
+begin
+  Result := Self.Sliders[ERSOptionsSlider.ZOOM].SetLevel(level);
+
+  if Result then
+    Self.ZoomLevel := level
+  else
+    Self.ZoomLevel := -1;
+end;
+
+
 var
+(*
+(Options)=
+## var Options
+Global TRSOptions variable.
+*)
   Options: TRSOptions;
 
 function TRSGameTabs.GetCurrent(): ERSGameTab; override;

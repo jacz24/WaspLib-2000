@@ -46,3 +46,21 @@ function TCuboid.Filter(arr: TPointArray): TPointArray;
 begin
   Result := arr.ExcludePolygon(Self.Polygon());
 end;
+
+
+procedure ShowOnClient(cuboid: TCuboid); overload;
+var
+  img: TImage;
+begin
+  img := TImage.CreateFromTarget();
+
+  img.DrawColor := $00FFFF;
+  img.DrawTPA(cuboid.Bottom.Corners.Connect().Grow(1));
+  img.DrawTPA(cuboid.Bottom.Corners.Connect().Grow(1));
+
+  img.DrawColor := $FFFFFF;
+  img.DrawTPA(cuboid.Edges());
+
+  img.Show();
+  img.Free();
+end;

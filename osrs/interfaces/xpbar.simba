@@ -9,6 +9,19 @@ Methods to interact with the XP bar.
 {$ENDIF}
 
 type
+(*
+## XPBar Enums
+```pascal
+ERSXPBarSize = enum(UNKNOWN, SMALL, MEDIUM, LARGE);
+ERSXPBarPosition = enum(UNKNOWN, LEFT, CENTER, RIGHT);
+```
+*)
+
+(*
+(TRSXPBar)=
+## type TRSXPBar
+Record responsible with interacting with the xp bar.
+*)
   ERSXPBarSize = enum(UNKNOWN, SMALL, MEDIUM, LARGE);
   ERSXPBarPosition = enum(UNKNOWN, LEFT, CENTER, RIGHT);
 
@@ -33,7 +46,13 @@ type
     end;
   end;
 
-
+(*
+## XPBar.UpdateSize
+```pascal
+procedure TRSXPBar.UpdateSize();
+```
+Internal method used to update the XPBar bounds.
+*)
 procedure TRSXPBar.UpdateSize();
 var
   i: Integer;
@@ -67,6 +86,13 @@ begin
     Self.Bounds := Self.AvailableBounds[Self.Position-1];
 end;
 
+(*
+## XPBar.SetupInterface
+```pascal
+procedure TRSXPBar.SetupInterface();
+```
+Internal method used to setup the XPBar coordinates and core values.
+*)
 procedure TRSXPBar.SetupInterface();
 begin
   case RSClient.Mode of
@@ -321,4 +347,9 @@ begin
 end;
 
 var
+(*
+(XPBar)=
+## var XPBar
+Global TRSXPBar variable.
+*)
   XPBar: TRSXPBar;

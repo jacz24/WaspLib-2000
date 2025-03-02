@@ -19,7 +19,7 @@ type
     const TEXT_GREY: TColor   = $9F9F9F;
   end;
 
-function RSColors.HasItem(bounds: TBox): Boolean; static;
+function RSColors.HasItem(const bounds: TBox): Boolean; static;
 begin
   Result := Target.HasColor(RSColors.ITEM_BORDER, 0, 1, bounds) or
             Target.HasColor(RSColors.ITEM_BORDER_WHITE, 0, 1, bounds);
@@ -37,7 +37,7 @@ Example:
   WriteLn Level2XP(70);
 ```
 *)
-function Level2XP(level: Integer): Integer;
+function Level2XP(const level: Integer): Integer;
 var
   total:Double;
   i:Int32;
@@ -59,7 +59,7 @@ Example:
   WriteLn XP2Level(100000);
 ```
 *)
-function XP2Level(xp: Integer): Integer;
+function XP2Level(const xp: Integer): Integer;
 var
   total: Double;
 begin
@@ -70,3 +70,11 @@ begin
   end;
 end;
 
+function TStringArray.AnyContains(const value: String; const caseSensitive: Boolean = True): Boolean;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self) do
+    if Self[i].Contains(value, caseSensitive) then
+      Exit(True);
+end;

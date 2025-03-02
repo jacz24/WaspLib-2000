@@ -2,13 +2,25 @@
 # ChooseOption
 Methods to interact with the runescape context menu.
 *)
-
 {$DEFINE SRLT_CHOOSEOPTION_INCLUDED}
 {$IFNDEF SRLT_OSRS}
   {$I SRLT/osrs.simba}
 {$ENDIF}
 
 type
+(*
+(Option)=
+## type TRSOption
+```pascal
+TRSOption = record
+  Text: String;
+  Bounds: TBox;
+  StringIndex: Integer;
+end;
+
+TRSOptionArray = array of TRSOption;
+```
+*)
   TRSOption = record
     Text: String;
     Bounds: TBox;
@@ -17,6 +29,11 @@ type
 
   TRSOptionArray = array of TRSOption;
 
+(*
+(ChooseOption)=
+## type TRSChooseOption
+Core record responsible with interacting with the choose option context menu.
+*)
   TRSChooseOption = record
     Bounds: TBox;
     OCRFilter: TOCRInvertColorFilter;
@@ -27,7 +44,6 @@ type
 ## ChooseOption.IsOpen
 ```pascal
 function TRSChooseOption.IsOpen(): Boolean;
-function TRSChooseOption.IsOpen(WaitTime: Int32; Interval: Int32 = -1): Boolean; overload;
 ```
 Returns True/False if the choose option menu is currently visible/open.
 
@@ -54,14 +70,26 @@ begin
     Self.Bounds := tpa.Cluster(1, 1).SortFromFirstPoint(p)[0].Bounds().Expand(-1);
 end;
 
-function TRSChooseOption.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
+(*
+## ChooseOption.WaitOpen
+```pascal
+function TRSChooseOption.WaitOpen(const time: Integer; interval: Integer = -1): Boolean;
+```
+Returns True/False if the choose option menu is becomes visible/open within the specified `time`.
+
+Example:
+```pascal
+WriteLn ChooseOption.WaitOpen();
+```
+*)
+function TRSChooseOption.WaitOpen(const time: Integer; interval: Integer = -1): Boolean;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsOpen(), interval, time);
 end;
 
 (*
-## ChooseOption.IsOpen
+## ChooseOption.Open
 ```pascal
 function TRSChooseOption.Open(): Boolean;
 ```
@@ -287,6 +315,11 @@ end;
 
 
 var
+(*
+(ChooseOption)=
+## var ChooseOption
+Global TRSChooseOption variable.
+*)
   ChooseOption: TRSChooseOption;
 begin
   ChooseOption.Setup();

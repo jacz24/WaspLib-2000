@@ -4,7 +4,7 @@ The core for our minimap to mainscreen projection.
 Supports rotation, and zoom, and resizable client.
 
 MM2MS extends the Minimap interface as well as the mainscreen interface with
-functionality to convert coordinates to & from the minimap to the mainscreen.
+functionality to convert coordinates to & from the minimap to the mainscreen (mm2ms).
 
 Original work done by slacky
 *)
@@ -15,12 +15,28 @@ Original work done by slacky
 {$ENDIF}
 
 type
+(*
+(TRSMM2MS)=
+## type TRSMM2MS
+Main record responsible for minimap to mainscreen (mm2ms) conversion.
+*)
   TMM2MS = record
     ZoomQuads: array [0..100] of TQuad;
     PlayerBoxes: array [0..100] of TBox;
     Projector: TMM2MSProjector;
   end;
 
+(*
+## MM2MS.Run
+```pascal
+function TMM2MS.Run(arr: Vector3Array; roll: Single): TPointArray;
+```
+Core method that will run the `TMM2MSProjector` to convert points from the
+minimap to the mainscreen.
+
+You will likely not need to use this directly and will only interact with the
+`TRSMinimap` and `TRSMainScreen` extensions below.
+*)
 function TMM2MS.Run(arr: Vector3Array; roll: Single): TPointArray;
 var
   i: Integer;
@@ -35,8 +51,22 @@ begin
 end;
 
 var
+(*
+(MM2MS)=
+## var MM2MS
+Global MM2MS variable. It's unlikely you need to use this directly.
+You usually only need the `TRSMinimap` and `TRSMainScreen` extensions below.
+*)
   MM2MS: TMM2MS;
 
+(*
+## Minimap Vectors To MainScreen
+```pascal
+function TRSMinimap.Vectors2MS(vectors: Vector3Array; angle: Single): TPointArray;
+function TRSMinimap.Vector2MS(vector: Vector3; angle: Single): TPoint;
+```
+Converts a minimap `vector` or `vectors` to the mainscreen with the help of `MM2MS`.
+*)
 function TRSMinimap.Vectors2MS(vectors: Vector3Array; angle: Single): TPointArray;
 var
   i: Integer;
@@ -58,6 +88,15 @@ begin
 end;
 
 
+(*
+## Minimap Points To MainScreen
+```pascal
+function TRSMinimap.Points2MS(points: TPointArray; angle: Single = $FFFF): TPointArray;
+function TRSMinimap.Point2MS(pt: TPoint; angle: Single = $FFFF): TPoint;
+function TRSMinimap.ATPA2MS(atpa: T2DPointArray; angle: Single = $FFFF): T2DPointArray; overload;
+```
+Converts minimap `points` to the mainscreen with the help of `MM2MS`.
+*)
 function TRSMinimap.Points2MS(points: TPointArray; angle: Single = $FFFF): TPointArray;
 var
   vectors: Vector3Array;
@@ -97,6 +136,23 @@ begin
 end;
 
 
+(*
+## Minimap Points To MainScreen Quads
+```pascal
+function TRSMinimap.Vector2MSQuad(vector: Vector3; angle: Single; size: Vector2 = [1,1]; offset: Vector3 = [0,0,0]): TQuad;
+function TRSMinimap.Point2MSQuad(pt: TPoint; size: Vector2 = [1,1]; angle: Single = $FFFF): TQuad;
+```
+Converts a minimap point `pt` or `vector` to a mainscreen `TQuad` with the help of `MM2MS`.
+
+Example:
+```pascal
+while True do
+begin
+  quad := Minimap.Point2MSQuad(Minimap.Center);
+  ShowOnClient(quad);
+end;
+```
+*)
 function TRSMinimap.Vector2MSQuad(vector: Vector3; angle: Single; size: Vector2 = [1,1]; offset: Vector3 = [0,0,0]): TQuad;
 var
   v1, v2: Vector2;
@@ -133,6 +189,23 @@ begin
 end;
 
 
+(*
+## Minimap Points To MainScreen Cuboids
+```pascal
+function TRSMinimap.Vector2MSCuboid(vector, size: Vector3; angle: Single; offset: Vector3 = [0,0,0]): TCuboid;
+function TRSMinimap.Point2MSCuboid(pt: TPoint; size: Vector3; angle: Single = $FFFF): TCuboid;
+```
+Converts a minimap point `pt` or `vector` to a mainscreen `TCuboid` with the help of `MM2MS`.
+
+Example:
+```pascal
+while True do
+begin
+  cuboid := Minimap.Point2MSCuboid(Minimap.Center, [2,2,6]);
+  ShowOnClient(cuboid);
+end;
+```
+*)
 function TRSMinimap.Vector2MSCuboid(vector, size: Vector3; angle: Single; offset: Vector3 = [0,0,0]): TCuboid;
 var
   v1, v2: Vector2;
@@ -173,11 +246,18 @@ begin
 end;
 
 
-
+(*
+## MainScreen.Point2MM
+```pascal
+function TRSMainScreen.Point2MM(pt: TPoint; height: Integer; angle: Single; accuracy: Single = 0.2): Vector3;
+```
+Converts a mainscreen point `pt` to a minimap `TPoint` with the help of `MM2MS`.
+This is not an exact reversion of what `MM2MS` does but it's very accurate.
+*)
 function TRSMainScreen.Point2MM(pt: TPoint; height: Integer; angle: Single; accuracy: Single = 0.2): Vector3;
   function FindNearest(Area, Step: Single; FromMM: Vector3; IsFinal: Boolean): Vector3;
   var
-    i: Int32;
+    i: Integer;
     tpa: TPointArray;
     arr, raw: Vector3Array;
     best: TPoint;
@@ -222,6 +302,23 @@ begin
 end;
 
 
+
+(*
+## Minimap.GetZoomQuad
+```pascal
+function TRSMinimap.GetZoomQuad(): TQuad;
+```
+Returns a `TQuad` on the minimap of what's visible on the mainscreen at the current zoom level.
+
+Example:
+```pascal
+while True do
+begin
+  Options.GetZoomLevel(False);
+  ShowOnClient(Minimap.GetZoomQuad());
+end;
+```
+*)
 function TRSMinimap.GetZoomQuad(): TQuad;
 var
   angle: Single;
@@ -240,12 +337,236 @@ begin
   MM2MS.ZoomQuads[Options.ZoomLevel] := Result;
 end;
 
+(*
+## Minimap.PointOnZoomQuad
+```pascal
+function TRSMinimap.PointOnZoomQuad(pt: TPoint): Boolean;
+```
+Returns True/False if a point `pt` is within our "zoom quad".
+Read `Minimap.GetZoomQuad()` for more information.
+
+Example:
+```pascal
+WriteLn Minimap.PointOnZoomQuad(pt);
+```
+*)
 function TRSMinimap.PointOnZoomQuad(pt: TPoint): Boolean;
 begin
   Result := Self.GetZoomQuad().Contains(pt);
 end;
 
+(*
+## Minimap.RandomPointOnZoomQuad
+```pascal
+function TRSMinimap.RandomPointOnZoomQuad(pt: TPoint; randomness: Integer): TPoint;
+```
+Creates a random point within the zoom quad that is within `randomness` distance from `pt`.
+*)
+function TRSMinimap.RandomPointOnZoomQuad(pt: TPoint; randomness: Integer): TPoint;
+var
+  quad: TQuad;
+  img: TImage;
+begin
+  quad := Self.GetZoomQuad();
+  if not quad.Contains(pt) then
+  begin
+    img := TImage.CreateFromTarget();
+    img.DrawColor := $FFFFFF;
+    img.DrawQuad(quad);
+    img.DrawColor := $0000FF;
+    img.DrawCross(pt, 4);
+    img.Show();
+    img.Free();
+    raise GetDebugLn('MM2MS', ToStr(pt) + ' is not a valid point to generate a random point on the zoom quad: ' + ToStr(quad) + '.');
+  end;
 
+  repeat
+    Result := pt.Random(-randomness, randomness);
+  until quad.Contains(Result);
+end;
+
+
+
+(*
+## Minimap.FacePoint
+```pascal
+function TRSMinimap.FacePoint(pt: TPoint; randomness: Integer = 0): Boolean;
+```
+This method will rotate the camera so that `pt` is within the zoom rectangle without adjusting the zoom level.
+
+Example:
+```pascal
+WriteLn Minimap.FacePoint([620, 100]); //keep in mind this example uses a static point, you will probably never do this.
+```
+*)
+function TRSMinimap.FacePoint(pt: TPoint; randomness: Integer = 0): Boolean;
+var
+  quad: TQuad;
+  tpa: TPointArray;
+  distance: Double;
+  i: Integer;
+begin
+  if not Self.Contains(pt) then Exit;
+
+  quad := Self.GetZoomQuad();
+  if quad.Contains(pt) then Exit(True);
+
+  tpa := quad.Corners.SortFrom(pt);
+  distance := Self.Center.DistanceTo(pt);
+
+  for i := 0 to High(tpa) do
+  begin
+    Result := distance <= Self.Center.DistanceTo(tpa[i]);
+    if Result then
+      Break;
+  end;
+
+  if not Result then Exit;
+
+  Self.SetCompassAngle(
+    Self.Center.AngleBetween(tpa[i]) - Self.Center.AngleBetween(pt) + randomness
+  );
+end;
+
+(*
+## MainScreen.FacePoint
+```pascal
+function TRSMainScreen.FacePoint(pt: TPoint; randomness: Integer = 0): Boolean; override;
+```
+Rotates the camera to face point `pt`.
+*)
+function TRSMainScreen.FacePoint(pt: TPoint; randomness: Integer = 0): Boolean;
+begin
+  Result := Minimap.FacePoint(Self.Point2MM(pt, 0, Minimap.GetCompassAngle(False)).ToPoint(), randomness);
+end;
+
+
+
+(*
+## Minimap.InZoomRange
+```pascal
+function TRSMinimap.InZoomRangeEx(pt: TPoint; out corner: TPoint): Boolean;
+function TRSMinimap.InZoomRange(pt: TPoint): Boolean;
+function TRSMinimap.AnyInZoomRange(tpa: TPointArray): Boolean; overload;
+```
+Method used to know if a point `pt`is within reach of the Zoom rectangle without adjusting the zoom level.
+Check `TRSMinimap.GetZoomQuad()` for information on the zoom quad.
+
+Example:
+```pascal
+WriteLn Minimap.InZoomRange([620, 100]);
+```
+*)
+function TRSMinimap.InZoomRangeEx(pt: TPoint; out corner: TPoint): Boolean;
+var
+  quad: TPointArray;
+begin
+  if not Self.Contains(pt) then Exit;
+
+  quad := Self.GetZoomQuad().Corners.SortFrom(Self.Center);
+  corner := quad[High(quad)];
+
+  Result := Self.Center.DistanceTo(pt) <= Self.Center.DistanceTo(corner);
+end;
+
+function TRSMinimap.InZoomRange(pt: TPoint): Boolean;
+var
+  corner: TPoint;
+begin
+  Result := Self.InZoomRangeEx(pt, corner);
+end;
+
+function TRSMinimap.AnyInZoomRange(tpa: TPointArray): Boolean; overload;
+var
+  quad: TPointArray;
+  pt, corner: TPoint;
+  dist: Double;
+begin
+  quad := Self.GetZoomQuad().Corners.SortFrom(Self.Center);
+  corner := quad[High(quad)];
+  dist := Self.Center.DistanceTo(corner);
+
+  for pt in tpa do
+    if Self.Center.DistanceTo(pt) <= dist then
+      Exit(True);
+end;
+
+
+(*
+## Minimap.GetZoomToPoint
+```pascal
+function TRSMinimap.GetZoomToPoint(p: TPoint; randomness: Integer = 0): Integer;
+```
+This function gives us a zoom level where **P** would be visible in the MainScreen.
+
+Example:
+```pascal
+p := Minimap.GetDots(ERSMinimapDot.ITEM)[0]; //find an item dot and returns it's coodinates.
+Options.SetZoomLevel(Minimap.ZoomToVisiblePoint(p));
+```
+*)
+function TRSMinimap.GetZoomToPoint(p: TPoint; randomness: Integer = 0): Integer;
+var
+  distance: Double;
+begin
+  distance := p.DistanceTo(Self.Center);
+
+  Result := Round((73 - distance) / 0.8);
+  Result := Result + randomness;
+end;
+
+(*
+## Minimap.SetZoom2Point
+```pascal
+function TRSMinimap.SetZoom2Point(pt: TPoint; randomness: Integer = 0): Boolean;
+```
+This function adjusts the zoom level so the point **pt** is true in `TRSMinimap.InZoomRange()`.
+*)
+function TRSMinimap.SetZoom2Point(pt: TPoint; randomness: Integer = 0): Boolean;
+var
+  level: Integer;
+begin
+  if Self.InZoomRange(pt) then Exit(True);
+
+  level := Self.GetZoomToPoint(pt, randomness);
+
+  if InRange(level, 0, 100) then
+    Result := Options.SetZoomLevel(level);
+end;
+
+
+(*
+## Minimap.MakePointVisible
+```pascal
+function TRSMinimap.MakePointVisible(p: TPoint): Boolean;
+```
+Uses both Minimap.Zoom2Point() and Minimap.FacePoint() to make a point visible on the Mainscreen.
+*)
+function TRSMinimap.MakePointVisible(pt: TPoint): Boolean;
+begin
+  Result := Self.SetZoom2Point(pt, Random(-5, 5)) and Self.FacePoint(pt, Random(-3, 3));
+end;
+
+
+
+
+
+(*
+## Minimap.DebugTiles
+```pascal
+procedure TRSMinimap.DebugTiles(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER, ERSMinimapDot.NPC, ERSMinimapDot.ITEM]);
+```
+Simply meant for debugging purposes.
+Will draw a grid of tiles on the mainscreen with the help of `MM2MS`.
+
+You can optionally specify which minimap `ERSMinimapDot` you want to highlight.
+By default all are highlighted.
+
+Example:
+```pascal
+Minimap.DebugTiles();
+```
+*)
 procedure TRSMinimap.DebugTiles(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER, ERSMinimapDot.NPC, ERSMinimapDot.ITEM]);
 const DOT_COLORS: TColorArray = [$FFFFFF, $00FFFF, $0000FF];
 var
