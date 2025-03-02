@@ -3,6 +3,8 @@
   {$I SRLT/utils.simba}
 {$ENDIF}
 
+{$loadlib ../../plugins/libtpaex/libtpaex}
+
 type
   TCuboid = record
     Top, Bottom: TQuad;
@@ -64,3 +66,23 @@ begin
   img.Show();
   img.Free();
 end;
+
+
+function TPointArray.Cluster(dist: Single): T2DPointArray; overload;
+begin
+  if (Length(Self) < 700) then
+    Exit(NRSplitTPA(Self, dist, dist));
+  Result := NRClusterTPA(Self, dist);
+end;
+
+function TPointArray.Cluster(distX, distY: Single): T2DPointArray; overload;
+begin
+  Result := NRSplitTPA(Self, distX, distY);
+end;
+
+
+function TPointArray.AStar(start, goal: TPoint; diagonalTravel: Boolean = True): TPointArray;
+begin
+  Result := AStarTPA(Self, start, goal, diagonalTravel);
+end;
+
