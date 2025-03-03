@@ -13,6 +13,7 @@
 
 {$IFNDEF SRLT_ITEMFINDER_INCLUDED}          {$I osrs/finders/items/itemfinder.simba}
 {$IFNDEF SRLT_SPELLFINDER_INCLUDED}         {$I osrs/finders/spells/spellfinder.simba}
+{$IFNDEF SRLT_PRAYERFINDER_INCLUDED}        {$I osrs/finders/prayer/prayerfinder.simba}
 
 {$IFNDEF SRLT_INTERFACE_CORE_INCLUDED}      {$I osrs/interfaces/interface.simba}
 {$IFNDEF SRLT_ACCOUNT_INCLUDED}             {$I osrs/account.simba}
@@ -34,6 +35,7 @@
 {$IFNDEF SRLT_INVENTORY_INCLUDED}           {$I osrs/interfaces/gametabs/inventory.simba}
 {$IFNDEF SRLT_MAGIC_INCLUDED}               {$I osrs/interfaces/gametabs/magic.simba}
 {$IFNDEF SRLT_OPTIONS_INCLUDED}             {$I osrs/interfaces/gametabs/options.simba}
+{$IFNDEF SRLT_PRAYER_INCLUDED}             {$I osrs/interfaces/gametabs/prayer.simba}
 
 
 {$IFNDEF SRLT_MM2MS_PROJECTOR_INCLUDED}     {$I osrs/interfaces/mm2ms_projector.simba}
@@ -47,6 +49,8 @@
 {$ELSE}{$ENDIF}
 
 
+{$ELSE}{$ENDIF}
+{$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}

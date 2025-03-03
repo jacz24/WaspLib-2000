@@ -1,0 +1,219 @@
+(*
+# Prayer
+Methods to interact with the prayer gametab.
+*)
+
+{$DEFINE SRLT_PRAYER_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  TRSPrayerSet = set of ERSPrayer;
+
+  TRSPrayerTab = record
+    PrayerBoxes: TBoxArray;
+  end;
+
+{%codetools off}
+procedure TRSPrayerTab.SetupInterface();
+var
+  i: Int32;
+begin
+  SetLength(Self.PrayerBoxes, Length(ERSPrayer));
+  Self.PrayerBoxes[1] := Box(30,47,61,78).Offset(GameTabs.Bounds.TopLeft);
+  for i := 2 to High(Self.PrayerBoxes) do
+    Self.PrayerBoxes[i] := Self.PrayerBoxes[1].OffSet([((i - 1) mod 5) * 37, ((i - 1) div 5) * 37]);
+
+end;
+{%codetools on}
+
+(*
+## Prayer.IsOpen
+```pascal
+function TRSPrayerTab.IsOpen(): Boolean;
+```
+Returns true if the Prayer tab is open.
+
+Example:
+```pascal
+WriteLn Prayer.IsOpen();
+```
+*)
+function TRSPrayerTab.IsOpen(): Boolean;
+begin
+  Result := GameTabs.IsOpen(ERSGameTab.PRAYER);
+end;
+
+function TRSPrayerTab.Open(): boolean;
+begin
+  Result := GameTabs.Open(ERSGameTab.PRAYER);
+end;
+
+(*
+## Prayer.InfoIsOpen
+```pascal
+function TRSPrayerTab.InfoIsOpen(): Boolean;
+```
+Returns true if the info yellow box about a prayer is open.
+
+Example:
+```pascal
+WriteLn Prayer.InfoIsOpen();
+```
+*)
+
+function TRSPrayerTab.GetInfoBox(): TBox;
+var
+  tpa: TPointArray;
+begin
+  if not Self.IsOpen then
+    Exit;
+
+  tpa := Target.FindColor($A0FFFF, 4, GameTab.Bounds);
+  tpa := tpa.Cluster(1).Largest;
+  if tpa.Length > 1000 then
+    Result := tpa.Bounds;
+end;
+
+function TRSPrayerTab.InfoIsOpen(): Boolean;
+begin
+  Result := Self.GetInfoBox <> [];
+end;
+
+function TRSPrayerTab.CloseInfo(): Boolean;
+var
+  destination: TPoint;
+  timeout: UInt64;
+begin
+  if not Self.InfoIsOpen then
+    Exit(True);
+
+  destination := GameTab.Bounds.Expand(10).NearestEdge(Target.MouseXY);
+  Async.MouseMove(destination);
+
+  timeout := GetTickCount() + 3000;
+
+  while Self.InfoIsOpen() or (GetTickCount() > timeout) do
+    Sleep(20, 100, ERandomDir.LEFT);
+
+  Async.MouseStop();
+
+  Result := not Self.InfoIsOpen();
+end;
+
+function TRSPrayerTab.Find(prayer: ERSPrayer; out b: TBox; attempts: Int32 = 2): Boolean;
+var
+  match: TImageMatch;
+begin
+  if not Self.IsOpen() then
+    Exit;
+
+  Result := PrayerFinder.Find([prayer], GameTab.Bounds, match);
+
+  if Result then
+  begin
+    b := match.Box.Expand(-1);
+    Exit;
+  end;
+
+  if attempts = 0 then
+    Exit;
+
+  if Self.InfoIsOpen then
+    Result := Self.CloseInfo and Self.Find(prayer, b, attempts-1);
+end;
+
+function TRSPrayerTab.Hover(prayer: ERSPrayer; checkUpText: Boolean = False): Boolean;
+var
+  b: TBox;
+begin
+  if not (Self.IsOpen and Self.Find(prayer, b)) then
+    Exit;
+
+  Mouse.Move(b);
+  Result := True;
+
+  if checkUpText then
+    Result := MainScreen.GetUpText.After('ctivate').Trim
+      = ToStr(prayer).ToLower.Replace('_', ' ').CapitalizeWords;
+end;
+
+function TRSPrayerTab.Click(prayer: ERSPrayer; button: EMouseButton = EMouseButton.LEFT): Boolean;
+begin
+  Result := Self.Hover(prayer);
+  if Result then
+    Target.MouseClick(button);
+end;
+
+function TRSPrayerTab.CanActivate(prayer: ERSPrayer): Boolean;
+var
+  b: TBox;
+begin
+  Result := Self.Find(prayer, b);
+end;
+
+function TRSPrayerTab.IsActive(prayers: TRSPrayerSet): Boolean; overload;
+var
+  prayer: ERSPrayer;
+  b: TBox;
+begin
+  for prayer in prayers do
+    if not (Self.Find(prayer, b) and Target.HasColor(7315120, 27, 10, b)) then
+      Exit;
+
+  Result := True;
+end;
+
+function TRSPrayerTab.GetActivePrayers(): TRSPrayerSet;
+var
+  prayer: ERSPrayer;
+begin
+  for prayer := Low(ERSPrayer) to High(ERSPrayer) do
+    if Self.IsActive([prayer]) then
+      Result += prayer;
+end;
+
+function TRSPrayerTab.Activate(prayers: TRSPrayerSet): Boolean;
+var
+  prayer: ERSPrayer;
+begin
+  Result := True;
+  if not Self.IsOpen then
+    Exit(False);
+
+  for prayer in prayers do
+  begin
+    if Self.IsActive([prayer]) then
+      Continue;
+    Result := Result and Self.Click(prayer);
+  end;
+
+  Result := Result and SleepUntil(Self.IsActive(prayers), 100, 2000);
+end;
+
+function TRSPrayerTab.Deactivate(prayers: TRSPrayerSet): Boolean;
+var
+  prayer: ERSPrayer;
+  emptyPrayerSet: TRSPrayerSet;
+begin
+  Result := True;
+  if not Self.IsOpen() then
+    Exit;
+
+  for prayer in prayers do
+  begin
+    if not Self.IsActive([prayer]) then
+      Continue;
+    Result := Result and Self.Click(prayer);
+  end;
+
+  Result := Result and SleepUntil(((Self.GetActivePrayers() * prayers) = emptyPrayerSet), 100, 2000);
+end;
+
+{$H-}
+var
+  PrayerTab: TRSPrayerTab;
+{$H+}
+
+
