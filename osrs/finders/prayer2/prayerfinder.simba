@@ -10,7 +10,6 @@ Methods to find and compare item images
 
 type
   ERSPrayer2 = enum(
-    UNKOWN,
     THICK_SKIN,           BURST_OF_STRENGTH,  CLARITY_OF_THOUGHT,
     SHARP_EYE,            MYSTIC_WILL,        ROCK_SKIN,
     SUPERHUMAN_STRENGTH,  IMPROVED_REFLEXES,  RAPID_RESTORE,
