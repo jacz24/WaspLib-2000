@@ -19,6 +19,8 @@ begin
   InterfaceArea.SetupInterface();
   RSInterface.SetupInterface();
   XPBar.SetupInterface();
+  Prayer2.SetupInterface();
+  PrayerTab.SetupInterface();
 end;
 
 function TRSClient.IsLoggedIn(): Boolean; override;
@@ -26,6 +28,7 @@ var
   mode: ERSClientMode;
 begin
   mode := Self.DetectClientMode();
+  Result := mode <> ERSClientMode.UNKNOWN;
 
   if (mode <> ERSClientMode.UNKNOWN) and (mode <> Self.Mode) then
   begin
@@ -45,5 +48,8 @@ end;
 
 begin
   Target.AddEvent(ETargetEvent.TARGET_RESIZE, @TargetResized);
+  RSClient.IsLoggedIn();
+  if RSClient.Mode = ERSClientMode.UNKNOWN then
+    RSClient.Mode := ERSClientMode.FIXED;
   SetupInterfaces();
 end;

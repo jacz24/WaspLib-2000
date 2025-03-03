@@ -101,7 +101,6 @@ function TRSMinimap.Points2MS(points: TPointArray; angle: Single = $FFFF): TPoin
 var
   vectors: Vector3Array;
   i: Integer;
-  rotation: Single;
 begin
   if (angle = $FFFF) then
     angle := Self.GetCompassAngle(False);

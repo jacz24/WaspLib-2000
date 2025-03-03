@@ -54,8 +54,6 @@ procedure TRSXPBar.UpdateSize();
 Internal method used to update the XPBar bounds.
 *)
 procedure TRSXPBar.UpdateSize();
-var
-  i: Integer;
 begin
   case Self.Size of
     ERSXPBarSize.UNKNOWN: Exit;

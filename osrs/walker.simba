@@ -36,14 +36,17 @@ begin
 end;
 ```
 *)
-  TRSWalkerEvent = procedure(walker: PRSWalker; position: TPoint; destination: TPoint) of object;
+  TRSWalkerEvent            = procedure(walker: PRSWalker; position: TPoint; destination: TPoint) of object;
+  TRSWalkerPositionFunction = function (): TPoint of object;
+  TRSWalkerHeightFunction   = function (pt: TPoint = [0,0]): Single of object;
+  TRWalkerGetLocalFunction  = function (pt: TPoint; offset: TPoint = [0,0]): TPoint of object;
 
   TRSWalker = record
     Name: String;
 
-    Position: function (): TPoint of object;
-    Height:   function (pt: TPoint = [-1,-1]): Single of object;
-    GetLocal: function (pt: TPoint; offset: TPoint = [0,0]): TPoint of object;
+    Position: TRSWalkerPositionFunction;
+    Height:   TRSWalkerHeightFunction;
+    GetLocal: TRWalkerGetLocalFunction;
 
     MinEnergy, ClickRandomness, MouseAheadTimer: Integer;
 
@@ -99,21 +102,12 @@ Example:
 Walker.Setup(@MyCustomPositionSystem, nil, nil, nil, nil);
 ```
 *)
-procedure TRSWalker.Setup(
-  position: function (): TPoint of object;
-  height: function (p: TPoint = [-1,-1]): Single of object;
-  getLocal: function (pt: TPoint; offset: TPoint = [0,0]): TPoint of object;
-  graph: ^TWebGraph;
-  mapImage: TImage
-);
-  type TRSWalker = TRSWalker;
-  {$H-}
-  function TRSWalker.DummyHeight(p: TPoint = [-1,-1]): Single;
-  begin
-    Result := 0;
-  end;
-  {$H+}
 
+{%codetools off}
+function TRSWalker.DummyHeight(pt: TPoint = [0,0]): Single; begin Result := pt.X; end;
+{%codetools on}
+
+procedure TRSWalker.Setup(position: TRSWalkerPositionFunction; height: TRSWalkerHeightFunction; getLocal: TRWalkerGetLocalFunction; graph: ^TWebGraph; mapImage: TImage);
 begin
   Self.Position := @position;
   if @height <> nil then Self.Height := @height else Self.Height := @Self.DummyHeight;
@@ -125,19 +119,19 @@ begin
 end;
 
 
-function TRSWalker.Point2MM(playerPoint, pt: TPoint; radians: Double): TPoint;
+function TRSWalker.Point2MM(const playerPoint, pt: TPoint; const radians: Double): TPoint;
 begin
   Result := pt - playerPoint + Minimap.Center;
   Result := Result.Rotate(radians, Minimap.Center);
 end;
 
-function TRSWalker.Point2MMVec(playerPoint, pt: TPoint; radians: Double): Vector2;
+function TRSWalker.Point2MMVec(const playerPoint, pt: TPoint; const radians: Double): Vector2;
 begin
-  pt := pt - playerPoint + Minimap.Center;
-  Result := Vec2(pt.X,pt.Y).Rotate(radians, Minimap.Center);
+  with pt - playerPoint + Minimap.Center do
+    Result := Vec2(X,Y).Rotate(radians, Minimap.Center);
 end;
 
-function TRSWalker.Points2MM(playerPoint: TPoint; tpa: TPointArray; radians: Double): TPointArray;
+function TRSWalker.Points2MM(const playerPoint: TPoint; const tpa: TPointArray; const radians: Double): TPointArray;
 var
   pt: TPoint;
 begin
@@ -145,7 +139,7 @@ begin
     Result += Self.Point2MM(playerPoint, pt, radians);
 end;
 
-function TRSWalker.GetLocalEx(tpa: TPointArray; offset: TPoint = [0,0]): TPointArray;
+function TRSWalker.GetLocalEx(const tpa: TPointArray; const offset: TPoint = [0,0]): TPointArray;
 var
   pt: TPoint;
 begin
@@ -153,39 +147,8 @@ begin
     Result += Self.GetLocal(pt, offset);
 end;
 
-(* TODO
-function TRSWalker.FilterToMM(playerPoint: TPoint; dotFilter: TRSDotFilter; roll: Single): TRSDotFilter;
-begin
-  if dotFilter.Circle <> [] then
-    with Self.PointToMM(playerPoint, dotFilter.Circle.Mean(), roll) do
-      Result.Circle := [X, Y, dotFilter.Circle.Radius];
 
-  Result.Bounds  := Self.PointsToMM(playerPoint, dotFilter.Bounds, roll);
-  Result.Inside  := dotFilter.Inside;
-  Result.Timeout := dotFilter.Timeout;
-  Result.Timer   := dotFilter.Timer;
-end;
-
-function TRSWalker.FiltersToMM(playerPoint: TPoint; dotFilters: TRSDotFilterArray; roll: Single): TRSDotFilterArray;
-var
-  i: Integer;
-begin
-
-  for i := High(dotFilters) downto 0 do
-  begin
-    if dotFilters[i].IsExpired() then
-    begin
-      Delete(dotFilters, i, 1);
-      Continue;
-    end;
-
-    Result += Self.FilterToMM(playerPoint, dotFilters[i], roll);
-  end;
-end;
-*)
-
-
-function TRSWalker.GetQuadMS(playerPoint, mapPoint: TPoint; height: Double = 0; offset: Vector3 = [0,0,0]; radians: Single = $FFFF): TQuad;
+function TRSWalker.GetQuadMS(const playerPoint, mapPoint: TPoint; const height: Double = 0; const offset: Vector3 = [0,0,0]; radians: Single = $FFFF): TQuad;
 var
   vector: Vector2;
 begin
@@ -198,7 +161,7 @@ begin
   Result := Minimap.Vector2MSQuad(Vec3(vector.X, vector.Y, height), radians, [1,1], offset);
 end;
 
-function TRSWalker.MMToMap(playerPoint, minimapPoint: TPoint; radians: Single = $FFFF): TPoint;
+function TRSWalker.MM2Map(const playerPoint, minimapPoint: TPoint; radians: Single = $FFFF): TPoint;
 begin
   Result := playerPoint + minimapPoint - Minimap.Center;
   if (radians = $FFFF) then
@@ -322,7 +285,7 @@ var
     if Self.ScreenWalk then
     begin
       h := Self.Height(myPos);
-      diff := Self.Height(Self.MMToMap(myPos, mmPos, angle));
+      diff := Self.Height(Self.MM2Map(myPos, mmPos, angle));
       mmPos := Minimap.Vector2MSQuad(Vec3(mmPos.X, mmPos.Y, h), angle, [1,1], Vec3(0,0,-diff)).Mean;
     end;
 
@@ -358,7 +321,7 @@ You will probably never need to call this directly.
 
 This is where TRSWalker.OnWaitMoving are called.
 *)
-procedure TRSWalker.WaitMoving(destination: TPoint; waitUntilDistance: Integer);
+procedure TRSWalker.WaitMoving(const destination: TPoint; const waitUntilDistance: Integer);
 var
   timeout, countdown: TCountDown;
   position: record Current, Previous: TPoint; end;
@@ -423,7 +386,7 @@ begin
   if not SleepUntil(Minimap.FindFlag(p), 10, 2000) then
     Exit(True);
 
-  history += Self.MMToMap(Self.Position(), p);
+  history += Self.MM2Map(Self.Position(), p);
 
   for i := 1 to 10 do
   begin
@@ -433,7 +396,7 @@ begin
       Exit(True);
     end;
 
-    history += Self.MMToMap(Self.Position(), q);
+    history += Self.MM2Map(Self.Position(), q);
     Sleep(50);
   end;
 

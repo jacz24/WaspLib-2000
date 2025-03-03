@@ -9,7 +9,7 @@ Methods to find and compare item images
 {$ENDIF}
 
 type
-  TItemFinder = record
+  TRSItemFinder = record
     ItemImages: TStringMap<TImage>;
     Filters: array of record
       Name: String;
@@ -24,7 +24,7 @@ type
   end;
 
 
-procedure TItemFinder.Align(image, template: TImage);
+procedure TRSItemFinder.Align(image, template: TImage);
 var
   borderA, borderB: TPointArray;
 begin
@@ -35,7 +35,7 @@ begin
   template.Crop(borderB.Bounds());
 end;
 
-procedure TItemFinder.Clean(image, template: TImage);
+procedure TRSItemFinder.Clean(image, template: TImage);
 var
   color: TColor;
   tpa: TPointArray;
@@ -53,7 +53,7 @@ begin
   template.DrawTPA(tpa);
 end;
 
-procedure TItemFinder.Setup();
+procedure TRSItemFinder.Setup();
 var
   dir, tmp: String;
 begin
@@ -87,7 +87,7 @@ begin
 end;
 
 
-function TItemFinder.GetFilter(item: String): TImageCompareFilter;
+function TRSItemFinder.GetFilter(item: String): TImageCompareFilter;
 var
   i: Integer;
 begin
@@ -96,7 +96,7 @@ begin
       Exit(@Self.Filters[i].Filter);
 end;
 
-function TItemFinder.GetImage(id: String): TImage;
+function TRSItemFinder.GetImage(id: String): TImage;
 var
   path: String;
 begin
@@ -115,7 +115,7 @@ begin
   Result := Self.ItemImages.Value[id];
 end;
 
-function TItemFinder.GetImages(item: String): TImageArray;
+function TRSItemFinder.GetImages(item: String): TImageArray;
 var
   ids: TStringArray;
   id: String;
@@ -130,7 +130,7 @@ begin
 end;
 
 
-function TItemFinder.FindAll(items: TRSItemArray; boxes: TBoxArray; maxToFind: Integer = 0): TImageMatchArray;
+function TRSItemFinder.FindAll(items: TRSItemArray; boxes: TBoxArray; maxToFind: Integer = 0): TImageMatchArray;
 var
   item: TRSItem;
   img: TImage;
@@ -166,7 +166,7 @@ begin
   end;
 end;
 
-function TItemFinder.FindAll(items: TRSItemArray; boxes: TBoxArray; out matches: TImageMatchArray): Boolean; overload;
+function TRSItemFinder.FindAll(items: TRSItemArray; boxes: TBoxArray; out matches: TImageMatchArray): Boolean; overload;
 var
   item: TRSItem;
   results: TImageMatchArray;
@@ -209,7 +209,7 @@ begin
   Result := True;
 end;
 
-function TItemFinder.Find(items: TRSItemArray; boxes: TBoxArray; out match: TImageMatch): Boolean;
+function TRSItemFinder.Find(items: TRSItemArray; boxes: TBoxArray; out match: TImageMatch): Boolean;
 var
   item: TRSItem;
   img: TImage;
@@ -247,7 +247,7 @@ begin
 end;
 
 var
-  ItemFinder: TItemFinder;
+  ItemFinder: TRSItemFinder;
 
 begin
   ItemFinder.Setup();
