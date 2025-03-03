@@ -44,6 +44,9 @@
 {$IFNDEF SRLT_MM2MS_INCLUDED}               {$I osrs/interfaces/mm2ms.simba}
 {$IFNDEF SRLT_XPBAR_INCLUDED}               {$I osrs/interfaces/xpbar.simba}
 {$IFNDEF SRLT_STATS_INCLUDED}               {$I osrs/interfaces/gametabs/stats.simba}
+{$IFNDEF SRLT_WALKER_INCLUDED}              {$I osrs/walker.simba}
+{$IFNDEF SRLT_MAPLOADER_INCLUDED}           {$I osrs/map/maploader.simba}
+
 
 
 {$IFNDEF SRLT_SETUP_INCLUDED}
@@ -51,6 +54,8 @@
 {$ELSE}{$ENDIF}
 
 
+{$ELSE}{$ENDIF}
+{$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}

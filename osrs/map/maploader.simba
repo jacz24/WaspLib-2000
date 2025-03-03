@@ -1,0 +1,431 @@
+(*
+# MapLoader
+This file is responsible for loading chunk maps for TRSMap.
+It was made from scratch but heavily inspired in the original
+TRSWalker by Slacky and it's future iterations made by Olly.
+
+```{note}
+Most things in this file are for internal use only and you shouldn't use them directly
+nor modify them if you don't quite understand them.
+```
+
+Credits: Torwent
+*)
+
+{$DEFINE SRLT_MAPLOADER_INCLUDED}
+{$IFNDEF SRLT_OSR}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+(*
+(TRSMapChunk)=
+## type TRSMapChunk
+Helper record to store chunk data with a name associated with.
+*)
+  TRSMapChunk = record
+    Chunk: TBox;
+    Planes: TIntegerArray;
+  end;
+
+function Chunk(b: TBox; planes: TIntegerArray): TRSMapChunk;
+begin
+  Result.Chunk := b;
+  Result.Planes := planes;
+end;
+
+function Chunk(b: TBox; plane: Integer): TRSMapChunk; overload;
+begin
+  Result := Chunk(b, [plane]);
+end;
+
+type
+(*
+## TMapLoader Enums
+```pascal
+ERSMap = enum(NORMAL, HEIGHT, COLLISION);
+ERSMapJSON = enum(OBJECTS, NPCS);
+```
+*)
+  ERSMap = enum(NORMAL, HEIGHT, COLLISION);
+  ERSJSON = enum(OBJECTS, NPCS);
+
+(*
+(TRSMapRegion)=
+## type TRSMapRegion
+Map region record, responsible for storing the map region/chunk data.
+```{note}
+This is an internal type. Don't use it if you don't know what you are doing.
+```
+*)
+  TRSMapRegion = record
+    Name: String;
+    Original: TBox;
+    Region: TBox;
+    Plane: UInt32;
+    Offset: TPoint;
+  end;
+
+  TRSMapChunkArray = array of TRSMapChunk;
+
+(*
+(TRSMapLoader)=
+## type TRSMapLoader
+TRSMapLoader is what's responsible for loading a map for TRSMap based on chunks.
+```{note}
+This is an internal type. Don't use it if you don't know what you are doing.
+```
+*)
+  TRSMapLoader = record
+    Version: String;
+    Map, Heightmap, Collision, DownscaledMap: TImage;
+    MapBox: TBox;
+    Graph: TWebGraph;
+    Regions: array of TRSMapRegion;
+    Padding, Downscale: Integer;
+    //ObjectData, NPCData: TJSONArray;
+    CacheDir: String;
+    const FILES: String = {$MACRO DIR} + 'files' + PATH_SEP;
+    const ZIPS: TStringArray = ['map', 'heightmap', 'collision', 'objects', 'npcs'];
+    _UnzipQueue: Integer;
+  end;
+
+procedure TRSMapLoader.Free();
+begin
+  if Assigned(Self.Map) then
+  begin
+    Self.Map.Free();
+    Self.Map := nil;
+  end;
+
+  if Assigned(Self.Heightmap) then
+  begin
+    Self.Heightmap.Free();
+    Self.Heightmap := nil;
+  end;
+
+  if Assigned(Self.DownscaledMap) then
+  begin
+    Self.DownscaledMap.Free();
+    Self.DownscaledMap := nil;
+  end;
+
+  if Assigned(Self.Collision) then
+  begin
+    Self.Collision.Free();
+    Self.Collision := nil;
+  end;
+
+  (* TODO
+  if Assigned(Self.ObjectData) then
+  begin
+    Self.ObjectData.Free();
+    Self.ObjectData := nil;
+  end;
+
+  if Assigned(Self.NPCData) then
+  begin
+    Self.NPCData.Free();
+    Self.NPCData := nil;
+  end;
+  *)
+end;
+
+procedure TRSMapLoader.Unzipped(constref result: TASyncUnzipResult);
+var
+  msg: String;
+begin
+  if not result.Success then
+    raise GetDebugLn('MapLoader', result.Exception);
+  msg := 'Finished async unzip of ' +  PathExtractName(result.ZipFile) + ' in ' + ToStr(Round(result.TimeUsed, 2)) + 'ms.';
+  WriteLn GetDebugLn('MapLoader', msg, EErrorLevel.SUCCESS);
+  Self._UnzipQueue -= 1;
+end;
+
+
+procedure TRSMapLoader.Setup(downscale: Integer);
+var
+  dir, tmp: String;
+begin
+  Self.Version := HashString(EHashAlgo.MD5,
+     HashFile(EHashAlgo.MD5, Self.FILES + 'map.zip') +
+     HashFile(EHashAlgo.MD5, Self.FILES + 'heightmap.zip') +
+     HashFile(EHashAlgo.MD5, Self.FILES + 'collision.zip') +
+     HashFile(EHashAlgo.MD5, Self.FILES + 'objects.zip') +
+     HashFile(EHashAlgo.MD5, Self.FILES + 'npcs.zip')
+  );
+
+  SetLength(Self.Version, 6);
+
+  Self.CacheDir := SRLTEnv.CacheDir + 'map' + PATH_SEP;
+
+  //Delete old cache files if they exist
+  for dir in DirList(Self.CacheDir) do
+  begin
+    tmp := Copy(dir, Length(dir)-5, 6);
+    if tmp = Self.Version then Continue;
+    DirDelete(dir, False);
+  end;
+
+  Self.CacheDir += Self.Version + PATH_SEP;
+
+  if not DirCreate(Self.CacheDir) then
+    raise GetDebugLn('MapLoader', 'Failed to create cache directory: ' + Self.CacheDir);
+
+  Self.Downscale := downscale;
+  AddOnTerminate(@Self.Free);
+
+  for dir in Self.ZIPS do
+  begin
+    if not DirExists(Self.CacheDir + dir+ PATH_SEP) then
+    begin
+      if not DirCreate(Self.CacheDir + dir + PATH_SEP) then
+        raise GetDebugLn('MapLoader', 'Failed to create cache directory: ' + Self.CacheDir + dir);
+      Self._UnzipQueue += 1;
+      Async.FileUnZip(Self.FILES + dir + '.zip', Self.CacheDir + dir, @Self.Unzipped, nil);
+    end;
+  end;
+end;
+
+
+
+(*
+## TRSChunkLoader.GetBitmap
+```pascal
+function TRSChunkLoader.GetBitmap(chunk: String; plane: UInt32; map: ERSMap): TMufasaBitmap;
+function TRSChunkLoader.GetBitmap(chunk: TPoint; plane: UInt32; map: ERSMap): TMufasaBitmap; overload;
+```
+Returns a chunk bitmap.
+If possible, it will be loaded from a cached .bmp file.
+If no cache file exists, the .png file is unzipped, loaded and saved as a .bmp for future uses.
+The files are cached as .bmp because .bmp is a raw format and simba loads them much faster that way.
+```{note}
+This are internal methods. Don't use them if you don't know what you are doing.
+```
+*)
+function TRSMapLoader.GetFile(chunk: TPoint; plane: Integer; map: ERSMap): TImage;
+var
+  filename, cachename: String;
+  created: Boolean;
+begin
+  if Self._UnzipQueue > 0 then
+    if not SleepUntil(Self._UnzipQueue <= 0, 100, 30000) then
+      raise GetDebugLn('MapLoader' 'Unzipping files timed out.');
+
+  filename := ToStr(chunk.X) + '-' + ToStr(chunk.Y);
+  Result := TImage.Create();
+
+  case map of
+    ERSMap.NORMAL: cachename := Self.CacheDir + 'map' + PATH_SEP + ToStr(plane) + PATH_SEP + filename;
+    ERSMap.HEIGHT: cachename := Self.CacheDir + 'heightmap' + PATH_SEP + filename;
+    ERSMap.COLLISION: cachename := Self.CacheDir + 'collision' + PATH_SEP + ToStr(plane) + PATH_SEP + filename;
+  end;
+
+  Result.Name := cachename;
+
+  if not FileExists(cachename + '.bmp') then
+  begin
+    if not FileExists(cachename + '.png') then
+    begin
+      created := True;
+      Result.SetSize(RSTranslator.Map.ChunkSide, RSTranslator.Map.ChunkSide);
+    end;
+
+    if not created then
+      Result.Load(cachename + '.png');
+    Result.Save(cachename + '.bmp');
+    FileDelete(cachename + '.png');
+    Exit;
+  end;
+
+  Result.Load(cachename + '.bmp');
+end;
+
+
+(*
+## MapLoader.GetMap
+```pascal
+function TRSMapLoader.GetMap(chunks: TPointArray; plane: Integer; map: ERSMap): TImage;
+```
+This returns a bitmap of all the `chunks` you pass into it or `start` and `finish` plus everything inbetween.
+```{note}
+This is an internal method. Don't use it if you don't know what you are doing.
+```
+*)
+function TRSMapLoader.GetMap(start, finish: TPoint; plane: Integer; map: ERSMap): TImage;
+var
+  chunks: TPointArray;
+  i, x, y, n: Int32;
+  lo, hi: TPoint;
+  chunkMaps: array of record
+    Point: TPoint;
+    Image: TImage;
+  end;
+begin
+  chunks := RSTranslator.GetChunks(start, finish);
+  SetLength(chunkMaps, Length(chunks));
+
+  lo := [$FFFFFF, $FFFFFF];
+
+  for i := 0 to High(chunks) do
+  begin
+    chunkMaps[i].Image := Self.GetFile(chunks[i], plane, map);
+
+    x := chunks[i].X;
+    y := 199 - chunks[i].Y;
+
+    chunkMaps[i].Point := [x,y];
+    lo := [Min(x, lo.X), Min(y, lo.Y)];
+    hi := [Max(x, hi.X), Max(y, hi.Y)];
+  end;
+
+  n := RSTranslator.Map.ChunkSide;
+
+  Result := TImage.Create((hi.X-lo.X) * n + 1 + n, (hi.Y-lo.Y) * n + 1 + n);
+
+  for i := 0 to High(chunkMaps) do
+  begin
+    x := (chunkMaps[i].Point.X - lo.X) * n;
+    y := (chunkMaps[i].Point.Y - lo.Y) * n;
+
+    Result.DrawImage(chunkMaps[i].Image, Point(x, y));
+    chunkMaps[i].Image.Free();
+  end;
+end;
+
+
+
+function TRSMapLoader._InternalLoad(imgs: TImageArray): TImage;
+var
+  i: Integer;
+begin
+  Result := TImage.Create(Self.MapBox.Width, Self.MapBox.Height);
+  for i := 0 to High(imgs) do
+  begin
+    Result.DrawImage(imgs[i], Self.Regions[i].Region.TopLeft);
+    imgs[i].Free();
+  end;
+end;
+
+function TRSMapLoader.InternalLoad(imgs: TImageArray): TImage;
+begin
+  Result := Self._InternalLoad(imgs);
+  //Self.DownscaledMap := TImage.Create();
+  Self.DownscaledMap := Result.Downsample(Self.Downscale);
+end;
+
+function TRSMapLoader.InternalGraphLoad(graphs: array of TWebGraph): TWebGraph;
+var
+  i: Int32;
+begin
+  for i := 0 to High(graphs) do
+    Result.Merge(graphs[i]);
+  for i := 0 to High(Result.Doors) do
+  begin
+    Result.Doors[i].Before := RSTranslator.Normalize(Result.Doors[i].Before);
+    Result.Doors[i].After  := RSTranslator.Normalize(Result.Doors[i].After);
+  end;
+
+  Result.UseCollisionData := Self.Graph.UseCollisionData;
+end;
+
+
+
+procedure TRSMapLoader.Load(chunks: array of TRSMapChunk; downscale: Integer = 8; padding: Integer = 40);
+var
+  i, j, idx: Int32;
+  maps, heightmaps, collisionmaps: TImageArray;
+  s, f, tmp: TPoint;
+  graphs: array of TWebGraph;
+  //json: TJSONArray;
+  //objects, npcs: array of TJSONArray;
+  name: String;
+  boxes: TBoxArray;
+begin
+  Self.Setup(downscale);
+
+  for i := 0 to High(chunks) do j += Length(chunks[i].Planes);
+
+  SetLength(Self.Regions, j);
+  SetLength(boxes, j);
+
+  Self.Padding := padding;
+  idx := -1;
+
+  for i := 0 to High(chunks) do
+    for j := 0 to High(chunks[i].Planes) do
+    begin
+      idx += 1;
+
+      with chunks[i] do
+      begin
+        s := Point(Min(Chunk.X1, Chunk.X2), Max(Chunk.Y1, Chunk.Y2));
+        f := Point(Max(Chunk.X1, Chunk.X2), Min(Chunk.Y1, Chunk.Y2));
+        Chunk := TBox.Create(s.X, s.Y, f.X, f.Y);
+      end;
+
+      name := ToStr(s.X) + '-' + ToStr(s.Y) + '_' + ToStr(f.X) + '-' + ToStr(f.Y);
+
+      Self.Regions[idx].Name     :=  ToStr(chunks[i].Planes[j]) + '_' + name;
+      Self.Regions[idx].Original := RSTranslator.Chunk2Coordinate(chunks[i].Chunk);
+
+      if chunks[i].Planes[j] > 0 then
+        Self.Regions[idx].Original := Self.Regions[idx].Original.Offset([RSTranslator.MapWidth() * chunks[i].Planes[j], 0]);
+
+      Self.Regions[idx].Plane := chunks[i].Planes[j];
+
+      tmp :=  RSTranslator.Chunk2Coordinate(s);
+      tmp.X += RSTranslator.MapWidth() * chunks[i].Planes[j]; //easy way to handle upper levels
+      Self.Regions[idx].Offset := [tmp.X-padding, tmp.Y - padding];
+
+      maps += Self.GetMap(s, f, chunks[i].Planes[j], ERSMap.NORMAL);
+      maps[idx].Pad(padding);
+
+      if chunks[i].Planes[j] = 0 then
+      begin
+        heightmaps += Self.GetMap(s, f, 0, ERSMap.HEIGHT);
+        heightmaps[High(heightmaps)].Pad(padding);
+      end;
+
+      collisionmaps += Self.GetMap(s, f, chunks[i].Planes[j], ERSMap.COLLISION);
+
+      (* TODO
+      if not GENERATED_GRAPH.Disabled then
+        graphs += Self.SetupGraph(name, idx, chunks[i].Planes[j], padding, collisionmaps[idx]);
+      *)
+
+      collisionmaps[idx].Pad(padding);
+
+      (* TODO
+      json := Self.GetJSON(s, f, chunks[i].Planes[j], ERSMapJSON.OBJECTS);
+      objects += json;
+      json := Self.GetJSON(s, f, chunks[i].Planes[j], ERSMapJSON.NPCS);
+      npcs += json;
+      *)
+
+      Self.Regions[idx].Region := TBox.Create(0, 0, maps[idx].Width, maps[idx].Height);
+      boxes[idx] := Self.Regions[idx].Region;
+    end;
+
+  boxes := boxes.Pack(); //pack our boxes into the smallest possible space
+
+  Self.MapBox := [];
+  for i := 0 to High(boxes) do
+  begin
+    Self.Regions[i].Region := boxes[i];
+    Self.MapBox := Self.MapBox.Combine(boxes[i]);
+  end;
+
+  Self.Map        := Self.InternalLoad(maps);
+  Self.Heightmap  := Self._InternalLoad(heightmaps);
+  Self.Collision  := Self._InternalLoad(collisionmaps);
+
+  if not GENERATED_GRAPH.Disabled then
+    Self.Graph := Self.InternalGraphLoad(graphs);
+
+  (* TODO
+  Self.ObjectData := Self.InternalJSONLoad(objects);
+  Self.NPCData    := Self.InternalJSONLoad(npcs);
+  *)
+end;
+

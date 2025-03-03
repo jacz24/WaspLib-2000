@@ -309,6 +309,30 @@ begin
 end;
 
 
+(*
+## TRSTranslator.GetChunks
+```pascal
+function TRSTranslator.GetChunks(start, finish: TPoint): TPointArray; static;
+```
+Simple methods that will return all chunks in between a `start` and `finish` chunks.
+This will also fix their order if required, as osrs chunks are oddly numbered from bottom to top on the Y axis.
+
+Example:
+```pascal
+WriteLn RSTranslator.GetChunks([20,20], [22,22]);
+//This will return:
+//[[20, 20], [20, 21], [20, 22], [21, 20], [21, 21], [21, 22], [22, 20], [22, 21], [22, 22]];
+```
+*)
+function TRSTranslator.GetChunks(start, finish: TPoint): TPointArray; static;
+var
+  x, y: Integer;
+begin
+  for x := Min(start.X, finish.X) to Max(start.X, finish.X) do
+    for y := Min(start.Y, finish.Y) to Max(start.Y, finish.Y) do
+      Result += [x,y];
+end;
+
 var
 (*
 (RSTranslator)=

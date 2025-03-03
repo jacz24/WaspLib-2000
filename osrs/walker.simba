@@ -105,13 +105,14 @@ Walker.Setup(@MyCustomPositionSystem, nil, nil, nil, nil);
 
 {%codetools off}
 function TRSWalker.DummyHeight(pt: TPoint = [0,0]): Single; begin Result := pt.X; end;
+function TRSWalker.DummyGetLocal(pt: TPoint; offset: TPoint = [0,0]): TPoint; begin Result := pt+offset; end;
 {%codetools on}
 
 procedure TRSWalker.Setup(position: TRSWalkerPositionFunction; height: TRSWalkerHeightFunction; getLocal: TRWalkerGetLocalFunction; graph: ^TWebGraph; mapImage: TImage);
 begin
   Self.Position := @position;
   if @height <> nil then Self.Height := @height else Self.Height := @Self.DummyHeight;
-  Self.GetLocal := @getLocal;
+  if @getLocal <> nil then Self.GetLocal := @getLocal else Self.GetLocal := @Self.DummyGetLocal;
   Self.WebGraph := graph;
   Self.WalkUpText := ['Walk here', 'alk her'];
   Self.AdaptiveWalk := True;
@@ -1242,12 +1243,9 @@ function TRSWalker.WebWalkEx(me: TPoint; destination: TPoint; waitUntilDistance:
         closestMe   := Self.WebGraph^.FindNearestNodes(me, 4);
         closestDest := Self.WebGraph^.FindNearestNodes(destination, 4);
 
-        if (@Self.GetLocal <> nil) then
-        begin
-          tmp.Nodes := Self.GetLocalEx(tmp.Nodes);
-          me := Self.GetLocal(me);
-          destination := Self.GetLocal(destination);
-        end;
+        tmp.Nodes := Self.GetLocalEx(tmp.Nodes);
+        me := Self.GetLocal(me);
+        destination := Self.GetLocal(destination);
 
         tmp.Draw(img);
 
