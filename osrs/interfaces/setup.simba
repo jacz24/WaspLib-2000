@@ -19,8 +19,7 @@ begin
   InterfaceArea.SetupInterface();
   RSInterface.SetupInterface();
   XPBar.SetupInterface();
-  Prayer2.SetupInterface();
-  PrayerTab.SetupInterface();
+  Prayer.SetupInterface();
 end;
 
 function TRSClient.IsLoggedIn(): Boolean; override;

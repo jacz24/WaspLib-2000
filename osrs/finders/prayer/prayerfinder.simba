@@ -1,17 +1,16 @@
 (*
-# PrayerFinder
-Methods to find and compare spell images
+# ItemFinder
+Methods to find and compare item images
 *)
 
-{$DEFINE SRLT_PRAYERFINDER_INCLUDED}
+{$DEFINE SRLT_PRAYERFINDER2_INCLUDED}
 {$IFNDEF SRLT_OSRS}
   {$I SRLT/osrs.simba}
 {$ENDIF}
 
 type
-  ERSPrayer = (
-    UNKOWN,
-
+  ERSPrayer = enum(
+    UNKNOWN,
     THICK_SKIN,           BURST_OF_STRENGTH,  CLARITY_OF_THOUGHT,
     SHARP_EYE,            MYSTIC_WILL,        ROCK_SKIN,
     SUPERHUMAN_STRENGTH,  IMPROVED_REFLEXES,  RAPID_RESTORE,
@@ -22,20 +21,23 @@ type
     RETRIBUTION,          REDEMPTION,         SMITE,
     PRESERVE,             CHIVALRY,           PIETY,
     RIGOUR,               AUGURY
-
-    //TODO Add npc prayers/overheads for mainscreen searching
   );
 
   TRSPrayerFinder = record
     PrayerImages: array [ERSPrayer] of TImage;
-
     Version: String;
     Similarity: Single;
     ImageCompare: TImageCompareUtils;
-
     CacheDir: String;
     const ZIP: String = {$MACRO DIR} + 'images.zip';
   end;
+
+
+procedure TRSPrayerFinder.Clean(image, template: TImage);
+begin
+  template.DrawColor := $0;
+  template.DrawTPA(image.FindColor($0, 0));
+end;
 
 procedure TRSPrayerFinder.Setup();
 var
@@ -61,19 +63,27 @@ begin
 
   //only set similarity if the user didn't set it already
   if Self.Similarity = 0 then
-    Self.Similarity := 0.5;
+    Self.Similarity := 0.97;
+
+  Self.ImageCompare.Clean := @Self.Clean;
 end;
+
 
 function TRSPrayerFinder.GetImage(prayer: ERSPrayer): TImage;
 var
-  path: String;
+  name, path: String;
 begin
+  if prayer = ERSPrayer.UNKNOWN then
+    Exit();
+
   if Self.PrayerImages[prayer] <> nil then
     Exit(Self.PrayerImages[prayer]);
 
-  path := Self.CacheDir + LowerCase(ToStr(prayer)) + '.png';
+  name := LowerCase(ToStr(prayer).After('.')) + '.png';
+  path := Self.CacheDir + name;
+
   if not FileExists(path) then
-    ZipExtractEntry(Self.ZIP, LowerCase(ToStr(prayer)) + '.png', Self.CacheDir);
+    ZipExtractEntry(Self.ZIP, name, Self.CacheDir);
 
   Self.PrayerImages[prayer] := TImage.Create(path);
   Self.PrayerImages[prayer].FreeOnTerminate := True;
@@ -82,32 +92,109 @@ begin
 end;
 
 
-function TRSPrayerFinder.FindAll(prayers: set of ERSPrayer; bounds: TBox; maxToFind: Integer = 0): TImageMatchArray;
+function TRSPrayerFinder.FindAll(prayers: array of ERSPrayer; boxes: TBoxArray; maxToFind: Integer = 0): TImageMatchArray;
 var
   prayer: ERSPrayer;
-  match: TImageMatch;
+  img: TImage;
+  i: Integer;
+  skip: TBooleanArray;
+  match: Single;
 begin
+  SetLength(skip, Length(boxes));
+
   for prayer in prayers do
   begin
-    match.Match := Self.Similarity;
-    if Self.ImageCompare.FindMatch(Self.GetImage(prayer), bounds, match) then
+    if prayer = ERSPrayer.UNKNOWN then
+      Continue;
+
+    img := Self.GetImage(prayer);
+    for i := 0 to High(boxes) do
     begin
-      Result += match;
-      if (maxToFind > 0) and (Length(Result) > maxToFind) then
-        Exit;
+      if skip[i] then
+        Continue;
+
+      match := Self.Similarity;
+      if Self.ImageCompare.Compare(img, boxes[i], match) then
+      begin
+        Result += [i, boxes[i], match];
+        if (maxToFind > 0) and (Length(Result) >= maxToFind) then
+          Exit;
+        skip[i] := True;
+      end;
     end;
   end;
 end;
 
-function TRSPrayerFinder.Find(prayers: set of ERSPrayer; bounds: TBox; out match: TImageMatch): Boolean;
+function TRSPrayerFinder.FindAll(prayers: array of ERSPrayer; boxes: TBoxArray; out matches: TImageMatchArray): Boolean; overload;
 var
   prayer: ERSPrayer;
+  results: TImageMatchArray;
+  i: Integer;
+  img: TImage;
+  match: Single;
+  skip: TBooleanArray;
 begin
+  SetLength(skip, Length(boxes));
+
   for prayer in prayers do
   begin
-    match.Match := Self.Similarity;
-    if Self.ImageCompare.FindMatch(Self.GetImage(prayer), bounds, match) then
-      Exit(True);
+    if prayer = ERSPrayer.UNKNOWN then
+      Continue;
+
+    img := Self.GetImage(prayer);
+
+    for i := 0 to High(boxes) do
+    begin
+      if skip[i] then
+        Continue;
+
+      match := Self.Similarity;
+      if Self.ImageCompare.Compare(img, boxes[i], match) then
+      begin
+        results += [i, boxes[i], match];
+        skip[i] := True;
+      end;
+    end;
+
+    if results = [] then
+      Exit;
+
+    matches += results;
+    results := [];
+  end;
+
+  Result := True;
+end;
+
+function TRSPrayerFinder.Find(prayers: array of ERSPrayer; boxes: TBoxArray; out match: TImageMatch): Boolean;
+var
+  prayer: ERSPrayer;
+  img: TImage;
+  i: Integer;
+  similarity: Single;
+  skip: TBooleanArray;
+begin
+  SetLength(skip, Length(boxes));
+
+  for prayer in prayers do
+  begin
+    if prayer = ERSPrayer.UNKNOWN then
+      Continue;
+
+    img := Self.GetImage(prayer);
+    for i := 0 to High(boxes) do
+    begin
+      if skip[i] then
+        Continue;
+
+      similarity := Self.Similarity;
+      if Self.ImageCompare.Compare(img, boxes[i], similarity) then
+      begin
+        match := [i, boxes[i], similarity];
+        Exit(True);
+      end;
+
+    end;
   end;
 end;
 
