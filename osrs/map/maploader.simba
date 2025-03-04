@@ -13,31 +13,9 @@ Credits: Torwent
 *)
 
 {$DEFINE SRLT_MAPLOADER_INCLUDED}
-{$IFNDEF SRLT_OSR}
+{$IFNDEF SRLT_OSRS}
   {$I SRLT/osrs.simba}
 {$ENDIF}
-
-type
-(*
-(TRSMapChunk)=
-## type TRSMapChunk
-Helper record to store chunk data with a name associated with.
-*)
-  TRSMapChunk = record
-    Chunk: TBox;
-    Planes: TIntegerArray;
-  end;
-
-function Chunk(b: TBox; planes: TIntegerArray): TRSMapChunk;
-begin
-  Result.Chunk := b;
-  Result.Planes := planes;
-end;
-
-function Chunk(b: TBox; plane: Integer): TRSMapChunk; overload;
-begin
-  Result := Chunk(b, [plane]);
-end;
 
 type
 (*
@@ -62,11 +40,9 @@ This is an internal type. Don't use it if you don't know what you are doing.
     Name: String;
     Original: TBox;
     Region: TBox;
-    Plane: UInt32;
+    Plane: Integer;
     Offset: TPoint;
   end;
-
-  TRSMapChunkArray = array of TRSMapChunk;
 
 (*
 (TRSMapLoader)=
@@ -89,6 +65,114 @@ This is an internal type. Don't use it if you don't know what you are doing.
     const ZIPS: TStringArray = ['map', 'heightmap', 'collision', 'objects', 'npcs'];
     _UnzipQueue: Integer;
   end;
+
+
+
+function TRSMapLoader.LocalIndex(pt: TPoint): Integer;
+begin
+  for Result := 0 to High(Self.Regions) do
+    if pt in Self.Regions[Result].Region then
+      Exit;
+  Result := -1;
+end;
+
+function TRSMapLoader.GlobalIndex(pt: TPoint): Integer;
+begin
+  for Result := 0 to High(Self.Regions) do
+    if pt in Self.Regions[Result].Original then
+      Exit;
+  Result := -1;
+end;
+
+function TRSMapLoader.GetOriginal(pt: TPoint): Integer;
+begin
+  for Result := 0 to High(Self.Regions) do
+  begin
+    with Self.Regions[Result] do
+      with Region.Offset(Offset) do
+        if Contains(pt) then Exit;
+  end;
+  Result := -1;
+end;
+
+
+function TRSMapLoader.GetGlobal(regionIndex: Integer; p: TPoint; offset: TPoint = [0,0]): TPoint;
+begin
+  if regionIndex = -1 then
+    Exit(p);
+  Result := p + Self.Regions[regionIndex].Offset - [Self.Regions[regionIndex].Region.X1, Self.Regions[regionIndex].Region.Y1] + offset;
+end;
+
+function TRSMapLoader.GetGlobal(p: TPoint; offset: TPoint = [0,0]): TPoint; overload;
+begin
+  Result := Self.GetGlobal(Self.LocalIndex(p), p, offset);
+end;
+
+function TRSMapLoader.GetGlobal(regionIndex: Integer; tpa: TPointArray; offset: TPoint = [0,0]): TPointArray; overload;
+begin
+  if regionIndex = -1 then
+    Exit(tpa);
+
+  Result := tpa.Offset(Self.Regions[regionIndex].Offset - [Self.Regions[regionIndex].Region.X1, Self.Regions[regionIndex].Region.Y1] + offset);
+end;
+
+function TRSMapLoader.GetGlobal(tpa: TPointArray; offset: TPoint = [0,0]): TPointArray; overload;
+var
+  p: TPoint;
+begin
+  if Length(Self.Regions) = 1 then
+    Exit(Self.GetGlobal(Self.LocalIndex(tpa[0]), tpa, offset));
+
+  for p in tpa do
+    Result += Self.GetGlobal(Self.LocalIndex(p), p, offset);
+end;
+
+function TRSMapLoader.GetGlobal(regionIndex: Integer; b: TBox; offset: TPoint = [0,0]): TBox; overload;
+var
+  tpa: TPointArray;
+begin
+  if regionIndex = -1 then Exit(b);
+  tpa := b.Corners().Offset(
+           Self.Regions[regionIndex].Offset -
+           Self.Regions[regionIndex].Region.TopLeft + offset
+         );
+  Result := tpa.Bounds();
+end;
+
+function TRSMapLoader.GetGlobal(b: TBox; offset: TPoint = [0,0]): TBox; overload;
+begin
+  Result := Self.GetGlobal(Self.LocalIndex(b.Center), b, offset);
+end;
+
+
+function TRSMapLoader.GetLocal(regionIndex: Integer; pt: TPoint; offset: TPoint = [0,0]): TPoint;
+begin
+  if regionIndex = -1 then Exit(pt);
+  Result := pt - Self.Regions[regionIndex].Offset + Self.Regions[regionIndex].Region.TopLeft + offset;
+end;
+
+function TRSMapLoader.GetLocal(pt: TPoint; offset: TPoint = [0,0]): TPoint; overload;
+begin
+  Result := Self.GetLocal(Self.GlobalIndex(pt), pt, offset);
+end;
+
+function TRSMapLoader.GetLocal(regionIndex: Integer; tpa: TPointArray; offset: TPoint = [0,0]): TPointArray; overload;
+var
+  pt: TPoint;
+begin
+  if regionIndex = -1 then Exit(tpa);
+  for pt in tpa do
+    Result += pt - Self.Regions[regionIndex].Offset + Self.Regions[regionIndex].Region.TopLeft + offset;
+end;
+
+function TRSMapLoader.GetLocal(tpa: TPointArray; offset: TPoint = [0,0]): TPointArray; overload;
+var
+  pt: TPoint;
+begin
+  for pt in tpa do
+    Result += Self.GetLocal(Self.GlobalIndex(pt), pt, offset);
+end;
+
 
 procedure TRSMapLoader.Free();
 begin
@@ -192,8 +276,8 @@ end;
 (*
 ## TRSChunkLoader.GetBitmap
 ```pascal
-function TRSChunkLoader.GetBitmap(chunk: String; plane: UInt32; map: ERSMap): TMufasaBitmap;
-function TRSChunkLoader.GetBitmap(chunk: TPoint; plane: UInt32; map: ERSMap): TMufasaBitmap; overload;
+function TRSChunkLoader.GetBitmap(chunk: String; plane: Integer; map: ERSMap): TMufasaBitmap;
+function TRSChunkLoader.GetBitmap(chunk: TPoint; plane: Integer; map: ERSMap): TMufasaBitmap; overload;
 ```
 Returns a chunk bitmap.
 If possible, it will be loaded from a cached .bmp file.
@@ -255,7 +339,7 @@ This is an internal method. Don't use it if you don't know what you are doing.
 function TRSMapLoader.GetMap(start, finish: TPoint; plane: Integer; map: ERSMap): TImage;
 var
   chunks: TPointArray;
-  i, x, y, n: Int32;
+  i, x, y, n: Integer;
   lo, hi: TPoint;
   chunkMaps: array of record
     Point: TPoint;
@@ -294,6 +378,118 @@ begin
 end;
 
 
+(*
+## MapLoader.GetGraph
+```pascal
+function TRSMapLoader.GetGraph(name: String; plane: Integer; map: TMufasaBitmap): TWebGraphV2;
+```
+Returns a TWebGraph for the given `map`.
+If the graph is already cached we load it from cache, otherwise we build it and save it into cache.
+```{note}
+This is an internal method. Don't use it if you don't know what you are doing.
+```
+*)
+function TRSMapLoader.GetGraph(name: String; plane: Integer; map: TImage): TWebGraph;
+var
+  path, filename: String;
+  t: UInt64;
+begin
+  path := Self.CacheDir + 'graphs' + PATH_SEP + ToStr(plane) + PATH_SEP;
+  filename := name + '-' + GENERATED_GRAPH.Hash();
+
+  if not FileExists(filename + '.txt') then
+  begin
+    WriteLn GetDebugLn('MapLoader', 'Caching ' + name + ' webgraph, this will take a minute.', EErrorLevel.WARN);
+
+    if not DirCreate(path + ToStr(plane) + PATH_SEP) then
+      raise GetDebugLn('MapLoader', 'Failed to create cache directory: ' + path);
+
+    t := GetTickCount();
+    Result := TWebGraph.BuildGraph(name, map);
+    WriteLn GetDebugLn('MapLoader', 'Took ' + ToStr((GetTickCount()-t) div 1000) + ' seconds to generate webgraph.', EErrorLevel.SUCCESS);
+
+    (* TODO
+    try
+      json.Init();
+
+      json.Put('nodes', Result.NodesToString());
+      json.Put('paths', Result.PathsToString());
+      json.Put('names', Result.NamesToString());
+      json.Put('doors', Result.DoorsToString());
+
+      if not WriteFileContents(cachename + '.json', json.ToString(2), False) then
+        Self.Fatal('Failed to save ' + name + ' webgraph.');
+    except
+      Self.Fatal('Something went wrong saving ' + name + ' webraph: ' + GetExceptionMessage());
+    finally
+      json.Free();
+    end;
+    *)
+    Exit;
+  end;
+
+  (* TODO
+  try
+    json.Init(ReadFileContents(cachename + '.json'));
+
+    Result.LoadNodesFromString(json.getString('nodes'));
+    Result.LoadPathsFromString(json.getString('paths'));
+    Result.LoadNamesFromString(json.getString('names'));
+    Result.LoadDoorsFromString(json.getString('doors'));
+  except
+    TerminateScript('Something went wrong loading the webraph: ' + GetExceptionMessage());
+  finally
+    json.Free();
+  end;
+  *)
+end;
+
+
+function TRSMapLoader.SetupGraph(name: String; idx, plane, padding: Integer; collision: TImage): TWebGraph;
+var
+  gray, white, merged, graySubset: TPointArray;
+  whiteClusters, grayClusters, mergedClusters: T2DPointArray;
+  i, j: Integer;
+begin
+  Result := Self.GetGraph(name, plane, collision);
+  Result.Nodes := Self.GetGlobal(idx, Result.Nodes, [padding,padding]);
+
+  white := collision.FindColor($FFFFFF, 0);
+  gray := collision.FindColor($333333, 0);
+
+  white := Self.GetGlobal(idx, white, [padding,padding]);
+  gray  := Self.GetGlobal(idx, gray, [padding,padding]);
+
+  whiteClusters := white.Cluster(1.0);
+  grayClusters := gray.Cluster(1.0);
+
+  for i := 0 to High(whiteClusters) do
+  begin
+    if Length(whiteClusters[i]) <= 6 then
+      Continue;
+
+    graySubset := gray.ExtractBox(whiteclusters[i].Bounds().Expand(80));
+    merged := whiteclusters[i] + graySubset;
+    mergedClusters := merged.Cluster(1.0);
+
+    for j := 0 to high(mergedClusters) do
+      if mergedClusters[j].Contains(whiteClusters[i][0]) then
+      begin
+        Result.WalkableClusters += mergedClusters[j];
+        Break;
+      end;
+  end;
+
+  Result.WalkableSpace    := white + gray;
+  Result.ObjectClusters   := grayClusters;
+
+  for i := 0 to High(Result.Doors) do
+  begin
+    Result.Doors[i].Before := Self.GetGlobal(idx, Result.Doors[i].Before, [padding, padding]);
+    Result.Doors[i].After  := Self.GetGlobal(idx, Result.Doors[i].After,  [padding, padding]);
+    Result.Doors[i].Center := Self.GetGlobal(idx, Result.Doors[i].Center, [padding, padding]);
+  end;
+end;
 
 function TRSMapLoader._InternalLoad(imgs: TImageArray): TImage;
 var
@@ -316,7 +512,7 @@ end;
 
 function TRSMapLoader.InternalGraphLoad(graphs: array of TWebGraph): TWebGraph;
 var
-  i: Int32;
+  i: Integer;
 begin
   for i := 0 to High(graphs) do
     Result.Merge(graphs[i]);
@@ -333,7 +529,7 @@ end;
 
 procedure TRSMapLoader.Load(chunks: array of TRSMapChunk; downscale: Integer = 8; padding: Integer = 40);
 var
-  i, j, idx: Int32;
+  i, j, idx: Integer;
   maps, heightmaps, collisionmaps: TImageArray;
   s, f, tmp: TPoint;
   graphs: array of TWebGraph;
@@ -389,10 +585,8 @@ begin
 
       collisionmaps += Self.GetMap(s, f, chunks[i].Planes[j], ERSMap.COLLISION);
 
-      (* TODO
       if not GENERATED_GRAPH.Disabled then
         graphs += Self.SetupGraph(name, idx, chunks[i].Planes[j], padding, collisionmaps[idx]);
-      *)
 
       collisionmaps[idx].Pad(padding);
 

@@ -644,39 +644,3 @@ begin
     img.DrawBox(TBox.Create(Self.Nodes[i], 1, 1));
   end;
 end;
-
-type
-  TWebGraphSettings = record
-    Spacing, MinimumTiles, NodeRadius, MaxConnections: Integer;
-    WallCrossings, Disabled: Boolean;
-  end;
-
-function TWebGraphSettings.Hash(): String;
-var
-  data: TIntegerArray;
-  h, i: Integer;
-  str: String;
-begin
-  data := [Self.Spacing, Self.MinimumTiles, Self.NodeRadius, Self.MaxConnections, Integer(Self.WallCrossings)];
-
-  h := $811C9DC5;
-  for i := 0 to High(data) do
-  begin
-    if data[i] = $0 then Continue;
-    h := (h * $1000193) xor data[i];
-  end;
-
-  str := LowerCase(IntToHex(h, 16));
-  Result := str.CopyRange(Length(str)-8, Length(str));
-end;
-
-var
-  GENERATED_GRAPH: TWebGraphSettings;
-
-begin
-  GENERATED_GRAPH.Spacing := 18;         //low = better/slower, high = worse/faster
-  GENERATED_GRAPH.MinimumTiles := 4;     //spaces with less tiles than this will be ignored.
-  GENERATED_GRAPH.NodeRadius := 50;      //closed space less than NodeRadius pixels will have a single node.
-  GENERATED_GRAPH.MaxConnections := 6;   //Max connections per node.
-  GENERATED_GRAPH.WallCrossings := True; //Whether to allow wall crossings when there's a close path around it.
-end;

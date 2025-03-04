@@ -78,3 +78,26 @@ begin
     if Self[i].Contains(value, caseSensitive) then
       Exit(True);
 end;
+
+
+function TImage.ColorsInLine(start, stop: TPoint; colors: TIntegerArray): Boolean;
+var
+  x, y: Integer;
+  pXCross, pYCross, qXCross, qYCross: Boolean;
+begin
+  for x := Min(start.X, stop.X) to Max(start.X, stop.X) do
+  begin
+    if not pXCross then pXCross := Self.Pixel[x, start.Y] in colors;
+    if not qXCross then qXCross := Self.Pixel[x, stop.Y] in colors;
+    if pXCross and qXCross then Exit(True);
+  end;
+
+  for y := Min(start.Y, stop.Y) to Max(start.Y, stop.Y) do
+  begin
+    if not pYCross then pYCross := Self.Pixel[start.X, y] in colors;
+    if not qYCross then qYCross := Self.Pixel[stop.X, y] in colors;
+    if pYCross and qYCross then Exit(True);
+  end;
+
+  Result := (pXCross and pYCross) or (qXCross and qYCross);
+end;

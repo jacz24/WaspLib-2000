@@ -1,0 +1,299 @@
+(*
+# WebGraph Generator
+File responsible for webgraph generation out of collision map images.
+*)
+
+{$DEFINE SRLT_WEBGRAPHGEN_INCLUDED}
+{$IFNDEF SRLT_UTILS}
+  {$I SRLT/utils.simba}
+{$ENDIF}
+
+type
+  TWebGraphSettings = record
+    Spacing, MinimumTiles, NodeRadius, MaxConnections: Integer;
+    WallCrossings, Disabled: Boolean;
+  end;
+
+function TWebGraphSettings.Hash(): String;
+var
+  data: TIntegerArray;
+  h, i: Integer;
+begin
+  data := [Self.Spacing, Self.MinimumTiles, Self.NodeRadius, Self.MaxConnections, Integer(Self.WallCrossings)];
+
+  h := $811C9DC5;
+  for i := 0 to High(data) do
+  begin
+    if data[i] = $0 then Continue;
+    h := (h * $1000193) xor data[i];
+  end;
+
+  Result := LowerCase(IntToHex(h, 16));
+  SetLength(Result, 8);
+end;
+
+var
+  GENERATED_GRAPH: TWebGraphSettings;
+
+begin
+  GENERATED_GRAPH.Spacing := 18;         //low = better/slower, high = worse/faster
+  GENERATED_GRAPH.MinimumTiles := 4;     //spaces with less tiles than this will be ignored.
+  GENERATED_GRAPH.NodeRadius := 50;      //closed space less than NodeRadius pixels will have a single node.
+  GENERATED_GRAPH.MaxConnections := 6;   //Max connections per node.
+  GENERATED_GRAPH.WallCrossings := True; //Whether to allow wall crossings when there's a close path around it.
+end;
+
+
+ function TWebGraph._FindDoors(doors: T2DPointArray; white: TPointArray): TRSDoorArray; static;
+  var
+    direction, center: TPoint;
+    i: Integer;
+  begin
+    SetLength(Result, Length(doors));
+
+    for i := 0 to High(doors) do
+    begin
+      center := doors[i].Mean();
+      Result[i].Center := center;
+
+      if (center + [1,0] in doors[i]) and (center + [-1,0] in doors[i]) then
+        direction := [0,1]
+      else if (center + [0,1] in doors[i]) and (center + [0,-1] in doors[i]) then
+        direction := [1,0]
+      else if (center + [1,1] in doors[i]) and (center + [-1,-1] in doors[i]) then
+        direction := [1,-1]
+      else if (center + [1,-1] in doors[i]) and (center + [-1,1] in doors[i]) then
+        direction := [1,1]
+      else Continue;
+
+      //check if pixels around the door are walkable to exclude weird objects colored red on the map as being doors
+      //also excludes open doors to be detected as doors needed to be passed through
+      if (center + direction in white) and (center + direction.Rotate(180, [0,0]) in white) then
+      begin
+        Result[i].Direction := direction;
+        case Length(doors[i]) of
+          4: Result[i].DoorType := ERSDoorType.NORMAL;
+          8: Result[i].DoorType := ERSDoorType.WIDE;
+        end;
+      end;
+
+      if Result[i].DoorType = ERSDoorType.WIDE then
+        case Result[i].Direction of
+          [0,1]: Result[i].Center.X -= 2;
+          [1,0]: Result[i].Center.Y -= 2;
+        end;
+
+      Result[i].Before += Result[i].Center + Result[i].Direction * 2;
+      Result[i].After  += Result[i].Center - Result[i].Direction * 2;
+    end;
+  end;
+
+
+(*
+## TRSChunkLoader.BuildGraph
+```pascal
+function TRSChunkLoader._BuildGraph(map: TMufasaBitmap; white, red: TPointArray): TWebGraphV2;
+function TRSChunkLoader.BuildGraph(name: String; map: TMufasaBitmap): TWebGraphV2;
+```
+Magically builds a webgraph for you for a given collision map passed into `map`.
+
+The collision map can only have 4 colors:
+- white ($FFFFFF) for walkable space
+- black ($000000) for non walkable space
+- red ($0000FF) for doors (optional)
+- gray ($333333) for objects (optional)
+
+```{note}
+This is an internal method. Don't use it if you don't know what you are doing.
+```
+*)
+function TWebGraph._BuildGraph(map: TImage; white, red: TPointArray): TWebGraph; static;
+var
+  a, b, i, j, n, len, hi, nonSepDoors: Integer;
+  atpa, parts: T2DPointArray;
+  skeleton, nodes, tpa, doorsInTpa, doorNodes: TPointArray;
+  bounds: TBox;
+  p, q: TPoint;
+  nodesTree, skeletonTree: TSlackTree;
+  jInRange, nInRange: Boolean;
+  connectionMap: array of array of TIntegerArray;
+  doors: TRSDoorArray;
+  door: TRSDoor;
+  doorPaths: T2DIntegerArray;
+begin
+  atpa := white.Cluster(1.0).sortBySize(True);
+  doors := TWebGraph._FindDoors(red.Cluster(1.0), white);
+
+  hi := High(doors);
+  WriteLn GetDebugLn('WebGraph', 'Adding ' + ToStr(hi) + ' doors.');
+
+  for i := 0 to high(doors) do
+  begin
+    door := doors[i];
+    if (door.DoorType = ERSDoorType.UNKNOWN) or atpa.InSameTPA(door.Before, door.After) then
+    begin
+      nonSepDoors += 1;
+      Continue;
+    end;
+
+    door.SEPARATING := True;
+
+    Result.Doors += door;
+    doorNodes += [door.Before, door.After];
+    SetLength(doorPaths, Length(doorNodes));
+    doorPaths[(i-nonSepDoors)*2] += (i-nonSepDoors)*2+1;
+    doorPaths[(i-nonSepDoors)*2+1] += (i-nonSepDoors)*2;
+  end;
+
+  hi := High(atpa);
+  WriteLn GetDebugLn('WebGraph', 'Creating ' + ToStr(hi) + ' connections for area.');
+
+  for i := 0 to hi do
+  begin
+    if Length(atpa[i]) <= GENERATED_GRAPH.MinimumTiles * RSTranslator.TileArea then Continue; //remove very small spaces
+
+    bounds := atpa[i].Bounds();
+    if Max(bounds.Width, bounds.Height) < GENERATED_GRAPH.NodeRadius then //mark spaces less than NodeRadius with a single node and continue
+    begin
+      Result.Nodes += atpa[i].Median();
+      Continue;
+    end;
+
+    skeleton := atpa[i].Erode(1).Skeleton(2, 7);
+
+    if skeleton = [] then
+    begin
+      Result.Nodes += atpa[i].Median();
+      Continue;
+    end;
+
+    nodes := [];
+
+    for tpa in skeleton.Partition(GENERATED_GRAPH.Spacing) do
+    begin
+      if tpa = [] then Continue;
+      for tpa in tpa.Cluster(1) do nodes += tpa.Mean();
+    end;
+
+    SetLength(connectionMap, bounds.X2, bounds.Y2);
+
+    skeletonTree.Init(skeleton);
+    nodesTree.Init(nodes);
+    for j := 0 to High(nodesTree.Data) do
+    begin
+      p := nodesTree.Data[j].split;
+      tpa := nodesTree.KNearest(p, GENERATED_GRAPH.MaxConnections, True);
+
+      for q in tpa do
+      begin
+        if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > GENERATED_GRAPH.Spacing * 2 then
+          Continue;
+
+        if GENERATED_GRAPH.WallCrossings and not map.ColorsInLine(p, q, [$0, $333333, $FF]) then
+        begin
+          connectionMap[q.X, q.Y] += j;
+          Continue;
+        end;
+
+        bounds := TBox.Create(p.X, p.Y, q.X, q.Y).Expand(GENERATED_GRAPH.Spacing);
+        parts := skeletonTree.RangeQuery(bounds).Cluster(1);
+
+        for a := 0 to High(parts) do
+        begin
+          jInRange := False;
+          nInRange := False;
+
+          for b := 0 to High(parts[a]) do
+          begin
+            jInRange := jInRange or (parts[a,b].DistanceTo(p) <= Sqrt(2));
+            nInRange := nInRange or (parts[a,b].DistanceTo(q) <= Sqrt(2));
+
+            if jInRange and nInRange then Break(2);
+          end;
+
+          if jInRange <> nInRange then Break;
+        end;
+
+        if not jInRange or not nInRange then Continue;
+
+        connectionMap[q.X, q.Y] += j;
+      end;
+    end;
+
+    len := Length(Result.Nodes);
+    SetLength(Result.Nodes, len + Length(nodes));
+    SetLength(Result.Paths, Length(Result.Nodes));
+
+    for j := 0 to High(nodesTree.Data) do
+    begin
+      p := nodesTree.Data[j].split;
+      Result.Nodes[j+len] := p;
+      for n in connectionMap[p.X, p.Y] do
+      begin
+        q := nodesTree.Data[n].split;
+        Result.Nodes[n+len] := q;
+
+        if not Result.Paths[j+len].Contains(n+len) then
+          Result.Paths[j+len] += n+len;
+        if not Result.Paths[n+len].Contains(j+len) then
+          Result.Paths[n+len] += j+len;
+      end;
+    end;
+  end;
+
+  SetLength(Result.Paths, Length(Result.Nodes));
+  SetLength(Result.Names, Length(Result.Nodes));
+
+  //Connect doornodes to nearest node
+  nodes := Copy(Result.Nodes);
+  nodesTree.Init(nodes);
+
+  len := Length(Result.Nodes);
+
+  for i := 0 to High(atpa) do
+  begin
+    doorsInTpa := atpa[i].Intersection(doorNodes);
+
+    for j := 0 to High(doorsInTpa) do
+    begin
+      for p in nodesTree.KNearest(doorsInTpa[j], 20) do
+      begin
+        if atpa[i].Contains(p) then
+        begin
+          n := Result.Nodes.IndexOf(p);
+          Result.Nodes += doorsInTpa[j];
+          SetLength(result.Paths, Length(Result.Nodes));
+          Result.Paths[n] += High(Result.Nodes);
+          Result.Paths[High(Result.Nodes)] += n;
+          Break;
+        end;
+      end;
+
+      if not Result.Nodes.Contains(doorsInTpa[j]) then
+        Result.Nodes += doorsInTpa[j];
+    end;
+  end;
+
+  nodes := Copy(Result.Nodes, len, Length(Result.Nodes)-len);
+  for n := 0 to high(doorNodes) do
+  begin
+    i := nodes.IndexOf(doorNodes[n]);
+    j := nodes.IndexOf(doorNodes[doorPaths[n][0]]);
+    if (i < 0) or (j < 0) then Continue;
+    Result.Paths[len + i] += len + j;
+  end;
+
+  SetLength(Result.Paths, Length(Result.Nodes));
+  SetLength(Result.Names, Length(Result.Nodes));
+end;
+
+function TWebGraph.BuildGraph(name: String; map: TImage): TWebGraph; static;
+var
+  white, red: TPointArray;
+begin
+  white := map.FindColor($FFFFFF, 0);
+  red := map.FindColor($FF, 0);
+  WriteLn GetDebugLn('Generating webgraph for region: ' + name);
+
+  //Result := Self._BuildGraph(map, white, red);
+end;

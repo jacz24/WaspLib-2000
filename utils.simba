@@ -14,8 +14,12 @@
 {$IFNDEF SRLT_IMAGECOMPARE_INCLUDED} {$I utils/imagecompare.simba}
 {$IFNDEF SRLT_RSTRANSLATOR_INCLUDED} {$I utils/math/rstranslator.simba}
 {$IFNDEF SRLT_WEBGRAPH_INCLUDED}     {$I utils/webgraph.simba}
+{$IFNDEF SRLT_WEBGRAPHGEN_INCLUDED}  {$I utils/webgraphgen.simba}
+{$IFNDEF SRLT_RSCHUNKS_INCLUDED}     {$I utils/rschunks.simba}
 
 
+{$ELSE}{$ENDIF}
+{$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}

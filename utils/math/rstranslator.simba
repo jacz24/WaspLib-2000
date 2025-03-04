@@ -18,7 +18,7 @@ that can be used by Simba and back.
 *)
   TRSTranslator = record
     const TileSize: Integer = 4;
-    const TileAre: Integer = 16;
+    const TileArea: Integer = 16;
     const MaxHeight: Integer = 2040;
     const Planes: Integer = 3;
 

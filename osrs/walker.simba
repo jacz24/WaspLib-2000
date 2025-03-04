@@ -6,7 +6,7 @@ iterations made by Olly.
 *)
 
 {$DEFINE SRLT_WALKER_INCLUDED}
-{$IFNDEF SRLT_OSR}
+{$IFNDEF SRLT_OSRS}
   {$I SRLT/osrs.simba}
 {$ENDIF}
 
