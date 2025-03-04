@@ -626,7 +626,7 @@ begin
       _Paint(p.Offset(-topLeft.X, -topLeft.Y));
   _Paint(img.Center); // our own player
 
-  // TODO: account for tolerance
+  //idk what the heck is this 3 lines
   img.ReplaceColor(255,0);
   img.ReplaceColor(284358,0);
   img.ReplaceColor(1127261,0);
@@ -660,18 +660,17 @@ img.Free();
 ```
 *)
 function TRSMinimap.GetCleanImage(angle: Single = $FFFF): TImage;
-var
-  img, clean: TImage;
 begin
-  img := TImage.CreateFromTarget(Self.Bounds);
-  img.ReplaceColor(0, 1);
-
-  clean := Self.CleanImage(img);
-  img.Free();
-
   if angle = $FFFF then angle := Self.GetCompassAngle(False);
-  Result := clean.Rotate(EImageRotateAlgo.NEAREST_NEIGHBOUR, angle, False);
-  clean.Free();
+  with TImagePool.Create() do
+  try
+    Result := TImage.CreateFromTarget(Self.Bounds);
+    Result.ReplaceColor(0, 1);
+    Result := Self.CleanImage(Result);
+    Result := Result.Rotate(EImageRotateAlgo.BILINEAR, angle, False);
+  finally
+    Free([Result]);
+  end;
 end;
 
 (*
@@ -697,29 +696,31 @@ var
   tmp, blend: TImage;
   tpa: TPointArray;
 begin
-  tmp := img.Copy();
+  with TImagePool.Create() do
+  try
+    tmp := img.Copy();
 
-  center := tmp.Center;
-  if RSClient.Mode = ERSClientMode.FIXED then
-    center := center.Offset(0, -8).Rotate(-Self.GetCompassAngle(False), center);
+    center := tmp.Center;
+    if RSClient.Mode = ERSClientMode.FIXED then
+      center := center.Offset(0, -8).Rotate(-Self.GetCompassAngle(False), center);
 
-  tmp.DrawColor := $0;
-  tmp.DrawCircleInverted(center, radius);
+    tmp.DrawColor := $0;
+    tmp.DrawCircleInverted(center, radius);
 
-  radius += 3;
+    radius += 3;
 
-  tmp.Crop(Box(center, radius, radius));
-  tpa := tmp.FindColor($0, 0).SortFrom(tmp.Center);
+    tmp.Crop(Box(center, radius, radius));
+    tpa := tmp.FindColor($0, 0).SortFrom(tmp.Center);
 
-  blend := tmp.Blend(tpa, 3);
+    blend := tmp.Blend(tpa, 3);
 
-  tmp.Free();
+    blend.DrawColor := $0;
+    blend.DrawCircleInverted(blend.Center, radius);
 
-  blend.DrawColor := $0;
-  blend.DrawCircleInverted(blend.Center, radius);
-
-  Result := blend.Downsample(scaling);
-  blend.Free();
+    Result := blend.Downsample(scaling);
+  finally
+    Free([Result]);
+  end;
 end;
 
 
