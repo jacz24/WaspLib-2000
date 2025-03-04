@@ -113,6 +113,10 @@ begin
   minimapSample := Minimap.ScaleMinimap(minimapImage, Self.Loader.Downscale, Self.Sample.Radius);
 
   Self.Cache := TMatchTemplateCache.Create(Self.Loader.DownscaledMap.ToMatrix(), minimapSample.ToMatrix(), ETMFormula.TM_CCOEFF_NORMED);
+  Self.Cache.FreeOnTerminate := True;
+
+  minimapImage.Free();
+  minimapSample.Free();
 
   Self.Filters := [];
   for i := 0 to High(Self.Loader.Regions) do
