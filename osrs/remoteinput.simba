@@ -22,8 +22,8 @@ begin
     if Self.EIOS <> nil then Break;
   until GetTickCount() > TIMEOUT;
 
-  Target.SetEIOS({$MACRO LOADEDLIB(libremoteinput)}, ToString(GetSimbaTargetPID()));
-  //Target.SetPlugin({$MACRO LOADEDLIB(libremoteinput)}, ToStr(GetSimbaTargetPID()), Self.Canvas);
+  //Target.SetEIOS({$MACRO LOADEDLIB(libremoteinput)}, ToString(GetSimbaTargetPID()));
+  Target.SetPlugin({$MACRO LOADEDLIB(libremoteinput)}, ToStr(GetSimbaTargetPID()), Self.Canvas);
 end;
 
 procedure TRemoteInput.LoseFocus();
