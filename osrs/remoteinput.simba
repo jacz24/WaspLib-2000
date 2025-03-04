@@ -46,6 +46,8 @@ end;
 var
   RemoteInput: TRemoteInput;
 
+{$IFNDEF SRLT_DISABLE_REMOTEINPUT}
 begin
   RemoteInput.Setup();
 end;
+{$ENDIF}

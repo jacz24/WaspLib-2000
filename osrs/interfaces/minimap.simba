@@ -626,7 +626,6 @@ begin
       _Paint(p.Offset(-topLeft.X, -topLeft.Y));
   _Paint(img.Center); // our own player
 
-
   // TODO: account for tolerance
   img.ReplaceColor(255,0);
   img.ReplaceColor(284358,0);
@@ -642,7 +641,6 @@ begin
   tpa := img.FindColor($0, 0).SortFrom(img.Center);
 
   Result := img.Blend(tpa, 5);
-  Result.FreeOnTerminate := True;
   Result.Pad(10);
 end;
 
@@ -666,16 +664,13 @@ var
   img, clean: TImage;
 begin
   img := TImage.CreateFromTarget(Self.Bounds);
-  img.FreeOnTerminate := True;
   img.ReplaceColor(0, 1);
 
   clean := Self.CleanImage(img);
-  clean.FreeOnTerminate := True;
   img.Free();
 
   if angle = $FFFF then angle := Self.GetCompassAngle(False);
-  Result := clean.Rotate(EImageRotateAlgo.BILINEAR, angle, False);
-  Result.FreeOnTerminate := True;
+  Result := clean.Rotate(EImageRotateAlgo.NEAREST_NEIGHBOUR, angle, False);
   clean.Free();
 end;
 
@@ -703,7 +698,6 @@ var
   tpa: TPointArray;
 begin
   tmp := img.Copy();
-  tmp.FreeOnTerminate := True;
 
   center := tmp.Center;
   if RSClient.Mode = ERSClientMode.FIXED then
@@ -718,7 +712,6 @@ begin
   tpa := tmp.FindColor($0, 0).SortFrom(tmp.Center);
 
   blend := tmp.Blend(tpa, 3);
-  blend.FreeOnTerminate := True;
 
   tmp.Free();
 
@@ -726,7 +719,6 @@ begin
   blend.DrawCircleInverted(blend.Center, radius);
 
   Result := blend.Downsample(scaling);
-  Result.FreeOnTerminate := True;
   blend.Free();
 end;
 

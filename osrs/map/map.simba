@@ -201,15 +201,17 @@ var
   matrix: TSingleMatrix;
   w, h, n, loops: Integer;
   pt, loaderOffset: TPoint;
+  width, height: Integer;
 begin
-  try
     sample := Minimap.ScaleMinimap(img, Self.Loader.Downscale, Self.Sample.Radius);
-    matrix := MatchTemplateMask(Self.Cache, sample.ToMatrix(), TM_CCOEFF_NORMED);
-
+    matrix := MatchTemplateMask(Self.Cache, sample.ToMatrix(), ETMFormula.TM_CCOEFF_NORMED);
     w := sample.Width div 2;
     h := sample.Height div 2;
+    sample.Free();
+
     loaderOffset.X := Self.Loader.Downscale div 2;
     loaderOffset.Y := loaderOffset.X;
+    matrix.GetSize(width, height);
 
     while Length(Result) < Self.Sample.Amount do
     begin
@@ -221,7 +223,7 @@ begin
           if Self.Filters[n].Valid(pt) then
           begin
             Result += pt + loaderOffset;
-            matrix.Fill([X - 5, Y - 5, X + 5, Y + 5], 0);
+            matrix.Fill([Max(0, X-5), Max(0, Y-5), Min(width, X+5), Min(height, Y+5)], 0);
             Continue(2);
           end;
 
@@ -230,9 +232,6 @@ begin
 
       if Inc(loops) > 70 then Break;
     end;
-  finally
-    sample.Free();
-  end;
 end;
 
 (*
@@ -309,23 +308,21 @@ begin
   Self.Region := [];
   Self.Similarity := 0;
 
-  try
-    clean := Minimap.GetCleanImage();
-    tpa := Self.ScaledSearch(clean);
+  clean := Minimap.GetCleanImage();
+  tpa := Self.ScaledSearch(clean);
 
-    for i := 0 to High(tpa) do
+  for i := 0 to High(tpa) do
+  begin
+    hit := Self.FullSearch(clean, Self.Loader.Map, tpa[i], match);
+
+    if match > Self.Similarity then
     begin
-      hit := Self.FullSearch(clean, Self.Loader.Map, tpa[i], match);
-
-      if match > Self.Similarity then
-      begin
-        Self.Similarity := match;
-        Result := hit;
-      end;
+      Self.Similarity := match;
+      Result := hit;
     end;
-  finally
-    clean.Free();
   end;
+  clean.Free();
+
 
   Self.RegionIndex := Self.Loader.LocalIndex(Result);
   if Self.RegionIndex < 0 then
@@ -438,12 +435,12 @@ var
   img, map, cleanMinimap: TImage;
   time: Double;
   lines: TStringArray;
-  tpa: TPointArray;
 begin
-  Target.FreezeImage(Minimap.Bounds);
+  Target.FreezeImage();
 
   time   := PerformanceTimer();
   Result := Self.Position();
+
   time   := PerformanceTimer() - time;
 
   case Self.RegionIndex of
@@ -464,22 +461,6 @@ begin
   x := local.X - x1;
   y := local.Y - y1;
 
-  map := Self.Loader.Map.Copy([x1, y1, x2, y2]);
-  map.FreeOnTerminate := True;
-  map.DrawColor := $00FF00;
-  map.DrawLine(Point(0, y), Point(x2 - x1, y));
-  map.DrawLine(Point(x, 0), Point(x, y2 - y1));
-  map.DrawColor := $FFFFFF;
-  map.DrawBox([x - 2, y - 2, x + 2, y + 2]);
-
-  cleanMinimap := Minimap.ScaleMinimap(Minimap.GetCleanImage(), 1);
-
-  with cleanMinimap.Center do
-    if RSClient.Mode = ERSClientMode.FIXED then
-      p := Point(X, Y).Offset(0, 8).Rotate(-Minimap.GetCompassAngle(False), [X,Y]);
-
-  cleanMinimap.DrawBoxFilled([p.X - 1, p.Y - 1, p.X + 1, p.Y + 1]);
-
   lines := [
     'Position:',
     ' - Local : '  + Format('[%d, %d]', [local.X, local.Y]),
@@ -496,8 +477,25 @@ begin
     'Time: '         + ToStr(Round(time)) + ' ms'
   ];
 
+  map := Self.Loader.Map.Copy([x1, y1, x2, y2]);
+  map.DrawColor := $00FF00;
+  map.DrawLine(Point(0, y), Point(x2 - x1, y));
+  map.DrawLine(Point(x, 0), Point(x, y2 - y1));
+  map.DrawColor := $FFFFFF;
+  map.DrawBox([x - 2, y - 2, x + 2, y + 2]);
+
   img := TImage.Create(700 + cleanMinimap.Width, 440);
-  img.FreeOnTerminate := True;
+  img.DrawImage(map, [10, 20]);
+  map.Free();
+
+  cleanMinimap := Minimap.ScaleMinimap(Minimap.GetCleanImage(), 1);
+
+  with cleanMinimap.Center do
+    if RSClient.Mode = ERSClientMode.FIXED then
+      p := Point(X, Y).Offset(0, 8).Rotate(-Minimap.GetCompassAngle(False), [X,Y]);
+
+  cleanMinimap.DrawBoxFilled([p.X - 1, p.Y - 1, p.X + 1, p.Y + 1]);
+
   img.FontName := 'Consolas';
   img.FontSize := 18;
   img.FontAntialiasing := True;
@@ -508,9 +506,6 @@ begin
     if print then WriteLn(lines[i]);
     img.DrawText(lines[i], [430, cleanMinimap.Height + 20 + 20 * i]);
   end;
-
-  img.DrawImage(map, [10, 20]);
-  map.Free();
 
   img.DrawImage(cleanMinimap, [520, 10]);
   cleanMinimap.Free();
