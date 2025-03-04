@@ -76,10 +76,7 @@ Record responsible for positioning.
 
     Sample: TRSMapSample;
 
-    Filters: array of record
-      Box: TBox;
-      Inside: Boolean;
-    end;
+    Filters: TBoxFilterArray;
 
     IsSetup, DisableHeightmap: Boolean;
   end;
@@ -202,40 +199,36 @@ function TRSMap.ScaledSearch(img: TImage): TPointArray;
 var
   sample: TImage;
   matrix: TSingleMatrix;
-  w, h, n, loops: Int32;
-  p: TPoint;
+  w, h, n, loops: Integer;
+  pt, loaderOffset: TPoint;
 begin
   sample := Minimap.ScaleMinimap(img, Self.Loader.Downscale, Self.Sample.Radius);
   matrix := MatchTemplateMask(Self.Cache, sample.ToMatrix(), TM_CCOEFF_NORMED);
 
   w := sample.Width div 2;
   h := sample.Height div 2;
+  loaderOffset.X := Self.Loader.Downscale div 2;
+  loaderOffset.Y := loaderOffset.X;
 
   while Length(Result) < Self.Sample.Amount do
   begin
     with matrix.ArgMax() do
     begin
-      p := Offset(w, h) * Self.Loader.Downscale;
+      pt := Offset(w, h) * Self.Loader.Downscale;
 
       for n := 0 to High(Self.Filters) do
-      begin
-        if (Self.Filters[n].Inside and Self.Filters[n].Box.Contains(p)) or
-           (not Self.Filters[n].Inside and not Self.Filters[n].Box.Contains(p)) then
+        if Self.Filters[n].Valid(pt) then
         begin
-          Result += p;
+          Result += pt + loaderOffset;
           matrix.Fill([X - 5, Y - 5, X + 5, Y + 5], 0);
           Continue(2);
         end;
-      end;
 
       matrix.Fill([X - 5, Y - 5, X + 5, Y + 5], 0);
     end;
 
     if Inc(loops) > 70 then Break;
   end;
-
-  n := Self.Loader.Downscale div 2;
-  Result := Result.Offset([n, n]);
 
   sample.Free();
 end;
@@ -315,8 +308,9 @@ begin
   Self.Similarity := 0;
 
   clean := Minimap.GetCleanImage();
+  WriteLn 'Position0';
   tpa := Self.ScaledSearch(clean);
-
+  WriteLn 'Position1';
   for i := 0 to High(tpa) do
   begin
     hit := Self.FullSearch(clean, Self.Loader.Map, tpa[i], match);

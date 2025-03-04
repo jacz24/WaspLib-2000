@@ -107,3 +107,20 @@ begin
     if i < High(Self) then
       Result += Self[i].DistanceTo(Self[i+1]);
 end;
+
+
+type
+  TBoxFilter = record
+    Box: TBox;
+    Inside: Boolean;
+  end;
+
+  TBoxFilterArray = array of TBoxFilter;
+
+function TBoxFilter.Valid(pt: TPoint): Boolean;
+begin
+  case Self.Inside of
+    True:  Result := pt in Self.Box;
+    False: Result := not (pt in Self.Box);
+  end;
+end;
