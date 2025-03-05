@@ -17,6 +17,10 @@ type
 
     GetLocal: function (tpa: TPointArray; offset: TPoint = [0,0]): TPointArray of object;
     GetGlobal: function (p: TPoint; offset: TPoint = [0,0]): TPoint of object;
+
+    Coordinate: TLazLabel;
+    ShowGraph, ShowWalkableSpace, ShowWalkableClusters, ShowObjectClusters: Boolean;
+    ColorArray: TColorArray;
   end;
 
 procedure TMapDebugger.OnChange(sender: TObject);
@@ -24,19 +28,71 @@ begin
   Self.ImageBox.SetImage(Self.Images[TLazComboBox(sender).ItemIndex], False);
 end;
 
-procedure ImgBoxPaint(Sender: TImageBox; Canvas: TImageBoxCanvas; R: TLazRect);
-begin
-  //Canvas.DrawCircleFilled(Sender.MousePoint, 5, Colors.YELLOW);
 
-  // if 300,300 is visible in the paint rect
-  //if (300 >= R.Left) and (300 >= R.Top) and (300 <= R.Right) and (300 <= R.Bottom) then
-  //  Canvas.DrawBoxFilled([300,300,350,350], Colors.LIME);
+procedure TMapDebugger.ImgBoxPaint(sender: TImageBox; canvas: TImageBoxCanvas; r: TLazRect);
+var
+  p: TPoint;
+  b: TBox;
+  tpa: TPointArray;
+  i: Integer;
+begin
+  if Self.ShowWalkableSpace then
+    canvas.DrawPoints(Self.Graph.WalkableSpace, Self.ColorArray.Last);
+
+  if Self.ShowWalkableClusters then
+    for i := 0 to High(Self.Graph.WalkableClusters) do
+      canvas.DrawPoints(Self.Graph.WalkableClusters[i], Self.ColorArray[i]);
+
+  if Self.ShowObjectClusters then
+    for i := 0 to High(Self.Graph.ObjectClusters) do
+      canvas.DrawPoints(Self.Graph.ObjectClusters[i], Self.ColorArray[i]);
+
+  if Self.ShowGraph then
+    Self.Graph.Draw(canvas);
+
+  with sender.MousePoint() do
+    p := [X div 4 * 4, Y div 4 * 4];
+
+  tpa := TBox.Create(p.X-1, p.Y-1, p.X + 4, p.Y + 4).Corners();
+  tpa := tpa.Connect().Difference(tpa);
+  canvas.DrawPoints(tpa, $F7AA4E);
 end;
 
-procedure ImgBoxMouseMove(Sender: TImageBox; Shift: ELazShiftStates; X, Y: Integer);
+procedure TMapDebugger.ImgBoxMouseMove(sender: TImageBox; shift: ELazShiftStates; x, y: Integer);
+var
+  p: TPoint;
+  canvas: TImageBoxCanvas;
 begin
+  p := Self.GetGlobal([x,y]);
+  Self.Coordinate.Caption := 'Coordinate: ' + ToStr(p.X) + ' X ' + ToStr(p.Y) + ' Y';
   Sender.Repaint();
 end;
+
+
+procedure TMapDebugger.GraphOnChange(sender: TObject);
+begin
+  Self.ShowGraph := TLazCheckBox(sender).State = ELazCheckBoxState.cbChecked;
+  Self.ImageBox.Repaint();
+end;
+
+procedure TMapDebugger.WalkableSpaceOnChange(sender: TObject);
+begin
+  Self.ShowWalkableSpace := TLazCheckBox(sender).State = ELazCheckBoxState.cbChecked;
+  Self.ImageBox.Repaint();
+end;
+
+procedure TMapDebugger.WalkableClustersOnChange(sender: TObject);
+begin
+  Self.ShowWalkableClusters := TLazCheckBox(sender).State = ELazCheckBoxState.cbChecked;
+  Self.ImageBox.Repaint();
+end;
+
+procedure TMapDebugger.ObjectClustersOnChange(sender: TObject);
+begin
+  Self.ShowObjectClusters := TLazCheckBox(sender).State = ELazCheckBoxState.cbChecked;
+  Self.ImageBox.Repaint();
+end;
+
 
 procedure TMapDebugger.Show();
 var
@@ -44,10 +100,11 @@ var
   panel: TLazPanel;
   lbl: TLazLabel;
   combobox: TLazComboBox;
+  checkbox: TLazCheckBox;
 begin
   form := TLazForm.Create();
-  form.Caption := 'Example form';
-  form.Width := 700;
+  form.Caption := 'TRSMap Debugger';
+  form.Width := 900;
   form.Height := 700;
   form.Position := ELazFormPosition.ScreenCenter;
   form.Color := $242322;
@@ -55,34 +112,75 @@ begin
 
   panel := TLazPanel.Create(form);
   panel.Parent := form;
-  panel.SetBounds(0, 0, form.Width, 40);
+  panel.SetBounds(0, 0, form.Width, 30);
   panel.BevelOuter := ELazPanelBevel.None;
   panel.Align := ELazAlign.Top;
 
-  lbl := TLazLabel.Create(panel);
-  lbl.Parent := panel;
-  lbl.Caption := 'Map:';
-  lbl.Color := $FFFFFF;
-  lbl.Align := ELazAlign.Top;
+  checkbox := TLazCheckBox.Create(panel);
+  checkbox.Parent := panel;
+  checkbox.Caption := 'Show ObjectClusters';
+  checkbox.Align := ELazAlign.Left;
+  checkbox.BorderSpacing.Left  := 10;
+  checkbox.BorderSpacing.Right := 10;
+  checkbox.OnChange := @Self.ObjectClustersOnChange;
+
+  checkbox := TLazCheckBox.Create(panel);
+  checkbox.Parent := panel;
+  checkbox.Caption := 'Show WalkableClusters';
+  checkbox.Align := ELazAlign.Left;
+  checkbox.BorderSpacing.Left  := 10;
+  checkbox.BorderSpacing.Right := 10;
+  checkbox.OnChange := @Self.WalkableClustersOnChange;
+
+  checkbox := TLazCheckBox.Create(panel);
+  checkbox.Parent := panel;
+  checkbox.Caption := 'Show WalkableSpace';
+  checkbox.Align := ELazAlign.Left;
+  checkbox.BorderSpacing.Left  := 10;
+  checkbox.BorderSpacing.Right := 10;
+  checkbox.OnChange := @Self.WalkableSpaceOnChange;
+
+  checkbox := TLazCheckBox.Create(panel);
+  checkbox.Parent := panel;
+  checkbox.Caption := 'Show webgraph';
+  checkbox.Align := ELazAlign.Left;
+  checkbox.State := ELazCheckBoxState.cbChecked;
+  checkbox.BorderSpacing.Left  := 10;
+  checkbox.BorderSpacing.Right := 10;
+  checkbox.OnChange := @Self.GraphOnChange;
 
   combobox := TLazComboBox.Create(panel);
-  combobox.Parent := Panel;
-  combobox.Align := ELazAlign.Top;
-
+  combobox.Parent := panel;
   combobox.Items.Add('Map');
   combobox.Items.Add('Height');
   combobox.Items.Add('Collision');
   combobox.Style := ELazComboBoxStyle.csDropDownList;
   combobox.ItemIndex := 0;
-  combobox.Align := ELazAlign.Bottom;
+  combobox.Align := ELazAlign.Left;
+  combobox.BorderSpacing.Left  := 10;
+  combobox.BorderSpacing.Right := 10;
   combobox.OnChange := @Self.OnChange;
+
+  lbl := TLazLabel.Create(panel);
+  lbl.Parent := panel;
+  lbl.Caption := 'Map:';
+  lbl.Font.Color := $FFFFFF;
+  lbl.Align := ELazAlign.Left;
+  lbl.BorderSpacing.Around := 5;
+
+  Self.Coordinate := TLazLabel.Create(panel);
+  Self.Coordinate.Parent := panel;
+  Self.Coordinate.Caption := 'Coordinate: 0 X 0 Y';
+  Self.Coordinate.Align := ELazAlign.Right;
+  Self.Coordinate.BorderSpacing.Around := 5;
+  Self.Coordinate.Font.Color := $FFFFFF;
 
   Self.ImageBox := TImageBox.Create(form);
   Self.ImageBox.Parent := form;
   Self.ImageBox.Align := ELazAlign.Client;
   Self.ImageBox.SetImage(Self.Images[0], False);
-  Self.ImageBox.OnImgPaint := @ImgBoxPaint;
-  Self.ImageBox.OnImgMouseMove := @ImgBoxMouseMove;
+  Self.ImageBox.OnImgPaint := @Self.ImgBoxPaint;
+  Self.ImageBox.OnImgMouseMove := @Self.ImgBoxMouseMove;
 
   Form.ShowModal();
 end;
@@ -91,7 +189,7 @@ procedure TMapDebugger.Setup(loader: ^TRSMapLoader);
 var
   map, heightmap, collision: TImage;
   p: TPoint;
-  x, y: Integer;
+  x, y, i: Integer;
 begin
   map := loader^.Map.Copy();
   map.FreeOnTerminate := True;
@@ -115,16 +213,23 @@ begin
   Self.GetGlobal := @loader^.GetGlobal;
   Self.GetLocal  := @loader^.GetLocal;
 
-  Self.Graph.Nodes    := Copy(loader^.Graph.Nodes);
+  Self.Graph.Nodes    := Self.GetLocal(loader^.Graph.Nodes);
   Self.Graph.Paths    := Copy(loader^.Graph.Paths);
   Self.Graph.Names    := Copy(loader^.Graph.Names);
   Self.Graph.Doors    := Copy(loader^.Graph.Doors);
   Self.Graph.Blocking := Copy(loader^.Graph.Blocking);
-  Self.Graph.Doors    := Copy(loader^.Graph.Doors);
 
-  Self.Graph.WalkableSpace    := Copy(loader^.Graph.WalkableSpace);
-  Self.Graph.WalkableClusters := Copy(loader^.Graph.WalkableClusters);
-  Self.Graph.ObjectClusters   := Copy(loader^.Graph.ObjectClusters);
+  Self.Graph.WalkableSpace    := Self.GetLocal(loader^.Graph.WalkableSpace);
+
+  for i := 0 to High(loader^.Graph.WalkableClusters) do
+    Self.Graph.WalkableClusters += Self.GetLocal(loader^.Graph.WalkableClusters[i]);
+  for i := 0 to High(loader^.Graph.ObjectClusters) do
+    Self.Graph.ObjectClusters += Self.GetLocal(loader^.Graph.ObjectClusters[i]);
+
+  for i := 0 to Max(Length(loader^.Graph.WalkableClusters), Length(loader^.Graph.ObjectClusters)) do
+    Self.ColorArray += RandomColor();
+
+  Self.ShowGraph := True;
 
   Self.Show();
 end;
@@ -132,7 +237,7 @@ end;
 var
   MapDebugger: TMapDebugger;
 
+procedure TRSMap.Debug();
 begin
-  Map.Setup(ERSChunk.VARROCK);
-  MapDebugger.Setup(@Map.Loader);
-end.
+  MapDebugger.Setup(@Self.Loader);
+end;

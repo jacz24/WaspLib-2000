@@ -45,6 +45,7 @@
 {$IFNDEF SRLT_WALKER_INCLUDED}              {$I osrs/walker.simba}
 {$IFNDEF SRLT_MAPLOADER_INCLUDED}           {$I osrs/map/maploader.simba}
 {$IFNDEF SRLT_MAP_INCLUDED}                 {$I osrs/map/map.simba}
+{$IFNDEF SRLT_MAPDEBUGGER_INCLUDED}         {$I osrs/map/mapdebugger.simba}
 
 
 
@@ -53,6 +54,7 @@
 {$ELSE}{$ENDIF}
 
 
+{$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}

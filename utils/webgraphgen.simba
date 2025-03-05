@@ -295,5 +295,5 @@ begin
   red := map.FindColor($FF, 0);
   WriteLn GetDebugLn('Generating webgraph for region: ' + name);
 
-  //Result := Self._BuildGraph(map, white, red);
+  Result := Self._BuildGraph(map, white, red);
 end;

@@ -644,3 +644,22 @@ begin
     img.DrawBox(TBox.Create(Self.Nodes[i], 1, 1));
   end;
 end;
+
+procedure TWebGraph.Draw(canvas: TImageBoxCanvas); overload;
+var
+  i,j,color: Integer;
+begin
+  if Self.Nodes = [] then Exit;
+
+  for i := 0 to High(Self.Paths) do
+    for j := 0 to High(Self.Paths[i]) do
+      canvas.DrawLine(Self.Nodes[i], Self.Nodes[Self.Paths[i, j]], $00EAEA);
+
+  for i := 0 to High(Self.Nodes) do
+  begin
+    if Self.Names[i] = '' then
+      canvas.DrawBox(TBox.Create(Self.Nodes[i], 1, 1), $0101CC)
+    else
+      canvas.DrawBox(TBox.Create(Self.Nodes[i], 1, 1), $FF7F00);
+  end;
+end;

@@ -70,6 +70,17 @@ begin
   end;
 end;
 
+
+function RandomColor: TColor;
+var
+  R, G, B: Byte;
+begin
+  R := 128 + Random(128);
+  G := 128 + Random(128);
+  B := 128 + Random(128);
+  Result := (B shl 16) or (G shl 8) or R;
+end;
+
 function TStringArray.AnyContains(const value: String; const caseSensitive: Boolean = True): Boolean;
 var
   i: Integer;
