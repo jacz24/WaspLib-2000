@@ -8,9 +8,29 @@ Methods to interact with the prayer gametab.
   {$I SRLT/osrs.simba}
 {$ENDIF}
 
+(*
+## TRSPrayerSet
+```pascal
+type TRSPrayerSet = set of ERSPrayer;
+```
+A set of prayers represented by the `ERSPrayer` enumeration.
+*)
 type
   TRSPrayerSet = set of ERSPrayer;
 
+(*
+## TRSPrayer
+```pascal
+type TRSPrayer = record
+  Slots: TBoxArray;
+end;
+```
+A record type representing the RuneScape Prayer game tab, which allows interaction with prayer options in the game.
+This type is intended to be used through the variable `Prayer`.
+
+### Fields:
+- `Slots`: An array of `TBox` representing the areas in which the prayers can be found or activated within the Prayer tab.
+*)
 type
   TRSPrayer = record
     Slots: TBoxArray;
@@ -19,9 +39,9 @@ type
 (*
 ## Prayer.SetupAlignment
 ```pascal
-procedure TRSPrayer.SetupAlignment(); overload;
+procedure TRSPrayer.SetupInterface(); overload;
 ```
-Setups up the interface aligment for the current client mode.
+Setups up the interface alignment for the current client mode.
 
 ```{note}
 This is automatically called on the **TRSClient.ClientModeChanged** function.
@@ -33,15 +53,25 @@ begin
 end;
 
 (*
-## Prayer.IsOpen
+## TRSPrayer.IsOpen
 ```pascal
 function TRSPrayer.IsOpen(): Boolean;
 ```
-Returns true if the Prayer tab is open.
+Checks whether the Prayer tab is currently open.
 
-Example:
+### Parameters:
+- None
+
+### Returns:
+- True if the Prayer tab is open.
+- False if the Prayer tab is closed.
+
+### Example Usage:
 ```pascal
-WriteLn Prayer.IsOpen();
+if Prayer.IsOpen() then
+  WriteLn('Prayer tab is open')
+else
+  WriteLn('Prayer tab is closed');
 ```
 *)
 function TRSPrayer.IsOpen(): Boolean;
@@ -54,11 +84,21 @@ end;
 ```pascal
 function TRSPrayer.Open(): Boolean;
 ```
-Attempts to open the Prayer tab and returns true if open.
+Attempts to open the Prayer tab.
 
-Example:
+### Parameters:
+- None
+
+### Returns:
+- True if the Prayer tab is open or successfully opened.
+- False if the Prayer tab remains closed.
+
+### Example Usage:
 ```pascal
-WriteLn Prayer.Open();
+if Prayer.Open() then
+  WriteLn('Prayer tab is open')
+else
+  WriteLn('Failed to open Prayer tab');
 ```
 *)
 function TRSPrayer.Open(): boolean;
@@ -69,11 +109,18 @@ end;
 (*
 ## Prayer.GetInfoBox
 ```pascal
-function TRSPrayer.GetInfoBox(): Boolean;
+function TRSPrayer.GetInfoBox(): TBox;
 ```
-Retuns a TBox of the yellow prayer info box.
+Attempts to locate and return the bounding box of the yellow prayer info box.
 
-Example:
+### Parameters:
+- None
+
+### Returns:
+- A TBox representing the bounds of the yellow prayer info box if found.
+- An empty TBox if the prayer info box is not found or the prayer tab is closed.
+
+### Example Usage:
 ```pascal
 WriteLn Prayer.GetInfoBox();
 ```
@@ -96,9 +143,16 @@ end;
 ```pascal
 function TRSPrayer.InfoIsOpen(): Boolean;
 ```
-Returns true if the info yellow box about a prayer is open.
+Checks if the yellow prayer info box is currently open.
 
-Example:
+### Parameters:
+- None
+
+### Returns:
+- True if the prayer info box is open.
+- False if the prayer info box is closed.
+
+### Example Usage:
 ```pascal
 WriteLn Prayer.InfoIsOpen();
 ```
@@ -109,15 +163,22 @@ begin
 end;
 
 (*
-## Prayer.InfoIsOpen
+## Prayer.CloseInfo
 ```pascal
-function TRSPrayer.InfoIsOpen(): Boolean;
+function TRSPrayer.CloseInfo(): Boolean;
 ```
-Moves the mouse to close the prayer info box if it is open. Retuns true if the info box is close.
+Attempts to close the prayer info box if it is open.
 
-Example:
+### Parameters:
+- None
+
+### Returns:
+- True if the prayer info box is successfully closed or was not open.
+- False if the info box remains open after attempting to close it.
+
+### Example Usage:
 ```pascal
-WriteLn Prayer.InfoIsOpen();
+WriteLn Prayer.CloseInfo();
 ```
 *)
 function TRSPrayer.CloseInfo(): Boolean;
@@ -144,9 +205,23 @@ end;
 (*
 ## Prayer.Find
 ```pascal
-function TRSPrayer.Find(prayer: ERSPrayer; out b: TBox): Boolean;
+function TRSPrayer.Find(prayer: ERSPrayer; out b: TBox; attempts: Int32 = 2): Boolean;
 ```
-Return true or false wether we found a prayer or not and return it's bounds if found.
+Searches for the specified prayer.
+
+### Parameters:
+- `prayer`: The prayer to find, specified as an `ERSPrayer` value.
+- `b`: An output parameter that will contain the bounding box of the found prayer.
+- `attempts`: Number of attempts to find the prayer (default is 2).
+
+### Returns:
+- True if the prayer is found.
+- False if the prayer is not found or the prayer tab is not open.
+
+### Example Usage:
+```pascal
+WriteLn Prayer.Find(ERSPrayer.Smite, b);
+```
 *)
 function TRSPrayer.Find(prayer: ERSPrayer; out b: TBox; attempts: Int32 = 2): Boolean;
 var
@@ -173,13 +248,21 @@ end;
 (*
 ## Prayer.Hover
 ```pascal
-function TRSPrayer.Hover(prayer: ERSPrayer): Boolean;
+function TRSPrayer.Hover(prayer: ERSPrayer; checkUpText: Boolean = False): Boolean;
 ```
-Used to move the mouse to the specified spell.
+Moves the mouse over the specified prayer.
 
-Example:
+### Parameters:
+- `prayer`: The prayer to hover over, specified as an `ERSPrayer` value.
+- `checkUpText`: A boolean flag indicating whether to verify the uptext (default is `False`).
+
+### Returns:
+- True if the mouse was successfully moved over the prayer and the optional uptext check passes.
+- False if the prayer was not found or the mouse could not be moved over the prayer.
+
+### Example Usage:
 ```pascal
-Magic.Hover(ERSSpell.HIGH_LEVEL_ALCHEMY);
+Prayer.Hover(ERSPrayer.PIETY);
 ```
 *)
 function TRSPrayer.Hover(prayer: ERSPrayer; checkUpText: Boolean = False): Boolean;
@@ -197,13 +280,53 @@ begin
       = ToStr(prayer).ToLower.Replace('_', ' ').CapitalizeWords;
 end;
 
-function TRSPrayer.Click(prayer: ERSPrayer; button: EMouseButton = EMouseButton.LEFT): Boolean;
+(*
+## Prayer.Click
+```pascal
+function TRSPrayer.Click(prayer: ERSPrayer; button: EMouseButton = EMouseButton.LEFT; checkUpText: Boolean = False): Boolean;
+```
+Clicks on the specified prayer.
+
+### Parameters:
+- `prayer`: The prayer to click, specified as an `ERSPrayer` value.
+- `button`: The mouse button to use for clicking (default is left button).
+- `checkUpText`: A boolean flag indicating whether to verify the uptext (default is `False`).
+
+### Returns:
+- True if the prayer was successfully clicked.
+- False if the prayer was not found or could not be clicked.
+
+### Example Usage:
+```pascal
+Prayer.Click(ERSPrayer.PIETY);
+```
+*)
+function TRSPrayer.Click(prayer: ERSPrayer; button: EMouseButton = EMouseButton.LEFT; checkUpText: Boolean = False): Boolean;
 begin
-  Result := Self.Hover(prayer);
+  Result := Self.Hover(prayer, checkUpText);
   if Result then
     Target.MouseClick(button);
 end;
 
+(*
+## Prayer.CanActivate
+```pascal
+function TRSPrayer.CanActivate(prayer: ERSPrayer): Boolean;
+```
+Checks if the specified prayer can be activated.
+
+### Parameters:
+- `prayer`: The prayer to check for activation, specified as an `ERSPrayer` value.
+
+### Returns:
+- True if the prayer can be activated.
+- False if the prayer cannot be activated.
+
+### Example Usage:
+```pascal
+Prayer.CanActivate(ERSPrayer.PIETY);
+```
+*)
 function TRSPrayer.CanActivate(prayer: ERSPrayer): Boolean;
 var
   b: TBox;
@@ -211,6 +334,28 @@ begin
   Result := Self.Find(prayer, b);
 end;
 
+(*
+## Prayer.IsActive
+```pascal
+function TRSPrayer.IsActive(prayers: TRSPrayerSet): Boolean; overload;
+```
+Checks if all specified prayers are currently active.
+
+### Parameters:
+- `prayers`: A set of prayers to check for activation.
+
+### Returns:
+- True if all specified prayers are active.
+- False if any of the specified prayers are not active.
+
+### Example Usage:
+```pascal
+if Prayer.IsActive([ERSPrayer.PIETY, ERSPrayer.PROTECT_FROM_MELEE]) then
+  WriteLn('Both prayers are active')
+else
+  WriteLn('One or more prayers are not active');
+```
+*)
 function TRSPrayer.IsActive(prayers: TRSPrayerSet): Boolean; overload;
 var
   prayer: ERSPrayer;
@@ -223,6 +368,24 @@ begin
   Result := True;
 end;
 
+(*
+## Prayer.GetActivePrayers
+```pascal
+function TRSPrayer.GetActivePrayers(): TRSPrayerSet;
+```
+Returns a set of all currently active prayers.
+
+### Parameters:
+- None
+
+### Returns:
+- A `TRSPrayerSet` containing all active prayers.
+
+### Example Usage:
+```pascal
+WriteLn(Prayer.GetActivePrayers());
+```
+*)
 function TRSPrayer.GetActivePrayers(): TRSPrayerSet;
 var
   prayer: ERSPrayer;
@@ -232,9 +395,32 @@ begin
       Result += prayer;
 end;
 
+(*
+## Prayer.Activate
+```pascal
+function TRSPrayer.Activate(prayers: TRSPrayerSet): Boolean;
+```
+Attempts to activate the specified prayers.
+
+### Parameters:
+- `prayers`: A set of prayers to activate.
+
+### Returns:
+- True if all specified prayers were successfully activated.
+- False if any prayer could not be activated.
+
+### Example Usage:
+```pascal
+if Prayer.Activate([ERSPrayer.PIETY, ERSPrayer.PROTECT_FROM_MELEE]) then
+  WriteLn('Prayers activated successfully')
+else
+  WriteLn('Failed to activate prayers');
+```
+*)
 function TRSPrayer.Activate(prayers: TRSPrayerSet): Boolean;
 var
   prayer: ERSPrayer;
+  activatedPrayers: TRSPrayerSet;
 begin
   Result := True;
   if not Self.IsOpen then
@@ -244,12 +430,38 @@ begin
   begin
     if Self.IsActive([prayer]) then
       Continue;
-    Result := Result and Self.Click(prayer);
+
+    if Self.CanActivate(prayer) and Self.Click(prayer) then
+      activatedPrayers += prayer
+    else
+      Result := False;
   end;
 
-  Result := Result and SleepUntil(Self.IsActive(prayers), 100, 2000);
+  Result := Result and SleepUntil(Self.IsActive(activatedPrayers), 100, 2000);
 end;
 
+(*
+## Prayer.Deactivate
+```pascal
+function TRSPrayer.Deactivate(prayers: TRSPrayerSet): Boolean;
+```
+Attempts to deactivate the specified prayers.
+
+### Parameters:
+- `prayers`: A set of prayers to deactivate.
+
+### Returns:
+- True if all specified prayers were successfully deactivated.
+- False if any prayer could not be deactivated.
+
+### Example Usage:
+```pascal
+if Prayer.Deactivate([ERSPrayer.PIETY, ERSPrayer.PROTECT_FROM_MELEE]) then
+  WriteLn('Prayers deactivated successfully')
+else
+  WriteLn('Failed to deactivate prayers');
+```
+*)
 function TRSPrayer.Deactivate(prayers: TRSPrayerSet): Boolean;
 var
   prayer: ERSPrayer;
@@ -273,5 +485,3 @@ end;
 var
   Prayer: TRSPrayer;
 {$H+}
-
-
