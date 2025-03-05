@@ -203,11 +203,14 @@ var
   pt, loaderOffset: TPoint;
   width, height: Integer;
 begin
-    sample := Minimap.ScaleMinimap(img, Self.Loader.Downscale, Self.Sample.Radius);
-    matrix := MatchTemplateMask(Self.Cache, sample.ToMatrix(), ETMFormula.TM_CCOEFF_NORMED);
-    w := sample.Width div 2;
-    h := sample.Height div 2;
-    sample.Free();
+    try
+      sample := Minimap.ScaleMinimap(img, Self.Loader.Downscale, Self.Sample.Radius);
+      matrix := MatchTemplateMask(Self.Cache, sample.ToMatrix(), ETMFormula.TM_CCOEFF_NORMED);
+      w := sample.Width div 2;
+      h := sample.Height div 2;
+    finally
+      sample.Free();
+    end;
 
     loaderOffset.X := Self.Loader.Downscale div 2;
     loaderOffset.Y := loaderOffset.X;
@@ -261,24 +264,23 @@ begin
     Min(map.Height - 1, position.Y + SLICE_SIZE)
   ];
 
-  slice := map.Copy(area);
-  downscaledSlice := slice.Downsample(SCALING);
+  with TImagePool.Create() do
+  try
+    slice := map.Copy(area);
+    downscaledSlice := slice.Downsample(SCALING);
+    downscaledTemplate := template.Downsample(SCALING);
+    downscaledTemplate.Crop(TBox.Create(downscaledTemplate.Center, TEMPL_SIZE, TEMPL_SIZE));
 
-  downscaledTemplate := template.Downsample(SCALING);
-  downscaledTemplate.Crop(TBox.Create(downscaledTemplate.Center, TEMPL_SIZE, TEMPL_SIZE));
-
-
-  matrix := MatchTemplate(downscaledSlice, downscaledTemplate, ETMFormula.TM_CCOEFF_NORMED);
-  with matrix.ArgMax() do
-  begin
-    match := matrix[Y, X];
-    Result.X := area.X1 + (X + TEMPL_SIZE) * SCALING;
-    Result.Y := area.Y1 + (Y + TEMPL_SIZE) * SCALING;
+    matrix := MatchTemplate(downscaledSlice, downscaledTemplate, ETMFormula.TM_CCOEFF_NORMED);
+    with matrix.ArgMax() do
+    begin
+      match := matrix[Y, X];
+      Result.X := area.X1 + (X + TEMPL_SIZE) * SCALING;
+      Result.Y := area.Y1 + (Y + TEMPL_SIZE) * SCALING;
+    end;
+  finally
+    Free();
   end;
-
-  downscaledTemplate.Free();
-  downscaledSlice.Free();
-  slice.Free();
 end;
 
 (*
@@ -308,20 +310,23 @@ begin
   Self.Region := [];
   Self.Similarity := 0;
 
-  clean := Minimap.GetCleanImage();
-  tpa := Self.ScaledSearch(clean);
+  try
+    clean := Minimap.GetCleanImage();
+    tpa := Self.ScaledSearch(clean);
 
-  for i := 0 to High(tpa) do
-  begin
-    hit := Self.FullSearch(clean, Self.Loader.Map, tpa[i], match);
-
-    if match > Self.Similarity then
+    for i := 0 to High(tpa) do
     begin
-      Self.Similarity := match;
-      Result := hit;
+      hit := Self.FullSearch(clean, Self.Loader.Map, tpa[i], match);
+
+      if match > Self.Similarity then
+      begin
+        Self.Similarity := match;
+        Result := hit;
+      end;
     end;
+  finally
+    clean.Free();
   end;
-  clean.Free();
 
 
   Self.RegionIndex := Self.Loader.LocalIndex(Result);
@@ -369,9 +374,9 @@ WriteLn rsw.GetHeight();
 function TRSMap.HeightEx(p: TPoint = [0,0]; global: Boolean): Single; overload;
 begin
   if Self.DisableHeightmap or not Assigned(Self.Loader.Heightmap) then
-    Exit;
+    Exit(0);
 
-  if p = [-1,-1] then
+  if p = [0, 0] then
   begin
     global := True;
     p := Self.Position();
@@ -477,41 +482,43 @@ begin
     'Time: '         + ToStr(Round(time)) + ' ms'
   ];
 
-  map := Self.Loader.Map.Copy([x1, y1, x2, y2]);
-  map.DrawColor := $00FF00;
-  map.DrawLine(Point(0, y), Point(x2 - x1, y));
-  map.DrawLine(Point(x, 0), Point(x, y2 - y1));
-  map.DrawColor := $FFFFFF;
-  map.DrawBox([x - 2, y - 2, x + 2, y + 2]);
+  with TImagePool.Create() do
+  try
+    map := Self.Loader.Map.Copy([x1, y1, x2, y2]);
+    map.DrawColor := $00FF00;
+    map.DrawLine(Point(0, y), Point(x2 - x1, y));
+    map.DrawLine(Point(x, 0), Point(x, y2 - y1));
+    map.DrawColor := $FFFFFF;
+    map.DrawBox([x - 2, y - 2, x + 2, y + 2]);
 
-  img := TImage.Create(700 + cleanMinimap.Width, 440);
-  img.DrawImage(map, [10, 20]);
-  map.Free();
+    cleanMinimap := Minimap.ScaleMinimap(Minimap.GetCleanImage(), 1);
+    img := TImage.Create(700 + cleanMinimap.Width, 440);
+    img.DrawImage(map, [10, 20]);
 
-  cleanMinimap := Minimap.ScaleMinimap(Minimap.GetCleanImage(), 1);
+    with cleanMinimap.Center do
+      if RSClient.Mode = ERSClientMode.FIXED then
+        p := Point(X, Y).Offset(0, 8).Rotate(-Minimap.GetCompassAngle(False), [X,Y]);
 
-  with cleanMinimap.Center do
-    if RSClient.Mode = ERSClientMode.FIXED then
-      p := Point(X, Y).Offset(0, 8).Rotate(-Minimap.GetCompassAngle(False), [X,Y]);
+    cleanMinimap.DrawColor := $FFFFFF;
+    cleanMinimap.DrawBoxFilled([p.X - 1, p.Y - 1, p.X + 1, p.Y + 1]);
 
-  cleanMinimap.DrawBoxFilled([p.X - 1, p.Y - 1, p.X + 1, p.Y + 1]);
+    img.FontName := 'Consolas';
+    img.FontSize := 18;
+    img.FontAntialiasing := True;
 
-  img.FontName := 'Consolas';
-  img.FontSize := 18;
-  img.FontAntialiasing := True;
+    img.DrawColor := $FFFFFF;
+    for i := 0 to High(lines) do
+    begin
+      if print then WriteLn(lines[i]);
+      img.DrawText(lines[i], [430, cleanMinimap.Height + 20 + 20 * i]);
+    end;
 
-  img.DrawColor := $FFFFFF;
-  for i := 0 to High(lines) do
-  begin
-    if print then WriteLn(lines[i]);
-    img.DrawText(lines[i], [430, cleanMinimap.Height + 20 + 20 * i]);
+    img.DrawImage(cleanMinimap, [520, 10]);
+
+    img.Show();
+  finally
+    Free();
   end;
-
-  img.DrawImage(cleanMinimap, [520, 10]);
-  cleanMinimap.Free();
-
-  img.Show();
-  img.Free();
 
   Target.UnFreezeImage();
 end;
