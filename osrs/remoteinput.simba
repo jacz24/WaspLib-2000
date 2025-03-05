@@ -13,14 +13,23 @@ type
 
 procedure TRemoteInput.Setup();
 const
-  TIMEOUT: UInt64 := GetTickCount() + 3000;
+  TIMEOUT: UInt64 := GetTickCount() + 2000;
 begin
+  if Target.TargetWindow.GetClassName() <> 'SunAwtCanvas' then Exit;
+
   RIInject(GetSimbaTargetPID());
 
   repeat
     Self.EIOS := EIOS_PairClient(GetSimbaTargetPID());
     if Self.EIOS <> nil then Break;
+    Sleep(100);
   until GetTickCount() > TIMEOUT;
+
+  if Self.EIOS = nil then
+  begin
+    WriteLn GetDebugLn('RemoteInput', 'Invalid target for RemoteInput, RemoteInput will not be used.', EErrorLevel.WARN);
+    Exit;
+  end;
 
   //Target.SetEIOS({$MACRO LOADEDLIB(libremoteinput)}, ToString(GetSimbaTargetPID()));
   Target.SetPlugin({$MACRO LOADEDLIB(libremoteinput)}, ToStr(GetSimbaTargetPID()), Self.Canvas);

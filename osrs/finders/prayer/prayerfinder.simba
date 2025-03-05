@@ -11,17 +11,21 @@ Methods to find and compare spell images
 (*
 ## ERSPrayer
 ```pascal
-type ERSPrayer = enum(
+ERSPrayer = enum(
   UNKNOWN,
-  THICK_SKIN, BURST_OF_STRENGTH, CLARITY_OF_THOUGHT,
-  ...
-)
+  THICK_SKIN,           BURST_OF_STRENGTH,  CLARITY_OF_THOUGHT,
+  SHARP_EYE,            MYSTIC_WILL,        ROCK_SKIN,
+  SUPERHUMAN_STRENGTH,  IMPROVED_REFLEXES,  RAPID_RESTORE,
+  RAPID_HEAL,           PROTECT_ITEM,       HAWK_EYE,
+  MYSTIC_LORE,          STEEL_SKIN,         ULTIMATE_STRENGTH,
+  INCREDIBLE_REFLEXES,  PROTECT_FROM_MAGIC, PROTECT_FROM_MISSILES,
+  PROTECT_FROM_MELEE,   EAGLE_EYE,          MYSTIC_MIGHT,
+  RETRIBUTION,          REDEMPTION,         SMITE,
+  PRESERVE,             CHIVALRY,           PIETY,
+  RIGOUR,               AUGURY
+);
 ```
 An enumeration representing different prayers in RuneScape.
-
-### Values:
-- Includes various prayers such as THICK_SKIN, PROTECT_FROM_MAGIC, PIETY, etc.
-- UNKNOWN is the default value
 *)
 type
   ERSPrayer = enum(
@@ -99,10 +103,7 @@ procedure TRSPrayerFinder.Setup();
 ```
 Sets up the PrayerFinder, including cache management and similarity settings.
 
-### Parameters:
-- None
-
-### Example Usage:
+### Example:
 ```pascal
 PrayerFinder.Setup();
 ```
@@ -148,11 +149,12 @@ Retrieves the image for a specific prayer, loading it from cache or extracting f
 
 ### Returns:
 - The TImage for the specified prayer
-- Nil if the prayer is UNKNOWN
 
-### Example Usage:
+### Example:
 ```pascal
-var img: TImage := PrayerFinder.GetImage(ERSPrayer.PIETY);
+img := PrayerFinder.GetImage(ERSPrayer.PIETY);
+img.Show();
+img.Free();
 ```
 *)
 function TRSPrayerFinder.GetImage(prayer: ERSPrayer): TImage;
@@ -178,23 +180,18 @@ begin
 end;
 
 (*
-## PrayerFinder.FindAll (First Overload)
+## PrayerFinder.FindAll
 ```pascal
 function TRSPrayerFinder.FindAll(prayers: array of ERSPrayer; boxes: TBoxArray; maxToFind: Integer = 0): TImageMatchArray;
+function TRSPrayerFinder.FindAll(prayers: array of ERSPrayer; boxes: TBoxArray; out matches: TImageMatchArray): Boolean; overload;
 ```
 Finds matches for specified prayers within given boxes.
 
-### Parameters:
-- `prayers`: Array of prayers to search for
-- `boxes`: Boxes to search within
-- `maxToFind`: Maximum number of matches to find (0 means find all)
-
-### Returns:
-- Array of image matches found
-
-### Example Usage:
+### Example:
 ```pascal
-var matches := PrayerFinder.FindAll([ERSPrayer.PIETY], boxes);
+if PrayerFinder.FindAll(prayers, boxes, matches) then
+  for match in matches do
+    ShowOnClient(matches.Box);
 ```
 *)
 function TRSPrayerFinder.FindAll(prayers: array of ERSPrayer; boxes: TBoxArray; maxToFind: Integer = 0): TImageMatchArray;
@@ -230,29 +227,6 @@ begin
   end;
 end;
 
-(*
-## PrayerFinder.FindAll (Second Overload)
-```pascal
-function TRSPrayerFinder.FindAll(prayers: array of ERSPrayer; boxes: TBoxArray; out matches: TImageMatchArray): Boolean; overload;
-```
-Finds matches for specified prayers within given boxes, with an output parameter.
-
-### Parameters:
-- `prayers`: Array of prayers to search for
-- `boxes`: Boxes to search within
-- `matches`: Output parameter to store found matches
-
-### Returns:
-- True if matches are found
-- False if no matches are found
-
-### Example Usage:
-```pascal
-var matches: TImageMatchArray;
-if PrayerFinder.FindAll(prayers, boxes, matches) then
-  WriteLn('Matches found');
-```
-*)
 function TRSPrayerFinder.FindAll(prayers: array of ERSPrayer; boxes: TBoxArray; out matches: TImageMatchArray): Boolean; overload;
 var
   prayer: ERSPrayer;
@@ -310,11 +284,10 @@ Finds the first match for specified prayers within given boxes.
 - True if a match is found
 - False if no match is found
 
-### Example Usage:
+### Example:
 ```pascal
-var match: TImageMatch;
 if PrayerFinder.Find([ERSPrayer.PIETY], boxes, match) then
-  WriteLn('Match found');
+  ShowOnClient(match.Box);
 ```
 *)
 function TRSPrayerFinder.Find(prayers: array of ERSPrayer; boxes: TBoxArray; out match: TImageMatch): Boolean;

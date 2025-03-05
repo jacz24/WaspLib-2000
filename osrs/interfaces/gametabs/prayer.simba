@@ -9,7 +9,8 @@ Methods to interact with the prayer gametab.
 {$ENDIF}
 
 (*
-## TRSPrayerSet
+(TRSPrayerSet)=
+## type TRSPrayerSet
 ```pascal
 type TRSPrayerSet = set of ERSPrayer;
 ```
@@ -19,19 +20,11 @@ type
   TRSPrayerSet = set of ERSPrayer;
 
 (*
-## TRSPrayer
-```pascal
-type TRSPrayer = record
-  Slots: TBoxArray;
-end;
-```
+(TRSPrayer)=
+## type TRSPrayer
 A record type representing the RuneScape Prayer game tab, which allows interaction with prayer options in the game.
 This type is intended to be used through the variable `Prayer`.
-
-### Fields:
-- `Slots`: An array of `TBox` representing the areas in which the prayers can be found or activated within the Prayer tab.
 *)
-type
   TRSPrayer = record
     Slots: TBoxArray;
   end;
@@ -66,7 +59,7 @@ Checks whether the Prayer tab is currently open.
 - True if the Prayer tab is open.
 - False if the Prayer tab is closed.
 
-### Example Usage:
+### Example:
 ```pascal
 if Prayer.IsOpen() then
   WriteLn('Prayer tab is open')
@@ -93,7 +86,7 @@ Attempts to open the Prayer tab.
 - True if the Prayer tab is open or successfully opened.
 - False if the Prayer tab remains closed.
 
-### Example Usage:
+### Example:
 ```pascal
 if Prayer.Open() then
   WriteLn('Prayer tab is open')
@@ -120,7 +113,7 @@ Attempts to locate and return the bounding box of the yellow prayer info box.
 - A TBox representing the bounds of the yellow prayer info box if found.
 - An empty TBox if the prayer info box is not found or the prayer tab is closed.
 
-### Example Usage:
+### Example:
 ```pascal
 WriteLn Prayer.GetInfoBox();
 ```
@@ -152,7 +145,7 @@ Checks if the yellow prayer info box is currently open.
 - True if the prayer info box is open.
 - False if the prayer info box is closed.
 
-### Example Usage:
+### Example:
 ```pascal
 WriteLn Prayer.InfoIsOpen();
 ```
@@ -176,7 +169,7 @@ Attempts to close the prayer info box if it is open.
 - True if the prayer info box is successfully closed or was not open.
 - False if the info box remains open after attempting to close it.
 
-### Example Usage:
+### Example:
 ```pascal
 WriteLn Prayer.CloseInfo();
 ```
@@ -218,7 +211,7 @@ Searches for the specified prayer.
 - True if the prayer is found.
 - False if the prayer is not found or the prayer tab is not open.
 
-### Example Usage:
+### Example:
 ```pascal
 WriteLn Prayer.Find(ERSPrayer.Smite, b);
 ```
@@ -260,7 +253,7 @@ Moves the mouse over the specified prayer.
 - True if the mouse was successfully moved over the prayer and the optional uptext check passes.
 - False if the prayer was not found or the mouse could not be moved over the prayer.
 
-### Example Usage:
+### Example:
 ```pascal
 Prayer.Hover(ERSPrayer.PIETY);
 ```
@@ -296,7 +289,7 @@ Clicks on the specified prayer.
 - True if the prayer was successfully clicked.
 - False if the prayer was not found or could not be clicked.
 
-### Example Usage:
+### Example:
 ```pascal
 Prayer.Click(ERSPrayer.PIETY);
 ```
@@ -322,7 +315,7 @@ Checks if the specified prayer can be activated.
 - True if the prayer can be activated.
 - False if the prayer cannot be activated.
 
-### Example Usage:
+### Example:
 ```pascal
 Prayer.CanActivate(ERSPrayer.PIETY);
 ```
@@ -348,7 +341,7 @@ Checks if all specified prayers are currently active.
 - True if all specified prayers are active.
 - False if any of the specified prayers are not active.
 
-### Example Usage:
+### Example:
 ```pascal
 if Prayer.IsActive([ERSPrayer.PIETY, ERSPrayer.PROTECT_FROM_MELEE]) then
   WriteLn('Both prayers are active')
@@ -381,7 +374,7 @@ Returns a set of all currently active prayers.
 ### Returns:
 - A `TRSPrayerSet` containing all active prayers.
 
-### Example Usage:
+### Example:
 ```pascal
 WriteLn(Prayer.GetActivePrayers());
 ```
@@ -409,7 +402,7 @@ Attempts to activate the specified prayers.
 - True if all specified prayers were successfully activated.
 - False if any prayer could not be activated.
 
-### Example Usage:
+### Example:
 ```pascal
 if Prayer.Activate([ERSPrayer.PIETY, ERSPrayer.PROTECT_FROM_MELEE]) then
   WriteLn('Prayers activated successfully')
@@ -454,7 +447,7 @@ Attempts to deactivate the specified prayers.
 - True if all specified prayers were successfully deactivated.
 - False if any prayer could not be deactivated.
 
-### Example Usage:
+### Example:
 ```pascal
 if Prayer.Deactivate([ERSPrayer.PIETY, ERSPrayer.PROTECT_FROM_MELEE]) then
   WriteLn('Prayers deactivated successfully')

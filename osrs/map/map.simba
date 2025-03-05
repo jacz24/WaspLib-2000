@@ -556,6 +556,7 @@ begin
   img.Free();
 end;
 
-
+{$H-}
 var
   Map: TRSMap;
+{$H+}

@@ -1,0 +1,138 @@
+(*
+# Map Debugger
+Tool to help debug TRSMap
+*)
+
+{$DEFINE SRLT_MAPDEBUGGER_INCLUDED}
+{$IFNDEF SRLT_OSRS}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  TMapDebugger = record
+    ImageBox: TImageBox;
+    Images: TImageArray;
+
+    Graph: TWebGraph;
+
+    GetLocal: function (tpa: TPointArray; offset: TPoint = [0,0]): TPointArray of object;
+    GetGlobal: function (p: TPoint; offset: TPoint = [0,0]): TPoint of object;
+  end;
+
+procedure TMapDebugger.OnChange(sender: TObject);
+begin
+  Self.ImageBox.SetImage(Self.Images[TLazComboBox(sender).ItemIndex], False);
+end;
+
+procedure ImgBoxPaint(Sender: TImageBox; Canvas: TImageBoxCanvas; R: TLazRect);
+begin
+  //Canvas.DrawCircleFilled(Sender.MousePoint, 5, Colors.YELLOW);
+
+  // if 300,300 is visible in the paint rect
+  //if (300 >= R.Left) and (300 >= R.Top) and (300 <= R.Right) and (300 <= R.Bottom) then
+  //  Canvas.DrawBoxFilled([300,300,350,350], Colors.LIME);
+end;
+
+procedure ImgBoxMouseMove(Sender: TImageBox; Shift: ELazShiftStates; X, Y: Integer);
+begin
+  Sender.Repaint();
+end;
+
+procedure TMapDebugger.Show();
+var
+  form: TLazForm;
+  panel: TLazPanel;
+  lbl: TLazLabel;
+  combobox: TLazComboBox;
+begin
+  form := TLazForm.Create();
+  form.Caption := 'Example form';
+  form.Width := 700;
+  form.Height := 700;
+  form.Position := ELazFormPosition.ScreenCenter;
+  form.Color := $242322;
+  form.BorderStyle := ELazFormBorderStyle.Sizeable;
+
+  panel := TLazPanel.Create(form);
+  panel.Parent := form;
+  panel.SetBounds(0, 0, form.Width, 40);
+  panel.BevelOuter := ELazPanelBevel.None;
+  panel.Align := ELazAlign.Top;
+
+  lbl := TLazLabel.Create(panel);
+  lbl.Parent := panel;
+  lbl.Caption := 'Map:';
+  lbl.Color := $FFFFFF;
+  lbl.Align := ELazAlign.Top;
+
+  combobox := TLazComboBox.Create(panel);
+  combobox.Parent := Panel;
+  combobox.Align := ELazAlign.Top;
+
+  combobox.Items.Add('Map');
+  combobox.Items.Add('Height');
+  combobox.Items.Add('Collision');
+  combobox.Style := ELazComboBoxStyle.csDropDownList;
+  combobox.ItemIndex := 0;
+  combobox.Align := ELazAlign.Bottom;
+  combobox.OnChange := @Self.OnChange;
+
+  Self.ImageBox := TImageBox.Create(form);
+  Self.ImageBox.Parent := form;
+  Self.ImageBox.Align := ELazAlign.Client;
+  Self.ImageBox.SetImage(Self.Images[0], False);
+  Self.ImageBox.OnImgPaint := @ImgBoxPaint;
+  Self.ImageBox.OnImgMouseMove := @ImgBoxMouseMove;
+
+  Form.ShowModal();
+end;
+
+procedure TMapDebugger.Setup(loader: ^TRSMapLoader);
+var
+  map, heightmap, collision: TImage;
+  p: TPoint;
+  x, y: Integer;
+begin
+  map := loader^.Map.Copy();
+  map.FreeOnTerminate := True;
+
+  heightmap := loader^.Heightmap.Copy();
+  heightmap.FreeOnTerminate := True;
+
+  collision := loader^.Collision.Copy();
+  collision.FreeOnTerminate := True;
+
+  for p in collision.FindColor($FFFFFF, 0) do
+  begin
+    x := (p.X div 4) mod 2;
+    y := (p.Y div 4) mod 2;
+    if x = y then Continue;
+    collision.Pixel[p.X, p.Y] := $F5F5F5;
+  end;
+
+  Self.Images := [map, heightmap, collision];
+
+  Self.GetGlobal := @loader^.GetGlobal;
+  Self.GetLocal  := @loader^.GetLocal;
+
+  Self.Graph.Nodes    := Copy(loader^.Graph.Nodes);
+  Self.Graph.Paths    := Copy(loader^.Graph.Paths);
+  Self.Graph.Names    := Copy(loader^.Graph.Names);
+  Self.Graph.Doors    := Copy(loader^.Graph.Doors);
+  Self.Graph.Blocking := Copy(loader^.Graph.Blocking);
+  Self.Graph.Doors    := Copy(loader^.Graph.Doors);
+
+  Self.Graph.WalkableSpace    := Copy(loader^.Graph.WalkableSpace);
+  Self.Graph.WalkableClusters := Copy(loader^.Graph.WalkableClusters);
+  Self.Graph.ObjectClusters   := Copy(loader^.Graph.ObjectClusters);
+
+  Self.Show();
+end;
+
+var
+  MapDebugger: TMapDebugger;
+
+begin
+  Map.Setup(ERSChunk.VARROCK);
+  MapDebugger.Setup(@Map.Loader);
+end.
