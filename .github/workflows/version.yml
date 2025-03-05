@@ -1,9 +1,9 @@
-name: Bump Version and Create Release
+name: CalVer
 
 on:
   push:
     branches:
-      - main  # Replace with your default branch name if it's not 'main'
+      - main
 
 jobs:
   bump-version:
