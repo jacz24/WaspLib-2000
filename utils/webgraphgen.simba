@@ -299,14 +299,14 @@ var
   white, red, gray, merged, graySubset: TPointArray;
   whiteClusters, grayClusters, mergedClusters: T2DPointArray;
   i, j: Integer;
-  t: Double;
+  t: UInt64;
 begin
   white := map.FindColor($FFFFFF, 0);
   red := map.FindColor($0000FF, 0);
 
   WriteLn GetDebugLn('Generating webgraph for region: ' + name);
 
-  t := PerformanceTimer();
+  t := GetTickCount();
   Result := Self._BuildGraph(map, white, red);
 
   gray := map.FindColor($333333, 0);
@@ -333,5 +333,5 @@ begin
   Result.WalkableSpace    := white + gray;
   Result.ObjectClusters   := grayClusters;
 
-  WriteLn GetDebugLn('WebGraph', 'Generating webgraph took ' + ToStr(Round((PerformanceTimer()-t/1000), 3)) + 'ms.', EErrorLevel.SUCCESS);
+  WriteLn GetDebugLn('WebGraph', 'Generating webgraph took ' + ToStr(Round((GetTickCount()-t/1000), 3)) + 'seconds.', EErrorLevel.SUCCESS);
 end;

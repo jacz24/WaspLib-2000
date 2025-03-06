@@ -603,7 +603,6 @@ begin
 end;
 
 
-
 procedure TWebGraph.Merge(graph: TWebGraph);
 var
   i, j, len: Integer;
@@ -663,3 +662,28 @@ begin
       canvas.DrawBox(TBox.Create(Self.Nodes[i], 1, 1), $FF7F00);
   end;
 end;
+
+
+
+function TRSDoorArray.ToBytes(): TByteArray;
+var
+  len: Integer;
+begin
+  len := Length(Self) * SizeOf(TRSDoor);
+  if len = 0 then Exit;
+  SetLength(Result, len);
+  Move(Self[0], Result[0], len);
+end;
+
+function TRSDoorArray.CreateFromBytes(bytes: TByteArray): TRSDoorArray; static;
+var
+  len: Integer;
+begin
+  len := Length(bytes);
+  if len = 0 then Exit;
+  len := Length(bytes);
+  SetLength(Result, len div SizeOf(TRSDoor));
+  Move(bytes[0], Result[0], len);
+end;
+
+

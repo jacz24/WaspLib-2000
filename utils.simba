@@ -2,6 +2,7 @@
 
 {$IFNDEF SRLT_SRLTENV_INCLUDED}      {$I utils/srltenv.simba}
 {$IFNDEF SRLT_RANDOM_INCLUDED}       {$I utils/math/random.simba}
+{$IFNDEF SRLT_CONVERSIONS_INCLUDED}  {$I utils/math/conversions.simba}
 {$IFNDEF SRLT_VECTOR_INCLUDED}       {$I utils/math/vector.simba}
 {$IFNDEF SRLT_GEOMETRY_INCLUDED}     {$I utils/math/geometry.simba}
 {$IFNDEF SRLT_TIME_INCLUDED}         {$I utils/time.simba}
@@ -18,6 +19,7 @@
 {$IFNDEF SRLT_RSCHUNKS_INCLUDED}     {$I utils/rschunks.simba}
 
 
+{$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}
 {$ELSE}{$ENDIF}

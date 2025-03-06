@@ -391,57 +391,63 @@ This is an internal method. Don't use it if you don't know what you are doing.
 *)
 function TRSMapLoader.GetGraph(name: String; plane: Integer; map: TImage): TWebGraph;
 var
-  path, filename: String;
-  t: UInt64;
+  path: String;
 begin
-  path := Self.CacheDir + 'graphs' + PATH_SEP + ToStr(plane) + PATH_SEP;
-  filename := name + '-' + GENERATED_GRAPH.Hash();
+  path := Self.CacheDir + 'graphs' + PATH_SEP + ToStr(plane) + PATH_SEP + name + '-' + GENERATED_GRAPH.Hash() + PATH_SEP;
 
-  if not FileExists(filename + '.txt') then
+  if
+    not FileExists(path + 'nodes.txt') or
+    not FileExists(path + 'paths.txt') or
+    not FileExists(path + 'names.txt') or
+    not FileExists(path + 'doors.txt') or
+    not FileExists(path + 'walkablespace.txt') or
+    not FileExists(path + 'walkableclusters.txt') or
+    not FileExists(path + 'objectclusters.txt') then
   begin
-    WriteLn GetDebugLn('MapLoader', 'Caching ' + name + ' webgraph, this will take a minute.', EErrorLevel.WARN);
-
-    if not DirCreate(path + ToStr(plane) + PATH_SEP) then
+    if not DirCreate(path) then
       raise GetDebugLn('MapLoader', 'Failed to create cache directory: ' + path);
 
-    t := GetTickCount();
     Result := TWebGraph.BuildGraph(name, map);
-    WriteLn GetDebugLn('MapLoader', 'Took ' + ToStr((GetTickCount()-t) div 1000) + ' seconds to generate webgraph.', EErrorLevel.SUCCESS);
 
-    (* TODO
-    try
-      json.Init();
+    if (Result.Nodes <> []) and not FileWriteBytes(path + 'nodes.txt', Result.Nodes.ToBytes()) then
+      raise GetDebugLn('MapLoader', 'Failed to create cache for graph nodes: ' + path);
+    if (Result.Paths <> []) and not FileWriteBytes(path + 'paths.txt', Result.Paths.ToBytes()) then
+      raise GetDebugLn('MapLoader', 'Failed to create cache for graph paths: ' + path);
+    if (Result.Names <> []) and not FileWriteBytes(path + 'names.txt', Result.Names.ToBytes()) then
+      raise GetDebugLn('MapLoader', 'Failed to create cache for graph names: ' + path);
 
-      json.Put('nodes', Result.NodesToString());
-      json.Put('paths', Result.PathsToString());
-      json.Put('names', Result.NamesToString());
-      json.Put('doors', Result.DoorsToString());
+    if (Result.Doors <> []) and not FileWriteBytes(path + 'doors.txt', Result.Doors.ToBytes()) then
+      raise GetDebugLn('MapLoader', 'Failed to create cache for graph doors: ' + path);
 
-      if not WriteFileContents(cachename + '.json', json.ToString(2), False) then
-        Self.Fatal('Failed to save ' + name + ' webgraph.');
-    except
-      Self.Fatal('Something went wrong saving ' + name + ' webraph: ' + GetExceptionMessage());
-    finally
-      json.Free();
-    end;
-    *)
+    if (Result.WalkableSpace <> []) and not FileWriteBytes(path + 'walkablespace.txt', Result.WalkableSpace.ToBytes()) then
+      raise GetDebugLn('MapLoader', 'Failed to create cache for graph WalkableSpace: ' + path);
+    if (Result.WalkableClusters <> []) and not FileWriteBytes(path + 'walkableclusters.txt', Result.WalkableClusters.ToBytes()) then
+      raise GetDebugLn('MapLoader', 'Failed to create cache for graph WalkableClusters: ' + path);
+    if (Result.ObjectClusters <> []) and not FileWriteBytes(path + 'objectclusters.txt', Result.ObjectClusters.ToBytes()) then
+      raise GetDebugLn('MapLoader', 'Failed to create cache for graph ObjectClusters: ' + path);
+
     Exit;
   end;
 
-  (* TODO
-  try
-    json.Init(ReadFileContents(cachename + '.json'));
+  if FileExists(path + 'nodes.txt') then
+    Result.Nodes := TPointArray.CreateFromBytes(FileReadBytes(path + 'nodes.txt'));
+  if FileExists(path + 'paths.txt') then
+    Result.Paths := T2DIntegerArray.CreateFromBytes(FileReadBytes(path + 'paths.txt'));
+  if FileExists(path + 'names.txt') then
+    Result.Names := TStringArray.CreateFromBytes(FileReadBytes(path + 'names.txt'));
 
-    Result.LoadNodesFromString(json.getString('nodes'));
-    Result.LoadPathsFromString(json.getString('paths'));
-    Result.LoadNamesFromString(json.getString('names'));
-    Result.LoadDoorsFromString(json.getString('doors'));
-  except
-    TerminateScript('Something went wrong loading the webraph: ' + GetExceptionMessage());
-  finally
-    json.Free();
-  end;
-  *)
+  if FileExists(path + 'doors.txt') then
+    Result.Doors := TRSDoorArray.CreateFromBytes(FileReadBytes(path + 'doors.txt'));
+
+  if FileExists(path + 'walkablespace.txt') then
+    Result.WalkableSpace := TPointArray.CreateFromBytes(FileReadBytes(path + 'walkablespace.txt'));
+  if FileExists(path + 'walkableclusters.txt') then
+    Result.WalkableClusters := T2DPointArray.CreateFromBytes(FileReadBytes(path + 'walkableclusters.txt'));
+  if FileExists(path + 'objectclusters.txt') then
+    Result.ObjectClusters := T2DPointArray.CreateFromBytes(FileReadBytes(path + 'objectclusters.txt'));
+
+  SetLength(Result.Paths, Length(Result.Nodes));
+  SetLength(Result.Names, Length(Result.Nodes));
 end;
 
 
