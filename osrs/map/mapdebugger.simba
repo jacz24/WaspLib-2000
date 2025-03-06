@@ -28,7 +28,7 @@ begin
   Self.ImageBox.SetImage(Self.Images[TLazComboBox(sender).ItemIndex], False);
 end;
 
-
+{$H-}
 procedure TMapDebugger.ImgBoxPaint(sender: TImageBox; canvas: TImageBoxCanvas; r: TLazRect);
 var
   p: TPoint;
@@ -57,15 +57,15 @@ begin
   tpa := tpa.Connect().Difference(tpa);
   canvas.DrawPoints(tpa, $F7AA4E);
 end;
+{$H+}
 
-procedure TMapDebugger.ImgBoxMouseMove(sender: TImageBox; shift: ELazShiftStates; x, y: Integer);
+procedure TMapDebugger.ImgBoxMouseMove(sender: TImageBox; {$H-}shift: ELazShiftStates;{$H+} x, y: Integer);
 var
   p: TPoint;
-  canvas: TImageBoxCanvas;
 begin
   p := Self.GetGlobal([x,y]);
   Self.Coordinate.Caption := 'Coordinate: ' + ToStr(p.X) + ' X ' + ToStr(p.Y) + ' Y';
-  Sender.Repaint();
+  sender.Repaint();
 end;
 
 

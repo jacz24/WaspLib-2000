@@ -91,7 +91,7 @@ begin
 end;
 
 
-function TImage.ColorsInLine(start, stop: TPoint; colors: TIntegerArray): Boolean;
+function TImage.ColorsInLineEx(start, stop: TPoint; colors: TIntegerArray): Boolean;
 var
   x, y: Integer;
   pXCross, pYCross, qXCross, qYCross: Boolean;
@@ -111,4 +111,65 @@ begin
   end;
 
   Result := (pXCross and pYCross) or (qXCross and qYCross);
+end;
+
+//credits: Simba1400/Source/MML/simba.tpa.pas#L2440C10-L2440C21
+function TImage.ColorsInLine(start, stop: TPoint; colors: TIntegerArray): Boolean;
+var
+  Xinc, YInc: Int32;
+  TwoDxAccumulatedError, TwoDyAccumulatedError: Integer;
+  current, d, twoD: TPoint;
+begin
+  d := [(stop.X-start.X), (stop.Y-start.Y)];
+  twoD := [d.X + d.X, d.Y + d.Y];
+  current := start;
+  Xinc := 1;
+  Yinc := 1;
+
+  if (d.X < 0) then
+  begin
+    Xinc := -1;
+    d.X := - d.X;
+    twoD.X := - twoD.X;
+  end;
+
+  if (d.Y < 0) then
+  begin
+    Yinc := -1;
+    d.Y := -d.Y;
+    twoD.Y := - twoD.Y;
+  end;
+
+  if ((d.X = 0) and (D.Y = 0)) then
+    Exit;
+
+  if (d.Y <= d.X) then
+  begin
+    repeat
+      Inc(current.X, Xinc);
+      Inc(TwoDxAccumulatedError, twoD.Y);
+      if (TwoDxAccumulatedError > d.X) then
+      begin
+        Inc(current.Y, Yinc);
+        Dec(TwoDxAccumulatedError, twoD.X);
+      end;
+
+      if Self.Pixel[current.X, current.Y] in colors then Exit(True);
+    until (current.X = stop.X);
+
+    Exit;
+  end;
+
+  repeat
+    Inc(current.Y, Yinc);
+    Inc(TwoDyAccumulatedError, twoD.X);
+
+    if (TwoDyAccumulatedError > d.Y) then
+    begin
+      Inc(current.X, Xinc);
+      Dec(TwoDyAccumulatedError, twoD.Y);
+    end;
+
+    if Self.Pixel[current.X, current.Y] in colors then Exit(True);
+  until (current.Y = stop.Y);
 end;

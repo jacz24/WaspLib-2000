@@ -447,41 +447,17 @@ end;
 
 function TRSMapLoader.SetupGraph(name: String; idx, plane, padding: Integer; collision: TImage): TWebGraph;
 var
-  gray, white, merged, graySubset: TPointArray;
-  whiteClusters, grayClusters, mergedClusters: T2DPointArray;
-  i, j: Integer;
+  i: Integer;
 begin
   Result := Self.GetGraph(name, plane, collision);
   Result.Nodes := Self.GetGlobal(idx, Result.Nodes, [padding,padding]);
 
-  white := collision.FindColor($FFFFFF, 0);
-  gray := collision.FindColor($333333, 0);
+  Result.WalkableSpace := Self.GetGlobal(idx, Result.WalkableSpace, [padding,padding]);
+  for i := 0 to High(Result.WalkableClusters) do
+    Result.WalkableClusters[i] := Self.GetGlobal(idx, Result.WalkableClusters[i], [padding,padding]);
 
-  white := Self.GetGlobal(idx, white, [padding,padding]);
-  gray  := Self.GetGlobal(idx, gray, [padding,padding]);
-
-  whiteClusters := white.Cluster(1.0);
-  grayClusters := gray.Cluster(1.0);
-
-  for i := 0 to High(whiteClusters) do
-  begin
-    if Length(whiteClusters[i]) <= 6 then
-      Continue;
-
-    graySubset := gray.ExtractBox(whiteclusters[i].Bounds().Expand(80));
-    merged := whiteclusters[i] + graySubset;
-    mergedClusters := merged.Cluster(1.0);
-
-    for j := 0 to high(mergedClusters) do
-      if mergedClusters[j].Contains(whiteClusters[i][0]) then
-      begin
-        Result.WalkableClusters += mergedClusters[j];
-        Break;
-      end;
-  end;
-
-  Result.WalkableSpace    := white + gray;
-  Result.ObjectClusters   := grayClusters;
+  for i := 0 to High(Result.ObjectClusters) do
+    Result.ObjectClusters[i] := Self.GetGlobal(idx, Result.ObjectClusters[i], [padding,padding]);
 
   for i := 0 to High(Result.Doors) do
   begin

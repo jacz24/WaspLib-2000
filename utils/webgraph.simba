@@ -292,7 +292,7 @@ var
   i, bestLength, tempLength: Integer;
 begin
   pArea := TPointArray.CreateFromCircle(p, 20, True).Intersection(Self.WalkableSpace);
-  pAreaClusters := pArea.Cluster(1.0);
+  pAreaClusters := pArea.ClusterEx(1);
 
   if Self.ObjectClusters = [] then Exit(pArea.NearestPoint(p));
 
