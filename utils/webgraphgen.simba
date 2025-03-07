@@ -174,27 +174,13 @@ begin
         if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > GENERATED_GRAPH.Spacing * 4 then
           Continue;
 
-        bounds := TBox.Create(p.X, p.Y, q.X, q.Y).Expand(GENERATED_GRAPH.Spacing);
-
         if GENERATED_GRAPH.WallCrossings then
         begin
-          if not map.ColorsInLine(p, q, [$0, $333333, $FF]) then
-          begin
-            connectionMap[q.X, q.Y] += j;
-            Continue;
-          end;
-          if not map.ColorsInLineEx(p, q, [$0, $333333, $FF]) then
-          begin
-            connectionMap[q.X, q.Y] += j;
-            Continue;
-          end;
-
-          if atpa[i].ExtractBox(bounds.Expand(GENERATED_GRAPH.Spacing)).AStar(p, q, False) <> [] then
-          begin
-            connectionMap[q.X, q.Y] += j;
-            Continue;
-          end;
+          connectionMap[q.X, q.Y] += j;
+          Continue;
         end;
+
+        bounds := TBox.Create(p.X, p.Y, q.X, q.Y).Expand(GENERATED_GRAPH.Spacing);
 
 
         parts := skeletonTree.RangeQuery(bounds).Cluster(1);
@@ -333,5 +319,5 @@ begin
   Result.WalkableSpace    := white + gray;
   Result.ObjectClusters   := grayClusters;
 
-  WriteLn GetDebugLn('WebGraph', 'Generating webgraph took ' + ToStr(Round((GetTickCount()-t/1000), 3)) + 'seconds.', EErrorLevel.SUCCESS);
+  WriteLn GetDebugLn('WebGraph', 'Generating webgraph took ' + ToStr(Round(((GetTickCount()-t)/1000), 3)) + 'seconds.', EErrorLevel.SUCCESS);
 end;
