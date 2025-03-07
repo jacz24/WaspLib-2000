@@ -11,12 +11,11 @@ differently to handle different scenarios, e.g. doors.
 {$ENDIF}
 
 type
-  ERSDoorType = (UNKNOWN, NORMAL, WIDE);
+  ERSDoorType = (NORMAL, WIDE);
 
   TRSDoor = record
     Before, After, Center, Direction: TPoint;
     DoorType: ERSDoorType;
-    SEPARATING: Boolean;
   end;
 
   TRSDoorArray = array of TRSDoor;
@@ -92,13 +91,47 @@ begin
   for door in Self do
   begin
     case door.DoorType of
-      ERSDoorType.NORMAL: if door.SEPARATING then img.DrawColor := $FF else img.DrawColor := $FFFF00;
-      ERSDoorType.UNKNOWN: img.DrawColor :=  $00;
-      ERSDoorType.WIDE: img.DrawColor :=  $FF00FF;
+      ERSDoorType.NORMAL: img.DrawColor := $FF0000;
+      ERSDoorType.WIDE: img.DrawColor :=  $FFFF00;
     end;
-    img.DrawCross(door.Center, 3);
+    img.DrawCross(door.Center, 4);
   end;
 end;
+
+procedure TRSDoorArray.Draw(canvas: TImageBoxCanvas); overload;
+var
+  door: TRSDoor;
+begin
+  for door in Self do
+    case door.DoorType of
+      ERSDoorType.NORMAL: canvas.DrawCross(door.Center, 4, $FF0000);
+      ERSDoorType.WIDE: canvas.DrawCross(door.Center, 4, $FFFF00);
+    end;
+end;
+
+
+function TRSDoorArray.ToBytes(): TByteArray;
+var
+  len: Integer;
+begin
+  len := Length(Self) * SizeOf(TRSDoor);
+  if len = 0 then Exit;
+  SetLength(Result, len);
+  Move(Self[0], Result[0], len);
+end;
+
+function TRSDoorArray.CreateFromBytes(bytes: TByteArray): TRSDoorArray; static;
+var
+  len: Integer;
+begin
+  len := Length(bytes);
+  if len = 0 then Exit;
+  len := Length(bytes);
+  SetLength(Result, len div SizeOf(TRSDoor));
+  Move(bytes[0], Result[0], len);
+end;
+
+
 
 type
   TWebGraph = record
@@ -642,6 +675,8 @@ begin
     if Self.Names[i] = '' then img.DrawColor := $0101CC else img.DrawColor := $FF7F00;
     img.DrawBox(TBox.Create(Self.Nodes[i], 1, 1));
   end;
+
+  Self.Doors.Draw(img);
 end;
 
 procedure TWebGraph.Draw(canvas: TImageBoxCanvas); overload;
@@ -661,29 +696,7 @@ begin
     else
       canvas.DrawBox(TBox.Create(Self.Nodes[i], 1, 1), $FF7F00);
   end;
+
+  Self.Doors.Draw(canvas);
 end;
-
-
-
-function TRSDoorArray.ToBytes(): TByteArray;
-var
-  len: Integer;
-begin
-  len := Length(Self) * SizeOf(TRSDoor);
-  if len = 0 then Exit;
-  SetLength(Result, len);
-  Move(Self[0], Result[0], len);
-end;
-
-function TRSDoorArray.CreateFromBytes(bytes: TByteArray): TRSDoorArray; static;
-var
-  len: Integer;
-begin
-  len := Length(bytes);
-  if len = 0 then Exit;
-  len := Length(bytes);
-  SetLength(Result, len div SizeOf(TRSDoor));
-  Move(bytes[0], Result[0], len);
-end;
-
 

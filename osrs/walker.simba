@@ -1155,9 +1155,6 @@ var
   quad: TQuad;
   tpa: TPointArray;
 begin
-  if door.DoorType = ERSDoorType.UNKNOWN then
-    Exit;
-
   angle := door.GetVisibleAngle(Minimap.GetCompassAngle() , 0 , False);
   Minimap.SetCompassAngleEx(angle, 15);
   SleepUntil(not minimap.IsPlayerMoving, 50,5000);

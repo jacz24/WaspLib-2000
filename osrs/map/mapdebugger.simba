@@ -221,6 +221,14 @@ begin
 
   Self.Graph.WalkableSpace    := Self.GetLocal(loader^.Graph.WalkableSpace);
 
+
+  for i := 0 to High(Self.Graph.Doors) do
+  begin
+    Self.Graph.Doors[i].Before := Self.GetLocal([Self.Graph.Doors[i].Before])[0];
+    Self.Graph.Doors[i].After  := Self.GetLocal([Self.Graph.Doors[i].After])[0];
+    Self.Graph.Doors[i].Center := Self.GetLocal([Self.Graph.Doors[i].Center])[0];
+  end;
+
   for i := 0 to High(loader^.Graph.WalkableClusters) do
     Self.Graph.WalkableClusters += Self.GetLocal(loader^.Graph.WalkableClusters[i]);
   for i := 0 to High(loader^.Graph.ObjectClusters) do

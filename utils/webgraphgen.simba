@@ -35,48 +35,75 @@ begin
 end;
 
 
-function TWebGraph._FindDoors(doors: T2DPointArray; white: TPointArray): TRSDoorArray; static;
+function TWebGraph._FindDoors(doors: T2DPointArray; img: TImage): TRSDoorArray; static;
 var
-  direction, center: TPoint;
-  i: Integer;
+  direction, inverted: TPoint;
+  i, idx, j: Integer;
+  doorType: ERSDoorType;
+  splitA, splitB: Boolean;
 begin
-  SetLength(Result, Length(doors));
-
   for i := 0 to High(doors) do
   begin
-    center := doors[i].Mean();
-    Result[i].Center := center;
-
-    if doors[i].Contains(center + [1,0]) and doors[i].Contains(center + [-1,0]) then
-      direction := [0,1]
-    else if doors[i].Contains(center + [0,1]) and doors[i].Contains(center + [0,-1]) then
-      direction := [1,0]
-    else if doors[i].Contains(center + [1,1]) and doors[i].Contains(center + [-1,-1]) then
-      direction := [1,-1]
-    else if doors[i].Contains(center + [1,-1]) and doors[i].Contains(center + [-1,1]) then
-      direction := [1,1]
-    else
-      Continue;
-
-    //check if pixels around the door are walkable to exclude weird objects colored red on the map as being doors
-    //also excludes open doors to be detected as doors needed to be passed through
-    if ((center + direction) in white) and ((center + direction.Rotate(180, [0,0])) in white) then
-    begin
-      Result[i].Direction := direction;
-      case Length(doors[i]) of
-        4: Result[i].DoorType := ERSDoorType.NORMAL;
-        8: Result[i].DoorType := ERSDoorType.WIDE;
-      end;
+    case Length(doors[i]) of
+      4: doorType := ERSDoorType.NORMAL;
+      8: doorType := ERSDoorType.WIDE;
+      else Continue;
     end;
 
-    if Result[i].DoorType = ERSDoorType.WIDE then
-      case Result[i].Direction of
-        [0,1]: Result[i].Center.X -= 2;
-        [1,0]: Result[i].Center.Y -= 2;
-      end;
+    with doors[i].Mean() do
+    begin
+      if (img.Pixel[X+1, Y] = $0000FF) or (img.Pixel[X-1, Y] = $0000FF) then
+        direction := [0,1]
+      else if (img.Pixel[X, Y+1] = $0000FF) or (img.Pixel[X, Y-1] = $0000FF) then
+        direction := [1,0]
+      else if (img.Pixel[X+1, Y+1] = $0000FF) or (img.Pixel[X-1, Y-1] = $0000FF) then
+        direction := [1,-1]
+      else if (img.Pixel[X+1, Y-1] = $0000FF) or (img.Pixel[X-1, Y+1] = $0000FF) then
+        direction := [1,1]
+      else
+        Continue;
 
-    Result[i].Before += Result[i].Center + Result[i].Direction * 2;
-    Result[i].After  += Result[i].Center - Result[i].Direction * 2;
+      if (img.Pixel[X+direction.X, Y+direction.Y] <> $FFFFFF) or
+         (img.Pixel[X + (direction.X*-1), Y+ (direction.Y*-1)] <> $FFFFFF) then
+        Continue;
+
+      inverted := direction.Rotate(PI/2, [0,0]);
+      splitA := False;
+      splitB := False;
+
+      for j := 1 to 6 do
+        with Point(X,Y) + (inverted * j) do
+          case img.Pixel[X, Y] of
+            $FFFFFF: Break;
+            $333333, $0:
+            begin
+              splitA := True;
+              Break;
+            end;
+          end;
+
+      for j := 1 to 6 do
+        with Point(X,Y) - (inverted * j) do
+          case img.Pixel[X, Y] of
+            $FFFFFF: Break;
+            $333333, $0:
+            begin
+              splitB := True;
+              Break;
+            end;
+          end;
+
+      if not splitA or not splitB then Continue;
+
+      idx := Length(Result);
+      SetLength(Result, idx+1);
+      Result[idx].Center := [X,Y];
+    end;
+
+    Result[idx].DoorType := doorType;
+    Result[idx].Direction := direction;
+    Result[idx].Before := Result[idx].Center + direction * 2;
+    Result[idx].After  := Result[idx].Center - direction * 2;
   end;
 end;
 
@@ -101,7 +128,7 @@ This is an internal method. Don't use it if you don't know what you are doing.
 *)
 function TWebGraph._BuildGraph(map: TImage; white, red: TPointArray): TWebGraph; static;
 var
-  a, b, i, j, n, len, hi, nonSepDoors: Integer;
+  a, b, i, j, n, len, hi: Integer;
   atpa, parts: T2DPointArray;
   skeleton, nodes, tpa, doorsInTpa, doorNodes: TPointArray;
   bounds: TBox;
@@ -114,24 +141,15 @@ var
   doorPaths: T2DIntegerArray;
 begin
   atpa := white.ClusterEx(1).SortBySize(True);
-  doors := TWebGraph._FindDoors(red.ClusterEx(1), white);
+  doors := TWebGraph._FindDoors(red.ClusterEx(1), map);
 
   for i := 0 to High(doors) do
   begin
-    door := doors[i];
-    if (door.DoorType = ERSDoorType.UNKNOWN) or atpa.InSameTPA(door.Before, door.After) then
-    begin
-      nonSepDoors += 1;
-      Continue;
-    end;
-
-    door.SEPARATING := True;
-
-    Result.Doors += door;
-    doorNodes += [door.Before, door.After];
+    Result.Doors += doors[i];
+    doorNodes += [doors[i].Before, doors[i].After];
     SetLength(doorPaths, Length(doorNodes));
-    doorPaths[(i-nonSepDoors)*2] += (i-nonSepDoors)*2+1;
-    doorPaths[(i-nonSepDoors)*2+1] += (i-nonSepDoors)*2;
+    doorPaths[i*2] += i*2+1;
+    doorPaths[i*2+1] += i*2;
   end;
 
   for i := 0 to High(atpa) do

@@ -409,42 +409,49 @@ begin
 
     Result := TWebGraph.BuildGraph(name, map);
 
-    if (Result.Nodes <> []) and not FileWriteBytes(path + 'nodes.txt', Result.Nodes.ToBytes()) then
-      raise GetDebugLn('MapLoader', 'Failed to create cache for graph nodes: ' + path);
-    if (Result.Paths <> []) and not FileWriteBytes(path + 'paths.txt', Result.Paths.ToBytes()) then
-      raise GetDebugLn('MapLoader', 'Failed to create cache for graph paths: ' + path);
-    if (Result.Names <> []) and not FileWriteBytes(path + 'names.txt', Result.Names.ToBytes()) then
-      raise GetDebugLn('MapLoader', 'Failed to create cache for graph names: ' + path);
+    if (Result.Nodes <> []) then
+      if not FileWriteBytes(path + 'nodes.txt', CompressBytes(Result.Nodes.ToBytes())) then
+        raise GetDebugLn('MapLoader', 'Failed to create cache for graph nodes: ' + path);
 
-    if (Result.Doors <> []) and not FileWriteBytes(path + 'doors.txt', Result.Doors.ToBytes()) then
-      raise GetDebugLn('MapLoader', 'Failed to create cache for graph doors: ' + path);
+    if (Result.Paths <> []) then
+      if not FileWriteBytes(path + 'paths.txt', CompressBytes(Result.Paths.ToBytes())) then
+        raise GetDebugLn('MapLoader', 'Failed to create cache for graph paths: ' + path);
+    if (Result.Names <> []) then
+      if not FileWriteBytes(path + 'names.txt', CompressBytes(Result.Names.ToBytes())) then
+        raise GetDebugLn('MapLoader', 'Failed to create cache for graph names: ' + path);
 
-    if (Result.WalkableSpace <> []) and not FileWriteBytes(path + 'walkablespace.txt', Result.WalkableSpace.ToBytes()) then
-      raise GetDebugLn('MapLoader', 'Failed to create cache for graph WalkableSpace: ' + path);
-    if (Result.WalkableClusters <> []) and not FileWriteBytes(path + 'walkableclusters.txt', Result.WalkableClusters.ToBytes()) then
-      raise GetDebugLn('MapLoader', 'Failed to create cache for graph WalkableClusters: ' + path);
-    if (Result.ObjectClusters <> []) and not FileWriteBytes(path + 'objectclusters.txt', Result.ObjectClusters.ToBytes()) then
-      raise GetDebugLn('MapLoader', 'Failed to create cache for graph ObjectClusters: ' + path);
+    if (Result.Doors <> []) then
+      if not FileWriteBytes(path + 'doors.txt', CompressBytes(Result.Doors.ToBytes())) then
+        raise GetDebugLn('MapLoader', 'Failed to create cache for graph doors: ' + path);
 
+    if (Result.WalkableSpace <> []) then
+      if not FileWriteBytes(path + 'walkablespace.txt', CompressBytes(Result.WalkableSpace.ToBytes())) then
+        raise GetDebugLn('MapLoader', 'Failed to create cache for graph WalkableSpace: ' + path);
+    if (Result.WalkableClusters <> []) then
+      if not FileWriteBytes(path + 'walkableclusters.txt', CompressBytes(Result.WalkableClusters.ToBytes())) then
+        raise GetDebugLn('MapLoader', 'Failed to create cache for graph WalkableClusters: ' + path);
+    if (Result.ObjectClusters <> []) then
+      if not FileWriteBytes(path + 'objectclusters.txt', CompressBytes(Result.ObjectClusters.ToBytes())) then
+        raise GetDebugLn('MapLoader', 'Failed to create cache for graph ObjectClusters: ' + path);
     Exit;
   end;
 
   if FileExists(path + 'nodes.txt') then
-    Result.Nodes := TPointArray.CreateFromBytes(FileReadBytes(path + 'nodes.txt'));
+    Result.Nodes := TPointArray.CreateFromBytes(DecompressBytes(FileReadBytes(path + 'nodes.txt')));
   if FileExists(path + 'paths.txt') then
-    Result.Paths := T2DIntegerArray.CreateFromBytes(FileReadBytes(path + 'paths.txt'));
+    Result.Paths := T2DIntegerArray.CreateFromBytes(DecompressBytes(FileReadBytes(path + 'paths.txt')));
   if FileExists(path + 'names.txt') then
-    Result.Names := TStringArray.CreateFromBytes(FileReadBytes(path + 'names.txt'));
+    Result.Names := TStringArray.CreateFromBytes(DecompressBytes(FileReadBytes(path + 'names.txt')));
 
   if FileExists(path + 'doors.txt') then
-    Result.Doors := TRSDoorArray.CreateFromBytes(FileReadBytes(path + 'doors.txt'));
+    Result.Doors := TRSDoorArray.CreateFromBytes(DecompressBytes(FileReadBytes(path + 'doors.txt')));
 
   if FileExists(path + 'walkablespace.txt') then
-    Result.WalkableSpace := TPointArray.CreateFromBytes(FileReadBytes(path + 'walkablespace.txt'));
+    Result.WalkableSpace := TPointArray.CreateFromBytes(DecompressBytes(FileReadBytes(path + 'walkablespace.txt')));
   if FileExists(path + 'walkableclusters.txt') then
-    Result.WalkableClusters := T2DPointArray.CreateFromBytes(FileReadBytes(path + 'walkableclusters.txt'));
+    Result.WalkableClusters := T2DPointArray.CreateFromBytes(DecompressBytes(FileReadBytes(path + 'walkableclusters.txt')));
   if FileExists(path + 'objectclusters.txt') then
-    Result.ObjectClusters := T2DPointArray.CreateFromBytes(FileReadBytes(path + 'objectclusters.txt'));
+    Result.ObjectClusters := T2DPointArray.CreateFromBytes(DecompressBytes(FileReadBytes(path + 'objectclusters.txt')));
 
   SetLength(Result.Paths, Length(Result.Nodes));
   SetLength(Result.Names, Length(Result.Nodes));
