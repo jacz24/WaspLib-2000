@@ -186,8 +186,9 @@ var
 begin
   atpa := white.ClusterEx(1).SortBySize(True);
   doors := Self.FindDoors(red.ClusterEx(1), map);
-
   SetLength(connectedDoors, Length(doors));
+  with white.Bounds() do
+    SetLength(connectionMap, X2, Y2);
 
   for i := 0 to High(atpa) do
   begin
@@ -197,15 +198,23 @@ begin
     connectA := [];
     connectB := [];
 
-    for d := High(connectedDoors) downto 0 do
+    hi := High(connectedDoors);
+    for d := 0 to hi do
     begin
-      if not connectedDoors[d].After then
-        if atpa[i].Contains(doors[d].After) then
-          connectA += d;
+      if connectedDoors[d].After and connectedDoors[d].Before then
+      begin
+        Result.Doors += doors[d];
+        Delete(doors, d, 1);
+        Delete(connectedDoors, d, 1);
+        hi -= 1;
+        d -= 1;
+        Continue;
+      end;
 
-      if not connectedDoors[d].Before then
-        if atpa[i].Contains(doors[d].Before) then
-          connectB += d;
+      if not connectedDoors[d].After and atpa[i].Contains(doors[d].After) then
+        connectA += d;
+      if not connectedDoors[d].Before and atpa[i].Contains(doors[d].Before) then
+        connectB += d;
     end;
 
     bounds := atpa[i].Bounds();
@@ -230,14 +239,6 @@ begin
         Result.Paths[High(Result.Nodes)-1] := [High(Result.Nodes)];
         Result.Paths[High(Result.Nodes)] := [High(Result.Nodes)-1];
       end;
-
-      for d := High(doors) downto 0 do
-        if connectedDoors[d].After and connectedDoors[d].Before then
-        begin
-          Delete(connectedDoors, d, 1);
-          Result.Doors += doors[d];
-          Delete(doors, d, 1);
-        end;
 
       Continue;
     end;
@@ -266,22 +267,14 @@ begin
         Result.Paths[High(Result.Nodes)] := [High(Result.Nodes)-1];
       end;
 
-      for d := High(doors) downto 0 do
-        if connectedDoors[d].After and connectedDoors[d].Before then
-        begin
-          Delete(connectedDoors, d, 1);
-          Result.Doors += doors[d];
-          Delete(doors, d, 1);
-        end;
-
       Continue;
     end;
 
+    nodes := [];
+
     for tpa in skeleton.Partition(Self.Spacing) do
-    begin
-      if tpa = [] then Continue;
-      for tpa in tpa.ClusterEx(1.5) do nodes += tpa.Mean();
-    end;
+      for tpa in tpa.ClusterEx(1.5) do
+        nodes += tpa.Mean();
 
     for d in connectA do
     begin
@@ -295,18 +288,11 @@ begin
       connectedDoors[d].Before := True;
     end;
 
-    for d := High(doors) downto 0 do
-      if connectedDoors[d].After and connectedDoors[d].Before then
-      begin
-        Delete(connectedDoors, d, 1);
-        Result.Doors += doors[d];
-        Delete(doors, d, 1);
-      end;
-
-    SetLength(connectionMap, bounds.X2, bounds.Y2);
-
-    skeletonTree.Init(skeleton);
     nodesTree.Init(nodes);
+    len := Length(Result.Nodes);
+    SetLength(Result.Nodes, len + Length(nodes));
+    SetLength(Result.Paths, Length(Result.Nodes));
+
     for j := 0 to High(nodesTree.Data) do
     begin
       p := nodesTree.Data[j].Split;
@@ -316,43 +302,12 @@ begin
       begin
         if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > Self.Spacing * 4 then
           Continue;
-
-        if Self.WallCrossings then
-        begin
-          connectionMap[q.X, q.Y] += j;
+        if not Self.WallCrossings and map.ColorsInLine(p, q, [$FF, $333333, $0])  then
           Continue;
-        end;
-
-        bounds := TBox.Create(p.X, p.Y, q.X, q.Y).Expand(Self.Spacing);
-
-
-        parts := skeletonTree.RangeQuery(bounds).Cluster(1);
-
-        for a := 0 to High(parts) do
-        begin
-          jInRange := False;
-          nInRange := False;
-
-          for b := 0 to High(parts[a]) do
-          begin
-            jInRange := jInRange or (parts[a,b].DistanceTo(p) <= Sqrt(2));
-            nInRange := nInRange or (parts[a,b].DistanceTo(q) <= Sqrt(2));
-
-            if jInRange and nInRange then Break(2);
-          end;
-
-          if jInRange <> nInRange then Break;
-        end;
-
-        if not jInRange or not nInRange then Continue;
 
         connectionMap[q.X, q.Y] += j;
       end;
     end;
-
-    len := Length(Result.Nodes);
-    SetLength(Result.Nodes, len + Length(nodes));
-    SetLength(Result.Paths, Length(Result.Nodes));
 
     for j := 0 to High(nodesTree.Data) do
     begin
@@ -368,8 +323,6 @@ begin
           Result.Paths[n+len] += j+len;
       end;
     end;
-
-    nodes := [];
   end;
 
   SetLength(Result.Paths, Length(Result.Nodes));
