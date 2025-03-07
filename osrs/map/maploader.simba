@@ -17,6 +17,9 @@ Credits: Torwent
   {$I SRLT/osrs.simba}
 {$ENDIF}
 
+{.$DEFINE SRLT_GENERATE_GRAPH_ALWAYS}
+
+
 type
 (*
 ## TMapLoader Enums
@@ -393,7 +396,10 @@ function TRSMapLoader.GetGraph(name: String; plane: Integer; map: TImage): TWebG
 var
   path: String;
 begin
-  path := Self.CacheDir + 'graphs' + PATH_SEP + ToStr(plane) + PATH_SEP + name + '-' + GENERATED_GRAPH.Hash() + PATH_SEP;
+  {$IFDEF SRLT_GENERATE_GRAPH_ALWAYS}
+  Exit(WebGraphGenerator.BuildGraph(name, map));
+  {$ENDIF}
+  path := Self.CacheDir + 'graphs' + PATH_SEP + ToStr(plane) + PATH_SEP + name + '-' + WebGraphGenerator.Hash() + PATH_SEP;
 
   if
     not FileExists(path + 'nodes.txt') or
@@ -407,7 +413,7 @@ begin
     if not DirCreate(path) then
       raise GetDebugLn('MapLoader', 'Failed to create cache directory: ' + path);
 
-    Result := TWebGraph.BuildGraph(name, map);
+    Result := WebGraphGenerator.BuildGraph(name, map);
 
     if (Result.Nodes <> []) then
       if not FileWriteBytes(path + 'nodes.txt', CompressBytes(Result.Nodes.ToBytes())) then
@@ -574,7 +580,7 @@ begin
 
       collisionmaps += Self.GetMap(s, f, chunks[i].Planes[j], ERSMap.COLLISION);
 
-      if not GENERATED_GRAPH.Disabled then
+      if not WebGraphGenerator.Disabled then
         graphs += Self.SetupGraph(name, idx, chunks[i].Planes[j], padding, collisionmaps[idx]);
 
       collisionmaps[idx].Pad(padding);
@@ -603,7 +609,7 @@ begin
   Self.Heightmap  := Self._InternalLoad(heightmaps);
   Self.Collision  := Self._InternalLoad(collisionmaps);
 
-  if not GENERATED_GRAPH.Disabled then
+  if not WebGraphGenerator.Disabled then
     Self.Graph := Self.InternalGraphLoad(graphs);
 
   (* TODO
