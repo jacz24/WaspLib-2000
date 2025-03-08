@@ -168,6 +168,139 @@ This is an internal method. Don't use it if you don't know what you are doing.
 *)
 function TWebGraphGenerator._BuildGraph(map: TImage; white, red: TPointArray): TWebGraph;
 var
+  i, j, d, len, hi, minLen: Integer;
+  cluster, skeleton, nodes, tpa: TPointArray;
+  bounds: TBox;
+  p, q: TPoint;
+  nodesTree: TSlackTree;
+  doors: TRSDoorArray;
+  connectionMap: array of TIntegerMatrix;
+  connectedDoors: array of record
+    After, Before: Boolean;
+  end;
+  connectA, connectB: TIntegerArray;
+begin
+  doors := Self.FindDoors(red.ClusterEx(1), map);
+  SetLength(connectedDoors, Length(doors));
+  with white.Bounds() do
+    SetLength(connectionMap, X2, Y2);
+
+  minLen := Self.MinimumTiles * RSTranslator.TileArea;
+
+  for cluster in white.ClusterEx(1).SortBySize(True) do
+  begin
+    if Length(cluster) <= minLen then Continue; //remove very small spaces
+
+    hi := High(connectedDoors);
+    connectA := [];
+    connectB := [];
+
+    for d := 0 to hi do
+    begin
+      if connectedDoors[d].After and connectedDoors[d].Before then
+      begin
+        Result.Doors += doors[d];
+        Delete(doors, d, 1);
+        Delete(connectedDoors, d, 1);
+        hi -= 1;
+        d -= 1;
+        Continue;
+      end;
+
+      if not connectedDoors[d].After and cluster.Contains(doors[d].After) then
+        connectA += d;
+      if not connectedDoors[d].Before and cluster.Contains(doors[d].Before) then
+        connectB += d;
+    end;
+
+    bounds := cluster.Bounds();
+
+    if Max(bounds.Width, bounds.Height) < Self.NodeRadius then
+    begin
+      Result.Nodes += cluster.Median(); //mark spaces less than NodeRadius with a single node and continue
+
+      for d in connectA do
+      begin
+        Result.Nodes += doors[d].After;
+        connectedDoors[d].After := True;
+        SetLength(Result.Paths, Length(Result.Nodes));
+        Result.Paths[High(Result.Nodes)-1] := [High(Result.Nodes)];
+        Result.Paths[High(Result.Nodes)] := [High(Result.Nodes)-1];
+      end;
+
+      for d in connectB do
+      begin
+        Result.Nodes += doors[d].Before;
+        connectedDoors[d].Before := True;
+        SetLength(Result.Paths, Length(Result.Nodes));
+        Result.Paths[High(Result.Nodes)-1] := [High(Result.Nodes)];
+        Result.Paths[High(Result.Nodes)] := [High(Result.Nodes)-1];
+      end;
+
+      Continue;
+    end;
+
+    skeleton := cluster.Erode(1).Skeleton(2, 6);
+
+    nodes := [];
+    for tpa in skeleton.Partition(Self.Spacing) do
+      nodes += tpa.ClusterEx(1.5).Means();
+
+    for d in connectA do
+    begin
+      nodes += doors[d].After;
+      connectedDoors[d].After := True;
+    end;
+
+    for d in connectB do
+    begin
+      nodes += doors[d].Before;
+      connectedDoors[d].Before := True;
+    end;
+
+    nodesTree := TSlackTree.Create(nodes);
+
+    len := Length(Result.Nodes);
+    SetLength(Result.Nodes, len + Length(nodes));
+    SetLength(Result.Paths, Length(Result.Nodes));
+
+    for i := 0 to High(nodesTree.Data) do
+    begin
+      p := nodesTree.Data[i].Split;
+      for q in nodesTree.KNearest(p, Self.MaxConnections, True) do
+      begin
+        if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > Self.Spacing * 2 then Continue;
+
+        if map.ColorsInLine(p, q, [$0, $FF, $333333]) then
+          if map.ColorsInLineEx(p, q, [$0, $FF, $333333]) then
+            if cluster.ExtractBox(TBox.Create(Min(p.X, q.X), Min(p.Y, q.Y), Max(p.X, q.X), Max(p.Y, q.Y)).Expand(Self.Spacing div 2)).AStar(p, q, True) = [] then
+              Continue;
+
+        connectionMap[q.X, q.Y] += i;
+      end;
+    end;
+
+    for i := 0 to High(nodesTree.Data) do
+    begin
+      p := nodesTree.Data[i].Split;
+      Result.Nodes[i+len] := p;
+      for j in connectionMap[p.X, p.Y] do
+      begin
+        Result.Nodes[j+len] := nodesTree.Data[j].Split;
+
+        if not Result.Paths[i+len].Contains(j+len) then
+          Result.Paths[i+len] += j+len;
+        if not Result.Paths[j+len].Contains(i+len) then
+          Result.Paths[j+len] += i+len;
+      end;
+    end;
+  end;
+
+  SetLength(Result.Names, Length(Result.Nodes));
+end;
+
+function TWebGraphGenerator._BuildGraph2(map: TImage; white, red: TPointArray): TWebGraph;
+var
   a, b, i, j, n, d, len, hi: Integer;
   atpa, parts: T2DPointArray;
   skeleton, nodes, tpa, doorsInTpa, doorNodes: TPointArray;
@@ -183,6 +316,7 @@ var
     After, Before: Boolean;
   end;
   connectA, connectB: TIntegerArray;
+  dists: TDoubleArray;
 begin
   atpa := white.ClusterEx(1).SortBySize(True);
   doors := Self.FindDoors(red.ClusterEx(1), map);
@@ -300,10 +434,12 @@ begin
 
       for q in tpa do
       begin
-        if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > Self.Spacing * 4 then
-          Continue;
-        if not Self.WallCrossings and map.ColorsInLine(p, q, [$FF, $333333, $0])  then
-          Continue;
+        if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > Self.Spacing * 2 then Continue;
+
+        if map.ColorsInLine(p, q, [$0, $FF, $333333]) then
+          if map.ColorsInLineEx(p, q, [$0, $FF, $333333]) then
+            if atpa[i].ExtractBox(TBox.Create(Min(p.X, q.X), Min(p.Y, q.Y), Max(p.X, q.X), Max(p.Y, q.Y))).AStar(p, q, True) = [] then
+              Continue;
 
         connectionMap[q.X, q.Y] += j;
       end;
@@ -328,6 +464,7 @@ begin
   SetLength(Result.Paths, Length(Result.Nodes));
   SetLength(Result.Names, Length(Result.Nodes));
 end;
+
 
 function TWebGraphGenerator.BuildGraph(name: String; map: TImage): TWebGraph;
 var
