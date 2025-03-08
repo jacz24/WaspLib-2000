@@ -263,6 +263,31 @@ begin
   end;
 end;
 
+
+procedure TRSItemFinder.Show(item: TRSItem);
+var
+  display, img: TImage;
+  i, h, w, x: Integer;
+begin
+  try
+    display := TImage.Create();
+
+    for img in Self.GetImages(item) do
+    begin
+      if img.Height > h then h:= img.Height;
+      w := img.Width;
+      x := display.Width;
+      display.SetSize(x+w, h);
+      display.DrawImage(img,[x,0]);
+    end;
+
+    display.Show();
+  finally
+    display.Free();
+  end;
+end;
+
+
 var
   ItemFinder: TRSItemFinder;
 

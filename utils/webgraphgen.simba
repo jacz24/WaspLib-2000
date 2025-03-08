@@ -180,14 +180,14 @@ var
   end;
   connectA, connectB: TIntegerArray;
 begin
-  doors := Self.FindDoors(red.ClusterEx(1), map);
+  doors := Self.FindDoors(red.Cluster(1), map);
   SetLength(connectedDoors, Length(doors));
   with white.Bounds() do
     SetLength(connectionMap, X2, Y2);
 
   minLen := Self.MinimumTiles * RSTranslator.TileArea;
 
-  for cluster in white.ClusterEx(1).SortBySize(True) do
+  for cluster in white.Cluster(1).SortBySize(True) do
   begin
     if Length(cluster) <= minLen then Continue; //remove very small spaces
 
@@ -244,7 +244,7 @@ begin
 
     nodes := [];
     for tpa in skeleton.Partition(Self.Spacing) do
-      nodes += tpa.ClusterEx(1.5).Means();
+      nodes += tpa.Cluster(1.5).Means();
 
     for d in connectA do
     begin
@@ -299,172 +299,6 @@ begin
   SetLength(Result.Names, Length(Result.Nodes));
 end;
 
-function TWebGraphGenerator._BuildGraph2(map: TImage; white, red: TPointArray): TWebGraph;
-var
-  a, b, i, j, n, d, len, hi: Integer;
-  atpa, parts: T2DPointArray;
-  skeleton, nodes, tpa, doorsInTpa, doorNodes: TPointArray;
-  bounds: TBox;
-  p, q: TPoint;
-  nodesTree, skeletonTree: TSlackTree;
-  jInRange, nInRange: Boolean;
-  connectionMap: array of TIntegerMatrix;
-  doors: TRSDoorArray;
-  door: TRSDoor;
-  doorPaths: T2DIntegerArray;
-  connectedDoors: array of record
-    After, Before: Boolean;
-  end;
-  connectA, connectB: TIntegerArray;
-  dists: TDoubleArray;
-begin
-  atpa := white.ClusterEx(1).SortBySize(True);
-  doors := Self.FindDoors(red.ClusterEx(1), map);
-  SetLength(connectedDoors, Length(doors));
-  with white.Bounds() do
-    SetLength(connectionMap, X2, Y2);
-
-  for i := 0 to High(atpa) do
-  begin
-    if Length(atpa[i]) <= Self.MinimumTiles * RSTranslator.TileArea then
-      Continue; //remove very small spaces
-
-    connectA := [];
-    connectB := [];
-
-    hi := High(connectedDoors);
-    for d := 0 to hi do
-    begin
-      if connectedDoors[d].After and connectedDoors[d].Before then
-      begin
-        Result.Doors += doors[d];
-        Delete(doors, d, 1);
-        Delete(connectedDoors, d, 1);
-        hi -= 1;
-        d -= 1;
-        Continue;
-      end;
-
-      if not connectedDoors[d].After and atpa[i].Contains(doors[d].After) then
-        connectA += d;
-      if not connectedDoors[d].Before and atpa[i].Contains(doors[d].Before) then
-        connectB += d;
-    end;
-
-    bounds := atpa[i].Bounds();
-    if Max(bounds.Width, bounds.Height) < Self.NodeRadius then
-    begin
-      Result.Nodes += atpa[i].Median(); //mark spaces less than NodeRadius with a single node and continue
-
-      for d in connectA do
-      begin
-        Result.Nodes += doors[d].After;
-        connectedDoors[d].After := True;
-        SetLength(Result.Paths, Length(Result.Nodes));
-        Result.Paths[High(Result.Nodes)-1] := [High(Result.Nodes)];
-        Result.Paths[High(Result.Nodes)] := [High(Result.Nodes)-1];
-      end;
-
-      for d in connectB do
-      begin
-        Result.Nodes += doors[d].Before;
-        connectedDoors[d].Before := True;
-        SetLength(Result.Paths, Length(Result.Nodes));
-        Result.Paths[High(Result.Nodes)-1] := [High(Result.Nodes)];
-        Result.Paths[High(Result.Nodes)] := [High(Result.Nodes)-1];
-      end;
-
-      Continue;
-    end;
-
-    skeleton := atpa[i].Erode(1).Skeleton(2, 6);
-
-    if skeleton = [] then
-    begin
-      Result.Nodes += atpa[i].Median();
-
-      for d in connectA do
-      begin
-        Result.Nodes += doors[d].After;
-        connectedDoors[d].After := True;
-        SetLength(Result.Paths, Length(Result.Nodes));
-        Result.Paths[High(Result.Nodes)-1] := [High(Result.Nodes)];
-        Result.Paths[High(Result.Nodes)] := [High(Result.Nodes)-1];
-      end;
-
-      for d in connectB do
-      begin
-        Result.Nodes += doors[d].Before;
-        connectedDoors[d].Before := True;
-        SetLength(Result.Paths, Length(Result.Nodes));
-        Result.Paths[High(Result.Nodes)-1] := [High(Result.Nodes)];
-        Result.Paths[High(Result.Nodes)] := [High(Result.Nodes)-1];
-      end;
-
-      Continue;
-    end;
-
-    nodes := [];
-
-    for tpa in skeleton.Partition(Self.Spacing) do
-      for tpa in tpa.ClusterEx(1.5) do
-        nodes += tpa.Mean();
-
-    for d in connectA do
-    begin
-      nodes += doors[d].After;
-      connectedDoors[d].After := True;
-    end;
-
-    for d in connectB do
-    begin
-      nodes += doors[d].Before;
-      connectedDoors[d].Before := True;
-    end;
-
-    nodesTree.Init(nodes);
-    len := Length(Result.Nodes);
-    SetLength(Result.Nodes, len + Length(nodes));
-    SetLength(Result.Paths, Length(Result.Nodes));
-
-    for j := 0 to High(nodesTree.Data) do
-    begin
-      p := nodesTree.Data[j].Split;
-      tpa := nodesTree.KNearest(p, Self.MaxConnections, True);
-
-      for q in tpa do
-      begin
-        if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > Self.Spacing * 2 then Continue;
-
-        if map.ColorsInLine(p, q, [$0, $FF, $333333]) then
-          if map.ColorsInLineEx(p, q, [$0, $FF, $333333]) then
-            if atpa[i].ExtractBox(TBox.Create(Min(p.X, q.X), Min(p.Y, q.Y), Max(p.X, q.X), Max(p.Y, q.Y))).AStar(p, q, True) = [] then
-              Continue;
-
-        connectionMap[q.X, q.Y] += j;
-      end;
-    end;
-
-    for j := 0 to High(nodesTree.Data) do
-    begin
-      p := nodesTree.Data[j].Split;
-      Result.Nodes[j+len] := p;
-      for n in connectionMap[p.X, p.Y] do
-      begin
-        Result.Nodes[n+len] := nodesTree.Data[n].Split;
-
-        if not Result.Paths[j+len].Contains(n+len) then
-          Result.Paths[j+len] += n+len;
-        if not Result.Paths[n+len].Contains(j+len) then
-          Result.Paths[n+len] += j+len;
-      end;
-    end;
-  end;
-
-  SetLength(Result.Paths, Length(Result.Nodes));
-  SetLength(Result.Names, Length(Result.Nodes));
-end;
-
 
 function TWebGraphGenerator.BuildGraph(name: String; map: TImage): TWebGraph;
 var
@@ -483,8 +317,8 @@ begin
 
   gray := map.FindColor($333333, 0);
 
-  whiteClusters := white.ClusterEx(1);
-  grayClusters := gray.ClusterEx(1);
+  whiteClusters := white.Cluster(1);
+  grayClusters := gray.Cluster(1);
 
   for i := 0 to High(whiteClusters) do
   begin
@@ -492,7 +326,7 @@ begin
 
     graySubset := gray.ExtractBox(whiteclusters[i].Bounds().Expand(80));
     merged := whiteclusters[i] + graySubset;
-    mergedClusters := merged.ClusterEx(1);
+    mergedClusters := merged.Cluster(1);
 
     for j := 0 to high(mergedClusters) do
       if mergedClusters[j].Contains(whiteClusters[i][0]) then

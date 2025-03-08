@@ -68,19 +68,6 @@ begin
 end;
 
 
-function TPointArray.ClusterEx(dist: Single): T2DPointArray; overload;
-begin
-  if (Length(Self) < 700) then
-    Exit(NRSplitTPA(Self, dist, dist));
-  Result := NRClusterTPA(Self, dist);
-end;
-
-function TPointArray.ClusterEx(distX, distY: Single): T2DPointArray; overload;
-begin
-  Result := NRSplitTPA(Self, distX, distY);
-end;
-
-
 function TPointArray.AStar(start, goal: TPoint; diagonalTravel: Boolean = True): TPointArray;
 begin
   Result := AStarTPA(Self, start, goal, diagonalTravel);
