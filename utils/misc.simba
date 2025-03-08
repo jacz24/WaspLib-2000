@@ -8,6 +8,7 @@ type
     const ITEM_SHADOW: TColor = $202030;
     const ITEM_SHADOW_GRAY: TColor = $333333;
     const ITEM_BORDER: TColor = $010000;
+    const INTERFACE_BORDER: TColor = $010000;
     const ITEM_BORDER_WHITE: TColor = $FFFFFF;
 
     const STACK_YELLOW: TColor = $00FFFF;

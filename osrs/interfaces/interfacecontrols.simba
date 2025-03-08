@@ -26,12 +26,13 @@ begin
       Exit(True);
 end;
 
-function TRSButton.WaitEnabled(time: Integer; interval: Integer = 50): Boolean;
+function TRSButton.WaitEnabled(const time: Integer; interval: Integer = -1): Boolean;
 begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.Enabled(), interval, time);
 end;
 
-procedure TRSButton.Click(button: EMouseButton = EMouseButton.LEFT);
+procedure TRSButton.Click(const button: EMouseButton = EMouseButton.LEFT);
 begin
   Mouse.Click(Self.Bounds, button);
 end;
@@ -136,7 +137,7 @@ begin
   Result := (tpa.Mean().X - Self.Bounds.X1) * 100 div Self.Width;
 end;
 
-function TRSSlider.SetLevel(level: Integer): Boolean;
+function TRSSlider.SetLevel(const level: Integer): Boolean;
 var
   current: Integer;
   p: TPoint;
@@ -159,3 +160,104 @@ begin
   Mouse.Click(p, EMouseButton.LEFT);
   Result := SleepUntil(Abs(Self.GetLevel()-level) < 2, RandomMode(100, 50, 1500), 600);
 end;
+
+
+type
+  TRSScrollBar = record
+    ScrollArea, Up, Down: TBox;
+    Bounds: TBox;
+    Width, Height: Integer;
+  end;
+
+procedure TRSScrollBar.Setup();
+begin
+  if Self.ScrollArea = Default(TBox) then
+    raise GetDebugLn('ScrollBar', 'You need to set a ScrollArea to use the TRSScrollBar.Setup() method.');
+
+  Self.Bounds.X1 := Self.ScrollArea.X2 + 1;
+  Self.Bounds.Y1 := Self.ScrollArea.Y1 + 16;
+  Self.Bounds.X2 := Self.Bounds.X1 + 15;
+  Self.Bounds.Y2 := Self.ScrollArea.Y2 - 16;
+
+  Self.Width  := Self.Bounds.Width;
+  Self.Height := Self.Bounds.Height;
+
+  Self.Up.X1 := Self.Bounds.X1;
+  Self.Up.Y1 := Self.ScrollArea.Y1;
+  Self.Up.X2 := Self.Bounds.X2;
+  Self.Up.Y2 := Self.Bounds.Y1 - 1;
+
+  Self.Down.X1 := Self.Bounds.X1;
+  Self.Down.Y1 := Self.Bounds.Y2 + 1;
+  Self.Down.X2 := Self.Bounds.X2;
+  Self.Down.Y2 := Self.ScrollArea.Y2;
+end;
+
+function TRSScrollBar.IsVisible(): Boolean;
+begin
+  Result := Target.HasColor(ColorTolerance($16091C, 16.971, EColorSpace.HSV, [0.277, 0.671, 2.054]), 1, Self.Up)
+            and
+            Target.HasColor(ColorTolerance($16091C, 16.971, EColorSpace.HSV, [0.277, 0.671, 2.054]), 1, Self.Down);
+end;
+
+function TRSScrollBar.GetSlider(): TBox;
+var
+  p: TPoint;
+  tpa: TPointArray;
+begin
+  p.X := Self.Bounds.X1 + Self.Width div 2;
+  tpa := Target.FindColor(RSColors.INTERFACE_BORDER, 0, [p.X, Self.Bounds.Y1, p.X + 1, Self.Bounds.Y2]);
+  if tpa = [] then Exit;
+  Result.X1 := Self.Bounds.X1+1;
+  Result.Y1 := tpa.First.Y;
+  Result.X2 := Self.Bounds.X2-1;
+  Result.Y2 := tpa.Last.Y;
+end;
+
+function TRSScrollBar.CanScroll(): Boolean;
+begin
+  Result := Self.IsVisible() and (Self.GetSlider() <> Self.Bounds);
+end;
+
+
+function TRSScrollBar.GetLevel(): Integer;
+begin
+  with Self.GetSlider() do
+    Result := Round((Y1 - Self.Bounds.Y1) * 100 / (Self.Height - Height));
+end;
+
+function TRSScrollBar.SetLevel(value: Integer): Integer;
+begin
+  if not Self.CanScroll() then Exit;
+  value := EnsureRange(value, 0, 100);
+end;
+
+
+
+procedure ShowOnClient(scroll: TRSScrollBar); overload;
+var
+  img: TImage;
+  bounds: TBox;
+begin
+  img := TImage.CreateFromTarget();
+
+  img.DrawColor := $FFFF00;
+  img.DrawBox(scroll.Bounds);
+
+  img.DrawColor := $FFFFFF;
+  bounds := scroll.GetSlider();
+  img.DrawBox(bounds);
+
+  img.DrawColor := $FF;
+  img.FontSize := 12;
+  bounds.X2 := bounds.X1 - 2;
+  bounds.X1 -= 30;
+  img.DrawText(ToStr(scroll.GetLevel()), bounds, [EImageTextAlign.CENTER]);
+
+  img.DrawColor := $00FFFF;
+  img.DrawBoxArray([scroll.Up, scroll.Down], False);
+
+  img.Show();
+  img.Free();
+end;
+

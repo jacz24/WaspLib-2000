@@ -33,6 +33,7 @@ type
     Bounds: TBox;
     Slots: TRSSlotInterface;
     Items: TRSItemInterface;
+    Scroll: TRSScrollBar;
 
     CachedQuantity: Int32;
 
@@ -108,6 +109,13 @@ begin
     Self.Bounds.Y2 := Min(Floor(Center.Y+(Height-3)/2), Floor(Center.Y+799/2));
   end;
 
+  Self.Scroll.ScrollArea.X1 := Self.Bounds.X1 + 5;
+  Self.Scroll.ScrollArea.Y1 := Self.Bounds.Y1 + 78;
+  Self.Scroll.ScrollArea.X2 := Self.Bounds.X2 - 22;
+  Self.Scroll.ScrollArea.Y2 := Self.Bounds.Y2 - 44;
+
+  Self.Scroll.Setup();
+
   Self.Tabs := TBoxArray.Create(Self.Bounds.TopLeft.Offset(47, 42), 10, 1, 35, 28, [5, 0]);
   Self.SlotBoxes := TBoxArray.Create(Self.Bounds.TopLeft.Offset(57, 77), 8, (Self.Bounds.Height - 135) div 35, 31, 31, [17, 5]);
 
@@ -126,14 +134,6 @@ begin
   Self.PotionStorage.X2 := Self.Bounds.X1 + 51;
   Self.PotionStorage.Y2 := Self.Bounds.Y2 - 118;
 
-  (*
-  Self.ScrollArea.X1 := Self.Bounds.X1 + 5;
-  Self.ScrollArea.Y1 := Self.Bounds.Y1 + 77;
-  Self.ScrollArea.X2 := Self.Bounds.X2 - 24;
-  Self.ScrollArea.Y2 := Self.Bounds.Y2 - 44;
-  *)
-
-
   Self.Slots.Setup('Bank.Slots', Self.SlotBoxes, @Self.FindItemBoundaries);
   Self.Items.Setup('Bank.Items', @Self.Slots, [0, 10, 3, 0]);
 end;
@@ -142,4 +142,3 @@ end;
 
 var
   Bank: TRSBank;
-
