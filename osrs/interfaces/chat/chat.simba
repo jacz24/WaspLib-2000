@@ -15,6 +15,7 @@ type
 
   TRSChat = record
     Bounds: TBox;
+    Scroll: TRSScrollBar;
     Tabs: TRSChatTabs;
 
     MessageLines: TBoxArray;
@@ -41,12 +42,19 @@ begin
     Self.Bounds.Y2 := Y1 - 1;
   end;
 
-  //Self.ScrollArea := Self.Bounds;
   with Self.Bounds do
-    Self.MessageLines := TBoxArray.Create(TopLeft + [10, 8], 1, 9, Width - 35, 13, [0, 1]);
+    Self.MessageLines := TBoxArray.Create(TopLeft + [10, 8], 1, 9, Width - 34, 13, [0, 1]);
 
   Self.InputLine := Self.MessageLines.Pop;
+  Self.InputLine.X2 += 17;
   Self.InputLine.Y2 += 2;
+
+  Self.Scroll.ScrollArea.X1 := Self.Bounds.X1 + 6;
+  Self.Scroll.ScrollArea.Y1 := Self.Bounds.Y1 + 6;
+  Self.Scroll.ScrollArea.X2 := Self.Bounds.X2 - 23;
+  Self.Scroll.ScrollArea.Y2 := Self.InputLine.Y1 - 1;
+
+  Self.Scroll.Setup();
 end;
 
 function TRSChat.GetColors(colors: ERSChatColorArray): TIntegerArray;
