@@ -1,0 +1,145 @@
+(*
+# Bank
+Methods to interact with the bank interface
+*)
+
+{$DEFINE SRLT_BANK_INCLUDED}
+{$IFNDEF SRLT_OSR}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  ERSBankButtons = (WORN, MENU);
+  ERSBankArrangement = enum(SWAP, INSERT);
+  ERSBankWithdraw = enum(ITEM, NOTE);
+  ERSBankQuantity = enum(QUANTITY_1, QUANTITY_5, QUANTITY_10, QUANTITY_CUSTOM, QUANTITY_ALL);
+  ERSBankDynamicButtons = enum(PLACEHOLDERS, SEARCH, DEPOSIT_INVENTORY, DEPOSIT_WORN);
+
+  TRSItemBankPosition = record
+    Tab: Integer;
+    Scroll: Integer;
+    Box: TBox;
+  end;
+
+  TRSBankItem = record
+    Item: TRSItem;
+    Quantity: Integer;
+    Noted: Boolean;
+  end;
+
+  TRSBankItemArray = array of TRSBankItem;
+
+  TRSBank = record
+    Bounds: TBox;
+    Slots: TRSSlotInterface;
+    Items: TRSItemInterface;
+
+    CachedQuantity: Int32;
+
+    Incenerator, PotionStorage, SlotsArea: TBox;
+
+    Tabs, SlotBoxes: TBoxArray;
+
+    Cache: record
+      Quantity: Integer;
+      Items: TStringMap<TRSItemBankPosition>;
+    end;
+    const QUANTITY_ALL: Integer = -1;
+    const QUANTITY_ALL_BUT_ONE: Integer = -2;
+  end;
+
+(*
+## Bank.FindItemBoundaries
+```pascal
+function TRSBank.FindItemBoundaries(): TBoxArray;
+```
+Finds item boundaries. This is an internal function used to retrieve the boxes we
+search for items in.
+
+Example:
+```pascal
+ShowOnClient(Self.FindItemBoundaries());
+```
+*)
+function TRSBank.FindItemBoundaries(): TBoxArray;
+var
+  tpa, final: TPointArray;
+  atpa: T2DPointArray;
+  b: TBox;
+  color: Int32;
+begin
+  final := Target.FindColor(RSColors.ITEM_BORDER, 0, Self.SlotsArea);
+  if final = [] then Exit;
+
+  for color in RSColors.STACK_COLORS do
+  begin
+    tpa := Target.FindColor(color, 0, Self.SlotsArea);
+    if tpa <> [] then final += tpa;
+  end;
+
+  atpa := final.Cluster(200, 3);
+
+  for tpa in atpa do
+  begin
+    b := tpa.Bounds();
+    if b.Height <= 5 then Continue;
+    Result += TBoxArray.Create([Self.SlotsArea.X1, b.Y1 - 1], 8, 1, 32, 32, [16, 0]);
+  end;
+end;
+
+(*
+## Bank.SetupInterface
+```pascal
+procedure Bank.SetupInterface;
+```
+Initializes Bank interface coordinates.
+
+```{note}
+This is automatically called on the **Bank** variable.
+```
+*)
+procedure TRSBank.SetupInterface();
+begin
+  with InterfaceArea do
+  begin
+    Self.Bounds.X1 := Max(Floor(Center.X-(Width-1)/2), Floor(Center.X-487/2));
+    Self.Bounds.X2 := Min(Floor(Center.X+(Width-1)/2), Floor(Center.X +487/2));
+    Self.Bounds.Y1 := Max(Floor(Center.Y-(Height-3)/2), Floor(Center.Y-799/2));
+    Self.Bounds.Y2 := Min(Floor(Center.Y+(Height-3)/2), Floor(Center.Y+799/2));
+  end;
+
+  Self.Tabs := TBoxArray.Create(Self.Bounds.TopLeft.Offset(47, 42), 10, 1, 35, 28, [5, 0]);
+  Self.SlotBoxes := TBoxArray.Create(Self.Bounds.TopLeft.Offset(57, 77), 8, (Self.Bounds.Height - 135) div 35, 31, 31, [17, 5]);
+
+  Self.SlotsArea.X1 := Self.Bounds.X1 + 57;
+  Self.SlotsArea.Y1 := Self.Bounds.Y1 + 77;
+  Self.SlotsArea.X2 := Self.Bounds.X2 - 63;
+  Self.SlotsArea.Y2 := Self.Bounds.Y2 - 44;
+
+  Self.Incenerator.X1 := Self.Bounds.X1 + 5;
+  Self.Incenerator.Y1 := Self.Bounds.Y2 - 113;
+  Self.Incenerator.X2 := Self.Bounds.X1 + 51;
+  Self.Incenerator.Y2 := Self.Bounds.Y2 - 44;
+
+  Self.PotionStorage.X1 := Self.Bounds.X1 + 8;
+  Self.PotionStorage.Y1 := Self.Bounds.Y2 - 156;
+  Self.PotionStorage.X2 := Self.Bounds.X1 + 51;
+  Self.PotionStorage.Y2 := Self.Bounds.Y2 - 118;
+
+  (*
+  Self.ScrollArea.X1 := Self.Bounds.X1 + 5;
+  Self.ScrollArea.Y1 := Self.Bounds.Y1 + 77;
+  Self.ScrollArea.X2 := Self.Bounds.X2 - 24;
+  Self.ScrollArea.Y2 := Self.Bounds.Y2 - 44;
+  *)
+
+
+  Self.Slots.Setup('Bank.Slots', Self.SlotBoxes, @Self.FindItemBoundaries);
+  Self.Items.Setup('Bank.Items', @Self.Slots, [0, 10, 3, 0]);
+end;
+
+
+
+var
+  Bank: TRSBank;
+

@@ -16,7 +16,7 @@ type
 
   TImageCompareUtils = record
     Clean: procedure (image, template: TImage) of object;
-    Align: procedure (image, template: TImage) of object;
+    Align: function (image, template: TImage): Boolean of object;
     Filter: TImageCompareFilter;
   end;
 
@@ -24,7 +24,8 @@ function TImageCompareUtils.Compare(image, template: TImage; var similarity: Sin
 var
   match: Single;
 begin
-  if @Self.Align <> nil then Self.Align(image, template);
+  if @Self.Align <> nil then
+    if not Self.Align(image, template) then Exit;
 
   if (template.Width < image.Width) or (template.Height < image.Height) then
   begin

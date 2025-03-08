@@ -24,15 +24,31 @@ type
   end;
 
 
-procedure TRSItemFinder.Align(image, template: TImage);
+function TRSItemFinder.Align(image, template: TImage): Boolean;
 var
   borderA, borderB: TPointArray;
+  bounds: TBox;
+  align, p: TPoint;
 begin
   borderA  := image.FindColor(RSColors.ITEM_BORDER, 0);
   borderB := template.FindColor(RSColors.ITEM_BORDER, 0) + template.FindColor(RSColors.ITEM_BORDER_WHITE, 0);
 
-  image.Crop(borderA.Bounds());
-  template.Crop(borderB.Bounds());
+  align := borderA[High(borderA)] - borderB[High(borderB)];
+
+  borderB := borderB.Offset(align);
+  for p in borderB do
+  begin
+    if p.Y <= 8 then Continue;//stack number... Don't compare.
+
+    //borders don't match.
+    if not image.InImage(p.X, p.Y) then Exit;
+    if image.Pixel[p.X, p.Y] <> RSColors.ITEM_BORDER then Exit;
+  end;
+
+  bounds := borderA.Bounds();
+  image.Crop(bounds);
+  template.Crop(bounds.Offset([-align.X, -align.Y]));
+  Result := True;
 end;
 
 procedure TRSItemFinder.Clean(image, template: TImage);
@@ -49,6 +65,7 @@ begin
   for color in RSColors.STACK_COLORS do
     tpa += template.FindColor(color, 0);
 
+  tpa += template.FindColor(RSColors.ITEM_BORDER, 0);
   image.DrawTPA(tpa);
   template.DrawTPA(tpa);
 end;

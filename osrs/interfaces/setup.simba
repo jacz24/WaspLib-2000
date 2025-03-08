@@ -20,6 +20,7 @@ begin
   RSInterface.SetupInterface();
   XPBar.SetupInterface();
   Prayer.SetupInterface();
+  Bank.SetupInterface();
 end;
 
 function TRSClient.IsLoggedIn(): Boolean; override;
