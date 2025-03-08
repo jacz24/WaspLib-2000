@@ -33,6 +33,8 @@ type
     Bounds: TBox;
     Slots: TRSSlotInterface;
     Items: TRSItemInterface;
+
+    Title: TRSInterfaceTitle;
     Scroll: TRSScrollBar;
 
     CachedQuantity: Int32;
@@ -47,6 +49,7 @@ type
     end;
     const QUANTITY_ALL: Integer = -1;
     const QUANTITY_ALL_BUT_ONE: Integer = -2;
+    _IsOpenHelperBox: TBox;
   end;
 
 (*
@@ -115,6 +118,7 @@ begin
   Self.Scroll.ScrollArea.Y2 := Self.Bounds.Y2 - 44;
 
   Self.Scroll.Setup();
+  Self.Title.Setup(Self.Bounds);
 
   Self.Tabs := TBoxArray.Create(Self.Bounds.TopLeft.Offset(47, 42), 10, 1, 35, 28, [5, 0]);
   Self.SlotBoxes := TBoxArray.Create(Self.Bounds.TopLeft.Offset(57, 77), 8, (Self.Bounds.Height - 135) div 35, 31, 31, [17, 5]);
@@ -136,7 +140,102 @@ begin
 
   Self.Slots.Setup('Bank.Slots', Self.SlotBoxes, @Self.FindItemBoundaries);
   Self.Items.Setup('Bank.Items', @Self.Slots, [0, 10, 3, 0]);
+
+  Self._IsOpenHelperBox.X1 := Self.Bounds.X1 + 240;
+  Self._IsOpenHelperBox.Y1 := Self.Bounds.Y2 - 39;
+  Self._IsOpenHelperBox.X2 := Self.Bounds.X2 - 155;
+  Self._IsOpenHelperBox.Y2 := Self.Bounds.Y2 - 25;
 end;
+
+
+(*
+## Bank.IsOpen
+```pascal
+function TRSBank.IsOpen(): Boolean;
+```
+Returns true if the bank is open.
+
+Example:
+```pascal
+WriteLn Bank.IsOpen();
+```
+*)
+function TRSBank.IsOpen(): Boolean;
+var
+  count1, count2: Integer;
+begin
+  count1 := Target.CountColor($0, 0, Self._IsOpenHelperBox);
+  count2 := Target.CountColor(RSColors.TEXT_ORANGE, 0, Self._IsOpenHelperBox);
+  Result := ((count1 = 94) and (count2 = 116)) or Self.Title.IsTitle('Bank') or Self.Title.IsTitle('Equip');
+end;
+
+(*
+## Bank.WaitOpen
+```pascal
+function TRSBank.WaitOpen(const time: Integer; interval: Integer = -1): Boolean;
+```
+Returns true if the bank is open within `time` milliseconds.
+
+### Example:
+```pascal
+WriteLn Bank.WaitOpen();
+```
+*)
+function TRSBank.WaitOpen(const time: Integer; interval: Integer = -1): Boolean;
+begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsOpen(), interval, time);
+end;
+
+(*
+## Bank.Close
+```pascal
+function TRSBank.Close(escape: Boolean): Boolean;
+function TRSBank.Close(escapeProbability: Single = 0): Boolean; overload;
+```
+Closes the bank, Depending on `escape` or `escapeProbability the function will
+either click the button or press escape key.
+
+Example:
+```pascal
+ WriteLn Bank.Close();
+```
+*)
+function TRSBank.Close(escape: Boolean): Boolean;
+begin
+  Result := Self.Title.Close(escape);
+end;
+
+function TRSBank.Close(escapeProbability: Single = 0): Boolean; overload;
+begin
+  Result := Self.Close(escapeProbability);
+end;
+
+
+function TRSBank.HasIncinerator(): Boolean;
+begin
+  with Self.Incenerator do     //TODO ADD COLOR
+    Result := Target.HasColor(10551295, 0, 1, [X1, Y1+55, X2, Y2]);
+end;
+
+function TRSBank.InceneratorTooltipVisible(): Boolean;
+begin
+  Result := Target.HasColor(10551295, 0, 1, Self.Incenerator);
+end;
+
+function TRSBank.UnHoverIncinerator(): Boolean;
+var
+  boxes: TBoxArray;
+begin
+  if not Self.Incenerator.Contains(Target.MouseXY) then
+    Exit(True);
+
+  boxes := Self.Incenerator.Invert(Self.Bounds).SortFrom(Target.MouseXY);
+  Async.MouseMove(boxes[RandomLeft(0, High(boxes))].RandomPoint());
+  Result := SleepUntil(not Self.InceneratorTooltipVisible(), 100, 1000);
+  Async.MouseStop();
+end;
+
 
 
 

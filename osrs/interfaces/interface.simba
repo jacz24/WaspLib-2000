@@ -51,11 +51,11 @@ begin
   Self.Bounds.X1 := bounds.X1 + 50;
   Self.Bounds.Y1 := bounds.Y1 + 10;
   Self.Bounds.X2 := bounds.X2 - 50;
-  Self.Bounds.Y2 := Self.Bounds.Y1 + 15;
+  Self.Bounds.Y2 := Self.Bounds.Y1 + 17;
 
-  Self.CloseButton.X1 := bounds.X2-28;
-  Self.CloseButton.X2 := bounds.X2-6;
-  Self.CloseButton.Y1 := bounds.Y1+6;
+  Self.CloseButton.X1 := bounds.X2-27;
+  Self.CloseButton.Y1 := bounds.Y1+8;
+  Self.CloseButton.X2 := bounds.X2-7;
   Self.CloseButton.Y2 := bounds.Y1+28;
 
   Self.TitleOCR := TOCRInvertColorFilter.Create([3358536, 0], [5, 0]) ;
@@ -91,7 +91,7 @@ begin
 end;
 
 
-function TRSInterfaceTitle.Close(const escape: Boolean = True): Boolean;
+function TRSInterfaceTitle.Close(const escape: Boolean): Boolean;
 begin
   if not Self.IsOpen() then Exit(True);
 
@@ -101,4 +101,9 @@ begin
   end;
 
   Result := SleepUntil(not Self.IsOpen(), 50, 600);
+end;
+
+function TRSInterfaceTitle.Close(escapeProbability: Single = 0): Boolean; overload;
+begin
+  Result := Self.Close(RandomBoolean(escapeProbability));
 end;

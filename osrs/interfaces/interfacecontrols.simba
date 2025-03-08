@@ -226,10 +226,36 @@ begin
     Result := Round((Y1 - Self.Bounds.Y1) * 100 / (Self.Height - Height));
 end;
 
+function TRSScrollBar.GetScrollArea(): TBox;
+begin
+  Result := Self.ScrollArea; //todo: add antiban to use bounds instead
+end;
+
 function TRSScrollBar.SetLevel(value: Integer): Integer;
+var
+  old, new, scrolls: Integer;
+  direction: Boolean;
+  area: TBox;
 begin
   if not Self.CanScroll() then Exit;
   value := EnsureRange(value, 0, 100);
+
+  old := Self.GetLevel();
+  direction := old < value;
+  area := Self.GetScrollArea();
+
+  while direction = (old < value) do
+  begin
+    Mouse.Move(area);
+    scrolls := Random(1, 3);
+    if direction then scrolls := -scrolls;
+    Target.MouseScroll(scrolls);
+    new := Self.GetLevel();
+
+    //user probably hover them while using RI
+    if new = old then Mouse.Move(area, True);
+    old := new;
+  end;
 end;
 
 
