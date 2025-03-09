@@ -20,7 +20,14 @@ begin
     SetupInterfaces();
 
     Assert(Inventory.IsOpen());
-    //Assert(Inventory.Slots.Count() = 9);
+    Assert(Inventory.Slots.Count() = 11);
+    Assert(Inventory.Slots.CountEmpty() = 17);
+    Assert(Inventory.Slots.CountEmpty() = 17);
+    Assert(Inventory.Items.Contains('Air rune'));
+    Assert(Inventory.Items.Contains('Super attack(4)'));
+
+    //Assert(Inventory.Slots.ReadStack(2) = 1);
+
 
     img.Free();
   end;

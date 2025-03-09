@@ -23,27 +23,34 @@ type
 function TImageCompareUtils.Compare(image, template: TImage; var similarity: Single): Boolean;
 var
   match: Single;
+  tmp: TImage;
 begin
-  if @Self.Align <> nil then
-    if not Self.Align(image, template) then Exit;
+  try
+    tmp := image.Copy();
 
-  if (template.Width < image.Width) or (template.Height < image.Height) then
-  begin
-    similarity := 0;
-    Exit;
+    if @Self.Align <> nil then
+      if not Self.Align(tmp, template) then Exit;
+
+    if (template.Width < tmp.Width) or (template.Height < tmp.Height) then
+    begin
+      similarity := 0;
+      Exit;
+    end;
+
+    template.SetSize(tmp.Width, tmp.Height);
+
+    if @Self.Clean <> nil then Self.Clean(tmp, template);
+    if @Self.Filter <> nil then Self.Filter(tmp, template);
+
+    if similarity = 1 then
+      Exit(tmp.Equals(template));
+
+    match := tmp.Compare(template);
+    Result := match >= similarity;
+    similarity := match;
+  finally
+    tmp.Free();
   end;
-
-  template.SetSize(image.Width, image.Height);
-
-  if @Self.Clean <> nil then Self.Clean(image, template);
-  if @Self.Filter <> nil then Self.Filter(image, template);
-
-  if similarity = 1 then
-    Exit(image.Equals(template));
-
-  match := image.Compare(template);
-  Result := match >= similarity;
-  similarity := match;
 end;
 
 function TImageCompareUtils.Compare(image: TImage; slot: TBox; out similarity: Single): Boolean; overload;
