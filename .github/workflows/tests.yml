@@ -9,8 +9,8 @@ on:
       - main
 
 jobs:
-  setup:
-    runs-on: ubuntu-latest
+  tests:
+    runs-on: windows-latest
 
     steps:
     - name: Checkout repository
@@ -33,6 +33,8 @@ jobs:
         echo "Download URL (64-bit): $downloadUrl"
         outputFile="$RUNNER_TEMP/downloaded64.zip"
         curl -o "$outputFile" "$downloadUrl"
+        echo "Downloaded file: $outputFile"
+        ls $RUNNER_TEMP
         unzip -o "$outputFile" -d ./tests
         rm -f "$outputFile"
 
@@ -44,35 +46,12 @@ jobs:
         echo "Download URL (32-bit): $downloadUrl"
         outputFile="$RUNNER_TEMP/downloaded32.zip"
         curl -o "$outputFile" "$downloadUrl"
+        echo "Downloaded file: $outputFile"
+        ls $RUNNER_TEMP
         unzip -o "$outputFile" -d ./tests
         rm -f "$outputFile"
 
-    - name: Cache tests folder
-      uses: actions/cache@v4
-      with:
-        path: ./tests
-        key: tests-${{ runner.os }}-${{ hashFiles('**/latest.win64') }}
-        restore-keys: |
-          tests-${{ runner.os }}-
-
-  tests:
-    runs-on: windows-latest
-    needs: setup
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4.2.2
-
-    - name: Restore tests folder from cache
-      uses: actions/cache@v4
-      with:
-        path: ./tests
-        key: tests-${{ runner.os }}-${{ hashFiles('**/*.exe') }}
-        restore-keys: |
-          tests-${{ runner.os }}-
-
     - name: Run tests
-      shell: bash
       run: |
-        echo "Contents of the tests folder:"
-        ls -R ./tests
+        cd ./tests
+        ls
