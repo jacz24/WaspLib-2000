@@ -13,43 +13,44 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4.2.2
+      - name: Fetch Simba 2 download URL
+        id: simba-url
+        run: |
+          $url = "https://raw.githubusercontent.com/Villavu/Simba-Build-Archive/refs/heads/main/latest.win64"
+          $response = Invoke-WebRequest -Uri $url -UseBasicParsing
+          $baseUrl = $response.Content.Trim() -replace 'Win64\.zip\?raw=true$', ''
+          Write-Output "Base URL: $baseUrl"
+          echo "::set-output name=baseUrl::$baseUrl"
+          New-Item -Path ".\Includes" -ItemType Directory
 
-    - name: Fetch Simba 2 download URL
-      id: simba-url
-      shell: bash
-      run: |
-        url="https://raw.githubusercontent.com/Villavu/Simba-Build-Archive/refs/heads/main/latest.win64"
-        baseUrl=$(curl -s "$url" | sed 's/Win64\.zip?raw=true$//')
-        echo "Base URL: $baseUrl"
-        echo "::set-output name=baseUrl::$baseUrl"
+      - name: Download Simba 2.0 (64-bit)
+        run: |
+          $baseUrl = "${{ steps.simba-url.outputs.baseUrl }}"
+          $downloadUrl = "$baseUrl" + "Win64.zip?raw=true"
+          Write-Output "Download URL (64-bit): $downloadUrl"
+          $outputFile = ".\download.zip"
+          Invoke-WebRequest -Uri $downloadUrl -OutFile $outputFile
+          Expand-Archive -Path $outputFile -DestinationPath . -Force
+          Remove-Item -Path $outputFile -Force
 
-    - name: Download Simba 2.0 (64-bit)
-      shell: bash
-      run: |
-        baseUrl="${{ steps.simba-url.outputs.baseUrl }}"
-        downloadUrl="${baseUrl}Win64.zip?raw=true"
-        echo "Download URL (64-bit): $downloadUrl"
-        curl "$downloadUrl"
-        pwd
-        ls
-        unzip -o ./Win64.zip -d ./tests
-        rm -f ./Win64.zip
+      - name: Download Simba 2.0 (32-bit)
+        run: |
+          $baseUrl = "${{ steps.simba-url.outputs.baseUrl }}"
+          $downloadUrl = "$baseUrl" + "Win32.zip?raw=true"
+          Write-Output "Download URL (32-bit): $downloadUrl"
+          $outputFile = ".\download.zip"
+          Invoke-WebRequest -Uri $downloadUrl -OutFile $outputFile
+          Expand-Archive -Path $outputFile -DestinationPath . -Force
+          Remove-Item -Path $outputFile -Force
 
-    - name: Download Simba 2.0 (32-bit)
-      shell: bash
-      run: |
-        baseUrl="${{ steps.simba-url.outputs.baseUrl }}"
-        downloadUrl="${baseUrl}Win32.zip?raw=true"
-        echo "Download URL (32-bit): $downloadUrl"
-        curl "$downloadUrl"
-        pwd
-        ls
-        unzip -o ./Win32.zip -d ./tests
-        rm -f ./Win32.zip
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+        with:
+          path: ./Includes/SRLT
 
-    - name: Run tests
-      run: |
-        cd ./tests
-        ls
+      - name: Run tests
+        working-directory: ./tests
+        run: |
+          Get-ChildItem -Recurse
+          ./Simba-Win32.exe --run ./Includes/SRLT/tests/compile.simba
+          ./Simba-Win64.exe --run ./Includes/SRLT/tests/compile.simba
