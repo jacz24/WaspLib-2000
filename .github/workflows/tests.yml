@@ -21,15 +21,15 @@ jobs:
       shell: bash
       run: |
         url="https://raw.githubusercontent.com/Villavu/Simba-Build-Archive/refs/heads/main/latest.win64"
-        baseUrl=$(curl -s "$url" | sed 's/win64\.zip$//')
+        baseUrl=$(curl -s "$url" | sed 's/Win64\.zip?raw=true$//')
         echo "Base URL: $baseUrl"
         echo "::set-output name=baseUrl::$baseUrl"
 
     - name: Download Simba 2.0 (64-bit)
       shell: bash
       run: |
-        baseUrl="${{ steps.fetch-url.outputs.baseUrl }}"
-        downloadUrl="${baseUrl}win64.zip"
+        baseUrl="${{ steps.simba-url.outputs.baseUrl }}"
+        downloadUrl="${baseUrl}Win64.zip?raw=true"
         echo "Download URL (64-bit): $downloadUrl"
         outputFile="$RUNNER_TEMP/downloaded64.zip"
         curl -o "$outputFile" "$downloadUrl"
@@ -39,8 +39,8 @@ jobs:
     - name: Download Simba 2.0 (32-bit)
       shell: bash
       run: |
-        baseUrl="${{ steps.fetch-url.outputs.baseUrl }}"
-        downloadUrl="${baseUrl}win32.zip"
+        baseUrl="${{ steps.simba-url.outputs.baseUrl }}"
+        downloadUrl="${baseUrl}Win32.zip?raw=true"
         echo "Download URL (32-bit): $downloadUrl"
         outputFile="$RUNNER_TEMP/downloaded32.zip"
         curl -o "$outputFile" "$downloadUrl"
