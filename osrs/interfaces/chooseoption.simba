@@ -36,7 +36,6 @@ Core record responsible with interacting with the choose option context menu.
 *)
   TRSChooseOption = record
     Bounds: TBox;
-    OCRFilter: TOCRInvertColorFilter;
     const TitleImg: TImage = ImageFromString('IMG:AQAAAGYAAAASAAAAAAAAAP21aQABAAAAIKprAAEAAADI5D8BAAAAAM0CAQABAAAAOIe7BgAAAAAApLsGAAAAADQBAACYAQAAOIe7BgAAAAABAAAAZgAAABIAAAAYAAAAAAAAAAAAAAAAAAAAAwAAABgIEAgICAAAAAEAAAIAAAAAAAAAAAAAAAAAAAAAiVBORw0KGgoAAAANSUhEUgAAAGYAAAASCAIAAAAmDjziAAAAzUlEQVR4nO2U0Q2AMAhE3c4F/HX/NYzxo9oWvAO0mkBqoqTA9Qmd1mXORa1pf9IoS2S0JTLaWmRlaK+ed3X1rdU2RkT1eXjOysarvMoA9TwlG+mmLyAzNH4iC0AWcxAcWfce8fjb0sqRdGSenEpUP5BCVu3xvEs4wE63lcOjtEuTHUwnJuXH4hpspf3iSxZJVkglPCcyRGZJkeKlpFGYPMMohRjwRYpvXdTgSN2hDODtfgUfG1s5EfEWZL8zsEkj671X7BlLZLQNQJaLWhvxdfuwwsTSHQAAAABJRU5ErkJggg==');
   end;
 
@@ -108,19 +107,6 @@ begin
   Result := Self.WaitOpen(600);
 end;
 
-(*
-## ChooseOption.Setup
-```pascal
-procedure TRSChooseOption.Setup();
-```
-TRSChooseOption setup method.
-This is responsible for loading the needed bitmaps into memory and is automatically called for you when a script is ran so you
-don't have to call it.
-*)
-procedure TRSChooseOption.Setup();
-begin
-  Self.OCRFilter := TOCRInvertColorFilter.Create([4674653, 0]);
-end;
 
 (*
 ## ChooseOption.GetOptions
@@ -149,7 +135,7 @@ begin
     b.Y2 := b.Y1 + 15;
     if b.Y2 > Self.Bounds.Y2 then Exit;
 
-    Result[i].Text := OCR.RecognizeStatic(b, Self.OCRFilter, RSFonts.BOLD_12_SHADOW);
+    Result[i].Text := OCR.RecognizeStatic(b, OCR.BOLD_SHADOW, [$47545D, $0], 0);
     Result[i].Bounds := b;
   end;
 end;
@@ -221,7 +207,7 @@ begin
     option.Bounds.Y2 := option.Bounds.Y1 + 15;
     if option.Bounds.Y2 > Self.Bounds.Y2 then Exit;
 
-    option.Text := OCR.RecognizeStatic(option.Bounds, Self.OCRFilter, RSFonts.BOLD_12_SHADOW);
+    option.Text := OCR.RecognizeStatic(option.Bounds, OCR.BOLD_SHADOW, [$47545D, $0], 0);
 
     if option.Text.ContainsAny(text, caseSensitive) then
       Exit(True);
@@ -321,6 +307,3 @@ var
 Global TRSChooseOption variable.
 *)
   ChooseOption: TRSChooseOption;
-begin
-  ChooseOption.Setup();
-end;

@@ -30,12 +30,11 @@ Record responsible with interacting with the xp bar.
     Position: ERSXPBarPosition;
 
     Bounds: TBox;
-    Font: TFontSet;
+    Font: TPixelFont;
 
     AvailableBounds: TBoxArray;
 
     Button: TCircle;
-    OCRFilter: TOCRColorFilter;
 
     SetupAttempts: Integer;
 
@@ -228,27 +227,25 @@ begin
       8:
       begin
         Self.Size := ERSXPBarSize.SMALL;
-        Self.Font := RSFonts.PLAIN_11;
+        Self.Font := OCR.PLAIN_11;
       end;
 
       11:
       begin
         Self.Size := ERSXPBarSize.MEDIUM;
-        Self.Font := RSFonts.PLAIN_12;
+        Self.Font := OCR.PLAIN_12;
       end;
 
       10:
       begin
         Self.Size := ERSXPBarSize.LARGE;
-        Self.Font := RSFonts.BOLD_12;
+        Self.Font := OCR.BOLD;
       end;
 
       else Continue;
     end;
 
     Self.Position := position;
-    Self.OCRFilter := TOCRColorFilter.Create([$FFFFFF]);
-
     Self.UpdateSize();
 
     Exit(True);
@@ -278,7 +275,7 @@ var
 begin
   if not Self.Setup() then Exit;
 
-  str := OCR.Recognize(Self.Bounds, Self.OCRFilter, Self.Font);
+  str := OCR.Recognize(Self.Bounds, Self.Font, [$FFFFFF], 0);
 
   Result := str.ExtractInteger(0);
   if Result = 0 then Exit;

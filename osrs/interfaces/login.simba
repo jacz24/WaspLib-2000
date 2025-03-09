@@ -6,13 +6,10 @@
 type
   TRSLoginLobby = record
     Bounds, Button: TBox;
-    OCRFilter: TOCRColorFilter;
   end;
 
 procedure TRSLoginLobby.Setup();
 begin
-  Self.OCRFilter := TOCRColorFilter.Create([$FFFFFF]);
-
   Self.Bounds.X1 := Target.Bounds.Width div 2 - 382;
   Self.Bounds.X2 := Target.Bounds.Width div 2 + 382;
   Self.Bounds.Y1 := Target.Bounds.Y1;
@@ -30,7 +27,7 @@ end;
 
 function TRSLoginLobby.IsOpen(): Boolean;
 begin
-  Result := 1 = OCR.Locate(Self.Button, 'CLICK HERE TO PLAY', RSFonts.BOLD_12_SHADOW,Self.OCRFilter);
+  Result := OCR.Locate(Self.Button, 'CLICK HERE TO PLAY', [$FFFFFF], 0, OCR.BOLD_SHADOW) > 0.999;
 end;
 
 function TRSLoginLobby.WaitOpen(const time: Integer = 600; interval: Integer = -1): Boolean;
@@ -67,7 +64,6 @@ type
   TRSLoginWorldSwitcher = record
     Bounds: TBox;
     OpenButton, CancelButton: TBox;
-    CurrentOCRFilter, WorldOCRFilter: TOCRColorFilter;
     CurrentWorld: Integer;
     WorldBoxes: TBoxArray;
 
@@ -76,9 +72,6 @@ type
 
 procedure TRSLoginWorldSwitcher.Setup();
 begin
-  Self.CurrentOCRFilter := TOCRColorFilter.Create([$FFFFFF]);
-  Self.WorldOCRFilter := TOCRColorFilter.Create([$000000, $0000FF]);
-
   Self.Bounds.X1 := Target.Bounds.Width div 2 - 382;
   Self.Bounds.X2 := Target.Bounds.Width div 2 + 382;
   Self.Bounds.Y1 := Target.Bounds.Y1;
@@ -142,7 +135,7 @@ end;
 
 function TRSLoginWorldSwitcher.Read(index: Integer): Integer;
 begin
-  Result := OCR.RecognizeNumber(Self.WorldBoxes[index], Self.WorldOCRFilter, RSFonts.BOLD_12);
+  Result := OCR.RecognizeNumber(Self.WorldBoxes[index], OCR.BOLD, [$000000, $0000FF], 0);
 end;
 
 
@@ -172,7 +165,7 @@ end;
 function TRSLoginWorldSwitcher.GetCurrent(): Integer;
 begin
   if not Self.Close() then Exit;
-  Result := OCR.RecognizeNumber(Self.OpenButton, Self.CurrentOCRFilter, RSFonts.BOLD_12_SHADOW);
+    Result := OCR.RecognizeNumber(Self.OpenButton, OCR.BOLD_SHADOW, [$FFFFFF], 0);
   if InRange(Self.CurrentWorld, 301, 580) then Self.CurrentWorld := Result;
 end;
 
@@ -181,7 +174,7 @@ function TRSLoginWorldSwitcher.Find(world: Integer; out index: Integer): Boolean
 begin
   repeat
     for index := 0 to High(Self.WorldBoxes) do
-      if OCR.RecognizeNumber(Self.WorldBoxes[index], Self.WorldOCRFilter, RSFonts.BOLD_12) = world then
+      if OCR.RecognizeNumber(Self.WorldBoxes[index], OCR.BOLD, [$000000, $0000FF], 0) = world then
         Exit(True);
   until not Self.NextPage();
 
@@ -249,9 +242,7 @@ type
   TRSLogin = record
     Lobby: TRSLoginLobby;
     WorldSwitcher: TRSLoginWorldSwitcher;
-
     Bounds: TBox;
-    WhiteOCR, YellowOCR: TOCRColorFilter;
 
     Inputs: array [ERSLoginInput] of TBox;
     Buttons: array [ERSLoginButton] of record
@@ -269,9 +260,6 @@ procedure TRSLogin.Setup();
 begin
   Self.WorldSwitcher.Setup();
   Self.Lobby.Setup();
-
-  Self.WhiteOCR := TOCRColorFilter.Create([$FFFFFF]);
-  Self.YellowOCR := TOCRColorFilter.Create([$00FFFF]);
 
   Self.Bounds.X1 := Target.Bounds.Width div 2 - 176;
   Self.Bounds.Y1 := Target.Bounds.Y1 + 172;
@@ -354,9 +342,9 @@ begin
   end;
 
   if Self.Buttons[button].Bold then
-    Result := Self.Buttons[button].Text = OCR.Recognize(Self.Buttons[button].Bounds, Self.WhiteOCR, RSFonts.BOLD_12_SHADOW)
-  else
-    Result := Self.Buttons[button].Text = OCR.Recognize(Self.Buttons[button].Bounds, Self.WhiteOCR, RSFonts.PLAIN_12);
+    Exit(Self.Buttons[button].Text = OCR.Recognize(Self.Buttons[button].Bounds, OCR.BOLD_SHADOW, [$FFFFFF], 0));
+
+  Result := Self.Buttons[button].Text = OCR.Recognize(Self.Buttons[button].Bounds, OCR.PLAIN_12, [$FFFFFF], 0);
 end;
 
 function TRSLogin.ClickButton(button: ERSLoginButton): Boolean;
@@ -410,9 +398,9 @@ function TRSLogin.GetMessage(): ERSLoginMessage;
 var
   dialog: String;
 begin
-  dialog := OCR.RecognizeLines(Self.Bounds, Self.YellowOCR, RSFonts.BOLD_12_SHADOW).Join(' ');
+  dialog := OCR.RecognizeLines(Self.Bounds, OCR.BOLD_SHADOW, [$00FFFF], 0).Join(' ');
   if dialog = '' then
-    dialog := OCR.RecognizeLines(Self.Bounds, Self.WhiteOCR, RSFonts.BOLD_12_SHADOW).Join(' ');
+    dialog := OCR.RecognizeLines(Self.Bounds, OCR.BOLD_SHADOW, [$FFFFFF], 0).Join(' ');
   if dialog = '' then Exit;
 
   for Result := ERSLoginMessage.WELCOME to High(ERSLoginMessage)-1 do

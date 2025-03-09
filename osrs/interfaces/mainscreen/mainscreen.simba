@@ -17,16 +17,17 @@ type
     TopLeft, TopRight, BottomRight, BottomLeft: TPoint;
 
     UpTextImageBuffer: TImage;
-    UpTextBox: TBox;
-    UpTextFilter: TOCRFilter;
+    UptextBounds: TBox;
+    UptextOCR: TPixelOCR;
 
     HighestPitch: Boolean;
   end;
 
 procedure TRSMainScreen.Setup();
 begin
-  Self.UptextFilter := TOCRAnyColorFilter.Create(85, 60);
-  Self.UptextFilter.Blacklist := ',.'+#39+#34;
+  Self.UptextOCR.Tolerance := 25;
+  Self.UptextOCR.ShadowTolerance := 65;
+  Self.UptextOCR.Whitelist := ['a'..'z', 'A'..'Z', '0'..'9', '-', '>', '(', ')', '/'];
 end;
 
 procedure TRSMainScreen.SetupInterface();
@@ -44,20 +45,20 @@ begin
   Self.BottomRight := Self.Bounds.BottomRight;
   Self.BottomLeft  := Self.Bounds.BottomLeft;
 
-  Self.UpTextBox.X1 := Self.Bounds.X1 + 3;
-  Self.UpTextBox.Y1 := Self.Bounds.Y1 + 3;
-  Self.UpTextBox.X2 := Self.Bounds.X1 + 500;
-  Self.UpTextBox.Y2 := Self.Bounds.Y1 + 21;
+  Self.UptextBounds.X1 := Self.Bounds.X1 + 3;
+  Self.UptextBounds.Y1 := Self.Bounds.Y1 + 3;
+  Self.UptextBounds.X2 := Self.Bounds.X1 + 500;
+  Self.UptextBounds.Y2 := Self.Bounds.Y1 + 21;
 end;
 
 
 function TRSMainScreen.GetUpText(): String;
+var
+  img: TImage;
 begin
-   if RSClient.Mode = ERSClientMode.FIXED then
-    Result := OCR.RecognizeStatic(Self.UpTextBox, Self.UptextFilter, RSFonts.BOLD_12_SHADOW)
-  else
-    Result := OCR.RecognizeStatic(Self.UpTextBox, Self.UptextFilter, RSFonts.BOLD_12_SHADOW);
-
+  img := TImage.CreateFromTarget(Self.UptextBounds);
+  Result := Self.UptextOCR.Recognize(img, OCR.BOLD_SHADOW, [0,0]);
+  img.Free();
   {$IFDEF DEBUG_UPTEXT}
   WriteLn GetDebugLn('MainScreen', 'UpText: ' + Result);
   {$ENDIF}

@@ -98,7 +98,7 @@ begin
   b.X2 := b.X1 + Self.InputLine.Width div 4;
   b.Y2 := Self.InputLine.Y2;
 
-  Result := OCR.RecognizeStatic(b, TOCRColorFilter.Create([$FFFFFF, $000000]), RSFonts.PLAIN_12);
+  Result := OCR.RecognizeStatic(b, OCR.PLAIN_12, [$FFFFFF, $000000], 0);
 
   if ':' in Result then
     Result := Result.Before(':');
@@ -170,17 +170,13 @@ end;
 
 
 function TRSChat.GetQuery(): String;
-const
-  FILTER: TOCRColorFilter := TOCRColorFilter.Create([$000000]);
 begin
-  Result := OCR.Recognize(Self.Bounds, FILTER, RSFonts.BOLD_12);
+  Result := OCR.Recognize(Self.Bounds, OCR.BOLD, [$0], 0);
 end;
 
 function TRSChat.GetQueryAnswer(): String;
-var
-  FILTER: TOCRColorFilter := TOCRColorFilter.Create([8388608]);
 begin
-  Result := OCR.Recognize(Self.Bounds, FILTER, RSFonts.BOLD_12);
+  Result := OCR.Recognize(Self.Bounds, OCR.BOLD, [$800000], 0);
 end;
 
 function TRSChat.FindQuery(query: String; caseSensitive: Boolean = False): Boolean;
@@ -232,7 +228,7 @@ begin
     tpa += Target.FindColor(colors[i], 0, Self.Bounds);
 
   b := tpa.Bounds();
-  strings := OCR.RecognizeLines(b, TOCRColorFilter.Create(colors), RSFonts.QUILL_8);
+  strings := OCR.RecognizeLines(b, OCR.QUILL_8, colors, 0);
 
   boxes := b.Partition(strings.Length, 1);
 

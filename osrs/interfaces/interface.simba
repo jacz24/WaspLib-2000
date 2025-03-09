@@ -43,7 +43,6 @@ end;
 type
   TRSInterfaceTitle = record
     Bounds, CloseButton: TBox;
-    TitleOCR: TOCRInvertColorFilter;
   end;
 
 procedure TRSInterfaceTitle.Setup(const bounds: TBox);
@@ -57,8 +56,6 @@ begin
   Self.CloseButton.Y1 := bounds.Y1+8;
   Self.CloseButton.X2 := bounds.X2-7;
   Self.CloseButton.Y2 := bounds.Y1+28;
-
-  Self.TitleOCR := TOCRInvertColorFilter.Create([3358536, 0], [5, 0]) ;
 end;
 
 
@@ -76,12 +73,12 @@ end;
 
 function TRSInterfaceTitle.GetTitle(): String;
 begin
-  Result := OCR.Recognize(Self.Bounds, Self.TitleOCR, RSFonts.BOLD_12);
+  Result := OCR.Recognize(Self.Bounds, OCR.BOLD, [RSColors.TEXT_ORANGE, $0], 0);
 end;
 
 function TRSInterfaceTitle.IsTitle(const text: String; const similarity: Single = 0.8): Boolean;
 begin
-  Result := OCR.Locate(Self.Bounds, text, RSFonts.BOLD_12, Self.TitleOCR) >= similarity;
+  Result := OCR.LocateInvert(Self.Bounds, text, [$344049,0], 2, OCR.BOLD) >= similarity;
 end;
 
 function TRSInterfaceTitle.WaitTitle(const text: String; const similarity: Single = 0.8; const time: Integer = 600; interval: Integer = -1): Boolean; overload;

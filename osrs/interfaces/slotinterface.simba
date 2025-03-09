@@ -13,7 +13,6 @@ type
     Name: String;
     Slots: TBoxArray;
     SlotsFunction: function (): TBoxArray of object;
-    StackOCR: array [0..2]of TOCRColorFilter;
   end;
 
 procedure TRSSlotInterface.Setup(name: String; slots: TBoxArray; slotsFunction: function (): TBoxArray of object = nil);
@@ -21,10 +20,6 @@ begin
   Self.Name := name;
   Self.Slots := slots;
   Self.SlotsFunction := @slotsFunction;
-
-  Self.StackOCR[0] := TOCRColorFilter.Create([RSColors.STACK_YELLOW]);
-  Self.StackOCR[1] := TOCRColorFilter.Create([RSColors.STACK_WHITE]);
-  Self.StackOCR[2] := TOCRColorFilter.Create([RSColors.STACK_GREEN]);
 end;
 
 function TRSSlotInterface.Boxes(): TBoxArray;
@@ -196,7 +191,7 @@ begin
 
   for i := 0 to High(RSColors.STACK_COLORS) do
     if Target.HasColor(RSColors.STACK_COLORS[i], 0, 1, slot) then
-      Exit(OCR.RecognizeNumber(slot, Self.StackOCR[i], RSFonts.PLAIN_11) * Round(10 ** (3 * i)));
+      Exit(OCR.RecognizeNumber(slot, OCR.PLAIN_11, [RSColors.STACK_COLORS[i]], 0) * Round(10 ** (3 * i)));
 end;
 
 function TRSSlotInterface.ReadStack(slot: Integer): Integer; overload;

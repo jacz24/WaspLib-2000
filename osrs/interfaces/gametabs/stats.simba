@@ -43,34 +43,12 @@ end;
 (*
 (TRSStats)=
 ## type TRSStats
-```pascal
-TRSStats = record
-  Levels: array [ERSSkill] of Integer;
-  Skills: TBoxArray;
-  StatsOCR, InfoOCR: TOCRColorFilter;
-end;
-```
+Main record used to interact with the stats gametab.
 *)
   TRSStats = record
     Levels: array [ERSSkill] of Integer;
     Skills: TBoxArray;
-    StatsOCR, InfoOCR: TOCRColorFilter;
   end;
-
-(*
-## Stats.Setup()
-```pascal
-procedure TRSStats.Setup(); override;
-```
-Internal method responsible for setting up Stats.
-It's automatically called for you when the file is included.
-*)
-procedure TRSStats.Setup();
-begin
-  Self.StatsOCR := TOCRColorFilter.Create([65535]);
-  Self.InfoOCR := TOCRColorFilter.Create([0]);
-end;
-
 
 (*
 ## Stats.SetupInterface
@@ -161,7 +139,7 @@ begin
   if lines = [] then Exit;
 
   for i := 0 to High(lines) do
-    lines[i] := OCR.Recognize([b.X1, b.Y1 + (i * 12), b.X2, b.Y1 + ((i+1) * 12) + 3],  Self.InfoOCR, RSFonts.PLAIN_12);
+    lines[i] := OCR.Recognize([b.X1, b.Y1 + (i * 12), b.X2, b.Y1 + ((i+1) * 12) + 3], OCR.PLAIN_12, [0], 0);
 
   if not (ToStr(skill).Capitalize() in lines[0]) then Exit;
 
@@ -220,7 +198,7 @@ begin
   if not Self.Open() then Exit(-1);
 
   with Self.Skills[skill] do
-    Result := OCR.RecognizeNumber([X1, Y2 - (Height div 2), X2, Y2], Self.StatsOCR, RSFonts.PLAIN_11);
+    Result := OCR.RecognizeNumber([X1, Y2 - (Height div 2), X2, Y2], OCR.PLAIN_11, [RSColors.STACK_YELLOW], 0);
 
   if Result > 0 then
     Self.Levels[skill] := Result;
@@ -268,7 +246,3 @@ var
 Global TRSStats variable.
 *)
   Stats: TRSStats;
-
-begin
-  Stats.Setup();
-end;

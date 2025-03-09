@@ -21,8 +21,6 @@ type
     Center: TPoint;
     Polygon: TPolygon;
 
-    OrbOCR: TOCRShadowFilter;
-
     Compass: record
       PreviousRadians: Single;
       Circle: TCircle;
@@ -270,7 +268,6 @@ begin
   until GetTickCount() > timeout;
 
   WriteLn GetDebugLn('Minimap', 'SetCompassAngle timed out.', EErrorLevel.WARN);
-
   //TODO:
   //if not RSClient.IsLoggedIn() then
   //  Login.LoginPlayer()
@@ -306,7 +303,9 @@ WriteLn Minimap.GetLevel(ERSMinimapOrb.PRAYER);
 *)
 function TRSMinimap.GetLevel(orb: ERSMinimapOrb): Integer;
 begin
-  Result := OCR.RecognizeNumber([Self.Orbs[orb].X-35, Self.Orbs[orb].Y-1, Self.Orbs[orb].X-15, Self.Orbs[orb].Y+9], Self.OrbOCR, RSFonts.PLAIN_11);
+  raise GetDebugLn('Minimap.GetLevel' , 'TODO');
+  //TODO:
+  //Result := OCR.RecognizeNumber([Self.Orbs[orb].X-35, Self.Orbs[orb].Y-1, Self.Orbs[orb].X-15, Self.Orbs[orb].Y+9], Self.OrbOCR, RSFonts.PLAIN_11);
 end;
 
 
@@ -750,7 +749,3 @@ var
 Global TRSMinimap variable.
 *)
   Minimap: TRSMinimap;
-
-begin
-  Minimap.OrbOCR := TOCRShadowFilter.Create();
-end;
