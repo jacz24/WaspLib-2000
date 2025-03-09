@@ -9,8 +9,8 @@ on:
       - main
 
 jobs:
-  tests:
-    runs-on: windows-latest
+  setup:
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
@@ -47,7 +47,32 @@ jobs:
         unzip -o "$outputFile" -d ./tests
         rm -f "$outputFile"
 
+    - name: Cache tests folder
+      uses: actions/cache@v4
+      with:
+        path: ./tests
+        key: tests-${{ runner.os }}-${{ hashFiles('**/latest.win64') }}
+        restore-keys: |
+          tests-${{ runner.os }}-
+
+  tests:
+    runs-on: windows-latest
+    needs: setup
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4.2.2
+
+    - name: Restore tests folder from cache
+      uses: actions/cache@v4
+      with:
+        path: ./tests
+        key: tests-${{ runner.os }}-${{ hashFiles('**/*.exe') }}
+        restore-keys: |
+          tests-${{ runner.os }}-
+
     - name: Run tests
+      shell: bash
       run: |
-        cd ./tests
-        ls
+        echo "Contents of the tests folder:"
+        ls -R ./tests
