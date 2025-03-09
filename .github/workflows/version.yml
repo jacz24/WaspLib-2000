@@ -1,4 +1,4 @@
-name: CalVer
+name: Version
 
 on:
   push:
@@ -6,49 +6,49 @@ on:
       - main
 
 jobs:
-  bump-version:
+  version:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4.2.2
+    - name: Checkout repository
+      uses: actions/checkout@v4.2.2
 
-      - name: Get current date
-        id: date
-        run: |
-          echo "CURRENT_YEAR=$(date +'%Y')" >> $GITHUB_ENV
-          echo "CURRENT_MONTH=$(date +'%m')" >> $GITHUB_ENV
-          echo "CURRENT_DAY=$(date +'%d')" >> $GITHUB_ENV
+    - name: Get current date
+      id: date
+      run: |
+        echo "CURRENT_YEAR=$(date +'%Y')" >> $GITHUB_ENV
+        echo "CURRENT_MONTH=$(date +'%m')" >> $GITHUB_ENV
+        echo "CURRENT_DAY=$(date +'%d')" >> $GITHUB_ENV
 
-      - name: Get commit hash
-        id: commit-hash
-        run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+    - name: Get commit hash
+      id: commit-hash
+      run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
-      - name: Update version.simba
-        run: |
-          sed -i "s/SRLT_VERSION_YEAR: Integer = .*/SRLT_VERSION_YEAR: Integer = $CURRENT_YEAR;/" version.simba
-          sed -i "s/SRLT_VERSION_MONTH: Integer = .*/SRLT_VERSION_MONTH: Integer = $CURRENT_MONTH;/" version.simba
-          sed -i "s/SRLT_VERSION_DAY: Integer = .*/SRLT_VERSION_DAY: Integer = $CURRENT_DAY;/" version.simba
-          sed -i "s/SRLT_VERSION_COMMIT_HASH: String = .*/SRLT_VERSION_COMMIT_HASH: String = '$COMMIT_HASH';/" version.simba
+    - name: Update version.simba
+      run: |
+        sed -i "s/SRLT_VERSION_YEAR: Integer = .*/SRLT_VERSION_YEAR: Integer = $CURRENT_YEAR;/" version.simba
+        sed -i "s/SRLT_VERSION_MONTH: Integer = .*/SRLT_VERSION_MONTH: Integer = $CURRENT_MONTH;/" version.simba
+        sed -i "s/SRLT_VERSION_DAY: Integer = .*/SRLT_VERSION_DAY: Integer = $CURRENT_DAY;/" version.simba
+        sed -i "s/SRLT_VERSION_COMMIT_HASH: String = .*/SRLT_VERSION_COMMIT_HASH: String = '$COMMIT_HASH';/" version.simba
 
-      - name: Commit changes
-        run: |
-          git config --global user.name "Wasp Bot"
-          git config --global user.email "waspbot@waspcripts.com"
-          git add version.simba
-          git commit -m "Automatic version bump to $CURRENT_YEAR.$CURRENT_MONTH.$CURRENT_DAY-$COMMIT_HASH"
-          git push
+    - name: Commit changes
+      run: |
+        git config --global user.name "Wasp Bot"
+        git config --global user.email "waspbot@waspcripts.com"
+        git add version.simba
+        git commit -m "Automatic version bump to $CURRENT_YEAR.$CURRENT_MONTH.$CURRENT_DAY-$COMMIT_HASH"
+        git push
 
-      - name: Create new tag
-        id: tag
-        run: |
-          TAG_NAME="$CURRENT_YEAR.$CURRENT_MONTH.$CURRENT_DAY-$COMMIT_HASH"
-          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
-          git tag $TAG_NAME
-          git push origin $TAG_NAME
+    - name: Create new tag
+      id: tag
+      run: |
+        TAG_NAME="$CURRENT_YEAR.$CURRENT_MONTH.$CURRENT_DAY-$COMMIT_HASH"
+        echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+        git tag $TAG_NAME
+        git push origin $TAG_NAME
 
-      - name: Create release
-        run: |
-          gh release create $TAG_NAME --generate-notes
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Create release
+      run: |
+        gh release create $TAG_NAME --generate-notes
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

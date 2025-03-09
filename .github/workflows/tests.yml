@@ -1,0 +1,53 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  tests:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4.2.2
+
+    - name: Fetch Simba 2 download URL
+      id: simba-url
+      shell: bash
+      run: |
+        url="https://raw.githubusercontent.com/Villavu/Simba-Build-Archive/refs/heads/main/latest.win64"
+        baseUrl=$(curl -s "$url" | sed 's/win64\.zip$//')
+        echo "Base URL: $baseUrl"
+        echo "::set-output name=baseUrl::$baseUrl"
+
+    - name: Download Simba 2.0 (64-bit)
+      shell: bash
+      run: |
+        baseUrl="${{ steps.fetch-url.outputs.baseUrl }}"
+        downloadUrl="${baseUrl}win64.zip"
+        echo "Download URL (64-bit): $downloadUrl"
+        outputFile="$RUNNER_TEMP/downloaded64.zip"
+        curl -o "$outputFile" "$downloadUrl"
+        unzip -o "$outputFile" -d ./tests
+        rm -f "$outputFile"
+
+    - name: Download Simba 2.0 (32-bit)
+      shell: bash
+      run: |
+        baseUrl="${{ steps.fetch-url.outputs.baseUrl }}"
+        downloadUrl="${baseUrl}win32.zip"
+        echo "Download URL (32-bit): $downloadUrl"
+        outputFile="$RUNNER_TEMP/downloaded32.zip"
+        curl -o "$outputFile" "$downloadUrl"
+        unzip -o "$outputFile" -d ./tests
+        rm -f "$outputFile"
+
+    - name: Run tests
+      run: |
+        cd ./tests
+        ls
