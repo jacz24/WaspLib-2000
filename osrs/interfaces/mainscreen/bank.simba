@@ -121,7 +121,7 @@ begin
   Self.Title.Setup(Self.Bounds);
 
   Self.Tabs := TBoxArray.Create(Self.Bounds.TopLeft.Offset(47, 42), 10, 1, 35, 28, [5, 0]);
-  //Self.SlotBoxes := TBoxArray.Create(Self.Bounds.TopLeft.Offset(57, 77), 8, (Self.Bounds.Height - 135) div 35, 31, 31, [17, 5]);
+  Self.SlotBoxes := TBoxArray.Create(Self.Bounds.TopLeft.Offset(57, 77), 8, (Self.Bounds.Height - 135) div 35, 31, 31, [17, 5]);
 
   Self.SlotsArea.X1 := Self.Bounds.X1 + 57;
   Self.SlotsArea.Y1 := Self.Bounds.Y1 + 77;

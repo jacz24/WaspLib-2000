@@ -184,14 +184,14 @@ function TRSSlotInterface.ReadStack(slot: TBox): Integer;
 var
   i: Integer;
 begin
-  //b.X1 += Self.DiscoverOffset.X1;
-  //b.Y1 += Self.DiscoverOffset.Y1 - 9;
+  slot.Y1 -= 1;
   slot.X2 := slot.X1 + 35;
-  slot.Y2 := slot.Y1 + 8;
+  slot.Y2 := slot.Y1 + 11;
 
   for i := 0 to High(RSColors.STACK_COLORS) do
     if Target.HasColor(RSColors.STACK_COLORS[i], 0, 1, slot) then
       Exit(OCR.RecognizeNumber(slot, OCR.PLAIN_11, [RSColors.STACK_COLORS[i]], 0) * Round(10 ** (3 * i)));
+  Result := -1;
 end;
 
 function TRSSlotInterface.ReadStack(slot: Integer): Integer; overload;

@@ -25,9 +25,8 @@ begin
     Assert(Inventory.Slots.CountEmpty() = 17);
     Assert(Inventory.Items.Contains('Air rune'));
     Assert(Inventory.Items.Contains('Super attack(4)'));
-
-    //Assert(Inventory.Slots.ReadStack(2) = 1);
-
+    Assert(Inventory.Slots.ReadStack(2) = 1);
+    Assert(Inventory.Slots.ReadStack(4) = 2);
 
     img.Free();
   end;
