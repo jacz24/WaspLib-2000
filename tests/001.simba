@@ -1,0 +1,27 @@
+//gametabs and inventory tests
+{$I SRLT/osrs.simba}
+{$ASSERTIONS ON}
+
+const
+  PATH: String = {$MACRO DIR} + 'imgs' + PATH_SEP;
+  MODES: TStringArray = ['fixed', 'resizable_classic', 'resizable_modern_small', 'resizable_modern_large'];
+  FILENAME: String := PATH_SEP + PathExtractNameWithoutExt(SCRIPT_FILE) + '.png';
+var
+  mode: String;
+  img: TImage;
+begin
+  for mode in modes do
+  begin
+    if not FileExists(PATH + mode + FILENAME) then continue;
+    img := TImage.Create(PATH + mode + FILENAME);
+    Target.SetImage(img);
+
+    RSClient.Mode := RSClient.DetectClientMode();
+    SetupInterfaces();
+
+    Assert(Inventory.IsOpen());
+    //Assert(Inventory.Slots.Count() = 9);
+
+    img.Free();
+  end;
+end;

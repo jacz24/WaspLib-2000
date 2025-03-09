@@ -72,7 +72,7 @@ begin
 end;
 
 
-function RandomColor: TColor;
+function RandomColor(): TColor;
 var
   R, G, B: Byte;
 begin

@@ -46,6 +46,27 @@ begin
 end;
 {$H+}
 
+
+procedure SaveAnonymousScreenshot(const filename: String);
+var
+  img: TImage;
+begin
+  try
+    img := TImage.CreateFromTarget();
+    img.DrawColor := $FFFFFF;
+
+    if Chat.IsOpen() then
+      img.DrawBoxFilled(Chat.GetDisplayNameBox());
+
+    if XPBar.IsOpen() and XPBar.Setup() then
+      img.DrawBoxFilled(XPBar.Bounds);
+
+    img.Save(filename);
+  finally
+    img.Free();
+  end;
+end;
+
 begin
   Target.AddEvent(ETargetEvent.TARGET_RESIZE, @TargetResized);
   RSClient.IsLoggedIn();

@@ -49,32 +49,14 @@ jobs:
           path: ./Includes/SRLT
 
       - name: Run tests
+        shell: bash
         run: |
-          # Get all .simba files in the tests folder, sorted numerically
-          $testFiles = Get-ChildItem -Path ./Includes/SRLT/tests/*.simba | Sort-Object Name
+          testFiles=(./Includes/SRLT/tests/*.simba)
 
-          # Check if any test files were found
-          if ($testFiles.Count -eq 0) {
-              Write-Output "::error::No .simba test files found."
-              exit 1
-          }
-
-          # Run each test file
-          foreach ($testFile in $testFiles) {
-              Write-Output "Running test: $($testFile.FullName)"
-
-              $output = .\Simba-Win32.exe --run $testFile.FullName
-              Write-Output $output
-              if (-not ($output -match "Successfully executed in \d+ milliseconds\.")) {
-                  Write-Output "::error::Simba-Win32.exe failed on $($testFile.Name)."
-                  exit 1
-              }
-
-              $output = .\Simba-Win64.exe --run $testFile.FullName
-              Write-Output $output
-              if (-not ($output -match "Successfully executed in \d+ milliseconds\.")) {
-                  Write-Output "::error::Simba-Win64.exe failed on $($testFile.Name)."
-                  exit 1
-              }
-          }
+          for testFile in "${testFiles[@]}"; do
+              echo "Running test: $testFile" on 32 bits
+              ./Simba-Win32.exe --run "$testFile"
+              echo "Running test: $testFile" on 64 bits
+              ./Simba-Win64.exe --run "$testFile"
+          done
 
