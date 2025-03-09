@@ -31,8 +31,9 @@ jobs:
         baseUrl="${{ steps.simba-url.outputs.baseUrl }}"
         downloadUrl="${baseUrl}Win64.zip?raw=true"
         echo "Download URL (64-bit): $downloadUrl"
-        outputFile="$RUNNER_TEMP/downloaded64.zip"
         curl "$downloadUrl"
+        pwd
+        ls
         unzip -o ./Win64.zip -d ./tests
         rm -f ./Win64.zip
 
@@ -42,8 +43,9 @@ jobs:
         baseUrl="${{ steps.simba-url.outputs.baseUrl }}"
         downloadUrl="${baseUrl}Win32.zip?raw=true"
         echo "Download URL (32-bit): $downloadUrl"
-        outputFile="$RUNNER_TEMP/downloaded32.zip"
         curl "$downloadUrl"
+        pwd
+        ls
         unzip -o ./Win32.zip -d ./tests
         rm -f ./Win32.zip
 
