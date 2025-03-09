@@ -50,6 +50,33 @@ jobs:
 
       - name: Run tests
         run: |
-          Get-ChildItem -Recurse
-          ./Simba-Win32.exe --run ./Includes/SRLT/tests/compile.simba
-          ./Simba-Win64.exe --run ./Includes/SRLT/tests/compile.simba
+          # Get all .simba files in the tests folder, sorted numerically
+          $testFiles = Get-ChildItem -Path ./Includes/SRLT/tests/*.simba | Sort-Object Name
+
+          # Check if any test files were found
+          if ($testFiles.Count -eq 0) {
+              Write-Output "::error::No .simba test files found."
+              exit 1
+          }
+
+          # Run each test file
+          foreach ($testFile in $testFiles) {
+              Write-Output "Running test: $($testFile.FullName)"
+
+              # Run Simba-Win32.exe
+              $output32 = .\Simba-Win32.exe --run $testFile.FullName
+              Write-Output $output32
+              if (-not ($output32 -match "Successfully executed")) {
+                  Write-Output "::error::Simba-Win32.exe failed on $($testFile.Name)."
+                  exit 1
+              }
+
+              # Run Simba-Win64.exe
+              $output64 = .\Simba-Win64.exe --run $testFile.FullName
+              Write-Output $output64
+              if (-not ($output64 -match "Successfully executed")) {
+                  Write-Output "::error::Simba-Win64.exe failed on $($testFile.Name)."
+                  exit 1
+              }
+          }
+

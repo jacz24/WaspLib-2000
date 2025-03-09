@@ -1,2 +1,3 @@
+//compile test
 {$I SRLT/osrs.simba}
 
