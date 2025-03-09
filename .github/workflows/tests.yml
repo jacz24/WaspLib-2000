@@ -63,18 +63,16 @@ jobs:
           foreach ($testFile in $testFiles) {
               Write-Output "Running test: $($testFile.FullName)"
 
-              # Run Simba-Win32.exe
-              $output32 = .\Simba-Win32.exe --run $testFile.FullName
-              Write-Output $output32
-              if (-not ($output32 -match "Successfully executed")) {
+              $output = .\Simba-Win32.exe --run $testFile.FullName
+              Write-Output $output
+              if (-not ($output -match "Successfully executed in \d+ milliseconds\.")) {
                   Write-Output "::error::Simba-Win32.exe failed on $($testFile.Name)."
                   exit 1
               }
 
-              # Run Simba-Win64.exe
-              $output64 = .\Simba-Win64.exe --run $testFile.FullName
-              Write-Output $output64
-              if (-not ($output64 -match "Successfully executed")) {
+              $output = .\Simba-Win64.exe --run $testFile.FullName
+              Write-Output $output
+              if (-not ($output -match "Successfully executed in \d+ milliseconds\.")) {
                   Write-Output "::error::Simba-Win64.exe failed on $($testFile.Name)."
                   exit 1
               }
