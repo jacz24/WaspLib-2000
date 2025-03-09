@@ -49,7 +49,6 @@ jobs:
           path: ./Includes/SRLT
 
       - name: Run tests
-        working-directory: ./tests
         run: |
           Get-ChildItem -Recurse
           ./Simba-Win32.exe --run ./Includes/SRLT/tests/compile.simba
