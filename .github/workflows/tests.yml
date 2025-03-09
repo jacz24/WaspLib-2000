@@ -32,11 +32,9 @@ jobs:
         downloadUrl="${baseUrl}Win64.zip?raw=true"
         echo "Download URL (64-bit): $downloadUrl"
         outputFile="$RUNNER_TEMP/downloaded64.zip"
-        curl -o "$outputFile" "$downloadUrl"
-        echo "Downloaded file: $outputFile"
-        ls $RUNNER_TEMP
-        unzip -o "$outputFile" -d ./tests
-        rm -f "$outputFile"
+        curl "$downloadUrl"
+        unzip -o ./Win64.zip -d ./tests
+        rm -f ./Win64.zip
 
     - name: Download Simba 2.0 (32-bit)
       shell: bash
@@ -45,11 +43,9 @@ jobs:
         downloadUrl="${baseUrl}Win32.zip?raw=true"
         echo "Download URL (32-bit): $downloadUrl"
         outputFile="$RUNNER_TEMP/downloaded32.zip"
-        curl -o "$outputFile" "$downloadUrl"
-        echo "Downloaded file: $outputFile"
-        ls $RUNNER_TEMP
-        unzip -o "$outputFile" -d ./tests
-        rm -f "$outputFile"
+        curl "$downloadUrl"
+        unzip -o ./Win32.zip -d ./tests
+        rm -f ./Win32.zip
 
     - name: Run tests
       run: |
