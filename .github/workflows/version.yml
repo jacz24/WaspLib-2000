@@ -8,7 +8,9 @@ on:
 
 jobs:
   version:
-    if: > ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
+    if: >
+      ${{ github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' }}  # Only run if Tests succeeded and was triggered by a push
     runs-on: ubuntu-latest
 
     steps:
