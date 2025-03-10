@@ -12,7 +12,7 @@ type
   ERSBankButtons = (WORN, MENU);
   ERSBankArrangement = enum(SWAP, INSERT);
   ERSBankWithdraw = enum(ITEM, NOTE);
-  ERSBankQuantity = enum(QUANTITY_1, QUANTITY_5, QUANTITY_10, QUANTITY_CUSTOM, QUANTITY_ALL);
+  ERSBankQuantity = enum(ONE, FIVE, TEN, CUSTOM, ALL);
   ERSBankDynamicButtons = enum(PLACEHOLDERS, SEARCH, DEPOSIT_INVENTORY, DEPOSIT_WORN);
 
   TRSItemBankPosition = record
@@ -37,19 +37,27 @@ type
     Title: TRSInterfaceTitle;
     Scroll: TRSScrollBar;
 
-    CachedQuantity: Int32;
+    CachedQuantity: Integer;
 
     Incenerator, PotionStorage, SlotsArea: TBox;
 
     Tabs, SlotBoxes: TBoxArray;
 
+    Buttons: array [ERSBankButtons] of TRSButton;
+    ArrangementButtons: array [ERSBankArrangement] of TRSButton;
+    WithdrawButtons: array [ERSBankWithdraw] of TRSButton;
+    QuantityButtons: array [ERSBankQuantity] of TRSButton;
+    DynamicButtons: array [ERSBankDynamicButtons] of TRSButton;
+    ButtonsOffset: Integer;
+
     Cache: record
       Quantity: Integer;
       Items: TStringMap<TRSItemBankPosition>;
     end;
+
+    _IsOpenHelperBox: TBox;
     const QUANTITY_ALL: Integer = -1;
     const QUANTITY_ALL_BUT_ONE: Integer = -2;
-    _IsOpenHelperBox: TBox;
   end;
 
 (*
@@ -70,7 +78,7 @@ var
   tpa, final: TPointArray;
   atpa: T2DPointArray;
   b: TBox;
-  color: Int32;
+  color: Integer;
 begin
   final := Target.FindColor(RSColors.ITEM_BORDER, 0, Self.SlotsArea);
   if final = [] then Exit;
@@ -103,6 +111,8 @@ This is automatically called on the **Bank** variable.
 ```
 *)
 procedure TRSBank.SetupInterface();
+var
+  i: Integer;
 begin
   with InterfaceArea do
   begin
@@ -145,8 +155,69 @@ begin
   Self._IsOpenHelperBox.Y1 := Self.Bounds.Y2 - 39;
   Self._IsOpenHelperBox.X2 := Self.Bounds.X2 - 155;
   Self._IsOpenHelperBox.Y2 := Self.Bounds.Y2 - 25;
+
+  for i := 0 to 1 do
+  begin
+    Self.Buttons[i].Index := i;
+    Self.Buttons[i].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
+    Self.ArrangementButtons[i].Index := i;
+    Self.ArrangementButtons[i].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
+    Self.WithdrawButtons[i].Index := i;
+    Self.WithdrawButtons[i].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
+  end;
+
+  for i := 0 to 4 do
+  begin
+    Self.QuantityButtons[i].Index := i;
+    Self.QuantityButtons[i].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
+  end;
+
+  for i := 0 to 3 do
+  begin
+    Self.DynamicButtons[i].Index := i;
+    Self.DynamicButtons[i].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
+  end;
+
+  with Self.Bounds do
+  begin
+    Self.Buttons[ERSBankButtons.WORN].Bounds := TBox.Create(X1+12, Y1+43, X1+36, Y1+67);
+    Self.Buttons[ERSBankButtons.MENU].Bounds := TBox.Create(X2-36, Y1+43, X2-12, Y1+67);
+
+    Self.ArrangementButtons[ERSBankArrangement.SWAP].Bounds := TBox.Create(X1+5, Y2-26, X1+54, Y2-5);
+    Self.ArrangementButtons[ERSBankArrangement.INSERT].Bounds := TBox.Create(X1+55, Y2-26, X1+104, Y2-5);
+
+    Self.WithdrawButtons[ERSBankWithdraw.ITEM].Bounds := TBox.Create(X1+105, Y2-26, X1+154, Y2-5);
+    Self.WithdrawButtons[ERSBankWithdraw.NOTE].Bounds := TBox.Create(X1+155, Y2-26, X1+204, Y2-5);
+
+    for i := 0 to 4 do
+      Self.QuantityButtons[i].Bounds := TBox.Create(X1+205 + 25 * i, Y2-26, X1+229 + 25 * i, Y2-5);
+
+    for i := 0 to 3 do
+      Self.DynamicButtons[i].Bounds := TBox.Create(X1+331 + 35 * i + 4 * i, Y2-41, X1+366 + 35 * i + 4 * i, Y2-6);
+    Self.DynamicButtons[ERSBankDynamicButtons.DEPOSIT_WORN].Bounds := Self.DynamicButtons[ERSBankDynamicButtons.DEPOSIT_WORN].Bounds.Offset([-2,0]);
+  end;
 end;
 
+procedure TRSBank.UpdateButtons(offset: Integer);
+var
+  i: Integer;
+begin
+  if Self.ButtonsOffset = offset then Exit;
+  Self.ButtonsOffset := offset;
+
+  for i := 0 to 1 do
+  begin
+    Self.Buttons[i].Bounds            := Self.Buttons[i].Bounds.Offset([offset, 0]);
+    Self.ArrangementButtons[i].Bounds := Self.ArrangementButtons[i].Bounds.Offset([offset, 0]);
+    Self.WithdrawButtons[i].Bounds    := Self.WithdrawButtons[i].Bounds.Offset([offset, 0]);
+  end;
+
+  for i := 0 to 4 do
+    Self.QuantityButtons[i].Bounds := Self.QuantityButtons[i].Bounds.Offset([offset, 0]);
+
+  for i := 0 to 3 do
+    Self.DynamicButtons[i].Bounds := Self.DynamicButtons[i].Bounds.Offset([offset, 0]);
+end;
 
 (*
 ## Bank.IsOpen
@@ -162,11 +233,22 @@ WriteLn Bank.IsOpen();
 *)
 function TRSBank.IsOpen(): Boolean;
 var
-  count1, count2: Integer;
+  count: Integer;
+  tpa: TPointArray;
+  offset: Integer;
 begin
-  count1 := Target.CountColor($0, 0, Self._IsOpenHelperBox);
-  count2 := Target.CountColor(RSColors.TEXT_ORANGE, 0, Self._IsOpenHelperBox);
-  Result := ((count1 = 94) and (count2 = 116)) or Self.Title.IsTitle('Bank') or Self.Title.IsTitle('Equip');
+  count := Target.CountColor($0, 0, Self._IsOpenHelperBox);
+  tpa := Target.FindColor(RSColors.TEXT_ORANGE, 0, Self._IsOpenHelperBox);
+  Result := ((count = 94) and (Length(tpa) = 116)) or Self.Title.IsTitle('Bank') or Self.Title.IsTitle('Equip');
+
+  if Result then
+  begin
+    if tpa = [] then Exit;
+
+    offset := tpa.First.X;
+    offset -= Self.Bounds.X1+244;
+    Self.UpdateButtons(offset);
+  end;
 end;
 
 (*
@@ -212,15 +294,205 @@ begin
 end;
 
 
+(*
+## Bank.CountTabs
+```pascal
+function TRSBank.CountTabs: Integer;
+```
+Counts the existing bank tabs.
+
+Example:
+```pascal
+WriteLn Bank.CountTabs();
+```
+*)
+function TRSBank.CountTabs(): Integer;
+var
+  i: Integer;
+begin
+  for i := 9 downto 1 do
+    if Target.HasColor(RSColors.ITEM_BORDER, 0, 1, Self.Tabs[i]) then
+      Exit(i);
+end;
+
+(*
+## Bank.GetCurrentTab
+```pascal
+function TRSBank.GetCurrentTab(): Integer;
+```
+Get the current active bank tab.
+
+Example:
+```pascal
+tab := Bank.GetCurrentTab();
+WritLn tab;
+ShowOnClient(Bank.Tabs[tab]);
+```
+*)
+function TRSBank.GetCurrentTab(): Integer;
+var
+  i: Integer;
+begin
+  for i := 0 to 9 do
+    with Self.Tabs[i] do
+      if not Target.HasColor($516471, 0, 1, [X1+4, Y2+3, X2-4, Y2+5]) then
+        Exit(i);
+end;
+
+(*
+## Bank.OpenTab
+```pascal
+function TRSBank.OpenTab(tab: Integer): Boolean;
+```
+Opens the specified bank tab.
+
+Example:
+```pascal
+WriteLn Bank.OpenTab(0);
+```
+*)
+function TRSBank.OpenTab(tab: Integer): Boolean;
+begin
+  if not Self.IsOpen() then Exit;
+
+  if tab = Self.GetCurrentTab() then
+    if (tab = 0) and not Self.Title.IsTitle('howing') then
+      Exit(True);
+
+  Mouse.Click(Self.Tabs[tab], EMouseButton.LEFT);
+  Result := SleepUntil(tab = Self.GetCurrentTab(), RandomMode(100, 50, 1500), 600);
+end;
+
+
+
+(*
+## Bank.IsSearchOpen
+```pascal
+function TRSBank.IsSearchOpen(): Boolean;
+```
+Checks if the bank search is currently open.
+
+Example:
+```pascal
+WriteLn Bank.IsSearchOpen();
+```
+*)
+function TRSBank.IsSearchOpen(): Boolean;
+begin
+  Result := Chat.FindQuery('Show items', True);
+end;
+
+(*
+## Bank.WaitSearchOpen
+```pascal
+function TRSBank.WaitSearchOpen(const time: Integer = 600): Boolean;
+```
+Waits `time` milliseconds for the bank search to be open.
+
+Example:
+```pascal
+WriteLn Bank.WaitSearchOpen();
+```
+*)
+function TRSBank.WaitSearchOpen(const time: Integer = 600): Boolean;
+begin
+  Result := Chat.WaitQuery('Show items', True, time);
+end;
+
+(*
+## Bank.OpenSearch
+```pascal
+function TRSBank.OpenSearch(const waitTime: Integer = 0): Boolean;
+```
+Attempts to open the bank search and Waits `waitTime` milliseconds for it to be open.
+
+Example:
+```pascal
+WriteLn Bank.OpenSearch();
+```
+*)
+function TRSBank.OpenSearch(const waitTime: Integer = 0): Boolean;
+begin
+  Self.DynamicButtons[ERSBankDynamicButtons.SEARCH].Click();
+  if waitTime <= 0 then Result := Self.IsSearchOpen()
+  else Result := Self.WaitSearchOpen(waitTime);
+end;
+
+(*
+## Bank.ClearSearch
+```pascal
+function TRSBank.ClearSearch(): Boolean;
+```
+Attempts to clear the bank search.
+
+Example:
+```pascal
+WriteLn Bank.ClearSearch();
+```
+*)
+function TRSBank.ClearSearch(): Boolean;
+begin
+  if not Self.Title.IsTitle('Showing items:') then Exit(True);
+  Self.DynamicButtons[ERSBankDynamicButtons.SEARCH].Click();
+  Result := SleepUntil(not Self.Title.IsTitle('Showing items:'), RandomMode(100, 50, 1500), 600);
+end;
+
+(*
+## Bank.Search
+```pascal
+function TRSBank.Search(item: String): Boolean;
+```
+Searches for an item.
+
+Example:
+```pascal
+Bank.Search('logs'); // Search for logs
+```
+*)
+function TRSBank.Search(item: String): Boolean;
+begin
+  if Self.Title.IsTitle('Showing items: ' + LowerCase(item)) then
+    Exit(True);
+
+  Result := Self.ClearSearch() and
+            Self.OpenSearch(Random(2000, 2500)) and
+            Chat.AnswerQuery('Show items', item, Random(2000, 2500)) and
+            Self.Title.IsTitle('Showing items: ' + LowerCase(item));
+end;
+
+(*
+## Bank.CloseSearch
+```pascal
+function TRSBank.CloseSearch(): Boolean;
+```
+
+Closes the bank search if it's open.
+
+Example:
+```pascal
+Bank.Search('logs'); // Search for logs
+Wait(1000);
+Bank.CloseSearch();
+```
+*)
+function TRSBank.CloseSearch(): Boolean;
+begin
+  Result := Self.ClearSearch() and
+            Chat.AnswerQuery('Show items', '', Random(2000, 2500));
+end;
+
+
+
 function TRSBank.HasIncinerator(): Boolean;
 begin
-  with Self.Incenerator do     //TODO ADD COLOR
-    Result := Target.HasColor(10551295, 0, 1, [X1, Y1+55, X2, Y2]);
+  with Self.Incenerator do
+    Result := Target.HasColor(ColorTolerance($517F9E, 2.132, EColorSpace.HSV, [2.437, 0.309, 0.256]), 1, [X1, Y1+55, X2, Y2]);
 end;
 
 function TRSBank.InceneratorTooltipVisible(): Boolean;
 begin
-  Result := Target.HasColor(10551295, 0, 1, Self.Incenerator);
+  with Self.Incenerator do
+    Result := Target.HasColor($A0FFFF, 0, 1, [X1+6, Y1+76, X2, Y2+35]);
 end;
 
 function TRSBank.UnHoverIncinerator(): Boolean;
@@ -236,6 +508,79 @@ begin
   Async.MouseStop();
 end;
 
+
+function TRSBank.HasPotionStorage(): Boolean;
+begin
+  Result := Target.HasColor(ColorTolerance($517F9E, 2.132, EColorSpace.HSV, [2.437, 0.309, 0.256]), 1, Self.PotionStorage);
+end;
+
+function TRSBank.PotionStorageIsOpen(): Boolean;
+begin
+  Result := Target.HasColor($1F98FF, 0,  3000, Self.SlotsArea);
+end;
+
+
+
+function TRSBank._IsCustomQuantity(quantity: Integer): Boolean;
+begin
+  Result := not (quantity in [1,5,10, Self.QUANTITY_ALL]);
+end;
+
+(*
+## Bank._SimplifyItemName
+```pascal
+function TRSBank._SimplifyItemName(item: TRSItem): String;
+```
+Internal function to get a human like search term for an item as humans
+don't usually type the full item name when searching for something.
+
+Example:
+```pascal
+WriteLn Bank._SimplifyItemName('Amulet of glory(6)');
+```
+*)
+function TRSBank._SimplifyItemName(item: TRSItem): String;
+var
+  str: String;
+  short, long: Integer;
+begin
+  str := item.Before('(').ToLower();
+  long := Length(str);
+  short := Min(0, long - Ceil(long/3));
+
+  Result := str.CopyRange(0, Random(short, long));
+end;
+
+
+procedure TRSBank.Draw(img: TImage);
+var
+  i: Integer;
+begin
+  if not Self.IsOpen() then Exit;
+
+  for i := 0 to 1 do
+  begin
+    Self.Buttons[i].Draw(img);
+    Self.ArrangementButtons[i].Draw(img);
+    Self.WithdrawButtons[i].Draw(img);
+  end;
+
+  for i := 0 to 4 do
+    Self.QuantityButtons[i].Draw(img);
+
+  for i := 0 to 3 do
+    Self.DynamicButtons[i].Draw(img);
+end;
+
+procedure ShowOnClient(bank: TRSBank); overload;
+var
+  img: TImage;
+begin
+  img := TImage.CreateFromTarget();
+  bank.Draw(img);
+  img.Show();
+  img.Free();
+end;
 
 
 

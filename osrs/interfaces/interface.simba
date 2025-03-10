@@ -73,12 +73,12 @@ end;
 
 function TRSInterfaceTitle.GetTitle(): String;
 begin
-  Result := OCR.Recognize(Self.Bounds, OCR.BOLD, [RSColors.TEXT_ORANGE, $0], 0);
+  Result := OCR.Recognize(Self.Bounds, RSFonts.BOLD, [RSColors.TEXT_ORANGE, $0], 0);
 end;
 
 function TRSInterfaceTitle.IsTitle(const text: String; const similarity: Single = 0.8): Boolean;
 begin
-  Result := OCR.LocateInvert(Self.Bounds, text, [$344049,0], 2, OCR.BOLD) >= similarity;
+  Result := OCR.LocateInvert(Self.Bounds, text, [$344049,0], 2, RSFonts.BOLD) >= similarity;
 end;
 
 function TRSInterfaceTitle.WaitTitle(const text: String; const similarity: Single = 0.8; const time: Integer = 600; interval: Integer = -1): Boolean; overload;

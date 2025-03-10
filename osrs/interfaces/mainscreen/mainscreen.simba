@@ -57,7 +57,7 @@ var
   img: TImage;
 begin
   img := TImage.CreateFromTarget(Self.UptextBounds);
-  Result := Self.UptextOCR.Recognize(img, OCR.BOLD_SHADOW, [0,0]);
+  Result := Self.UptextOCR.Recognize(img, RSFonts.BOLD_SHADOW, [0,0]);
   img.Free();
   {$IFDEF DEBUG_UPTEXT}
   WriteLn GetDebugLn('MainScreen', 'UpText: ' + Result);

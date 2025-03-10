@@ -50,22 +50,26 @@ begin
 end;
 
 
+procedure TCuboid.Draw(img: TImage);
+begin
+  img.DrawColor := $00FFFF;
+  img.DrawTPA(Self.Bottom.Corners.Connect().Grow(1));
+  img.DrawTPA(Self.Bottom.Corners.Connect().Grow(1));
+
+  img.DrawColor := $FFFFFF;
+  img.DrawTPA(Self.Edges());
+end;
+
 procedure ShowOnClient(cuboid: TCuboid); overload;
 var
   img: TImage;
 begin
   img := TImage.CreateFromTarget();
-
-  img.DrawColor := $00FFFF;
-  img.DrawTPA(cuboid.Bottom.Corners.Connect().Grow(1));
-  img.DrawTPA(cuboid.Bottom.Corners.Connect().Grow(1));
-
-  img.DrawColor := $FFFFFF;
-  img.DrawTPA(cuboid.Edges());
-
+  cuboid.Draw(img);
   img.Show();
   img.Free();
 end;
+
 
 
 function TPointArray.AStar(start, goal: TPoint; diagonalTravel: Boolean = True): TPointArray;

@@ -139,7 +139,7 @@ begin
   if lines = [] then Exit;
 
   for i := 0 to High(lines) do
-    lines[i] := OCR.Recognize([b.X1, b.Y1 + (i * 12), b.X2, b.Y1 + ((i+1) * 12) + 3], OCR.PLAIN_12, [0], 0);
+    lines[i] := OCR.Recognize([b.X1, b.Y1 + (i * 12), b.X2, b.Y1 + ((i+1) * 12) + 3], RSFonts.PLAIN_12, [0], 0);
 
   if not (ToStr(skill).Capitalize() in lines[0]) then Exit;
 
@@ -198,7 +198,7 @@ begin
   if not Self.Open() then Exit(-1);
 
   with Self.Skills[skill] do
-    Result := OCR.RecognizeNumber([X1, Y2 - (Height div 2), X2, Y2], OCR.PLAIN_11, [RSColors.STACK_YELLOW], 0);
+    Result := OCR.RecognizeNumber([X1, Y2 - (Height div 2), X2, Y2], RSFonts.PLAIN_11, [RSColors.STACK_YELLOW], 0);
 
   if Result > 0 then
     Self.Levels[skill] := Result;

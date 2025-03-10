@@ -190,7 +190,7 @@ begin
 
   for i := 0 to High(RSColors.STACK_COLORS) do
     if Target.HasColor(RSColors.STACK_COLORS[i], 0, 1, slot) then
-      Exit(OCR.RecognizeNumber(slot, OCR.PLAIN_11, [RSColors.STACK_COLORS[i]], 0) * Round(10 ** (3 * i)));
+      Exit(OCR.RecognizeNumber(slot, RSFonts.PLAIN_11, [RSColors.STACK_COLORS[i]], 0) * Round(10 ** (3 * i)));
   Result := -1;
 end;
 

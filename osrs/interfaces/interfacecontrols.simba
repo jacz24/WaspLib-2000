@@ -22,7 +22,7 @@ var
   i: Integer;
 begin
   for i := 0 to High(Self.EnabledColors) do
-    if Target.CountColor(Self.EnabledColors[i].Color, Self.EnabledColors[i].Tolerance, Self.Bounds) > 0 then
+    if Target.HasColor(Self.EnabledColors[i].Color, Self.EnabledColors[i].Tolerance, 1, Self.Bounds) then
       Exit(True);
 end;
 

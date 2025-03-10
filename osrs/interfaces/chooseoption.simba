@@ -135,7 +135,7 @@ begin
     b.Y2 := b.Y1 + 15;
     if b.Y2 > Self.Bounds.Y2 then Exit;
 
-    Result[i].Text := OCR.RecognizeStatic(b, OCR.BOLD_SHADOW, [$47545D, $0], 0);
+    Result[i].Text := OCR.RecognizeStatic(b, RSFonts.BOLD_SHADOW, [$47545D, $0], 0);
     Result[i].Bounds := b;
   end;
 end;
@@ -207,7 +207,7 @@ begin
     option.Bounds.Y2 := option.Bounds.Y1 + 15;
     if option.Bounds.Y2 > Self.Bounds.Y2 then Exit;
 
-    option.Text := OCR.RecognizeStatic(option.Bounds, OCR.BOLD_SHADOW, [$47545D, $0], 0);
+    option.Text := OCR.RecognizeStatic(option.Bounds, RSFonts.BOLD_SHADOW, [$47545D, $0], 0);
 
     if option.Text.ContainsAny(text, caseSensitive) then
       Exit(True);

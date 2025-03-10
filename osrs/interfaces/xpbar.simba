@@ -227,19 +227,19 @@ begin
       8:
       begin
         Self.Size := ERSXPBarSize.SMALL;
-        Self.Font := OCR.PLAIN_11;
+        Self.Font := RSFonts.PLAIN_11;
       end;
 
       11:
       begin
         Self.Size := ERSXPBarSize.MEDIUM;
-        Self.Font := OCR.PLAIN_12;
+        Self.Font := RSFonts.PLAIN_12;
       end;
 
       10:
       begin
         Self.Size := ERSXPBarSize.LARGE;
-        Self.Font := OCR.BOLD;
+        Self.Font := RSFonts.BOLD;
       end;
 
       else Continue;

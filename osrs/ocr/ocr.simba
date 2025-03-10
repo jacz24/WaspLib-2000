@@ -8,41 +8,11 @@ OCR
 {$ENDIF}
 
 type
-  TRSOCR = record
-    PLAIN_11:       TPixelFont;
-    PLAIN_12:       TPixelFont;
-    BOLD:           TPixelFont;
-    BOLD_SHADOW:    TPixelFont;
-    QUILL_8:        TPixelFont;
-    QUILL:          TPixelFont;
-
+  TOCR = record
     Engine: TPixelOCR;
-    const PATH = SRLTEnv.CacheDir + 'fonts' + PATH_SEP;
   end;
 
-procedure TRSOCR.Setup();
-begin
-  if DirList(Self.PATH) = [] then
-  begin
-    if not DirCreate(Self.PATH) then
-      raise GetDebugLn('OCR', 'Failed to create path: ' + Self.PATH);
-    if not ZipExtract({$MACRO DIR} + 'fonts.zip', Self.PATH) then
-      raise GetDebugLn('OCR', 'Failed to unzip fonts');
-  end;
-
-  Self.PLAIN_11 := Self.Engine.LoadFont(Self.PATH + 'Plain 11', 4);
-  Self.PLAIN_12 := Self.Engine.LoadFont(Self.PATH + 'Plain 12', 4);
-
-  Self.BOLD        := Self.Engine.LoadFont(Self.PATH + 'Bold 12', 4);
-  Self.BOLD_SHADOW := Self.Engine.LoadFont(Self.PATH + 'Bold 12 Shadow', 4);
-
-  Self.QUILL_8 := Self.Engine.LoadFont(Self.PATH + 'Quill 8', 4);
-  Self.QUILL   := Self.Engine.LoadFont(Self.PATH + 'Quill', 4);
-end;
-
-
-
-function TRSOCR.RecognizeStatic(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): String;
+function TOCR.RecognizeStatic(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): String;
 var
   img: TImage;
 begin
@@ -52,7 +22,7 @@ begin
   img.Free();
 end;
 
-function TRSOCR.RecognizeStaticInvert(bounds: TBox; font: TPixelFont; colors: TColorArray): String;
+function TOCR.RecognizeStaticInvert(bounds: TBox; font: TPixelFont; colors: TColorArray): String;
 var
   img: TImage;
 begin
@@ -62,7 +32,7 @@ begin
   img.Free();
 end;
 
-function TRSOCR.Recognize(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): String;
+function TOCR.Recognize(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): String;
 var
   img: TImage;
 begin
@@ -72,7 +42,7 @@ begin
   img.Free();
 end;
 
-function TRSOCR.RecognizeLines(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): TStringArray;
+function TOCR.RecognizeLines(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): TStringArray;
 var
   img: TImage;
 begin
@@ -82,7 +52,7 @@ begin
   img.Free();
 end;
 
-function TRSOCR.RecognizeShadow(bounds: TBox; font: TPixelFont; tolerance: Single): String;
+function TOCR.RecognizeShadow(bounds: TBox; font: TPixelFont; tolerance: Single): String;
 var
   image: TImage;
   shadows: TPointArray;
@@ -97,12 +67,12 @@ begin
   image.Free();
 end;
 
-function TRSOCR.RecognizeNumber(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): Integer;
+function TOCR.RecognizeNumber(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): Integer;
 begin
   Result := Self.Recognize(bounds, font, colors, tolerance).ExtractInteger();
 end;
 
-function TRSOCR.Locate(bounds: TBox; Text: String; colors: TColorArray; tolerance: Single; font: TPixelFont): Single;
+function TOCR.Locate(bounds: TBox; Text: String; colors: TColorArray; tolerance: Single; font: TPixelFont): Single;
 var
   img: TImage;
 begin
@@ -112,47 +82,53 @@ begin
   img.Free();
 end;
 
-function TRSOCR.LocateInvert(bounds: TBox; Text: String; colors: TColorArray; tolerance: Single; font: TPixelFont): Single;
+function TOCR.LocateInvert(bounds: TBox; Text: String; colors: TColorArray; tolerance: Single; font: TPixelFont): Single;
 var
   img: TImage;
 begin
   img := TImage.CreateFromTarget(bounds);
   img.ReplaceColorBinary(True, colors, tolerance);
-  img.Show();
   Result := Self.Engine.Locate(img, Font, Text);
   img.Free();
 end;
 
-(*
-function CountItemStack(Area: TBox): Int64;
-const
-  colors = [RScolors.ITEM_TEXT_YELLOW, RScolors.ITEM_TEXT_WHITE, RScolors.ITEM_TEXT_GREEN];
-  Multipliers = [1, 1000, 1000000];
 var
-  I: Integer;
+  OCR: TOCR;
+
+type
+  TRSFonts = record
+    PLAIN_11:       TPixelFont;
+    PLAIN_12:       TPixelFont;
+    BOLD:           TPixelFont;
+    BOLD_SHADOW:    TPixelFont;
+    QUILL_8:        TPixelFont;
+    QUILL:          TPixelFont;
+    const PATH = SRLTEnv.CacheDir + 'fonts' + PATH_SEP;
+  end;
+
+procedure TRSFonts.Setup();
 begin
-  //for I := 0 to High(colors) do
-  //begin
-  //  Result := OCR.RecognizeNumber(Area, TOCRColorFilter.Create([colors[I]]), FONT_PLAIN_11) * Multipliers[I];
-  //  if (Result > 0) then
-  //    Exit;
-  //end;
+  if DirList(Self.PATH) = [] then
+  begin
+    if not DirCreate(Self.PATH) then
+      raise GetDebugLn('OCR', 'Failed to create path: ' + Self.PATH);
+    if not ZipExtract({$MACRO DIR} + 'fonts.zip', Self.PATH) then
+      raise GetDebugLn('OCR', 'Failed to unzip fonts');
+  end;
+
+  Self.PLAIN_11 := OCR.Engine.LoadFont(Self.PATH + 'Plain 11', 4);
+  Self.PLAIN_12 := OCR.Engine.LoadFont(Self.PATH + 'Plain 12', 4);
+
+  Self.BOLD        := OCR.Engine.LoadFont(Self.PATH + 'Bold 12', 4);
+  Self.BOLD_SHADOW := OCR.Engine.LoadFont(Self.PATH + 'Bold 12 Shadow', 4);
+
+  Self.QUILL_8 := OCR.Engine.LoadFont(Self.PATH + 'Quill 8', 4);
+  Self.QUILL   := OCR.Engine.LoadFont(Self.PATH + 'Quill', 4);
 end;
 
-//function ClickText(Text: String; Color: TColor; Font: TFontSet; Area: TBox = [-1,-1,-1,-1]): Boolean;
-//begin
-//  Result := OCR.Locate(Area, Text, Font, TOCRColorFilter.Create([Color])) = 1;
-//  if Result then
-//  begin
-//    Target.MouseMove(OCR.Matches[0].Bounds);
-//    Target.MouseClick(EMouseButton.LEFT);
-//  end;
-//end;
-*)
-
 var
-  OCR: TRSOCR;
+  RSFonts: TRSFonts;
 
 begin
-  OCR.Setup();
+  RSFonts.Setup();
 end;
