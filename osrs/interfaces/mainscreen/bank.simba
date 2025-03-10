@@ -854,15 +854,19 @@ begin
 end;
 
 
-function TRSBank.Withdraw(const item: TRSBankItem; const useCache: Boolean = True): Boolean;
+function TRSBank.Withdraw(const item: TRSBankItem;const useQuantityButton: Boolean = True; const useCache: Boolean = True): Boolean;
 var
   data: TBankPosition;
 begin
-  if Self.Cache.Items.Exists(item.Item) then
+  if useCache and  Self.Cache.Items.Exists(item.Item) then
     data := Self.Cache.Items.Value[item.Item]
   else if not Self.Find(item.Item, data) then Exit;
 
-  Result := Self._InteractionHelper(ERSBankInteraction.WITHDRAW, data.Slot, item.Quantity, True);
+  if not Self.OpenTab(data.Tab) then Exit;
+  if not InRange(Self.Scroll.GetLevel() - data.Scroll, -5, 5) then
+     Self.Scroll.SetLevel(data.Scroll);
+
+  Result := Self._InteractionHelper(ERSBankInteraction.WITHDRAW, data.Slot, item.Quantity, useQuantityButton);
 end;
 
 procedure TRSBank.Draw(img: TImage);
