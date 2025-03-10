@@ -28,7 +28,7 @@ Bank enums used to interact with the bank interface.
   ERSBankDynamicButtons = enum(PLACEHOLDERS, SEARCH, DEPOSIT_INVENTORY, DEPOSIT_WORN);
   ERSBankInteraction = enum(WITHDRAW, DEPOSIT);
 
-  TRSItemBankPosition = record
+  TBankPosition = record
     Tab: Integer;
     Scroll: Integer;
     Slot: TBox;
@@ -70,7 +70,7 @@ Record responsible to handle the bank interface.
 
     Cache: record
       Quantity: Integer;
-      Items: TStringMap<TRSItemBankPosition>;
+      Items: TStringMap<TBankPosition>;
     end;
 
     {%codetools off}
@@ -664,9 +664,9 @@ end;
 {%codetools on}
 
 (*
-## Bank.FindItemTab
+## Bank.FindTab
 ```pascal
-function TRSBank.FindItemTab(const item: TRSItem; const openTab: Boolean = True): Integer;
+function TRSBank.FindTab(const item: TRSItem; const openTab: Boolean = True): Integer;
 ```
 Find the bank tab of `item`.
 
@@ -676,10 +676,10 @@ A known limitation of this is that if several items match the sprite of the item
 
 Example:
 ```pascal
-WriteLn Bank.FindItemTab('Molten glass');
+WriteLn Bank.FindTab('Molten glass');
 ```
 *)
-function TRSBank.FindItemTab(const item: TRSItem): Integer;
+function TRSBank.FindTab(const item: TRSItem): Integer;
 var
   bounds: TBox;
 begin
@@ -696,9 +696,9 @@ begin
 end;
 
 (*
-## Bank.FindItemScroll
+## Bank.FindScroll
 ```pascal
-function TRSBank.FindItemScroll(const item: TRSItem): Integer;
+function TRSBank.FindScroll(const item: TRSItem): Integer;
 ```
 Find the scroll position of the bank where `item` is visible..
 
@@ -708,10 +708,10 @@ A known limitation of this is that if several items match the sprite of the item
 
 Example:
 ```pascal
-WriteLn Bank.FindItemScroll('Molten glass');
+WriteLn Bank.FindScroll('Molten glass');
 ```
 *)
-function TRSBank.FindItemScroll(const item: TRSItem): Integer;
+function TRSBank.FindScroll(const item: TRSItem): Integer;
 var
   next: Integer;
   down: Boolean;
@@ -749,7 +749,7 @@ end;
 (*
 ## Bank._InteractionHelper
 ```pascal
-function TRSBank._InteractionHelper(mode: ERSBankInteraction; slot: TBox; amount: Integer; useQuantityButton: Boolean): Boolean;
+function TRSBank._InteractionHelper(const mode: ERSBankInteraction; const slot: TBox; const amount: Integer; const useQuantityButton: Boolean): Boolean;
 ```
 Internal helper method to handle both withdrawing and depositing.
 
@@ -760,7 +760,7 @@ if Bank.Items.Find('Abyssal whip', slot) the
 ```
 *)
 {%codetools off}
-function TRSBank._InteractionHelper(mode: ERSBankInteraction; slot: TBox; amount: Integer; useQuantityButton: Boolean): Boolean;
+function TRSBank._InteractionHelper(const mode: ERSBankInteraction; const slot: TBox; const amount: Integer; const useQuantityButton: Boolean): Boolean;
 var
   quantity: ERSBankQuantity;
   amountStr, modeStr: String;
@@ -804,7 +804,7 @@ end;
 (*
 ## Bank.Find
 ```pascal
-function TRSBank.Find(item: TRSItem; out data: TRSItemBankPosition; attempts: Int32 = 3): Boolean;
+function TRSBank.Find(const item: TRSItem; out data: TBankPosition; attempts: Int32 = 3): Boolean;
 ```
 Attempts to find `item` in the back by whatever means necessary.
 This will search and scroll the bank until the item is found.
@@ -812,7 +812,7 @@ By default attempts up to 3 times.
 
 Item position data is returned via `data`.
 *)
-function TRSBank.Find(item: TRSItem; out data: TRSItemBankPosition; attempts: Int32 = 3): Boolean;
+function TRSBank.Find(const item: TRSItem; out data: TBankPosition; attempts: Int32 = 3): Boolean;
 begin
   if attempts = 0 then Exit(False);
 
@@ -827,12 +827,12 @@ begin
     end;
 
     if Self.WaitSearchOpen(600) then
-      if not Self.CloseSearch() then Exit(Self.FindItem(item, data, Dec(attempts))); //unknown state, reset search
+      if not Self.CloseSearch() then Exit(Self.Find(item, data, Dec(attempts))); //unknown state, reset search
   end;
 
-  data.Tab := Self.FindItemTab(item);
+  data.Tab := Self.FindTab(item);
   if data.Tab = -1 then
-    Exit(Self.FindItem(item, data, Dec(attempts)));
+    Exit(Self.Find(item, data, Dec(attempts)));
   Self.OpenTab(data.Tab);
 
   if Self.Items.Find(item, data.Slot) then
@@ -842,18 +842,28 @@ begin
     Exit(True);
   end;
 
-  data.Scroll := Self.FindItemScroll(item);
+  data.Scroll := Self.FindScroll(item);
   if data.Scroll = -1 then
-    Exit(Self.FindItem(item, data, Dec(attempts)));
+    Exit(Self.Find(item, data, Dec(attempts)));
 
   if not Self.Items.Find(item, data.Slot) then
-    Exit(Self.FindItem(item, data, Dec(attempts)));
+    Exit(Self.Find(item, data, Dec(attempts)));
 
   Result := True;
   Self.Cache.Items.Value[item] := data;
 end;
 
 
+function TRSBank.Withdraw(const item: TRSBankItem; const useCache: Boolean = True): Boolean;
+var
+  data: TBankPosition;
+begin
+  if Self.Cache.Items.Exists(item.Item) then
+    data := Self.Cache.Items.Value[item.Item]
+  else if not Self.Find(item.Item, data) then Exit;
+
+  Result := Self._InteractionHelper(ERSBankInteraction.WITHDRAW, data.Slot, item.Quantity, True);
+end;
 
 procedure TRSBank.Draw(img: TImage);
 var
