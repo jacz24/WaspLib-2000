@@ -16,8 +16,10 @@ type
     const STACK_GREEN: TColor  = $80FF00;
     const STACK_COLORS: TColorArray = [$00FFFF, $FFFFFF, $80FF00];
 
+    const TEXT_WHITE: TColor = $FFFFFF;
     const TEXT_ORANGE: TColor = $1F98FF;
     const TEXT_GREY: TColor   = $9F9F9F;
+    const TEXT_LIGHT_YELLOW: TColor = $A2D8E4;
   end;
 
 function RSColors.HasItem(const bounds: TBox): Boolean; static;

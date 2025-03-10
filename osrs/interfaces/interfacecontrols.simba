@@ -26,7 +26,7 @@ begin
       Exit(True);
 end;
 
-function TRSButton.WaitEnabled(const time: Integer; interval: Integer = -1): Boolean;
+function TRSButton.WaitEnabled(const time: Integer = 600; interval: Integer = -1): Boolean;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.Enabled(), interval, time);
@@ -41,7 +41,7 @@ function TRSButton.Enable(): Boolean;
 begin
   if Self.Enabled() then Exit(True);
   Self.Click();
-  Result := Self.WaitEnabled(600);
+  Result := Self.WaitEnabled();
 end;
 
 function TRSButton.Disable(): Boolean;
@@ -233,7 +233,7 @@ end;
 
 function TRSScrollBar.SetLevel(value: Integer): Integer;
 var
-  old, new, scrolls: Integer;
+  old, scrolls: Integer;
   direction: Boolean;
   area: TBox;
 begin
@@ -250,11 +250,11 @@ begin
     scrolls := Random(1, 3);
     if direction then scrolls := -scrolls;
     Target.MouseScroll(scrolls);
-    new := Self.GetLevel();
+    Result := Self.GetLevel();
 
     //user probably hover them while using RI
-    if new = old then Mouse.Move(area, True);
-    old := new;
+    if Result = old then Mouse.Move(area, True);
+    old := Result;
   end;
 end;
 

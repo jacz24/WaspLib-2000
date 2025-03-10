@@ -49,6 +49,11 @@ begin
     slot := match.Box;
 end;
 
+function TRSItemInterface.Find(item: TRSItem; out slot: TBox): Boolean; overload;
+begin
+  Result := Self.Find([item], slot);
+end;
+
 
 function TRSItemInterface.FindAll(items: TRSItemArray): TBoxArray;
 var

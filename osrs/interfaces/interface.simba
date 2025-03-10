@@ -77,8 +77,11 @@ begin
 end;
 
 function TRSInterfaceTitle.IsTitle(const text: String; const similarity: Single = 0.8): Boolean;
+var
+  match: Single;
 begin
-  Result := OCR.LocateInvert(Self.Bounds, text, [$344049,0], 2, RSFonts.BOLD) >= similarity;
+  match := OCR.LocateInvert(Self.Bounds, text, [$344049,0], 2, RSFonts.BOLD);
+  Result := match >= similarity;
 end;
 
 function TRSInterfaceTitle.WaitTitle(const text: String; const similarity: Single = 0.8; const time: Integer = 600; interval: Integer = -1): Boolean; overload;

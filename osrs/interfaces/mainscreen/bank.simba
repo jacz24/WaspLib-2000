@@ -365,6 +365,51 @@ end;
 
 
 
+function TRSBank.SetArrangement(arrangement: ERSBankArrangement): Boolean;
+begin
+  if Self.ArrangementButtons[arrangement].Enabled() then Exit(True);
+  Result := Self.ArrangementButtons[arrangement].Enable();
+end;
+
+function TRSBank.SetWithdraw(withdraw: ERSBankWithdraw): Boolean;
+begin
+  if Self.WithdrawButtons[withdraw].Enabled() then Exit(True);
+  Result := Self.WithdrawButtons[withdraw].Enable();
+end;
+
+
+(*
+## Bank.Integer2Quantity
+```pascal
+function TRSBank.Integer2Quantity(const quantity: Integer): ERSBankQuantity;
+```
+Internal helper function to convert a integer quantity into a ERSBankQuantity.
+
+Example:
+```pascal
+WriteLn Bank.Integer2Quantity(5);
+WriteLn Bank.Integer2Quantity(7);
+```
+*)
+function TRSBank.Integer2Quantity(const quantity: Integer): ERSBankQuantity;
+begin
+  case quantity of
+    1:  Result := ERSBankQuantity.ONE;
+    5:  Result := ERSBankQuantity.FIVE;
+    10: Result := ERSBankQuantity.TEN;
+    Self.QUANTITY_ALL:  Result := ERSBankQuantity.ALL;
+    else Result := ERSBankQuantity.CUSTOM;
+  end;
+end;
+
+function TRSBank.SetQuantity(quantity: ERSBankQuantity): Boolean;
+begin
+  if Self.QuantityButtons[quantity].Enabled() then Exit(True);
+  Exit(Self.QuantityButtons[quantity].Enable());
+end;
+
+
+
 (*
 ## Bank.IsSearchOpen
 ```pascal
@@ -394,9 +439,9 @@ Example:
 WriteLn Bank.WaitSearchOpen();
 ```
 *)
-function TRSBank.WaitSearchOpen(const time: Integer = 600): Boolean;
+function TRSBank.WaitSearchOpen(const time: Integer = 600; const interval: Integer = -1): Boolean;
 begin
-  Result := Chat.WaitQuery('Show items', True, time);
+  Result := Chat.WaitQuery('Show items', True, time, interval);
 end;
 
 (*
@@ -450,14 +495,16 @@ Bank.Search('logs'); // Search for logs
 ```
 *)
 function TRSBank.Search(item: String): Boolean;
+var
+  query: String;
 begin
-  if Self.Title.IsTitle('Showing items: ' + LowerCase(item)) then
-    Exit(True);
+  query := 'Showing items: ' + item.ToLower();
+  if Self.Title.IsTitle(query) then Exit(True);
+  if not Self.ClearSearch() then Exit;
+  if not Self.OpenSearch(Random(2000, 2500)) then Exit;
 
-  Result := Self.ClearSearch() and
-            Self.OpenSearch(Random(2000, 2500)) and
-            Chat.AnswerQuery('Show items', item, Random(2000, 2500)) and
-            Self.Title.IsTitle('Showing items: ' + LowerCase(item));
+  if Chat.AnswerQuery('Show items', item, Random(2000, 2500)) then
+    Result := Self.Title.WaitTitle(query);
 end;
 
 (*
@@ -520,36 +567,144 @@ begin
 end;
 
 
-
-function TRSBank._IsCustomQuantity(quantity: Integer): Boolean;
-begin
-  Result := not (quantity in [1,5,10, Self.QUANTITY_ALL]);
-end;
-
 (*
-## Bank._SimplifyItemName
+## Bank._FindTabText
 ```pascal
-function TRSBank._SimplifyItemName(item: TRSItem): String;
+function TRSBank._FindTabText(const tpa: TPointArray; out bounds: TBox): Boolean;
 ```
-Internal function to get a human like search term for an item as humans
-don't usually type the full item name when searching for something.
+Internal helper function help process the tabs text when you search.
 
 Example:
 ```pascal
-WriteLn Bank._SimplifyItemName('Amulet of glory(6)');
+if Bank.Search('logs') then
+  if Bank._FindTabText(Target.FindColor(RSColors.TEXT_LIGHT_YELLOW, 0, bounds), bounds) then
+    ShowOnClient(bounds);
 ```
 *)
-function TRSBank._SimplifyItemName(item: TRSItem): String;
+function TRSBank._FindTabText(const tpa: TPointArray; out bounds: TBox): Boolean;
 var
-  str: String;
-  short, long: Integer;
+  atpa: T2DPointArray;
 begin
-  str := item.Before('(').ToLower();
-  long := Length(str);
-  short := Min(0, long - Ceil(long/3));
+  if tpa = [] then Exit;
+  atpa := tpa.Cluster(6).ExcludeDimensions(24, 8, 26, 8);
+  if atpa = [] then Exit;
 
-  Result := str.CopyRange(0, Random(short, long));
+  atpa := atpa.SortByY(False)[0].Cluster(1.5);
+  bounds := atpa.SortByX(False)[0].Bounds();
+
+  bounds.X1 -= 1;
+  bounds.Y1 -= 1;
+  bounds.X2 += 1;
+  bounds.Y2 += 3;
+  Result := True;
 end;
+
+
+(*
+## Bank.FindItemTab
+```pascal
+function TRSBank.FindItemTab(const item: TRSItem; const openTab: Boolean = True): Integer;
+```
+Find the bank tab of `item`.
+
+```{note}
+A known limitation of this is that if several items match the sprite of the item (for example multiple charged jewlry) the tab retrieved will be the first one found. If you have 'Games necklace(1)' in tab 1 and 'Games necklace(8)' in tab 5 and search for the latter, you will get tab 1.
+```
+
+Example:
+```pascal
+WriteLn Bank.FindItemTab('Molten glass');
+```
+*)
+function TRSBank.FindItemTab(const item: TRSItem): Integer;
+var
+  bounds: TBox;
+begin
+  (* TODO: Remove
+  if Self.Items.Contains(item) then
+  begin
+    if not Self.DynamicButtons[ERSBankDynamicButtons.SEARCH].Enabled() then
+      Exit(Self.GetCurrentTab());
+
+    if Self.WaitSearchOpen(600) then
+      if not Self.CloseSearch() then Exit(-1); //unknown state, reset search
+  end;
+  *)
+
+  if not Self.Search(item.SimplifyName()) then Exit(-1);
+  if not Self.Items.Find(item, bounds)  then Exit(-1);
+
+  bounds := [Self.Bounds.X1 + 56, Self.Bounds.Y1 + 77, Self.Bounds.X1 + 84, bounds.Y1];
+  if bounds.Height < 8 then Exit(0);
+
+  if Self._FindTabText(Target.FindColor(RSColors.TEXT_LIGHT_YELLOW, 0, bounds), bounds) then
+    Result := OCR.RecognizeNumber(bounds, RSFonts.PLAIN_11, [RSColors.TEXT_LIGHT_YELLOW], 0);
+  if Self._FindTabText(Target.FindColor(RSColors.TEXT_WHITE, 0, bounds), bounds) then
+    Result := OCR.RecognizeNumber(bounds, RSFonts.PLAIN_11, [RSColors.TEXT_WHITE], 0);
+end;
+
+(*
+## Bank.FindItemScroll
+```pascal
+function TRSBank.FindItemScroll(const item: TRSItem): Integer;
+```
+Find the scroll position of the bank where `item` is visible..
+
+```{note}
+A known limitation of this is that if several items match the sprite of the item (for example multiple charged jewlry) the tab retrieved will be the first one found. If you have 'Games necklace(1)' in tab 1 and 'Games necklace(8)' in tab 5 and search for the latter, you will get tab 1.
+```
+
+Example:
+```pascal
+WriteLn Bank.FindItemScroll('Molten glass');
+```
+*)
+function TRSBank.FindItemScroll(const item: TRSItem): Integer;
+var
+  next: Integer;
+  down: Boolean;
+begin
+  (* TODO: Remove
+  if Self.Items.Contains(item) then
+  begin
+    if not Self.DynamicButtons[ERSBankDynamicButtons.SEARCH].Enabled() then
+      Exit(Self.Scroll.GetLevel());
+
+    if Self.WaitSearchOpen(600) then
+      if not Self.CloseSearch() then Exit(-1); //unknown state, reset search
+  end;
+  *)
+
+  if not Self.Scroll.CanScroll() then Exit(-1);
+
+  Result := Self.Scroll.GetLevel();
+  down := (Result > 0) or RandomBoolean(0.5);
+
+  repeat
+    if down then next := Result - 5
+    else next := Result + 5;
+
+    Result := Self.Scroll.SetLevel(next);
+    if Self.Items.Contains(item) then Exit;
+
+    if not Self.IsOpen() then Exit(-1); //failsafe
+  until not InRange(Result, 1, 99);
+
+  down := not down;
+
+  repeat
+    if down then next := Result - 5
+    else next := Result + 5;
+
+    Result := Self.Scroll.SetLevel(next);
+    if Self.Items.Contains(item) then Exit;
+
+    if not Self.IsOpen() then Exit(-1);
+  until not InRange(Result, 1, 99);
+
+  Result := -1;
+end;
+
 
 
 procedure TRSBank.Draw(img: TImage);
@@ -572,16 +727,15 @@ begin
     Self.DynamicButtons[i].Draw(img);
 end;
 
-procedure ShowOnClient(bank: TRSBank); overload;
+procedure TRSBank.ShowOnClient();
 var
   img: TImage;
 begin
   img := TImage.CreateFromTarget();
-  bank.Draw(img);
+  Self.Draw(img);
   img.Show();
   img.Free();
 end;
-
 
 
 var

@@ -11,3 +11,29 @@ function TRSItem.HasAmount(): Boolean;
 begin
   Result := Self.EndsWith(')', True);
 end;
+
+(*
+## TRSItem.SimplifyName
+```pascal
+function TRSItem.SimplifyName(): String;
+```
+Internal helper function to get a human like short item name, usually to search.
+
+Example:
+```pascal
+item := 'Amulet of glory(6)';
+WriteLn item.SimplifyName();
+```
+*)
+function TRSItem.SimplifyName(): String;
+var
+  str: String;
+  short, long: Integer;
+begin
+  Result := ToStr(Self).ToLower();
+  if Result.EndsWith(')') then Result := Result.Before('(');
+
+  long := Length(Result);
+  short := Min(0, long - Ceil(long/3));
+  Result := Result.CopyRange(0, Random(short, long));
+end;
