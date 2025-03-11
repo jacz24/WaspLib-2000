@@ -22,14 +22,14 @@ const
 procedure TMM2MSProjector.SetupProjection();
 begin
   case RSClient.Mode of
-    ERSClientMode.FIXED:
+    ERSMode.FIXED:
     begin
       Self.ScaleMin := 0.83 * MainScreen.Bounds.Height / 503; // fixed client height
       Self.ScaleMax := 6.32 * MainScreen.Bounds.Height / 503; // fixed client height
       Self.ViewMatrix := TMatrix4.LookAtRH([0,-28,61],[0,0,1.0], VECTOR3_UNIT_Y);
     end;
 
-    ERSCLientMode.RESIZABLE_CLASSIC, ERSClientMode.RESIZABLE_MODERN:
+    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
     begin
       Self.ScaleMin := 0.635 * MainScreen.Bounds.Height / 503; // fixed client height
       Self.ScaleMax := 4.90 * MainScreen.Bounds.Height / 503; // fixed client height

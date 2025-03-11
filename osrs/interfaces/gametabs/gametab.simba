@@ -13,7 +13,7 @@ type
 procedure TRSGameTab.SetupInterface();
 begin
   case RSClient.Mode of
-    ERSClientMode.FIXED:
+    ERSMode.FIXED:
     begin
       Self.Bounds.X1 := Target.Bounds.X2 - 214;
       Self.Bounds.X2 := Target.Bounds.X2 - 31;
@@ -21,7 +21,7 @@ begin
       Self.Bounds.Y2 := Target.Bounds.Y2 - 37;
     end;
 
-    ERSClientMode.RESIZABLE_CLASSIC:
+    ERSMode.RESIZABLE_CLASSIC:
     begin
       Self.Bounds.X1 := Target.Bounds.X2 - 212;
       Self.Bounds.X2 := Target.Bounds.X2 - 29;
@@ -29,7 +29,7 @@ begin
       Self.Bounds.Y2 := Target.Bounds.Y2 - 37;
     end;
 
-    ERSClientMode.RESIZABLE_MODERN:
+    ERSMode.RESIZABLE_MODERN:
     begin
       Self.Bounds.X1 := Target.Bounds.X2 - 193;
       Self.Bounds.X2 := Target.Bounds.X2 - 10;

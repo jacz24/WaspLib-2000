@@ -8,44 +8,50 @@ Methods relating to targeting the RS client and detecting client states.
   {$I SRLT/osrs.simba}
 {$ENDIF}
 
+type
+(*
+## RSClient Enums
+```pascal
+ERSClient = enum(UNKNOWN, LEGACY, RUNELITE, OFFICIAL);
+ERSMode = enum(UNKNOWN, FIXED, RESIZABLE_CLASSIC, RESIZABLE_MODERN);
+```
+Enums that represent both the client type and the client mode.
+*)
+  ERSClient = enum(UNKNOWN, LEGACY, RUNELITE, OFFICIAL);
+  ERSMode = enum(UNKNOWN, FIXED, RESIZABLE_CLASSIC, RESIZABLE_MODERN);
 
 (*
-## ERSClientMode
+(TRSClient)=
+## type TRSClient
+Record representing the RuneScape client.
 *)
-type
-  ERSClient = enum(UNKNOWN, LEGACY, RUNELITE, OFFICIAL);
-  ERSClientMode = enum(UNKNOWN, FIXED, RESIZABLE_CLASSIC, RESIZABLE_MODERN);
-
   TRSClient = record
     Client: ERSClient;
-    Mode: ERSClientMode;
+    Mode: ERSMode;
   end;
 
 (*
-## RSClient.DetectClientMode()
+## RSClient.DetectMode()
 ```pascal
-function TRSClient.DetectClientMode(update: Boolean): ERSClientMode;
+function TRSClient.DetectMode(): ERSMode;
 ```
-Detects the client mode. If **update** is True ClientModeChanged will be called.
-Uses the music tab so will return RS_CLIENT_UNKNOWN when not logged in.
-Are there any other cases where music tab won't be visible?
+Detects the client mode.
 *)
-function TRSClient.DetectClientMode(): ERSClientMode;
+function TRSClient.DetectMode(): ERSMode;
 begin
   // Music tab in each mode there are different colors at W-4, H-21
   // Two colors each because tab can be active(red) or not(grey)
   case Target.GetColor([Target.Width-4, Target.Height-21]) of
-    2435372, 658467: Result := ERSClientMode.FIXED;
-    3555653, 922425: Result := ERSClientMode.RESIZABLE_MODERN;
-    2896180, 790059: Result := ERSClientMode.RESIZABLE_CLASSIC;
+    2435372, 658467: Result := ERSMode.FIXED;
+    3555653, 922425: Result := ERSMode.RESIZABLE_MODERN;
+    2896180, 790059: Result := ERSMode.RESIZABLE_CLASSIC;
   end;
 end;
 
 (*
-## RSClient.IsLoggedIn()
+## RSClient.IsLoggedIn
 ```pascal
 function TRSClient.IsLoggedIn(): Boolean;
-function TRSClient.IsLoggedIn(waitTime: Int32; interval: Int32 = -1): Boolean; overload;
 ```
 Returns true/false whether there's a player logged in or not.
 
@@ -56,10 +62,22 @@ WriteLn RSClient.IsLoggedIn();
 *)
 function TRSClient.IsLoggedIn(): Boolean;
 begin
-  Result := Self.DetectClientMode() <> ERSClientMode.UNKNOWN;
+  Result := Self.DetectMode() <> ERSMode.UNKNOWN;
 end;
 
-function TRSClient.WaitLoggedIn(time: Integer = 2000; interval: Integer = -1): Boolean;
+(*
+## RSClient.WaitLoggedIn
+```pascal
+function TRSClient.WaitLoggedIn(const time: Integer = 2000; interval: Integer = -1): Boolean;
+```
+Waits `time` milliseconds for the players to be logged in.
+
+Example:
+```pascal
+WriteLn RSClient.WaitLoggedIn();
+```
+*)
+function TRSClient.WaitLoggedIn(const time: Integer = 2000; interval: Integer = -1): Boolean;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsLoggedIn(), interval, time);

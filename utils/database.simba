@@ -140,9 +140,9 @@ type
     DataDir, CacheDir: String;
   end;
 
-function TDatabase._ValueWeight(const str: String): Int32;
+function TDatabase._ValueWeight(const str: String): Integer;
 var
-  i: Int32;
+  i: Integer;
 begin
   for i := 1 to Length(str) do
     Result += Ord(str[i]);
@@ -150,7 +150,7 @@ end;
 
 procedure TDatabase.Setup(name: String; columns: TStringArray; path, version: String);
 var
-  i: Int32;
+  i: Integer;
   dir, tmp, column: String;
   data, rows: TStringArray;
   weights: TIntegerArray;
@@ -236,7 +236,7 @@ end;
 
 function TDatabase.GetRow(value, column: String): Integer;
 var
-  idx: Int32;
+  idx: Integer;
   rows: TStringArray;
 begin
   idx := Self.Data.Value[column].IndexOf(value);
@@ -249,7 +249,7 @@ end;
 function TDatabase.GetRows(value, column: String): TIntegerArray;
 var
   indices: TIntegerArray;
-  idx: Int32;
+  idx: Integer;
   rows: TStringArray;
 begin
   indices := Self.Data.Value[column].IndicesOf(value);
@@ -274,7 +274,7 @@ end;
 
 function TDatabase.GetValues(indices: TIntegerArray; column: String): TStringArray;
 var
-  idx: Int32;
+  idx: Integer;
   data: TStringArray;
 begin
   data := Self.Data.Value[column];
@@ -298,7 +298,7 @@ end;
 
 function TDatabase.Get(value, valueColumn, resultColumn: String): String;
 var
-  idx: Int32;
+  idx: Integer;
   rows, data: TStringArray;
 begin
   idx := Self.Data.Value[valueColumn].IndexOf(value);
@@ -333,7 +333,7 @@ end;
 
 function TDatabase.GetRowData(value, column: String): TStringArray;
 var
-  idx, row: Int32;
+  idx, row: Integer;
   rows, data: TStringArray;
 begin
   idx := Self.Data.Value[column].IndexOf(value);
@@ -352,7 +352,7 @@ end;
 function TDatabase.GetRowsData(value, column: String): T2DStringArray;
 var
   indices: TIntegerArray;
-  idx, row: Int32;
+  idx, row: Integer;
   rows, data: TStringArray;
 begin
   indices := Self.Data.Value[column].IndicesOf(value);
@@ -375,7 +375,7 @@ end;
 //didn't test this one, might be broken:
 procedure TDatabase.AddRow(values: TStringArray; saveCache: Boolean = False);
 var
-  i, idx: Int32;
+  i, idx: Integer;
   value, column: String;
   data, rows: TStringArray;
   weights: TIntegerArray;

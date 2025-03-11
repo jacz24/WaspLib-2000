@@ -93,10 +93,10 @@ Internal method used to setup the XPBar coordinates and core values.
 procedure TRSXPBar.SetupInterface();
 begin
   case RSClient.Mode of
-    ERSClientMode.RESIZABLE_CLASSIC, ERSClientMode.RESIZABLE_MODERN:
+    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
       Self.Button := [Minimap.Bounds.X1 - 40, Minimap.Bounds.Y1 + 32,  11];
 
-    ERSClientMode.FIXED:
+    ERSMode.FIXED:
       Self.Button := [Minimap.Bounds.X1 - 40, Minimap.Bounds.Y1 + 26,  11];
   end;
 
@@ -118,9 +118,9 @@ begin
     Y2 := Y1 + 27;
 
     case RSClient.Mode of
-      ERSClientMode.FIXED: X1 := X1 + (X2 - X1) div 2 - 69;
-      ERSClientMode.RESIZABLE_CLASSIC: X1 := X1 + (X2 - X1) div 2 - 69;
-      ERSClientMode.RESIZABLE_MODERN: X1 := X1 + (X2 - X1) div 2 - 69;
+      ERSMode.FIXED: X1 := X1 + (X2 - X1) div 2 - 69;
+      ERSMode.RESIZABLE_CLASSIC: X1 := X1 + (X2 - X1) div 2 - 69;
+      ERSMode.RESIZABLE_MODERN: X1 := X1 + (X2 - X1) div 2 - 69;
     end;
 
     X2 := X1 + 139;

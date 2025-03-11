@@ -26,12 +26,12 @@ end;
 
 function TRSClient.IsLoggedIn(): Boolean; override;
 var
-  mode: ERSClientMode;
+  mode: ERSMode;
 begin
-  mode := Self.DetectClientMode();
-  Result := mode <> ERSClientMode.UNKNOWN;
+  mode := Self.DetectMode();
+  Result := mode <> ERSMode.UNKNOWN;
 
-  if (mode <> ERSClientMode.UNKNOWN) and (mode <> Self.Mode) then
+  if (mode <> ERSMode.UNKNOWN) and (mode <> Self.Mode) then
   begin
     Self.Mode := mode;
     WriteLn(GetDebugLn('RSClient', 'Client mode changed: ' + ToStr(Self.Mode), EErrorLevel.SUCCESS));
@@ -42,7 +42,7 @@ end;
 {$H-}
 procedure TargetResized(var sender: TTarget; data: TTargetEventData);
 begin
-  if RSClient.Mode = ERSClientMode.UNKNOWN then Exit;
+  if RSClient.Mode = ERSMode.UNKNOWN then Exit;
   SetupInterfaces();
 end;
 {$H+}
@@ -71,7 +71,7 @@ end;
 begin
   Target.AddEvent(ETargetEvent.TARGET_RESIZE, @TargetResized);
   RSClient.IsLoggedIn();
-  if RSClient.Mode = ERSClientMode.UNKNOWN then
-    RSClient.Mode := ERSClientMode.FIXED;
+  if RSClient.Mode = ERSMode.UNKNOWN then
+    RSClient.Mode := ERSMode.FIXED;
   SetupInterfaces();
 end;

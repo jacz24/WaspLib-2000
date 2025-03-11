@@ -55,21 +55,21 @@ begin
   Self.Bounds.Y2 := Target.Bounds.Y2;
 
   case RSClient.Mode of
-    ERSClientMode.FIXED:
+    ERSMode.FIXED:
     begin
       Self.Bounds.X1 := Target.Bounds.X2 - 242;
       Self.Bounds.X2 := Target.Bounds.X2 - 2;
       Self.Bounds.Y1 := Target.Bounds.Y2 - 334;
     end;
 
-    ERSClientMode.RESIZABLE_CLASSIC:
+    ERSMode.RESIZABLE_CLASSIC:
     begin
       Self.Bounds.X1 := Target.Bounds.X2 - 240;
       Self.Bounds.X2 := Target.Bounds.X2;
       Self.Bounds.Y1 := Target.Bounds.Y2 - 334;
     end;
 
-    ERSClientMode.RESIZABLE_MODERN:
+    ERSMode.RESIZABLE_MODERN:
     begin
       Self.Bounds.X2 := Target.Bounds.X2;
 
@@ -88,10 +88,10 @@ begin
   end;
 
   case RSClient.Mode of
-    ERSClientMode.FIXED, ERSClientMode.RESIZABLE_CLASSIC:
+    ERSMode.FIXED, ERSMode.RESIZABLE_CLASSIC:
       Self.Tabs := TBoxArray.Create(Self.Bounds.TopLeft.Offset(6,1), 7, 2, 30, 33, [3, 265]);
 
-    ERSClientMode.RESIZABLE_MODERN:
+    ERSMode.RESIZABLE_MODERN:
       begin
         // One row
         if Target.Width >= 948 then
@@ -147,7 +147,7 @@ function TRSGameTabs.GetCurrent(): ERSGametab;
 var
   tab: ERSGameTab;
 begin
-  if (RSClient.Mode = ERSClientMode.RESIZABLE_MODERN) and (Target.CountColor(8639715, 0, Self.Tabs[ERSGameTab.LOGOUT-1]) > 0) then
+  if (RSClient.Mode = ERSMode.RESIZABLE_MODERN) and (Target.CountColor(8639715, 0, Self.Tabs[ERSGameTab.LOGOUT-1]) > 0) then
     Exit(ERSGameTab.LOGOUT);
 
   for tab := ERSGameTab.COMBAT to High(ERSGameTab) do

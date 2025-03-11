@@ -154,14 +154,14 @@ end;
 
 function TRSChat.IsOpen(): Boolean;
 begin
-  if RSClient.Mode = ERSClientMode.FIXED then Exit(True);
+  if RSClient.Mode = ERSMode.FIXED then Exit(True);
   Result := Self.Tabs.GetActive() <> ERSChatTab.NONE;
 end;
 
 
 function TRSChat.Close(): Boolean;
 begin
-  if RSClient.Mode = ERSClientMode.FIXED then Exit(False);
+  if RSClient.Mode = ERSMode.FIXED then Exit(False);
   if Self.Tabs.GetActive() = ERSChatTab.NONE then Exit(True);
 
   Self.Tabs.Get(Self.Tabs.GetActive()).Button.Click();

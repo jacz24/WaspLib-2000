@@ -496,7 +496,7 @@ begin
     img.DrawImage(map, [10, 20]);
 
     with cleanMinimap.Center do
-      if RSClient.Mode = ERSClientMode.FIXED then
+      if RSClient.Mode = ERSMode.FIXED then
         p := Point(X, Y).Offset(0, 8).Rotate(-Minimap.GetCompassAngle(False), [X,Y]);
 
     cleanMinimap.DrawColor := $FFFFFF;

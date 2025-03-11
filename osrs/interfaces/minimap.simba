@@ -52,7 +52,7 @@ var
   tpa: TPointArray;
 begin
   case RSClient.Mode of
-    ERSClientMode.RESIZABLE_CLASSIC, ERSClientMode.RESIZABLE_MODERN:
+    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
     begin
       Self.Bounds.X1 := Target.Bounds.X2 - 157;
       Self.Bounds.X2 := Target.Bounds.X2 - 6;
@@ -60,7 +60,7 @@ begin
       Self.Bounds.Y2 := Target.Bounds.Y1 + 159;
     end;
 
-    ERSClientMode.FIXED:
+    ERSMode.FIXED:
     begin
       Self.Bounds.X1 := Target.Bounds.X2 - 194;
       Self.Bounds.X2 := Target.Bounds.X2 - 50;
@@ -73,7 +73,7 @@ begin
 
   with Self.Bounds do
     case RSClient.Mode of
-      ERSClientMode.RESIZABLE_CLASSIC, ERSClientMode.RESIZABLE_MODERN:
+      ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
       begin
         Self.Compass.Circle := [X1 - 2,  Y1 + 14,  17];
         Self.Orbs[ERSMinimapOrb.HITPOINTS] := [X1 - 13, Y1 + 55,  12];
@@ -83,7 +83,7 @@ begin
         tpa := [[0, -76], [21, -73], [40, -64], [56, -51], [68, -33], [75, -1], [68, 31], [50, 43], [40, 62], [21, 71], [0, 74], [-21, 71], [-40, 62], [-56, 49], [-68, 31], [-75, -1], [-68, -33], [-56, -51], [-40, -64], [-21, -73]];
       end;
 
-      ERSClientMode.FIXED:
+      ERSMode.FIXED:
       begin
         Self.Compass.Circle := [X1 - 8,  Y1 + 12,  17];
         Self.Orbs[ERSMinimapOrb.HITPOINTS] := [X1 - 13, Y1 + 49,  12];
@@ -633,8 +633,8 @@ begin
   img.DrawColor := 0;
 
   case RSClient.Mode of
-    ERSClientMode.FIXED: img.DrawImage(Self.Masks.FIXED, [0,0]);
-    ERSClientMode.RESIZABLE_CLASSIC, ERSCLientMode.RESIZABLE_MODERN: img.DrawImage(Self.Masks.RESIZABLE, [0,0]);
+    ERSMode.FIXED: img.DrawImage(Self.Masks.FIXED, [0,0]);
+    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN: img.DrawImage(Self.Masks.RESIZABLE, [0,0]);
   end;
 
   tpa := img.FindColor($0, 0).SortFrom(img.Center);
@@ -700,7 +700,7 @@ begin
     tmp := img.Copy();
 
     center := tmp.Center;
-    if RSClient.Mode = ERSClientMode.FIXED then
+    if RSClient.Mode = ERSMode.FIXED then
       center := center.Offset(0, -8).Rotate(-Self.GetCompassAngle(False), center);
 
     tmp.DrawColor := $0;

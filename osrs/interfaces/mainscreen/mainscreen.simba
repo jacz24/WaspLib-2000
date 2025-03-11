@@ -33,8 +33,8 @@ end;
 procedure TRSMainScreen.SetupInterface();
 begin
   case RSClient.Mode of
-    ERSClientMode.FIXED: Self.Bounds := TBox.Create(4,4,515,337);
-    ERSClientMode.RESIZABLE_CLASSIC, ERSClientMode.RESIZABLE_MODERN:
+    ERSMode.FIXED: Self.Bounds := TBox.Create(4,4,515,337);
+    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
       Self.Bounds := Target.Bounds;
   end;
 
@@ -120,7 +120,7 @@ function TRSMainScreen.IsVisible(p: TPoint): Boolean;
 begin
   Result := Self.Bounds.Expand(-10).Contains(p);
 
-  if not Result or (RSClient.Mode = ERSClientMode.FIXED) then
+  if not Result or (RSClient.Mode = ERSMode.FIXED) then
     Exit;
 
   if Chat.Bounds.Expand(5).Contains(p) and Chat.IsOpen() then

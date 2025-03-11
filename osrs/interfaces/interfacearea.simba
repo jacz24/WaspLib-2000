@@ -18,19 +18,19 @@ begin
   Self.Bounds.X1 := MainScreen.Bounds.X1;
 
   case RSClient.Mode of
-    ERSClientMode.FIXED:
+    ERSMode.FIXED:
     begin
       Self.Bounds.X2 := MainScreen.Bounds.X2;
       Self.Bounds.Y2 := MainScreen.Bounds.Y2;
     end;
 
-    ERSClientMode.RESIZABLE_CLASSIC:
+    ERSMode.RESIZABLE_CLASSIC:
     begin
       Self.Bounds.X2 := GameTabs.Bounds.X1 - 10;
       Self.Bounds.Y2 := Chat.Bounds.Y1;
     end;
 
-    ERSClientMode.RESIZABLE_MODERN:
+    ERSMode.RESIZABLE_MODERN:
     begin
       Self.Bounds.X2 := GameTab.Bounds.X1 - 22;
       Self.Bounds.Y2 := Chat.Bounds.Y1;
