@@ -1,4 +1,7 @@
-//gametabs and inventory tests
+(*
+## Inventory Tests
+Tests the integrety of several inventory methods.
+*)
 {$I SRLT/osrs.simba}
 {$ASSERTIONS ON}
 

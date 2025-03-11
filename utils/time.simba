@@ -3,11 +3,18 @@
   {$I SRLT/utils.simba}
 {$ENDIF}
 
+const
+  ONE_SECOND: Integer = 1000;
+  ONE_MINUTE: Integer = ONE_SECOND * 60;
+  ONE_HOUR: Integer   = ONE_MINUTE * 60;
+  ONE_DAY: Integer    = ONE_HOUR   * 24;
+  TIME_FORMAL: String = 'h \ho\ur\s, m \min\ute\s and s \second\s';
+  MINUTES_FORMAL: String = 'm \min\ute\s and s \second\s';
+
 function TimeStamp(): String;
 begin
   Result := FormatMilliseconds(GetTimeRunning(), '[hh:mm:ss:uu]');
 end;
-
 (*
 ## TCountDown
 A neat and simple timer type.

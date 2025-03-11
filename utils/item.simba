@@ -7,6 +7,14 @@ type
   TRSItem = String;
   TRSItemArray = array of TRSItem;
 
+  TRSBankItem = record
+    Item: TRSItem;
+    Quantity: Integer;
+    Noted: Boolean;
+  end;
+
+  TRSBankItemArray = array of TRSBankItem;
+
 function TRSItem.HasAmount(): Boolean;
 begin
   Result := Self.EndsWith(')', True);
@@ -37,3 +45,19 @@ begin
   short := Min(0, long - Ceil(long/3));
   Result := Result.CopyRange(0, Random(short, long));
 end;
+
+function TRSItem.ToBankItem(): TRSBankItem;
+begin
+  Result.Quantity := 1;
+  Result.Noted := Self.StartsWith('Noted ', False);
+  if Result.Noted then Result.Item := Self.After('Noted ')
+  else Result.Item := Self;
+end;
+
+function TRSBankItem.ToItem(): TRSItem;
+begin
+  Result := Self.Item;
+  if Self.Noted then
+    Result := 'Noted ' + Result.ToLower();
+end;
+

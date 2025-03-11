@@ -34,14 +34,6 @@ Bank enums used to interact with the bank interface.
     Slot: TBox;
   end;
 
-  TRSBankItem = record
-    Item: TRSItem;
-    Quantity: Integer;
-    Noted: Boolean;
-  end;
-
-  TRSBankItemArray = array of TRSBankItem;
-
 (*
 (TRSBank)=
 ## type TRSBank
@@ -127,7 +119,7 @@ procedure Bank.SetupInterface;
 Initializes Bank interface coordinates.
 
 ```{note}
-This is automatically called on the **Bank** variable.
+This is automatically called on the {ref}`Bank` variable.
 ```
 *)
 procedure TRSBank.SetupInterface();
@@ -218,6 +210,19 @@ begin
   end;
 end;
 
+(*
+## Bank.UpdateButtons
+```pascal
+procedure TRSBank.UpdateButtons(offset: Integer);
+```
+Internal helper method used to update the buttons coordinates.
+
+All the bank's bottom buttons shift slightly on the X axis depending on how many dynamic buttons are visible.
+
+```{note}
+This is automatically called for you with {ref}`Bank.IsOpen()`.
+```
+*)
 procedure TRSBank.UpdateButtons(offset: Integer);
 var
   i: Integer;
@@ -591,20 +596,61 @@ begin
 end;
 
 
+(*
+## Bank.HasIncinerator
+```pascal
+function TRSBank.HasIncinerator(): Boolean;
+```
+Returns true if the bank screen has the incenerator visible.
 
+Example:
+```pascal
+if Bank.HasIncenerator() then
+  ShowOnClient(Self.Incenerator);
+```
+*)
 function TRSBank.HasIncinerator(): Boolean;
 begin
   with Self.Incenerator do
     Result := Target.HasColor(ColorTolerance($517F9E, 2.132, EColorSpace.HSV, [2.437, 0.309, 0.256]), 1, [X1, Y1+55, X2, Y2]);
 end;
 
+(*
+## Bank.InceneratorTooltipVisible
+```pascal
+function TRSBank.InceneratorTooltipVisible(): Boolean;
+```
+Returns true if the incenerator tooltip is visible.
+This is important to check when you want to interact with the bottom buttons of
+the bank as the tooltip will cover them.
+
+Example:
+```pascal
+WriteLn Bank.InceneratorTooltipVisible();
+```
+*)
 function TRSBank.InceneratorTooltipVisible(): Boolean;
 begin
   with Self.Incenerator do
     Result := Target.HasColor($A0FFFF, 0, 1, [X1+6, Y1+76, X2, Y2+35]);
 end;
 
-function TRSBank.UnHoverIncinerator(): Boolean;
+(*
+## Bank.CloseInceneratorTooltip
+```pascal
+function TRSBank.CloseInceneratorTooltip(): Boolean;
+```
+Attempts to close the incenerator tooltip.
+This is important to do when you want to interact with the bottom buttons of
+the bank as the tooltip will cover them.
+
+Example:
+```pascal
+if Bank.InceneratorTooltipVisible() then
+  WriteLn Bank.CloseInceneratorTooltip();
+```
+*)
+function TRSBank.CloseInceneratorTooltip(): Boolean;
 var
   boxes: TBoxArray;
 begin
@@ -618,17 +664,42 @@ begin
 end;
 
 
+(*
+## Bank.HasPotionStorage
+```pascal
+function TRSBank.HasPotionStorage(): Boolean;
+```
+Returns True/False if the bank has the potion storage menu available.
+
+Example:
+```pascal
+WriteLn Bank.HasPotionStorage();
+```
+*)
 function TRSBank.HasPotionStorage(): Boolean;
 begin
   Result := Target.HasColor(ColorTolerance($517F9E, 2.132, EColorSpace.HSV, [2.437, 0.309, 0.256]), 1, Self.PotionStorage);
 end;
 
+(*
+## Bank.PotionStorageIsOpen
+```pascal
+function TRSBank.PotionStorageIsOpen(): Boolean;
+```
+Returns True if the potion storage is currently open.
+
+Example:
+```pascal
+WriteLn Bank.PotionStorageIsOpen();
+```
+*)
 function TRSBank.PotionStorageIsOpen(): Boolean;
 begin
   Result := Target.HasColor($1F98FF, 0,  3000, Self.SlotsArea);
 end;
 
 
+{%codetools off}
 (*
 ## Bank._FindTabText
 ```pascal
@@ -643,7 +714,6 @@ if Bank.Search('logs') then
     ShowOnClient(bounds);
 ```
 *)
-{%codetools off}
 function TRSBank._FindTabText(const tpa: TPointArray; out bounds: TBox): Boolean;
 var
   atpa: T2DPointArray;
@@ -854,7 +924,20 @@ begin
 end;
 
 
-function TRSBank.Withdraw(const item: TRSBankItem;const useQuantityButton: Boolean = True; const useCache: Boolean = True): Boolean;
+(*
+## Bank.Withdraw
+```pascal
+function TRSBank.Withdraw(const item: TRSBankItem; const useQuantityButton: Boolean = True; const useCache: Boolean = True): Boolean;
+function TRSBank.Withdraw(const item: TRSItem; const useQuantityButton: Boolean = True; const useCache: Boolean = True): Boolean; overload;
+```
+Attempts to withdraw `item` from the bank.
+
+Example:
+```pascal
+WriteLn Bank.Withdraw(item);
+```
+*)
+function TRSBank.Withdraw(const item: TRSBankItem; const useQuantityButton: Boolean = True; const useCache: Boolean = True): Boolean;
 var
   data: TBankPosition;
 begin
@@ -868,6 +951,41 @@ begin
 
   Result := Self._InteractionHelper(ERSBankInteraction.WITHDRAW, data.Slot, item.Quantity, useQuantityButton);
 end;
+
+function TRSBank.Withdraw(const item: TRSItem; const useQuantityButton: Boolean = True; const useCache: Boolean = True): Boolean; overload;
+begin
+  Result := Self.Withdraw(item.ToBankItem(), useQuantityButton, useCache);
+end;
+
+(*
+## Bank.Deposit
+```pascal
+function TRSBank.Deposit(const item: TRSBankItem; const useQuantityButton: Boolean = True): Boolean;
+function TRSBank.Deposit(const item: TRSItem; const useQuantityButton: Boolean = True): Boolean; overload;
+```
+Attempts to deposit `item` into the bank.
+
+Example:
+```pascal
+WriteLn Bank.Deposit(item);
+```
+*)
+function TRSBank.Deposit(const item: TRSBankItem; const useQuantityButton: Boolean = True): Boolean;
+var
+  slot: TBox;
+begin
+  if Inventory.Items.Find(item.ToItem(), slot) then
+    Result := Self._InteractionHelper(ERSBankInteraction.DEPOSIT, slot, item.Quantity, useQuantityButton);
+end;
+
+function TRSBank.Deposit(const item: TRSItem; const useQuantityButton: Boolean = True): Boolean; overload;
+var
+  slot: TBox;
+begin
+  if Inventory.Items.Find(item, slot) then
+    Result := Self._InteractionHelper(ERSBankInteraction.DEPOSIT, slot, 1, useQuantityButton);
+end;
+
 
 procedure TRSBank.Draw(img: TImage);
 var

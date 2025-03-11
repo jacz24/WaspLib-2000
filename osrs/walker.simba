@@ -12,35 +12,46 @@ iterations made by Olly.
 
 type
 (*
-## PRSWalker
+(PRSWalker)=
+## type PRSWalker
 TRSWalker pointer.
 *)
   PRSWalker = ^TRSWalker;
 
 (*
-## TRSWalker_OnWalkEvent
+(TRSWalkerEvent)=
+## type TRSWalkerEvent
 Callback object method to use while walking. This can be used to perform custom tasks while walking.
 
 Example:
 ```pascal
-procedure TRSWalker.WalkerTasks(Walker: PRSWalker; Position: TPoint; Destination: TPoint);
+procedure TRSWalker.WalkerTasks(walker: PRSWalker; position, destination: TPoint);
 begin
   Antiban.RandomTab();
 end;
 
-var
-  rsw: TRSWalker;
 begin
-  rsw.Setup('world');
-  rsw.OnWaitMoving := @rsw.WalkerTasks;
+  //this assumes walker is already setup.
+  walker.OnWaitMoving := @walker.WalkerTasks;
 end;
 ```
 *)
-  TRSWalkerEvent            = procedure(walker: PRSWalker; position: TPoint; destination: TPoint) of object;
+  TRSWalkerEvent            = procedure(walker: PRSWalker; position, destination: TPoint) of object;
   TRSWalkerPositionFunction = function (): TPoint of object;
   TRSWalkerHeightFunction   = function (pt: TPoint = [0,0]): Single of object;
   TRWalkerGetLocalFunction  = function (pt: TPoint; offset: TPoint = [0,0]): TPoint of object;
 
+(*
+(TRSWalker)=
+## type TRSWalker
+TRSWalker is the record responsible for walking.
+To work you need to set it up with something that gives it a position function
+as by itself it doesn't really do anything.
+
+Once you have a function that gives you an accurate position, you can pass it to
+into a `TRSWalker` variable or into the {ref}`Walker` one, either directly or
+via the {ref}`Walker.Setup()` method.
+*)
   TRSWalker = record
     Name: String;
 
@@ -108,18 +119,56 @@ function TRSWalker.DummyHeight(pt: TPoint = [0,0]): Single; begin Result := pt.X
 function TRSWalker.DummyGetLocal(pt: TPoint; offset: TPoint = [0,0]): TPoint; begin Result := pt+offset; end;
 {%codetools on}
 
+(*
+## Walker.Setup
+```pascal
+procedure TRSWalker.Setup(position: TRSWalkerPositionFunction; height: TRSWalkerHeightFunction; getLocal: TRWalkerGetLocalFunction; graph: ^TWebGraph; mapImage: TImage);
+```
+Method responsible for setting up the {ref}`TRSWalker` variable.
+All parameters of this function can be `nil` except for `position`.
+Without a `position` callback you cannot use `TRSWalker`.
+
+The following example is purely an example, you never have to do this since
+`Map.Setup` already does this for you anyway.
+
+Example:
+```pascal
+Map.Setup(ERSChunk.CATACOMBS_OF_KOUREND);
+Walker.Setup(@Map.Position, @Map.Height, @Map.Loader.GetLocal, @Map.Loader.Graph, @Map.Loader.Map);
+```
+*)
 procedure TRSWalker.Setup(position: TRSWalkerPositionFunction; height: TRSWalkerHeightFunction; getLocal: TRWalkerGetLocalFunction; graph: ^TWebGraph; mapImage: TImage);
 begin
   Self.Position := @position;
   if @height <> nil then Self.Height := @height else Self.Height := @Self.DummyHeight;
   if @getLocal <> nil then Self.GetLocal := @getLocal else Self.GetLocal := @Self.DummyGetLocal;
-  Self.WebGraph := graph;
+
   Self.WalkUpText := ['Walk here', 'alk her'];
   Self.AdaptiveWalk := True;
+  Self.WebGraph := graph;
   Self.MapImage := mapImage;
 end;
 
 
+(*
+## Walker Conversions
+```pascal
+function TRSWalker.Point2MM(const playerPoint, pt: TPoint; const radians: Double): TPoint;
+function TRSWalker.Point2MMVec(const playerPoint, pt: TPoint; const radians: Double): Vector2;
+function TRSWalker.Points2MM(const playerPoint: TPoint; const tpa: TPointArray; const radians: Double): TPointArray;
+function TRSWalker.GetLocalEx(const tpa: TPointArray; const offset: TPoint = [0,0]): TPointArray;
+function TRSWalker.GetQuadMS(const playerPoint, mapPoint: TPoint; const height: Double = 0; const offset: Vector3 = [0,0,0]; radians: Single = $FFFF): TQuad;
+function TRSWalker.MM2Map(const playerPoint, minimapPoint: TPoint; radians: Single = $FFFF): TPoint;
+```
+Used to convert coordinates from `TRSWalker` to the minimap or the mainscreen.
+
+Example:
+```pascal
+//assuming walker is already setup...
+me := Walker.Position();
+ShowOnClient(Walker.GetQuadMS(me, me + [4,0])); //should show you the tile to your right.
+```
+*)
 function TRSWalker.Point2MM(const playerPoint, pt: TPoint; const radians: Double): TPoint;
 begin
   Result := pt - playerPoint + Minimap.Center;

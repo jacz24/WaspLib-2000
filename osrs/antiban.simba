@@ -1,0 +1,544 @@
+(*
+# Antiban
+Methods to handle antiban.
+*)
+
+{$DEFINE SRLT_ANTIBAN_INCLUDED}
+{$IFNDEF SRLT_OSR}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  PAntibanTask = ^TAntibanTask;
+  PBreakTask = ^TBreakTask;
+  PSleepTask = ^TSleepTask;
+  PAntibanTaskArray = array of PAntibanTask;
+  PAntibanBreakArray = array of PBreakTask;
+
+  TAntibanMethod = procedure of object;
+
+  TAntibanTask = record
+    Method: TAntibanMethod;
+    Interval: Double;
+    StdVar: Double;
+    Countdown: TCountDown;
+  end;
+
+  TBreakTask = record
+    Interval: Double;
+    Length: Double;
+    LogoutChance: Double;
+    StdVar: Double;
+    Next, Previous: Double;
+  end;
+
+  TSleepTask = record
+    Time: String;
+    Length: Double;
+    Randomness: String;
+    LogoutChance: Double;
+    StdVar: Double;
+    Next: Double;
+  end;
+
+  TAntiban = record
+    DoingAntiban: Boolean;
+    Debugging: Boolean;
+    DebugRandoms: Boolean;
+
+    Skills: array of ERSSkill;
+
+    Zoom: record
+      Min, Max: Integer;
+    end;
+
+    Sleeps: array of TSleepTask;
+    OnStartSleep:  procedure(task: PSleepTask) of object;
+    OnSleeping:    procedure(task: PSleepTask; var countdown: TCountdown) of object;
+    OnFinishSleep: procedure(task: PSleepTask) of object;
+
+    Breaks: array of TBreakTask;
+    OnStartBreak:  procedure(task: PBreakTask) of object;
+    OnBreaking:    procedure(task: PBreakTask; var countdown: TCountdown) of object;
+    OnFinishBreak: procedure(task: PBreakTask) of object;
+
+    Tasks: array of TAntibanTask;
+    OnStartTask:  procedure(task: PAntibanTask) of object;
+    OnFinishTask: procedure(task: PAntibanTask) of object;
+  end;
+
+function TAntiban.TimeRunningAtClock(const time: String; const randomness: Double = 0.10): Int64;
+var
+  current, res: TDateTime;
+begin
+  current := Now();
+  res := (current.Date + TDateTime.CreateFromString(time)) - current;
+  if (res < 0) then res += 1;
+
+  Result := GetTimeRunning() + Trunc(res * ONE_DAY);
+  Result += Trunc(GaussRand(0, TDateTime.CreateFromString(ToStr(randomness * 10)) * ONE_DAY));
+  Result := Max(0, Result);
+end;
+
+
+function TAntiban.GetActiveTasks(): PAntibanTaskArray;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self.Tasks) do
+    if not Self.Tasks[i].Countdown.IsPaused() then
+      Result += @Self.Tasks[i];
+end;
+
+
+(*
+## Antiban.AddTask
+```pascal
+procedure TAntiban.AddTask(const interval: Double; const method: TAntibanMethod; const randomness: Double = 0.2);
+```
+Schedule a antiban task.
+An antiban task can be any procedure but they should be short actions that won't
+break your main script.
+
+`interval` is the aproximate interval of time that has to pass for the antiban
+task to occur and it will be repeated everytime that the interval has passed
+and the antiban is checked with {ref}`Antiban.DoAntiban()`.
+
+`method` is a pointer to the task you want to perform. SRLT includes a couple of them but you may make your own if you want.
+
+This task will only occur when **TAntiban.DoAntiban** is called.
+
+Example:
+```pascal
+Antiban.AddTask(15 * ONE_MINUTE, @Antiban.HoverSkills); //Every 15 minutes the script will hover the skills.
+```
+*)
+procedure TAntiban.AddTask(const interval: Double; const method: TAntibanMethod; const randomness: Double = 0.2);
+var
+  task: TAntibanTask;
+begin
+  task.Interval := interval;
+  task.Method := @method;
+  task.StdVar := randomness;
+  task.Countdown.Init(Random(Trunc(Abs(GaussRand(task.Interval, task.Interval * task.StdVar)))));
+
+  Self.Tasks += task;
+end;
+
+(*
+## Antiban.AddBreak
+```pascal
+procedure TAntiban.AddBreak(const interval, length: Double; const randomness: Double = 0.2; const logoutChance: Double = 0.33);
+```
+Schedule a break. Breaks can be of short or medium length and should be shorter than any sleep breaks.
+
+`interval` is the aproximate interval of time that has to pass for the break to
+occur and it will be repeated everytime that interval passes and the antiban is
+checked either with {ref}`Antiban.DoBreak()` or {ref}`Antiban.DoAntiban()`.
+`length`, `randomness` and `logoutChance` are the same as {ref}`Antiban.AddSleep`.
+
+This break will only occur when {ref}`Antiban.DoAntiban()` is called.
+
+Example:
+```pascal
+Antiban.AddBreak(30 * ONE_MINUTE, 5 * ONE_MINUTE); //Every 30 minutes the script will take a 5 minute break, subject to variance from the randomness variable.
+```
+*)
+procedure TAntiban.AddBreak(const interval, length: Double; const randomness: Double = 0.2; const logoutChance: Double = 0.33);
+var
+  task: TBreakTask;
+begin
+  task.Interval := interval;
+  task.Length := length;
+  task.StdVar := randomness;
+  task.LogoutChance := logoutChance;
+  task.Next := GetTimeRunning() + Abs(GaussRand(task.Interval, task.Interval * task.StdVar));
+
+  Self.Breaks += task;
+end;
+
+(*
+## Antiban.AddSleep
+```pascal
+procedure TAntiban.AddSleep(const time: String; const length: Double; const randomness: Double = 0.10; const logoutChance: Double = 0.5);
+```
+Schedule a sleep break. A sleep break is a large break, it can be any length but
+it's usually the several hours and also the largest one/ones.
+
+`time` is the aproximate time you want the break to occur and should be written
+in a "bare" time format (00:00:00).
+
+`length` is how long we will sleep for in milliseconds.
+
+`randomness` is self explanatory, gives variance to the time our script will
+sleep at and it's length too.
+
+`logoutChance` is the probability of logging out for the sleep break or to
+simply afk and logout from inactivity.
+
+This sleep break will only occur when {ref}`Antiban.DoAntiban()` is called and our sleep break is due.
+
+Example:
+```pascal
+Antiban.AddSleep('01:30:45', 8 * ONE_HOUR, 0.1, 0.8); //At 01:30:45 on our computer time the script will take a break for 8 hours, subject to variance from the randomness variable.
+```
+*)
+procedure TAntiban.AddSleep(const time: String; const length: Double; const randomness: Double = 0.10; const logoutChance: Double = 0.5);
+var
+  task: TSleepTask;
+begin
+  task.Time := time;
+  task.Length := length;
+  task.StdVar := randomness;
+  task.LogoutChance := logoutChance;
+  task.Next := Self.TimeRunningAtClock(task.Time, task.StdVar);
+  Self.Sleeps += task;
+end;
+
+
+(*
+## Antiban.TakeSleep
+```pascal
+procedure TAntiban.TakeSleep(var task: TSleepTask);
+```
+Internal function used by {ref}`Antiban.DoAntiban()` and is responsible for
+performing the specified sleep `task`.
+In other words, this is what makes the script take the sleep break.
+*)
+procedure TAntiban.TakeSleep(var task: TSleepTask);
+var
+  countdown: TCountDown;
+  i: Integer;
+  activeTasks: PAntibanTaskArray;
+  marker: UInt64;
+begin
+  activeTasks := Self.GetActiveTasks();
+  for i := 0 to High(activeTasks) do
+    activeTasks[i]^.countdown.Pause();
+
+  countdown.Init(Abs(Round(GaussRand(task.Length, task.Length * task.StdVar))));
+
+  WriteLn GetDebugLn('Antiban', 'Sleeping for ' + FormatMilliseconds(countdown.Remaining(), TIME_FORMAL));
+
+  if @Self.OnStartSleep <> nil then Self.OnStartSleep(@task);
+
+  if RandomBoolean(task.LogoutChance) then
+  begin
+    WriteLn GetDebugLn('Antiban', 'Logging out.');
+    //TODO:
+    //Logout.ClickLogout();
+  end;
+
+  if RandomBoolean(0.7) then RSClient.LoseFocus();
+
+  repeat
+    if GetTickCount() > marker  then
+    begin
+      WriteLn GetDebugLn('Antiban', 'Sleep time remaining: ' + FormatMilliseconds(countdown.Remaining(), TIME_FORMAL));
+      //OnSleeping callback only runs every 5 mins.
+      if (@Self.OnSleeping <> nil) then
+        Self.OnSleeping(@task, countdown);
+      marker := GetTickCount() + 5 * ONE_MINUTE;
+    end;
+
+    Sleep(Min(countdown.Remaining(), 5 * ONE_SECOND));
+  until countdown.IsFinished();
+
+  WriteLn GetDebugLn('Antiban', 'Sleep finished.');
+
+  if (@Self.OnFinishSleep <> nil) then
+    Self.OnFinishSleep(@task);
+
+  //Offset all tasks & breaks
+  for i := 0 to High(Self.Breaks) do
+    Self.Breaks[i].Next += GetTickCount() - (countdown.Timeout - countdown.Length);
+
+  for i := 0 to High(activeTasks) do
+    activeTasks[i]^.countdown.Resume();
+
+  // Schedule next time this sleep will happen
+  task.Next := Self.TimeRunningAtClock(task.Time, task.StdVar);
+end;
+
+(*
+## Antiban.TakeBreak
+```pascal
+procedure TAntiban.TakeBreak(var task: TBreakTask);
+```
+Internal function used by {ref}`Antiban.DoAntiban()` and is responsible for
+performing the specified break `task`.
+In other words, this is what makes the script take the break.
+*)
+procedure TAntiban.TakeBreak(var task: TBreakTask);
+var
+  countdown: TCountDown;
+  i: Integer;
+  activeTasks: PAntibanTaskArray;
+begin
+  activeTasks := Self.GetActiveTasks();
+  for i := 0 to High(activeTasks) do
+    activeTasks[i]^.countdown.Pause();
+
+  countdown.Init(Abs(Round(GaussRand(task.Length, task.Length * task.StdVar))));
+
+  WriteLn GetDebugLn('Antiban', 'Taking a break for ' + FormatMilliseconds(countdown.Remaining(), MINUTES_FORMAL));
+
+  if (@Self.OnStartBreak <> nil) then
+    Self.OnStartBreak(@task);
+
+  if RandomBoolean(task.LogoutChance) then
+  begin
+    WriteLn GetDebugLn('Antiban', 'Logging out.');
+    //TODO:
+    //Logout.ClickLogout();
+  end;
+
+  if RandomBoolean(0.50) then
+    RSClient.LoseFocus();
+
+  repeat
+    if (Inc(i) mod 12 = 0) then
+      WriteLn GetDebugLn('Antiban', 'Break time remaining: ' + FormatMilliseconds(countdown.Remaining(), MINUTES_FORMAL));
+
+    if (@Self.OnBreaking <> nil) then //callback runs every 5 seconds
+      Self.OnBreaking(@task, countdown);
+
+    Sleep(Min(countdown.Remaining(), 5 * ONE_SECOND));
+  until countdown.IsFinished();
+
+  WriteLn GetDebugLn('Antiban', 'Break finished');
+
+  if (@Self.OnFinishBreak <> nil) then
+    Self.OnFinishBreak(@task);
+
+  // Offset all tasks & breaks
+  for i := 0 to High(Self.Breaks) do
+    Self.Breaks[i].Next += GetTickCount() - (countdown.Timeout - countdown.Length);
+
+  for I := 0 to High(activeTasks) do
+    activeTasks[i]^.countdown.Resume();
+
+  // Setup next time this break happens
+  task.Next := GetTimeRunning() + Abs(GaussRand(task.Interval, task.Interval * task.StdVar));
+end;
+
+
+(*
+## Antiban.DoTask
+```pascal
+function TAntiban.DoTask(): Boolean;
+```
+Checks for scheduled antiban tasks, if any is due it will do it.
+
+You should only call this when taking doing an antiban task won't break your script.
+
+Returns true if a task was performed.
+
+Example:
+```pascal
+Antiban.DoTask();
+```
+*)
+function TAntiban.DoTask(): Boolean;
+var
+  i: Int32;
+  task: PAntibanTask;
+  activeTasks: PAntibanTaskArray;
+begin
+  activeTasks := Self.GetActiveTasks();
+  for i := 0 to High(activeTasks) do
+    activeTasks[i]^.Countdown.Pause();
+
+  for i := 0 to High(activeTasks) do
+  begin
+    task := activeTasks[i];
+
+    if task^.Countdown.Remaining() = 0 then
+    begin
+      if (@Self.OnStartTask <> nil) then
+        Self.OnStartTask(Task);
+
+      task^.Method();
+      task^.Countdown.Init(Trunc(Abs(GaussRand(task^.Interval, task^.Interval * task^.StdVar))));
+      task^.Countdown.Pause();
+
+      if (@Self.OnFinishTask <> nil) then
+        Self.OnFinishTask(Task);
+
+      Result := True;
+    end;
+  end;
+
+  for i := 0 to High(activeTasks) do
+    activeTasks[i]^.Countdown.Resume();
+end;
+
+(*
+## Antiban.DoBreak
+```pascal
+function TAntiban.DoBreak(): Boolean;
+```
+Checks for scheduled breaks, if any is due it will take it.
+
+You should only call this when taking a break won't break your script.
+
+Returns true if a break was taken.
+
+Example:
+```pascal
+Antiban.DoBreak();
+```
+*)
+function TAntiban.DoBreak(): Boolean;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self.Breaks) do
+    if GetTimeRunning() > Self.Breaks[i].Next then
+    begin
+      Self.TakeBreak(Self.Breaks[i]);
+      Result := True;
+      i := -1; // Restart loop
+    end;
+end;
+
+(*
+## Antiban.DoSleep
+```pascal
+function TAntiban.DoSleep(): Boolean;
+```
+Checks for scheduled sleep breaks, if any is due it will take it.
+
+You should only call this when taking a sleep break won't break your script.
+
+Returns true if a sleep break was taken.
+
+Example:
+```pascal
+Antiban.DoSleep();
+```
+*)
+function TAntiban.DoSleep(): Boolean;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self.Sleeps) do
+    if GetTimeRunning() > Self.Sleeps[i].Next then
+    begin
+      Self.TakeSleep(Self.Sleeps[i]);
+      Result := True;
+      i := -1; // Restart loop
+    end;
+end;
+
+
+(*
+## Antiban.DoAntiban
+```pascal
+function TAntiban.DoAntiban(checkTasks, checkBreaks, checkSleeps: Boolean = True): Boolean;
+```
+This should be called in your script when antiban sleeps, breaks or tasks won't
+break your script.
+
+When this is called, the setup sleep breaks, breaks and tasks will be checked,
+if enough time has passed to perform any of them
+(subject to the parameters you pass in too), they will be performed, otherwise,
+nothing will happen.
+
+Example:
+```pascal
+Antiban.AddTask(15 * ONE_MINUTE, @Antiban.HoverSkills);
+
+while True do        //Infinite loop
+  Antiban.DoAntiban(); //Antiban.HoverSkills will be called every time 15 minutes passed when this is called.
+```
+*)
+function TAntiban.DoAntiban(const checkTasks, checkBreaks, checkSleeps: Boolean = True): Boolean;
+begin
+  if Self.DoingAntiban then Exit;
+  Self.DoingAntiban := True;
+
+  try
+    if checkTasks and Self.DoTask() then Result := True;
+    if checkBreaks and Self.DoBreak() then Result := True;
+    if checkSleeps and Self.DoSleep() then Result := True;
+  finally
+    Self.DoingAntiban := False;
+  end;
+end;
+
+
+(*
+## Antiban.TimeUntilBreak
+```pascal
+function TAntiban.TimeUntilBreak(const task: TBreakTask): String;
+```
+Check how much time is left until the specified break `task` should be taken.
+*)
+function TAntiban.TimeUntilBreak(const task: TBreakTask): String;
+begin
+  Result := FormatMilliseconds(Max(0, Round(task.Next - GetTimeRunning())), True);
+end;
+
+(*
+## Antiban.TimeUntilSleep
+```pascal
+function TAntiban.TimeUntilSleep(const task: TSleepTask): String;
+```
+Check how much time is left until the specified sleep break `task` should be taken.
+*)
+function TAntiban.TimeUntilSleep(const task: TSleepTask): String;
+begin
+  Result := FormatMilliseconds(Max(0, Round(task.Next - GetTimeRunning())), True);
+end;
+
+(*
+## Antiban.SimulateBreaks
+```pascal
+procedure TAntiban.SimulateBreaks(const bottingDays: UInt64 = 1000);
+```
+Performs a simulation of `bottingDays` amount of days with the currently setup
+breaks and prints the results.
+
+Example
+```pascal
+Antiban.AddBreak(30 * ONE_MINUTE, 5 * ONE_MINUTE);
+Antiban.SimulateBreaks();
+```
+*)
+procedure TAntiban.SimulateBreaks(const bottingDays: UInt64 = 1000);
+var
+  active, inactive, len, prev: Double;
+  i: Int32;
+  task: PBreakTask;
+begin
+  while (active + inactive < bottingDays * ONE_DAY) do
+  begin
+    task := @Self.Breaks[0];
+    for I := 0 to High(Self.Breaks) do
+      if Self.Breaks[i].Next < task^.Next then
+        task := @Self.Breaks[i];
+
+    len := Abs(GaussRand(task^.Length, task^.Length * task^.StdVar));
+    active += task^.Next - Prev;
+    inactive += len;
+
+    for i := 0 to High(Self.Breaks) do
+      Self.Breaks[i].Next += len;
+
+    prev := task^.Next;
+    task^.Next += Abs(GaussRand(task^.Interval, task^.Interval * task^.StdVar));
+  end;
+
+  inactive /= bottingDays;
+  active /= bottingDays;
+  WriteLn('Running for ', FormatMilliseconds(Round(active), TIME_FORMAL), ' per day, on average.');
+end;
+
+var
+(*
+(Antiban)=
+## var Antiban
+Global {ref}`TAntiban` variable.
+*)
+  Antiban: TAntiban;
