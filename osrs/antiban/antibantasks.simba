@@ -496,21 +496,6 @@ begin
 end;
 
 
-procedure TAntiban.RandomKeyboard();
-begin
-  case Random(100) of
-    0..74:
-    case Random(3) of
-      0: Keyboard.PressKey(EKeyCode.LEFT);
-      1: Keyboard.PressKey(EKeyCode.RIGHT);
-      2: Keyboard.PressKey(EKeyCode.UP);
-    end;
-    75..89: Keyboard.PressKey(Keyboard.FKEYS.Random());
-    90..99: Keyboard.PressKey(Keyboard.MISC.Random());
-  end;
-end;
-
-
 procedure TAntiban.ToggleRun();
 begin
   WriteLn GetDebugLn('Antiban', 'Toggling energy');

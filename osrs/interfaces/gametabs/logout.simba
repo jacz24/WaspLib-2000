@@ -9,11 +9,9 @@ Methods to interact with the logout tab.
 
 type
   ERSLogoutButton = (WORLD_SWITCHER, CLICK_HERE);
-  ERSLogoutRating = (ONE, TWO, THREE, FOUR, FIVE);
-
   TRSLogout = record
     Buttons: array [ERSLoginButton] of TRSButton;
-    Ratings: array [ERSLogoutRating] of TRSButton;
+    Ratings: array [0..4] of TRSButton;
   end;
 
 procedure TRSLogout.SetupInterface();
@@ -87,7 +85,49 @@ WriteLn Logout.IsRated();
 *)
 function TRSLogout.IsRated(): Boolean;
 begin
-  Result := Self.Ratings[ERSLogoutRating.ONE].Enabled();
+  Result := Self.Ratings[0].Enabled();
+end;
+
+(*
+## Logout.ClickLogout
+```pascal
+function TRSLogout.ClickLogout(attempts: Int32 = 5; time: Int32 = 20000): Boolean;
+```
+Clicks the logout button. Returns true if we succesfully logout of the game.
+
+Example:
+```pascal
+WriteLn Logout.ClickLogout();
+```
+*)
+function TRSLogout.Logout(const attempts: UInt32 = 5; const time: UInt32 = 20000): Boolean;
+var
+  i: Integer;
+  interval: UInt32;
+begin
+  if not Self.Open() then Exit; //TODO: or (not Self.CloseWorldSwitcher()) then
+  interval := time div attempts;
+
+  if Biometrics.RandomBoolean(EBiometric.RATING) then
+  begin
+    if Biometrics.RandomBoolean(EBiometric.LIKES) then
+      i := RandomLeft(4, 0)
+    else
+      i := RandomLeft(0, 4);
+
+    WriteLn GetDebugLn('Logout', 'Rating the game with ' + ToStr(i+1) + ' stars before logging out.');
+    Self.Ratings[i].Enable();
+  end;
+
+  if Keyboard.LastKey = EKeyCode.RETURN then
+    Keyboard.RandomKey();  //unlock enter if using remote input
+
+  for i := 1 to attempts do
+  begin
+    Self.Buttons[ERSLogoutButton.CLICK_HERE].Click();
+    if SleepUntil(not RSClient.IsLoggedIn(), 500, interval + Random(-2000, 2000)) then
+      Exit(True);
+  end;
 end;
 
 var

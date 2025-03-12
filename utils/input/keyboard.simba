@@ -113,6 +113,22 @@ begin
   Self.PressKey(keyPressAfter);
 end;
 
+
+procedure TKeyboard.RandomKey();
+begin
+  case Random(100) of
+    0..74:
+    case Random(3) of
+      0: Self.PressKey(EKeyCode.LEFT);
+      1: Self.PressKey(EKeyCode.RIGHT);
+      2: Self.PressKey(EKeyCode.UP);
+    end;
+    75..89: Self.PressKey(Self.FKEYS.Random());
+    90..99: Self.PressKey(Self.MISC.Random());
+  end;
+end;
+
+
 var
   Keyboard: TKeyboard;
 

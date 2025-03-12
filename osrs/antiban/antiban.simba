@@ -225,8 +225,7 @@ begin
   if RandomBoolean(task.LogoutChance) then
   begin
     WriteLn GetDebugLn('Antiban', 'Logging out.');
-    //TODO:
-    //Logout.ClickLogout();
+    Logout.Logout();
   end;
 
   if RandomBoolean(0.7) then RSClient.LoseFocus();
@@ -289,8 +288,7 @@ begin
   if RandomBoolean(task.LogoutChance) then
   begin
     WriteLn GetDebugLn('Antiban', 'Logging out.');
-    //TODO:
-    //Logout.ClickLogout();
+    Logout.Logout();
   end;
 
   if RandomBoolean(0.50) then
