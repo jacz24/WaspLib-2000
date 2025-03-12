@@ -28,7 +28,6 @@ begin
     for i := 0 to 6 do
     begin
       Self.Tabs[i].Tab := ERSChatTab(i+1);
-      Self.Tabs[i].Button.Index := i;
       Self.Tabs[i].Button.EnabledColors := [[1555,6], [5399922, 0], [795452, 0]];
       Self.Tabs[i].Button.Bounds := Box(X1 + 3 + (i * 62), Y1, X1 + 58 + (i * 62), Y2 - 1);
     end;

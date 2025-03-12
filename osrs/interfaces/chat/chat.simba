@@ -27,8 +27,6 @@ var
   b: TBox;
 begin
   Self.Tabs.SetupInterface();
-
-  Self.ReportButton.Index := 0;
   Self.ReportButton.EnabledColors := [[1555,6], [5399922, 0], [795452, 0]];
 
   with Self.Tabs.Bounds do

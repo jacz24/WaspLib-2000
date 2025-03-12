@@ -8,7 +8,6 @@ type
       Tolerance: Single;
     end;
 
-    Index: Integer;
     Bounds: TBox;
   end;
 
@@ -51,23 +50,11 @@ end;
 
 procedure TRSButton.Draw(img: TImage; color: Integer = $00FFFF);
 var
-  oldSize: Single;
   oldColor: Integer;
-  oldAntialiasing: Boolean;
 begin
-  oldSize := img.FontSize;
-  oldAntialiasing := img.FontAntialiasing;
   oldColor := img.DrawColor;
-
-  img.FontSize := 20;
-  img.FontAntialiasing := True;
   img.DrawColor := color;
-
   img.DrawBox(Self.Bounds);
-  img.DrawText(ToStr(Self.Index), Self.Bounds, [EImageTextAlign.CENTER]);
-
-  img.FontSize := oldSize;
-  img.FontAntialiasing := oldAntialiasing;
   img.DrawColor := oldColor;
 end;
 
@@ -83,27 +70,15 @@ end;
 
 procedure TRSButtonArray.Draw(img: TImage; color: Integer = $00FFFF);
 var
-  oldSize: Single;
   oldColor: Integer;
-  oldAntialiasing: Boolean;
   button: TRSButton;
 begin
-  oldSize := img.FontSize;
-  oldAntialiasing := img.FontAntialiasing;
   oldColor := img.DrawColor;
-
-  img.FontSize := 20;
-  img.FontAntialiasing := True;
   img.DrawColor := color;
 
   for button in Self do
-  begin
     img.DrawBox(button.Bounds);
-    img.DrawText(ToString(button.Index), button.Bounds, [EImageTextAlign.CENTER]);
-  end;
 
-  img.FontSize := oldSize;
-  img.FontAntialiasing := oldAntialiasing;
   img.DrawColor := oldColor;
 end;
 

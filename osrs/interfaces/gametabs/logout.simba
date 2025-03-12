@@ -1,0 +1,95 @@
+(*
+# Logout
+Methods to interact with the logout tab.
+*)
+{$DEFINE SRLT_LOGOUT_INCLUDED}
+{$IFNDEF SRLT_OSR}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+type
+  ERSLogoutButton = (WORLD_SWITCHER, CLICK_HERE);
+  ERSLogoutRating = (ONE, TWO, THREE, FOUR, FIVE);
+
+  TRSLogout = record
+    Buttons: array [ERSLoginButton] of TRSButton;
+    Ratings: array [ERSLogoutRating] of TRSButton;
+  end;
+
+procedure TRSLogout.SetupInterface();
+var
+  btns: TBoxArray;
+  i: Integer;
+begin
+  btns := TBoxArray.Create(GameTab.TopLeft.Offset(2,61), 5, 1, 31, 35, [6, 0]);
+  for i := 0 to High(btns) do
+  begin
+    Self.Ratings[i].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
+    Self.Ratings[i].Bounds := btns[i];
+  end;
+
+  Self.Buttons[ERSLogoutButton.WORLD_SWITCHER].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
+  Self.Buttons[ERSLogoutButton.CLICK_HERE].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
+
+  with GameTab.Bounds do
+  begin
+    Self.Buttons[ERSLogoutButton.WORLD_SWITCHER].Bounds := TBox.Create(X1+22, Y2-97, X2-22, Y2-66);
+    Self.Buttons[ERSLogoutButton.CLICK_HERE].Bounds := TBox.Create(X1+22, Y2-49, X2-22, Y2-18);
+  end;
+end;
+
+(*
+## Logout.IsOpen
+```pascal
+function TRSLogout.IsOpen(): Boolean;
+```
+Returns true if the logout gametab is open, false if it's not.
+
+Example:
+```pascal
+WriteLn Logout.IsOpen();
+```
+*)
+function TRSLogout.IsOpen(): Boolean;
+begin
+  Result := GameTabs.IsOpen(ERSGameTab.LOGOUT);
+end;
+
+(*
+## Logout.Open
+```pascal
+function TRSLogout.Open(): Boolean;
+```
+Attempts to open the logout tab, returns true if it succeeds.
+
+Example:
+```pascal
+WriteLn Logout.Open();
+```
+*)
+function TRSLogout.Open(): Boolean;
+begin
+  Result := GameTabs.Open(ERSGameTab.LOGOUT);
+end;
+
+
+(*
+## Logout.IsRated
+```pascal
+function TRSLogout.IsRated(): Boolean;
+```
+Returns true if a star button was clicked.
+
+Example:
+```pascal
+WriteLn Logout.IsRated();
+```
+*)
+function TRSLogout.IsRated(): Boolean;
+begin
+  Result := Self.Ratings[ERSLogoutRating.ONE].Enabled();
+end;
+
+var
+  Logout: TRSLogout;
+

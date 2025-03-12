@@ -170,25 +170,16 @@ begin
 
   for i := 0 to 1 do
   begin
-    Self.Buttons[i].Index := i;
-    Self.Buttons[i].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
-    Self.ArrangementButtons[i].Index := i;
-    Self.ArrangementButtons[i].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
-    Self.WithdrawModeButtons[i].Index := i;
+    Self.Buttons[i].EnabledColors             := [[$0F1043, 0], [$23269F, 0.227]];
+    Self.ArrangementButtons[i].EnabledColors  := [[$0F1043, 0], [$23269F, 0.227]];
     Self.WithdrawModeButtons[i].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
   end;
 
   for i := 0 to 4 do
-  begin
-    Self.QuantityButtons[i].Index := i;
     Self.QuantityButtons[i].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
-  end;
 
   for i := 0 to 3 do
-  begin
-    Self.DynamicButtons[i].Index := i;
     Self.DynamicButtons[i].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
-  end;
 
   with Self.Bounds do
   begin
