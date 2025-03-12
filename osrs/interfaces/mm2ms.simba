@@ -10,7 +10,7 @@ Original work done by slacky
 *)
 
 {$DEFINE SRLT_MM2MS_INCLUDED}
-{$include_once SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
 (*

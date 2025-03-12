@@ -4,7 +4,7 @@ File responsible for webgraph generation out of collision map images.
 *)
 
 {$DEFINE SRLT_WEBGRAPHGEN_INCLUDED}
-{$include_once SRLT/utils.simba}
+{$INCLUDE_ONCE SRLT/utils.simba}
 
 type
   TWebGraphGenerator = record

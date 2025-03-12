@@ -3,7 +3,7 @@
 Gametabs interfaces core
 *)
 {$DEFINE SRLT_GAMETAB_INCLUDED}
-{$include_once SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
   TRSGameTab = type TRSInterface;

@@ -6,7 +6,7 @@ differently to handle different scenarios, e.g. doors.
 *)
 
 {$DEFINE SRLT_WEBGRAPH_INCLUDED}
-{$include_once SRLT/utils.simba}
+{$INCLUDE_ONCE SRLT/utils.simba}
 
 type
   ERSDoorType = (NORMAL, WIDE);

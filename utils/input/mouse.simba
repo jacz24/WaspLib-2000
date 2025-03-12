@@ -4,7 +4,7 @@ Methods to interact with the mouse.
 *)
 
 {$DEFINE SRLT_MOUSE_INCLUDED}
-{$include_once SRLT/utils.simba}
+{$INCLUDE_ONCE SRLT/utils.simba}
 
 {.$DEFINE DEBUG_MOUSE} // Enable me to record mouse path + clicks. Will be displayed when script terminates.
 

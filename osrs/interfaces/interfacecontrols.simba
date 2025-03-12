@@ -1,5 +1,5 @@
 {$DEFINE SRLT_INTERFACE_CONTROLS_INCLUDED}
-{$include_once SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
   TRSButton = record

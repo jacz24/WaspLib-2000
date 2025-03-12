@@ -4,7 +4,7 @@ Tool to help debug TRSMap
 *)
 
 {$DEFINE SRLT_MAPDEBUGGER_INCLUDED}
-{$include_once SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
   TMapDebugger = record

@@ -3,7 +3,7 @@
 *)
 
 {$DEFINE SRLT_INTERFACE_AREA_INCLUDED}
-{$include_once SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
   ERSInterfaceType = (CLASSIC, PAPER, ANY);

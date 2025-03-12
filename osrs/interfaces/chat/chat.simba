@@ -1,5 +1,5 @@
 {$DEFINE SRLT_CHAT_INCLUDED}
-{$include_once SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
   ERSChatColor = enum(

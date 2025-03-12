@@ -3,7 +3,7 @@
 Methods to interact with the gametab buttons
 *)
 {$DEFINE SRLT_GAMETABS_INCLUDED}
-{$include_once SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
 (*

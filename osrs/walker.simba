@@ -6,7 +6,7 @@ iterations made by Olly.
 *)
 
 {$DEFINE SRLT_WALKER_INCLUDED}
-{$include_once SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
 (*

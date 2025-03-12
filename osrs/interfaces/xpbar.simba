@@ -4,7 +4,7 @@ Methods to interact with the XP bar.
 *)
 
 {$DEFINE SRLT_XPBAR_INCLUDED}
-{$include_once SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
 (*

@@ -7,7 +7,7 @@ Without them, this wouldn't be possible.
 *)
 
 {$DEFINE SRLT_MAP_INCLUDED}
-{$include_once SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
 (*

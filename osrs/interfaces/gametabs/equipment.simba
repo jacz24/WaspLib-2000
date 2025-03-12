@@ -1,0 +1,92 @@
+(*
+# Equipment
+Methods to interact with the Equipment tab.
+*)
+{$DEFINE SRLT_STATS_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+
+type
+(*
+(ERSEquipmentSlot)=
+## type ERSEquipmentSlot
+```pascal
+ERSEquipment = (
+  HEAD, SECONDARY_AMMO, CAPE, NECK, AMMO, WEAPON, BODY, SHIELD, LEGS, HANDS, FEET, RING
+);
+```
+Enumerator of the equipment slots.
+*)
+  ERSEquipment = enum(
+    HEAD, SECONDARY_AMMO, CAPE, NECK, AMMO, WEAPON, BODY, SHIELD, LEGS, HANDS, FEET, RING
+  );
+
+(*
+(ERSEquipmentButton)=
+## type ERSEquipmentButton
+```pascal
+ERSEquipmentButton = (STATS, PRICES, DEATH, FOLLOWER);
+```
+Enumerator of the equipment buttons.
+*)
+  ERSEquipmentButton = enum(STATS, PRICES, DEATH, FOLLOWER);
+
+(*
+(TRSEquipment)=
+## type TRSEquipment
+Main equipment type reponsible for handling it.
+*)
+  TRSEquipment = record
+    Slots: TRSSlotInterface;
+    Items: TRSItemInterface;
+    Buttons: array [ERSEquipmentButton] of TRSButton;
+  end;
+
+procedure TRSEquipment.SetupInterface();
+var
+  slots: TBoxArray;
+begin
+  slots := TBoxArray.Create(GameTab.TopLeft.Offset(33, 5), 3,2, 35, 35, [6, 4]) +
+           TBoxArray.Create(GameTab.TopLeft.Offset(18, 83), 3, 3, 35, 35, [21, 5]);
+
+  Delete(slots, 0, 1);
+  Delete(slots, 8, 2);
+
+  Self.Slots.Setup('Equipment.Slots', slots);
+  Self.Items.Setup('Equipment.Items', @Self.Slots, [2, 11, 2, -2]);
+end;
+
+(*
+## Equipment.IsOpen
+```pascal
+function TRSEquipment.IsOpen(): Boolean;
+```
+Returns True/False whether the equipment tab is open or not.
+
+Example:
+```pascal
+WriteLn Equipment.IsOpen();
+```
+*)
+function TRSEquipment.IsOpen(): Boolean;
+begin
+  Result := GameTabs.IsOpen(ERSGameTab.EQUIPMENT);
+end;
+
+(*
+## Equipment.Open
+```pascal
+function TRSEquipment.Open(): Boolean;
+```
+Attempts to open the equipment tab.
+Returns true if we succeed.
+
+Example:
+```pascal
+WriteLn Equipment.Open();
+```
+*)
+function TRSEquipment.Open(): Boolean;
+begin
+  Result := GameTabs.Open(ERSGameTab.EQUIPMENT);
+end;

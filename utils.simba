@@ -1,20 +1,20 @@
-{$IFNDEF SRLT_SRLTENV_INCLUDED}      {$include_once utils/srltenv.simba}
-{$IFNDEF SRLT_RANDOM_INCLUDED}       {$include_once utils/math/random.simba}
-{$IFNDEF SRLT_CONVERSIONS_INCLUDED}  {$include_once utils/math/conversions.simba}
-{$IFNDEF SRLT_VECTOR_INCLUDED}       {$include_once utils/math/vector.simba}
-{$IFNDEF SRLT_GEOMETRY_INCLUDED}     {$include_once utils/math/geometry.simba}
-{$IFNDEF SRLT_TIME_INCLUDED}         {$include_once utils/time.simba}
-{$IFNDEF SRLT_BASE_INCLUDED}         {$include_once utils/base.simba}
-{$IFNDEF SRLT_MISC_INCLUDED}         {$include_once utils/misc.simba}
-{$IFNDEF SRLT_MOUSE_INCLUDED}        {$include_once utils/input/mouse.simba}
-{$IFNDEF SRLT_KEYBOARD_INCLUDED}     {$include_once utils/input/keyboard.simba}
-{$IFNDEF SRLT_ITEM_INCLUDED}         {$include_once utils/item.simba}
-{$IFNDEF SRLT_DATABASE_INCLUDED}     {$include_once utils/database.simba}
-{$IFNDEF SRLT_IMAGECOMPARE_INCLUDED} {$include_once utils/imagecompare.simba}
-{$IFNDEF SRLT_RSTRANSLATOR_INCLUDED} {$include_once utils/math/rstranslator.simba}
-{$IFNDEF SRLT_WEBGRAPH_INCLUDED}     {$include_once utils/webgraph.simba}
-{$IFNDEF SRLT_WEBGRAPHGEN_INCLUDED}  {$include_once utils/webgraphgen.simba}
-{$IFNDEF SRLT_RSCHUNKS_INCLUDED}     {$include_once utils/rschunks.simba}
+{$IFNDEF SRLT_SRLTENV_INCLUDED}      {$INCLUDE_ONCE utils/srltenv.simba}
+{$IFNDEF SRLT_RANDOM_INCLUDED}       {$INCLUDE_ONCE utils/math/random.simba}
+{$IFNDEF SRLT_CONVERSIONS_INCLUDED}  {$INCLUDE_ONCE utils/math/conversions.simba}
+{$IFNDEF SRLT_VECTOR_INCLUDED}       {$INCLUDE_ONCE utils/math/vector.simba}
+{$IFNDEF SRLT_GEOMETRY_INCLUDED}     {$INCLUDE_ONCE utils/math/geometry.simba}
+{$IFNDEF SRLT_TIME_INCLUDED}         {$INCLUDE_ONCE utils/time.simba}
+{$IFNDEF SRLT_BASE_INCLUDED}         {$INCLUDE_ONCE utils/base.simba}
+{$IFNDEF SRLT_MISC_INCLUDED}         {$INCLUDE_ONCE utils/misc.simba}
+{$IFNDEF SRLT_MOUSE_INCLUDED}        {$INCLUDE_ONCE utils/input/mouse.simba}
+{$IFNDEF SRLT_KEYBOARD_INCLUDED}     {$INCLUDE_ONCE utils/input/keyboard.simba}
+{$IFNDEF SRLT_ITEM_INCLUDED}         {$INCLUDE_ONCE utils/item.simba}
+{$IFNDEF SRLT_DATABASE_INCLUDED}     {$INCLUDE_ONCE utils/database.simba}
+{$IFNDEF SRLT_IMAGECOMPARE_INCLUDED} {$INCLUDE_ONCE utils/imagecompare.simba}
+{$IFNDEF SRLT_RSTRANSLATOR_INCLUDED} {$INCLUDE_ONCE utils/math/rstranslator.simba}
+{$IFNDEF SRLT_WEBGRAPH_INCLUDED}     {$INCLUDE_ONCE utils/webgraph.simba}
+{$IFNDEF SRLT_WEBGRAPHGEN_INCLUDED}  {$INCLUDE_ONCE utils/webgraphgen.simba}
+{$IFNDEF SRLT_RSCHUNKS_INCLUDED}     {$INCLUDE_ONCE utils/rschunks.simba}
 
 
 {$ENDIF}

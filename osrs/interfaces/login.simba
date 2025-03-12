@@ -4,7 +4,7 @@ This file is responsible for handling everything that is related to logging into
 It has records with methods to handle the login screen, the world switcher and the lobby screen.
 *)
 {$DEFINE SRLT_LOGIN_INCLUDED}
-{$include_once SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
 (*

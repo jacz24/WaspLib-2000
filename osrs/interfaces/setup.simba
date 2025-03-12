@@ -1,6 +1,6 @@
 //Design by olly.
 {$DEFINE SRLT_SETUP_INCLUDED}
-{$include_once SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 procedure SetupInterfaces();
 begin

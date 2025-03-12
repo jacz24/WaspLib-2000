@@ -6,7 +6,7 @@ Methods to interact with the mainscreen.
 {.$DEFINE DEBUG_UPTEXT}
 
 {$DEFINE SRLT_MAINSCREEN_INCLUDED}
-{$include_once SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
   TRSMainScreen = record

@@ -4,7 +4,7 @@ Methods to find and compare spell images
 *)
 
 {$DEFINE SRLT_SPELLFINDER_INCLUDED}
-{$include_once SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
   ERSSpell = enum(

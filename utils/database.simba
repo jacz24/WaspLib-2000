@@ -126,7 +126,7 @@ So with the examples above, if we want to get `abyssal whip` id:
 You successfully retrieved the abyssal whip ID.
 *)
 {$DEFINE SRLT_DATABASE_INCLUDED}
-{$include_once SRLT/utils.simba}
+{$INCLUDE_ONCE SRLT/utils.simba}
 
 type
   TDatabase = record

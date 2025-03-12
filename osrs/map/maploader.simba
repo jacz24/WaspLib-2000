@@ -13,7 +13,7 @@ Credits: Torwent
 *)
 
 {$DEFINE SRLT_MAPLOADER_INCLUDED}
-{$include_once SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 {.$DEFINE SRLT_GENERATE_GRAPH_ALWAYS}
 

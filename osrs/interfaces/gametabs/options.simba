@@ -4,7 +4,7 @@ Methods to interact with the options gametab.
 *)
 
 {$DEFINE SRLT_OPTIONS_INCLUDED}
-{$include_once SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
 (*

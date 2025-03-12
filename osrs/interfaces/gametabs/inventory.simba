@@ -4,7 +4,7 @@ Methods to interact with the inventory gametab.
 *)
 
 {$DEFINE SRLT_INVENTORY_INCLUDED}
-{$include_once SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
   TRSInventory = record
@@ -282,14 +282,6 @@ begin
 
       Mouse.Move(b);
       ChooseOption.Select('Drop');
-
-      if RandomBoolean(0.03) then
-        for j := 1 to RandomMode(1, 0, 2) do
-        begin
-          circle := TCircle.Create(Target.MouseX, Target.MouseY, 5);
-          Mouse.Click(circle, EMouseButton.LEFT, True);
-        end;
-
       Sleep(0, 250, ERandomDir.LEFT);
     end;
 
@@ -353,15 +345,8 @@ begin
         Sleep(95, 170, ERandomDir.LEFT); //Wait for SHIFT to be registered before the click (important).
       end;
 
-      Mouse.Click(b, EMouseButton.LEFT);
-
-      if RandomBoolean(0.03) then
-        for j := 1 to RandomMode(1, 0, 2) do
-        begin
-          circle := TCircle.Create(Target.MouseX, Target.MouseY, 5);
-          Mouse.Click(circle, EMouseButton.LEFT, True);
-        end;
-
+      Mouse.Move(b);
+      Biometrics.Click(EMouseButton.LEFT, 3, 0.03);
       Sleep(0, 250, ERandomDir.LEFT);
     end;
 

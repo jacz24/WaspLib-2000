@@ -4,7 +4,7 @@ Interface core .
 *)
 
 {$DEFINE SRLT_INTERFACE_CORE_INCLUDED}
-{$include_once SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
   TRSInterface = record

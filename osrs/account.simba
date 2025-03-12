@@ -1,5 +1,5 @@
 {$DEFINE SRLT_ACCOUNT_INCLUDED}
-{$include_once SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 var
   AccountIndex: Integer;
@@ -103,5 +103,5 @@ var
   Accounts: TRSAccountArray;
 
 {$IF FILEEXISTS(Configs/credentials.simba)}
-{$include_once Configs/credentials.simba}
+{$INCLUDE_ONCE Configs/credentials.simba}
 {$ENDIF}

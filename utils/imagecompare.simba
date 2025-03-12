@@ -1,5 +1,5 @@
 {$DEFINE SRLT_IMAGECOMPARE_INCLUDED}
-{$include_once SRLT/utils.simba}
+{$INCLUDE_ONCE SRLT/utils.simba}
 
 type
   TImageMatch = record
