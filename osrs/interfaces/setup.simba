@@ -11,6 +11,7 @@ begin
   GameTabs.SetupInterface();
   GameTab.SetupInterface();
   Inventory.SetupInterface();
+  Equipment.SetupInterface();
   Options.SetupInterface();
   MM2MS.Projector.SetupProjection();
   Chat.SetupInterface();

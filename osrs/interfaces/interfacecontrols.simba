@@ -10,7 +10,6 @@ type
 
     Index: Integer;
     Bounds: TBox;
-    Center: TPoint;
   end;
 
   TRSButtonArray = array of TRSButton;
