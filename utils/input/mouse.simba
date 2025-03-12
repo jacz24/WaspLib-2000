@@ -4,9 +4,7 @@ Methods to interact with the mouse.
 *)
 
 {$DEFINE SRLT_MOUSE_INCLUDED}
-{$IFNDEF SRLT_UTILS}
-  {$I SRLT/utils.simba}
-{$ENDIF}
+{$include_once SRLT/utils.simba}
 
 {.$DEFINE DEBUG_MOUSE} // Enable me to record mouse path + clicks. Will be displayed when script terminates.
 
@@ -397,7 +395,8 @@ end;
 (*
 ## Mouse.Click()
 ```pascal
-procedure TMouse.Click(destination: TPoint; button: EMouseButton);
+procedure TMouse.Click(button: EMouseButton);
+procedure TMouse.Click(destination: TPoint; button: EMouseButton); overload;
 procedure TMouse.Click(circle: TCircle; button: EMouseButton; forcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
 procedure TMouse.Click(b: TBox; button: EMouseButton; forcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
 procedure TMouse.Click(quad: TQuad; button: EMouseButton; forcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
@@ -414,7 +413,12 @@ begin
 end;
 ```
 *)
-procedure TMouse.Click(destination: TPoint; button: EMouseButton);
+procedure TMouse.Click(button: EMouseButton);
+begin
+  Target.MouseClick(button);
+end;
+
+procedure TMouse.Click(destination: TPoint; button: EMouseButton); overload;
 begin
   Self.Move(destination);
   Target.MouseClick(button);

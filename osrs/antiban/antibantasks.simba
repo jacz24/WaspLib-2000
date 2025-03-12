@@ -1,0 +1,822 @@
+(*
+# Antiban Tasks
+Collection of antiban tasks to be used with {ref}`TAntiban`.
+*)
+
+{$DEFINE SRLT_ANTIBAN_TASKS_INCLUDED}
+{$IFNDEF SRLT_OSR}
+  {$I SRLT/osrs.simba}
+{$ENDIF}
+
+
+(*
+## Built in Antiban Tasks
+```pascal
+procedure TAntiban.SmallRandomMouse;
+procedure TAntiban.RandomMouse;
+procedure TAntiban.RandomRotate;
+procedure TAntiban.HoverSkill(Skill: ERSSkill; HoverTime: Int32; ReturnToCurrentTab: Boolean);
+procedure TAntiban.HoverSkills;
+procedure TAntiban.LoseFocus;
+procedure TAntiban.LoseFocus(Idle: Int32); overload;
+procedure TAntiban.RandomTab;
+procedure TAntiban.RandomRightClick;
+procedure TAntiban.AdjustZoom;
+procedure TAntiban.SwivelNear(start: TBox; radius: Int32; Iterations: Int32=1); overload;
+procedure TAntiban.Swivel;
+```
+SRL built in Antiban Tasks that can be added with **TAntiban.AddTask**.
+
+Example:
+```pascal
+Antiban.AddTask(15 * ONE_MINUTE, @Antiban.HoverSkills);
+```
+*)
+
+//Mouse antiban
+procedure TAntiban.SmallRandomMouse();
+var
+  pt: TPoint;
+begin
+  WriteLn GetDebugLn('Antiban', 'Random Mouse (Small)');
+
+  repeat
+    pt := Mouse.Position().Random(-350, 350);
+  until Mouse.Position().DistanceTo(pt) > 50;
+
+  Async.MouseMove(pt);
+end;
+
+procedure TAntiban.LargeRandomMouse();
+var
+  speed: Double;
+  i: Int32;
+  b: TBox;
+begin
+  WriteLn GetDebugLn('Antiban', 'Random Mouse');
+
+  speed := Target.MouseOptions.Speed;
+  Target.MouseOptions.Speed += Biometrics.RandomModeInteger(2, 1, 5);
+
+  b := Target.Bounds.Expand(150);
+
+  for i := 1 to Trunc(GaussRand(1, 6)) do
+  begin
+    if Random() < 0.30 then
+      Mouse.Move(b, True, EMouseDistribution.GAUSS)
+    else
+      Mouse.Move(b, True, EMouseDistribution.RANDOM);
+
+    if Random() < 0.50 then
+      Biometrics.Sleep(0, 1000, ERandomDir.LEFT);
+  end;
+
+  Target.MouseOptions.Speed := speed;
+end;
+
+
+//Camera antiban
+procedure TAntiban.SmallCameraRotation();
+begin
+  WriteLn GetDebugLn('Antiban', 'Small camera rotation');
+  Minimap.SetCompassAngle(Minimap.GetCompassAngle() + Random(-15,15));
+end;
+
+procedure TAntiban.LargeCameraRotation();
+begin
+  WriteLn GetDebugLn('Antiban', 'Large camera rotation');
+
+  case RandomBoolean(0.5) of
+    True:  Minimap.SetCompassAngle(Minimap.GetCompassAngle() - GaussRand(30, 360));
+    False: Minimap.SetCompassAngle(Minimap.GetCompassAngle() + GaussRand(30, 360));
+  end;
+end;
+
+
+function TAntiban.RandomScroll(scroll: TRSScrollBar; down: Boolean = True): Boolean;
+var
+  i: Integer;
+begin
+  if not scroll.IsVisible() or not scroll.CanScroll() then Exit;
+
+  Result := True;
+
+  case down of
+    True:  if scroll.GetLevel() = 100 then Exit;
+    False: if scroll.GetLevel() = 0   then Exit;
+  end;
+
+  Mouse.Move(scroll.GetScrollArea());
+
+  for i := 1 to Biometrics.RandomModeInteger(5, 3, 8) do
+  begin
+    if down then
+      Target.MouseScroll(-Random(1,3))
+    else
+      Target.MouseScroll(Random(1,3));
+  end;
+end;
+
+
+//Stats antiban
+procedure TAntiban.HoverSkill(const skill: ERSSkill; const time: UInt32; const returnToCurrentTab: Boolean);
+var
+  tab: ERSGameTab;
+begin
+  WriteLn GetDebugLn('Antiban', 'Hover skill: ' + ToString(skill));
+
+  if returnToCurrentTab then
+    tab := GameTabs.GetCurrent();
+
+  if Stats.Hover(skill) then
+  begin
+    Sleep(time);
+    if returnToCurrentTab then
+      GameTabs.Open(tab);
+  end;
+end;
+
+procedure TAntiban.HoverSkills();
+begin
+  if Self.Skills = [] then
+  begin
+    WriteLn GetDebugLn('Antiban', 'HoverSkills: No skills declared.', EErrorLevel.ERROR);
+    Exit;
+  end;
+
+  Self.HoverSkill(Self.Skills.Random(), Trunc(GaussRand(1000, 10000)), RandomBoolean(0.5));
+end;
+
+procedure TAntiban.OpenSkill(const skill: ERSSkill; const time: Integer; const returnToCurrentTab: Boolean);
+var
+  tab: ERSGameTab;
+begin
+  WriteLn GetDebugLn('Antiban', 'Opening skill: ' + ToString(skill));
+
+  if returnToCurrentTab then
+    tab := GameTabs.GetCurrent();
+
+  if Stats.Hover(skill) then
+  begin
+    Mouse.Click(EMouseButton.LEFT);
+    RSInterface.WaitOpen(ERSInterfaceType.PAPER);
+    Biometrics.Sleep(time);
+
+    RSInterface.Close();
+
+    if returnToCurrentTab then
+      GameTabs.Open(tab);
+  end;
+end;
+
+procedure TAntiban.OpenSkills();
+begin
+  if Self.Skills = [] then
+  begin
+    WriteLn GetDebugLn('Antiban', 'OpenSkills: No skills declared.', EErrorLevel.ERROR);
+    Exit;
+  end;
+
+  Self.OpenSkill(Self.Skills.Random(), Trunc(GaussRand(1000, 10000)), RandomBoolean(0.5));
+end;
+
+
+//Chatbox antiban
+procedure TAntiban.ChatScrolling();
+begin
+  WriteLn GetDebugLn('Antiban', 'Random scrolling on chat');
+  Self.RandomScroll(Chat.Scroll, False);
+  Biometrics.Sleep(5000, 8000);
+  Chat.Scroll.SetLevel(100);
+end;
+
+procedure TAntiban.RandomChatTab();
+var
+  tab: ERSChatTab;
+begin
+  tab := ERSChatTab(Random(1, Length(ERSChatTab)));
+  WriteLn GetDebugLn('Antiban', 'Opening ' + ToStr(tab) + ' chat button');
+  Chat.Tabs.Open(tab);
+end;
+
+procedure TAntiban.ToggleChatTab();
+var
+  current: ERSChatTab;
+begin
+  current := Chat.Tabs.GetActive();
+  WriteLn GetDebugLn('Antiban', 'Toggling chat buttons');
+  Self.RandomChatTab();
+  Biometrics.Sleep(3000, 5000);
+  Chat.Tabs.Open(current);
+end;
+
+procedure TAntiban.RandomChatTabState();
+var
+  tab: ERSChatTab;
+  state: ERSChatTabState;
+begin
+  tab := ERSChatTab(Random(1, Length(ERSChatTab)));
+  case tab of
+    ERSChatTab.GAME:     state := ERSChatTabState.FILTERED;
+    ERSChatTab.PUBLIC_:  state := ERSChatTabState(Random(1, Length(ERSChatTabState)));
+    ERSChatTab.PRIVATE_: state := ERSChatTabState(Random(1, 3));
+    ERSChatTab.CHANNEL:  state := ERSChatTabState(Random(1, 3));
+    ERSChatTab.CLAN:     state := ERSChatTabState(Random(1, 3));
+    ERSChatTab.TRADE:    state := ERSChatTabState(Random(1, 3));
+  end;
+
+  WriteLn GetDebugLn('Antiban', 'Changing ' + ToStr(tab) + ' state to ' + ToStr(state));
+  Chat.Tabs.ChangeState(tab, state);
+end;
+
+
+//GameTabs antiban
+procedure TAntiban.RandomTabBetween(first, last: ERSGameTab);
+begin
+  if RandomBoolean(0.5) then
+  begin
+    GameTabs.Open(ERSGameTab(Random(Ord(first), Ord(last))));
+    Biometrics.Sleep(0, 2500, ERandomDir.LEFT);
+  end;
+
+  GameTabs.Open(ERSGameTab(Random(Ord(first), Ord(last))));
+  Biometrics.Sleep(0, 8000, ERandomDir.LEFT);
+end;
+
+procedure TAntiban.RandomTab();
+begin
+  WriteLn GetDebugLn('Antiban', 'Random Tab');
+
+  if RandomBoolean(0.8) then
+    Self.RandomTabBetween(ERSGameTab.COMBAT, ERSGameTab.MAGIC)
+  else
+    Self.RandomTabBetween(ERSGameTab.CLAN, ERSGameTab.MUSIC);
+end;
+
+procedure TAntiban.ToggleTab();
+var
+  current: ERSGameTab;
+begin
+  WriteLn GetDebugLn('Antiban', 'Toggling GameTabs');
+  current := GameTabs.GetCurrent();
+  Self.RandomTab();
+  Biometrics.Sleep(500, 6000, ERandomDir.LEFT);
+  GameTabs.Open(current);
+end;
+
+
+// Bank antibans
+procedure TAntiban.BankScrolling();
+begin
+  if not Bank.IsOpen() then Exit;
+  WriteLn GetDebugLn('Antiban', 'Random scrolling on bank');
+  Antiban.RandomScroll(Bank.Scroll, RandomBoolean(0.5));
+end;
+
+procedure TAntiban.RandomBankTab();
+var
+  tab: Integer;
+begin
+  if not Bank.IsOpen() then Exit;
+  tab := Random(Bank.CountTabs());
+  WriteLn GetDebugLn('Antiban', 'Opening bank tab ' + ToStr(tab));
+  Bank.OpenTab(tab);
+end;
+
+procedure TAntiban.ToggleBankTab();
+var
+  tab: Integer;
+begin
+  if not Bank.IsOpen() then Exit;
+  WriteLn GetDebugLn('Antiban', 'Toggling bank tabs');
+  tab := Bank.GetCurrentTab();
+  Self.RandomBankTab();
+  Biometrics.Sleep(3000, 4000, ERandomDir.LEFT);
+  Bank.OpenTab(tab);
+end;
+
+
+procedure TAntiban.RandomRightClick();
+begin
+  WriteLn GetDebugLn('Antiban', 'Random Right Click');
+
+  Mouse.Move(Target.Bounds.Expand(-15), True, EMouseDistribution.RANDOM);
+
+  if ChooseOption.Open() then
+  begin
+    if Random() < 0.50 then
+      Mouse.Move(ChooseOption.Bounds);
+
+    if not Biometrics.RandomBoolean(0.6) or not ChooseOption.Select('Examine') then
+    begin
+      Biometrics.Sleep(300, 6000, ERandomDir.LEFT);
+      ChooseOption.Close();
+    end;
+  end;
+end;
+
+
+procedure TAntiban.AdjustZoom();
+var
+  zoom, newZoom: Integer;
+  attempts: Integer;
+begin
+  if Abs(Self.Zoom.Max - Self.Zoom.Min) <= 15 then
+  begin
+    WriteLn GetDebugLn('Antiban', 'AdjustZoom: The current Zoom.Min and Zoom.Max are too close to each other for this method.', EErrorLevel.ERROR);
+    Exit;
+  end;
+
+  if RSInterface.IsOpen() then Exit;
+
+  zoom := Min(Self.Zoom.Max, Max(Self.Zoom.Min, Options.GetZoomLevel()));
+
+  repeat
+    Inc(attempts);
+    if attempts > 100 then Exit;
+
+    newZoom := RandomMode(zoom, Self.Zoom.Min, Self.Zoom.Max);
+  until Abs(zoom - newZoom) > 15;
+
+  WriteLn GetDebugLn('Antiban', 'Adjust zoom: ' + ToString(newZoom));
+
+  //TODO: Use RSMouseZoom instead or maybe even both.
+  Options.SetZoomLevel(newZoom);
+end;
+
+
+function TAntiban.DismissRandom(): Boolean;
+var
+  name: String;
+  number: Integer;
+  b: TBox;
+begin
+  name := Chat.GetDisplayName();
+
+  if (name <> '') then
+  begin
+    b := Box(MainScreen.Center, 250, 100);
+    if OCR.Locate(b, name, [$00FFFF, 0], 0, RSFonts.BOLD) < 0.85 then Exit;
+
+    if Self.DebugRandoms then
+    begin
+      DirCreate(SRLTEnv.CacheDir + 'randoms');
+
+      number := Length(DirList(SRLTEnv.CacheDir + 'randoms'));
+      if number > 1000 then
+        TerminateScript('Lots of randoms debugged');
+
+      SaveScreenshot(SRLTEnv.CacheDir + 'randoms' + PATH_SEP + IntToStr(number) + '.png');
+
+      Sleep(5000);
+    end;
+
+    Result := True; //TODO...
+  end;
+end;
+
+
+function TAntiban.GenerateSwivelPoints(a: TPoint; invCircularity: Double; curls: Integer; baseRad:Int32; direction:Boolean): TPointArray;
+var
+  t,o,rr: Double;
+  i,j,k,rad: Int32;
+  vec,prev: Vector2;
+  v,tmp: array of Vector2;
+  pts: TPointArray;
+  c: TPoint;
+begin
+  o := Random(360);
+  for j:=1 to curls do
+  begin
+    v := [];
+    rad := baseRad;
+    c := Point(a.x+rad, a.y+rad).Rotate(180-o, A);
+
+    pts := TPointArray.CreateFromCircle(c, rad, False);
+    pts.SortCircular(c, Round(o), Direction);
+    pts := pts.Offset(a - pts[0]);
+
+    rr := Round(rad*invCircularity);
+
+    v += [pts[0].x, pts[0].y];
+    for i:=1 to High(pts) with 35 do
+      v += [pts[i].x+Random(-rr, rr), pts[i].y+Random(-rr, rr)];
+    v += [pts[High(pts)].x+Random(-rr, rr), pts[High(pts)].y+Random(-rr, rr)];
+
+    rad := Round(rad * Round(RandomMode(1.2,0.9,1.7)));
+
+    t := 0;
+    prev := v[0];
+    while t <= 1 do
+    begin
+      tmp := Copy(v);
+      for i:=High(tmp) downto 1 do
+        for k:=0 to i-1 do
+        begin
+          tmp[k].x := tmp[k].x + (tmp[k+1].x - tmp[k].x) * t;
+          tmp[k].y := tmp[k].y + (tmp[k+1].y - tmp[k].y) * t;
+        end;
+      vec := tmp[0];
+
+      Result += TPointArray.CreateFromLine(prev.ToPoint(), vec.ToPoint());
+      prev := vec;
+      t += 0.01;
+    end;
+
+    a := Result[High(Result)];
+  end;
+end;
+
+procedure TAntiban.SwivelNear(start: TPoint; invCircularity: Double; curls, radius: Integer; dir:Boolean; maxSpeed: Double=22; minSpeed: Double=9; baseSpeed: Double=14);
+var
+  p,q: TPoint;
+  i: Integer;
+  swivel: TPointArray;
+  speed, d1, d2, asc: Double;
+  mouseSpeed: Double;
+  iddle: Boolean;
+begin
+  iddle := Mouse.CanIdle;
+  mouseSpeed := Target.MouseOptions.Speed;
+
+  Target.MouseOptions.Speed := Random(15,20);
+  Mouse.CanIdle := False;
+
+  q := Point(-1,-1);
+  swivel := Self.GenerateSwivelPoints([start.x, start.y], invCircularity, curls, radius, dir);
+  speed := baseSpeed;
+  for i:=0 to High(swivel) do
+  begin
+    p := swivel[i];
+    if p.DistanceTo(q) > Max(4, speed * 2) then
+      Mouse.Move(p);
+    Mouse.Teleport(p.Random(-1,1));
+
+    q := p;
+    d1 := swivel[i].AngleBetween(swivel[Min(High(swivel), i+20)]);
+    d2 := swivel[i].AngleBetween(swivel[Min(High(swivel), i+40)]);
+    asc := Abs(DeltaAngle(d1, d2));
+
+    if High(swivel)-i < Speed then speed -= 1;
+
+    if asc < 2.0 then speed += 2;
+    speed := Min(maxSpeed, speed);
+    speed := Max(minSpeed, speed - Random() * 0.5);
+
+    Sleep(1);
+    Inc(i, Round(speed));
+  end;
+
+  Target.MouseOptions.Speed := mouseSpeed;
+  Mouse.CanIdle := iddle;
+end;
+
+procedure TAntiban.SwivelNear(start: TBox; radius: Integer; iterations: Integer = 1); overload;
+var
+  i: Integer;
+begin
+  for i := 1 to iterations do
+  begin
+    Self.SwivelNear(start.RandomPoint(), 1/2, Round(GaussRand(1,4)), radius, GaussRand(0.0,1.25) > 0.5, Random(12,22), 9, 14);
+    if Random() < 0.5 then
+      Biometrics.Sleep(0, 300, ERandomDir.LEFT);
+  end;
+end;
+
+procedure TAntiban.Swivel(); overload;
+var
+  i: Int32;
+begin
+  for i := 1 to Round(GaussRand(1,4)) do
+  begin
+    Self.SwivelNear(Mouse.Position(), 1/2, Round(GaussRand(1,4)), Random(25,40), GaussRand(0.0,1.25) > 0.5, Random(12,22), 9, 14);
+    if Random() < 0.5 then
+      Biometrics.Sleep(0, 300, ERandomDir.LEFT);
+  end;
+end;
+
+
+procedure TAntiban.RandomKeyboard();
+begin
+  case Random(100) of
+    0..74:
+    case Random(3) of
+      0: Keyboard.PressKey(EKeyCode.LEFT);
+      1: Keyboard.PressKey(EKeyCode.RIGHT);
+      2: Keyboard.PressKey(EKeyCode.UP);
+    end;
+    75..89: Keyboard.PressKey(Keyboard.FKEYS.Random());
+    90..99: Keyboard.PressKey(Keyboard.MISC.Random());
+  end;
+end;
+
+
+procedure TAntiban.ToggleRun();
+begin
+  WriteLn GetDebugLn('Antiban', 'Toggling energy');
+
+  Minimap.Toggle(ERSMinimapOrb.ENERGY);
+  Biometrics.Sleep(1000, 4000);
+  Minimap.Toggle(ERSMinimapOrb.ENERGY);
+end;
+
+procedure TAntiban.TogglePray();
+begin
+  WriteLn GetDebugLn('Antiban', 'Toggling quick pray');
+
+  Minimap.Toggle(ERSMinimapOrb.PRAYER);
+  Biometrics.Sleep(1000, 4000);
+  Minimap.Toggle(ERSMinimapOrb.PRAYER);
+end;
+
+
+
+
+//Antiban task "packs"
+procedure TAntiban.RandomCameraTask();
+begin
+  case Random(10) of
+    0..4: Self.AdjustZoom();
+    5..7: Self.SmallCameraRotation();
+    else  Self.LargeCameraRotation();
+  end;
+end;
+
+procedure TAntiban.RandomMouseTask();
+begin
+  case Random(10) of
+    0..1: Self.RandomRightClick();
+    2..4: Self.LargeRandomMouse();
+    else  Self.SmallRandomMouse();
+  end;
+end;
+
+procedure TAntiban.RandomGameTabTask();
+begin
+  case Random(13) of
+    0..3:   Self.RandomTab();
+    4..9:   Self.ToggleTab();
+    //TODO: 10..11: Self.ToggleAchievementTabs();
+    //TODO: 12:     Self.CheckCharges();
+  end;
+end;
+
+procedure TAntiban.RandomChatTask();
+begin
+  case Random(30) of
+    0..5:   Self.RandomChatTab();
+    6..17:  Self.ToggleChatTab();
+    18..24: Self.ChatScrolling();
+    25..29: Self.RandomChatTabState();
+  end;
+end;
+
+procedure TAntiban.RandomBankTask();
+begin
+  case Random(0, 12) of
+    0..2: Self.RandomBankTab;
+    1..8: Self.ToggleBankTab;
+  end;
+end;
+
+
+(* TODO:
+procedure TAntiban.MoveItems(items: TRSItemArray);
+var
+  currentSlots, newSlots, tmp: TIntegerArray;
+  i: Int32;
+begin
+  WriteLn GetDebugLn('Antiban', 'Moving items');
+
+  if Inventory.GetSelected() > -1 then
+  begin
+    Inventory.Select(-1);
+    Biometrics.Sleep(50, 250, ERandomDir.LEFT);
+  end;
+
+  if not Inventory.Items.FindAll(items, currentSlots) then
+    Exit;
+
+  newSlots := Inventory.RandomPattern();
+
+  SetLength(newSlots, Length(currentSlots));
+  WriteLn newSlots;
+  tmp := currentSlots.Intersection(newSlots);
+  WriteLn tmp;
+  currentSlots := currentSlots.Difference(tmp);
+  currentSlots := currentSlots.Sorted();
+  WriteLn currentSlots;
+  newSlots := newSlots.Difference(tmp);
+
+  WriteLn newSlots;
+  for i := 0 to High(currentSlots) do
+  begin
+    Inventory.Drag(currentSlots[i], newSlots[i]);
+    Biometrics.Sleep(50, 250, ERandomDir.LEFT);
+  end;
+end;
+
+
+
+procedure TAntiban.CheckCharges();
+const
+  ITEM_LIST: TRSItemArray = [
+    'Infernal axe', 'Crystal axe', 'Infernal harpoon', 'Crystal harpoon',
+    'Infernal pickaxe', 'Crystal pickaxe', 'Bryophyta''s staff',
+    'Ring of endurance', 'Ring of suffering (ri)', 'Ring of suffering (r)',
+    'Amulet of blood fury', 'Dodgy necklace', 'Tome of fire',
+    'Bonecrusher necklace', 'Amulet of chemistry',
+    'Celestial ring', 'Celestial signet',
+    'Sanguinesti staff'
+  ];
+var
+  equippedArray: TRSItemArray;
+  item: TRSItem;
+begin
+  if not Equipment.Open() then
+    Exit;
+
+  for item in ITEM_LIST do
+    if Equipment.ContainsItem(item) then
+      equippedArray += item;
+
+  if equippedArray = [] then
+    Exit;
+
+  item := equippedArray.RandomValue();
+
+  WriteLn GetDebugLn('Antiban', 'Checking ' + ToStr(item) + ' charges');
+
+  Equipment.ClickItem(item, 'Check');
+end;
+
+procedure TAntiban.CheckSlayerHelm();
+const
+  ITEM_LIST: TRSItemArray = [
+  'Slayer helmet', 'Black slayer helmet', 'Green slayer helmet', 'Red slayer helmet',
+  'Purple slayer helmet', 'Turquoise slayer helmet', 'Hydra slayer helmet',
+  'Twisted slayer helmet', 'Tztok slayer helmet', 'Vampyric slayer helmet',
+  'Tzkal slayer helmet', 'Slayer helmet (i)', 'Black slayer helmet (i)',
+  'Green slayer helmet (i)', 'Red slayer helmet (i)', 'Purple slayer helmet (i)',
+  'Turquoise slayer helmet (i)', 'Hydra slayer helmet (i)', 'Twisted slayer helmet (i)',
+  'Tztok slayer helmet (i)', 'Vampyric slayer helmet (i)', 'Tzkal slayer helmet (i)'
+  ];
+var
+  i: Int32;
+begin
+  if not Equipment.Open() then
+    Exit;
+
+  for i := 0 to High(ITEM_LIST) do
+  begin
+    if Equipment.ContainsItem(ITEM_LIST[i]) then
+      Break;
+    if i = High(ITEM_LIST) then
+      Exit;
+  end;
+
+  WriteLn GetDebugLn('Antiban', 'Checking slayer task progress in' + ToStr(ITEM_LIST[i]) + '.');
+
+  Equipment.ClickItem(ITEM_LIST[i], 'Check');
+end;
+
+procedure TAntiban.CheckSlayerBracelet(); //TODO: Add equipping if it expired in the equipment
+var
+  item: TRSItem;
+  inInventory: Boolean;
+begin
+  item := 'null';
+
+  if Inventory.Open() then
+  begin
+    if Inventory.ContainsItem('Bracelet of slaughter') then
+      item := 'Bracelet of slaughter'
+    else if Inventory.ContainsItem('Expeditious bracelet') then
+      item := 'Expeditious bracelet';
+
+    inInventory := True;
+  end;
+
+  if (item = 'null') and Equipment.Open() then
+  begin
+    if Equipment.ContainsItem('Bracelet of slaughter') then
+      item := 'Bracelet of slaughter'
+    else if Equipment.ContainsItem('Expeditious bracelet') then
+      item := 'Expeditious bracelet';
+
+    inInventory := False;
+  end;
+
+  if item = 'null' then
+    Exit;
+
+  WriteLn GetDebugLn('Antiban', 'Checking ' + ToStr(item) + ' state.');
+
+  if inInventory then
+    Inventory.ClickItem(Item, 'Check')
+  else
+    Equipment.ClickItem(Item, 'Check');
+end;
+
+
+
+procedure TAntiban.RandomAchievementTab();
+begin
+  WriteLn GetDebugLn('Antiban', 'Random Achievement Tab');
+  Achievements.OpenTab(ERSAchievementTab(Random(0, Ord(High(ERSAchievementTab)))));
+end;
+
+procedure TAntiban.ToggleAchievementTabs();
+var
+  currentTab: ERSAchievementTab;
+  time: Int32;
+  done: Int64;
+begin
+  currentTab := Achievements.GetCurrentTab();
+  WriteLn GetDebugLn('Antiban', 'Toggling Achievement tabs');
+  Self.RandomAchievementTab();
+
+  time := Round(SRL.TruncatedGauss(500*BioHash, 7000*BioHash));
+  done := GetTickCount() + time;
+
+  if Self.BioDice(50) then
+  begin
+    case Achievements.GetCurrentTab() of
+      ERSAchievementTab.QUESTS, ERSAchievementTab.DIARIES:
+        Achievements.RandomScroll(Achievements.GetScrollPosition() < 50);
+    end;
+  end;
+
+  repeat
+    System.Wait(50, 150);
+  until GetTickCount() > done;
+
+  Achievements.OpenTab(currentTab);
+end;
+
+procedure TAntiban.RandomBankButton();
+var
+  RandomButton: ERSBankButton;
+  BankButton: TRSButton;
+begin
+  if not Bank.IsOpen then
+    Exit;
+
+  RandomButton := ERSBankButton(Random(2, 10));
+  BankButton := Bank.GetButton(RandomButton);
+  WriteLn GetDebugLn('Antiban', 'Clicking ' + ToStr(RandomButton) + ' bank button');
+  BankButton.Enable;
+end;
+
+//by Flight
+procedure TAntiBan.HoverMSTile(dotType: ERSMinimapDot; rightClick: Boolean = False);
+var
+  tries: Int32;
+  a: Double;
+  rDot: TPoint;
+  msBox: TBox;
+  dots,cTPA: TPointArray;
+  cArr: TIntegerArray;
+begin
+  dots := Minimap.GetDots(dotType);
+  if dots.Len() < 1 then Exit;
+  a := Minimap.GetCompassAngle(False);
+  repeat
+    Inc(tries);
+    rDot := dots[Random(Low(dots),High(dots))];
+    msBox := Minimap.VectorToMSRect(Vec3(rDot.X + 2, rDot.Y + 2, 0), 1, 1, a).Bounds();
+    if MainScreen.Bounds.Contains(msBox) then
+    begin
+      WriteLn GetDebugLn('Antiban', 'Hovering random ' + toStr(dotType));
+      cArr := GetColors(TPAFromBox(msBox));
+      SRL.FindColors(cTPA, CTS1(cArr.GetRarest(), 30), msBox);
+      Mouse.HumanMove(cTPA.Mean());
+      if rightClick then
+        Mouse.Click(MOUSE_RIGHT);
+
+      wait(1500, 2700);
+      if rightClick then
+        ChooseOption.Close();
+      Exit;
+    end;
+  until(tries > 10);
+end;
+
+//by Flight
+procedure TAntiban.HoverMSNPCs();
+begin
+  Self.HoverMSTile(ERSMinimapDot.NPC);
+end;
+
+//by Flight
+procedure TAntiban.HoverMSPlayers();
+begin
+  Self.HoverMSTile(ERSMinimapDot.PLAYER);
+end;
+
+//by Flight
+procedure TAntiban.HoverMSItems();
+begin
+  Self.HoverMSTile(ERSMinimapDot.ITEM);
+end;
+*)

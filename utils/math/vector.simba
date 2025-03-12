@@ -3,9 +3,7 @@ Almost exact copy of what SRL-Development had.
 All credits to the original author whoever that was.
 *)
 {$DEFINE SRLT_VECTOR_INCLUDED}
-{$IFNDEF SRLT_UTILS}
-  {$I SRLT/utils.simba}
-{$ENDIF}
+{$include_once SRLT/utils.simba}
 
 type
   TMatrix4 = packed record

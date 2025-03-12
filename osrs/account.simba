@@ -1,7 +1,5 @@
 {$DEFINE SRLT_ACCOUNT_INCLUDED}
-{$IFNDEF SRLT_OSRS}
-  {$I SRLT/osrs.simba}
-{$ENDIF}
+{$include_once SRLT/osrs.simba}
 
 var
   AccountIndex: Integer;
@@ -11,7 +9,6 @@ type
     Username, Password, Pin: String;
     Worlds: TIntegerArray;
     Active: Boolean;
-    Seed: TIntegerArray;
   end;
 
   TRSAccountArray = array of TRSAccount;
@@ -30,7 +27,7 @@ Example:
 *)
 procedure TRSAccountArray.Add(user, pass: String; pin: String = ''; worlds: TIntegerArray = []);
 begin
-  Self += [user, pass, pin, worlds, true, []];
+  Self += [user, pass, pin, worlds, true];
 end;
 
 procedure TRSAccountArray.NextAccount(disableCurrent: Boolean);
@@ -102,33 +99,9 @@ begin
     raise GetDebugLn('Accounts', 'Invalid bank pin.');
 end;
 
-
-(*
-## Accounts.GetSeed
-```pascal
-function TRSAccountArray.GetSeed(): Double;
-```
-Get the current player unique seed.
-
-Example:
-```pascal
-WriteLn Accounts.GetSeed();
-```
-*)
-function TRSAccountArray.GetSeed(): TIntegerArray;
-begin
-  if Self = [] then
-    raise GetDebugLn('Accounts', 'No accounts declared: Add an account if you want scripts to handle login.');
-  if not InRange(AccountIndex, 0, High(Self)) then
-    raise GetDebugLn('Accounts', 'Account is out of range: Account number selected in script does not exist.');
-
-  if Self[AccountIndex].Seed <> [] then
-    Exit(Self[AccountIndex].Seed);
-
-  Move(Self[AccountIndex].Username[1], Self[AccountIndex].Seed, Length(Self[AccountIndex].Username));
-  WriteLn GetDebugLn('Accounts', 'Current account seed: ' + ToStr(Self[AccountIndex].Seed), EErrorLevel.SUCCESS);
-  Result := Self[AccountIndex].Seed;
-end;
-
 var
   Accounts: TRSAccountArray;
+
+{$IF FILEEXISTS(Configs/credentials.simba)}
+{$include_once Configs/credentials.simba}
+{$ENDIF}

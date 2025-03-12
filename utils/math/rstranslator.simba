@@ -5,9 +5,7 @@ that can be used by Simba and back.
 *)
 
 {$DEFINE SRLT_RSTRANSLATOR_INCLUDED}
-{$IFNDEF SRLT_UTILS}
-  {$I SRLT/utils.simba}
-{$ENDIF}
+{$include_once SRLT/utils.simba}
 
 type
 (*

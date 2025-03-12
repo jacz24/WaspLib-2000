@@ -6,9 +6,7 @@ iterations made by Olly.
 *)
 
 {$DEFINE SRLT_WALKER_INCLUDED}
-{$IFNDEF SRLT_OSRS}
-  {$I SRLT/osrs.simba}
-{$ENDIF}
+{$include_once SRLT/osrs.simba}
 
 type
 (*
@@ -461,21 +459,6 @@ begin
 end;
 
 
-procedure TRSWalker.AntibanClick(randomness: Integer);
-var
-  i: Integer;
-begin
-  Target.MouseClick(EMouseButton.LEFT);
-
-  // 15% chance of spam clicking
-  if (randomness > 0) and (Random() < 0.15) then
-    for i := 0 to Random(3) do
-    begin
-      Target.MouseClick(EMouseButton.LEFT);
-      Sleep(5, 150, ERandomDir.LEFT);
-    end;
-end;
-
 (*
 ## Walker.Click
 ```pascal
@@ -539,7 +522,10 @@ begin
   else
     Mouse.Move(Minimap.RandomPoint(minimapPoint, randomness));
 
-  Self.AntibanClick(randomness);
+  if randomness = 0 then
+    Mouse.Click(EMouseButton.LEFT)
+  else
+    Biometrics.Click(EMouseButton.LEFT);
 
   Self.RedClicked := Self.ScreenWalk and hoveringTarget and MainScreen.RedClicked();
   if Self.RedClicked then Self.Walking := False;

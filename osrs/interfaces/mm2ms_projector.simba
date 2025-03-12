@@ -4,9 +4,7 @@ Original MM2MS Projector done by slacky.
 This is basically the same thing with some pre-calculated math
 *)
 {$DEFINE SRLT_MM2MS_PROJECTOR_INCLUDED}
-{$IFNDEF SRLT_OSRS}
-  {$I SRLT/osrs.simba}
-{$ENDIF}
+{$include_once SRLT/osrs.simba}
 
 type
   TMM2MSProjector = record

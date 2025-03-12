@@ -1,7 +1,5 @@
 {$DEFINE SRLT_CHAT_TABS_INCLUDED}
-{$IFNDEF SRLT_OSRS}
-  {$I SRLT/osrs.simba}
-{$ENDIF}
+{$include_once SRLT/osrs.simba}
 
 type
   ERSChatTab = enum(NONE, ALL, GAME, PUBLIC_, PRIVATE_, CHANNEL, CLAN, TRADE);

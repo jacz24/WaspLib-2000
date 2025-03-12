@@ -1,7 +1,5 @@
 {$DEFINE SRLT_MISC_INCLUDED}
-{$IFNDEF SRLT_UTILS}
-  {$I SRLT/utils.simba}
-{$ENDIF}
+{$include_once SRLT/utils.simba}
 
 type
   RSColors = record

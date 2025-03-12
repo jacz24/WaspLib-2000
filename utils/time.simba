@@ -1,7 +1,5 @@
 {$DEFINE SRLT_TIME_INCLUDED}
-{$IFNDEF SRLT_UTILS}
-  {$I SRLT/utils.simba}
-{$ENDIF}
+{$include_once SRLT/utils.simba}
 
 const
   ONE_SECOND: Integer = 1000;

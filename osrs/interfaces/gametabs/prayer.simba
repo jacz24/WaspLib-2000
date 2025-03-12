@@ -4,9 +4,7 @@ Methods to interact with the prayer gametab.
 *)
 
 {$DEFINE SRLT_PRAYER_INCLUDED}
-{$IFNDEF SRLT_OSRS}
-  {$I SRLT/osrs.simba}
-{$ENDIF}
+{$include_once SRLT/osrs.simba}
 
 (*
 (TRSPrayerSet)=

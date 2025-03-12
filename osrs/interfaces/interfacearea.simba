@@ -3,9 +3,7 @@
 *)
 
 {$DEFINE SRLT_INTERFACE_AREA_INCLUDED}
-{$IFNDEF SRLT_OSRS}
-  {$I SRLT/osrs.simba}
-{$ENDIF}
+{$include_once SRLT/osrs.simba}
 
 type
   ERSInterfaceType = (CLASSIC, PAPER, ANY);
@@ -67,13 +65,13 @@ begin
 end;
 
 (*
-## TRSInterfaceArea.IsOpen
+## TRSInterfaceArea.WaitOpen
 ```pascal
-function TRSInterfaceArea.IsOpen(interfaceType: ERSInterfaceType = ERSInterfaceType.ANY): Boolean;
+function TRSInterfaceArea.WaitOpen(const interfaceType: ERSInterfaceType = ERSInterfaceType.ANY; const time: Integer = 600; interval: Integer = -1): Boolean;
 ```
-Returns True/False if any interface is found open.
+Returns True/False if any interface is found open within `time` milliseconds.
 *)
-function TRSInterfaceArea.WaitOpenOpen(interfaceType: ERSInterfaceType = ERSInterfaceType.ANY; time: Integer; interval: Integer = -1): Boolean;
+function TRSInterfaceArea.WaitOpen(const interfaceType: ERSInterfaceType = ERSInterfaceType.ANY; const time: Integer = 600; interval: Integer = -1): Boolean;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsOpen(interfaceType), interval, time);

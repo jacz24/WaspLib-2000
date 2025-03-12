@@ -1,15 +1,22 @@
 {$DEFINE SRLT_CONVERSIONS_INCLUDED}
-{$IFNDEF SRLT_UTILS}
-  {$I SRLT/utils.simba}
-{$ENDIF}
+{$include_once SRLT/utils.simba}
 
+function String.CreateFromBytes(const bytes: TByteArray): String; static;
+var
+  len: Integer;
+begin
+  len := Length(Bytes) div SizeOf(Char);
+  SetLength(Result, len);
+  if len > 0 then
+    Move(Bytes[0], Result[1], Length(Bytes));
+end;
 
 function TStringArray.ToBytes(): TByteArray;
 begin
   Result := Self.Join(#0).ToBytes();
 end;
 
-function TStringArray.CreateFromBytes(bytes: TByteArray): TStringArray; static;
+function TStringArray.CreateFromBytes(const bytes: TByteArray): TStringArray; static;
 var
   str: String;
   len: Integer;
@@ -53,7 +60,7 @@ begin
   end;
 end;
 
-function T2DIntegerArray.CreateFromBytes(bytes: TByteArray): T2DIntegerArray; static;
+function T2DIntegerArray.CreateFromBytes(const bytes: TByteArray): T2DIntegerArray; static;
 var
   size, i, len, row, offset: Integer;
 begin
@@ -90,7 +97,7 @@ begin
   Move(Self[0], Result[0], len);
 end;
 
-function TPointArray.CreateFromBytes(bytes: TByteArray): TPointArray; static;
+function TPointArray.CreateFromBytes(const bytes: TByteArray): TPointArray; static;
 var
   len: Integer;
 begin
@@ -138,7 +145,7 @@ begin
 end;
 
 
-function T2DPointArray.CreateFromBytes(bytes: TByteArray): T2DPointArray; static;
+function T2DPointArray.CreateFromBytes(const bytes: TByteArray): T2DPointArray; static;
 var
   size, i, len, row, offset: Int32;
 begin

@@ -3,9 +3,7 @@ OCR
 ===
 *)
 {$DEFINE SRLT_OCR_INCLUDED}
-{$IFNDEF SRLT_OSRS}
-  {$I SRLT/osrs.simba}
-{$ENDIF}
+{$include_once SRLT/osrs.simba}
 
 type
   TOCR = record

@@ -1,7 +1,5 @@
 {$DEFINE SRLT_STATS_INCLUDED}
-{$IFNDEF SRLT_OSRS}
-  {$I SRLT/osrs.simba}
-{$ENDIF}
+{$include_once SRLT/osrs.simba}
 
 type
   TRSCombatOptions = record

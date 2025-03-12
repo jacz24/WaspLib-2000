@@ -1,90 +1,91 @@
-{$DEFINE SRLT_OSRS}
-{$IFNDEF SRLT_UTILS}
-  {$I utils.simba}
-{$ENDIF}
+{$include_once utils.simba}
 
-
-// The following allows individual include files to compile on their own with just having {$I SRLT/osr.simba}
+// The following allows individual include files to compile on their own with just having {$include_once SRLT/osr.simba}
 // Summary: It includes this file until the current file is reached.
+{$IFNDEF SRLT_ACCOUNT_INCLUDED}             {$include_once osrs/account.simba}
+{$IFNDEF SRLT_BIOMETRICS_INCLUDED}          {$include_once osrs/antiban/biometrics.simba}
 
-{$IFNDEF SRLT_OCR_INCLUDED}                 {$I osrs/ocr/ocr.simba}
-{$IFNDEF SRLT_REMOTEINPUT_INCLUDED}         {$I osrs/remoteinput.simba}
-{$IFNDEF SRLT_RSCLIENT_INCLUDED}            {$I osrs/rsclient.simba}
+{$IFNDEF SRLT_OCR_INCLUDED}                 {$include_once osrs/ocr/ocr.simba}
+{$IFNDEF SRLT_REMOTEINPUT_INCLUDED}         {$include_once osrs/remoteinput.simba}
+{$IFNDEF SRLT_RSCLIENT_INCLUDED}            {$include_once osrs/rsclient.simba}
 
-{$IFNDEF SRLT_ITEMFINDER_INCLUDED}          {$I osrs/finders/items/itemfinder.simba}
-{$IFNDEF SRLT_SPELLFINDER_INCLUDED}         {$I osrs/finders/spells/spellfinder.simba}
-{$IFNDEF SRLT_PRAYERFINDER_INCLUDED}        {$I osrs/finders/prayer/prayerfinder.simba}
+{$IFNDEF SRLT_ITEMFINDER_INCLUDED}          {$include_once osrs/finders/items/itemfinder.simba}
+{$IFNDEF SRLT_SPELLFINDER_INCLUDED}         {$include_once osrs/finders/spells/spellfinder.simba}
+{$IFNDEF SRLT_PRAYERFINDER_INCLUDED}        {$include_once osrs/finders/prayer/prayerfinder.simba}
 
-{$IFNDEF SRLT_INTERFACE_CORE_INCLUDED}      {$I osrs/interfaces/interface.simba}
-{$IFNDEF SRLT_ACCOUNT_INCLUDED}             {$I osrs/account.simba}
-{$IFNDEF SRLT_LOGIN_INCLUDED}               {$I osrs/interfaces/login.simba}
-{$IFNDEF SRLT_INTERFACE_CONTROLS_INCLUDED}  {$I osrs/interfaces/interfacecontrols.simba}
-{$IFNDEF SRLT_CHOOSEOPTION_INCLUDED}        {$I osrs/interfaces/chooseoption.simba}
-{$IFNDEF SRLT_MINIMAP_INCLUDED}             {$I osrs/interfaces/minimap.simba}
+{$IFNDEF SRLT_INTERFACE_CORE_INCLUDED}      {$include_once osrs/interfaces/interface.simba}
+{$IFNDEF SRLT_LOGIN_INCLUDED}               {$include_once osrs/interfaces/login.simba}
+{$IFNDEF SRLT_INTERFACE_CONTROLS_INCLUDED}  {$include_once osrs/interfaces/interfacecontrols.simba}
+{$IFNDEF SRLT_CHOOSEOPTION_INCLUDED}        {$include_once osrs/interfaces/chooseoption.simba}
+{$IFNDEF SRLT_MINIMAP_INCLUDED}             {$include_once osrs/interfaces/minimap.simba}
 
-{$IFNDEF SRLT_GAMETABS_INCLUDED}            {$I osrs/interfaces/gametabs/gametabs.simba}
-{$IFNDEF SRLT_GAMETAB_INCLUDED}             {$I osrs/interfaces/gametabs/gametab.simba}
-{$IFNDEF SRLT_CHAT_TABS_INCLUDED}           {$I osrs/interfaces/chat/chattabs.simba}
-{$IFNDEF SRLT_CHAT_INCLUDED}                {$I osrs/interfaces/chat/chat.simba}
-{$IFNDEF SRLT_MAINSCREEN_INCLUDED}          {$I osrs/interfaces/mainscreen/mainscreen.simba}
-{$IFNDEF SRLT_INTERFACE_AREA_INCLUDED}      {$I osrs/interfaces/interfacearea.simba}
+{$IFNDEF SRLT_GAMETABS_INCLUDED}            {$include_once osrs/interfaces/gametabs/gametabs.simba}
+{$IFNDEF SRLT_GAMETAB_INCLUDED}             {$include_once osrs/interfaces/gametabs/gametab.simba}
+{$IFNDEF SRLT_CHAT_TABS_INCLUDED}           {$include_once osrs/interfaces/chat/chattabs.simba}
+{$IFNDEF SRLT_CHAT_INCLUDED}                {$include_once osrs/interfaces/chat/chat.simba}
+{$IFNDEF SRLT_MAINSCREEN_INCLUDED}          {$include_once osrs/interfaces/mainscreen/mainscreen.simba}
+{$IFNDEF SRLT_INTERFACE_AREA_INCLUDED}      {$include_once osrs/interfaces/interfacearea.simba}
 
-{$IFNDEF SRLT_SLOT_INTERFACE_INCLUDED}      {$I osrs/interfaces/slotinterface.simba}
-{$IFNDEF SRLT_ITEM_INTERFACE_INCLUDED}      {$I osrs/interfaces/iteminterface.simba}
+{$IFNDEF SRLT_SLOT_INTERFACE_INCLUDED}      {$include_once osrs/interfaces/slotinterface.simba}
+{$IFNDEF SRLT_ITEM_INTERFACE_INCLUDED}      {$include_once osrs/interfaces/iteminterface.simba}
 
-{$IFNDEF SRLT_INVENTORY_INCLUDED}           {$I osrs/interfaces/gametabs/inventory.simba}
-{$IFNDEF SRLT_MAGIC_INCLUDED}               {$I osrs/interfaces/gametabs/magic.simba}
-{$IFNDEF SRLT_OPTIONS_INCLUDED}             {$I osrs/interfaces/gametabs/options.simba}
-{$IFNDEF SRLT_PRAYER_INCLUDED}              {$I osrs/interfaces/gametabs/prayer.simba}
+{$IFNDEF SRLT_INVENTORY_INCLUDED}           {$include_once osrs/interfaces/gametabs/inventory.simba}
+{$IFNDEF SRLT_MAGIC_INCLUDED}               {$include_once osrs/interfaces/gametabs/magic.simba}
+{$IFNDEF SRLT_OPTIONS_INCLUDED}             {$include_once osrs/interfaces/gametabs/options.simba}
+{$IFNDEF SRLT_PRAYER_INCLUDED}              {$include_once osrs/interfaces/gametabs/prayer.simba}
 
+{$IFNDEF SRLT_MM2MS_PROJECTOR_INCLUDED}     {$include_once osrs/interfaces/mm2ms_projector.simba}
+{$IFNDEF SRLT_MM2MS_INCLUDED}               {$include_once osrs/interfaces/mm2ms.simba}
+{$IFNDEF SRLT_XPBAR_INCLUDED}               {$include_once osrs/interfaces/xpbar.simba}
+{$IFNDEF SRLT_STATS_INCLUDED}               {$include_once osrs/interfaces/gametabs/stats.simba}
+{$IFNDEF SRLT_ANTIBAN_INCLUDED}             {$include_once osrs/antiban/antiban.simba}
 
-{$IFNDEF SRLT_MM2MS_PROJECTOR_INCLUDED}     {$I osrs/interfaces/mm2ms_projector.simba}
-{$IFNDEF SRLT_MM2MS_INCLUDED}               {$I osrs/interfaces/mm2ms.simba}
-{$IFNDEF SRLT_XPBAR_INCLUDED}               {$I osrs/interfaces/xpbar.simba}
-{$IFNDEF SRLT_STATS_INCLUDED}               {$I osrs/interfaces/gametabs/stats.simba}
-{$IFNDEF SRLT_WALKER_INCLUDED}              {$I osrs/walker.simba}
-{$IFNDEF SRLT_MAPLOADER_INCLUDED}           {$I osrs/map/maploader.simba}
-{$IFNDEF SRLT_MAP_INCLUDED}                 {$I osrs/map/map.simba}
-{$IFNDEF SRLT_MAPDEBUGGER_INCLUDED}         {$I osrs/map/mapdebugger.simba}
-{$IFNDEF SRLT_BANK_INCLUDED}                {$I osrs/interfaces/mainscreen/bank.simba}
-
-
-
-{$IFNDEF SRLT_SETUP_INCLUDED}
-{$I osrs/interfaces/setup.simba}
-{$ELSE}{$ENDIF}
+{$IFNDEF SRLT_WALKER_INCLUDED}              {$include_once osrs/walker.simba}
+{$IFNDEF SRLT_MAPLOADER_INCLUDED}           {$include_once osrs/map/maploader.simba}
+{$IFNDEF SRLT_MAP_INCLUDED}                 {$include_once osrs/map/map.simba}
+{$IFNDEF SRLT_MAPDEBUGGER_INCLUDED}         {$include_once osrs/map/mapdebugger.simba}
+{$IFNDEF SRLT_BANK_INCLUDED}                {$include_once osrs/interfaces/mainscreen/bank.simba}
 
 
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
-{$ELSE}{$ENDIF}
+{$IFNDEF SRLT_ANTIBAN_TASKS_INCLUDED}       {$include_once osrs/antiban/antibantasks.simba}
+
+{$IFNDEF SRLT_SETUP_INCLUDED}               {$include_once osrs/interfaces/setup.simba}
+
+
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}

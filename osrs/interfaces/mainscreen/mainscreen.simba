@@ -6,9 +6,7 @@ Methods to interact with the mainscreen.
 {.$DEFINE DEBUG_UPTEXT}
 
 {$DEFINE SRLT_MAINSCREEN_INCLUDED}
-{$IFNDEF SRLT_OSRS}
-  {$I SRLT/osrs.simba}
-{$ENDIF}
+{$include_once SRLT/osrs.simba}
 
 type
   TRSMainScreen = record
@@ -183,10 +181,73 @@ begin
   Result := SleepUntil(Self._YellowClicked(area), 50, time);
 end;
 
-
 var
   MainScreen: TRSMainScreen;
 
 begin
   MainScreen.Setup();
 end;
+
+
+(*
+## Biometrics.YellowClick
+```pascal
+function TBiometrics.YellowClick(button: EMouseButton; clicks: UInt32 = 3): Boolean;
+```
+Basically the same as {ref}`TBiometrics.Click()` but returns true if we yellow clicked.
+
+Example:
+```pascal
+Biometrics.YellowClick(EMouseButton.LEFT);
+```
+*)
+function TBiometrics.YellowClick(button: EMouseButton; clicks: UInt32 = 3): Boolean;
+var
+  i: Integer;
+begin
+  Mouse.Click(button);
+  Result := MainScreen.YellowClicked();
+
+  if Random() > Self.RandomModeDouble(0.08, 0.05, 0.1) then
+    Exit;
+
+  for i := 1 to Self.RandomModeInteger(clicks div 2, 1, clicks) do
+  begin
+    Mouse.Click(Mouse.Position().Random(5), button);
+    Sleep(0, 100, ERandomDir.LEFT);
+  end;
+
+  Result := MainScreen.YellowClicked() and not MainScreen.RedClicked();
+end;
+
+(*
+## Biometrics.RedClick
+```pascal
+function TBiometrics.RedClick(button: EMouseButton; clicks: UInt32 = 3): Boolean;
+```
+Basically the same as {ref}`TBiometrics.Click()` but returns true if we red clicked.
+
+Example:
+```pascal
+Biometrics.RedClick(EMouseButton.LEFT);
+```
+*)
+function TBiometrics.RedClick(button: EMouseButton; clicks: UInt32 = 3): Boolean;
+var
+  i: Integer;
+begin
+  Mouse.Click(button);
+  Result := MainScreen.RedClicked();
+
+  if Random() > Self.RandomModeDouble(0.08, 0.05, 0.1) then
+    Exit;
+
+  for i := 1 to Self.RandomModeInteger(clicks div 2, 1, clicks) do
+  begin
+    Mouse.Click(Mouse.Position().Random(5), button);
+    Sleep(0, 100, ERandomDir.LEFT);
+  end;
+
+  Result := MainScreen.RedClicked() and not MainScreen.YellowClicked();
+end;
+

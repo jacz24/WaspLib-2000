@@ -4,9 +4,7 @@ Methods to interact with the inventory gametab.
 *)
 
 {$DEFINE SRLT_INVENTORY_INCLUDED}
-{$IFNDEF SRLT_OSRS}
-  {$I SRLT/osrs.simba}
-{$ENDIF}
+{$include_once SRLT/osrs.simba}
 
 type
   TRSInventory = record

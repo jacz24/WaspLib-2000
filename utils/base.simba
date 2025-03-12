@@ -1,7 +1,5 @@
 {$DEFINE SRLT_BASE_INCLUDED}
-{$IFNDEF SRLT_UTILS}
-  {$I SRLT/utils.simba}
-{$ENDIF}
+{$include_once SRLT/utils.simba}
 
 type
   EErrorLevel = enum(SUCCESS, WARN, ERROR);

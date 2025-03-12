@@ -4,9 +4,7 @@ Methods to find and compare item images
 *)
 
 {$DEFINE SRLT_ITEMFINDER_INCLUDED}
-{$IFNDEF SRLT_OSRS}
-  {$I SRLT/osrs.simba}
-{$ENDIF}
+{$include_once SRLT/osrs.simba}
 
 type
   TRSItemFinder = record

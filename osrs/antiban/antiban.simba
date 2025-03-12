@@ -542,3 +542,7 @@ var
 Global {ref}`TAntiban` variable.
 *)
   Antiban: TAntiban;
+
+begin
+  Antiban.Zoom.Max := 100;
+end;
