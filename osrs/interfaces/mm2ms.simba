@@ -22,7 +22,19 @@ Main record responsible for minimap to mainscreen (mm2ms) conversion.
     ZoomQuads: array [0..100] of TQuad;
     PlayerBoxes: array [0..100] of TBox;
     Projector: TMM2MSProjector;
+    Normalization: record
+      Projector: TMM2MSProjector;
+      Base: TPoint;
+    end;
   end;
+
+procedure TMM2MS.Setup();
+begin
+  Self.Projector.SetupProjection();
+  Self.Normalization.Projector.SetupProjection();
+  Self.Normalization.Projector.UpdateZoom(0);
+  Self.Normalization.Base := Self.Normalization.Projector.Run([0, 0, 0], [0, 0, 0]);
+end;
 
 (*
 ## MM2MS.Run
@@ -437,6 +449,70 @@ begin
   Result := Minimap.FacePoint(Self.Point2MM(pt, 0, Minimap.GetCompassAngle(False)).ToPoint(), randomness);
 end;
 
+(*
+## MainScreen.NormalizeDistance
+```pascal
+function TRSMainScreen.NormalizeDistance(dist: Integer; accuracy: Single = 1.05): Integer;
+```
+Converts a distance acquired from the **fixed client* and **default zoom** to the
+current mainscreen.
+
+Example:
+```pascal
+// 20 pixels on the fixed client and default zoom(50) is currently x pixels at the current zoom & client size.
+WriteLn(MainScreen.TranslateDistance(20));
+```
+*)
+function TRSMainScreen.NormalizeDistance(dist: Integer; accuracy: Single = 1.05): Integer;
+  function _SearchUp(value: Single; target: Single; inc: Single): Single;
+  var
+    pt: TPoint;
+  begin
+    while True do
+    begin
+      pt := MM2MS.Normalization.Projector.Run([value, 0, 0], [0, 0, 0]);
+      if MM2MS.Normalization.Base.DistanceTo(pt) > target then
+        Exit(value);
+
+      value *= inc;
+    end;
+  end;
+
+  function _SearchDown(value: Single; target: Single; dec: Single): Single;
+  var
+    pt: TPoint;
+  begin
+    while True do
+    begin
+      pt := MM2MS.Normalization.Projector.Run([value, 0, 0], [0, 0, 0]);
+      if MM2MS.Normalization.Base.DistanceTo(pt) < target then
+        Exit(value);
+
+      value /= dec;
+    end;
+  end;
+
+var
+  lo, hi, mean: Single;
+begin
+  if dist = 0 then Exit;
+
+  hi := _SearchUp(0.1, dist, 1.50);
+  lo := _SearchDown(hi, dist, 1.50);
+
+  hi := _SearchUp(lo, dist, accuracy);
+  lo := _SearchDown(hi, dist, accuracy);
+
+  mean := lo + ((hi - lo) / 2);
+
+  with Minimap.Center do
+    Result := Round(
+                Minimap.Vector2MS([X, Y, 0], 0).DistanceTo(
+                Minimap.Vector2MS([X + mean, Y, 0], 0)
+              ));
+
+  if Result < 1 then Result := 1;
+end;
 
 
 (*

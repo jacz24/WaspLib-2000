@@ -15,7 +15,7 @@ begin
   Options.SetupInterface();
   WorldSwitcher.SetupInterface();
   Logout.SetupInterface();
-  MM2MS.Projector.SetupProjection();
+  MM2MS.Setup();
   Chat.SetupInterface();
   InterfaceArea.SetupInterface();
   RSInterface.SetupInterface();
