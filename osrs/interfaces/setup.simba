@@ -13,6 +13,7 @@ begin
   Inventory.SetupInterface();
   Equipment.SetupInterface();
   Options.SetupInterface();
+  WorldSwitcher.SetupInterface();
   Logout.SetupInterface();
   MM2MS.Projector.SetupProjection();
   Chat.SetupInterface();

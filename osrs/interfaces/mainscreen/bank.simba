@@ -132,10 +132,10 @@ begin
     Self.Bounds.Y2 := Min(Floor(Center.Y+(Height-3)/2), Floor(Center.Y+799/2));
   end;
 
-  Self.Scroll.ScrollArea.X1 := Self.Bounds.X1 + 5;
-  Self.Scroll.ScrollArea.Y1 := Self.Bounds.Y1 + 78;
-  Self.Scroll.ScrollArea.X2 := Self.Bounds.X2 - 22;
-  Self.Scroll.ScrollArea.Y2 := Self.Bounds.Y2 - 44;
+  Self.Scroll.Area.X1 := Self.Bounds.X1 + 5;
+  Self.Scroll.Area.Y1 := Self.Bounds.Y1 + 78;
+  Self.Scroll.Area.X2 := Self.Bounds.X2 - 22;
+  Self.Scroll.Area.Y2 := Self.Bounds.Y2 - 44;
 
   Self.Scroll.Setup();
   Self.Title.Setup(Self.Bounds);

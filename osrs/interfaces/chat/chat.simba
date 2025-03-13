@@ -45,10 +45,10 @@ begin
   Self.InputLine.X2 += 17;
   Self.InputLine.Y2 += 2;
 
-  Self.Scroll.ScrollArea.X1 := Self.Bounds.X1 + 6;
-  Self.Scroll.ScrollArea.Y1 := Self.Bounds.Y1 + 6;
-  Self.Scroll.ScrollArea.X2 := Self.Bounds.X2 - 23;
-  Self.Scroll.ScrollArea.Y2 := Self.InputLine.Y1 - 1;
+  Self.Scroll.Area.X1 := Self.Bounds.X1 + 6;
+  Self.Scroll.Area.Y1 := Self.Bounds.Y1 + 6;
+  Self.Scroll.Area.X2 := Self.Bounds.X2 - 23;
+  Self.Scroll.Area.Y2 := Self.InputLine.Y1 - 1;
 
   Self.Scroll.Setup();
 end;

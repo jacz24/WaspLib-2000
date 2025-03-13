@@ -114,13 +114,14 @@ end;
 (*
 ## Logout.Logout
 ```pascal
-function TRSLogout.Logout(attempts: UInt32 = 5; time: UInt32 = 20000): Boolean;
+function TRSLogout.Logout(const attempts: UInt32 = 5; const time: UInt32 = 20000): Boolean;
 ```
-Clicks the logout button. Returns true if we succesfully logout of the game.
+Attempts to logout of the game. Returns true if we succesfully logout of the game.
+If the {ref}`WorldSwitcher` is open, we will use {ref}`WorldSwitcher.Logout` instead.
 
 Example:
 ```pascal
-WriteLn Logout.ClickLogout();
+WriteLn Logout.Logout();
 ```
 *)
 function TRSLogout.Logout(const attempts: UInt32 = 5; const time: UInt32 = 20000): Boolean;
@@ -128,7 +129,9 @@ var
   i: Integer;
   interval: UInt32;
 begin
-  if not Self.Open() then Exit; //TODO: or (not Self.CloseWorldSwitcher()) then
+  if not Self.Open() then Exit;
+  if WorldSwitcher.Logout() then Exit(True);
+
   interval := time div attempts;
 
   if Biometrics.RandomBoolean(EBiometric.RATING) then

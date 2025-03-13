@@ -34,6 +34,7 @@
 {$IFNDEF SRLT_MAGIC_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/gametabs/magic.simba}
 {$IFNDEF SRLT_OPTIONS_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/gametabs/options.simba}
 {$IFNDEF SRLT_PRAYER_INCLUDED}              {$INCLUDE_ONCE osrs/interfaces/gametabs/prayer.simba}
+{$IFNDEF SRLT_WORLDSWITCHER_INCLUDED}       {$INCLUDE_ONCE osrs/interfaces/gametabs/worldswitcher.simba}
 {$IFNDEF SRLT_LOGOUT_INCLUDED}              {$INCLUDE_ONCE osrs/interfaces/gametabs/logout.simba}
 
 {$IFNDEF SRLT_MM2MS_PROJECTOR_INCLUDED}     {$INCLUDE_ONCE osrs/interfaces/mm2ms_projector.simba}
@@ -54,6 +55,7 @@
 {$IFNDEF SRLT_SETUP_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/setup.simba}
 
 
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}

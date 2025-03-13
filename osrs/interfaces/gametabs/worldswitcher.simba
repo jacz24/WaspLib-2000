@@ -1,0 +1,160 @@
+(*
+# WorldSwitcher
+WorldSwitcher is resposible for changing worlds with the logged in world
+switcher in the {ref}`Logout` gametab.
+*)
+{$DEFINE SRLT_WORLDSWITCHER_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+type
+  ERSWorldSwitcherButton = enum(CONFIGURE, CLOSE, LOGOUT);
+(*
+(TRSWorldSwitcher)=
+## type TRSWorldSwitcher
+Main record that holds all the world switching methods.
+*)
+  TRSWorldSwitcher = record
+    Scroll: TRSScrollBar;
+    ServerMessageBox: TBox;
+    Cooldown: TCountDown;
+    CurrentWorldBounds: TBox;
+    Buttons: array [ERSWorldSwitcherButton] of TRSButton;
+    const SILVER: TColor = $E0E0E0;
+    const YELLOW: TColor = $00F0F0;
+  end;
+
+procedure TRSWorldSwitcher.SetupInterface();
+begin
+  Self.ServerMessageBox.X1 := MainScreen.Bounds.X1 + 4;
+  Self.ServerMessageBox.Y1 := MainScreen.Bounds.Y1 + 4;
+  Self.ServerMessageBox.X2 := Self.ServerMessageBox.X1 + 79;
+  Self.ServerMessageBox.Y2 := Self.ServerMessageBox.Y1 + 20;
+
+  with GameTab.Bounds do
+  begin
+    Self.CurrentWorldBounds.X1 := X2 - 52;
+    Self.CurrentWorldBounds.Y1 := Y1 + 4;
+    Self.CurrentWorldBounds.X2 := X2 - 25;
+    Self.CurrentWorldBounds.Y2 := Y1 + 17;
+
+    Self.Buttons[ERSWorldSwitcherButton.CONFIGURE].Bounds.X1 := X1;
+    Self.Buttons[ERSWorldSwitcherButton.CONFIGURE].Bounds.Y1 := Y1 + 4;
+    Self.Buttons[ERSWorldSwitcherButton.CONFIGURE].Bounds.X2 := X1 + 15;
+    Self.Buttons[ERSWorldSwitcherButton.CONFIGURE].Bounds.Y2 := Y1 + 19;
+
+    Self.Buttons[ERSWorldSwitcherButton.CLOSE].Bounds.X1 := X2 - 17;
+    Self.Buttons[ERSWorldSwitcherButton.CLOSE].Bounds.Y1 := Y1 + 2;
+    Self.Buttons[ERSWorldSwitcherButton.CLOSE].Bounds.X2 := X2 + 3;
+    Self.Buttons[ERSWorldSwitcherButton.CLOSE].Bounds.Y2 := Y1 + 22;
+
+    Self.Buttons[ERSWorldSwitcherButton.LOGOUT].Bounds.X1 := X2 - 19;
+    Self.Buttons[ERSWorldSwitcherButton.LOGOUT].Bounds.Y1 := Y2 - 30;
+    Self.Buttons[ERSWorldSwitcherButton.LOGOUT].Bounds.X2 := X2 + 1;
+    Self.Buttons[ERSWorldSwitcherButton.LOGOUT].Bounds.Y2 := Y2 - 1;
+
+    Self.Scroll.Area.X1 := X1 - 3;
+    Self.Scroll.Area.Y1 := Y1 + 36;
+    Self.Scroll.Area.X2 := X2 - 13;
+    Self.Scroll.Area.Y2 := Y2 - 33;
+  end;
+
+  Self.Scroll.Setup();
+end;
+
+
+{%codetools off}
+function TRSWorldSwitcher._IsOpen(): Boolean;
+begin
+  Result := Target.HasColor($0C0E10, 3, 134, Self.Buttons[ERSWorldSwitcherButton.CLOSE].Bounds);
+end;
+{%codetools on}
+
+(*
+## WorldSwitcher.IsOpen
+```pascal
+function TRSWorldSwitcher.IsOpen(): Boolean;
+```
+Returns true if the world switcher is open.
+
+Example:
+```pascal
+WriteLn WorldSwitcher.IsOpen();
+```
+*)
+function TRSWorldSwitcher.IsOpen(): Boolean;
+begin
+  Result := GameTabs.IsOpen(ERSGameTab.LOGOUT) and Self._IsOpen();
+end;
+
+(*
+## Logout.CloseWorldSwitcher
+```pascal
+function TRSLogout.CloseWorldSwitcher(): Boolean;
+```
+Closes the world switcher.
+
+Example:
+```pascal
+Logout.CloseWorldSwitcher();
+```
+*)
+function TRSWorldSwitcher.Close(): Boolean;
+begin
+  if not Self.IsOpen() then Exit(True);
+  Self.Buttons[ERSWorldSwitcherButton.CLOSE].Click();
+  Result := SleepUntil(not Self._IsOpen(), RandomMode(100, 50, 1500), 600);
+end;
+
+(*
+## WorldSwitcher.Logout
+```pascal
+function TRSWorldSwitcher.Logout(const attempts: UInt32 = 5; const time: UInt32 = 20000): Boolean;
+```
+Clicks the logout button. Returns true if we succesfully logout of the game.
+
+Example:
+```pascal
+WriteLn WorldSwitcher.Logout();
+```
+*)
+function TRSWorldSwitcher.Logout(const attempts: UInt32 = 5; const time: UInt32 = 20000): Boolean;
+var
+  i: Integer;
+  interval: UInt32;
+begin
+  if not Self.IsOpen() then Exit;
+  interval := time div attempts;
+
+  if Keyboard.LastKey = EKeyCode.RETURN then
+    Keyboard.RandomKey();  //unlock enter if using remote input
+
+  for i := 1 to attempts do
+  begin
+    Self.Buttons[ERSWorldSwitcherButton.LOGOUT].Click();
+    if SleepUntil(not RSClient.IsLoggedIn(), 500, interval + Random(-2000, 2000)) then
+      Exit(True);
+  end;
+end;
+
+
+(*
+## WorldSwitcher.GetCurrentWorld
+```pascal
+function TRSWorldSwitcher.GetCurrentWorld(): Integer;
+```
+Returns the current world we are on.
+
+Example:
+```pascal
+WriteLn WorldSwitcher.GetCurrentWorld();
+```
+*)
+function TRSWorldSwitcher.GetCurrentWorld(): Integer;
+begin
+  Result := OCR.RecognizeNumber(Self.CurrentWorldBounds, RSFonts.BOLD, [RSColors.TEXT_ORANGE], 0);
+end;
+
+
+var
+  WorldSwitcher: TRSWorldSwitcher;
+

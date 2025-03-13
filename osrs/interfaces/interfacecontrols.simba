@@ -136,33 +136,33 @@ end;
 
 type
   TRSScrollBar = record
-    ScrollArea, Up, Down: TBox;
+    Area, Up, Down: TBox;
     Bounds: TBox;
     Width, Height: Integer;
   end;
 
 procedure TRSScrollBar.Setup();
 begin
-  if Self.ScrollArea = Default(TBox) then
-    raise GetDebugLn('ScrollBar', 'You need to set a ScrollArea to use the TRSScrollBar.Setup() method.');
+  if Self.Area = Default(TBox) then
+    raise GetDebugLn('ScrollBar', 'You need to set a Area to use the TRSScrollBar.Setup() method.');
 
-  Self.Bounds.X1 := Self.ScrollArea.X2 + 1;
-  Self.Bounds.Y1 := Self.ScrollArea.Y1 + 16;
+  Self.Bounds.X1 := Self.Area.X2 + 1;
+  Self.Bounds.Y1 := Self.Area.Y1 + 16;
   Self.Bounds.X2 := Self.Bounds.X1 + 15;
-  Self.Bounds.Y2 := Self.ScrollArea.Y2 - 16;
+  Self.Bounds.Y2 := Self.Area.Y2 - 16;
 
   Self.Width  := Self.Bounds.Width;
   Self.Height := Self.Bounds.Height;
 
   Self.Up.X1 := Self.Bounds.X1;
-  Self.Up.Y1 := Self.ScrollArea.Y1;
+  Self.Up.Y1 := Self.Area.Y1;
   Self.Up.X2 := Self.Bounds.X2;
   Self.Up.Y2 := Self.Bounds.Y1 - 1;
 
   Self.Down.X1 := Self.Bounds.X1;
   Self.Down.Y1 := Self.Bounds.Y2 + 1;
   Self.Down.X2 := Self.Bounds.X2;
-  Self.Down.Y2 := Self.ScrollArea.Y2;
+  Self.Down.Y2 := Self.Area.Y2;
 end;
 
 function TRSScrollBar.IsVisible(): Boolean;
@@ -200,7 +200,10 @@ end;
 
 function TRSScrollBar.GetScrollArea(): TBox;
 begin
-  Result := Self.ScrollArea; //todo: add antiban to use bounds instead
+  if Biometrics.RandomBoolean(0.9) then
+    Result := Self.Area
+  else
+    Result := Self.Bounds;
 end;
 
 function TRSScrollBar.SetLevel(value: Integer): Integer;
@@ -238,6 +241,9 @@ var
   bounds: TBox;
 begin
   img := TImage.CreateFromTarget();
+
+  img.DrawColor := $00FF00;
+  img.DrawBox(scroll.Area);
 
   img.DrawColor := $FFFF00;
   img.DrawBox(scroll.Bounds);
