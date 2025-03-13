@@ -4,9 +4,7 @@ Methods to interact with the bank interface
 *)
 
 {$DEFINE SRLT_BANK_INCLUDED}
-{$IFNDEF SRLT_OSR}
-  {$I SRLT/osrs.simba}
-{$ENDIF}
+{$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
 (*

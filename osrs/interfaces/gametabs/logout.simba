@@ -8,10 +8,11 @@ Methods to interact with the logout tab.
 {$ENDIF}
 
 type
+  ERSRating = (ONE, TWO, THREE, FOUR, FIVE);
   ERSLogoutButton = (WORLD_SWITCHER, CLICK_HERE);
   TRSLogout = record
     Buttons: array [ERSLoginButton] of TRSButton;
-    Ratings: array [0..4] of TRSButton;
+    Ratings: array [ERSRating] of TRSButton;
   end;
 
 procedure TRSLogout.SetupInterface();
@@ -85,13 +86,35 @@ WriteLn Logout.IsRated();
 *)
 function TRSLogout.IsRated(): Boolean;
 begin
-  Result := Self.Ratings[0].Enabled();
+  Result := Self.Ratings[ERSRating.ONE].Enabled();
 end;
 
 (*
-## Logout.ClickLogout
+## Logout.Rate
 ```pascal
-function TRSLogout.ClickLogout(attempts: Int32 = 5; time: Int32 = 20000): Boolean;
+function TRSLogout.Rate(const star: ERSRating): Boolean;
+```
+Click a star button to rate the game.
+
+Example:
+```pascal
+WriteLn Logout.Rate(ERSRating.FOUR);
+```
+*)
+function TRSLogout.Rate(const star: ERSRating): Boolean;
+begin
+   if Self.Ratings[star].Enabled() and
+      ((star = ERSRating.FIVE) or not Self.Ratings[star+1].Enabled()) then
+       Exit(True);
+
+   Self.Ratings[star].Click(EMouseButton.LEFT);
+   Result := Self.Ratings[star].WaitEnabled();
+end;
+
+(*
+## Logout.Logout
+```pascal
+function TRSLogout.Logout(attempts: UInt32 = 5; time: UInt32 = 20000): Boolean;
 ```
 Clicks the logout button. Returns true if we succesfully logout of the game.
 
@@ -115,7 +138,7 @@ begin
     else
       i := RandomLeft(0, 4);
 
-    WriteLn GetDebugLn('Logout', 'Rating the game with ' + ToStr(i+1) + ' stars before logging out.');
+    WriteLn GetDebugLn('Logout', 'Rating the game with ' + ToStr(ERSRating(i)) + ' stars before logging out.');
     Self.Ratings[i].Enable();
   end;
 
