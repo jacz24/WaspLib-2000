@@ -64,7 +64,7 @@ end;
 (*
 ## Lobby.WaitOpen
 ```pascal
-function TRSLobbyScreen.WaitOpen(const time: Integer = 600; interval: Integer = -1): Boolean;
+function TRSLobbyScreen.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
 ```
 Returns True/False if the lobby screen opens within `time` milliseconds.
 
@@ -74,7 +74,7 @@ if Lobby.WaitOpen(2000) then
   Lobby.EnterGame();
 ```
 *)
-function TRSLobbyScreen.WaitOpen(const time: Integer = 600; interval: Integer = -1): Boolean;
+function TRSLobbyScreen.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsOpen(), interval, time);
@@ -172,7 +172,7 @@ end;
 (*
 ## LoginWorldSwitcher.WaitOpen
 ```pascal
-function TRSLoginWorldSwitcher.WaitOpen(const time: Integer = 600; interval: Integer = -1): Boolean;
+function TRSLoginWorldSwitcher.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
 ```
 Returns True/False if the login screen world switcher opens within `time` milliseconds.
 
@@ -181,7 +181,7 @@ Example:
 WriteLn LoginWorldSwitcher.WaitOpen();
 ```
 *)
-function TRSLoginWorldSwitcher.WaitOpen(const time: Integer = 600; interval: Integer = -1): Boolean;
+function TRSLoginWorldSwitcher.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsOpen(), interval, time);
@@ -261,7 +261,7 @@ end;
 (*
 ## LoginWorldSwitcher.Read
 ```pascal
-function TRSLoginWorldSwitcher.Read(const index: Integer): Integer;
+function TRSLoginWorldSwitcher.Read(index: Integer): Integer;
 ```
 Returns the number of the world box at the `index` you specify.
 
@@ -271,7 +271,7 @@ if LoginWorldSwitcher.IsOpen() then
   WriteLn LoginWorldSwitcher.Read(0);
 ```
 *)
-function TRSLoginWorldSwitcher.Read(const index: Integer): Integer;
+function TRSLoginWorldSwitcher.Read(index: Integer): Integer;
 begin
   Result := OCR.RecognizeNumber(Self.WorldBoxes[index], RSFonts.BOLD, [$000000, $0000FF], 0);
 end;
@@ -341,7 +341,7 @@ end;
 (*
 ## LoginWorldSwitcher.Find
 ```pascal
-function TRSLoginWorldSwitcher.Find(const world: Integer; out index: Integer): Boolean;
+function TRSLoginWorldSwitcher.Find(world: Integer; out index: Integer): Boolean;
 ```
 Attempts to find the specified `world`.
 For this, {ref}`LoginWorldSwitcher Pagination` will be used if required.
@@ -353,7 +353,7 @@ Example:
 WriteLn LoginWorldSwitcher.Find(303, idx);
 ```
 *)
-function TRSLoginWorldSwitcher.Find(const world: Integer; out index: Integer): Boolean;
+function TRSLoginWorldSwitcher.Find(world: Integer; out index: Integer): Boolean;
 begin
   repeat
     for index := 0 to High(Self.WorldBoxes) do
@@ -368,7 +368,7 @@ end;
 (*
 ## LoginWorldSwitcher.Switch
 ```pascal
-function TRSLoginWorldSwitcher.Switch(const world: Integer): Boolean;
+function TRSLoginWorldSwitcher.Switch(world: Integer): Boolean;
 ```
 Attempts to switch to the specified `world`.
 For this, {ref}`LoginWorldSwitcher Pagination` will be used if required.
@@ -380,7 +380,7 @@ Example:
 WriteLn LoginWorldSwitcher.Switch(303);
 ```
 *)
-function TRSLoginWorldSwitcher.Switch(const world: Integer): Boolean;
+function TRSLoginWorldSwitcher.Switch(world: Integer): Boolean;
 var
   idx: Integer;
 begin
@@ -590,11 +590,11 @@ end;
 (*
 ## Login.FindButton
 ```pascal
-function TRSLogin.FindButton(const button: ERSLoginButton): Boolean;
+function TRSLogin.FindButton(button: ERSLoginButton): Boolean;
 ```
 Attempts to find the specified `ERSLoginButton`, returns `True` if we find it.
 *)
-function TRSLogin.FindButton(const button: ERSLoginButton): Boolean;
+function TRSLogin.FindButton(button: ERSLoginButton): Boolean;
 begin
   if button = ERSLoginButton.LAUNCHER then
   begin
@@ -615,7 +615,7 @@ end;
 (*
 ## Login.ClickButton
 ```pascal
-function TRSLogin.ClickButton(const button: ERSLoginButton): Boolean;
+function TRSLogin.ClickButton(button: ERSLoginButton): Boolean;
 ```
 Attempts to click the specified `ERSLoginButton`, returns `True` if we succeed.
 
@@ -624,7 +624,7 @@ Example:
 WriteLn Login.ClickButton(ERSLoginButton.LOGIN);
 ```
 *)
-function TRSLogin.ClickButton(const button: ERSLoginButton): Boolean;
+function TRSLogin.ClickButton(button: ERSLoginButton): Boolean;
 begin
   if not Self.FindButton(button) then Exit;
   Result := True;
@@ -635,7 +635,7 @@ end;
 (*
 ## Login.SelectInput
 ```pascal
-function TRSLogin.SelectInput(const field: ERSLoginInput): Boolean;
+function TRSLogin.SelectInput(field: ERSLoginInput): Boolean;
 ```
 Attempts to select the specified `ERSLoginInput`, returns `True` if we succeed.
 This waits a few milliseconds for the flashing yellow cursor for confirmation.
@@ -645,7 +645,7 @@ Example:
 WriteLn Login.SelectInput(ERSLoginInput.USERNAME);
 ```
 *)
-function TRSLogin.SelectInput(const field: ERSLoginInput): Boolean;
+function TRSLogin.SelectInput(field: ERSLoginInput): Boolean;
 begin
   if SleepUntil(Target.HasColor($00FFFF, 0, 8, Self.Inputs[field]), 30, 100) then
     Exit(True);
@@ -662,7 +662,7 @@ end;
 (*
 ## Login.InputIsFilled
 ```pascal
-function TRSLogin.InputIsFilled(const field: ERSLoginInput): Boolean;
+function TRSLogin.InputIsFilled(field: ERSLoginInput): Boolean;
 ```
 Returns True/False if the specified `field` is filled.
 
@@ -671,7 +671,7 @@ Example:
 WriteLn Login.InputIsFilled(ERSLoginInput.USERNAME);
 ```
 *)
-function TRSLogin.InputIsFilled(const field: ERSLoginInput): Boolean;
+function TRSLogin.InputIsFilled(field: ERSLoginInput): Boolean;
 begin
   Result := Target.HasColor($FFFFFF, 0, 1, Self.Inputs[field]);
 end;
@@ -679,7 +679,7 @@ end;
 (*
 ## Login.ClearInput
 ```pascal
-function TRSLogin.ClearInput(const field: ERSLoginInput): Boolean;
+function TRSLogin.ClearInput(field: ERSLoginInput): Boolean;
 ```
 Attempts to clear the  specified `field`.
 
@@ -688,7 +688,7 @@ Example:
 WriteLn Login.ClearInput(ERSLoginInput.USERNAME);
 ```
 *)
-function TRSLogin.ClearInput(const field: ERSLoginInput): Boolean;
+function TRSLogin.ClearInput(field: ERSLoginInput): Boolean;
 begin
   if not Self.InputIsFilled(field) then Exit(True);
   if not Self.SelectInput(field) then Exit;
@@ -701,7 +701,7 @@ end;
 (*
 ## Login.FillInput
 ```pascal
-function TRSLogin.FillInput(const field: ERSLoginInput; const details: String): Boolean;
+function TRSLogin.FillInput(field: ERSLoginInput; details: String): Boolean;
 ```
 Attempts to fill the  specified `field` with `details`.
 
@@ -710,7 +710,7 @@ Example:
 WriteLn Login.FillInput(ERSLoginInput.USERNAME, 'myaccount@email.com');
 ```
 *)
-function TRSLogin.FillInput(const field: ERSLoginInput; const details: String): Boolean;
+function TRSLogin.FillInput(field: ERSLoginInput; details: String): Boolean;
 begin
   if Self.InputIsFilled(field) then Exit;
   if not Self.SelectInput(field) then Exit;
@@ -837,7 +837,7 @@ end;
 (*
 ## Login.EnterCredentials
 ```pascal
-function TRSLogin.EnterCredentials(const username, password: String): Boolean;
+function TRSLogin.EnterCredentials(username, password: String): Boolean;
 ```
 Attempts to enter a user credentials.
 
@@ -846,7 +846,7 @@ Example:
 WriteLn Login.EnterCredentials('username', 'password');
 ```
 *)
-function TRSLogin.EnterCredentials(const username, password: String): Boolean;
+function TRSLogin.EnterCredentials(username, password: String): Boolean;
 var
   field: ERSLoginInput;
 begin
@@ -865,7 +865,7 @@ end;
 (*
 ## Login.Retry
 ```pascal
-function TRSLogin.Retry(const msg: ERSLoginMessage): Boolean;
+function TRSLogin.Retry(msg: ERSLoginMessage): Boolean;
 ```
 Attempts to handle any screen that has a "Retry" button.
 Returns True if we succeed.
@@ -873,7 +873,7 @@ Returns True if we succeed.
 The current `ERSLoginMessage` message has to be passed as `msg` so we know
 when we successfully handled the button.
 *)
-function TRSLogin.Retry(const msg: ERSLoginMessage): Boolean;
+function TRSLogin.Retry(msg: ERSLoginMessage): Boolean;
 begin
   if not Self.ClickButton(ERSLoginButton.RETRY) then Exit;
   Self.ClearInputs := True;
@@ -883,7 +883,7 @@ end;
 (*
 ## Login.HandleError
 ```pascal
-function TRSLogin.HandleError(const msg: ERSLoginMessage): Boolean;
+function TRSLogin.HandleError(msg: ERSLoginMessage): Boolean;
 ```
 Attempts to handle any screen that has an error message.
 Returns True if we succeed.
@@ -897,7 +897,7 @@ After 10 times of this being called without `Login.Attempts` being reset, this
 will raise an exception **IF** the reason we can't login is not the world being
 full. **IF** the reason is the world being full, this can be called forever.
 *)
-function TRSLogin.HandleError(const msg: ERSLoginMessage): Boolean;
+function TRSLogin.HandleError(msg: ERSLoginMessage): Boolean;
 var
   time: Integer;
 begin
@@ -926,7 +926,7 @@ end;
 (*
 ## Login.HandleMessage
 ```pascal
-function TRSLogin.HandleMessage(const msg: ERSLoginMessage; const username, password: String): Boolean;
+function TRSLogin.HandleMessage(msg: ERSLoginMessage; username, password: String): Boolean;
 ```
 Attempts to handle whatever screen the login screen is currently at.
 Returns True if we succeed.
@@ -941,7 +941,7 @@ On certain `ERSLoginMessages` that cannot be handled this will raise an
 exception to shutdown your script. For example, if the account you are trying to
 use has been banned.
 *)
-function TRSLogin.HandleMessage(const msg: ERSLoginMessage; const username, password: String): Boolean;
+function TRSLogin.HandleMessage(msg: ERSLoginMessage; username, password: String): Boolean;
 begin
   case msg of
     ERSLoginMessage.WELCOME:           Result := Self.HandleWelcome();
@@ -969,7 +969,7 @@ end;
 (*
 ## Login.DoLogin
 ```pascal
-function TRSLogin.DoLogin(const account: TRSAccount): Boolean;
+function TRSLogin.DoLogin(account: TRSAccount): Boolean;
 ```
 Attempts to login into `account`.
 If we login, the {ref}`Lobby` screen is handled for you.
@@ -980,7 +980,7 @@ Example:
 WriteLn Login.DoLogin(account);
 ```
 *)
-function TRSLogin.DoLogin(const account: TRSAccount): Boolean;
+function TRSLogin.DoLogin(account: TRSAccount): Boolean;
 var
   timeout: UInt64;
 begin

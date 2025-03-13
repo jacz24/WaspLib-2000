@@ -22,7 +22,7 @@ begin
 end;
 
 
-function TWebGraphGenerator.GetDoorDirection(const center: TPoint; const img: TImage): TPoint;
+function TWebGraphGenerator.GetDoorDirection(center: TPoint; img: TImage): TPoint;
 begin
   if (img.Pixel[center.X+1, center.Y] = $0000FF) or (img.Pixel[center.X-1, center.Y] = $0000FF) then
     Exit([0,1]);
@@ -39,7 +39,7 @@ begin
   Result := [0,0];
 end;
 
-function TWebGraphGenerator.DoorIsSeparating(const center, direction: TPoint; const img: TImage): Boolean;
+function TWebGraphGenerator.DoorIsSeparating(center, direction: TPoint; img: TImage): Boolean;
 var
   inverted: TPoint;
   i: Integer;

@@ -57,6 +57,12 @@ begin
   Self.Timeout := GetTickCount() + (Self.Length + variation);
 end;
 
+procedure TCountDown.Restart(min, max: UInt32); overload;
+begin
+  Self.Restart(Random(min, max));
+end;
+
+
 procedure TCountDown.Extend(time: UInt32);
 begin
   Self.Timeout := Self.Timeout + time;

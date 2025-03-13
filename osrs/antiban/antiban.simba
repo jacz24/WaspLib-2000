@@ -67,7 +67,7 @@ type
     OnFinishTask: procedure(task: PAntibanTask) of object;
   end;
 
-function TAntiban.TimeRunningAtClock(const time: String; const randomness: Double = 0.10): Int64;
+function TAntiban.TimeRunningAtClock(time: String; randomness: Double = 0.10): Int64;
 var
   current, res: TDateTime;
 begin
@@ -94,7 +94,7 @@ end;
 (*
 ## Antiban.AddTask
 ```pascal
-procedure TAntiban.AddTask(const interval: Double; const method: TAntibanMethod; const randomness: Double = 0.2);
+procedure TAntiban.AddTask(interval: Double; method: TAntibanMethod; randomness: Double = 0.2);
 ```
 Schedule a antiban task.
 An antiban task can be any procedure but they should be short actions that won't
@@ -113,7 +113,7 @@ Example:
 Antiban.AddTask(15 * ONE_MINUTE, @Antiban.HoverSkills); //Every 15 minutes the script will hover the skills.
 ```
 *)
-procedure TAntiban.AddTask(const interval: Double; const method: TAntibanMethod; const randomness: Double = 0.2);
+procedure TAntiban.AddTask(interval: Double; method: TAntibanMethod; randomness: Double = 0.2);
 var
   task: TAntibanTask;
 begin
@@ -128,7 +128,7 @@ end;
 (*
 ## Antiban.AddBreak
 ```pascal
-procedure TAntiban.AddBreak(const interval, length: Double; const randomness: Double = 0.2; const logoutChance: Double = 0.33);
+procedure TAntiban.AddBreak(interval, length: Double; randomness: Double = 0.2; logoutChance: Double = 0.33);
 ```
 Schedule a break. Breaks can be of short or medium length and should be shorter than any sleep breaks.
 
@@ -144,7 +144,7 @@ Example:
 Antiban.AddBreak(30 * ONE_MINUTE, 5 * ONE_MINUTE); //Every 30 minutes the script will take a 5 minute break, subject to variance from the randomness variable.
 ```
 *)
-procedure TAntiban.AddBreak(const interval, length: Double; const randomness: Double = 0.2; const logoutChance: Double = 0.33);
+procedure TAntiban.AddBreak(interval, length: Double; randomness: Double = 0.2; logoutChance: Double = 0.33);
 var
   task: TBreakTask;
 begin
@@ -160,7 +160,7 @@ end;
 (*
 ## Antiban.AddSleep
 ```pascal
-procedure TAntiban.AddSleep(const time: String; const length: Double; const randomness: Double = 0.10; const logoutChance: Double = 0.5);
+procedure TAntiban.AddSleep(time: String; length: Double; randomness: Double = 0.10; logoutChance: Double = 0.5);
 ```
 Schedule a sleep break. A sleep break is a large break, it can be any length but
 it's usually the several hours and also the largest one/ones.
@@ -183,7 +183,7 @@ Example:
 Antiban.AddSleep('01:30:45', 8 * ONE_HOUR, 0.1, 0.8); //At 01:30:45 on our computer time the script will take a break for 8 hours, subject to variance from the randomness variable.
 ```
 *)
-procedure TAntiban.AddSleep(const time: String; const length: Double; const randomness: Double = 0.10; const logoutChance: Double = 0.5);
+procedure TAntiban.AddSleep(time: String; length: Double; randomness: Double = 0.10; logoutChance: Double = 0.5);
 var
   task: TSleepTask;
 begin
@@ -451,7 +451,7 @@ while True do        //Infinite loop
   Antiban.DoAntiban(); //Antiban.HoverSkills will be called every time 15 minutes passed when this is called.
 ```
 *)
-function TAntiban.DoAntiban(const checkTasks, checkBreaks, checkSleeps: Boolean = True): Boolean;
+function TAntiban.DoAntiban(checkTasks, checkBreaks, checkSleeps: Boolean = True): Boolean;
 begin
   if Self.DoingAntiban then Exit;
   Self.DoingAntiban := True;
@@ -469,11 +469,11 @@ end;
 (*
 ## Antiban.TimeUntilBreak
 ```pascal
-function TAntiban.TimeUntilBreak(const task: TBreakTask): String;
+function TAntiban.TimeUntilBreak(task: TBreakTask): String;
 ```
 Check how much time is left until the specified break `task` should be taken.
 *)
-function TAntiban.TimeUntilBreak(const task: TBreakTask): String;
+function TAntiban.TimeUntilBreak(task: TBreakTask): String;
 begin
   Result := FormatMilliseconds(Max(0, Round(task.Next - GetTimeRunning())), True);
 end;
@@ -481,11 +481,11 @@ end;
 (*
 ## Antiban.TimeUntilSleep
 ```pascal
-function TAntiban.TimeUntilSleep(const task: TSleepTask): String;
+function TAntiban.TimeUntilSleep(task: TSleepTask): String;
 ```
 Check how much time is left until the specified sleep break `task` should be taken.
 *)
-function TAntiban.TimeUntilSleep(const task: TSleepTask): String;
+function TAntiban.TimeUntilSleep(task: TSleepTask): String;
 begin
   Result := FormatMilliseconds(Max(0, Round(task.Next - GetTimeRunning())), True);
 end;
@@ -493,7 +493,7 @@ end;
 (*
 ## Antiban.SimulateBreaks
 ```pascal
-procedure TAntiban.SimulateBreaks(const bottingDays: UInt64 = 1000);
+procedure TAntiban.SimulateBreaks(bottingDays: UInt64 = 1000);
 ```
 Performs a simulation of `bottingDays` amount of days with the currently setup
 breaks and prints the results.
@@ -504,7 +504,7 @@ Antiban.AddBreak(30 * ONE_MINUTE, 5 * ONE_MINUTE);
 Antiban.SimulateBreaks();
 ```
 *)
-procedure TAntiban.SimulateBreaks(const bottingDays: UInt64 = 1000);
+procedure TAntiban.SimulateBreaks(bottingDays: UInt64 = 1000);
 var
   active, inactive, len, prev: Double;
   i: Int32;

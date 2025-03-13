@@ -67,11 +67,11 @@ end;
 (*
 ## TRSInterfaceArea.WaitOpen
 ```pascal
-function TRSInterfaceArea.WaitOpen(const interfaceType: ERSInterfaceType = ERSInterfaceType.ANY; const time: Integer = 600; interval: Integer = -1): Boolean;
+function TRSInterfaceArea.WaitOpen(interfaceType: ERSInterfaceType = ERSInterfaceType.ANY; time: Integer = 600; interval: Integer = -1): Boolean;
 ```
 Returns True/False if any interface is found open within `time` milliseconds.
 *)
-function TRSInterfaceArea.WaitOpen(const interfaceType: ERSInterfaceType = ERSInterfaceType.ANY; const time: Integer = 600; interval: Integer = -1): Boolean;
+function TRSInterfaceArea.WaitOpen(interfaceType: ERSInterfaceType = ERSInterfaceType.ANY; time: Integer = 600; interval: Integer = -1): Boolean;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsOpen(interfaceType), interval, time);

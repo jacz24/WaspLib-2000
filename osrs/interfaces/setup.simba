@@ -49,7 +49,7 @@ end;
 {$H+}
 
 
-procedure SaveAnonymousScreenshot(const filename: String);
+procedure SaveAnonymousScreenshot(filename: String);
 var
   img: TImage;
 begin

@@ -138,7 +138,7 @@ type
     DataDir, CacheDir: String;
   end;
 
-function TDatabase._ValueWeight(const str: String): Integer;
+function TDatabase._ValueWeight(str: String): Integer;
 var
   i: Integer;
 begin

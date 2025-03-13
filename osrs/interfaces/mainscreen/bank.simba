@@ -322,7 +322,7 @@ end;
 (*
 ## Bank.WaitOpen
 ```pascal
-function TRSBank.WaitOpen(const time: Integer; interval: Integer = -1): Boolean;
+function TRSBank.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
 ```
 Returns true if the bank is open within `time` milliseconds.
 
@@ -331,7 +331,7 @@ Returns true if the bank is open within `time` milliseconds.
 WriteLn Bank.WaitOpen();
 ```
 *)
-function TRSBank.WaitOpen(const time: Integer; interval: Integer = -1): Boolean;
+function TRSBank.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsOpen(), interval, time);
@@ -479,7 +479,7 @@ end;
 (*
 ## Bank.Integer2Quantity
 ```pascal
-function TRSBank.Integer2Quantity(const quantity: Integer): ERSBankQuantity;
+function TRSBank.Integer2Quantity(quantity: Integer): ERSBankQuantity;
 ```
 Internal helper function to convert a integer quantity into a ERSBankQuantity.
 
@@ -489,7 +489,7 @@ WriteLn Bank.Integer2Quantity(5);
 WriteLn Bank.Integer2Quantity(7);
 ```
 *)
-function TRSBank.Integer2Quantity(const quantity: Integer): ERSBankQuantity;
+function TRSBank.Integer2Quantity(quantity: Integer): ERSBankQuantity;
 begin
   case quantity of
     1:     Result := ERSBankQuantity.ONE;
@@ -540,7 +540,7 @@ end;
 (*
 ## Bank.WaitSearchOpen
 ```pascal
-function TRSBank.WaitSearchOpen(const time: Integer = 600): Boolean;
+function TRSBank.WaitSearchOpen(time: Integer = 600): Boolean;
 ```
 Waits `time` milliseconds for the bank search to be open.
 
@@ -549,7 +549,7 @@ Example:
 WriteLn Bank.WaitSearchOpen();
 ```
 *)
-function TRSBank.WaitSearchOpen(const time: Integer = 600; const interval: Integer = -1): Boolean;
+function TRSBank.WaitSearchOpen(time: Integer = 600; interval: Integer = -1): Boolean;
 begin
   Result := Chat.WaitQuery('Show items', True, time, interval);
 end;
@@ -557,7 +557,7 @@ end;
 (*
 ## Bank.OpenSearch
 ```pascal
-function TRSBank.OpenSearch(const waitTime: Integer = 0): Boolean;
+function TRSBank.OpenSearch(waitTime: Integer = 0): Boolean;
 ```
 Attempts to open the bank search and Waits `waitTime` milliseconds for it to be open.
 
@@ -566,7 +566,7 @@ Example:
 WriteLn Bank.OpenSearch();
 ```
 *)
-function TRSBank.OpenSearch(const waitTime: Integer = 0): Boolean;
+function TRSBank.OpenSearch(waitTime: Integer = 0): Boolean;
 begin
   Self.DynamicButtons[ERSBankDynamicButtons.SEARCH].Click();
   if waitTime <= 0 then Result := Self.IsSearchOpen()
@@ -746,7 +746,7 @@ end;
 (*
 ## Bank._FindTabText
 ```pascal
-function TRSBank._FindTabText(const tpa: TPointArray; out bounds: TBox): Boolean;
+function TRSBank._FindTabText(tpa: TPointArray; out bounds: TBox): Boolean;
 ```
 Internal helper function help process the tabs text when you search.
 
@@ -757,7 +757,7 @@ if Bank.Search('logs') then
     ShowOnClient(bounds);
 ```
 *)
-function TRSBank._FindTabText(const tpa: TPointArray; out bounds: TBox): Boolean;
+function TRSBank._FindTabText(tpa: TPointArray; out bounds: TBox): Boolean;
 var
   atpa: T2DPointArray;
 begin
@@ -779,7 +779,7 @@ end;
 (*
 ## Bank.FindTab
 ```pascal
-function TRSBank.FindTab(const item: TRSItem; const openTab: Boolean = True): Integer;
+function TRSBank.FindTab(item: TRSItem; openTab: Boolean = True): Integer;
 ```
 Find the bank tab of `item`.
 
@@ -792,7 +792,7 @@ Example:
 WriteLn Bank.FindTab('Molten glass');
 ```
 *)
-function TRSBank.FindTab(const item: TRSItem): Integer;
+function TRSBank.FindTab(item: TRSItem): Integer;
 var
   bounds: TBox;
 begin
@@ -811,7 +811,7 @@ end;
 (*
 ## Bank.FindScroll
 ```pascal
-function TRSBank.FindScroll(const item: TRSItem): Integer;
+function TRSBank.FindScroll(item: TRSItem): Integer;
 ```
 Find the scroll position of the bank where `item` is visible..
 
@@ -824,7 +824,7 @@ Example:
 WriteLn Bank.FindScroll('Molten glass');
 ```
 *)
-function TRSBank.FindScroll(const item: TRSItem): Integer;
+function TRSBank.FindScroll(item: TRSItem): Integer;
 var
   next: Integer;
   down: Boolean;
@@ -862,7 +862,7 @@ end;
 (*
 ## Bank._InteractionHelper
 ```pascal
-function TRSBank._InteractionHelper(const mode: ERSBankInteraction; const slot: TBox; const amount: Integer; const useQuantityButton: Boolean): Boolean;
+function TRSBank._InteractionHelper(mode: ERSBankInteraction; slot: TBox; amount: Integer; useQuantityButton: Boolean): Boolean;
 ```
 Internal helper method to handle both withdrawing and depositing.
 
@@ -873,7 +873,7 @@ if Bank.Items.Find('Abyssal whip', slot) the
 ```
 *)
 {%codetools off}
-function TRSBank._InteractionHelper(const mode: ERSBankInteraction; const slot: TBox; const amount: Integer; const useQuantityButton: Boolean): Boolean;
+function TRSBank._InteractionHelper(mode: ERSBankInteraction; slot: TBox; amount: Integer; useQuantityButton: Boolean): Boolean;
 var
   quantity: ERSBankQuantity;
   amountStr, modeStr: String;
@@ -917,7 +917,7 @@ end;
 (*
 ## Bank.Find
 ```pascal
-function TRSBank.Find(const item: TRSItem; out data: TBankPosition; attempts: Int32 = 3): Boolean;
+function TRSBank.Find(item: TRSItem; out data: TBankPosition; attempts: Int32 = 3): Boolean;
 ```
 Attempts to find `item` in the back by whatever means necessary.
 This will search and scroll the bank until the item is found.
@@ -925,7 +925,7 @@ By default attempts up to 3 times.
 
 Item position data is returned via `data`.
 *)
-function TRSBank.Find(const item: TRSItem; out data: TBankPosition; attempts: Int32 = 3): Boolean;
+function TRSBank.Find(item: TRSItem; out data: TBankPosition; attempts: Int32 = 3): Boolean;
 begin
   if attempts = 0 then Exit(False);
 
@@ -970,8 +970,8 @@ end;
 (*
 ## Bank.Withdraw
 ```pascal
-function TRSBank.Withdraw(const item: TRSBankItem; const useQuantityButton: Boolean = True; const useCache: Boolean = True): Boolean;
-function TRSBank.Withdraw(const item: TRSItem; const useQuantityButton: Boolean = True; const useCache: Boolean = True): Boolean; overload;
+function TRSBank.Withdraw(item: TRSBankItem; useQuantityButton: Boolean = True; useCache: Boolean = True): Boolean;
+function TRSBank.Withdraw(item: TRSItem; useQuantityButton: Boolean = True; useCache: Boolean = True): Boolean; overload;
 ```
 Attempts to withdraw `item` from the bank.
 
@@ -980,7 +980,7 @@ Example:
 WriteLn Bank.Withdraw(item);
 ```
 *)
-function TRSBank.Withdraw(const item: TRSBankItem; const useQuantityButton: Boolean = True; const useCache: Boolean = True): Boolean;
+function TRSBank.Withdraw(item: TRSBankItem; useQuantityButton: Boolean = True; useCache: Boolean = True): Boolean;
 var
   data: TBankPosition;
 begin
@@ -995,7 +995,7 @@ begin
   Result := Self._InteractionHelper(ERSBankInteraction.WITHDRAW, data.Slot, item.Quantity, useQuantityButton);
 end;
 
-function TRSBank.Withdraw(const item: TRSItem; const useQuantityButton: Boolean = True; const useCache: Boolean = True): Boolean; overload;
+function TRSBank.Withdraw(item: TRSItem; useQuantityButton: Boolean = True; useCache: Boolean = True): Boolean; overload;
 begin
   Result := Self.Withdraw(item.ToBankItem(), useQuantityButton, useCache);
 end;
@@ -1003,8 +1003,8 @@ end;
 (*
 ## Bank.Deposit
 ```pascal
-function TRSBank.Deposit(const item: TRSBankItem; const useQuantityButton: Boolean = True): Boolean;
-function TRSBank.Deposit(const item: TRSItem; const useQuantityButton: Boolean = True): Boolean; overload;
+function TRSBank.Deposit(item: TRSBankItem; useQuantityButton: Boolean = True): Boolean;
+function TRSBank.Deposit(item: TRSItem; useQuantityButton: Boolean = True): Boolean; overload;
 ```
 Attempts to deposit `item` into the bank.
 
@@ -1013,7 +1013,7 @@ Example:
 WriteLn Bank.Deposit(item);
 ```
 *)
-function TRSBank.Deposit(const item: TRSBankItem; const useQuantityButton: Boolean = True): Boolean;
+function TRSBank.Deposit(item: TRSBankItem; useQuantityButton: Boolean = True): Boolean;
 var
   slot: TBox;
 begin
@@ -1021,7 +1021,7 @@ begin
     Result := Self._InteractionHelper(ERSBankInteraction.DEPOSIT, slot, item.Quantity, useQuantityButton);
 end;
 
-function TRSBank.Deposit(const item: TRSItem; const useQuantityButton: Boolean = True): Boolean; overload;
+function TRSBank.Deposit(item: TRSItem; useQuantityButton: Boolean = True): Boolean; overload;
 var
   slot: TBox;
 begin

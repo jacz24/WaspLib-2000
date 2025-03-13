@@ -63,15 +63,15 @@ end;
 procedure TMouse._Debug();
 var
   p: TPoint;
-  i,x,y,wid,hei: Int32;
-  clr, tol,heat: Int32;
+  i,x,y,wid,hei: Integer;
+  clr, tol,heat: Integer;
   hue,sat: Double;
   m: TSingleMatrix;
   mats: array of TSingleMatrix;
   tmp,ClientBitmap, DebugBitmap: TImage;
   TPA: TPointArray;
   function AlphaColor(A,B: TColor; Weight: Double): TColor;
-  var R1,R2,G1,G2,B1,B2: Int32;
+  var R1,R2,G1,G2,B1,B2: Integer;
   begin
     ColorToRGB(A, R1,G1,B1);
     ColorToRGB(A, R1,G1,B1);
@@ -118,9 +118,9 @@ begin
   DebugBitmap.Free();
 end;
 
-procedure TMouse._DebugCallback(Sender: PMouse; X, Y: Int32); static;
+procedure TMouse._DebugCallback(Sender: PMouse; X, Y: Integer); static;
 var
-  w,h: Int32;
+  w,h: Integer;
 begin
   GetClientDimensions(W,H);
   if Sender^.DebugMovement = nil then
@@ -263,7 +263,7 @@ This could automatically be called depending on **Mouse.MissChance**.
 *)
 function TMouse.Miss(destination: TPoint): TPoint;
 var
-  range: Int32;
+  range: Integer;
   miss: Double;
   Temp: Double := Self.MissChance;
 begin
@@ -305,7 +305,7 @@ end;
 procedure TMouse.Move(destination: TPoint);
 var
   start: TPoint;
-  w, h: Int32;
+  w, h: Integer;
 begin
   if Self.CanIdle and (Self.IdleInterval > 0) then
   begin
@@ -430,9 +430,9 @@ begin
   Target.MouseClick(button);
 end;
 
-procedure TMouse.Click(b: TBox; button: EMouseButton; forcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
+procedure TMouse.Click(box: TBox; button: EMouseButton; forcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
 begin
-  Self.Move(b, forcedMove, distribution);
+  Self.Move(box, forcedMove, distribution);
   Target.MouseClick(button);
 end;
 
@@ -441,6 +441,49 @@ begin
   Self.Move(quad, forcedMove, distribution);
   Target.MouseClick(button);
 end;
+
+
+(*
+## Mouse.Scroll()
+```pascal
+procedure TMouse.Scroll(amount: Integer; down: Boolean);
+procedure TMouse.Scroll(pt: TPoint; amount: Integer; down: Boolean);
+procedure TMouse.Scroll(box: TBox; amount: Integer; down: Boolean);
+```
+Scrolls the mouse X amount of times.
+If a `TPoint P` or a `TBox b` is passed in, the mouse will be moved there to scroll.
+Otherwise, the current mouse position is used.
+
+Example:
+```pascal
+var P: TPoint;
+begin
+  P.X := 50;
+  P.Y := 50;
+  Mouse.Scroll(P, 5, True);  // Scroll 5 times down at 50,50
+  Mouse.Scroll(P, 5, False); // Scroll 5 times up at 50,50
+end;
+```
+*)
+procedure TMouse.Scroll(amount: Integer; down: Boolean);
+begin
+  if not down then
+    amount := amount * -1;
+  Target.MouseScroll(amount);
+end;
+
+procedure TMouse.Scroll(pt: TPoint; amount: Integer; down: Boolean); overload;
+begin
+  Self.Move(pt);
+  Self.Scroll(amount, down);
+end;
+
+procedure TMouse.Scroll(box: TBox; amount: Integer; down: Boolean; forceMove: Boolean = False); overload;
+begin
+  Self.Move(box, forceMove);
+  Self.Scroll(amount, down);
+end;
+
 
 var
   Mouse: TMouse;

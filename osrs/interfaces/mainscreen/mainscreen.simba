@@ -9,25 +9,31 @@ Methods to interact with the mainscreen.
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
+(*
+(TRSMainScreen)=
+## type TRSMainScreen
+Main record to handle the mainscreen and methods relating to it.
+*)
   TRSMainScreen = record
     Bounds: TBox;
     Center: TPoint;
     TopLeft, TopRight, BottomRight, BottomLeft: TPoint;
 
     UpTextImageBuffer: TImage;
-    UptextBounds: TBox;
+    UptextBounds, ServerMsgBounds: TBox;
     UptextOCR: TPixelOCR;
 
     HighestPitch: Boolean;
   end;
 
-procedure TRSMainScreen.Setup();
-begin
-  Self.UptextOCR.Tolerance := 25;
-  Self.UptextOCR.ShadowTolerance := 65;
-  Self.UptextOCR.Whitelist := ['a'..'z', 'A'..'Z', '0'..'9', '-', '>', '(', ')', '/'];
-end;
-
+(*
+## MainScreen.SetupInterface
+```pascal
+procedure TRSMainScreen.SetupInterface();
+```
+Internal setup method responsible for setting up the interface coordinates.
+This is called automatically for you on the {ref}`MainScreen` variable.
+*)
 procedure TRSMainScreen.SetupInterface();
 begin
   case RSClient.Mode of
@@ -47,9 +53,36 @@ begin
   Self.UptextBounds.Y1 := Self.Bounds.Y1 + 3;
   Self.UptextBounds.X2 := Self.Bounds.X1 + 500;
   Self.UptextBounds.Y2 := Self.Bounds.Y1 + 21;
+
+  Self.ServerMsgBounds.X1 := Self.Bounds.X1 + 2;
+  Self.ServerMsgBounds.Y1 := Self.Bounds.Y1 + 2;
+  Self.ServerMsgBounds.X2 := Self.ServerMsgBounds.X1 + 129;
+  Self.ServerMsgBounds.Y2 := Self.ServerMsgBounds.Y1 + 20;
 end;
 
+(*
+(uptext)=
+## UpText
+"UpText" refers to the text that shows up on the top left corner of the
+mainscreen describing what action you will perform if you click.
 
+The game uptext is one of the few texts that has a lot of randomization to
+combat bots and therefore you shouldn't rely on being able to read it 100%
+accurately because many times you won't.
+*)
+
+(*
+## MainScreen.GetUpText
+```pascal
+function TRSMainScreen.GetUpText(): String;
+```
+Returns the {ref}`uptext` on the mainscreen.
+
+Example:
+```pascal
+WriteLn MainScreen.GetUpText();
+```
+*)
 function TRSMainScreen.GetUpText(): String;
 var
   img: TImage;
@@ -62,8 +95,21 @@ begin
   {$ENDIF}
 end;
 
+(*
+## MainScreen.IsUpText
+```pascal
+function TRSMainScreen.IsUpText(text: String; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean;
+```
+Compares `text` with the {ref}`uptext` on the mainscreen.
+Returns True if the match above the threshold `similarity`.
 
-function TRSMainScreen.IsUpText(text: String; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean; overload;
+Example:
+```pascal
+if MainScreen.IsUpText('Walk here') then
+  Mouse.Click(EMouseButton.LEFT);
+```
+*)
+function TRSMainScreen.IsUpText(text: String; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean;
 var
   upText: String;
 begin
@@ -79,7 +125,22 @@ begin
   Result := text.Similarity(upText) >= similarity;
 end;
 
-function TRSMainScreen.IsUpText(strings: TStringArray; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean; overload;
+(*
+## MainScreen.AnyIsUpText
+```pascal
+function TRSMainScreen.AnyIsUpText(strings: TStringArray; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean;
+```
+Same as {ref}`MainScreen.IsUpText` but compares multiple `strings` for a valid match.
+This is very useful when you are having trouble reading {ref}`uptext` properly as
+you can try something like the following example:
+
+Example:
+```pascal
+if MainScreen.AnyIsUpText(['Wal', 'ere']) then
+  Mouse.Click(EMouseButton.LEFT);
+```
+*)
+function TRSMainScreen.AnyIsUpText(strings: TStringArray; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean;
 var
   upText, str, tmp: String;
 begin
@@ -98,6 +159,82 @@ begin
   end;
 end;
 
+(*
+(server message)=
+## Server Messages
+"Server Messages" refers to the text that shows up on the top left corner of the
+mainscreen inside of a black box.
+These can only be seen when there's a message. An easy way to see this is to
+simply attempt to switch worlds.
+*)
+
+(*
+## MainScreen.GetServerMessage
+```pascal
+function TRSMainScreen.GetServerMessage(): String;
+```
+Returns the {ref}`server message` if it's visible.
+
+Example:
+```pascal
+WriteLn MainScreen.GetServerMessage();
+```
+*)
+function TRSMainScreen.GetServerMessage(): String;
+var
+  black: TPointArray;
+begin
+  black := Target.FindColor($0, 0, Self.ServerMsgBounds);
+  if Length(black) < 500 then Exit;
+  Result := OCR.Recognize(black.Bounds(), RSFonts.PLAIN_12, [$FFFFFF], 0);
+end;
+
+(*
+## MainScreen.IsServerMessage
+```pascal
+function TRSMainScreen.IsServerMessage(text: String; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean;
+```
+Compares `text` with the {ref}`server message` visible if any.
+Returns True if the match above the threshold `similarity`.
+
+Example:
+```pascal
+if MainScreen.IsServerMessage('Loading...') then
+  Sleep(2000, 4000);
+```
+*)
+function TRSMainScreen.IsServerMessage(text: String; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean; overload;
+var
+  msg: String;
+begin
+  if caseSensitive then
+    msg := Self.GetServerMessage()
+  else
+  begin
+    text := LowerCase(text);
+    msg := LowerCase(Self.GetServerMessage());
+  end;
+
+  if msg = '' then Exit;
+
+  msg := Copy(msg, 1, Length(text));
+  Result := text.Similarity(msg) >= similarity;
+end;
+
+
+(*
+## MainScreen.SetHighestPitch
+```pascal
+procedure TRSMainScreen.SetHighestPitch();
+```
+Attempts to set the camera pitch to the highest possible.
+
+Example:
+```pascal
+if not MainScreen.HighestPitch then
+  MainScreen.SetHighestPitch();
+```
+*)
 procedure TRSMainScreen.SetHighestPitch();
 var
   i, area: Integer;
@@ -114,33 +251,59 @@ begin
 end;
 
 
-function TRSMainScreen.IsVisible(p: TPoint): Boolean;
+(*
+## MainScreen.IsVisible
+```pascal
+function TRSMainScreen.IsVisible(pt: TPoint): Boolean;
+```
+Returns `True` if a point `pt` is visible on the mainscreen.
+This also checks for open interfaces to check if the point is not behind them.
+
+Example:
+```pascal
+WriteLn MainScreen.IsVisible([100,100]);
+```
+*)
+function TRSMainScreen.IsVisible(pt: TPoint): Boolean;
 begin
-  Result := Self.Bounds.Expand(-10).Contains(p);
+  Result := Self.Bounds.Expand(-10).Contains(pt);
 
   if not Result or (RSClient.Mode = ERSMode.FIXED) then
     Exit;
 
-  if Chat.Bounds.Expand(5).Contains(p) and Chat.IsOpen() then
+  if Chat.Bounds.Expand(5).Contains(pt) and Chat.IsOpen() then
     Exit(False);
-  if Chat.Tabs.Bounds.Expand(5).Contains(p) then
+  if Chat.Tabs.Bounds.Expand(5).Contains(pt) then
     Exit(False);
-  if Minimap.Bounds.Expand(55).Contains(p) then
+  if Minimap.Bounds.Expand(55).Contains(pt) then
     Exit(False);
 
-  if GameTab.Bounds.Expand(5).Contains(p) then
+  if GameTab.Bounds.Expand(5).Contains(pt) then
     Exit(False);
-  if GameTabs.Bounds.Expand(5).Contains(p) then
+  if GameTabs.Bounds.Expand(5).Contains(pt) then
     Exit(False);
 end;
 
 {%codetools off}
 function TRSMainScreen._RedClicked(area: TBox): Boolean;
 begin
-  Result := Target.HasColor(255, 0, 1, area) or Target.HasColor(262600, 0, 1, area);
+  Result := Target.HasColor($0000FF, 0, 1, area) or Target.HasColor($0401C8, 0, 1, area);
 end;
 {%codetools on}
 
+(*
+## MainScreen.RedClicked
+```pascal
+function TRSMainScreen.RedClicked(): Boolean;
+```
+Returns `True` if a the red cross from clicking an entity is visible on the
+mainscreen.
+
+Example:
+```pascal
+WriteLn MainScreen.RedClicked();
+```
+*)
 function TRSMainScreen.RedClicked(): Boolean;
 var
   area: TBox;
@@ -149,6 +312,19 @@ begin
   Result := Self._RedClicked(area);
 end;
 
+(*
+## MainScreen.WaiRedClick
+```pascal
+function TRSMainScreen.WaiRedClick(time: Integer = 250): Boolean;
+```
+Returns `True` if a the red cross from clicking an entity is visible on the
+mainscreen within `time` milliseconds.
+
+Example:
+```pascal
+WriteLn MainScreen.WaiRedClick();
+```
+*)
 function TRSMainScreen.WaiRedClick(time: Integer = 250): Boolean;
 var
   area: TBox;
@@ -165,6 +341,19 @@ begin
 end;
 {%codetools on}
 
+(*
+## MainScreen.YellowClicked
+```pascal
+function TRSMainScreen.YellowClicked(): Boolean;
+```
+Returns `True` if a the yellow cross from click to "walk here" is visible on the
+mainscreen.
+
+Example:
+```pascal
+WriteLn MainScreen.YellowClicked();
+```
+*)
 function TRSMainScreen.YellowClicked(): Boolean;
 var
   area: TBox;
@@ -173,6 +362,19 @@ begin
   Result := Self._YellowClicked(area);
 end;
 
+(*
+## MainScreen.WaiYellowClick
+```pascal
+function TRSMainScreen.WaiYellowClick(time: Integer = 250): Boolean;
+```
+Returns `True` if a the yellow cross from clicking to "walk here" is visible on the
+mainscreen within `time` milliseconds.
+
+Example:
+```pascal
+WriteLn MainScreen.WaiYellowClick();
+```
+*)
 function TRSMainScreen.WaiYellowClick(time: Integer = 250): Boolean;
 var
   area: TBox;
@@ -185,7 +387,9 @@ var
   MainScreen: TRSMainScreen;
 
 begin
-  MainScreen.Setup();
+  MainScreen.UptextOCR.Tolerance := 25;
+  MainScreen.UptextOCR.ShadowTolerance := 65;
+  MainScreen.UptextOCR.Whitelist := ['a'..'z', 'A'..'Z', '0'..'9', '-', '>', '(', ')', '/'];
 end;
 
 

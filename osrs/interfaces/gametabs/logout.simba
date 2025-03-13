@@ -8,13 +8,35 @@ Methods to interact with the logout tab.
 {$ENDIF}
 
 type
+(*
+## Logout Enums
+```pascal
+ERSRating = (ONE, TWO, THREE, FOUR, FIVE);
+ERSLogoutButton = (WORLD_SWITCHER, CLICK_HERE);
+```
+Enums representing the buttons available in the logout gametab.
+*)
   ERSRating = (ONE, TWO, THREE, FOUR, FIVE);
   ERSLogoutButton = (WORLD_SWITCHER, CLICK_HERE);
+
+(*
+(TRSLogout)=
+## type TRSLogout
+Main record that holds and the methods to interact with the logout gametab.
+*)
   TRSLogout = record
     Buttons: array [ERSLoginButton] of TRSButton;
     Ratings: array [ERSRating] of TRSButton;
   end;
 
+(*
+## Logout.SetupInterface
+```pascal
+procedure TRSLogout.SetupInterface();
+```
+Internal method used to setup {ref}`TRSLogout` coordinates.
+This is called automatically for you on the {ref}`Logout` variable.
+*)
 procedure TRSLogout.SetupInterface();
 var
   btns: TBoxArray;
@@ -94,7 +116,7 @@ end;
 (*
 ## Logout.Rate
 ```pascal
-function TRSLogout.Rate(const star: ERSRating): Boolean;
+function TRSLogout.Rate(star: ERSRating): Boolean;
 ```
 Click a star button to rate the game.
 
@@ -103,7 +125,7 @@ Example:
 WriteLn Logout.Rate(ERSRating.FOUR);
 ```
 *)
-function TRSLogout.Rate(const star: ERSRating): Boolean;
+function TRSLogout.Rate(star: ERSRating): Boolean;
 begin
    if Self.Ratings[star].Enabled() and
       ((star = ERSRating.FIVE) or not Self.Ratings[star+1].Enabled()) then
@@ -116,7 +138,7 @@ end;
 (*
 ## Logout.Logout
 ```pascal
-function TRSLogout.Logout(const attempts: UInt32 = 5; const time: UInt32 = 20000): Boolean;
+function TRSLogout.Logout(attempts: UInt32 = 5; time: UInt32 = 20000): Boolean;
 ```
 Attempts to logout of the game. Returns true if we succesfully logout of the game.
 If the {ref}`WorldSwitcher` is open, we will use {ref}`WorldSwitcher.Logout` instead.
@@ -126,7 +148,7 @@ Example:
 WriteLn Logout.Logout();
 ```
 *)
-function TRSLogout.Logout(const attempts: UInt32 = 5; const time: UInt32 = 20000): Boolean;
+function TRSLogout.Logout(attempts: UInt32 = 5; time: UInt32 = 20000): Boolean;
 var
   i: Integer;
   interval: UInt32;
@@ -162,3 +184,11 @@ end;
 
 var
   Logout: TRSLogout;
+
+function TRSWorldSwitcher.Open(waitLoad: Boolean = True): Boolean; override;
+begin
+  if not Logout.Open() then Exit;
+  if WorldSwitcher._IsOpen() then Exit(True);
+  Logout.Buttons[ERSLogoutButton.WORLD_SWITCHER].Click();
+  Result := inherited;
+end;

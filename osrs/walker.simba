@@ -151,12 +151,12 @@ end;
 (*
 ## Walker Conversions
 ```pascal
-function TRSWalker.Point2MM(const playerPoint, pt: TPoint; const radians: Double): TPoint;
-function TRSWalker.Point2MMVec(const playerPoint, pt: TPoint; const radians: Double): Vector2;
-function TRSWalker.Points2MM(const playerPoint: TPoint; const tpa: TPointArray; const radians: Double): TPointArray;
-function TRSWalker.GetLocalEx(const tpa: TPointArray; const offset: TPoint = [0,0]): TPointArray;
-function TRSWalker.GetQuadMS(const playerPoint, mapPoint: TPoint; const height: Double = 0; const offset: Vector3 = [0,0,0]; radians: Single = $FFFF): TQuad;
-function TRSWalker.MM2Map(const playerPoint, minimapPoint: TPoint; radians: Single = $FFFF): TPoint;
+function TRSWalker.Point2MM(playerPoint, pt: TPoint; radians: Double): TPoint;
+function TRSWalker.Point2MMVec(playerPoint, pt: TPoint; radians: Double): Vector2;
+function TRSWalker.Points2MM(playerPoint: TPoint; tpa: TPointArray; radians: Double): TPointArray;
+function TRSWalker.GetLocalEx(tpa: TPointArray; offset: TPoint = [0,0]): TPointArray;
+function TRSWalker.GetQuadMS(playerPoint, mapPoint: TPoint; height: Double = 0; offset: Vector3 = [0,0,0]; radians: Single = $FFFF): TQuad;
+function TRSWalker.MM2Map(playerPoint, minimapPoint: TPoint; radians: Single = $FFFF): TPoint;
 ```
 Used to convert coordinates from `TRSWalker` to the minimap or the mainscreen.
 
@@ -167,19 +167,19 @@ me := Walker.Position();
 ShowOnClient(Walker.GetQuadMS(me, me + [4,0])); //should show you the tile to your right.
 ```
 *)
-function TRSWalker.Point2MM(const playerPoint, pt: TPoint; const radians: Double): TPoint;
+function TRSWalker.Point2MM(playerPoint, pt: TPoint; radians: Double): TPoint;
 begin
   Result := pt - playerPoint + Minimap.Center;
   Result := Result.Rotate(radians, Minimap.Center);
 end;
 
-function TRSWalker.Point2MMVec(const playerPoint, pt: TPoint; const radians: Double): Vector2;
+function TRSWalker.Point2MMVec(playerPoint, pt: TPoint; radians: Double): Vector2;
 begin
   with pt - playerPoint + Minimap.Center do
     Result := Vec2(X,Y).Rotate(radians, Minimap.Center);
 end;
 
-function TRSWalker.Points2MM(const playerPoint: TPoint; const tpa: TPointArray; const radians: Double): TPointArray;
+function TRSWalker.Points2MM(playerPoint: TPoint; tpa: TPointArray; radians: Double): TPointArray;
 var
   pt: TPoint;
 begin
@@ -187,7 +187,7 @@ begin
     Result += Self.Point2MM(playerPoint, pt, radians);
 end;
 
-function TRSWalker.GetLocalEx(const tpa: TPointArray; const offset: TPoint = [0,0]): TPointArray;
+function TRSWalker.GetLocalEx(tpa: TPointArray; offset: TPoint = [0,0]): TPointArray;
 var
   pt: TPoint;
 begin
@@ -196,7 +196,7 @@ begin
 end;
 
 
-function TRSWalker.GetQuadMS(const playerPoint, mapPoint: TPoint; const height: Double = 0; const offset: Vector3 = [0,0,0]; radians: Single = $FFFF): TQuad;
+function TRSWalker.GetQuadMS(playerPoint, mapPoint: TPoint; height: Double = 0; offset: Vector3 = [0,0,0]; radians: Single = $FFFF): TQuad;
 var
   vector: Vector2;
 begin
@@ -209,7 +209,7 @@ begin
   Result := Minimap.Vector2MSQuad(Vec3(vector.X, vector.Y, height), radians, [1,1], offset);
 end;
 
-function TRSWalker.MM2Map(const playerPoint, minimapPoint: TPoint; radians: Single = $FFFF): TPoint;
+function TRSWalker.MM2Map(playerPoint, minimapPoint: TPoint; radians: Single = $FFFF): TPoint;
 begin
   Result := playerPoint + minimapPoint - Minimap.Center;
   if (radians = $FFFF) then
@@ -369,7 +369,7 @@ You will probably never need to call this directly.
 
 This is where TRSWalker.OnWaitMoving are called.
 *)
-procedure TRSWalker.WaitMoving(const destination: TPoint; const waitUntilDistance: Integer);
+procedure TRSWalker.WaitMoving(destination: TPoint; waitUntilDistance: Integer);
 var
   timeout, countdown: TCountDown;
   position: record Current, Previous: TPoint; end;
@@ -948,7 +948,7 @@ begin
   Self._DoorHandler.Skipped := False; //I can't explain why but without this like, it always skips the door
 
   //Check Uptext and walk through
-  if Mainscreen.IsUpText(['Open', 'Squeeze']) then
+  if Mainscreen.AnyIsUpText(['Open', 'Squeeze']) then
   begin
     Target.MouseClick(EMouseButton.LEFT);
     Exit;
@@ -1206,10 +1206,10 @@ begin
   with quad.Mean do
     Mouse.Move([(X + middleBottom.X) div 2, (Y + middleBottom.Y) div 2]);
 
-  if Mainscreen.IsUpText(['Open', 'Squeeze']) then
+  if Mainscreen.AnyIsUpText(['Open', 'Squeeze']) then
   begin
     Target.MouseClick(EMouseButton.LEFT);
-    if not SleepUntil(not Mainscreen.IsUpText(['Open', 'Close', 'Squeeze']), 100, 2000) then
+    if not SleepUntil(not Mainscreen.AnyIsUpText(['Open', 'Close', 'Squeeze']), 100, 2000) then
       Exit;
   end;
 

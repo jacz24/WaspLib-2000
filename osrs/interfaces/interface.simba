@@ -16,21 +16,6 @@ type
 
   PRSInterface = ^TRSInterface;
 
-procedure TRSInterface.Setup(const bounds: TBox);
-begin
-  Self.Bounds := bounds;
-  Self.Width  := bounds.Width;
-  Self.Height := bounds.Height;
-  Self.Center := bounds.Center;
-
-  Self.TopLeft     := bounds.TopLeft;
-  Self.TopRight    := bounds.TopRight;
-  Self.BottomRight := bounds.BottomRight;
-  Self.BottomLeft  := bounds.BottomLeft;
-
-  Self.Quad := TQuad.CreateFromBox(bounds);
-end;
-
 procedure TRSInterface.Draw(img: TImage);
 begin
   img.DrawColor := $00FFFF;
@@ -43,7 +28,7 @@ type
     Bounds, CloseButton: TBox;
   end;
 
-procedure TRSInterfaceTitle.Setup(const bounds: TBox);
+procedure TRSInterfaceTitle.Setup(bounds: TBox);
 begin
   Self.Bounds.X1 := bounds.X1 + 50;
   Self.Bounds.Y1 := bounds.Y1 + 10;
@@ -62,7 +47,7 @@ begin
   Result := Target.HasColor($010000, 0, 80, Self.CloseButton);
 end;
 
-function TRSInterfaceTitle.WaitOpen(const time: Integer = 600; interval: Integer = -1): Boolean;
+function TRSInterfaceTitle.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsOpen(), interval, time);
@@ -74,7 +59,7 @@ begin
   Result := OCR.Recognize(Self.Bounds, RSFonts.BOLD, [RSColors.TEXT_ORANGE, $0], 0);
 end;
 
-function TRSInterfaceTitle.IsTitle(const text: String; const similarity: Single = 0.8): Boolean;
+function TRSInterfaceTitle.IsTitle(text: String; similarity: Single = 0.8): Boolean;
 var
   match: Single;
 begin
@@ -82,14 +67,14 @@ begin
   Result := match >= similarity;
 end;
 
-function TRSInterfaceTitle.WaitTitle(const text: String; const similarity: Single = 0.8; const time: Integer = 600; interval: Integer = -1): Boolean; overload;
+function TRSInterfaceTitle.WaitTitle(text: String; similarity: Single = 0.8; time: Integer = 600; interval: Integer = -1): Boolean; overload;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsTitle(text, similarity), interval, time);
 end;
 
 
-function TRSInterfaceTitle.Close(const escape: Boolean): Boolean;
+function TRSInterfaceTitle.Close(escape: Boolean): Boolean;
 begin
   if not Self.IsOpen() then Exit(True);
 

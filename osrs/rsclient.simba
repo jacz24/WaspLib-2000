@@ -66,7 +66,7 @@ end;
 (*
 ## RSClient.WaitLoggedIn
 ```pascal
-function TRSClient.WaitLoggedIn(const time: Integer = 2000; interval: Integer = -1): Boolean;
+function TRSClient.WaitLoggedIn(time: Integer = 2000; interval: Integer = -1): Boolean;
 ```
 Waits `time` milliseconds for the players to be logged in.
 
@@ -75,7 +75,7 @@ Example:
 WriteLn RSClient.WaitLoggedIn();
 ```
 *)
-function TRSClient.WaitLoggedIn(const time: Integer = 2000; interval: Integer = -1): Boolean;
+function TRSClient.WaitLoggedIn(time: Integer = 2000; interval: Integer = -1): Boolean;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsLoggedIn(), interval, time);

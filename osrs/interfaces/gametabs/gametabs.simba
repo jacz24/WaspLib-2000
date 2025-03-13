@@ -22,13 +22,7 @@ ERSGameTab = enum(NONE, COMBAT, STATS, ACHIEVEMENTS, INVENTORY, EQUIPMENT, PRAYE
 (*
 (TRSGameTabs)=
 ## type TRSGameTabs
-```pascal
-TRSGameTabs = record
-  Bounds: TBox;
-  Tabs: TBoxArray; //Hidden, you are meant to use the Get() method.
-  const ActiveColor: TColorTolerance = [$14194A, 1.235, EColorSpace.HSL, [1.631, 1.084, 0.286]];
-end;
-```
+Main record responsible for handling the gametabs.
 *)
   TRSGameTabs = record
     Bounds: TBox;
@@ -115,7 +109,7 @@ end;
 (*
 ## GameTabs.Get
 ```pascal
-function TRSGameTabs.Get(const tab: ERSGameTab): TBox;
+function TRSGameTabs.Get(tab: ERSGameTab): TBox;
 ```
 Get a GameTab button bounds.
 
@@ -124,7 +118,7 @@ Example:
 ShowOnClient(GameTabs.Get(ERSGameTab.INVENTORY));
 ```
 *)
-function TRSGameTabs.Get(const tab: ERSGameTab): TBox;
+function TRSGameTabs.Get(tab: ERSGameTab): TBox;
 begin
   Result := Self.Tabs[tab-1];
 end;
@@ -157,7 +151,7 @@ end;
 (*
 ## GameTabs.IsOpen
 ```pascal
-function TRSGameTabs.IsOpen(const tab: ERSGameTab): Boolean;
+function TRSGameTabs.IsOpen(tab: ERSGameTab): Boolean;
 ```
 Returns true/false if the specified `tab` is currently open.
 
@@ -166,7 +160,7 @@ Example:
 WriteLn GameTabs.IsOpen(ERSGameTab.INVENTORY);
 ```
 *)
-function TRSGameTabs.IsOpen(const tab: ERSGameTab): Boolean;
+function TRSGameTabs.IsOpen(tab: ERSGameTab): Boolean;
 begin
   Result := Self.GetCurrent() = tab;
 end;
@@ -174,7 +168,7 @@ end;
 (*
 ## GameTabs.WaitOpen
 ```pascal
-function TRSGameTabs.WaitOpen(const tab: ERSGameTab; const time: Integer = 600; interval: Integer = -1): Boolean;
+function TRSGameTabs.WaitOpen(tab: ERSGameTab; time: Integer = 600; interval: Integer = -1): Boolean;
 ```
 Returns true/false if the specified `tab` opens within the specified `time`.
 
@@ -184,7 +178,7 @@ Mouse.Click(GameTabs.Get(ERSGameTab.INVENTORY), EMouseButton.LEFT);
 WriteLn GameTabs.WaitOpen(ERSGameTab.INVENTORY);
 ```
 *)
-function TRSGameTabs.WaitOpen(const tab: ERSGameTab; const time: Integer = 600; interval: Integer = -1): Boolean;
+function TRSGameTabs.WaitOpen(tab: ERSGameTab; time: Integer = 600; interval: Integer = -1): Boolean;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsOpen(tab), interval, time);
@@ -193,7 +187,7 @@ end;
 (*
 ## GameTabs.Open
 ```pascal
-function TRSGameTabs.Open(const tab: ERSGameTab): Boolean;
+function TRSGameTabs.Open(tab: ERSGameTab): Boolean;
 ```
 Attempts to open the specified `tab` gametab.
 
@@ -202,7 +196,7 @@ Example:
 WriteLn GameTabs.Open(ERSGameTab.INVENTORY);
 ```
 *)
-function TRSGameTabs.Open(const tab: ERSGameTab): Boolean;
+function TRSGameTabs.Open(tab: ERSGameTab): Boolean;
 begin
   if Self.IsOpen(tab) then Exit(True);
 

@@ -22,13 +22,13 @@ begin
       Exit(True);
 end;
 
-function TRSButton.WaitEnabled(const time: Integer = 600; interval: Integer = -1): Boolean;
+function TRSButton.WaitEnabled(time: Integer = 600; interval: Integer = -1): Boolean;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.Enabled(), interval, time);
 end;
 
-procedure TRSButton.Click(const button: EMouseButton = EMouseButton.LEFT);
+procedure TRSButton.Click(button: EMouseButton = EMouseButton.LEFT);
 begin
   Mouse.Click(Self.Bounds, button);
 end;
@@ -109,7 +109,7 @@ begin
   Result := (tpa.Mean().X - Self.Bounds.X1) * 100 div Self.Width;
 end;
 
-function TRSSlider.SetLevel(const level: Integer): Boolean;
+function TRSSlider.SetLevel(level: Integer): Boolean;
 var
   current: Integer;
   p: TPoint;
@@ -230,6 +230,33 @@ begin
     //user probably hover them while using RI
     if Result = old then Mouse.Move(area, True);
     old := Result;
+  end;
+end;
+
+
+function TRSScrollBar.Scroll(amount: Integer; down: Boolean): Boolean;
+var
+  i: Integer;
+begin
+  if not Self.CanScroll() then Exit;
+
+  Result := True;
+
+  case down of
+    True:  if Self.GetLevel() = 100 then Exit;
+    False: if Self.GetLevel() = 0   then Exit;
+  end;
+
+  Mouse.Move(Self.GetScrollArea());
+
+  for i := 1 to amount do
+  begin
+    case down of
+      True:  if Self.GetLevel() = 100 then Exit;
+      False: if Self.GetLevel() = 0   then Exit;
+    end;
+
+    Mouse.Scroll(Random(1,3), False);
   end;
 end;
 
