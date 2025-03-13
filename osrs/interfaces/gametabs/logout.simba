@@ -69,6 +69,8 @@ WriteLn Logout.Open();
 function TRSLogout.Open(): Boolean;
 begin
   Result := GameTabs.Open(ERSGameTab.LOGOUT);
+  if Result and WorldSwitcher._IsOpen() then
+    Result := WorldSwitcher.Close();
 end;
 
 
@@ -128,6 +130,7 @@ function TRSLogout.Logout(const attempts: UInt32 = 5; const time: UInt32 = 20000
 var
   i: Integer;
   interval: UInt32;
+  stars: ERSRating;
 begin
   if not Self.Open() then Exit;
   if WorldSwitcher.Logout() then Exit(True);
@@ -141,8 +144,9 @@ begin
     else
       i := RandomLeft(0, 4);
 
-    WriteLn GetDebugLn('Logout', 'Rating the game with ' + ToStr(ERSRating(i)) + ' stars before logging out.');
-    Self.Ratings[i].Enable();
+    stars := ERSRating(i);
+    WriteLn GetDebugLn('Logout', 'Rating the game with ' + ToStr(stars) + ' stars before logging out.');
+    Self.Rate(stars);
   end;
 
   if Keyboard.LastKey = EKeyCode.RETURN then
@@ -158,4 +162,3 @@ end;
 
 var
   Logout: TRSLogout;
-

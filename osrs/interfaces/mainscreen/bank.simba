@@ -58,6 +58,10 @@ Record responsible to handle the bank interface.
     DynamicButtons: array [ERSBankDynamicButtons] of TRSButton;
     ButtonsOffset: Integer;
 
+    JagexAccountAd: record
+      NotNow, MoreInfo: TBox;
+    end;
+
     Cache: record
       Quantity: Integer;
       Items: TStringMap<TBankPosition>;
@@ -148,6 +152,12 @@ begin
   Self.SlotsArea.X2 := Self.Bounds.X2 - 63;
   Self.SlotsArea.Y2 := Self.Bounds.Y2 - 44;
 
+  with Self.SlotsArea.Center.Offset(0,-1) do
+    Self.JagexAccountAd.NotNow := [X-120, Y+43, X-49, Y+66];
+
+  with Self.SlotsArea.Center.Offset(0,-1) do
+    Self.JagexAccountAd.MoreInfo := [X+39, Y+43, X+108, Y+66];
+
   Self.Incenerator.X1 := Self.Bounds.X1 + 5;
   Self.Incenerator.Y1 := Self.Bounds.Y2 - 113;
   Self.Incenerator.X2 := Self.Bounds.X1 + 51;
@@ -233,6 +243,45 @@ begin
     Self.DynamicButtons[i].Bounds := Self.DynamicButtons[i].Bounds.Offset([offset, 0]);
 end;
 
+
+(*
+## Bank.HasJagexAccountAd
+```pascal
+function TRSBank.HasJagexAccountAd(): Boolean;
+```
+Returns true if the bank has the jagex account ad pop-up.
+This only ever shows up on non jagex accounts and tries to buy you in with bank space.
+
+Example:
+```pascal
+WriteLn Bank.HasJagexAccountAd();
+```
+*)
+function TRSBank.HasJagexAccountAd(): Boolean;
+begin
+  Result := (Target.CountColor($0000FF, 0, Self.JagexAccountAd.NotNow) = 98) and
+            (Target.CountColor($0DC10D, 0, Self.JagexAccountAd.MoreInfo) = 112);
+end;
+
+(*
+## Bank.CloseJagexAccountAd
+```pascal
+function TRSBank.CloseJagexAccountAd(): Boolean;
+```
+Attempts to close the jagex account advert. Returns true on success.
+
+Example:
+```pascal
+WriteLn Bank.CloseJagexAccountAd();
+```
+*)
+function TRSBank.CloseJagexAccountAd(): Boolean;
+begin
+  Mouse.Click(Self.JagexAccountAd.NotNow, EMouseButton.LEFT);
+  Result := SleepUntil(not Self.HasJagexAccountAd(), 50, 600);
+end;
+
+
 (*
 ## Bank.IsOpen
 ```pascal
@@ -257,7 +306,12 @@ begin
 
   if Result then
   begin
-    if tpa = [] then Exit;
+    if tpa = [] then
+    begin
+      if not Self.HasJagexAccountAd() then Exit;
+      if not Self.CloseJagexAccountAd() then Exit;
+      Exit(Self.IsOpen()); //ad closed, restart
+    end;
 
     offset := tpa.First.X;
     offset -= Self.Bounds.X1+244;

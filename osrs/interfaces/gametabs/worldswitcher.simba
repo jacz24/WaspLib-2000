@@ -7,7 +7,41 @@ switcher in the {ref}`Logout` gametab.
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
+(*
+(ERSWorldSwitcherButton)=
+## Enum ERSWorldSwitcherButton
+```pascal
+ERSWorldSwitcherButton = enum(CONFIGURE, CLOSE, LOGOUT);
+```
+Enum representing the world switcher buttons.
+*)
   ERSWorldSwitcherButton = enum(CONFIGURE, CLOSE, LOGOUT);
+
+  TRSWorld = record
+    Number: Integer;
+    Bounds: TBox;
+  end;
+  TRSWorldArray = array of TRSWorld;
+
+procedure ShowOnClient(worlds: TRSWorldArray); overload;
+var
+  img: TImage;
+  i: Integer;
+begin
+  img := TImage.CreateFromTarget();
+
+  img.DrawColor := $FFFFFF;
+  for i := 0 to High(worlds) do
+  begin
+    WriteLn worlds[i].Number;
+    img.DrawBox(worlds[i].Bounds);
+  end;
+
+  img.Show();
+  img.Free();
+end;
+
+type
 (*
 (TRSWorldSwitcher)=
 ## type TRSWorldSwitcher
@@ -154,7 +188,56 @@ begin
   Result := OCR.RecognizeNumber(Self.CurrentWorldBounds, RSFonts.BOLD, [RSColors.TEXT_ORANGE], 0);
 end;
 
+function TRSWorldSwitcher.GetWorlds(): TRSWorldArray;
+var
+  tpa: TPointArray;
+  atpa: T2DPointArray;
+  weights: TIntegerArray;
+  world: TRSWorld;
+begin
+  tpa := Target.FindColor(Self.SILVER, 0, Self.Scroll.Area) +
+         Target.FindColor(Self.YELLOW, 0, Self.Scroll.Area);
+
+  atpa := tpa.Cluster(5, 1.5);
+  for tpa in atpa do
+    with tpa.Bounds() do
+    begin
+      if Height <> 10 then Continue;
+
+      world.Number := OCR.RecognizeNumber([X1-3, Y1-2, X2+3, Y2+2], RSFonts.PLAIN_12, [Self.SILVER, Self.YELLOW], 0);
+      if world.Number = -1 then Continue;
+
+      world.Bounds := [Self.Scroll.Area.X1, Y1-2, Self.Scroll.Area.X2, Y2+3];
+
+      weights += Y1;
+      Result += World;
+    end;
+
+  Result.Sort(weights, True);
+end;
+
+function TRSWorldSwitcher.FindWorld(number: Integer; out world: TRSWorld): Boolean;
+var
+  tpa: TPointArray;
+  atpa: T2DPointArray;
+begin
+  tpa := Target.FindColor(Self.SILVER, 0, Self.Scroll.Area) +
+         Target.FindColor(Self.YELLOW, 0, Self.Scroll.Area);
+
+  atpa := tpa.Cluster(5, 1.5);
+  for tpa in atpa do
+    with tpa.Bounds() do
+    begin
+      if Height <> 10 then Continue;
+
+      world.Number := OCR.RecognizeNumber([X1-3, Y1-2, X2+3, Y2+2], RSFonts.PLAIN_12, [Self.SILVER, Self.YELLOW], 0);
+      if world.Number <> number then Continue;
+
+      world.Bounds := [Self.Scroll.Area.X1, Y1-2, Self.Scroll.Area.X2, Y2+3];
+      Exit(True);
+    end;
+end;
+
 
 var
   WorldSwitcher: TRSWorldSwitcher;
-
