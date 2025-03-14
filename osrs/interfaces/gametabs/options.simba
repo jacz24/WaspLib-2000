@@ -186,7 +186,7 @@ end;
 (*
 ## Options.OpenTab
 ```pascal
-function TRSOptions.OpenTab(const tab: ERSOptionsTab): Boolean;
+function TRSOptions.OpenTab(tab: ERSOptionsTab): Boolean;
 ```
 Attempts to open the specified `tab` `ERSOptionsTab`.
 
@@ -195,7 +195,7 @@ Example:
 WriteLn Options.OpenTab(ERSOptionsTab.DISPLAY);
 ```
 *)
-function TRSOptions.OpenTab(const tab: ERSOptionsTab): Boolean;
+function TRSOptions.OpenTab(tab: ERSOptionsTab): Boolean;
 begin
   if not Self.Open() then Exit;
   if not Self.CloseHouseOptions() then Exit;
@@ -209,7 +209,7 @@ end;
 (*
 ## Options.GetZoomLevel
 ```pascal
-function TRSOptions.GetZoomLevel(const useCache: Boolean = True): Integer;
+function TRSOptions.GetZoomLevel(useCache: Boolean = True): Integer;
 ```
 Retrieves the current zoom level.
 By default it uses the value cached in `TRSOptions.ZoomLevel` if it is already set.
@@ -221,7 +221,7 @@ Example:
 WriteLn Options.GetZoomLevel();
 ```
 *)
-function TRSOptions.GetZoomLevel(const useCache: Boolean = True): Integer;
+function TRSOptions.GetZoomLevel(useCache: Boolean = True): Integer;
 begin
   if useCache and (Self.ZoomLevel > -1) then
     Exit(Self.ZoomLevel);
@@ -240,7 +240,7 @@ end;
 (*
 ## Options.SetZoomLevel
 ```pascal
-function TRSOptions.SetZoomLevel(const level: Integer): Boolean;
+function TRSOptions.SetZoomLevel(level: Integer): Boolean;
 ```
 Sets a new zoom level through the options gametab.
 If we successfully update the zoom level we update the cached
@@ -251,7 +251,7 @@ Example:
 Options.SetZoomLevel(30);
 ```
 *)
-function TRSOptions.SetZoomLevel(const level: Integer): Boolean;
+function TRSOptions.SetZoomLevel(level: Integer): Boolean;
 begin
   Result := Self.Sliders[ERSOptionsSlider.ZOOM].SetLevel(level);
 
@@ -261,7 +261,6 @@ begin
     Self.ZoomLevel := -1;
 end;
 
-
 var
 (*
 (Options)=
@@ -269,15 +268,6 @@ var
 Global TRSOptions variable.
 *)
   Options: TRSOptions;
-
-function TRSGameTabs.GetCurrent(): ERSGameTab; override;
-begin
-  Result := inherited;
-
-  if Result <> ERSGameTab.NONE then Exit;
-  if Options.IsHouseOptionsOpen() then
-    Result := ERSGameTab.OPTIONS;
-end;
 
 begin
   Options.ZoomLevel := -1;

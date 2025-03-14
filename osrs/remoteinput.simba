@@ -50,6 +50,26 @@ begin
   Self.LoseFocus();
 end;
 
+
+function TRemoteInput.IsInputEnabled(): Boolean;
+begin
+  Result := EIOS_IsMouseInputEnabled(Self.EIOS) and EIOS_IsKeyboardInputEnabled(Self.EIOS);
+end;
+
+
+procedure TRemoteInput.DisableRealInput();
+begin
+  EIOS_SetMouseInputEnabled(Self.EIOS, False);
+  EIOS_SetKeyboardInputEnabled(Self.EIOS, False);
+end;
+
+procedure TRemoteInput.EnableRealInput();
+begin
+  EIOS_SetMouseInputEnabled(Self.EIOS, True);
+  EIOS_SetKeyboardInputEnabled(Self.EIOS, True);
+end;
+
+
 var
   RemoteInput: TRemoteInput;
 

@@ -36,6 +36,7 @@
 {$IFNDEF SRLT_PRAYER_INCLUDED}              {$INCLUDE_ONCE osrs/interfaces/gametabs/prayer.simba}
 {$IFNDEF SRLT_WORLDSWITCHER_INCLUDED}       {$INCLUDE_ONCE osrs/interfaces/gametabs/worldswitcher.simba}
 {$IFNDEF SRLT_LOGOUT_INCLUDED}              {$INCLUDE_ONCE osrs/interfaces/gametabs/logout.simba}
+{$IFNDEF SRLT_MOUSEZOOM_INCLUDED}           {$INCLUDE_ONCE osrs/mousezoom.simba}
 
 {$IFNDEF SRLT_MM2MS_PROJECTOR_INCLUDED}     {$INCLUDE_ONCE osrs/interfaces/mm2ms_projector.simba}
 {$IFNDEF SRLT_MM2MS_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/mm2ms.simba}
@@ -55,8 +56,11 @@
 {$IFNDEF SRLT_ANTIBAN_TASKS_INCLUDED}       {$INCLUDE_ONCE osrs/antiban/antibantasks.simba}
 
 {$IFNDEF SRLT_SETUP_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/setup.simba}
+{$IFNDEF SRLT_OVERRIDES_INCLUDED}           {$INCLUDE_ONCE osrs/overrides.simba}
 
 
+{$ENDIF}
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}

@@ -1,0 +1,38 @@
+(*
+# Overrides
+Several final overrides to add some final behaviour to certain methods.
+This is the very last file being included in the library.
+*)
+
+{$DEFINE SRLT_OVERRIDES_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+function TRSGameTabs.GetCurrent(): ERSGameTab; override;
+begin
+  Result := inherited;
+  if Result <> ERSGameTab.NONE then Exit;
+  if not Options.IsHouseOptionsOpen() then Exit;
+  Result := ERSGameTab.OPTIONS;
+  if RSMouseZoom.SettingChecked then Exit;
+  if Options.GetTab() <> ERSOptionsTab.DISPLAY then Exit;
+
+  RSMouseZoom.Enabled := not Target.HasColor($0000C8, 0, 1, GameTab.Bounds);
+  RSMouseZoom.SettingChecked := True;
+
+  if not RSMouseZoom.Enabled then
+  begin
+    RSMouseZoom.ZoomLevel := -1;
+    Options.ZoomLevel := -1;
+  end;
+end;
+
+function TRSGameTabs.Open(tab: ERSGameTab): Boolean; override;
+begin
+  if Bank.IsOpen() then
+  begin
+    if tab = ERSGameTab.INVENTORY then Exit(True);
+    Bank.Close();
+  end;
+
+  Result := inherited();
+end;

@@ -356,9 +356,9 @@ begin
   Result := Self.Title.Close(escape);
 end;
 
-function TRSBank.Close(escapeProbability: Single = 0): Boolean; overload;
+function TRSBank.Close(escapeProbability: Single = -1): Boolean; overload;
 begin
-  Result := Self.Close(escapeProbability);
+  Result := Self.Title.Close(escapeProbability);
 end;
 
 
