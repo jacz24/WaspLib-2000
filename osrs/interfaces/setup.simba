@@ -22,6 +22,7 @@ begin
   XPBar.SetupInterface();
   Prayer.SetupInterface();
   Stats.SetupInterface();
+  BankPin.SetupInterface();
   Bank.SetupInterface();
 end;
 

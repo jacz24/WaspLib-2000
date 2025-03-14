@@ -8,17 +8,39 @@ Methods to interact with the bank pin interface.
 
 
 type
-  TRSBankPin = type TRSInterface;
+  TRSBankPin = record
+    Bounds: TBox;
+    Buttons: TRSButtonArray;
+  end;
 
 procedure TRSBankPin.SetupInterface();
+var
+  boxes: TBoxArray;
+  i: Integer;
 begin
   with InterfaceArea do
   begin
     Self.Bounds.X1 := Max(Floor(Center.X-(Width-1)/2), Floor(Center.X-487/2));
+    Self.Bounds.Y1 := Max(Floor(Center.Y-(Height-3)/2), Center.Y-148);
     Self.Bounds.X2 := Min(Floor(Center.X+(Width-1)/2), Floor(Center.X +487/2));
-    Self.Bounds.Y1 := Max(Floor(Center.Y-(Height-3)/2), Floor(Center.Y-799/2));
-    Self.Bounds.Y2 := Min(Floor(Center.Y+(Height-3)/2), Floor(Center.Y+799/2));
+    Self.Bounds.Y2 := Min(Floor(Center.Y+(Height-3)/2), Center.Y+157);
   end;
 
+  boxes := TBoxArray.Create(Self.Bounds.TopLeft.Offset(25,88), 3, 3, 55, 55, [39, 17]);
+  boxes.Insert(boxes[2].Offset([84, 0]), 3);
+
+  SetLength(Self.Buttons, 10);
+  for i := 0 to High(boxes) do
+  begin
+    Self.Buttons[i].Bounds := boxes[i];
+    Self.Buttons[i].EnabledColors := [];
+  end;
 end;
 
+function TRSBankPin.IsOpen(): Boolean;
+begin               //TODO:
+  Result := Target.HasColor($060D56, 10, 30000, Self.Bounds);
+end;
+
+var
+  BankPin: TRSBankPin;

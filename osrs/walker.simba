@@ -1151,7 +1151,7 @@ begin
 
     if path = [] then Continue;
 
-    dist := Floor(path.TotalDistance());
+    dist := Floor(path.PolylineLength());
     if dist < shortest then
     begin
       shortPaths := [path];

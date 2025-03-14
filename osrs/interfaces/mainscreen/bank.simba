@@ -300,6 +300,16 @@ var
   tpa: TPointArray;
   offset: Integer;
 begin
+  if BankPin.IsOpen() then
+  begin
+    //TODO:
+    //if not SleepUntil(BankPin.ButtonsLoaded(), 100, 3000) then
+    //  Self.Fatal('Bank pin buttons don''t seem to have loaded in 3 seconds.');
+
+    //if not BankPin.Enter(Login.GetPlayerPin()) then
+    //  Self.Fatal('Failed to enter bank pin');
+  end;
+
   count := Target.CountColor($0, 0, Self._IsOpenHelperBox);
   tpa := Target.FindColor(RSColors.TEXT_ORANGE, 0, Self._IsOpenHelperBox);
   Result := ((count = 94) and (Length(tpa) = 116)) or Self.Title.IsTitle('Bank') or Self.Title.IsTitle('Equip');
