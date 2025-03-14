@@ -1,81 +1,275 @@
 (*
 # ColorFinder
-Methods to interact with the mainscreen.
+Methods to find and interact with complex color objects.
 *)
 
 {$DEFINE SRLT_COLORFINDER_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
-  TColorFinder = record
-    Colors: array of TColorTolerance;
+(*
+(TColorFinderTransformer)=
+## type TColorFinderTransformer
+Helper record that helps transforming a {ref}`TColorFinder` after finding it's
+colors and/or colors clusters.
+*)
+  TColorFinderTransformer = record
     Distance, Erode, Grow: Integer;
-    LongSide, ShortSide: record Min, Max: Integer; end;
+    LongSide, ShortSide: record
+      Min, Max: Integer;
+    end;
   end;
 
-function TColorFinder.Find(area: TBox; atpa: T2DPointArray): Boolean;
-var
-  tpa: TPointArray;
-  i, l, s: Integer;
-  finder: TColorFinder;
-  tmp: T2DPointArray;
+(*
+## TColorFinderTransformer.Normalize
+```pascal
+function TColorFinderTransformer.Normalize(): TColorFinder;
+```
+Helper method to normalize a {ref}`TColorFinderTransformer` from 50% zoom values
+to our current one with the help of {ref}`MainScreen.NormalizeDistance`.
+This is important to do so we have consistent values at any zoom value.
+*)
+function TColorFinderTransformer.Normalize(): TColorFinderTransformer;
 begin
-  // Translate distances
-  finder.Distance  := MainScreen.NormalizeDistance(Self.Distance);
-  finder.Erode     := MainScreen.NormalizeDistance(Self.Erode);
-  finder.Grow      := MainScreen.NormalizeDistance(Self.Grow);
+  if Self.Distance > 0 then
+    Result.Distance := MainScreen.NormalizeDistance(Self.Distance);
+  if Self.Erode > 0 then
+    Result.Erode := MainScreen.NormalizeDistance(Self.Erode);
+  if Self.Grow > 0 then
+    Result.Grow := MainScreen.NormalizeDistance(Self.Grow);
 
-  finder.LongSide.Min  := MainScreen.NormalizeDistance(Self.LongSide.Min);
-  finder.ShortSide.Min := MainScreen.NormalizeDistance(Self.ShortSide.Min);
+  if Self.LongSide.Min > 0 then
+    Result.LongSide.Min := MainScreen.NormalizeDistance(Self.LongSide.Min);
+  if Self.ShortSide.Min > 0 then
+    Result.ShortSide.Min := MainScreen.NormalizeDistance(Self.ShortSide.Min);
 
-  if Self.LongSide.Max = 0 then
-    finder.LongSide.Max := $FFFFFF
-  else
-    finder.LongSide.Max  := MainScreen.NormalizeDistance(Self.LongSide.Max);
+  if Self.LongSide.Max > 0 then
+    Result.LongSide.Max := MainScreen.NormalizeDistance(Self.LongSide.Max);
+  if Self.ShortSide.Max > 0 then
+    Result.ShortSide.Max := MainScreen.NormalizeDistance(Self.ShortSide.Max);
+end;
 
-  if Self.ShortSide.Max = 0 then
-    finder.ShortSide.Max := $FFFFFF
-  else
-    finder.ShortSide.Max := MainScreen.NormalizeDistance(Self.ShortSide.Max);
-
-  // Find colors
-  for i := 0 to High(Self.Colors) do
-    tpa += Target.FindColor(Self.Colors[i], area);
-
-  // Process TPA
+(*
+## TColorFinderTransformer.Process
+```pascal
+function TColorFinderTransformer.Process(tpa: TPointArray): T2DPointArray;
+```
+Helper method to transform a TPA with the current {ref}`TColorFinderTransformer`
+into an ATPA.
+*)
+function TColorFinderTransformer.Process(tpa: TPointArray): T2DPointArray;
+var
+  i, l, s: Integer;
+  weights: TIntegerArray;
+begin
   if tpa <> [] then Exit;
 
-  if finder.Grow > 0 then
-    tpa := tpa.Grow(finder.Grow);
-  if finder.Erode > 0 then
-    tpa := tpa.Erode(finder.Erode);
+  // Transform the TPA
+  if Self.Grow  > 0 then tpa := tpa.Grow(Self.Grow);
+  if Self.Erode > 0 then tpa := tpa.Erode(Self.Erode);
 
   if tpa = [] then Exit;
 
-  Result := True;
-  tmp := tpa.Cluster(finder.Distance);
+  Result := tpa.Cluster(Self.Distance);
 
-  if (finder.ShortSide.Min > 0) or (finder.ShortSide.Max > 0) or
-     (finder.LongSide.Min > 0) or (finder.LongSide.Max > 0) then
+  if (Self.ShortSide.Max <= 0) and (Self.LongSide.Max <= 0) then
+    Exit(Result.SortBySize(True)); //sort by size
+
+  //filter the TPA by ShortSide and LongSide
+  for i := High(Result) downto 0 do
   begin
-    for i := 0 to High(tmp) do
+    with Result[i].MinAreaRect() do
     begin
-      with tmp[i].Edges().MinAreaRect() do
+      l := LongSideLen;
+      s := ShortSideLen;
+    end;
+
+    if not InRange(s, Self.ShortSide.Min, Self.ShortSide.Max) then
+    begin
+      Delete(Result, i, 1);
+      Continue;
+    end;
+
+    if not InRange(l, Self.LongSide.Min, Self.LongSide.Max) then
+    begin
+      Delete(Result, i, 1);
+      Continue;
+    end;
+
+    weights += Length(Result[i]);
+  end;
+
+  if Result = [] then Exit;
+  Result := Result.Sort(weights); //Sort by size making use of the prev loop.
+end;
+
+
+type
+(*
+(TColorFinder)=
+## type TColorFinder
+Main record used to find and interact with complex color objects.
+*)
+  TColorFinder = record
+    Colors: array of TColorTolerance;
+    ColorClusters: array of record
+      Primary, Secondary: TColorTolerance;
+      Distance: Integer;
+    end;
+    Transformer: TColorFinderTransformer;
+  end;
+
+(*
+## TColorFinder.Find
+```pascal
+function TColorFinder.Find(out atpa: T2DPointArray; areas: TBoxArray): Boolean;
+function TColorFinder.Find(out atpa: T2DPointArray; area: TBox): Boolean; overload;
+function TColorFinder.Find(out atpa: T2DPointArray; areas: TPolygonArray): Boolean; overload;
+function TColorFinder.Find(out atpa: T2DPointArray; area: TPolygon): Boolean; overload;
+function TColorFinder.Find(out atpa: T2DPointArray; areas: TCuboidArray): Boolean; overload;
+function TColorFinder.Find(out atpa: T2DPointArray; area: TCuboid): Boolean; overload;
+```
+Attempts to find on the given `area` a {ref}`TColorFinder`.
+If `area` is not specified, {ref}`MainScreen` Bounds are used.
+The function returns true if we find anything and the coordinates containing
+what was found are returned through `atpa`.
+
+*)
+function TColorFinder.Find(out atpa: T2DPointArray; areas: TBoxArray): Boolean;
+var
+  transformer: TColorFinderTransformer;
+  area: TBox;
+  i: Integer;
+  tpa, primary, secondary: TPointArray;
+begin
+  transformer := Self.Transformer.Normalize();
+
+  for area in areas do
+  begin
+    for i := 0 to High(Self.Colors) do // Find TColorFinder.Colors
+      tpa += Target.FindColor(Self.Colors[i], area);
+
+    for i := 0 to High(Self.ColorClusters) do // Find TColorFinder.ColorClusters
+    begin
+      if Self.ColorClusters[i].Distance <= 0 then
       begin
-        l := LongSideLen;
-        s := ShortSideLen;
+        WriteLn GetDebugLn('TColorFinder', 'Skipping cluster with 0 distance, make it higher than 0!', EErrorLevel.WARN);
+        Continue;
       end;
 
-      if ((finder.ShortSide.Min > 0) or (finder.ShortSide.Max > 0)) and (not InRange(s, finder.ShortSide.Min, finder.ShortSide.Max)) then
-        Continue;
-      if ((finder.LongSide.Min > 0) or (finder.LongSide.Max > 0)) and (not InRange(l, finder.LongSide.Min, finder.LongSide.Max)) then
-        Continue;
+      primary := Target.FindColor(Self.ColorClusters[i].Primary, area);
+      if primary = [] then Continue;
+      secondary := Target.FindColor(Self.ColorClusters[i].Secondary, area);
+      if secondary = [] then Continue;
 
-      atpa += tmp[I];
+      tpa += primary.PointsNearby(secondary, 0, MainScreen.NormalizeDistance(Self.ColorClusters[i].Distance));
     end;
-  end else
-    atpa := tmp;
+  end;
 
-  atpa := atpa.SortBySize(True);
+  atpa := transformer.Process(tpa);
+  Result := atpa <> [];
+end;
+
+function TColorFinder.Find(out atpa: T2DPointArray; area: TBox): Boolean; overload;
+begin
+  Result := Self.Find(atpa, [area]);
+end;
+
+
+function TColorFinder.Find(out atpa: T2DPointArray; areas: TPolygonArray): Boolean; overload;
+var
+  transformer: TColorFinderTransformer;
+  area: TPolygon;
+  bounds: TBox;
+  i: Integer;
+  tpa, primary, secondary, tmp: TPointArray;
+begin
+  transformer := Self.Transformer.Normalize();
+
+  for area in areas do
+  begin
+    bounds := area.Bounds();
+    for i := 0 to High(Self.Colors) do // Find TColorFinder.Colors
+      tmp += Target.FindColor(Self.Colors[i], bounds);
+
+    for i := 0 to High(Self.ColorClusters) do // Find TColorFinder.ColorClusters
+    begin
+      if Self.ColorClusters[i].Distance <= 0 then
+      begin
+        WriteLn GetDebugLn('TColorFinder', 'Skipping cluster with 0 distance, make it higher than 0!', EErrorLevel.WARN);
+        Continue;
+      end;
+
+      primary := Target.FindColor(Self.ColorClusters[i].Primary, bounds);
+      if primary = [] then Continue;
+      secondary := Target.FindColor(Self.ColorClusters[i].Secondary, bounds);
+      if secondary = [] then Continue;
+
+      tmp += primary.PointsNearby(secondary, 0, MainScreen.NormalizeDistance(Self.ColorClusters[i].Distance));
+    end;
+
+    tpa += tmp.ExtractPolygon(area);
+    tmp := [];
+  end;
+
+  atpa := transformer.Process(tpa);
+  Result := atpa <> [];
+end;
+
+function TColorFinder.Find(out atpa: T2DPointArray; area: TPolygon): Boolean; overload;
+begin
+  Result := Self.Find(atpa, [area]);
+end;
+
+
+function TColorFinder.Find(out atpa: T2DPointArray; areas: TCuboidArray): Boolean; overload;
+var
+  transformer: TColorFinderTransformer;
+  area: TCuboid;
+  bounds: TBox;
+  i: Integer;
+  tpa, primary, secondary, tmp: TPointArray;
+begin
+  transformer := Self.Transformer.Normalize();
+
+  for area in areas do
+  begin
+    bounds := area.Bounds();
+    for i := 0 to High(Self.Colors) do // Find TColorFinder.Colors
+      tmp += Target.FindColor(Self.Colors[i], bounds);
+
+    for i := 0 to High(Self.ColorClusters) do // Find TColorFinder.ColorClusters
+    begin
+      if Self.ColorClusters[i].Distance <= 0 then
+      begin
+        WriteLn GetDebugLn('TColorFinder', 'Skipping cluster with 0 distance, make it higher than 0!', EErrorLevel.WARN);
+        Continue;
+      end;
+
+      primary := Target.FindColor(Self.ColorClusters[i].Primary, bounds);
+      if primary = [] then Continue;
+      secondary := Target.FindColor(Self.ColorClusters[i].Secondary, bounds);
+      if secondary = [] then Continue;
+
+      tmp += primary.PointsNearby(secondary, 0, MainScreen.NormalizeDistance(Self.ColorClusters[i].Distance));
+    end;
+
+    tpa += tmp.ExtractPolygon(area.Polygon());
+    tmp := [];
+  end;
+
+  atpa := transformer.Process(tpa);
+  Result := atpa <> [];
+end;
+
+function TColorFinder.Find(out atpa: T2DPointArray; area: TCuboid): Boolean; overload;
+begin
+  Result := Self.Find(atpa, [area]);
+end;
+
+
+function TColorFinder.Find(out atpa: T2DPointArray): Boolean; overload;
+begin
+  Result := Self.Find(atpa, [MainScreen.Bounds]);
 end;
 
