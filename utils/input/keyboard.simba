@@ -17,11 +17,6 @@ begin
   Target.KeyOptions.MaxPressTime := 60;
 end;
 
-function TKeyboard.UseKeyboard(chance: Single): Boolean;
-begin
-  if chance = -1 then Exit(RandomBoolean());
-end;
-
 (*
 ## Keyboard.KeyDown
 ```pascal

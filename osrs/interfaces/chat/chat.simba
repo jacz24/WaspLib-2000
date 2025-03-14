@@ -281,17 +281,23 @@ begin
   option := Self.FindOption(chatOption, caseSensitive, colors);
   if option = [] then Exit;
 
-  Result := True;
-  if Keyboard.UseKeyboard(keyboardProbability) then
+  if keyboardProbability < 0 then
+    keyboardProbability := Biometrics.RandomDouble(0.5);
+
+  if RandomBoolean(keyboardProbability) then
     Keyboard.PressKey(option.Key)
   else
     Mouse.Click(option.Bounds, EMouseButton.LEFT);
+
+  Result := True;
 end;
 
 function TRSChat.ContinueChat(keyboardProbability: Single = -1): Boolean;
 var
   colors: TIntegerArray;
 begin
+  if keyboardProbability < 0 then
+    keyboardProbability := Biometrics.RandomDouble(0.5);
   colors := Self.GetColors([ERSChatColor.BLUE, ERSChatColor.WHITE]);
   if not Self.Select('Click here to continue', True, keyboardProbability, colors) then
     Exit;
