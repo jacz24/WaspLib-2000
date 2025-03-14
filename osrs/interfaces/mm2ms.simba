@@ -22,18 +22,14 @@ Main record responsible for minimap to mainscreen (mm2ms) conversion.
     ZoomQuads: array [0..100] of TQuad;
     PlayerBoxes: array [0..100] of TBox;
     Projector: TMM2MSProjector;
-    Normalization: record
-      Projector: TMM2MSProjector;
-      Base: TPoint;
-    end;
+    Normalizer: TMM2MSProjector;
   end;
 
 procedure TMM2MS.Setup();
 begin
-  Self.Projector.SetupProjection();
-  Self.Normalization.Projector.SetupProjection();
-  Self.Normalization.Projector.UpdateZoom(0);
-  Self.Normalization.Base := Self.Normalization.Projector.Run([0, 0, 0], [0, 0, 0]);
+  Self.Projector.SetupProjection(RSClient.Mode);
+  Self.Normalizer.SetupProjection(ERSMode.FIXED);
+  Self.Normalizer.UpdateZoom(50);
 end;
 
 (*
@@ -464,14 +460,17 @@ WriteLn(MainScreen.TranslateDistance(20));
 ```
 *)
 function TRSMainScreen.NormalizeDistance(dist: Integer; accuracy: Single = 1.05): Integer;
+const
+  BASE: TPoint = [260,181];
+
   function _SearchUp(value: Single; target: Single; inc: Single): Single;
   var
     pt: TPoint;
   begin
     while True do
     begin
-      pt := MM2MS.Normalization.Projector.Run([value, 0, 0], [0, 0, 0]);
-      if MM2MS.Normalization.Base.DistanceTo(pt) > target then
+      pt := MM2MS.Normalizer.Run([value, 0, 0], [0, 0, 0]);
+      if BASE.DistanceTo(pt) > target then
         Exit(value);
 
       value *= inc;
@@ -484,8 +483,8 @@ function TRSMainScreen.NormalizeDistance(dist: Integer; accuracy: Single = 1.05)
   begin
     while True do
     begin
-      pt := MM2MS.Normalization.Projector.Run([value, 0, 0], [0, 0, 0]);
-      if MM2MS.Normalization.Base.DistanceTo(pt) < target then
+      pt := MM2MS.Normalizer.Run([value, 0, 0], [0, 0, 0]);
+      if BASE.DistanceTo(pt) < target then
         Exit(value);
 
       value /= dec;
@@ -494,6 +493,7 @@ function TRSMainScreen.NormalizeDistance(dist: Integer; accuracy: Single = 1.05)
 
 var
   lo, hi, mean: Single;
+  arr: TPointArray;
 begin
   if dist = 0 then Exit;
 
@@ -506,10 +506,9 @@ begin
   mean := lo + ((hi - lo) / 2);
 
   with Minimap.Center do
-    Result := Round(
-                Minimap.Vector2MS([X, Y, 0], 0).DistanceTo(
-                Minimap.Vector2MS([X + mean, Y, 0], 0)
-              ));
+    arr := MM2MS.Run([[X,Y], [X+mean,Y]], 0);
+
+  Result := Round(arr[0].DistanceTo(arr[1]));
 
   if Result < 1 then Result := 1;
 end;

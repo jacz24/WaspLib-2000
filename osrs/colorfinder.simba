@@ -1,0 +1,81 @@
+(*
+# ColorFinder
+Methods to interact with the mainscreen.
+*)
+
+{$DEFINE SRLT_COLORFINDER_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+type
+  TColorFinder = record
+    Colors: array of TColorTolerance;
+    Distance, Erode, Grow: Integer;
+    LongSide, ShortSide: record Min, Max: Integer; end;
+  end;
+
+function TColorFinder.Find(area: TBox; atpa: T2DPointArray): Boolean;
+var
+  tpa: TPointArray;
+  i, l, s: Integer;
+  finder: TColorFinder;
+  tmp: T2DPointArray;
+begin
+  // Translate distances
+  finder.Distance  := MainScreen.NormalizeDistance(Self.Distance);
+  finder.Erode     := MainScreen.NormalizeDistance(Self.Erode);
+  finder.Grow      := MainScreen.NormalizeDistance(Self.Grow);
+
+  finder.LongSide.Min  := MainScreen.NormalizeDistance(Self.LongSide.Min);
+  finder.ShortSide.Min := MainScreen.NormalizeDistance(Self.ShortSide.Min);
+
+  if Self.LongSide.Max = 0 then
+    finder.LongSide.Max := $FFFFFF
+  else
+    finder.LongSide.Max  := MainScreen.NormalizeDistance(Self.LongSide.Max);
+
+  if Self.ShortSide.Max = 0 then
+    finder.ShortSide.Max := $FFFFFF
+  else
+    finder.ShortSide.Max := MainScreen.NormalizeDistance(Self.ShortSide.Max);
+
+  // Find colors
+  for i := 0 to High(Self.Colors) do
+    tpa += Target.FindColor(Self.Colors[i], area);
+
+  // Process TPA
+  if tpa <> [] then Exit;
+
+  if finder.Grow > 0 then
+    tpa := tpa.Grow(finder.Grow);
+  if finder.Erode > 0 then
+    tpa := tpa.Erode(finder.Erode);
+
+  if tpa = [] then Exit;
+
+  Result := True;
+  tmp := tpa.Cluster(finder.Distance);
+
+  if (finder.ShortSide.Min > 0) or (finder.ShortSide.Max > 0) or
+     (finder.LongSide.Min > 0) or (finder.LongSide.Max > 0) then
+  begin
+    for i := 0 to High(tmp) do
+    begin
+      with tmp[i].Edges().MinAreaRect() do
+      begin
+        l := LongSideLen;
+        s := ShortSideLen;
+      end;
+
+      if ((finder.ShortSide.Min > 0) or (finder.ShortSide.Max > 0)) and (not InRange(s, finder.ShortSide.Min, finder.ShortSide.Max)) then
+        Continue;
+      if ((finder.LongSide.Min > 0) or (finder.LongSide.Max > 0)) and (not InRange(l, finder.LongSide.Min, finder.LongSide.Max)) then
+        Continue;
+
+      atpa += tmp[I];
+    end;
+  end else
+    atpa := tmp;
+
+  atpa := atpa.SortBySize(True);
+end;
+
