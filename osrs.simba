@@ -48,6 +48,8 @@
 {$IFNDEF SRLT_MAP_INCLUDED}                 {$INCLUDE_ONCE osrs/map/map.simba}
 {$IFNDEF SRLT_MAPDEBUGGER_INCLUDED}         {$INCLUDE_ONCE osrs/map/mapdebugger.simba}
 {$IFNDEF SRLT_BANK_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/mainscreen/bank.simba}
+{$IFNDEF SRLT_COLORFINDER_INCLUDED}         {$INCLUDE_ONCE osrs/mainscreen/colorfinder.simba}
+{$IFNDEF SRLT_HITSPLATS_INCLUDED}           {$INCLUDE_ONCE osrs/mainscreen/hitsplats.simba}
 
 
 {$IFNDEF SRLT_ANTIBAN_TASKS_INCLUDED}       {$INCLUDE_ONCE osrs/antiban/antibantasks.simba}
@@ -55,6 +57,8 @@
 {$IFNDEF SRLT_SETUP_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/setup.simba}
 
 
+{$ENDIF}
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}

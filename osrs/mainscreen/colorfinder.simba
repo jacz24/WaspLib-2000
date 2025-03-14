@@ -273,17 +273,14 @@ Main record used to find and interact with complex color objects.
 ## TColorFinder.Find
 ```pascal
 function TColorFinder.Find(out atpa: T2DPointArray; areas: TBoxArray): Boolean;
-function TColorFinder.Find(out atpa: T2DPointArray; area: TBox): Boolean; overload;
 function TColorFinder.Find(out atpa: T2DPointArray; areas: TPolygonArray): Boolean; overload;
-function TColorFinder.Find(out atpa: T2DPointArray; area: TPolygon): Boolean; overload;
 function TColorFinder.Find(out atpa: T2DPointArray; areas: TCuboidArray): Boolean; overload;
-function TColorFinder.Find(out atpa: T2DPointArray; area: TCuboid): Boolean; overload;
+function TColorFinder.Find(out atpa: T2DPointArray): Boolean; overload;
 ```
 Attempts to find on the given `area` a {ref}`TColorFinder`.
 If `area` is not specified, {ref}`MainScreen` Bounds are used.
 The function returns true if we find anything and the coordinates containing
 what was found are returned through `atpa`.
-
 *)
 function TColorFinder.Find(out atpa: T2DPointArray; areas: TBoxArray): Boolean;
 var
@@ -319,12 +316,6 @@ begin
   atpa := transformer.Process(tpa);
   Result := atpa <> [];
 end;
-
-function TColorFinder.Find(out atpa: T2DPointArray; area: TBox): Boolean; overload;
-begin
-  Result := Self.Find(atpa, [area]);
-end;
-
 
 function TColorFinder.Find(out atpa: T2DPointArray; areas: TPolygonArray): Boolean; overload;
 var
@@ -366,12 +357,6 @@ begin
   Result := atpa <> [];
 end;
 
-function TColorFinder.Find(out atpa: T2DPointArray; area: TPolygon): Boolean; overload;
-begin
-  Result := Self.Find(atpa, [area]);
-end;
-
-
 function TColorFinder.Find(out atpa: T2DPointArray; areas: TCuboidArray): Boolean; overload;
 var
   transformer: TColorFinderTransformer;
@@ -411,12 +396,6 @@ begin
   atpa := transformer.Process(tpa);
   Result := atpa <> [];
 end;
-
-function TColorFinder.Find(out atpa: T2DPointArray; area: TCuboid): Boolean; overload;
-begin
-  Result := Self.Find(atpa, [area]);
-end;
-
 
 function TColorFinder.Find(out atpa: T2DPointArray): Boolean; overload;
 begin
