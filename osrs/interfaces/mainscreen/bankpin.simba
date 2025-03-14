@@ -1,0 +1,24 @@
+(*
+# BankPin
+Methods to interact with the bank pin interface.
+*)
+
+{$DEFINE SRLT_BANKPIN_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+
+type
+  TRSBankPin = type TRSInterface;
+
+procedure TRSBankPin.SetupInterface();
+begin
+  with InterfaceArea do
+  begin
+    Self.Bounds.X1 := Max(Floor(Center.X-(Width-1)/2), Floor(Center.X-487/2));
+    Self.Bounds.X2 := Min(Floor(Center.X+(Width-1)/2), Floor(Center.X +487/2));
+    Self.Bounds.Y1 := Max(Floor(Center.Y-(Height-3)/2), Floor(Center.Y-799/2));
+    Self.Bounds.Y2 := Min(Floor(Center.Y+(Height-3)/2), Floor(Center.Y+799/2));
+  end;
+
+end;
+

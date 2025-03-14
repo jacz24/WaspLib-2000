@@ -19,8 +19,8 @@
 
 # -- Project information -----------------------------------------------------
 
-project = u'SRL-T'
-description = u'SRL-T is a fork of SRL-Development. SRL is a library for Simba to interact with RuneScape.'
+project = u'SRLT'
+description = u'SRLT stands for SRL Tribute. SRLT is a library for Simba to interact with OldSchool RuneScape.'
 copyright = u'2020, SRL Group'
 author = u'SRL Group'
 

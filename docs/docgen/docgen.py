@@ -8,7 +8,7 @@
 import re
 import os, sys
 
-DOCNAME         = 'SRL-T'
+DOCNAME         = 'SRLT'
 IGNORE_FOLDERS  = ['.git', '.github', 'docgen']
 FILE_EXTENSIONS = ['.simba']
 
