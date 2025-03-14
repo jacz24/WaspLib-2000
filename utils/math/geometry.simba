@@ -77,7 +77,7 @@ end;
 
 function T2DPointArray.InSameTPA(p, q: TPoint): Boolean;
 var
-  i: Int32;
+  i: Integer;
 begin
   for i := 0 to High(Self) do
     with Self[i].Bounds() do
@@ -88,13 +88,13 @@ begin
         end;
 end;
 
-function TPointArray.TotalDistance(): Double;
+function TPointArray.PolylineLength(): Double;
 var
-  i: Int32;
+  i: Integer;
 begin
-  for i := 0 to High(Self) do
-    if i < High(Self) then
-      Result += Self[i].DistanceTo(Self[i+1]);
+  if Length(Self) < 2 then Exit;
+  for i := 0 to Length(Self) do
+    Result += Self[i].DistanceTo(Self[i+1]);
 end;
 
 
