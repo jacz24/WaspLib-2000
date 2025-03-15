@@ -144,10 +144,10 @@ begin
   Self.CancelButton.X2 := Self.Bounds.X2 - 8;
   Self.CancelButton.Y2 := Self.Bounds.Y1 + 19;
 
-  Self.OpenButton.X1 := Self.Bounds.X1 + 14;
-  Self.OpenButton.Y1 := Self.Bounds.Y2 - 34;
-  Self.OpenButton.X2 := Self.OpenButton.X1 + 79;
-  Self.OpenButton.Y2 := Self.OpenButton.Y1 + 23;
+  Self.OpenButton.X1 := Self.Bounds.X1 + 10;
+  Self.OpenButton.Y1 := Self.Bounds.Y2 - 38;
+  Self.OpenButton.X2 := Self.OpenButton.X1 + 89;
+  Self.OpenButton.Y2 := Self.OpenButton.Y1 + 32;
 
   Self.WorldBoxes := TBoxArray.Create(Self.Bounds.TopLeft.Offset(62, 35), 7, 24, 84, 18, [9, 1]);
 end;
@@ -443,7 +443,7 @@ Constant of all the login messages the login screen can handle.
     'Invalid credentials',
     'Incorrect username or password',
     'You need a skill total of',
-    'Please enter your username/email',
+    'your username/email',
     'Error connecting to server',
     'Your account has not logged out',
     'Login server offline',
@@ -551,6 +551,7 @@ begin
 
   with Self.Buttons[ERSLoginButton.EXISTING_USER] do
   begin
+    Bold := True;
     Bounds.X1 := Self.Bounds.X1 + 188;
     Bounds.Y1 := Self.Bounds.Y1 + 103;
     Bounds.X2 := Bounds.X1 + 134;
@@ -560,6 +561,7 @@ begin
 
   with Self.Buttons[ERSLoginButton.LOGIN] do
   begin
+    Bold := True;
     Bounds.X1 := Self.Bounds.X1 + 28;
     Bounds.Y1 := Self.Bounds.Y1 + 133;
     Bounds.X2 := Bounds.X1 + 134;
@@ -744,7 +746,7 @@ begin
   if dialog = '' then Exit;
 
   for msg := ERSLoginMessage.WELCOME to High(ERSLoginMessage)-1 do
-    if dialog.Contains(LOGIN_MESSAGES[Result-1]) then
+    if dialog.Contains(LOGIN_MESSAGES[msg-1]) then
       Exit(msg);
 end;
 
@@ -1017,8 +1019,3 @@ end;
 
 var
   Login: TRSLogin;
-begin
-  LoginWorldSwitcher.Setup();
-  Lobby.Setup();
-  Login.Setup();
-end;

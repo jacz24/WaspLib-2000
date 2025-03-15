@@ -44,6 +44,10 @@ end;
 {$H-}
 procedure TargetResized(var sender: TTarget; data: TTargetEventData);
 begin
+  LoginWorldSwitcher.Setup();
+  Lobby.Setup();
+  Login.Setup();
+
   if RSClient.Mode = ERSMode.UNKNOWN then Exit;
   SetupInterfaces();
 end;

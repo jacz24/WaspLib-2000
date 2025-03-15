@@ -1,0 +1,80 @@
+(*
+## Login Tests
+Tests the integrety of several login methods.
+*)
+{$I SRLT/osrs.simba}
+{$ASSERTIONS ON}
+
+const
+  PATH: String = {$MACRO DIR} + 'imgs' + PATH_SEP;
+  MODES: TStringArray = ['fixed', 'resizable_classic'];
+  FILENAME: String := PATH_SEP + PathExtractNameWithoutExt(SCRIPT_FILE);
+var
+  mode: String;
+  img: TImage;
+begin
+  for mode in modes do
+  begin
+    if not FileExists(PATH + mode + FILENAME + '-0.png') then Continue;
+    img := TImage.Create(PATH + mode + FILENAME + '-0.png');
+    Target.SetImage(img);
+
+    RSClient.Mode := RSClient.DetectMode();
+    SetupInterfaces();
+
+    Assert(RSClient.IsLoggedIn() = False);
+    Assert(Login.GetMessage() = ERSLoginMessage.WELCOME);
+    Assert(Login.FindButton(ERSLoginButton.EXISTING_USER));
+    Assert(Login.GetMode() = ERSLoginMode.LEGACY);
+    Assert(LoginWorldSwitcher.IsOpen() = False);
+    Assert(LoginWorldSwitcher.GetCurrent() = 333);
+    Assert(Lobby.IsOpen() = False);
+
+    img.Free();
+    img := TImage.Create(PATH + mode + FILENAME + '-1.png');
+    Target.SetImage(img);
+
+    Assert(RSClient.IsLoggedIn() = False);
+    Assert(Login.GetMessage() = ERSLoginMessage.ENTER_CREDENTIALS);
+    Assert(Login.ClearInput(ERSLoginInput.USERNAME));
+    Assert(Login.ClearInput(ERSLoginInput.PASSWORD));
+    Assert(Login.FindButton(ERSLoginButton.LOGIN));
+
+    img.Free();
+    img := TImage.Create(PATH + mode + FILENAME + '-2.png');
+    Target.SetImage(img);
+
+    Assert(RSClient.IsLoggedIn() = False);
+    Assert(Login.GetMessage() = ERSLoginMessage.CONNECTING);
+    Assert(Login.InputIsFilled(ERSLoginInput.USERNAME));
+    Assert(Login.InputIsFilled(ERSLoginInput.PASSWORD));
+
+    img.Free();
+    img := TImage.Create(PATH + mode + FILENAME + '-3.png');
+    Target.SetImage(img);
+
+    Assert(RSClient.IsLoggedIn() = False);
+    Assert(Login.GetMessage() = ERSLoginMessage.INCORRECT);
+    Assert(Login.FindButton(ERSLoginButton.RETRY));
+
+    img.Free();
+    img := TImage.Create(PATH + mode + FILENAME + '-4.png');
+    Target.SetImage(img);
+
+    Assert(RSClient.IsLoggedIn() = False);
+    Assert(Lobby.IsOpen());
+
+    img.Free();
+    img := TImage.Create(PATH + mode + FILENAME + '-5.png');
+    Target.SetImage(img);
+
+    Assert(RSClient.IsLoggedIn() = False);
+    Assert(LoginWorldSwitcher.IsOpen());
+    Assert(LoginWorldSwitcher.Read(0) = 301);
+    Assert(LoginWorldSwitcher.Read(10) = 375);
+    Assert(LoginWorldSwitcher.Read(40) = 440);
+    Assert(Lobby.IsOpen() = False);
+
+    img.Free();
+  end;
+end;
