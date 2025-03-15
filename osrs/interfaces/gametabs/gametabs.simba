@@ -1,9 +1,22 @@
 (*
 # GameTabs
-Methods to interact with the gametab buttons
+Methods to interact with the gametab buttons.
+
+By default it will attempt to use "F-Keys" to open gametabs.
+You can turn this off by setting `TRSGameTabs.KeybindsEnabled` to `False`.
+
+The way keybindings work in SRLT is that it will try a random "F-Key" everytime
+you want to open a gametab. Because it uses a random "F-Key", it will probably
+not open the gametab you want but whatever opens, gets cached and mapped to the
+random "F-Key" used.
+
+Next time you want to open a gametab that has already been mapped, it will use
+the correct "F-Key".
 *)
 {$DEFINE SRLT_GAMETABS_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
+
+{.$DEFINE SRLT_KEYBINDS_DEBUG}
 
 type
 (*
@@ -14,9 +27,8 @@ ERSGameTab = enum(NONE, COMBAT, STATS, ACHIEVEMENTS, INVENTORY, EQUIPMENT, PRAYE
 ```
 *)
   ERSGameTab = enum(
-    NONE,
     COMBAT, STATS, ACHIEVEMENTS, INVENTORY, EQUIPMENT, PRAYER, MAGIC,
-    CLAN, FRIENDS, ACCOUNT, LOGOUT, OPTIONS, EMOTES, MUSIC
+    CLAN, FRIENDS, ACCOUNT, LOGOUT, OPTIONS, EMOTES, MUSIC, NONE
   );
 
 (*
@@ -26,9 +38,10 @@ Main record responsible for handling the gametabs.
 *)
   TRSGameTabs = record
     Bounds: TBox;
-    {%codetools off}
     Tabs: TBoxArray;
-    {%codetools on}
+    Keybinds: array [ERSGameTab] of EKeyCode;
+    KeybindsEnabled: Boolean;
+    AvailableKeys: EKeycodeArray;
     const ActiveColor: TColorTolerance = [$14194A, 1.235, EColorSpace.HSL, [1.631, 1.084, 0.286]];
   end;
 
@@ -37,7 +50,9 @@ Main record responsible for handling the gametabs.
 ```pascal
 procedure TRSGameTabs.SetupInterface();
 ```
-Internal method automatically called for you responsible for setting up coordinates.
+Internal method responsible for setting up coordinates for the {ref}`TRSGameTabs`.
+
+This is automatically called for you on the {ref}`GameTabs variable`.
 *)
 procedure TRSGameTabs.SetupInterface();
 var
@@ -89,8 +104,8 @@ begin
         if Target.Width >= 948 then
         begin
           Self.Tabs := TBoxArray.Create(Self.Bounds.BottomLeft.Offset(0,-35), 14, 1, 30, 33, [3, 0]);
-          for tab := ERSGameTab.MUSIC downto ERSGameTab.FRIENDS - 1 do
-            Self.Tabs[tab-1] := Self.Tabs[tab-2];
+          for tab := ERSGameTab.MUSIC downto ERSGameTab.FRIENDS do
+            Self.Tabs[tab] := Self.Tabs[tab-1];
         end
         else // Two rows
           Self.Tabs := TBoxArray.Create(Self.Bounds.BottomLeft.Offset(0,-70), 7, 2, 30, 33, [3, 3]);
@@ -103,24 +118,6 @@ begin
         Self.Tabs[10].Y2 := Target.Bounds.Y1 + 18;
       end;
   end;
-end;
-
-
-(*
-## GameTabs.Get
-```pascal
-function TRSGameTabs.Get(tab: ERSGameTab): TBox;
-```
-Get a GameTab button bounds.
-
-Example:
-```pascal
-ShowOnClient(GameTabs.Get(ERSGameTab.INVENTORY));
-```
-*)
-function TRSGameTabs.Get(tab: ERSGameTab): TBox;
-begin
-  Result := Self.Tabs[tab-1];
 end;
 
 (*
@@ -142,9 +139,10 @@ begin
   if (RSClient.Mode = ERSMode.RESIZABLE_MODERN) and (Target.CountColor(8639715, 0, Self.Tabs[ERSGameTab.LOGOUT-1]) > 0) then
     Exit(ERSGameTab.LOGOUT);
 
-  for tab := ERSGameTab.COMBAT to High(ERSGameTab) do
-    if (Target.CountColor(Self.ActiveColor, Self.Tabs[tab-1]) > 50) then
+  for tab := ERSGameTab.COMBAT to ERSGameTab.MUSIC do
+    if (Target.CountColor(Self.ActiveColor, Self.Tabs[tab]) > 50) then
       Exit(tab);
+  Result := ERSGameTab.NONE;
 end;
 
 
@@ -184,25 +182,90 @@ begin
   Result := SleepUntil(Self.IsOpen(tab), interval, time);
 end;
 
+
+(*
+## GameTabs.FKeyOpen
+```pascal
+function TRSGameTabs.FKeyOpen(tab: ERSGameTab): Boolean;
+```
+Attempts to open the specified `tab` gametab with an FKey.
+This works by randomly using FKeys that haven't been tried yet and slowly
+caching which gametabs they open. At first most times this is used it won't
+open the `tab` specified, but as more EKeyCode/ERSGameTab pairs get mapped
+this starts getting them right.
+
+Example:
+```pascal
+WriteLn GameTabs.FKeyOpen(ERSGameTab.INVENTORY);
+```
+*)
+function TRSGameTabs.FKeyOpen(tab: ERSGameTab): Boolean;
+var
+  current, new: ERSGameTab;
+  i: Integer;
+  switched: Boolean;
+begin
+  {$IFDEF SRLT_KEYBINDS_DEBUG}
+  for current := ERSGameTab.COMBAT to ERSGameTab.MUSIC do
+    WriteLn GetDebugLn('GameTabs', 'Keybinds -> ' + ToStr(current) + ' -> ' ToStr(Self.Keybinds[current]));
+  {$ENDIF}
+
+  if Self.Keybinds[tab] <> EKeyCode.UNKNOWN then
+  begin
+    Keyboard.PressKey(Self.Keybinds[tab]);
+    Exit(Self.WaitOpen(tab, 2000));
+  end;
+
+  if Self.AvailableKeys = [] then Exit; //all keys are already setup and there's no match
+  i := Random(0, High(Self.AvailableKeys));
+
+  current := Self.GetCurrent();
+  Keyboard.PressKey(Self.AvailableKeys[i]);
+
+  switched := SleepUntil(current <> (new := Self.GetCurrent()), RandomMode(100, 50, 1500), 600);
+
+  if switched then //if tab switched we are sure of this key-gametab pair
+  begin
+   Self.Keybinds[new] := Self.AvailableKeys[i];
+   Delete(Self.AvailableKeys, i, 1);
+  end
+  else if Self.Keybinds[new] <> EKeyCode.UNKNOWN then
+    Delete(Self.AvailableKeys, i, 1); //This key has no pair
+
+  Result := new = Tab;
+end;
+
+
 (*
 ## GameTabs.Open
 ```pascal
-function TRSGameTabs.Open(tab: ERSGameTab): Boolean;
+function TRSGameTabs.Open(tab: ERSGameTab; fkeyProbability: Single = -1): Boolean;
 ```
 Attempts to open the specified `tab` gametab.
+If `TRSGameTabs.KeybindsEnabled` is true, we might attempt to open the tab
+with {ref}`TRSGameTabs.FKeyOpen`, subject to `fkeyProbability`.
 
 Example:
 ```pascal
 WriteLn GameTabs.Open(ERSGameTab.INVENTORY);
 ```
 *)
-function TRSGameTabs.Open(tab: ERSGameTab): Boolean;
+function TRSGameTabs.Open(tab: ERSGameTab; fkeyProbability: Single = -1): Boolean;
 begin
-  if Self.IsOpen(tab) then Exit(True);
+  if Self.IsOpen(tab) then
+    Exit(True);
+
+  if Self.KeybindsEnabled then
+  begin
+    if fkeyProbability = -1 then fkeyProbability := Biometrics.RandomDouble(0.8);
+
+    if RandomBoolean(fkeyProbability) and Self.FKeyOpen(tab) then
+      Exit(True);
+  end;
 
   for 1 to 3 do
   begin
-    Mouse.Click(Self.Tabs[tab-1], EMouseButton.LEFT);
+    Mouse.Click(Self.Tabs[tab], EMouseButton.LEFT);
     if Self.WaitOpen(tab, 2000) then Exit(True);
   end;
 end;
@@ -215,4 +278,18 @@ begin
 end;
 
 var
+(*
+(GameTabs variable)=
+## var GameTabs
+Global {ref}`TRSGameTabs` variable.
+*)
   GameTabs: TRSGameTabs;
+
+begin
+  GameTabs.KeybindsEnabled := True;
+  GameTabs.AvailableKeys := [
+    EKeyCode.ESCAPE, EKeyCode.F1, EKeyCode.F2, EKeyCode.F3, EKeyCode.F4,
+    EKeyCode.F5, EKeyCode.F6, EKeyCode.F7, EKeyCode.F8, EKeyCode.F9,
+    EKeyCode.F10, EKeyCode.F11, EKeyCode.F12
+  ];
+end;

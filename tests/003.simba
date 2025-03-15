@@ -40,6 +40,7 @@ begin
 
     Assert(BankPin.IsOpen() = False);
     Assert(Bank.IsOpen());
+    Assert(Inventory.IsOpen());
     Assert(Bank.CountTabs() = 9);
     Assert(Bank.GetCurrentTab() = 5);
     Assert(Bank.ClearSearch());

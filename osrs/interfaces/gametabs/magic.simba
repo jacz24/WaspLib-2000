@@ -142,7 +142,7 @@ WriteLn Magic.IsSpellBook(ERSSpellBook.LUNAR);
 *)
 function TRSMagic.IsSpellBook(book: ERSSpellBook): Boolean;
 begin
-  Result := Self._IsSpellBook(book, GameTabs.Get(ERSGameTab.MAGIC).Expand(-5));
+  Result := Self._IsSpellBook(book, GameTabs.Tabs[ERSGameTab.MAGIC].Expand(-5));
 end;
 
 (*
@@ -162,7 +162,7 @@ var
   bounds: TBox;
   book: ERSSpellBook;
 begin
-  bounds := GameTabs.Get(ERSGameTab.MAGIC).Expand(-5);
+  bounds := GameTabs.Tabs[ERSGameTab.MAGIC].Expand(-5);
   for book := ERSSpellBook.STANDARD to High(ERSSpellBook) do
     if Self._IsSpellBook(book, bounds) then
       Exit(book);

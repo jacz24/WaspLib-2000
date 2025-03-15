@@ -11,6 +11,9 @@ function TRSGameTabs.GetCurrent(): ERSGameTab; override;
 begin
   Result := inherited;
   if Result <> ERSGameTab.NONE then Exit;
+
+  if Bank.IsOpen() then Exit(ERSGameTab.INVENTORY);
+
   if not Options.IsHouseOptionsOpen() then Exit;
   Result := ERSGameTab.OPTIONS;
   if RSMouseZoom.SettingChecked then Exit;
@@ -24,15 +27,4 @@ begin
     RSMouseZoom.ZoomLevel := -1;
     Options.ZoomLevel := -1;
   end;
-end;
-
-function TRSGameTabs.Open(tab: ERSGameTab): Boolean; override;
-begin
-  if Bank.IsOpen() then
-  begin
-    if tab = ERSGameTab.INVENTORY then Exit(True);
-    Bank.Close();
-  end;
-
-  Result := inherited();
 end;
