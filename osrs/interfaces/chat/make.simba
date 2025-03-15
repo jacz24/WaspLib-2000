@@ -1,0 +1,21 @@
+(*
+# Make
+The "Make" menu is the chatbox menu that pops up when you attempt to craft
+certain items in OldSchool RuneScape.
+*)
+
+{$DEFINE SRLT_MAKE_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+type
+  TRSMakeItem = record
+    Item: String;
+    Index, Quantity: Integer;
+  end;
+
+  TRSMake = record
+    Items: array of TRSMakeItem;
+    const QUANTITY_ALL: Integer = 0;
+  end;
+
+

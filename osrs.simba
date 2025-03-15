@@ -1,3 +1,29 @@
+(*
+# SRLT
+SRLT is a library used to bot OldSchool RuneScape with Simba 2.0.
+SRLT stands for SRL Tribute and it's heavily inspired in previous work done by
+the SRL Community.
+
+This library is meant to do the job of both [SRL-T](https://github.com/Torwent/SRL-T)
+and [WaspLib](https://github.com/Torwent/WaspLib) in Simba 1.4 in a lighter,
+less confusing way.
+*)
+
+(*
+## Compile Directives
+```pascal
+{$DEFINE DEBUG_MOUSE}
+{$DEFINE SRLT_DISABLE_REMOTEINPUT}
+{$DEFINE SRLT_KEYBINDS_DEBUG}
+{$DEFINE DEBUG_UPTEXT}
+```
+This are the compiler directives available in the library.
+
+Add them **before** including the library to use them.
+
+They should be self-explanatory.
+*)
+
 {$INCLUDE_ONCE utils.simba}
 
 // The following allows individual include files to compile on their own with just having {$INCLUDE_ONCE SRLT/osr.simba}

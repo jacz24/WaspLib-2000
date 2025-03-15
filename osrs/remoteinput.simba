@@ -1,6 +1,8 @@
 {$DEFINE SRLT_REMOTEINPUT_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
+{.$DEFINE SRLT_DISABLE_REMOTEINPUT}
+
 {$loadlib ../plugins/libremoteinput/libremoteinput}
 
 type

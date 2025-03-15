@@ -41,7 +41,6 @@ Record responsible to handle the bank interface.
     Bounds: TBox;
     Slots: TRSSlotInterface;
     Items: TRSItemInterface;
-
     Title: TRSInterfaceTitle;
     Scroll: TRSScrollBar;
 
@@ -62,12 +61,11 @@ Record responsible to handle the bank interface.
       NotNow, MoreInfo: TBox;
     end;
 
+    {%codetools off}
     Cache: record
       Quantity: Integer;
       Items: TStringMap<TBankPosition>;
     end;
-
-    {%codetools off}
     _IsOpenHelperBox: TBox;
     {%codetools on}
     const QUANTITY_ALL: Integer = 0;
