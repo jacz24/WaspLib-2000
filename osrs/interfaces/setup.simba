@@ -17,6 +17,7 @@ begin
   Logout.SetupInterface();
   MM2MS.Setup();
   Chat.SetupInterface();
+  Make.SetupInterface();
   InterfaceArea.SetupInterface();
   RSInterface.SetupInterface();
   XPBar.SetupInterface();

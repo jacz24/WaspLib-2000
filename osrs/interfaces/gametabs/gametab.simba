@@ -1,13 +1,31 @@
 (*
 # GameTab
-Gametabs interfaces core
+Gametabs interfaces core.
+Whenever you want to use gametab coordinates that are not unique to a specific
+tab you should use this.
+
+Check {ref}`TRSInterface` to see what coordinates it has available.
 *)
 {$DEFINE SRLT_GAMETAB_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
+(*
+(TRSGameTab)=
+## type TRSGameTab
+GameTab type that holds the core coordinates of a gametab.
+*)
   TRSGameTab = type TRSInterface;
 
+(*
+## GameTab.SetupInterface
+```pascal
+procedure TRSGameTab.SetupInterface();
+```
+Internal method used to setup the {ref}`TRSGameTab` coordinates.
+
+This is automatically called for you on the {ref}`GameTab variable`.
+*)
 procedure TRSGameTab.SetupInterface();
 begin
   case RSClient.Mode of
@@ -49,4 +67,9 @@ begin
 end;
 
 var
+(*
+(GameTab variable)=
+## var GameTab
+Global {ref}`TRSGameTab` variable.
+*)
   GameTab: TRSGameTab;

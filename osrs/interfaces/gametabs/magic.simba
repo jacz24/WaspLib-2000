@@ -75,6 +75,11 @@ const
   ]);
 
 type
+(*
+(TRSMagic)=
+## type TRSMagic
+Main record reponsible for handling the magic gametab.
+*)
   TRSMagic = record
     SpellCache: array [ERSSpell] of record
       Box: TBox;
@@ -591,9 +596,10 @@ begin
   Result += 1;
 end;
 
-(*
-## var Magic
-Global Magic variable.
-*)
 var
+(*
+(Magic variable)=
+## var Magic
+Global {ref}`TRSMagic` variable.
+*)
   Magic: TRSMagic;

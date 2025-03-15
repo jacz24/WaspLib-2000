@@ -34,7 +34,7 @@ Enumerator of the equipment buttons.
 (*
 (TRSEquipment)=
 ## type TRSEquipment
-Main equipment type reponsible for handling it.
+Main record reponsible for handling the equipment gametab.
 *)
   TRSEquipment = record
     Slots: TRSSlotInterface;
@@ -42,6 +42,15 @@ Main equipment type reponsible for handling it.
     Buttons: array [ERSEquipmentButton] of TRSButton;
   end;
 
+(*
+## Equipment.SetupInterface
+```pascal
+procedure TRSEquipment.SetupInterface();
+```
+Internal method used to setup the {ref}`TRSEquipment` coordinates.
+
+This is automatically called for you on the {ref}`Equipment variable`.
+*)
 procedure TRSEquipment.SetupInterface();
 var
   slots, btns: TBoxArray;
@@ -101,4 +110,9 @@ begin
 end;
 
 var
+(*
+(Equipment variable)=
+## var Equipment
+Global {ref}`TRSEquipment` variable.
+*)
   Equipment: TRSEquipment;

@@ -49,6 +49,7 @@ They should be self-explanatory.
 {$IFNDEF SRLT_GAMETAB_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/gametabs/gametab.simba}
 {$IFNDEF SRLT_CHAT_TABS_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/chat/chattabs.simba}
 {$IFNDEF SRLT_CHAT_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/chat/chat.simba}
+{$IFNDEF SRLT_MAKE_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/chat/make.simba}
 {$IFNDEF SRLT_MAINSCREEN_INCLUDED}          {$INCLUDE_ONCE osrs/interfaces/mainscreen/mainscreen.simba}
 {$IFNDEF SRLT_INTERFACE_AREA_INCLUDED}      {$INCLUDE_ONCE osrs/interfaces/interfacearea.simba}
 
@@ -86,6 +87,7 @@ They should be self-explanatory.
 {$IFNDEF SRLT_OVERRIDES_INCLUDED}           {$INCLUDE_ONCE osrs/overrides.simba}
 
 
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}

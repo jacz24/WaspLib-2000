@@ -15,7 +15,90 @@ type
 
   TRSMake = record
     Items: array of TRSMakeItem;
+    QuantityButtons: TBoxArray;
+    {%codetools on}
+    _IsOpenHelper, _QuantityHelper, _ItemsHelper: TBox;
+    {%codetools on}
     const QUANTITY_ALL: Integer = 0;
+    const TEXT_COLOR: TColor = $203040;
   end;
 
+(*
+## Make.SetupInterface
+```pascal
+procedure TRSMake.SetupInterface();
+```
+Internal method used to setup the {ref}`TRSMake` coordinates.
 
+This is automatically called for you on the {ref}`Make variable`.
+*)
+procedure TRSMake.SetupInterface();
+begin
+  with Chat.Bounds do
+  begin
+    Self._IsOpenHelper.X1 := X1 + 40;
+    Self._IsOpenHelper.Y1 := Y1 + 12;
+    Self._IsOpenHelper.X2 := X1 + 300;
+    Self._IsOpenHelper.Y2 := Y1 + 34;
+  end;
+
+  with Chat.Bounds do
+  begin
+    Self._QuantityHelper.X1 := X2 - 193;
+    Self._QuantityHelper.Y1 := Y1 + 15;
+    Self._QuantityHelper.X2 := X2 - 19;
+    Self._QuantityHelper.Y2 := Y1 + 44;
+  end;
+
+  with Chat.Bounds do
+  begin
+    Self._ItemsHelper.X1 := X1 + 8;
+    Self._ItemsHelper.Y1 := Y1 + 51;
+    Self._ItemsHelper.X2 := X2 - 8;
+    Self._ItemsHelper.Y2 := Y2 - 19;
+  end;
+end;
+
+(*
+## Make.IsOpen
+```pascal
+function TRSMake.IsOpen(): Boolean;
+```
+Returns True/False if the {ref}`Make` if open.
+
+Example:
+```pascal
+WriteLn Make.IsOpen();
+```
+*)
+function TRSMake.IsOpen(): Boolean;
+begin
+  Result := Target.HasColor(Self.TEXT_COLOR, 0, 500, Self._IsOpenHelper);
+end;
+
+(*
+## Make.WaitOpen
+```pascal
+function TRSMake.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
+```
+Returns True if the {ref}`Make` opens within `time` milliseconds.
+
+Example:
+```pascal
+WriteLn Make.WaitOpen();
+```
+*)
+function TRSMake.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
+begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsOpen(), interval, time);
+end;
+
+
+var
+(*
+(Make variable)=
+## var Make
+Global {ref}`TRSMake` variable.
+*)
+  Make: TRSMake;

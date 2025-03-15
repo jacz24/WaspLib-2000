@@ -13,6 +13,15 @@ type
     ShiftEnabled: Boolean;
   end;
 
+(*
+## Inventory.SetupInterface
+```pascal
+procedure TRSInventory.SetupInterface();
+```
+Internal method used to setup the {ref}`TRSInventory` coordinates.
+
+This is automatically called for you on the {ref}`Inventory variable`.
+*)
 procedure TRSInventory.SetupInterface();
 begin
   Self.Slots.Setup('Inventory.Slots', TBoxArray.Create(GameTab.TopLeft.Offset(13,9), 4, 7, 31, 31, [11, 5]));
@@ -377,8 +386,8 @@ end;
 
 var
 (*
-(Inventory)=
+(Inventory variable)=
 ## var Inventory
-Global TRSInventory variable.
+Global {ref}`TRSInventory` variable.
 *)
   Inventory: TRSInventory;
