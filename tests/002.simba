@@ -15,7 +15,6 @@ var
 begin
   for mode in modes do
   begin
-    if not FileExists(PATH + mode + FILENAME + '-0.png') then Continue;
     img := TImage.Create(PATH + mode + FILENAME + '-0.png');
     Target.SetImage(img);
 

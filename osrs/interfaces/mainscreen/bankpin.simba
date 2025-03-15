@@ -103,11 +103,44 @@ end;
 
 
 (*
+## BankPin.FindDigit
+```pascal
+function TRSBankPin.FindDigit(digit: Char): Integer;
+```
+Finds a bank pin digit.
+
+Example:
+```pascal
+WriteLn BankPin.FindDigit('5');
+```
+*)
+function TRSBankPin.FindDigit(digit: Char): Integer;
+var
+  i, hovering: Integer;
+begin
+  hovering := -1;
+  for i := 0 to High(Self.Buttons) do
+  begin
+    if Self.Buttons[i].Contains(Mouse.Position()) then
+    begin
+      hovering := i;
+      Continue;
+    end;
+
+    if OCR.Locate(Self.Buttons[i], digit, [$007FFF], 0, RSFonts.BOLD) > 0.95 then
+      Exit(i);
+  end;
+
+  if hovering > -1 then Exit(hovering);
+  Result := -1;
+end;
+
+(*
 ## BankPin.ClickDigit
 ```pascal
-function TRSBankPin.ClickDigit(digit: Char): Boolean; override;
+function TRSBankPin.ClickDigit(digit: Char): Boolean;
 ```
-Clicks a bank pin digit.
+Finds a digit with {ref}`BankPin.FindDigit` and clicks it if it was found.
 
 Example:
 ```pascal
@@ -117,28 +150,11 @@ WriteLn BankPin.ClickDigit('5');
 function TRSBankPin.ClickDigit(digit: Char): Boolean;
 var
   i: Integer;
-  hovering: Boolean;
 begin
-  for i := 0 to High(Self.Buttons) do
-  begin
-    if Self.Buttons[i].Contains(Mouse.Position()) then
-    begin
-      hovering := True;
-      Continue;
-    end;
-
-    if OCR.Locate(Self.Buttons[i], digit, [$007FFF], 0, RSFonts.BOLD) > 0.95 then
-    begin
-      Mouse.Click(Self.Buttons[i], EMouseButton.LEFT);
-      Exit(True);
-    end;
-  end;
-
-  if hovering then
-  begin
-    Mouse.Click(EMouseButton.LEFT);
-    Exit(True);
-  end;
+  i := Self.FindDigit(digit);
+  if i < 0 then Exit;
+  Mouse.Click(Self.Buttons[i], EMouseButton.LEFT);
+  Result := True;
 end;
 
 

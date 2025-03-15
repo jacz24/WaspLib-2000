@@ -171,10 +171,10 @@ begin
   Self.Slots.Setup('Bank.Slots', Self.SlotBoxes, @Self.FindItemBoundaries);
   Self.Items.Setup('Bank.Items', @Self.Slots, [0, 10, 3, 0]);
 
-  Self._IsOpenHelperBox.X1 := Self.Bounds.X1 + 240;
-  Self._IsOpenHelperBox.Y1 := Self.Bounds.Y2 - 39;
-  Self._IsOpenHelperBox.X2 := Self.Bounds.X2 - 155;
-  Self._IsOpenHelperBox.Y2 := Self.Bounds.Y2 - 25;
+  Self._IsOpenHelperBox.X1 := Self.Bounds.X1 + 235;
+  Self._IsOpenHelperBox.Y1 := Self.Bounds.Y2 - 42;
+  Self._IsOpenHelperBox.X2 := Self.Bounds.X2 - 156;
+  Self._IsOpenHelperBox.Y2 := Self.Bounds.Y2 - 26;
 
   for i := 0 to 1 do
   begin
@@ -302,12 +302,11 @@ var
 begin
   if BankPin.IsOpen() then
   begin
-    //TODO:
-    //if not SleepUntil(BankPin.ButtonsLoaded(), 100, 3000) then
-    //  Self.Fatal('Bank pin buttons don''t seem to have loaded in 3 seconds.');
+    if not BankPin.WaitLoading(3000) then
+      raise GetDebugLn('BankPin', 'Bank pin buttons don''t seem to have loaded in 3 seconds.');
 
-    //if not BankPin.Enter(Login.GetPlayerPin()) then
-    //  Self.Fatal('Failed to enter bank pin');
+    if not BankPin.Enter(Accounts.GetPin()) then
+      raise GetDebugLn('BankPin', 'Failed to enter bank pin.');
   end;
 
   count := Target.CountColor($0, 0, Self._IsOpenHelperBox);
@@ -434,8 +433,10 @@ begin
   if not Self.IsOpen() then Exit;
 
   if tab = Self.GetCurrentTab() then
-    if (tab = 0) and not Self.Title.IsTitle('howing') then
-      Exit(True);
+  begin
+    if tab <> 0 then Exit(True);
+    if not Self.Title.IsTitle('howing') then Exit(True);
+  end;
 
   Mouse.Click(Self.Tabs[tab], EMouseButton.LEFT);
   Result := SleepUntil(tab = Self.GetCurrentTab(), RandomMode(100, 50, 1500), 600);

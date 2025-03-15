@@ -1,0 +1,60 @@
+(*
+## Bank Tests
+Tests the integrety of several bankpin and bank methods.
+*)
+{$I SRLT/osrs.simba}
+{$ASSERTIONS ON}
+
+function TMouse.Position(): TPoint; override;
+begin
+  Result := [0,0];
+end;
+
+const
+  PATH: String = {$MACRO DIR} + 'imgs' + PATH_SEP;
+  MODES: TStringArray = ['fixed', 'resizable_classic', 'resizable_modern_small', 'resizable_modern_large'];
+  FILENAME: String := PATH_SEP + PathExtractNameWithoutExt(SCRIPT_FILE);
+var
+  mode: String;
+  img: TImage;
+  digits: TIntegerArray = [0, 7, 9, 9];
+  slots: TIntegerArray = [47,72,71,72];
+begin
+  for mode in modes do
+  begin
+    img := TImage.Create(PATH + mode + FILENAME + '-0.png');
+    Target.SetImage(img);
+
+    RSClient.Mode := RSClient.DetectMode();
+    SetupInterfaces();
+
+    Assert(BankPin.IsOpen());
+    Assert(BankPin.GetDigitIndex() = 1);
+    Assert(BankPin.FindDigit('5') = digits[0]);
+    Delete(digits, 0, 1);
+
+    img.Free();
+
+    img := TImage.Create(PATH + mode + FILENAME + '-1.png');
+    Target.SetImage(img);
+
+    Assert(BankPin.IsOpen() = False);
+    Assert(Bank.IsOpen());
+    Assert(Bank.CountTabs() = 9);
+    Assert(Bank.GetCurrentTab() = 5);
+    Assert(Bank.ClearSearch());
+    Assert(Bank.InceneratorTooltipVisible() = False);
+    Assert(Bank.HasJagexAccountAd() = False);
+    Assert(Bank.OpenTab(5));
+    Assert(Bank.SetArrangement(ERSBankArrangement.INSERT));
+    Assert(Bank.SetWithdrawMode(False));
+    Assert(Bank.SetQuantity(ERSBankQuantity.ONE));
+    Assert(Bank.Slots.Count() = slots[0]);
+    Delete(slots, 0, 1);
+    Assert(Bank.Items.Contains('Rune defender'));
+    Assert(Bank.Items.Contains('Spiked boots'));
+    Assert(Bank.Items.IndexOf(['Spiked boots']) = 30);
+
+    img.Free();
+  end;
+end;
