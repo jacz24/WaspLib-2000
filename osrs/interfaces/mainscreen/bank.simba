@@ -76,13 +76,27 @@ Record responsible to handle the {ref}`Bank` interface.
 ```pascal
 function TRSBank.FindItemBoundaries(): TBoxArray;
 ```
-Finds item boundaries. This is an internal function used to retrieve the boxes we
-search for items in.
+Finds item boundaries and returns them as a TBoxArray.
 
-Example:
+You have 2 ways of getting the bank slots, a static one:
+```pascal
+ShowOnClient(Bank.SlotBoxes);
+```
+
+```{figure} ../../images/bank_static_slots.png
+The bank static slots.
+```
+
+And a dynamic one:
 ```pascal
 ShowOnClient(Self.FindItemBoundaries());
 ```
+
+```{figure} ../../images/bank_item_boundaries.png
+The bank "dynamic" slots.
+```
+
+There are use cases for both, internally, `Bank.FindItemBoundaries` is usually used.
 *)
 function TRSBank.FindItemBoundaries(): TBoxArray;
 var
@@ -364,9 +378,22 @@ begin
   Result := Self.Title.Close(escapeProbability);
 end;
 
+(*
+## Bank.Tabs
+You can access the bank tabs coordinates via the `TRSBank.Tabs` variable.
+
+Example:
+```pascal
+ShowOnClient(Bank.Tabs);
+```
+
+```{figure} ../../images/bank_tabs.png
+The bank interface.
+```
+*)
 
 (*
-## Bank.CountTabs
+### Bank.CountTabs
 ```pascal
 function TRSBank.CountTabs: Integer;
 ```
@@ -387,7 +414,7 @@ begin
 end;
 
 (*
-## Bank.GetCurrentTab
+### Bank.GetCurrentTab
 ```pascal
 function TRSBank.GetCurrentTab(): Integer;
 ```
@@ -411,7 +438,7 @@ begin
 end;
 
 (*
-## Bank.OpenTab
+### Bank.OpenTab
 ```pascal
 function TRSBank.OpenTab(tab: Integer): Boolean;
 ```
@@ -479,7 +506,6 @@ begin
   if Self.WithdrawModeButtons[btn].Enabled() then Exit(True);
   Result := Self.WithdrawModeButtons[btn].Enable();
 end;
-
 
 (*
 ## Bank.SetQuantity

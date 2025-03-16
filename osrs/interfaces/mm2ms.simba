@@ -6,7 +6,12 @@ Supports rotation, and zoom, and resizable client.
 MM2MS extends the Minimap interface as well as the mainscreen interface with
 functionality to convert coordinates to & from the minimap to the mainscreen (mm2ms).
 
-Original work done by slacky
+Original work done by slacky.
+
+It's thanks to {ref}`MM2MS` that we can have the following grid:
+```{figure} ../../images/mm2ms.png
+The MM2MS projection.
+```
 *)
 
 {$DEFINE SRLT_MM2MS_INCLUDED}
@@ -14,18 +19,17 @@ Original work done by slacky
 
 type
 (*
-(TRSMM2MS)=
-## type TRSMM2MS
-Main record responsible for minimap to mainscreen (mm2ms) conversion.
+## TRSMM2MS
+Main record responsible for minimap to mainscreen ({ref}`MM2MS`) conversion.
 *)
-  TMM2MS = record
+  TRSMM2MS = record
     ZoomQuads: array [0..100] of TQuad;
     PlayerBoxes: array [0..100] of TBox;
     Projector: TMM2MSProjector;
     Normalizer: TMM2MSProjector;
   end;
 
-procedure TMM2MS.Setup();
+procedure TRSMM2MS.Setup();
 begin
   Self.Projector.SetupProjection(RSClient.Mode);
   Self.Normalizer.SetupProjection(ERSMode.FIXED);
@@ -35,7 +39,7 @@ end;
 (*
 ## MM2MS.Run
 ```pascal
-function TMM2MS.Run(arr: Vector3Array; roll: Single): TPointArray;
+function TRSMM2MS.Run(arr: Vector3Array; roll: Single): TPointArray;
 ```
 Core method that will run the `TMM2MSProjector` to convert points from the
 minimap to the mainscreen.
@@ -43,7 +47,7 @@ minimap to the mainscreen.
 You will likely not need to use this directly and will only interact with the
 `TRSMinimap` and `TRSMainScreen` extensions below.
 *)
-function TMM2MS.Run(arr: Vector3Array; roll: Single): TPointArray;
+function TRSMM2MS.Run(arr: Vector3Array; roll: Single): TPointArray;
 var
   i: Integer;
 begin
@@ -58,12 +62,11 @@ end;
 
 var
 (*
-(MM2MS)=
-## var MM2MS
-Global MM2MS variable. It's unlikely you need to use this directly.
+## MM2MS variable
+Global {ref}TRSMM2MS variable. It's unlikely you need to use this directly.
 You usually only need the `TRSMinimap` and `TRSMainScreen` extensions below.
 *)
-  MM2MS: TMM2MS;
+  MM2MS: TRSMM2MS;
 
 (*
 ## Minimap Vectors To MainScreen

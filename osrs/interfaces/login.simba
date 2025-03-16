@@ -1,15 +1,19 @@
 (*
 # Login
-This file is responsible for handling everything that is related to logging into the game.
-It has records with methods to handle the login screen, the world switcher and the lobby screen.
+The login screen is the first screen you see that you can interact with when you open the game:
+
+```{figure} ../../images/loginscreen.png
+The login screen.
+```
+
+SRLT's {ref}`TRSLogin` can handle both resizable and fixed mode login screens.
 *)
 {$DEFINE SRLT_LOGIN_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
 (*
-(TRSLobbyScreen)=
-## type TRSLobbyScreen
+## TRSLobbyScreen
 Record that handles the login lobby screen.
 The lobby screen is the screen you see after logging in with the large red
 button with "CLICK HERE TO PLAY".
@@ -24,7 +28,7 @@ button with "CLICK HERE TO PLAY".
 procedure TRSLobbyScreen.Setup();
 ```
 Internal function that sets up the lobby screen coordinates.
-This is automatically called for you on the {ref}`Lobby` variable.
+This is automatically called for you on the {ref}`Lobby variable`.
 *)
 procedure TRSLobbyScreen.Setup();
 begin
@@ -103,21 +107,22 @@ end;
 
 var
 (*
-(Lobby)=
-## var Lobby
-Global TRSLobbyScreen variable.
+## Lobby variable
+Global {ref}`TRSLobbyScreen` variable.
 *)
   Lobby: TRSLobbyScreen;
 
 type
 (*
-(TRSLoginWorldSwitcher)=
-## type TRSLoginWorldSwitcher
-Reponsible for handling the login screen world switcher.
+## TRSLoginWorldSwitcher
+Reponsible for handling the login screen world switcher:
+```{figure} ../../images/login_worldswitcher.png
+The login world switcher.
+```
 *)
   TRSLoginWorldSwitcher = record
     Bounds: TBox;
-    OpenButton, CancelButton: TBox;
+    OpenButton, CancelButton, LeftButton, RightButton: TBox;
     CurrentWorld: Integer;
     WorldBoxes: TBoxArray;
 
@@ -129,8 +134,8 @@ Reponsible for handling the login screen world switcher.
 ```pascal
 procedure TRSLoginWorldSwitcher.Setup();
 ```
-Internal method used to setup the `TRSLoginWorldSwitcher` coordinates.
-This is automatically called for you on the {ref}`LoginWorldSwitcher` variable.
+Internal method used to setup the {ref}`TRSLoginWorldSwitcher` coordinates.
+This is automatically called for you on the {ref}`LoginWorldSwitcher variable`.
 *)
 procedure TRSLoginWorldSwitcher.Setup();
 begin
@@ -150,6 +155,16 @@ begin
   Self.OpenButton.Y2 := Self.OpenButton.Y1 + 32;
 
   Self.WorldBoxes := TBoxArray.Create(Self.Bounds.TopLeft.Offset(62, 35), 7, 24, 84, 18, [9, 1]);
+
+  Self.LeftButton.X1 := Target.Bounds.X1 + 9;
+  Self.LeftButton.Y1 := Target.Bounds.Height div 2 - 10;
+  Self.LeftButton.X2 := Self.LeftButton.X1 + 42;
+  Self.LeftButton.Y2 := Self.LeftButton.Y1 + 28;
+
+  Self.RightButton.X2 := Target.Bounds.X2 - 7;
+  Self.RightButton.Y1 := Target.Bounds.Height div 2 - 10;
+  Self.RightButton.X1 := Self.RightButton.X2 - 42;
+  Self.RightButton.Y2 := Self.RightButton.Y1 + 28;
 end;
 
 (*
@@ -229,36 +244,6 @@ end;
 
 
 (*
-## LoginWorldSwitcher Buttons
-```pascal
-function TRSLoginWorldSwitcher.LeftButton(): TBox;
-function TRSLoginWorldSwitcher.RightButton(): TBox;
-```
-Returns the login screen world switcher pagination buttons bounds.
-
-Example:
-```pascal
-if LoginWorldSwitcher.IsOpen() then
-  ShowOnClient(LoginWorldSwitcher.RightButton);
-```
-*)
-function TRSLoginWorldSwitcher.LeftButton(): TBox;
-begin
-  Result.X1 := Target.Bounds.X1 + 9;
-  Result.Y1 := Target.Bounds.Height div 2 - 10;
-  Result.X2 := Result.X1 + 42;
-  Result.Y2 := Result.Y1 + 28;
-end;
-
-function TRSLoginWorldSwitcher.RightButton(): TBox;
-begin
-  Result.X2 := Target.Bounds.X2 - 7;
-  Result.Y1 := Target.Bounds.Height div 2 - 10;
-  Result.X1 := Result.X2 - 42;
-  Result.Y2 := Result.Y1 + 28;
-end;
-
-(*
 ## LoginWorldSwitcher.Read
 ```pascal
 function TRSLoginWorldSwitcher.Read(index: Integer): Integer;
@@ -298,7 +283,7 @@ var
   first: Integer;
 begin
   first := Self.Read(0);
-  Mouse.Click(Self.LeftButton(), EMouseButton.LEFT);
+  Mouse.Click(Self.LeftButton, EMouseButton.LEFT);
   Result := SleepUntil(Self.Read(0) <> first, RandomMode(100, 50, 1500), 600);
   Sleep(400, 1200);
 end;
@@ -310,7 +295,7 @@ begin
   if Target.HasColor($0, 0, 1615, Self.WorldBoxes[High(Self.WorldBoxes)]) then Exit;
 
   first := Self.Read(0);
-  Mouse.Click(Self.RightButton(), EMouseButton.LEFT);
+  Mouse.Click(Self.RightButton, EMouseButton.LEFT);
   Result := SleepUntil(Self.Read(0) <> first, RandomMode(100, 50, 1500), 600);
   Sleep(400, 1200);
 end;
@@ -401,11 +386,42 @@ begin
   Result := SleepUntil(not Self.IsOpen(), 50, 600) and (Self.GetCurrent() = world);
 end;
 
+{$IFDEF SRLT_DEBUG_INTERFACES}
+procedure TRSLoginWorldSwitcher.Draw(img: TImage);
+var
+  i: Integer;
+begin
+  if not Self.IsOpen() then Exit;
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
+
+  img.DrawColor := $00FF00;
+  img.DrawBox(Self.CancelButton);
+
+  img.DrawColor := $FFFFFF;
+  img.DrawBoxArray(Self.WorldBoxes, False);
+
+  img.DrawColor := $0000FF;
+  img.DrawBox(Self.LeftButton);
+  img.DrawBox(Self.RightButton);
+end;
+
+procedure TRSLoginWorldSwitcher.ShowOnClient();
+var
+  img: TImage;
+begin
+  img := TImage.CreateFromTarget();
+  Self.Draw(img);
+  img.Show();
+  img.Free();
+end;
+{$ENDIF}
+
 var
 (*
-(LoginWorldSwitcher)=
-## var LoginWorldSwitcher
-Global `TRSLoginWorldSwitcher` variable.
+## LoginWorldSwitcher variable
+Global {ref}`TRSLoginWorldSwitcher` variable.
 *)
   LoginWorldSwitcher: TRSLoginWorldSwitcher;
 
@@ -490,9 +506,8 @@ Enums representing various aspects of the login screen.
   );
 
 (*
-(TRSLogin)=
-## type TRSLogin
-Main record responsible for handling the login screen.
+## TRSLogin
+Main record responsible for handling the {ref}`Login` screen.
 *)
   TRSLogin = record
     Bounds: TBox;
@@ -515,7 +530,7 @@ Main record responsible for handling the login screen.
 procedure TRSLogin.Setup();
 ```
 Internal method responsible for setting up the {ref}`TRSLogin` coordinates.
-This is automatically called for you on the {ref}`Login` variable.
+This is automatically called for you on the {ref}`Login variable`.
 *)
 procedure TRSLogin.Setup();
 begin
@@ -1018,4 +1033,8 @@ begin
 end;
 
 var
+(*
+## Login variable
+Global {ref}`TRSLogin` variable.
+*)
   Login: TRSLogin;

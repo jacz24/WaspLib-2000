@@ -1,6 +1,10 @@
 (*
 # BankPin
 Methods to interact with the bank pin interface.
+
+```{figure} ../../images/bankpin_interface.png
+The bankpin interface.
+```
 *)
 
 {$DEFINE SRLT_BANKPIN_INCLUDED}
@@ -250,6 +254,32 @@ begin
   Result := SleepUntil(_IsUnlocked(), 300, 3000) or Self.Enter(pin, Dec(attempts));
 end;
 
+{$DEFINE SRLT_DEBUG_INTERFACES}
+{$IFDEF SRLT_DEBUG_INTERFACES}
+procedure TRSBankPin.Draw(img: TImage);
+var
+  i: Integer;
+begin
+  if not Self.IsOpen() then Exit;
+
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
+
+  img.DrawColor := $FFFFFF;
+  img.DrawBoxArray(Self.Buttons, False);
+end;
+
+procedure TRSBankPin.ShowOnClient();
+var
+  img: TImage;
+begin
+  img := TImage.CreateFromTarget();
+  Self.Draw(img);
+  img.Show();
+  img.Free();
+end;
+{$ENDIF}
 
 var
 (*
