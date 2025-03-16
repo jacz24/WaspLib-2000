@@ -12,10 +12,11 @@ less confusing way.
 (*
 ## Compile Directives
 ```pascal
-{$DEFINE DEBUG_MOUSE}
+{$DEFINE SRLT_DEBUG_MOUSE}
 {$DEFINE SRLT_DISABLE_REMOTEINPUT}
 {$DEFINE SRLT_KEYBINDS_DEBUG}
-{$DEFINE DEBUG_UPTEXT}
+{$DEFINE SRLT_DEBUG_UPTEXT}
+{$DEFINE SRLT_DEBUG_INTERFACES}
 ```
 This are the compiler directives available in the library.
 
@@ -49,6 +50,7 @@ They should be self-explanatory.
 {$IFNDEF SRLT_GAMETAB_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/gametabs/gametab.simba}
 {$IFNDEF SRLT_CHAT_TABS_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/chat/chattabs.simba}
 {$IFNDEF SRLT_CHAT_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/chat/chat.simba}
+{$IFNDEF SRLT_CHAT_OPTIONS_INCLUDED}        {$INCLUDE_ONCE osrs/interfaces/chat/chatoptions.simba}
 {$IFNDEF SRLT_MAKE_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/chat/make.simba}
 {$IFNDEF SRLT_MAINSCREEN_INCLUDED}          {$INCLUDE_ONCE osrs/interfaces/mainscreen/mainscreen.simba}
 {$IFNDEF SRLT_INTERFACE_AREA_INCLUDED}      {$INCLUDE_ONCE osrs/interfaces/interfacearea.simba}
@@ -75,8 +77,8 @@ They should be self-explanatory.
 {$IFNDEF SRLT_MAPLOADER_INCLUDED}           {$INCLUDE_ONCE osrs/map/maploader.simba}
 {$IFNDEF SRLT_MAP_INCLUDED}                 {$INCLUDE_ONCE osrs/map/map.simba}
 {$IFNDEF SRLT_MAPDEBUGGER_INCLUDED}         {$INCLUDE_ONCE osrs/map/mapdebugger.simba}
-{$IFNDEF SRLT_BANKPIN_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/mainscreen/bankpin.simba}
-{$IFNDEF SRLT_BANK_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/mainscreen/bank.simba}
+{$IFNDEF SRLT_BANKPIN_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/mainscreen/bankpin.simba}
+{$IFNDEF SRLT_BANK_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/mainscreen/bank.simba}
 {$IFNDEF SRLT_COLORFINDER_INCLUDED}         {$INCLUDE_ONCE osrs/mainscreen/colorfinder.simba}
 {$IFNDEF SRLT_HITSPLATS_INCLUDED}           {$INCLUDE_ONCE osrs/mainscreen/hitsplats.simba}
 
@@ -87,6 +89,7 @@ They should be self-explanatory.
 {$IFNDEF SRLT_OVERRIDES_INCLUDED}           {$INCLUDE_ONCE osrs/overrides.simba}
 
 
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}

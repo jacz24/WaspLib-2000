@@ -1,16 +1,46 @@
+(*
+# Chat
+The {ref}`Chat` interface is the interface that shows up at the bottom left
+corner of the game client where you can communicate with other players,
+receive game messages and even interact with some options and menus it hosts
+like the {ref}`Make` menu.
+
+```{figure} ../../../images/chat_interface.png
+The chat interface.
+```
+*)
 {$DEFINE SRLT_CHAT_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
+(*
+## ERSChatColor
+```pascal
+ERSChatColor = enum(
+  BLACK, MAROON, BLUE, PURPLE, RED, LIGHT_RED, WHITE, LIGHT_PURPLE, NAVY, GREEN
+);
+```
+Enum representing each of the available chat text colors.
+*)
   ERSChatColor = enum(
-    BLACK, MAROON, BLUE, PURPLE, RED, LIGHT_RED,
-    WHITE, LIGHT_PURPLE, NAVY, GREEN
+    BLACK, MAROON, BLUE, PURPLE, RED, LIGHT_RED, WHITE, LIGHT_PURPLE, NAVY, GREEN
   );
 
   ERSChatColorArray = array of ERSChatColor;
 
+(*
+## ERSIronMan
+```pascal
+ERSIronMan = enum(NONE, IRONMAN, HARDCORE, ULTIMATE, GROUP, HARCORE_GROUP, UNRANKED_GROUP);
+```
+Enum representing each of the available ironman types.
+*)
   ERSIronMan = enum(NONE, IRONMAN, HARDCORE, ULTIMATE, GROUP, HARCORE_GROUP, UNRANKED_GROUP);
 
+(*
+## TRSChat
+Main record used to interact with the {ref}`Chat` interface.
+*)
   TRSChat = record
     Bounds: TBox;
     Scroll: TRSScrollBar;
@@ -19,9 +49,17 @@ type
     MessageLines: TBoxArray;
     InputLine: TBox;
     ReportButton: TRSButton;
-    const Colors: array [ERSChatColor] of Integer = [$000000, $7F0000, $FF0000, $7F007F, $2010EF, $0000FF, $FFFFFF, $FF9090, $800000, $005F00];
+    const Colors: array [ERSChatColor] of TColor = [$000000, $7F0000, $FF0000, $7F007F, $2010EF, $0000FF, $FFFFFF, $FF9090, $800000, $005F00];
   end;
 
+(*
+## TRSChat.SetupInterface
+```pascal
+procedure TRSChat.SetupInterface();
+```
+Internal method used to setup the {ref}`TRSChat` coordinates.
+This is automatically called for you on the {ref}`Chat variable`.
+*)
 procedure TRSChat.SetupInterface();
 var
   b: TBox;
@@ -53,7 +91,20 @@ begin
   Self.Scroll.Setup();
 end;
 
-function TRSChat.GetColors(colors: ERSChatColorArray): TIntegerArray;
+(*
+## TRSChat.GetColors
+```pascal
+function TRSChat.GetColors(colors: ERSChatColorArray): TColorArray;
+```
+Convenience method used to conver the human readable `colors` in a `ERSChatColorArray` format
+into a `TColorArray` which has the colors in BGR format.
+
+Example:
+```pascal
+WriteLn Chat.GetColors([ERSChatColor.RED]);
+```
+*)
+function TRSChat.GetColors(colors: ERSChatColorArray): TColorArray;
 var
   c: ERSChatColor;
 begin
@@ -61,6 +112,20 @@ begin
 end;
 
 
+(*
+## TRSChat.GetDisplayNameBox
+```pascal
+function TRSChat.GetDisplayNameBox(out color: Integer): TBox;
+function TRSChat.GetDisplayNameBox(): TBox; overload;
+```
+Returns the bounds of the display name on the {ref}`Chat` box.
+You can optionally get the display name color back through the `color` variable.
+
+Example:
+```pascal
+ShowOnClient(Chat.GetDisplayNameBox());
+```
+*)
 function TRSChat.GetDisplayNameBox(out color: Integer): TBox;
 var
   b: TBox;
@@ -85,6 +150,18 @@ begin
   Result := Self.GetDisplayNameBox(color);
 end;
 
+(*
+## TRSChat.GetDisplayName
+```pascal
+function TRSChat.GetDisplayName(): String;
+```
+Returns the account display name on the {ref}`Chat` box as a string.
+
+Example:
+```pascal
+WriteLn Chat.GetDisplayName();
+```
+*)
 function TRSChat.GetDisplayName(): String;
 var
   b: TBox;
@@ -101,6 +178,18 @@ begin
 end;
 
 
+(*
+## TRSChat.GetIronManType
+```pascal
+function TRSChat.GetIronManType() : ERSIronMan;
+```
+Returns the account ironman type.
+
+Example:
+```pascal
+WriteLn Chat.GetIronManType();
+```
+*)
 function TRSChat.GetIronManType() : ERSIronMan;
 var
   b: TBox;
@@ -135,6 +224,18 @@ begin
 end;
 
 
+(*
+## TRSChat.IsTransparent
+```pascal
+function TRSChat.IsTransparent(): Boolean;
+```
+Returns true if the {ref}`Chat` box is in transparent mode.
+
+Example:
+```pascal
+WriteLn Chat.IsTransparent();
+```
+*)
 function TRSChat.IsTransparent(): Boolean;
 var
   b: TBox;
@@ -148,13 +249,37 @@ begin
 end;
 
 
+(*
+## TRSChat.IsOpen
+```pascal
+function TRSChat.IsOpen(): Boolean;
+```
+Returns True/False if the {ref}`Chat` is open.
+
+Example:
+```pascal
+if Chat.IsOpen() then
+  ShowOnClient(Chat.Bounds);
+```
+*)
 function TRSChat.IsOpen(): Boolean;
 begin
   if RSClient.Mode = ERSMode.FIXED then Exit(True);
   Result := Self.Tabs.GetActive() <> ERSChatTab.NONE;
 end;
 
+(*
+## TRSChat.Close
+```pascal
+function TRSChat.Close(): Boolean;
+```
+Attempts to close the {ref}`Chat`interface.
 
+Example:
+```pascal
+WriteLn Chat.Close();
+```
+*)
 function TRSChat.Close(): Boolean;
 begin
   if RSClient.Mode = ERSMode.FIXED then Exit(False);
@@ -165,27 +290,92 @@ begin
 end;
 
 
+(*
+## Chat Queries
+### TRSChat.GetQuery
+```pascal
+function TRSChat.GetQuery(): String;
+```
+Returns the query shown on the {ref}`Chat` interface if any as a string.
+
+Example:
+```pascal
+WriteLn Chat.Close();
+```
+*)
 function TRSChat.GetQuery(): String;
 begin
   Result := OCR.Recognize(Self.Bounds, RSFonts.BOLD, [$0], 0);
 end;
 
+(*
+### TRSChat.GetQueryAnswer
+```pascal
+function TRSChat.GetQueryAnswer(): String;
+```
+Returns the query current answer to the query in the {ref}`Chat` interface if
+any.
+
+Example:
+```pascal
+WriteLn Chat.GetQueryAnswer();
+```
+*)
 function TRSChat.GetQueryAnswer(): String;
 begin
   Result := OCR.Recognize(Self.Bounds, RSFonts.BOLD, [$800000], 0);
 end;
 
+(*
+### TRSChat.FindQuery
+```pascal
+function TRSChat.FindQuery(query: String; caseSensitive: Boolean = False): Boolean;
+```
+Returns the True/False if the {ref}`Chat` interface currently has the specified
+`query` visible.
+
+Example:
+```pascal
+WriteLn Chat.FindQuery('Enter amount');
+```
+*)
 function TRSChat.FindQuery(query: String; caseSensitive: Boolean = False): Boolean;
 begin
   Result := Self.GetQuery().Contains(query, caseSensitive);
 end;
 
+(*
+### TRSChat.WaitQuery
+```pascal
+function TRSChat.WaitQuery(query: String; caseSensitive: Boolean = False; time: Integer = 600; interval: Integer = -1): Boolean;
+```
+Returns the true if the specified `query` is visible in the {ref}`Chat`
+interface within `time` milliseconds.
+
+Example:
+```pascal
+WriteLn Chat.WaitQuery('Enter amount');
+```
+*)
 function TRSChat.WaitQuery(query: String; caseSensitive: Boolean = False; time: Integer = 600; interval: Integer = -1): Boolean;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.FindQuery(query, caseSensitive), interval, time);
 end;
 
+(*
+### TRSChat.AnswerQuery
+```pascal
+function TRSChat.AnswerQuery(query, answer: String; waitTime: Integer = 600; interval: Integer = -1): Boolean;
+```
+Attempts to reply to the specified `query` with `answer` if it's available in the
+{ref}`Chat` interface within `waitTime` milliseconds.
+
+Example:
+```pascal
+WriteLn Chat.AnswerQuery('Enter amount', '15');
+```
+*)
 function TRSChat.AnswerQuery(query, answer: String; waitTime: Integer = 600; interval: Integer = -1): Boolean;
 begin
   Result := Self.WaitQuery(query, False, waitTime, interval);
@@ -200,140 +390,19 @@ begin
 end;
 
 
-type
-  TRSChatOption = record
-    Text: String;
-    Bounds: TBox;
-    Key: EKeyCode;
-  end;
-  TRSChatOptionArray = array of TRSChatOption;
-
-
-function TRSChat.GetOptions(colors: TIntegerArray = []): TRSChatOptionArray;
-var
-  strings: TStringArray;
-  boxes: TBoxArray;
-  i: Int32;
-  tpa, tmp: TPointArray;
-  b: TBox;
-begin
-  if colors = [] then
-    colors := Self.GetColors([ERSChatColor.BLACK, ERSChatColor.WHITE]);
-
-  for i := 0 to High(colors) do
-    tpa += Target.FindColor(colors[i], 0, Self.Bounds);
-
-  b := tpa.Bounds();
-  strings := OCR.RecognizeLines(b, RSFonts.QUILL_8, colors, 0);
-
-  boxes := b.Partition(strings.Length, 1);
-
-  SetLength(Result, Length(boxes));
-
-  for i := 0 to High(boxes) do
-  begin
-    tmp := tpa.ExtractBox(boxes[i]);
-    Result[i].Bounds := tmp.Bounds();
-    Result[i].Text := strings[i];
-
-    if ('Click here to continue' in Result[i].Text) then
-      Result[i].Key := EKeyCode.SPACE
-    else
-      Result[i].Key := EKeyCode(Ord(EKeyCode.NUM_1) + i);
-  end;
-
-end;
-
-
-function TRSChat.FindOption(chatOption: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): TRSChatOption;
-var
-  option: TRSChatOption;
-begin
-  if colors = [] then
-    colors := Self.GetColors([ERSChatColor.BLACK, ERSChatColor.WHITE, ERSChatColor.BLUE]);
-  for option in Self.GetOptions(colors) do
-    if option.Text.Contains(chatOption, caseSensitive) then
-      Exit(option);
-end;
-
-function TRSChat.ContainsOption(chatOption: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): Boolean;
-begin
-  if colors = [] then
-    colors := Self.GetColors([ERSChatColor.BLACK, ERSChatColor.WHITE, ERSChatColor.BLUE]);
-  Result := Self.FindOption(chatOption, caseSensitive, colors) <> [];
-end;
-
-function TRSChat.WaitOption(chatOption: String; caseSensitive: Boolean = False; colors: TIntegerArray = []; time: Integer = 600; interval: Integer = -1): Boolean;
-begin
-  if colors = [] then
-    colors := Self.GetColors([ERSChatColor.BLACK, ERSChatColor.WHITE, ERSChatColor.BLUE]);
-  if interval < 0 then interval := RandomMode(100, 50, 1500);
-  Result := SleepUntil(Self.ContainsOption(chatOption, caseSensitive, colors), time, interval);
-end;
-
-
-function TRSChat.Select(chatOption: String; caseSensitive: Boolean = False; keyboardProbability: Single = -1; colors: TIntegerArray = []): Boolean;
-var
-  option: TRSChatOption;
-begin
-  if colors = [] then
-    colors := Self.GetColors([ERSChatColor.BLACK, ERSChatColor.WHITE]);
-  option := Self.FindOption(chatOption, caseSensitive, colors);
-  if option = [] then Exit;
-
-  if keyboardProbability < 0 then
-    keyboardProbability := Biometrics.RandomDouble(0.5);
-
-  if RandomBoolean(keyboardProbability) then
-    Keyboard.PressKey(option.Key)
-  else
-    Mouse.Click(option.Bounds, EMouseButton.LEFT);
-
-  Result := True;
-end;
-
-function TRSChat.ContinueChat(keyboardProbability: Single = -1): Boolean;
-var
-  colors: TIntegerArray;
-begin
-  if keyboardProbability < 0 then
-    keyboardProbability := Biometrics.RandomDouble(0.5);
-  colors := Self.GetColors([ERSChatColor.BLUE, ERSChatColor.WHITE]);
-  if not Self.Select('Click here to continue', True, keyboardProbability, colors) then
-    Exit;
-
-  Result := Self.WaitOption('Please wait', True, colors, 3000) and
-            SleepUntil(not Self.ContainsOption('Please wait', True, colors), RandomMode(100, 50, 1500), 3000);
-end;
-
-
-function TRSChat.ContinueUntilOption(Option: String; timeout: Integer = 10000): Boolean;
-begin
-  timeout += GetTickCount();
-  while (GetTickCount() < timeout) do
-  begin
-    if Self.ContainsOption(option) then Break;
-    Self.ContinueChat();
-    Sleep(0, 2500, ERandomDir.LEFT);
-  end;
-
-  Result := Self.Select(option);
-end;
-
 (*
 ## Chat.GetMessage
 ```pascal
-function TRSChat.GetMessage(Line: Int32; Colors: TIntegerArray = CHAT_MESSAGE_COLORS): String;
+function TRSChat.GetMessage(line: Integer; colors: TIntegerArray = []): String;
 ```
-
-Get the message in the specified **Line**.
+Get the message in the specified `line`.
 
 Example:
 ```pascal
 WriteLn Chat.GetMessage(5);
 ```
 *)
-function TRSChat.GetMessage(line: Int32; colors: TIntegerArray = []): String;
+function TRSChat.GetMessage(line: Integer; colors: TIntegerArray = []): String;
 const
   STATIC_OFFSET = 2; // Make static text placement so RecognizeStatic can be used
 var
@@ -366,6 +435,18 @@ begin
   //Result := OCR.RecognizeStatic(matrix, TOCRColorFilter.Create(colors), RS_FONT_PLAIN_12);
 end;
 
+(*
+## Chat.FindMessageLine
+```pascal
+function TRSChat.FindMessageLine(msg: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): Integer;
+```
+Find which line has a specific `msg` either entirely or partially if any.
+
+Example:
+```pascal
+WriteLn Chat.FindMessageLine('Hello world');
+```
+*)
 function TRSChat.FindMessageLine(msg: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): Integer;
 var
   i: Integer;
@@ -376,44 +457,59 @@ begin
   Result := -1;
 end;
 
+(*
+## Chat.ContainsMessage
+```pascal
+function TRSChat.ContainsMessage(msg: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): Boolean;
+```
+Returns True/False if the specified `msg` is visible on the {ref}`Chat` interface.
+
+Example:
+```pascal
+WriteLn Chat.ContainsMessage('Hello world');
+```
+*)
 function TRSChat.ContainsMessage(msg: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): Boolean;
 begin
   Result := Self.FindMessageLine(msg, caseSensitive, colors) > -1;
 end;
 
 
-function TRSChat.GetChat(): String;
-var
-  option: TRSChatOption;
-begin
-  for option in Self.GetOptions() do
-  begin
-    if Result <> '' then Result += LINE_SEP;
-    Result += option.Text;
-  end;
-end;
-
-
-function TRSChat.GetChatTitle(): String;
-var
-  options: TRSChatOptionArray;
-begin
-  options := Self.GetOptions([$000080]);
-  if Length(options) > 0 then
-    Result := options[0].Text;
-end;
-
-
+{$IFDEF SRLT_DEBUG_INTERFACES}
 procedure TRSChat.Draw(img: TImage);
+var
+  tab: TRSChatTab;
 begin
   if not Self.IsOpen() then Exit;
 
   img.DrawColor := $00FFFF;
   img.DrawBox(Self.Bounds);
+  img.DrawColor := $FFFFFF;
   img.DrawBoxArray(Self.MessageLines, False);
+  img.DrawColor := $00FF00;
   img.DrawBox(Self.InputLine);
+  img.DrawColor := $FF0000;
+  img.DrawBox(Self.InputLine);
+
+  Self.Scroll.Draw(img);
+  for tab in Self.Tabs.Tabs do
+    tab.Button.Draw(img);
 end;
 
+procedure TRSChat.ShowOnClient();
+var
+  img: TImage;
+begin
+  img := TImage.CreateFromTarget();
+  Self.Draw(img);
+  img.Show();
+  img.Free();
+end;
+{$ENDIF}
 
 var
+(*
+## Chat variable
+Global {ref}`TRSChat` variable.
+*)
   Chat: TRSChat;

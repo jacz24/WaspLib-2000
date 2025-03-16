@@ -1,6 +1,10 @@
 (*
 # Bank
 Methods to interact with the bank interface
+
+```{figure} ../../../images/bank_interface.png
+The bank interface.
+```
 *)
 
 {$DEFINE SRLT_BANK_INCLUDED}
@@ -32,7 +36,7 @@ Bank enums used to interact with the bank interface.
 
 (*
 ## TRSBank
-Record responsible to handle the bank interface.
+Record responsible to handle the {ref}`Bank` interface.
 *)
   TRSBank = record
     Bounds: TBox;
@@ -209,7 +213,7 @@ Internal helper method used to update the buttons coordinates.
 All the bank's bottom buttons shift slightly on the X axis depending on how many dynamic buttons are visible.
 
 ```{note}
-This is automatically called for you with {ref}`Bank.IsOpen()`.
+This is automatically called for you with {ref}`Bank.IsOpen`.
 ```
 *)
 procedure TRSBank.UpdateButtons(offset: Integer);
@@ -1006,7 +1010,7 @@ begin
     Result := Self._InteractionHelper(ERSBankInteraction.DEPOSIT, slot, 1, useQuantityButton);
 end;
 
-
+{$IFDEF SRLT_DEBUG_INTERFACES}
 procedure TRSBank.Draw(img: TImage);
 var
   i: Integer;
@@ -1019,6 +1023,14 @@ begin
     Self.ArrangementButtons[i].Draw(img);
     Self.WithdrawModeButtons[i].Draw(img);
   end;
+
+  img.DrawColor := $FFFFFF;
+  for i := 0 to Self.CountTabs() do
+    img.DrawBox(Self.Tabs[i]);
+
+  img.DrawColor := $FFFF00;
+  img.DrawBoxArray(Self.FindItemBoundaries(), False);
+  Self.Scroll.Draw(img);
 
   for i := 0 to 4 do
     Self.QuantityButtons[i].Draw(img);
@@ -1036,7 +1048,7 @@ begin
   img.Show();
   img.Free();
 end;
-
+{$ENDIF}
 
 var
 (*

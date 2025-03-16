@@ -47,7 +47,7 @@ begin
   Result := SleepUntil(Self.Enabled(), 50, 600);
 end;
 
-
+{$IFDEF SRLT_DEBUG_INTERFACES}
 procedure TRSButton.Draw(img: TImage; color: Integer = $00FFFF);
 var
   oldColor: Integer;
@@ -91,7 +91,7 @@ begin
   img.Show();
   img.Free();
 end;
-
+{$ENDIF}
 
 type
   TRSSlider = record
@@ -261,6 +261,30 @@ begin
 end;
 
 
+{$IFDEF SRLT_DEBUG_INTERFACES}
+procedure TRSScrollBar.Draw(img: TImage);
+var
+  bounds: TBox;
+begin
+  img.DrawColor := $00FF00;
+  img.DrawBox(Self.Area);
+
+  img.DrawColor := $FFFF00;
+  img.DrawBox(Self.Bounds);
+
+  img.DrawColor := $FFFFFF;
+  bounds := Self.GetSlider();
+  img.DrawBox(bounds);
+
+  img.DrawColor := $FF;
+  img.FontSize := 12;
+  bounds.X2 := bounds.X1 - 2;
+  bounds.X1 -= 30;
+  img.DrawText(ToStr(Self.GetLevel()), bounds, [EImageTextAlign.CENTER]);
+
+  img.DrawColor := $00FFFF;
+  img.DrawBoxArray([Self.Up, Self.Down], False);
+end;
 
 procedure ShowOnClient(scroll: TRSScrollBar); overload;
 var
@@ -269,26 +293,9 @@ var
 begin
   img := TImage.CreateFromTarget();
 
-  img.DrawColor := $00FF00;
-  img.DrawBox(scroll.Area);
-
-  img.DrawColor := $FFFF00;
-  img.DrawBox(scroll.Bounds);
-
-  img.DrawColor := $FFFFFF;
-  bounds := scroll.GetSlider();
-  img.DrawBox(bounds);
-
-  img.DrawColor := $FF;
-  img.FontSize := 12;
-  bounds.X2 := bounds.X1 - 2;
-  bounds.X1 -= 30;
-  img.DrawText(ToStr(scroll.GetLevel()), bounds, [EImageTextAlign.CENTER]);
-
-  img.DrawColor := $00FFFF;
-  img.DrawBoxArray([scroll.Up, scroll.Down], False);
+  scroll.Draw(img);
 
   img.Show();
   img.Free();
 end;
-
+{$ENDIF}

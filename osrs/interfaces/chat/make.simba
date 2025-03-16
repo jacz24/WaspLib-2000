@@ -1,18 +1,30 @@
 (*
 # Make
-The "Make" menu is the chatbox menu that pops up when you attempt to craft
-certain items in OldSchool RuneScape.
+The "Make" menu is the {ref}`Chat` box menu that pops up when you attempt to
+craft certain items in OldSchool RuneScape.
+
+```{figure} ../../../images/make_interface.png
+The make interface.
+```
 *)
 
 {$DEFINE SRLT_MAKE_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
+(*
+## TRSMakeItem
+Helper record used to cache make menu items.
+*)
   TRSMakeItem = record
     Item: String;
     Index, Quantity: Integer;
   end;
 
+(*
+## TRSMake
+Main record used to interact with the {ref}`Make` menu.
+*)
   TRSMake = record
     Items: array of TRSMakeItem;
     QuantityButtons: TBoxArray;
@@ -97,6 +109,10 @@ Returns the available item boxes.
 Example:
 ```pascal
 ShowOnClient(Make.GetItemBoxes());
+```
+
+```{figure} ../../../images/make_items.png
+The make interface.
 ```
 *)
 function TRSMake.GetItemBoxes(): TBoxArray;
@@ -213,7 +229,6 @@ begin
   Mouse.Move(tpa[RandomLeft(0, High(tpa))]);
   Result := SleepUntil(not Self.HasHint(), RandomMode(100, 50, 1500), 600);
 end;
-
 
 
 (*
@@ -410,6 +425,34 @@ begin
     end;
   end;
 end;
+
+{$IFDEF SRLT_DEBUG_INTERFACES}
+procedure TRSMake.Draw(img: TImage);
+var
+  boxes: TBoxArray;
+begin
+  if not Self.IsOpen() then Exit;
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Chat.Bounds);
+  img.DrawColor := $FFFFFF;
+  img.DrawBoxArray(Self.QuantityButtons, False);
+  img.DrawColor := $00FF00;
+  img.DrawBoxArray(Self.GetItemBoxes(), False);
+  img.DrawColor := $FF0000;
+  img.DrawBox(Self.GetHintBox());
+end;
+
+procedure TRSMake.ShowOnClient();
+var
+  img: TImage;
+begin
+  img := TImage.CreateFromTarget();
+  Self.Draw(img);
+  img.Show();
+  img.Free();
+end;
+{$ENDIF}
 
 var
 (*

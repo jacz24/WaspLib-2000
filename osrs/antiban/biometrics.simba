@@ -1,6 +1,8 @@
 (*
 # Biometrics
 Biometrics related methods that are unique to the current account being used.
+
+For your convenience you can use {ref}`TBiometrics` methods through the {ref}`Biometrics variable`.
 *)
 
 {$DEFINE SRLT_BIOMETRICS_INCLUDED}
@@ -10,8 +12,7 @@ Biometrics related methods that are unique to the current account being used.
 
 type
 (*
-(EBiometric)=
-## type EBiometric
+## EBiometric
 ```pascal
 EBiometric = enum(
   MULTIPLIER,
@@ -25,7 +26,7 @@ EBiometric = enum(
   RATING, LIKES, DISLIKES
 );
 ```
-EBiometric is a enum that represent biometrics affected by the user user unique
+Enum that represent biometrics affected by the user user unique
 account seed.
 *)
   EBiometric = enum(
@@ -41,8 +42,7 @@ account seed.
   );
 
 (*
-(TBiometrics)=
-## type TBiometrics
+## TBiometrics
 Record responsible for biometrics and beiometric behaviour.
 *)
   TBiometrics = record
@@ -55,7 +55,8 @@ Record responsible for biometrics and beiometric behaviour.
 ```pascal
 function TBiometrics.GetHash(): TByteArray;
 ```
-Get the current unique hash `TBiometrics.Hash` being used. If none is set yet one will be set.
+Get the current unique hash `TBiometrics.Hash` being used.
+If none is set yet one will be set.
 If the currently used account changed, we also reset the hash.
 
 If there's no accounts availble we will use a random hash.
@@ -314,4 +315,8 @@ begin
 end;
 
 var
+(*
+## Biometrics variable
+Global {ref}`TBiometrics` variable.
+*)
   Biometrics: TBiometrics;

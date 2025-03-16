@@ -3,15 +3,12 @@
 Methods to interact with the mainscreen.
 *)
 
-{.$DEFINE DEBUG_UPTEXT}
-
 {$DEFINE SRLT_MAINSCREEN_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
 (*
-(TRSMainScreen)=
-## type TRSMainScreen
+## TRSMainScreen
 Main record to handle the mainscreen and methods relating to it.
 *)
   TRSMainScreen = record
@@ -31,8 +28,10 @@ Main record to handle the mainscreen and methods relating to it.
 ```pascal
 procedure TRSMainScreen.SetupInterface();
 ```
-Internal setup method responsible for setting up the interface coordinates.
-This is called automatically for you on the {ref}`MainScreen` variable.
+Internal setup method responsible for setting up the {ref}`TRSMainScreen` interface
+coordinates.
+
+This is called automatically for you on the {ref}`MainScreen variable`.
 *)
 procedure TRSMainScreen.SetupInterface();
 begin
@@ -63,16 +62,22 @@ end;
 (*
 (uptext)=
 ## UpText
-"UpText" refers to the text that shows up on the top left corner of the
+{ref}`UpText` refers to the text that shows up on the top left corner of the
 mainscreen describing what action you will perform if you click.
 
 The game uptext is one of the few texts that has a lot of randomization to
 combat bots and therefore you shouldn't rely on being able to read it 100%
 accurately because many times you won't.
+
+To debug uptext when uptext methods are used add the following compiler directive
+to your script **before** you include SRLT:
+```pascal
+{$DEFINE SRLT_DEBUG_UPTEXT}
+```
 *)
 
 (*
-## MainScreen.GetUpText
+### MainScreen.GetUpText
 ```pascal
 function TRSMainScreen.GetUpText(): String;
 ```
@@ -90,13 +95,13 @@ begin
   img := TImage.CreateFromTarget(Self.UptextBounds);
   Result := Self.UptextOCR.Recognize(img, RSFonts.BOLD_SHADOW, [0,0]);
   img.Free();
-  {$IFDEF DEBUG_UPTEXT}
+  {$IFDEF SRLT_DEBUG_UPTEXT}}
   WriteLn GetDebugLn('MainScreen', 'UpText: ' + Result);
   {$ENDIF}
 end;
 
 (*
-## MainScreen.IsUpText
+### MainScreen.IsUpText
 ```pascal
 function TRSMainScreen.IsUpText(text: String; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean;
 ```
@@ -126,7 +131,7 @@ begin
 end;
 
 (*
-## MainScreen.AnyIsUpText
+### MainScreen.AnyIsUpText
 ```pascal
 function TRSMainScreen.AnyIsUpText(strings: TStringArray; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean;
 ```
@@ -169,7 +174,7 @@ simply attempt to switch worlds.
 *)
 
 (*
-## MainScreen.GetServerMessage
+### MainScreen.GetServerMessage
 ```pascal
 function TRSMainScreen.GetServerMessage(): String;
 ```
@@ -190,7 +195,7 @@ begin
 end;
 
 (*
-## MainScreen.IsServerMessage
+### MainScreen.IsServerMessage
 ```pascal
 function TRSMainScreen.IsServerMessage(text: String; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean;
 ```
@@ -384,6 +389,10 @@ begin
 end;
 
 var
+(*
+## MainScreen variable
+Global {ref}`TRSMainScreen` variable.
+*)
   MainScreen: TRSMainScreen;
 
 begin

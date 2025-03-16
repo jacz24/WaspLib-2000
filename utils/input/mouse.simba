@@ -1,16 +1,20 @@
 (*
 # Mouse
 Methods to interact with the mouse.
+
+To see a click heatmap at the end of your botting session add the following
+compiler directive before you include SRLT:
+```pascal
+{$DEFINE SRLT_DEBUG_MOUSE}
+```
 *)
 
 {$DEFINE SRLT_MOUSE_INCLUDED}
 {$INCLUDE_ONCE SRLT/utils.simba}
 
-{.$DEFINE DEBUG_MOUSE}
+{.$DEFINE SRLT_DEBUG_MOUSE}
 
-{$IFDEF SIMBAHEADLESS}
-  {$UNDEF DEBUG_MOUSE}
-{$ENDIF}
+{$IFDEF SIMBAHEADLESS}{$UNDEF SRLT_DEBUG_MOUSE}{$ENDIF}
 
 (*
 ## EMouseDistribution
@@ -53,13 +57,13 @@ end;
     IdleInterval, IdleProgress, IdleGoal: Double;
     CanIdle: Boolean;
 
-    {$IFDEF DEBUG_MOUSE}
+    {$IFDEF SRLT_DEBUG_MOUSE}
     DebugMovement: TSingleMatrix;
     DebugClicks: TSingleMatrix;
     {$ENDIF}
   end;
 
-{$IFDEF DEBUG_MOUSE}
+{$IFDEF SRLT_DEBUG_MOUSE}
 procedure TMouse._Debug();
 var
   p: TPoint;
@@ -155,7 +159,7 @@ begin
   Self.Distribution := EMouseDistribution.ROWP;
   Self.CanIdle := True;
 
-  {$IFDEF DEBUG_MOUSE}
+  {$IFDEF SRLT_DEBUG_MOUSE}
   Self.OnTeleport := @Self._DebugCallback;
   {$ENDIF}
 end;

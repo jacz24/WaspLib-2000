@@ -1,0 +1,148 @@
+(*
+# Chat Options
+The {ref}`Chat` interface options menu that shows up when you are interacting
+with certain objects or NPCs.
+*)
+{$DEFINE SRLT_CHAT_OPTIONS_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+type
+  TRSChatOption = record
+    Text: String;
+    Bounds: TBox;
+    Key: EKeyCode;
+  end;
+  TRSChatOptionArray = array of TRSChatOption;
+
+function TRSChat.GetOptions(colors: TIntegerArray = []): TRSChatOptionArray;
+var
+  strings: TStringArray;
+  boxes: TBoxArray;
+  i: Int32;
+  tpa, tmp: TPointArray;
+  b: TBox;
+begin
+  if colors = [] then
+    colors := Self.GetColors([ERSChatColor.BLACK, ERSChatColor.WHITE]);
+
+  for i := 0 to High(colors) do
+    tpa += Target.FindColor(colors[i], 0, Self.Bounds);
+
+  b := tpa.Bounds();
+  strings := OCR.RecognizeLines(b, RSFonts.QUILL_8, colors, 0);
+
+  boxes := b.Partition(strings.Length, 1);
+
+  SetLength(Result, Length(boxes));
+
+  for i := 0 to High(boxes) do
+  begin
+    tmp := tpa.ExtractBox(boxes[i]);
+    Result[i].Bounds := tmp.Bounds();
+    Result[i].Text := strings[i];
+
+    if ('Click here to continue' in Result[i].Text) then
+      Result[i].Key := EKeyCode.SPACE
+    else
+      Result[i].Key := EKeyCode(Ord(EKeyCode.NUM_1) + i);
+  end;
+
+end;
+
+
+function TRSChat.FindOption(chatOption: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): TRSChatOption;
+var
+  option: TRSChatOption;
+begin
+  if colors = [] then
+    colors := Self.GetColors([ERSChatColor.BLACK, ERSChatColor.WHITE, ERSChatColor.BLUE]);
+  for option in Self.GetOptions(colors) do
+    if option.Text.Contains(chatOption, caseSensitive) then
+      Exit(option);
+end;
+
+function TRSChat.ContainsOption(chatOption: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): Boolean;
+begin
+  if colors = [] then
+    colors := Self.GetColors([ERSChatColor.BLACK, ERSChatColor.WHITE, ERSChatColor.BLUE]);
+  Result := Self.FindOption(chatOption, caseSensitive, colors) <> [];
+end;
+
+function TRSChat.WaitOption(chatOption: String; caseSensitive: Boolean = False; colors: TIntegerArray = []; time: Integer = 600; interval: Integer = -1): Boolean;
+begin
+  if colors = [] then
+    colors := Self.GetColors([ERSChatColor.BLACK, ERSChatColor.WHITE, ERSChatColor.BLUE]);
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.ContainsOption(chatOption, caseSensitive, colors), time, interval);
+end;
+
+
+function TRSChat.Select(chatOption: String; caseSensitive: Boolean = False; keyboardProbability: Single = -1; colors: TIntegerArray = []): Boolean;
+var
+  option: TRSChatOption;
+begin
+  if colors = [] then
+    colors := Self.GetColors([ERSChatColor.BLACK, ERSChatColor.WHITE]);
+  option := Self.FindOption(chatOption, caseSensitive, colors);
+  if option = [] then Exit;
+
+  if keyboardProbability < 0 then
+    keyboardProbability := Biometrics.RandomDouble(0.5);
+
+  if RandomBoolean(keyboardProbability) then
+    Keyboard.PressKey(option.Key)
+  else
+    Mouse.Click(option.Bounds, EMouseButton.LEFT);
+
+  Result := True;
+end;
+
+function TRSChat.ContinueChat(keyboardProbability: Single = -1): Boolean;
+var
+  colors: TIntegerArray;
+begin
+  if keyboardProbability < 0 then
+    keyboardProbability := Biometrics.RandomDouble(0.5);
+  colors := Self.GetColors([ERSChatColor.BLUE, ERSChatColor.WHITE]);
+  if not Self.Select('Click here to continue', True, keyboardProbability, colors) then
+    Exit;
+
+  Result := Self.WaitOption('Please wait', True, colors, 3000) and
+            SleepUntil(not Self.ContainsOption('Please wait', True, colors), RandomMode(100, 50, 1500), 3000);
+end;
+
+
+function TRSChat.ContinueUntilOption(Option: String; timeout: Integer = 10000): Boolean;
+begin
+  timeout += GetTickCount();
+  while (GetTickCount() < timeout) do
+  begin
+    if Self.ContainsOption(option) then Break;
+    Self.ContinueChat();
+    Sleep(0, 2500, ERandomDir.LEFT);
+  end;
+
+  Result := Self.Select(option);
+end;
+
+
+function TRSChat.GetChat(): String;
+var
+  option: TRSChatOption;
+begin
+  for option in Self.GetOptions() do
+  begin
+    if Result <> '' then Result += LINE_SEP;
+    Result += option.Text;
+  end;
+end;
+
+function TRSChat.GetChatTitle(): String;
+var
+  options: TRSChatOptionArray;
+begin
+  options := Self.GetOptions([$000080]);
+  if Length(options) > 0 then
+    Result := options[0].Text;
+end;
+
