@@ -16,10 +16,10 @@ type
   TRSMake = record
     Items: array of TRSMakeItem;
     QuantityButtons: TBoxArray;
+    SelectedQuantity: Integer;
     {%codetools on}
-    _IsOpenHelper, _QuantityHelper, _ItemsHelper: TBox;
+    _IsOpenHelper, _ItemsHelper: TBox;
     {%codetools on}
-    const QUANTITY_ALL: Integer = 0;
     const TEXT_COLOR: TColor = $203040;
   end;
 
@@ -36,22 +36,14 @@ procedure TRSMake.SetupInterface();
 begin
   with Chat.Bounds do
   begin
-    Self._IsOpenHelper.X1 := X1 + 40;
+    Self._IsOpenHelper.X1 := X1 + 10;
     Self._IsOpenHelper.Y1 := Y1 + 12;
-    Self._IsOpenHelper.X2 := X1 + 300;
+    Self._IsOpenHelper.X2 := X2 - 10;
     Self._IsOpenHelper.Y2 := Y1 + 34;
-  end;
 
-  with Chat.Bounds do
-  begin
-    Self._QuantityHelper.X1 := X2 - 193;
-    Self._QuantityHelper.Y1 := Y1 + 15;
-    Self._QuantityHelper.X2 := X2 - 19;
-    Self._QuantityHelper.Y2 := Y1 + 44;
-  end;
+    Self.QuantityButtons := TBoxArray.Create([X2-228, Y1+15], 6, 1, 29, 29, [6,0]).Reversed();
+    Self.QuantityButtons[0].X2 += 5;
 
-  with Chat.Bounds do
-  begin
     Self._ItemsHelper.X1 := X1 + 8;
     Self._ItemsHelper.Y1 := Y1 + 51;
     Self._ItemsHelper.X2 := X2 - 8;
@@ -95,10 +87,333 @@ begin
 end;
 
 
+(*
+## Make.GetItemBoxes
+```pascal
+function TRSMake.GetItemBoxes(): TBoxArray;
+```
+Returns the available item boxes.
+
+Example:
+```pascal
+ShowOnClient(Make.GetItemBoxes());
+```
+*)
+function TRSMake.GetItemBoxes(): TBoxArray;
+var
+  tpa: TPointArray;
+  b: TBox;
+begin
+  tpa := Target.FindColor($080707, 5, Self._ItemsHelper);
+  for tpa in tpa.Cluster(1.5) do
+  begin
+    b := tpa.Bounds();
+    if (b.Height = 72) and (b.Width = 93) then
+      Result += b;
+  end;
+end;
+
+
+(*
+## Make.HasHint
+```pascal
+function TRSMake.HasHint(): Boolean;
+```
+Returns true if a hint tooltip is visible.
+
+Example:
+```pascal
+if Make.HasHint() then
+  ShowOnClient(Make.GetHintBox());
+```
+*)
+function TRSMake.HasHint(): Boolean;
+begin
+  Result := Target.HasColor($A0FFFF, 0, 1, Chat.Bounds);
+end;
+
+(*
+## Make.WaitHint
+```pascal
+function TRSMake.WaitHint(time: Integer = 600; interval: Integer = -1): Boolean;
+```
+Returns true if a hint tooltip is visible within `time` milliseconds.
+
+Example:
+```pascal
+if Make.WaitHint() then
+  ShowOnClient(Make.GetHintBox());
+```
+*)
+function TRSMake.WaitHint(time: Integer = 600; interval: Integer = -1): Boolean;
+begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.HasHint(), interval, time);
+end;
+
+(*
+## Make.GetHintBox
+```pascal
+function TRSMake.GetHintBox(): TBox;
+```
+Returns the hint tooltip bounds.
+
+Example:
+```pascal
+ShowOnClient(Make.GetHintBox());
+```
+*)
+function TRSMake.GetHintBox(): TBox;
+var
+  tpa: TPointArray;
+begin
+  tpa := Target.FindColor($A0FFFF, 0, Chat.Bounds);
+  if tpa <> [] then Result := tpa.Bounds();
+end;
+
+(*
+## Make.ReadHint
+```pascal
+function TRSMake.ReadHint(): String;
+```
+Returns the hint tooltip text.
+
+Example:
+```pascal
+WriteLn Make.ReadHint();
+```
+*)
+function TRSMake.ReadHint(): String;
+begin
+  Result := OCR.Recognize(Self.GetHintBox(), RSFonts.PLAIN_12, [$0], 0);
+end;
+
+(*
+## Make.CloseHint
+```pascal
+function TRSMake.CloseHint(): Boolean;
+```
+Attempts to close a hint tooltip.
+
+Example:
+```pascal
+WriteLn Make.CloseHint();
+```
+*)
+function TRSMake.CloseHint(): Boolean;
+var
+  tpa: TPointArray;
+  b: TBox;
+begin
+  tpa := TPointArray.CreateFromBox(Chat.Bounds, True);
+  for b in Self.GetItemBoxes() do
+    tpa := tpa.ExcludeBox(b.Expand(1));
+
+  tpa := tpa.SortFrom(Mouse.Position());
+  Mouse.Move(tpa[RandomLeft(0, High(tpa))]);
+  Result := SleepUntil(not Self.HasHint(), RandomMode(100, 50, 1500), 600);
+end;
+
+
+
+(*
+## Make.IndexOfQuantity
+```pascal
+function TRSMake.IndexOfQuantity(amount: Integer): Integer;
+```
+Finds the index of a quantity button by the specified `amount`.
+If the `amount` we are looking for, the custom quantity button is returned,
+otherwise the result is `-1`.
+
+Example:
+```pascal
+WriteLn Make.IndexOfQuantity(Make.QUANTITY_ALL);
+```
+*)
+function TRSMake.IndexOfQuantity(amount: Integer): Integer;
+var
+  hintPt: TPoint;
+  i, value: Integer;
+  quantity: ERSItemQuantity;
+begin
+  if amount <= 0 then Exit(0);
+
+  if Self.HasHint() then
+  begin
+    hintPt := Self.GetHintBox().TopRight;
+    if (hintPt.Y <= Self.QuantityButtons[5].Y2) and (hintPt.X >= Self.QuantityButtons[5].X1) then
+
+    if not Self.CloseHint() then
+      raise GetDebugLn('Make', 'Failed to close the tooltip which is covering the quanitty buttons');
+  end;
+
+  quantity := ERSItemQuantity.Integer2Quantity(amount);
+
+  if quantity = ERSItemQuantity.CUSTOM then
+  begin
+    if amount = OCR.RecognizeNumber(Self.QuantityButtons[2], RSFonts.PLAIN_11, [Self.TEXT_COLOR, RSColors.TEXT_WHITE], 0) then
+      Exit(2);
+    Exit(1);
+  end;
+
+  for i := 1 to High(Self.QuantityButtons) do
+    if amount = OCR.RecognizeNumber(Self.QuantityButtons[i], RSFonts.PLAIN_11, [Self.TEXT_COLOR, RSColors.TEXT_WHITE], 0) then
+      Exit(i);
+  Result := -1;
+end;
+
+(*
+## Make.IndexOfQuantity
+```pascal
+function TRSMake.IndexOfQuantity(amount: Integer): Integer;
+```
+Finds the index of a quantity button by the specified `amount`.
+If the `amount` we are looking for, the custom quantity button is returned,
+otherwise the result is `-1`.
+
+Example:
+```pascal
+WriteLn Make.IndexOfQuantity(Make.QUANTITY_ALL);
+```
+*)
+function TRSMake.IsQuantitySelected(idx: Integer): Boolean;
+begin
+  Result := Target.HasColor(RSColors.TEXT_WHITE, 0, 1, Self.QuantityButtons[idx]);
+end;
+
+
+(*
+## Make.SetQuantity
+```pascal
+function TRSMake.SetQuantity(amount: Integer): Boolean;
+```
+Attempts to set a quantity.
+
+Example:
+```pascal
+WriteLn Make.SetQuantity(Make.QUANTITY_ALL);
+```
+*)
+function TRSMake.SetQuantity(amount: Integer): Boolean;
+var
+  idx: Integer;
+  done: Boolean;
+begin
+  idx := Self.IndexOfQuantity(amount);
+  if idx < 0 then
+    raise GetDebugLn('Make', 'Quantity button for "' + ToStr(amount) + '" is not available.');
+
+  if Self.IsQuantitySelected(idx) then Exit(True);
+
+  Mouse.Click(Self.QuantityButtons[idx], EMouseButton.LEFT);
+  Result := SleepUntil(
+              (done := Self.IsQuantitySelected(idx)) or
+              Chat.FindQuery('Enter amount', True), RandomMode(100, 50, 1500), 600
+            );
+  if done then Exit;
+
+  Result := Chat.AnswerQuery('Enter amount', ToStr(amount), 600);
+end;
+
+
+(*
+## Make._SelectHelper
+```pascal
+function TRSMake._SelectHelper(index: Integer; boxes: TBoxArray; keyboardProbability: Single): Boolean;
+```
+Internal helper method that handles selecting an item with or without the keyboard.
+You probably will never need to use this directly.
+*)
+function TRSMake._SelectHelper(index: Integer; boxes: TBoxArray; keyboardProbability: Single): Boolean;
+var
+  t: UInt64;
+begin
+  if High(boxes) < index then Exit;
+
+  if keyboardProbability = -1 then
+    keyboardProbability := Biometrics.RandomDouble(0.5);
+
+  if not RandomBoolean(keyboardProbability) then
+  begin
+    Mouse.Click(boxes[index], EMouseButton.LEFT);
+    Exit(SleepUntil(not Self.IsOpen(), RandomMode(100, 50, 1500), 2000));
+  end;
+
+  boxes[index].Y1 := boxes[index].Y2 + 1;
+  boxes[index].Y2 += 15;
+
+  if OCR.Locate(boxes[index], 'Space', [Self.TEXT_COLOR], 0, RSFonts.PLAIN_11) < 0.95 then
+    Keyboard.PressKey(EKeyCode.SPACE)
+  else
+    Keyboard.PressKey(EKeyCode(Ord(EKeyCode.NUM_1) + index));
+
+  Result := SleepUntil(not Self.IsOpen(), RandomMode(100, 50, 1500), 2000);
+end;
+
+(*
+## Make.Select
+```pascal
+function TRSMake.Select(index, quantity: Integer; keyboardProbability: Single = -1): Boolean;
+function TRSMake.Select(item: String; quantity: Integer; keyboardProbability: Single = -1): Boolean; overload;
+```
+Select a `index` or an `item` of the available item buttons available.
+If you are selecting an `item` you need to use the tooltip text.
+
+Example:
+```pascal
+WriteLn Make.Select('Maple longbow', QUANTITY_ALL);
+```
+*)
+function TRSMake.Select(index, quantity: Integer; keyboardProbability: Single = -1): Boolean;
+var
+  boxes: TBoxArray;
+begin
+  if not Self.IsOpen() then Exit;
+  if not Self.SetQuantity(quantity) then Exit;
+  boxes := Self.GetItemBoxes();
+  if index <= High(boxes) then
+    Result := Self._SelectHelper(index, boxes, keyboardProbability);
+end;
+
+function TRSMake.Select(item: String; quantity: Integer; keyboardProbability: Single = -1): Boolean; overload;
+var
+  boxes: TBoxArray;
+  i: Integer;
+begin
+  if not Self.IsOpen() then Exit;
+  boxes := Self.GetItemBoxes();
+
+  for i := 0 to High(Self.Items) do
+  begin
+    if Self.Items[i].Item <> item then Continue;
+
+    if Self.Items[i].Quantity <> quantity then
+    begin
+      if not Self.SetQuantity(quantity) then Exit;
+      Self.Items[i].Quantity := quantity;
+    end;
+
+    Exit(Self._SelectHelper(Self.Items[i].Index, boxes, keyboardProbability));
+  end;
+
+  if not Self.SetQuantity(quantity) then Exit;
+
+  for i := 0 to High(boxes) do
+  begin
+    Mouse.Move(boxes[i]);
+    if not Self.WaitHint(4000) then Continue;
+
+    if SameText(Self.ReadHint(), item) then
+    begin
+      Self.Items += [item, i, quantity];
+      Exit(Self._SelectHelper(i, boxes, keyboardProbability));
+    end;
+  end;
+end;
+
 var
 (*
-(Make variable)=
-## var Make
+## Make variable
 Global {ref}`TRSMake` variable.
 *)
   Make: TRSMake;

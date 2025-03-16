@@ -13,7 +13,6 @@ type
 ERSBankButtons = enum(WORN, MENU);
 ERSBankArrangement = enum(SWAP, INSERT);
 ERSWithdrawMode = enum(ITEM, NOTE);
-ERSBankQuantity = enum(ONE, FIVE, TEN, CUSTOM, ALL);
 ERSBankDynamicButtons = enum(PLACEHOLDERS, SEARCH, DEPOSIT_INVENTORY, DEPOSIT_WORN);
 ERSBankInteraction = enum(WITHDRAW, DEPOSIT);
 ```
@@ -22,7 +21,6 @@ Bank enums used to interact with the bank interface.
   ERSBankButtons = enum(WORN, MENU);
   ERSBankArrangement = enum(SWAP, INSERT);
   ERSWithdrawMode = enum(ITEM, NOTE);
-  ERSBankQuantity = enum(ONE, FIVE, TEN, CUSTOM, ALL);
   ERSBankDynamicButtons = enum(PLACEHOLDERS, SEARCH, DEPOSIT_INVENTORY, DEPOSIT_WORN);
   ERSBankInteraction = enum(WITHDRAW, DEPOSIT);
 
@@ -33,8 +31,7 @@ Bank enums used to interact with the bank interface.
   end;
 
 (*
-(TRSBank)=
-## type TRSBank
+## TRSBank
 Record responsible to handle the bank interface.
 *)
   TRSBank = record
@@ -53,7 +50,7 @@ Record responsible to handle the bank interface.
     Buttons: array [ERSBankButtons] of TRSButton;
     ArrangementButtons: array [ERSBankArrangement] of TRSButton;
     WithdrawModeButtons: array [ERSWithdrawMode] of TRSButton;
-    QuantityButtons: array [ERSBankQuantity] of TRSButton;
+    QuantityButtons: array [ERSItemQuantity] of TRSButton;
     DynamicButtons: array [ERSBankDynamicButtons] of TRSButton;
     ButtonsOffset: Integer;
 
@@ -68,8 +65,6 @@ Record responsible to handle the bank interface.
     end;
     _IsOpenHelperBox: TBox;
     {%codetools on}
-    const QUANTITY_ALL: Integer = 0;
-    const QUANTITY_ALL_BUT_ONE: Integer = -1;
   end;
 
 (*
@@ -483,42 +478,18 @@ end;
 
 
 (*
-## Bank.Integer2Quantity
-```pascal
-function TRSBank.Integer2Quantity(quantity: Integer): ERSBankQuantity;
-```
-Internal helper function to convert a integer quantity into a ERSBankQuantity.
-
-Example:
-```pascal
-WriteLn Bank.Integer2Quantity(5);
-WriteLn Bank.Integer2Quantity(7);
-```
-*)
-function TRSBank.Integer2Quantity(quantity: Integer): ERSBankQuantity;
-begin
-  case quantity of
-    1:     Result := ERSBankQuantity.ONE;
-    5:     Result := ERSBankQuantity.FIVE;
-    10:    Result := ERSBankQuantity.TEN;
-    0, -1: Result := ERSBankQuantity.ALL;
-    else   Result := ERSBankQuantity.CUSTOM;
-  end;
-end;
-
-(*
 ## Bank.SetQuantity
 ```pascal
-function TRSBank.SetQuantity(quantity: ERSBankQuantity): Boolean;
+function TRSBank.SetQuantity(quantity: ERSItemQuantity): Boolean;
 ```
 Attempts to set the bank quantity to `quantity`, returns true if we succeed.
 
 Example:
 ```pascal
-WriteLn Bank.SetQuantity(ERSBankQuantity.FIVE);
+WriteLn Bank.SetQuantity(ERSItemQuantity.FIVE);
 ```
 *)
-function TRSBank.SetQuantity(quantity: ERSBankQuantity): Boolean;
+function TRSBank.SetQuantity(quantity: ERSItemQuantity): Boolean;
 begin
   if Self.QuantityButtons[quantity].Enabled() then Exit(True);
   Exit(Self.QuantityButtons[quantity].Enable());
@@ -881,11 +852,11 @@ if Bank.Items.Find('Abyssal whip', slot) the
 {%codetools off}
 function TRSBank._InteractionHelper(mode: ERSBankInteraction; slot: TBox; amount: Integer; useQuantityButton: Boolean): Boolean;
 var
-  quantity: ERSBankQuantity;
+  quantity: ERSItemQuantity;
   amountStr, modeStr: String;
 begin
   amountStr := ToString(amount);
-  quantity := Self.Integer2Quantity(amount);
+  quantity := ERSItemQuantity.Integer2Quantity(amount);
   if mode = ERSBankInteraction.DEPOSIT then modeStr := 'Deposit-'
   else modeStr := 'Withdraw-';
 
@@ -894,7 +865,7 @@ begin
     if not Self.SetQuantity(quantity) then Exit;
 
     Mouse.Move(slot);
-    if quantity <> ERSBankQuantity.CUSTOM then
+    if quantity <> ERSItemQuantity.CUSTOM then
     begin
       Target.MouseClick(EMouseButton.LEFT);
       Exit(True);
@@ -912,7 +883,7 @@ begin
 
   Mouse.Move(slot);
 
-  if (quantity = ERSBankQuantity.ALL) then
+  if (quantity = ERSItemQuantity.ALL) then
     Exit(ChooseOption.Select(modeStr + 'All'));
 
   Result := ChooseOption.Select(modeStr + amountStr + ' ', True, False) or
@@ -1069,8 +1040,7 @@ end;
 
 var
 (*
-(Bank variable)=
-## var Bank
+## Bank variable
 Global {ref}`TRSBank` variable.
 *)
   Bank: TRSBank;

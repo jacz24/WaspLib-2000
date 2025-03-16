@@ -186,7 +186,7 @@ begin
   Result := SleepUntil(Self.FindQuery(query, caseSensitive), interval, time);
 end;
 
-function TRSChat.AnswerQuery(query, answer: String; waitTime: Integer; interval: Integer = -1): Boolean;
+function TRSChat.AnswerQuery(query, answer: String; waitTime: Integer = 600; interval: Integer = -1): Boolean;
 begin
   Result := Self.WaitQuery(query, False, waitTime, interval);
   if not Result then Exit;

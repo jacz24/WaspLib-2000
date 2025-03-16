@@ -7,6 +7,10 @@ Methods to interact with the inventory gametab.
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
+(*
+## TRSInventory
+Main record responsible with handling the inventory gametab.
+*)
   TRSInventory = record
     Slots: TRSSlotInterface;
     Items: TRSItemInterface;
@@ -386,8 +390,7 @@ end;
 
 var
 (*
-(Inventory variable)=
-## var Inventory
+## Inventory variable
 Global {ref}`TRSInventory` variable.
 *)
   Inventory: TRSInventory;

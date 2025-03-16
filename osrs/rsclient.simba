@@ -8,19 +8,24 @@ Methods relating to targeting the RS client and detecting client states.
 
 type
 (*
-## RSClient Enums
+## ERSClient
 ```pascal
 ERSClient = enum(UNKNOWN, LEGACY, RUNELITE, OFFICIAL);
-ERSMode = enum(UNKNOWN, FIXED, RESIZABLE_CLASSIC, RESIZABLE_MODERN);
 ```
-Enums that represent both the client type and the client mode.
+Enums that represent the client type.
 *)
   ERSClient = enum(UNKNOWN, LEGACY, RUNELITE, OFFICIAL);
+(*
+## ERSMode
+```pascal
+ERSMode = enum(UNKNOWN, FIXED, RESIZABLE_CLASSIC, RESIZABLE_MODERN);
+```
+Enums that represent the client mode.
+*)
   ERSMode = enum(UNKNOWN, FIXED, RESIZABLE_CLASSIC, RESIZABLE_MODERN);
 
 (*
-(TRSClient)=
-## type TRSClient
+## TRSClient
 Record representing the RuneScape client.
 *)
   TRSClient = record
@@ -106,4 +111,8 @@ begin
 end;
 
 var
+(*
+## RSClient variable
+Global {ref}`TRSClient` variable.
+*)
   RSClient: TRSClient;

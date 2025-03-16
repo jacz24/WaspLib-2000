@@ -8,8 +8,7 @@ Methods to interact with the Equipment tab.
 
 type
 (*
-(ERSEquipmentSlot)=
-## type ERSEquipmentSlot
+## ERSEquipmentSlot
 ```pascal
 ERSEquipment = (
   HEAD, SECONDARY_AMMO, CAPE, NECK, AMMO, WEAPON, BODY, SHIELD, LEGS, HANDS, FEET, RING
@@ -22,8 +21,7 @@ Enumerator of the equipment slots.
   );
 
 (*
-(ERSEquipmentButton)=
-## type ERSEquipmentButton
+## ERSEquipmentButton
 ```pascal
 ERSEquipmentButton = (STATS, PRICES, DEATH, FOLLOWER);
 ```
@@ -32,8 +30,7 @@ Enumerator of the equipment buttons.
   ERSEquipmentButton = enum(STATS, PRICES, DEATH, FOLLOWER);
 
 (*
-(TRSEquipment)=
-## type TRSEquipment
+## TRSEquipment
 Main record reponsible for handling the equipment gametab.
 *)
   TRSEquipment = record
@@ -111,8 +108,7 @@ end;
 
 var
 (*
-(Equipment variable)=
-## var Equipment
+## Equipment variable
 Global {ref}`TRSEquipment` variable.
 *)
   Equipment: TRSEquipment;
