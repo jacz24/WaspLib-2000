@@ -104,15 +104,15 @@ end;
 ```pascal
 function TRSMake.GetItemBoxes(): TBoxArray;
 ```
-Returns the available item boxes.
+Returns the available item buttons as a TBoxArray.
 
 Example:
 ```pascal
 ShowOnClient(Make.GetItemBoxes());
 ```
 
-```{figure} ../../../images/make_items.png
-The make interface.
+```{figure} ../../images/make_items.png
+The make interface item buttons.
 ```
 *)
 function TRSMake.GetItemBoxes(): TBoxArray;
@@ -230,9 +230,26 @@ begin
   Result := SleepUntil(not Self.HasHint(), RandomMode(100, 50, 1500), 600);
 end;
 
+(*
+## Make.QuantityButtons
+The quantity buttons are dynamic there can be anywhere from 1 to 6 available.
+
+You have their coordinates available at anytime through the
+`TRSMake.QuantityButtons` variable:
+```pascal
+ShowOnClient(Make.QuantityButtons);
+```
+
+```{figure} ../../images/make_quantities.png
+The make interface quantity buttons.
+```
+
+Despite them being always available you should only interact with the ones that
+are visible which you can do easily through the next methods.
+*)
 
 (*
-## Make.IndexOfQuantity
+### Make.IndexOfQuantity
 ```pascal
 function TRSMake.IndexOfQuantity(amount: Integer): Integer;
 ```
@@ -278,7 +295,7 @@ begin
 end;
 
 (*
-## Make.IndexOfQuantity
+### Make.IndexOfQuantity
 ```pascal
 function TRSMake.IndexOfQuantity(amount: Integer): Integer;
 ```
@@ -298,7 +315,7 @@ end;
 
 
 (*
-## Make.SetQuantity
+### Make.SetQuantity
 ```pascal
 function TRSMake.SetQuantity(amount: Integer): Boolean;
 ```
@@ -340,8 +357,6 @@ Internal helper method that handles selecting an item with or without the keyboa
 You probably will never need to use this directly.
 *)
 function TRSMake._SelectHelper(index: Integer; boxes: TBoxArray; keyboardProbability: Single): Boolean;
-var
-  t: UInt64;
 begin
   if High(boxes) < index then Exit;
 
