@@ -2,7 +2,7 @@
 # Bank
 Methods to interact with the bank interface
 
-```{figure} ../../../images/bank_interface.png
+```{figure} ../../images/bank_interface.png
 The bank interface.
 ```
 *)

@@ -6,13 +6,24 @@ Methods to interact with the bank pin interface.
 {$DEFINE SRLT_BANKPIN_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
-
 type
+(*
+## TRSBankPin
+Main record to interact with the {ref}`BankPin` interface.
+*)
   TRSBankPin = record
     Bounds: TBox;
     Buttons: TBoxArray;
   end;
 
+(*
+## BankPin.SetupInterface
+```pascal
+procedure TRSBankPin.SetupInterface();
+```
+Internal method used to setup the {ref}`TRSBankPin` coordinates.
+This is automatically called for you on the {ref}`BankPin variable`.
+*)
 procedure TRSBankPin.SetupInterface();
 begin
   with InterfaceArea do
@@ -242,8 +253,7 @@ end;
 
 var
 (*
-(BankPin variable)=
-## var BankPin
+## BankPin variable
 Global {ref}`TRSBankPin` variable.
 *)
   BankPin: TRSBankPin;

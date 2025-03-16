@@ -5,7 +5,7 @@ corner of the game client where you can communicate with other players,
 receive game messages and even interact with some options and menus it hosts
 like the {ref}`Make` menu.
 
-```{figure} ../../../images/chat_interface.png
+```{figure} ../../images/chat_interface.png
 The chat interface.
 ```
 *)

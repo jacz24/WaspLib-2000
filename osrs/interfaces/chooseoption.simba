@@ -1,6 +1,10 @@
 (*
 # ChooseOption
 Methods to interact with the runescape context menu.
+
+```{figure} ../../images/choose_option.png
+The choose option context menu.
+```
 *)
 {$DEFINE SRLT_CHOOSEOPTION_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
@@ -8,16 +12,8 @@ Methods to interact with the runescape context menu.
 type
 (*
 (Option)=
-## type TRSOption
-```pascal
-TRSOption = record
-  Text: String;
-  Bounds: TBox;
-  StringIndex: Integer;
-end;
-
-TRSOptionArray = array of TRSOption;
-```
+## TRSOption
+Helper record to interact with {ref}`ChooseOption`.
 *)
   TRSOption = record
     Text: String;
@@ -28,9 +24,8 @@ TRSOptionArray = array of TRSOption;
   TRSOptionArray = array of TRSOption;
 
 (*
-(ChooseOption)=
-## type TRSChooseOption
-Core record responsible with interacting with the choose option context menu.
+## TRSChooseOption
+Core record responsible with interacting with the {ref}`ChooseOption` context menu.
 *)
   TRSChooseOption = record
     Bounds: TBox;
@@ -300,8 +295,7 @@ end;
 
 var
 (*
-(ChooseOption)=
-## var ChooseOption
-Global TRSChooseOption variable.
+## ChooseOption variable
+Global {ref}`TRSChooseOption` variable.
 *)
   ChooseOption: TRSChooseOption;
