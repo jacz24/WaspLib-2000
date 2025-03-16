@@ -254,7 +254,6 @@ begin
   Result := SleepUntil(_IsUnlocked(), 300, 3000) or Self.Enter(pin, Dec(attempts));
 end;
 
-{$DEFINE SRLT_DEBUG_INTERFACES}
 {$IFDEF SRLT_DEBUG_INTERFACES}
 procedure TRSBankPin.Draw(img: TImage);
 var
