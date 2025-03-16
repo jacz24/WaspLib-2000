@@ -49,7 +49,7 @@ begin
     Assert(Bank.OpenTab(5));
     Assert(Bank.SetArrangement(ERSBankArrangement.INSERT));
     Assert(Bank.SetWithdrawMode(False));
-    Assert(Bank.SetQuantity(ERSBankQuantity.ONE));
+    Assert(Bank.SetQuantity(ERSItemQuantity.ONE));
     Assert(Bank.Slots.Count() = slots[0]);
     Delete(slots, 0, 1);
     Assert(Bank.Items.Contains('Rune defender'));
