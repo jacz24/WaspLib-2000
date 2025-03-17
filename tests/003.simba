@@ -25,7 +25,7 @@ begin
     img := TImage.Create(PATH + mode + FILENAME + '-0.png');
     Target.SetImage(img);
 
-    RSClient.Mode := RSClient.DetectMode();
+    RSClient.Mode := RSClient.GetMode();
     SetupInterfaces();
 
     Assert(BankPin.IsOpen());

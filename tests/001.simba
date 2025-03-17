@@ -19,7 +19,7 @@ begin
     img := TImage.Create(PATH + mode + FILENAME);
     Target.SetImage(img);
 
-    RSClient.Mode := RSClient.DetectMode();
+    RSClient.Mode := RSClient.GetMode();
     SetupInterfaces();
 
     Assert(Inventory.IsOpen());
