@@ -61,6 +61,7 @@ They should be self-explanatory.
 {$IFNDEF SRLT_INVENTORY_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/gametabs/inventory.simba}
 {$IFNDEF SRLT_EQUIPMENT_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/gametabs/equipment.simba}
 {$IFNDEF SRLT_MAGIC_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/gametabs/magic.simba}
+{$IFNDEF SRLT_HOUSEOPTIONS_INCLUDED}        {$INCLUDE_ONCE osrs/interfaces/gametabs/houseoptions.simba}
 {$IFNDEF SRLT_OPTIONS_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/gametabs/options.simba}
 {$IFNDEF SRLT_PRAYER_INCLUDED}              {$INCLUDE_ONCE osrs/interfaces/gametabs/prayer.simba}
 {$IFNDEF SRLT_WORLDSWITCHER_INCLUDED}       {$INCLUDE_ONCE osrs/interfaces/gametabs/worldswitcher.simba}
@@ -89,6 +90,7 @@ They should be self-explanatory.
 {$IFNDEF SRLT_OVERRIDES_INCLUDED}           {$INCLUDE_ONCE osrs/overrides.simba}
 
 
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}

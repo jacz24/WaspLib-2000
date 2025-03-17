@@ -14,9 +14,13 @@ SRLT's {ref}`TRSLogin` can handle both resizable and fixed mode login screens.
 type
 (*
 ## TRSLobbyScreen
-Record that handles the login lobby screen.
+Simple record that handles the login lobby screen.
 The lobby screen is the screen you see after logging in with the large red
 button with "CLICK HERE TO PLAY".
+
+```{figure} ../../images/lobby.png
+The lobbby screen.
+```
 *)
   TRSLobbyScreen = record
     Bounds, Button: TBox;
@@ -104,6 +108,31 @@ begin
   Mouse.Click(Self.Button, EMouseButton.LEFT);
   Result := RSClient.WaitLoggedIn(3000);
 end;
+
+{$IFDEF SRLT_DEBUG_INTERFACES}
+procedure TRSLobbyScreen.Draw(img: TImage);
+var
+  i: Integer;
+begin
+  if not Self.IsOpen() then Exit;
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
+
+  img.DrawColor := $FFFF00;
+  img.DrawBox(Self.Button);
+end;
+
+procedure TRSLobbyScreen.ShowOnClient();
+var
+  img: TImage;
+begin
+  img := TImage.CreateFromTarget();
+  Self.Draw(img);
+  img.Show();
+  img.Free();
+end;
+{$ENDIF}
 
 var
 (*
@@ -508,6 +537,10 @@ Enums representing various aspects of the login screen.
 (*
 ## TRSLogin
 Main record responsible for handling the {ref}`Login` screen.
+
+```{figure} ../../images/trslogin.png
+The login screen.
+```
 *)
   TRSLogin = record
     Bounds: TBox;
@@ -1031,6 +1064,41 @@ begin
 
   Result := RSClient.IsLoggedIn();
 end;
+
+
+{$IFDEF SRLT_DEBUG_INTERFACES}
+procedure TRSLogin.Draw(img: TImage);
+var
+  i: Integer;
+begin
+  if RSClient.IsLoggedIn() then Exit;
+  if LoginWorldSwitcher.IsOpen() then Exit;
+  if Lobby.IsOpen() then Exit;
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
+
+  img.DrawColor := $FFFFFF;
+  img.DrawBox(Self.Buttons[ERSLoginButton.LOGIN].Bounds);
+
+  img.DrawColor := $00FF00;
+  img.DrawBox(Self.Inputs[ERSLoginInput.USERNAME]);
+  img.DrawBox(Self.Inputs[ERSLoginInput.PASSWORD]);
+
+  img.DrawColor := $FF00FF;
+  img.DrawBox(LoginWorldSwitcher.OpenButton);
+end;
+
+procedure TRSLogin.ShowOnClient();
+var
+  img: TImage;
+begin
+  img := TImage.CreateFromTarget();
+  Self.Draw(img);
+  img.Show();
+  img.Free();
+end;
+{$ENDIF}
 
 var
 (*

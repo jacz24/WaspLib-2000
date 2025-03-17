@@ -14,7 +14,7 @@ begin
 
   if Bank.IsOpen() then Exit(ERSGameTab.INVENTORY);
 
-  if not Options.IsHouseOptionsOpen() then Exit;
+  if not HouseOptions.IsOpen() then Exit;
   Result := ERSGameTab.OPTIONS;
   if RSMouseZoom.SettingChecked then Exit;
   if Options.GetTab() <> ERSOptionsTab.DISPLAY then Exit;
@@ -27,4 +27,50 @@ begin
     RSMouseZoom.ZoomLevel := -1;
     Options.ZoomLevel := -1;
   end;
+end;
+
+
+(*
+## HouseOptions.Open override
+```pascal
+function TRSHouseOptions.Open(): Boolean; override;
+```
+Attempts to open the house options on the options gametab.
+
+Since {ref}`HouseOptions` depends on {ref}`Options`, an override is necessary.
+
+Example:
+```pascal
+WriteLn HouseOptions.Open();
+```
+*)
+function TRSHouseOptions.Open(): Boolean; override;
+begin
+  if Self.IsOpen() then Exit(True);
+  if not Options.Open() or not Options.OpenTab(ERSOptionsTab.CONTROLS) then Exit;
+
+  Options.Buttons[ERSOptionsButton.HOUSE].Click();
+  Result := Self.WaitOpen();
+end;
+
+(*
+## WorldSwitcher.Open override
+```pascal
+function TRSWorldSwitcher.Open(waitLoad: Boolean = True): Boolean; override;
+```
+Attempts to open the world switcher.
+
+Since {ref}`WorldSwitcher` depends on {ref}`Logout`, this override is necessary.
+
+Example:
+```pascal
+WriteLn WorldSwitcher.Open();
+```
+*)
+function TRSWorldSwitcher.Open(waitLoad: Boolean = True): Boolean; override;
+begin
+  if not Logout.Open() then Exit;
+  if WorldSwitcher._IsOpen() then Exit(True);
+  Logout.Buttons[ERSLogoutButton.WORLD_SWITCHER].Click();
+  Result := inherited;
 end;

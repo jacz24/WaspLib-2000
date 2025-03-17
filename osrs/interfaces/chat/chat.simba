@@ -292,6 +292,16 @@ end;
 
 (*
 ## Chat Queries
+A chat query is when you have some kind of question on the chatbox which you have
+to reply to.
+
+For example, when you try to "withdraw-x" from the bank, you are asked for the quantity:
+```{figure} ../../images/chat_query.png
+A chat query.
+```
+*)
+
+(*
 ### TRSChat.GetQuery
 ```pascal
 function TRSChat.GetQuery(): String;

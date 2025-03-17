@@ -184,11 +184,3 @@ end;
 
 var
   Logout: TRSLogout;
-
-function TRSWorldSwitcher.Open(waitLoad: Boolean = True): Boolean; override;
-begin
-  if not Logout.Open() then Exit;
-  if WorldSwitcher._IsOpen() then Exit(True);
-  Logout.Buttons[ERSLogoutButton.WORLD_SWITCHER].Click();
-  Result := inherited;
-end;

@@ -8,21 +8,27 @@ begin
   //e.g., gametabs need to go after GameTab and GameTab after GameTabs.
   Minimap.SetupInterface();
   MainScreen.SetupInterface();
-  GameTabs.SetupInterface();
-  GameTab.SetupInterface();
+
+  GameTabs.SetupInterface(); //Has to be before gametab
+  GameTab.SetupInterface();  //Has to be before all gametabs
   Inventory.SetupInterface();
   Equipment.SetupInterface();
+  HouseOptions.SetupInterface();
   Options.SetupInterface();
   WorldSwitcher.SetupInterface();
   Logout.SetupInterface();
+  Prayer.SetupInterface();
+  Stats.SetupInterface();
+
   MM2MS.Setup();
+
   Chat.SetupInterface();
   Make.SetupInterface();
+
   InterfaceArea.SetupInterface();
   RSInterface.SetupInterface();
   XPBar.SetupInterface();
-  Prayer.SetupInterface();
-  Stats.SetupInterface();
+
   BankPin.SetupInterface();
   Bank.SetupInterface();
 end;

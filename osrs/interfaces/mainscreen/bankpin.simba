@@ -131,9 +131,9 @@ WriteLn BankPin.FindDigit('5');
 *)
 function TRSBankPin.FindDigit(digit: Char): Integer;
 var
-  i, hovering: Integer;
+  i: Integer;
+  hovering: Integer = -1;
 begin
-  hovering := -1;
   for i := 0 to High(Self.Buttons) do
   begin
     if Self.Buttons[i].Contains(Mouse.Position()) then

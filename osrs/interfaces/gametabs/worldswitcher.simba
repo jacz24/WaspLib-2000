@@ -162,7 +162,10 @@ end;
 ```pascal
 function TRSWorldSwitcher.Open(waitLoad: Boolean = True): Boolean;
 ```
-Opens the world switcher.
+Attempts to open the world switcher.
+
+This method is overriden after {ref}`Logout`, for more information check
+{ref}`WorldSwitcher.Open override`.
 
 Example:
 ```pascal
