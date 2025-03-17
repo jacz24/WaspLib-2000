@@ -7,6 +7,21 @@ This is the very last file being included in the library.
 {$DEFINE SRLT_OVERRIDES_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
+function TRSClient.IsLoggedIn(): Boolean; override;
+var
+  mode: ERSMode;
+begin
+  mode := Self.GetMode();
+  Result := mode <> ERSMode.UNKNOWN;
+
+  if (mode <> ERSMode.UNKNOWN) and (mode <> Self.Mode) then
+  begin
+    Self.Mode := mode;
+    WriteLn(GetDebugLn('RSClient', 'Client mode changed: ' + ToStr(Self.Mode), EErrorLevel.SUCCESS));
+    SetupInterfaces();
+  end;
+end;
+
 function TRSGameTabs.GetCurrent(): ERSGameTab; override;
 begin
   Result := inherited;

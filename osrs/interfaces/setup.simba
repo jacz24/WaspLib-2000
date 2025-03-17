@@ -33,24 +33,12 @@ begin
   Bank.SetupInterface();
 end;
 
-function TRSClient.IsLoggedIn(): Boolean; override;
-var
-  mode: ERSMode;
-begin
-  mode := Self.DetectMode();
-  Result := mode <> ERSMode.UNKNOWN;
-
-  if (mode <> ERSMode.UNKNOWN) and (mode <> Self.Mode) then
-  begin
-    Self.Mode := mode;
-    WriteLn(GetDebugLn('RSClient', 'Client mode changed: ' + ToStr(Self.Mode), EErrorLevel.SUCCESS));
-    SetupInterfaces();
-  end;
-end;
-
 {$H-}
 procedure TargetResized(var sender: TTarget; data: TTargetEventData);
 begin
+  WriteLn(GetDebugLn('RSClient', 'Client was resized, updating coordinates.', EErrorLevel.SUCCESS));
+
+  if RemoteInput.EIOS <> nil then RemoteInput.Canvas.Clear();
   LoginWorldSwitcher.Setup();
   Lobby.Setup();
   Login.Setup();

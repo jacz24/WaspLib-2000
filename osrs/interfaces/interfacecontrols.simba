@@ -1,7 +1,31 @@
+(*
+# RSInterface Controls
+This page is about controls on runescape interfaces.
+These can be buttons, scrollbars, dropdowns, checkboxes, etc.
+*)
 {$DEFINE SRLT_INTERFACE_CONTROLS_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
+(*
+## TRSButton
+RuneScape has several types of buttons, {ref}`TRSButton` can be used for
+several of them but it's made specifically for buttons that have an
+"enabled" and "disabled" state:
+```{figure} ../../images/trsbuttons.png
+2 buttons that have an enabled/disabled state.
+```
+
+You can also use them very effectively for this type of buttons that are "linked" together:
+```{figure} ../../images/linked_trsbuttons.png
+Several buttons that have their states linked.
+```
+With "linked", it means that enabling one, disabled the linked one(s).
+
+You can also use them for other types of buttons and imagination is the limit
+but in a slot of cases you won't be able to make use of the {ref}`TRSButton`
+methods.
+*)
   TRSButton = record
     EnabledColors: array of record
       Color: Integer;
@@ -13,6 +37,18 @@ type
 
   TRSButtonArray = array of TRSButton;
 
+(*
+### TRSButton.Enabled
+```pascal
+function TRSButton.Enabled(): Boolean;
+```
+Returns True/False if the button is enabled.
+
+Example:
+```pascal
+WriteLn Button.Enabled();
+```
+*)
 function TRSButton.Enabled(): Boolean;
 var
   i: Integer;
@@ -22,17 +58,54 @@ begin
       Exit(True);
 end;
 
+(*
+### TRSButton.WaitEnabled
+```pascal
+function TRSButton.WaitEnabled(time: Integer = 600; interval: Integer = -1): Boolean;
+```
+Returns True if the button is enabled within `time` milliseconds.
+
+Example:
+```pascal
+WriteLn Button.WaitEnabled();
+```
+*)
 function TRSButton.WaitEnabled(time: Integer = 600; interval: Integer = -1): Boolean;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.Enabled(), interval, time);
 end;
 
+(*
+### TRSButton.Click
+```pascal
+procedure TRSButton.Click(button: EMouseButton = EMouseButton.LEFT);
+```
+Clicks a {ref]`TRSButton` with the specified mouse `button` which by default is the left one.
+
+Example:
+```pascal
+Button.Click();
+```
+*)
 procedure TRSButton.Click(button: EMouseButton = EMouseButton.LEFT);
 begin
   Mouse.Click(Self.Bounds, button);
 end;
 
+(*
+### TRSButton.Enable
+```pascal
+function TRSButton.Enable(): Boolean;
+```
+Attempts to enable a {ref]`TRSButton`. This is done with the left mouse click
+and the function returns true if {ref}`TRSButton.Enabled` returns true.
+
+Example:
+```pascal
+WriteLn Button.Enable();
+```
+*)
 function TRSButton.Enable(): Boolean;
 begin
   if Self.Enabled() then Exit(True);
@@ -40,6 +113,19 @@ begin
   Result := Self.WaitEnabled();
 end;
 
+(*
+### TRSButton.Disable
+```pascal
+function TRSButton.Disable(): Boolean;
+```
+Attempts to disable a {ref]`TRSButton`. This is done with the left mouse click
+and the function returns true if {ref}`TRSButton.Enabled` returns false.
+
+Example:
+```pascal
+WriteLn Button.Disable();
+```
+*)
 function TRSButton.Disable(): Boolean;
 begin
   if Self.Enabled() then Exit(True);
@@ -94,12 +180,34 @@ end;
 {$ENDIF}
 
 type
+(*
+## TRSSlider
+A record meant to handle sliders in the game interfaces:
+```{figure} ../../images/sliders.png
+RuneScape sliders.
+```
+*)
   TRSSlider = record
     Color: TColor;
     Bounds: TBox;
     Width: Integer;
   end;
 
+(*
+### TRSSlider.GetLevel
+```pascal
+function TRSSlider.GetLevel(): Integer;
+```
+Returns the slider level from 0 to 100. It's important to keep in mind that
+while we use a scale from 0 to 100, don't have that many "levels".
+
+For example, the brightness slider only have 5 or 6 possible positions.
+
+Example:
+```pascal
+WriteLn slider.GetLevel();
+```
+*)
 function TRSSlider.GetLevel(): Integer;
 var
   tpa: TPointArray;
@@ -109,6 +217,18 @@ begin
   Result := (tpa.Mean().X - Self.Bounds.X1) * 100 div Self.Width;
 end;
 
+(*
+### TRSSlider.SetLevel
+```pascal
+function TRSSlider.SetLevel(level: Integer): Boolean;
+```
+Attempts to set the slider to the specified `level`.
+
+Example:
+```pascal
+WriteLn slider.SetLevel(60);
+```
+*)
 function TRSSlider.SetLevel(level: Integer): Boolean;
 var
   current: Integer;
@@ -135,12 +255,37 @@ end;
 
 
 type
+(*
+## TRSScrollBar
+Record to handle the game interface's scrollbars:
+```{figure} ../../images/scrollbar.png
+A RuneScape scrollbar.
+```
+*)
   TRSScrollBar = record
     Area, Up, Down: TBox;
     Bounds: TBox;
     Width, Height: Integer;
   end;
 
+(*
+### TRSScrollBar.Setup
+```pascal
+procedure TRSScrollBar.Setup();
+```
+Method used to setup several {ref}`TRSScrollBar` internal variables.
+When creating a {ref}`TRSScrollBar` you should first setup it's `Area` variable
+and then call this.
+
+Example:
+```pascal
+scroll.Area.X1 := Bank.Bounds.X1 + 5;
+scroll.Area.Y1 := Bank.Bounds.Y1 + 78;
+scroll.Area.X2 := Bank.Bounds.X2 - 22;
+scroll.Area.Y2 := Bank.Bounds.Y2 - 44;
+scroll.Setup();
+```
+*)
 procedure TRSScrollBar.Setup();
 begin
   if Self.Area = Default(TBox) then
@@ -165,6 +310,18 @@ begin
   Self.Down.Y2 := Self.Area.Y2;
 end;
 
+(*
+### TRSScrollBar.IsVisible
+```pascal
+function TRSScrollBar.IsVisible(): Boolean;
+```
+Returns True/False if the scrollbar is visible.
+
+Example:
+```pascal
+WriteLn Bank.Scroll.IsVisible();
+```
+*)
 function TRSScrollBar.IsVisible(): Boolean;
 begin
   Result := Target.HasColor(ColorTolerance($16091C, 16.971, EColorSpace.HSV, [0.277, 0.671, 2.054]), 1, Self.Up)
@@ -172,6 +329,21 @@ begin
             Target.HasColor(ColorTolerance($16091C, 16.971, EColorSpace.HSV, [0.277, 0.671, 2.054]), 1, Self.Down);
 end;
 
+(*
+### TRSScrollBar.GetSlider
+```pascal
+function TRSScrollBar.GetSlider(): TBox;
+```
+Returns a `TBox` of the scrollbar slider.
+
+Example:
+```pascal
+ShowOnClient(Bank.Scroll.GetSlider());
+```
+```{figure} ../../images/scrollbar_slider.png
+The bank scrollbar slider.
+```
+*)
 function TRSScrollBar.GetSlider(): TBox;
 var
   p: TPoint;
@@ -186,18 +358,58 @@ begin
   Result.Y2 := tpa.Last.Y;
 end;
 
+(*
+### TRSScrollBar.CanScroll
+```pascal
+function TRSScrollBar.CanScroll(): Boolean;
+```
+Returns True/False if the scrollbar is "scrollable".
+
+A scrollbar is not scrollable if it's not visible or if the slider occupies the whole space available.
+
+Example:
+```pascal
+WriteLn Chat.Scroll.CanScroll();
+```
+*)
 function TRSScrollBar.CanScroll(): Boolean;
 begin
   Result := Self.IsVisible() and (Self.GetSlider() <> Self.Bounds);
 end;
 
 
+(*
+### TRSScrollBar.GetLevel
+```pascal
+function TRSScrollBar.GetLevel(): Integer;
+```
+Returns the level of the scrollbar.
+This is a percentage between the available space and the slider size.
+
+Example:
+```pascal
+WriteLn Chat.Scroll.GetLevel();
+```
+*)
 function TRSScrollBar.GetLevel(): Integer;
 begin
   with Self.GetSlider() do
     Result := Round((Y1 - Self.Bounds.Y1) * 100 / (Self.Height - Height));
 end;
 
+(*
+### TRSScrollBar.GetScrollArea
+```pascal
+function TRSScrollBar.GetScrollArea(): TBox;
+```
+Returns a area where you can scroll the mouse, using {ref}`TBiometrics` between
+`TRSScrollBar.Area` and `TRSScrollBar.Bounds`.
+
+Example:
+```pascal
+ShowOnClient(Chat.Scroll.GetScrollArea());
+```
+*)
 function TRSScrollBar.GetScrollArea(): TBox;
 begin
   if Biometrics.RandomBoolean(0.9) then
@@ -206,6 +418,18 @@ begin
     Result := Self.Bounds;
 end;
 
+(*
+### TRSScrollBar.SetLevel
+```pascal
+function TRSScrollBar.SetLevel(value: Integer): Integer;
+```
+Attempts to set a scroll level on a scrollbar.
+
+Example:
+```pascal
+WriteLn Chat.Scroll.SetLevel(50);
+```
+*)
 function TRSScrollBar.SetLevel(value: Integer): Integer;
 var
   old, scrolls: Integer;
@@ -233,7 +457,18 @@ begin
   end;
 end;
 
+(*
+### TRSScrollBar.Scroll
+```pascal
+function TRSScrollBar.Scroll(amount: Integer; down: Boolean): Boolean;
+```
+Scroll `amount` amount of times in a direction decided by `down`.
 
+Example:
+```pascal
+WriteLn Chat.Scroll.Scroll(3, True);
+```
+*)
 function TRSScrollBar.Scroll(amount: Integer; down: Boolean): Boolean;
 var
   i: Integer;
@@ -299,3 +534,234 @@ begin
   img.Free();
 end;
 {$ENDIF}
+
+type
+(*
+## TRSDropDownOption
+Helper record to handle {ref}`TRSDropDown` options.
+*)
+  TRSDropDownOption = record
+    Index: Integer;
+    Bounds: TBox;
+    Text: String;
+  end;
+
+(*
+## TRSDropDown
+Record to handle drop downs in the game interfaces:
+```{figure} ../../images/dropdowns.png
+Two game dropdowns.
+```
+*)
+  TRSDropDown = record
+    Index: Integer;
+    Bounds, Arrow: TBox;
+    Center: TPoint;
+    Options: array of TRSDropDownOption;
+  end;
+
+  TRSDropDownArray = array of TRSDropDown;
+
+
+(*
+### TRSDropDown.Setup
+```pascal
+procedure TRSDropDown.Setup(options: TStringArray);
+```
+Sets up a {ref}`TRSDropDown` internal variables.
+
+This has to be used after the `TRSDropDown.Bounds` variable is already set.
+
+Example:
+```pascal
+DropDown.Setup(['Fixed - Classic layout', 'Resizable - Classic layout', 'Resizable - Modern layout']);
+```
+*)
+procedure TRSDropDown.Setup(options: TStringArray);
+var
+  i: Integer;
+  option: TRSDropDownOption;
+begin
+  if Self.Bounds = Default(TBox) then
+    raise GetDebugLn('DropDown', 'You need to set up `Bounds` to use the TRSDropDown.Setup() method.');
+
+  Self.Index := -1;
+
+  Self.Arrow.X1 := Self.Bounds.X2 - 17;
+  Self.Arrow.Y1 := Self.Bounds.Y1 + 2;
+  Self.Arrow.X2 := Self.Bounds.X2 - 2;
+  Self.Arrow.Y2 := Self.Bounds.Y2 - 2;
+
+  Self.Center := Self.Bounds.Center;
+
+  for i := 0 to High(options) do
+  begin
+    option.Index := i;
+    option.Bounds := [Self.Bounds.X1+1, Self.Bounds.Y2 + 1 + 15*i, Self.Bounds.X2-18, Self.Bounds.Y2 + 1 + 14 + 15*i];
+    option.Text := options[i];
+    Self.Options += option;
+  end;
+end;
+
+
+(*
+### TRSDropDown.IsVisible
+```pascal
+function TRSDropDown.IsVisible(): Boolean;
+```
+Returns true if a {ref}`TRSDropDown` is visible.
+
+Example:
+```pascal
+WriteLn Options.DropDowns[ERSOptionsDropDown.CLIENT_MODE].IsVisible();
+```
+*)
+function TRSDropDown.IsVisible(): Boolean;
+begin
+  Result := Target.HasColor(ColorTolerance($130C18, 15.825, EColorSpace.HSV, [0.271, 0.433, 2.298]), 1, Self.Arrow);
+end;
+
+
+(*
+### TRSDropDown.IsOpen
+```pascal
+function TRSDropDown.IsOpen(): Boolean;
+```
+Returns true if a {ref}`TRSDropDown` is open.
+
+Example:
+```pascal
+WriteLn Options.DropDowns[ERSOptionsDropDown.CLIENT_MODE].IsOpen();
+```
+*)
+function TRSDropDown.IsOpen(): Boolean;
+var
+  tpa: TPointArray;
+begin
+  tpa := Target.FindColor(ColorTolerance($130C18, 15.825, EColorSpace.HSV, [0.271, 0.433, 2.298]), Self.Arrow);
+  Result := Self.Center.Y > tpa.Median().Y;
+end;
+
+
+(*
+### TRSDropDown.WaitOpen
+```pascal
+function TRSDropDown.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
+```
+Returns true if {ref}`TRSDropDown.IsOpen` returns true within `time` milliseconds.
+
+Example:
+```pascal
+WriteLn Options.DropDowns[ERSOptionsDropDown.CLIENT_MODE].WaitOpen();
+```
+*)
+function TRSDropDown.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
+begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsOpen(), interval, time);
+end;
+
+
+(*
+### TRSDropDown.Open
+```pascal
+function TRSDropDown.Open(): Boolean;
+```
+Attempts to open a {ref}`TRSDropDown`.
+
+Example:
+```pascal
+WriteLn Options.DropDowns[ERSOptionsDropDown.CLIENT_MODE].Open();
+```
+*)
+function TRSDropDown.Open(): Boolean;
+begin
+  if not Self.IsVisible() then Exit;
+  if Self.IsOpen() then Exit(True);
+  Mouse.Click(Self.Bounds, EMouseButton.LEFT);
+  Result := Self.WaitOpen(2000);
+end;
+
+(*
+### TRSDropDown.Close
+```pascal
+function TRSDropDown.Close(): Boolean;
+```
+Attempts to close a {ref}`TRSDropDown`.
+
+Example:
+```pascal
+WriteLn Options.DropDowns[ERSOptionsDropDown.CLIENT_MODE].Close();
+```
+*)
+function TRSDropDown.Close(): Boolean;
+begin
+  if not Self.IsVisible() or not Self.IsOpen() then Exit(True);
+  Mouse.Click(Self.Bounds, EMouseButton.LEFT);
+  Result := SleepUntil(not Self.IsOpen(), RandomMode(100, 50, 1500), 600);
+end;
+
+
+(*
+### TRSDropDown.GetSelected
+```pascal
+function TRSDropDown.GetSelected(): Integer;
+```
+Returns the index of the currently selected option on a {ref}`TRSDropDown`.
+
+Example:
+```pascal
+WriteLn Options.DropDowns[ERSOptionsDropDown.CLIENT_MODE].GetSelected();
+```
+*)
+function TRSDropDown.GetSelected(): Integer;
+begin
+  if Self.Index > -1 then Exit(Self.Index);
+
+  try
+    for Result := 0 to High(Self.Options) do
+      if OCR.Locate(Self.Bounds, Self.Options[Result].Text, [$2FA8FE], 5.5, RSFonts.PLAIN_11) > 0.85 then
+        Exit;
+    Result := -1;
+  finally
+    Self.Index := Result;
+  end;
+end;
+
+
+(*
+### TRSDropDown.Select
+```pascal
+function TRSDropDown.Select(index: Integer): Boolean;
+function TRSDropDown.Select(option: String): Boolean; overload;
+```
+Attempts to select an option on a {ref}`TRSDropDown`.
+
+You can either use an option index or substring of an option.
+If you use a substring, the first match will be used.
+
+Example:
+```pascal
+WriteLn Options.DropDowns[ERSOptionsDropDown.CLIENT_MODE].Select('Fixed');
+```
+*)
+function TRSDropDown.Select(index: Integer): Boolean;
+begin
+  if (Self.Index < 0) and (Self.GetSelected() < 0) then Exit;
+  if Self.Index = index then Exit(True);
+  if not Self.Open() then Exit;
+
+  Mouse.Click(Self.Options[index].Bounds, EMouseButton.LEFT);
+  Self.Index := -1;
+  Result := SleepUntil(Self.GetSelected() = index, RandomMode(100, 50, 1500), 2000);
+end;
+
+function TRSDropDown.Select(option: String): Boolean; overload;
+var
+  idx: Integer;
+begin
+  for idx := 0 to High(Self.Options) do
+    if Self.Options[idx].Text.Contains(option) then
+      Exit(Self.Select(idx));
+end;
+

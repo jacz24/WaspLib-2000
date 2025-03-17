@@ -63,7 +63,6 @@ begin
     Exit;
   end;
 
-  //Target.SetEIOS({$MACRO LOADEDLIB(libremoteinput)}, ToString(GetSimbaTargetPID()));
   Target.SetPlugin({$MACRO LOADEDLIB(libremoteinput)}, ToStr(GetSimbaTargetPID()), Self.Canvas);
 end;
 

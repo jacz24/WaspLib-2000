@@ -15,6 +15,7 @@ ERSClient = enum(UNKNOWN, LEGACY, RUNELITE, OFFICIAL);
 Enums that represent the client type.
 *)
   ERSClient = enum(UNKNOWN, LEGACY, RUNELITE, OFFICIAL);
+
 (*
 ## ERSMode
 ```pascal
@@ -34,13 +35,13 @@ Record representing the RuneScape client.
   end;
 
 (*
-## RSClient.DetectMode()
+## RSClient.GetMode
 ```pascal
-function TRSClient.DetectMode(): ERSMode;
+function TRSClient.GetMode(): ERSMode;
 ```
 Detects the client mode.
 *)
-function TRSClient.DetectMode(): ERSMode;
+function TRSClient.GetMode(): ERSMode;
 begin
   // Music tab in each mode there are different colors at W-4, H-21
   // Two colors each because tab can be active(red) or not(grey)
@@ -50,6 +51,26 @@ begin
     2896180, 790059: Result := ERSMode.RESIZABLE_CLASSIC;
   end;
 end;
+
+(*
+## RSClient.WaitModeChange
+```pascal
+function TRSClient.WaitModeChange(time: Integer = 600; interval: Integer = -1): Boolean;
+```
+Waits `time` milliseconds for the client mode to change
+*)
+function TRSClient.WaitModeChange(time: Integer = 1200; interval: Integer = -1): Boolean;
+var
+  mode: ERSMode;
+begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(
+              ((mode := Self.GetMode()) <> Self.Mode) and (mode <> ERSMode.UNKNOWN),
+              interval, time
+            );
+end;
+
+
 
 (*
 ## RSClient.IsLoggedIn
@@ -65,7 +86,7 @@ WriteLn RSClient.IsLoggedIn();
 *)
 function TRSClient.IsLoggedIn(): Boolean;
 begin
-  Result := Self.DetectMode() <> ERSMode.UNKNOWN;
+  Result := Self.GetMode() <> ERSMode.UNKNOWN;
 end;
 
 (*

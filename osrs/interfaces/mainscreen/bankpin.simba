@@ -214,7 +214,7 @@ function TRSBankPin.Enter(pin: String; attempts: Integer = 3): Boolean;
   begin
     if Self.IsOpen() then
       Exit;
-    Result := not Chat.GetChat().ContainsAny(['try again', 'forgotten your PIN', 'PIN incorrectly several']);
+    Result := not Chat.GetOptionsString().ContainsAny(['try again', 'forgotten your PIN', 'PIN incorrectly several']);
   end;
 
 var
@@ -235,7 +235,7 @@ begin
     SleepUntil((idx <> Self.GetDigitIndex()) and not Self.IsLoading(), 100, 5000);
   end;
 
-  chatCache := Chat.GetChat();
+  chatCache := Chat.GetOptionsString();
   if 'try again' in chatCache then
   begin
     Chat.ContinueChat();
@@ -244,7 +244,7 @@ begin
 
   if 'forgotten your PIN' in chatCache then
   begin
-    SleepUntil(not ('forgotten your PIN' in Chat.GetChat()), 300, 20000);
+    SleepUntil(not ('forgotten your PIN' in Chat.GetOptionsString()), 300, 20000);
     Exit(Self.Enter(pin, Dec(attempts)));
   end;
 

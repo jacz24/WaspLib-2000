@@ -27,6 +27,15 @@ Could be expanded in the future to include the sound sliders but for now only ha
   ERSOptionsSlider = enum(BRIGHTNESS, ZOOM);
 
 (*
+## ERSOptionsDropDown
+```pascal
+ERSOptionsDropDown = enum(PLAYER_ATTACK, NPC_ATTACK, CLIENT_MODE);
+```
+Enum representing each of the options gametab dropdowns.
+*)
+  ERSOptionsDropDown = enum(PLAYER_ATTACK, NPC_ATTACK, CLIENT_MODE);
+
+(*
 ## ERSOptionsButton
 ```pascal
 ERSOptionsButton = enum(AID, RUN, HOUSE, BOND, ALL_SETTINGS);
@@ -36,13 +45,13 @@ Enum representing each of the options gametab buttons.
   ERSOptionsButton = enum(AID, RUN, HOUSE, BOND, ALL_SETTINGS);
 
 (*
-(TRSOptions)=
-## type TRSOptions
-Main record responsible with interacting with the options gametab.
+## TRSOptions
+Main record responsible with interacting with the {ref}`Options` gametab.
 *)
   TRSOptions = record
     Tabs: TBoxArray;
     Sliders: array [ERSOptionsSlider] of TRSSlider;
+    DropDowns: array [ERSOptionsDropDown] of TRSDropDown;
     Buttons: array [ERSOptionsButton] of TRSButton;
     ZoomLevel: Integer;
   end;
@@ -52,7 +61,9 @@ Main record responsible with interacting with the options gametab.
 ```pascal
 procedure TRSOptions.SetupInterface();
 ```
-Internal method used to setup the gametab coordinates.
+Internal method used to setup the {ref}`TRSOptions` coordinates.
+
+This is automatically called for you on the {ref}`Options variable`.
 *)
 procedure TRSOptions.SetupInterface();
 var
@@ -87,9 +98,18 @@ begin
     Self.Buttons[i].Bounds := boxes[i];
 
   with GameTab.Bounds do
+  begin
     Self.Buttons[4].Bounds := TBox.Create(X1 + 22, Y2 - 32, X2 - 22, Y2 - 3);
 
+    Self.DropDowns[0].Bounds := [X1 + 11, Y1 + 111, X2 - 11, Y1 + 130];
+    Self.DropDowns[0].Setup(['Depends on combat levels', 'Always right-click', 'Left-click where available', 'Hidden', 'Right-click for clanmates']);
 
+    Self.DropDowns[1].Bounds := [X1 + 11, Y1 + 150, X2 - 11, Y1 + 169];
+    Self.DropDowns[1].Setup(['Depends on combat levels', 'Always right-click', 'Left-click where available', 'Hidden']);
+
+    Self.DropDowns[2].Bounds := [X1 + 11, Y2 - 109, X2 - 11, Y2 - 90];
+    Self.DropDowns[2].Setup(['Fixed - Classic layout', 'Resizable - Classic layout', 'Resizable - Modern layout']);
+  end;
 end;
 
 
@@ -169,7 +189,7 @@ begin
   if Self.GetTab() = tab then Exit(True);
 
   Mouse.Click(Self.Tabs[tab], EMouseButton.LEFT);
-  Result := SleepUntil(Self.GetTab() = tab, RandomMode(100, 50, 1500), 600);
+  Result := SleepUntil(Self.GetTab() = tab, RandomMode(100, 50, 1500), 2000);
 end;
 
 
@@ -220,6 +240,7 @@ Options.SetZoomLevel(30);
 *)
 function TRSOptions.SetZoomLevel(level: Integer): Boolean;
 begin
+  if not Self.OpenTab(ERSOptionsTab.DISPLAY) then Exit;
   Result := Self.Sliders[ERSOptionsSlider.ZOOM].SetLevel(level);
 
   if Result then
@@ -228,11 +249,87 @@ begin
     Self.ZoomLevel := -1;
 end;
 
+
+(*
+## Options.SetPlayerAttack
+```pascal
+function TRSOptions.SetPlayerAttack(index: Integer): Boolean;
+function TRSOptions.SetPlayerAttack(option: String): Boolean; overload;
+```
+Attempts to set the specified attack option for players.
+
+Example:
+```pascal
+WriteLn Options.SetPlayerAttack('Depends on combat levels');
+WriteLn Options.SetPlayerAttack(2);
+```
+*)
+function TRSOptions.SetPlayerAttack(index: Integer): Boolean;
+begin
+  if not Self.OpenTab(ERSOptionsTab.CONTROLS) then Exit;
+  Result := Self.DropDowns[ERSOptionsDropDown.PLAYER_ATTACK].Select(index);
+end;
+
+function TRSOptions.SetPlayerAttack(option: String): Boolean; overload;
+begin
+  if not Self.OpenTab(ERSOptionsTab.CONTROLS) then Exit;
+  Result := Self.DropDowns[ERSOptionsDropDown.PLAYER_ATTACK].Select(option);
+end;
+
+
+(*
+## Options.SetNPCAttack
+```pascal
+function TRSOptions.SetNPCAttack(index: Integer): Boolean;
+function TRSOptions.SetNPCAttack(option: String): Boolean; overload;
+```
+Attempts to set the specified attack option for NPCs.
+
+Example:
+```pascal
+WriteLn Options.SetNPCAttack('Depends on combat levels');
+WriteLn Options.SetNPCAttack(2);
+```
+*)
+function TRSOptions.SetNPCAttack(index: Integer): Boolean;
+begin
+  if not Self.OpenTab(ERSOptionsTab.CONTROLS) then Exit;
+  Result := Self.DropDowns[ERSOptionsDropDown.NPC_ATTACK].Select(index);
+end;
+
+function TRSOptions.SetNPCAttack(option: String): Boolean; overload;
+begin
+  if not Self.OpenTab(ERSOptionsTab.CONTROLS) then Exit;
+  Result := Self.DropDowns[ERSOptionsDropDown.NPC_ATTACK].Select(option);
+end;
+
+
+(*
+## Options.SetClientMode
+```pascal
+function TRSOptions.SetClientMode(mode: ERSMode): Boolean;
+```
+Attempts to set the specified `mode` client mode.
+
+Example:
+```pascal
+WriteLn Options.SetClientMode('Fixed');
+```
+*)
+function TRSOptions.SetClientMode(mode: ERSMode): Boolean;
+begin
+  if not Self.OpenTab(ERSOptionsTab.DISPLAY) then Exit;
+
+  Result := Self.DropDowns[ERSOptionsDropDown.CLIENT_MODE].Select(Ord(mode)-1);
+  if Result and RSClient.WaitModeChange(4000) then
+    RSClient.IsLoggedIn(); //force trigger SetupInterfaces
+end;
+
+
 var
 (*
-(Options)=
-## var Options
-Global TRSOptions variable.
+## Options variable
+Global {ref}`TRSOptions` variable.
 *)
   Options: TRSOptions;
 

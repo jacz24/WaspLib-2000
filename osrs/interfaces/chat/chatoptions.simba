@@ -69,7 +69,19 @@ begin
     Result[High(Result)].Key := EKeyCode.SPACE;
 end;
 
-function TRSChat.GetOptions(): String; overload;
+(*
+## Chat.GetOptionsString
+```pascal
+function TRSChat.GetOptionsString(): String;
+```
+Returns every chat option visible in black and white as a string.
+
+Example:
+```pascal
+WriteLn Chat.GetOptionsString();
+```
+*)
+function TRSChat.GetOptionsString(): String;
 var
   option: TRSChatOption;
 begin

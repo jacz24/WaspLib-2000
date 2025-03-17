@@ -1,7 +1,6 @@
 (*
 # Bank
 Methods to interact with the bank interface
-
 ```{figure} ../../images/bank_interface.png
 The bank interface.
 ```
@@ -12,22 +11,55 @@ The bank interface.
 
 type
 (*
-## Bank Enums
+## ERSBankButtons
 ```pascal
 ERSBankButtons = enum(WORN, MENU);
-ERSBankArrangement = enum(SWAP, INSERT);
-ERSWithdrawMode = enum(ITEM, NOTE);
-ERSBankDynamicButtons = enum(PLACEHOLDERS, SEARCH, DEPOSIT_INVENTORY, DEPOSIT_WORN);
-ERSBankInteraction = enum(WITHDRAW, DEPOSIT);
 ```
-Bank enums used to interact with the bank interface.
+Enum representing the 2 top buttons of the {ref}`Bank` interface.
 *)
   ERSBankButtons = enum(WORN, MENU);
+
+(*
+## ERSBankArrangement
+```pascal
+ERSBankArrangement = enum(SWAP, INSERT);
+```
+Enum representing the 2 arrangement buttons of the {ref}`Bank` interface.
+*)
   ERSBankArrangement = enum(SWAP, INSERT);
+
+(*
+## ERSWithdrawMode
+```pascal
+ERSWithdrawMode = enum(ITEM, NOTE);
+```
+Enum representing the 2 withdraw mode buttons of the {ref}`Bank` interface.
+*)
   ERSWithdrawMode = enum(ITEM, NOTE);
+
+(*
+## ERSBankDynamicButtons
+```pascal
+ERSBankDynamicButtons = enum(PLACEHOLDERS, SEARCH, DEPOSIT_INVENTORY, DEPOSIT_WORN);
+```
+Enum representing the 4 dynamic buttons on the right corner of the {ref}`Bank` interface.
+These buttons are dynamic because they can be enabled/disabled and shift places.
+*)
   ERSBankDynamicButtons = enum(PLACEHOLDERS, SEARCH, DEPOSIT_INVENTORY, DEPOSIT_WORN);
+
+(*
+## ERSBankInteraction
+```pascal
+ERSBankInteraction = enum(WITHDRAW, DEPOSIT);
+```
+Enum representing 2 core actions you can perform on the {ref}`Bank` interface.
+*)
   ERSBankInteraction = enum(WITHDRAW, DEPOSIT);
 
+(*
+## TBankPosition
+Helper record to cache items positions on the {ref}`Bank` interface.
+*)
   TBankPosition = record
     Tab: Integer;
     Scroll: Integer;
