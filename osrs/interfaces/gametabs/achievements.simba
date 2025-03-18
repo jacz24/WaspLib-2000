@@ -15,7 +15,7 @@ ERSAchievementTab = enum(SUMMARY, QUESTS, DIARIES);
 ```
 An enum representing each of the {ref}`Achievements` gametab tabs.
 *)
-  ERSAchievementTab = enum(SUMMARY, QUESTS, DIARIES);
+  ERSAchievementTab = enum(SUMMARY, QUESTS, DIARIES, ADVENTURE_PATHS);
 
 (*
 ## ERSSummary
@@ -65,10 +65,26 @@ An enum representing each of the achievement diaries available.
   );
 
   TRSAchievements = record
-    Tabs: array [ERSAchievementTab] of TBox;
-    TabCount: Integer;
+    Tabs: TBoxArray;
   end;
 
+function TRSAchievements.Open(): Boolean; forward;
+
+(*
+## Achievements Tabs
+The {ref}`Achievements` tabs are dynamic as one of them can be hidden away on certain types of accounts:
+![3 tabs](../../images/achievements_tabs3.png) ![4 tabs](../../images/achievements_tabs4.png)
+To handle this, you have the 2 following methods, they are used automatically for you on the
+{ref}`Achievements variable`.
+*)
+
+(*
+### Achievements.CountTabs
+```pascal
+function TRSAchievements.CountTabs(): Integer;
+```
+Internal method used to count the available tabs on the {ref}`Achievements` gametab.
+*)
 function TRSAchievements.CountTabs(): Integer;
 var
   tpa: TPointArray;
@@ -78,12 +94,107 @@ begin
   Result := Length(tpa.Cluster(1.5));
 end;
 
+(*
+### Achievements.SetupTabs
+```pascal
 procedure TRSAchievements.SetupTabs();
-var
-  tpa: TPointArray;
-begin
-  if Self.TabCount = 0 then Self.TabCount := Self.CountTabs();
+```
+Internal method used to update the coordinates of the tabs on the {ref}`Achievements` gametab.
 
+This is automatically used for you.
+*)
+procedure TRSAchievements.SetupTabs();
+begin
+  case Self.CountTabs() of
+    3: Self.Tabs := TBoxArray.Create(GameTab.TopLeft.Offset(1,4), 3, 1, 57, 20, [5, 2]);
+    4: Self.Tabs := TBoxArray.Create(GameTab.TopLeft.Offset(1,4), 4, 1, 43, 20, [3, 2]);
+    else Exit;
+  end;
+end;
+
+
+(*
+## Achievements.IsOpen
+```pascal
+function TRSAchievements.IsOpen(): Boolean;
+```
+Returns true/false if the inventory is open.
+
+Example:
+```pascal
+WriteLn Achievements.IsOpen();
+```
+*)
+function TRSAchievements.IsOpen(): Boolean;
+begin
+  Result := GameTabs.IsOpen(ERSGameTab.ACHIEVEMENTS);
+end;
+
+(*
+## Achievements.Open
+```pascal
+function TRSAchievements.Open(): Boolean;
+```
+Attempts to open the inventory gametab.
+
+Example:
+```pascal
+WriteLn Achievements.Open();
+```
+*)
+function TRSAchievements.Open(): Boolean;
+begin
+  Result := GameTabs.Open(ERSGameTab.ACHIEVEMENTS);
+end;
+
+
+(*
+## Achievements.GetTab
+```pascal
+function TRSAchievements.GetTab(): ERSAchievementsTab;
+```
+Returns the currently active {ref}`ERSAchievementsTab`.
+
+Example:
+```pascal
+WriteLn Achievements.GetTab();
+```
+*)
+function TRSAchievements.GetTab(): ERSAchievementTab;
+var
+  i: Integer;
+begin
+  if Self.Tabs = [] then
+  begin
+    if not Self.Open() then Exit;
+    Self.SetupTabs();
+  end;
+
+  for i := 0 to High(Self.Tabs) do
+    if not Target.HasColor($48585D, 0, 100, Self.Tabs[i]) and
+      not Target.HasColor($1E2528, 0, 100, Self.Tabs[i]) then
+      Exit(ERSAchievementTab(i));
+end;
+
+(*
+## Achievements.OpenTab
+```pascal
+function TRSAchievements.OpenTab(tab: ERSAchievementsTab): Boolean;
+```
+Attempts to open the specified `tab` {ref}`ERSAchievementsTab`.
+
+Example:
+```pascal
+WriteLn Achievements.OpenTab(ERSAchievementsTab.DIARIES);
+```
+*)
+function TRSAchievements.OpenTab(tab: ERSAchievementTab): Boolean;
+begin
+  if not Self.Open() then Exit;
+  if Self.GetTab() = tab then Exit(True);
+
+  Mouse.Click(Self.Tabs[tab], EMouseButton.LEFT);
+  Result := SleepUntil(Self.GetTab() = tab, RandomMode(100, 50, 1500), 2000);
 end;
 
 

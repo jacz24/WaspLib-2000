@@ -154,7 +154,7 @@ end;
 ```pascal
 function TRSOptions.GetTab(): ERSOptionsTab;
 ```
-Returns the currently active `ERSOptionsTab`.
+Returns the currently active {ref}`ERSOptionsTab`.
 
 Example:
 ```pascal
@@ -176,7 +176,7 @@ end;
 ```pascal
 function TRSOptions.OpenTab(tab: ERSOptionsTab): Boolean;
 ```
-Attempts to open the specified `tab` `ERSOptionsTab`.
+Attempts to open the specified `tab` {ref}`ERSOptionsTab`.
 
 Example:
 ```pascal
