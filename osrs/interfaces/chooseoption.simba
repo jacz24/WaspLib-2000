@@ -292,7 +292,6 @@ begin
   Result := Self.Select([text], caseSensitive, closeOnFalse);
 end;
 
-
 var
 (*
 ## ChooseOption variable

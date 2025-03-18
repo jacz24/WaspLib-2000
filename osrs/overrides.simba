@@ -22,6 +22,15 @@ begin
   end;
 end;
 
+procedure TRSClient.LoseFocus(); override;
+begin
+  {$IFDEF SRLT_REMOTEINPUT_INCLUDED}
+  RemoteInput.LoseFocus();
+  Exit;
+  {$ENDIF}
+  inherited;
+end;
+
 function TRSGameTabs.GetCurrent(): ERSGameTab; override;
 begin
   Result := inherited;

@@ -101,7 +101,3 @@ end;
 
 var
   Accounts: TRSAccountArray;
-
-{$IF FILEEXISTS(Configs/credentials.simba)}
-{$INCLUDE_ONCE Configs/credentials.simba}
-{$ENDIF}

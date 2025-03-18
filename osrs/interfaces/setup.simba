@@ -3,6 +3,9 @@
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 procedure SetupInterfaces();
+{$IFDEF SRLT_DEBUG_INTERFACES}
+var t: UInt64 := GetTickCount();
+{$ENDIF}
 begin
   //interfaces that depend on other's bounds need to be in the right order
   //e.g., gametabs need to go after GameTab and GameTab after GameTabs.
@@ -31,6 +34,10 @@ begin
 
   BankPin.SetupInterface();
   Bank.SetupInterface();
+
+  {$IFDEF SRLT_DEBUG_INTERFACES}
+  WriteLn GetDebugLn('RSClient', 'Interface setup took ' + ToStr(GetTickCount()-t) + ' ms to calculate.');
+  {$ENDIF}
 end;
 
 {$H-}
@@ -69,8 +76,43 @@ begin
   end;
 end;
 
+
+{$IF FILEEXISTS(Configs/credentials.simba)}
+{$INCLUDE_ONCE Configs/credentials.simba}
+{$ENDIF}
+
+
+//Setup process, for some things the order matters.
 begin
   Target.AddEvent(ETargetEvent.TARGET_RESIZE, @TargetResized);
+  RSFonts.Setup();
+
+  RSClient.Client := RSClient.GetClient();
+  {$IFNDEF SRLT_DISABLE_REMOTEINPUT}
+  if RSClient.Client <> ERSClient.OFFICIAL then
+    RemoteInput.Setup();
+  {$ENDIF}
+
+  RSCacheParser.Setup();
+
+  ItemFinder.Setup();
+  SpellFinder.Setup();
+  PrayerFinder.Setup();
+  GameTabs.KeybindsEnabled := True;
+  GameTabs.AvailableKeys := [
+    EKeyCode.ESCAPE, EKeyCode.F1, EKeyCode.F2, EKeyCode.F3, EKeyCode.F4,
+    EKeyCode.F5, EKeyCode.F6, EKeyCode.F7, EKeyCode.F8, EKeyCode.F9,
+    EKeyCode.F10, EKeyCode.F11, EKeyCode.F12
+  ];
+  MainScreen.UptextOCR.Tolerance := 25;
+  MainScreen.UptextOCR.ShadowTolerance := 65;
+  MainScreen.UptextOCR.Whitelist := ['a'..'z', 'A'..'Z', '0'..'9', '-', '>', '(', ')', '/'];
+  Options.ZoomLevel := -1;
+  WorldSwitcher.Cooldown.Setup(8000);
+  RSMouseZoom.ZoomLevel := -1;
+  RSMouseZoom.Enabled := True;
+  Antiban.Zoom.Max := 100;
+
   RSClient.IsLoggedIn();
   if RSClient.Mode = ERSMode.UNKNOWN then
     RSClient.Mode := ERSMode.FIXED;

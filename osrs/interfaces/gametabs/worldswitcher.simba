@@ -43,9 +43,8 @@ end;
 
 type
 (*
-(TRSWorldSwitcher)=
-## type TRSWorldSwitcher
-Main record that holds all the world switching methods.
+## TRSWorldSwitcher
+Main record that interacts with the {ref}`WorldSwitcher`.
 *)
   TRSWorldSwitcher = record
     Scroll: TRSScrollBar;
@@ -56,6 +55,15 @@ Main record that holds all the world switching methods.
     const YELLOW: TColor = $00F0F0;
   end;
 
+(*
+## TRSWorldSwitcher.SetupInterface
+```pascal
+procedure TRSWorldSwitcher.SetupInterface();
+```
+Interal method used to setup the {ref}`TRSWorldSwitcher` coordinates.
+
+This is automatically called for you on the {ref}`WorldSwitcher variable`.
+*)
 procedure TRSWorldSwitcher.SetupInterface();
 begin
   with GameTab.Bounds do
@@ -437,10 +445,9 @@ begin
   until not InRange(Self.Scroll.GetLevel(), 1, 99);
 end;
 
-
 var
+(*
+## WorldSwitcher variable
+Global {ref}`TRSWorldSwitcher` variable.
+*)
   WorldSwitcher: TRSWorldSwitcher;
-
-begin
-  WorldSwitcher.Cooldown.Setup(8000);
-end;

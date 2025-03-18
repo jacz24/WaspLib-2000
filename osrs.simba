@@ -17,6 +17,7 @@ less confusing way.
 {$DEFINE SRLT_KEYBINDS_DEBUG}
 {$DEFINE SRLT_DEBUG_UPTEXT}
 {$DEFINE SRLT_DEBUG_INTERFACES}
+{$DEFINE SRLT_GENERATE_GRAPH_ALWAYS}
 ```
 This are the compiler directives available in the library.
 
@@ -33,8 +34,9 @@ They should be self-explanatory.
 {$IFNDEF SRLT_BIOMETRICS_INCLUDED}          {$INCLUDE_ONCE osrs/antiban/biometrics.simba}
 
 {$IFNDEF SRLT_OCR_INCLUDED}                 {$INCLUDE_ONCE osrs/ocr/ocr.simba}
-{$IFNDEF SRLT_REMOTEINPUT_INCLUDED}         {$INCLUDE_ONCE osrs/remoteinput.simba}
 {$IFNDEF SRLT_RSCLIENT_INCLUDED}            {$INCLUDE_ONCE osrs/rsclient.simba}
+{$IFNDEF SRLT_REMOTEINPUT_INCLUDED}         {$INCLUDE_ONCE osrs/remoteinput.simba}
+{$IFNDEF SRLT_CACHEPARSER_INCLUDED}         {$INCLUDE_ONCE osrs/cacheparser.simba}
 
 {$IFNDEF SRLT_ITEMFINDER_INCLUDED}          {$INCLUDE_ONCE osrs/finders/items/itemfinder.simba}
 {$IFNDEF SRLT_SPELLFINDER_INCLUDED}         {$INCLUDE_ONCE osrs/finders/spells/spellfinder.simba}
@@ -47,7 +49,6 @@ They should be self-explanatory.
 {$IFNDEF SRLT_MINIMAP_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/minimap.simba}
 
 {$IFNDEF SRLT_GAMETABS_INCLUDED}            {$INCLUDE_ONCE osrs/interfaces/gametabs/gametabs.simba}
-{$IFNDEF SRLT_GAMETAB_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/gametabs/gametab.simba}
 {$IFNDEF SRLT_CHAT_TABS_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/chat/chattabs.simba}
 {$IFNDEF SRLT_CHAT_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/chat/chat.simba}
 {$IFNDEF SRLT_CHAT_OPTIONS_INCLUDED}        {$INCLUDE_ONCE osrs/interfaces/chat/chatoptions.simba}

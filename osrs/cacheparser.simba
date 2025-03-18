@@ -1,0 +1,441 @@
+(*
+# RSCacheParser
+RSCacheParser as the name implies is a record made to parse information from certain files that are part of the OSRS cache.
+- preferences.dat is where most client settings are stored.
+- preferences2.dat I have no idea? some values in address 00000020 seem to change after some times has passed randomly. (related to 6h log maybe!?!?)
+- random.dat in the user home directory seems to be a random identifier generated the first time you open a client if it doesn't exist.
+    while it exists, it seems to never change unless the user deletes it.
+```{note}
+For more information check this file: https://github.com/open-osrs/runelite/blob/dd4478eff7d90fcb3e85584171d5836809eb150a/runescape-client/src/main/java/ClientPreferences.java
+```
+*)
+
+{$DEFINE SRLT_CACHEPARSER_INCLUDED}
+{$I SRLT/osrs.simba}
+
+(*
+## TRSCacheParser
+Type responsible for handling osrs cache parsing.
+*)
+type
+  TRSCacheParser = record
+    Disabled: Boolean;
+    Directory: String;
+    const PREFERENCES:  String = PATH_SEP + 'jagexcache' + PATH_SEP + 'oldschool' + PATH_SEP + 'LIVE' + PATH_SEP + 'preferences.dat';
+    const PREFERENCES2: String = PATH_SEP + 'jagexcache' + PATH_SEP + 'oldschool' + PATH_SEP + 'LIVE' + PATH_SEP + 'preferences2.dat';
+  end;
+
+(*
+## RSCacheParser.Setup
+```pascal
+procedure TRSCacheParser.Setup();
+```
+Internal method responsible for setting up the {ref}`TRSCacheParser`.
+
+This is automatically called for you on the {ref}`RSCacheParser variable`.
+*)
+procedure TRSCacheParser.Setup();
+var
+  {$IFDEF WINDOWS}
+  paths: TStringArray;
+  {$ENDIF}
+begin
+  case RSClient.Client of
+    ERSClient.LEGACY:
+    begin
+      {$IFDEF WINDOWS}
+      paths := [GetEnvVar('ONEDRIVE'), GetEnvVar('USERPROFILE'), GetEnvVar('HOMEPATH')];
+
+      for Self.Directory in paths do
+        if FileExists(Self.Directory + Self.PREFERENCES) then Break;
+      {$ELSE}
+        Self.Directory := GetEnvVar('HOME');
+      {$ENDIF}
+    end;
+
+    ERSClient.RUNELITE:
+      Self.Directory := {$IFDEF WINDOWS} GetEnvVar('USERPROFILE') {$ELSE} GetEnvVar('HOME') {$ENDIF} + PATH_SEP + '.runelite';
+
+    else
+    begin
+      Self.Disabled := True;
+      Exit;
+    end;
+  end;
+
+  if not FileExists(Self.Directory + Self.PREFERENCES) then
+    Self.Disabled := True;
+end;
+
+
+(*
+## RSCacheParser.Read
+```pascal
+function TRSCacheParser.Read(): TByteArray;
+```
+Returns the bytes of the preferences file which can only be 1 or 2.
+
+Example:
+```pascal
+WriteLn RSCacheParser.Read(1);
+```
+*)
+function TRSCacheParser.Read(pref: Integer = 1): TByteArray;
+begin
+  case pref of
+    1: Result := FileReadBytes(Self.Directory + Self.PREFERENCES);
+    2: Result := FileReadBytes(Self.Directory + Self.PREFERENCES2);
+  end;
+end;
+
+(*
+## RSCacheParser.CountOptions
+```pascal
+function TRSCacheParser.CountOptions(bytes: TByteArray = []): Integer;
+```
+Returns the number of options saved in the cache.
+
+This is not very useful, AFAIK there's only 2 possible values for this: 0 and 11.
+0 is only if you haven't accepted the EULA in the client.
+
+Example:
+```pascal
+WriteLn RSCacheParser.CountOptions();
+```
+*)
+function TRSCacheParser.CountOptions(bytes: TByteArray = []): Integer;
+begin
+  if bytes = [] then
+    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+  if Length(bytes) > 0 then Result := bytes[0];
+end;
+
+
+(*
+## RSCacheParser.RoofsHidden
+```pascal
+function TRSCacheParser.RoofsHidden(bytes: TByteArray = []): Boolean;
+```
+Returns whether the roofs are hidden or not.
+
+Example:
+```pascal
+WriteLn RSCacheParser.RoofsHidden();
+```
+*)
+function TRSCacheParser.RoofsHidden(bytes: TByteArray = []): Boolean;
+begin
+  if bytes = [] then
+    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+  if Length(bytes) > 0 then Result := Boolean(bytes[1]);
+end;
+
+(*
+## RSCacheParser.LoginMusicDisabled
+```pascal
+function TRSCacheParser.LoginMusicDisabled(bytes: TByteArray = []): Boolean;
+```
+Checks if the music is enabled in the login screen.
+
+Example:
+```pascal
+WriteLn RSCacheParser.LoginMusicDisabled();
+```
+*)
+function TRSCacheParser.LoginMusicDisabled(bytes: TByteArray = []): Boolean;
+begin
+  if bytes = [] then
+    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+  if Length(bytes) > 1 then Result := Boolean(bytes[2]);
+end;
+
+(*
+## RSCacheParser.WindowMode
+```pascal
+function TRSCacheParser.WindowMode(bytes: TByteArray = []): Integer;
+```
+Returns 1 for fixed mode and 2 for resizable mode. Resizable modern and resizable classic make no difference here.
+
+Example:
+```pascal
+WriteLn RSCacheParser.WindowMode();
+```
+*)
+function TRSCacheParser.WindowMode(bytes: TByteArray = []): Integer;
+begin
+  if bytes = [] then
+    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+  if Length(bytes) > 2 then Result := bytes[3];
+end;
+
+
+(*
+## RSCacheParser.CountAuthenticators
+```pascal
+function TRSCacheParser.CountAuthenticators(bytes: TByteArray = []): Integer;
+```
+Returns the number of authenticators saved for the next 30 days.
+
+If this is more than 0, you will have 8 bytes for each of the saved authenticators.
+
+This is important to know so we know where the saved username starts if we have saved authenticators so we can skip bytes.
+
+Example:
+```pascal
+WriteLn RSCacheParser.CountAuthenticators();
+```
+*)
+function TRSCacheParser.CountAuthenticators(bytes: TByteArray = []): Integer;
+begin
+  if bytes = [] then
+    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+  if Length(bytes) > 4 then Result := bytes[4];
+end;
+
+(*
+## RSCacheParser.GetAuthenticators
+```pascal
+function TRSCacheParser.GetAuthenticators(): TStringArray;
+```
+Returns each authenticator saved in a TStringArray.
+
+Each string is 8 bytes like mentioned in {ref}`RSCacheParser.CountAuthenticators` documentation.
+
+Example:
+```pascal
+WriteLn RSCacheParser.GetAuthenticators();
+```
+*)
+function TRSCacheParser.GetAuthenticators(bytes: TByteArray = []): TStringArray;
+var
+  i, count: Int32;
+  authStr: String;
+begin
+  if bytes = [] then
+    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+
+  count := Self.CountAuthenticators(bytes);
+  if count = 0 then Exit;
+
+  SetLength(Result, count);
+  SetLength(authStr, 8);
+
+  for i := 0 to count - 1 do
+  begin
+    Move(bytes[5 + (i * 8)], authStr[1], 8);
+    Result[i] := authStr;
+  end;
+end;
+
+(*
+## RSCacheParser.GetUsernameIndex
+```pascal
+function TRSCacheParser.GetUsernameIndex(bytes: TByteArray = []): Integer;
+```
+Internal function that returns byte index where the username starts.
+This is required because depending on whether we have authenticators saved or not, the bytes shift.
+*)
+function TRSCacheParser.GetUsernameIndex(bytes: TByteArray = []): Integer;
+begin
+  if bytes = [] then
+    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+
+  Result := 5 + Self.CountAuthenticators(bytes) * 8;
+end;
+
+(*
+## RSCacheParser.GetUsername
+```pascal
+function TRSCacheParser.GetUsername(bytes: TByteArray = []): String;
+```
+Returns the saved username in the osrs cache. This is the username you clicked to save on the client when logging in.
+
+Example:
+```pascal
+WriteLn RSCacheParser.GetUsername();
+```
+*)
+function TRSCacheParser.GetUsername(bytes: TByteArray = []): String;
+var
+  i, startIdx: Int32;
+begin
+  if bytes = [] then
+    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+
+  startIdx := Self.GetUsernameIndex(bytes);
+  for i := startIdx to Length(bytes) do
+  begin
+    if bytes[i] = 0 then
+      Break;
+    Result += Char(bytes[i]);
+  end;
+end;
+
+(*
+## RSCacheParser.UsernameEndIndex
+```pascal
+function TRSCacheParser.UsernameEndIndex(bytes: TByteArray = []): Int32;
+```
+Internal function used to get the index of the byte of where the username ends.
+*)
+function TRSCacheParser.UsernameEndIndex(bytes: TByteArray = []): Int32;
+var
+  i: Int32;
+begin
+  if bytes = [] then
+    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+
+  for i := Self.GetUsernameIndex(bytes) to Length(bytes) do
+  begin
+    if bytes[i] = 0 then
+      Break;
+  end;
+  Result := i + 1;
+end;
+
+(*
+## RSCacheParser.LoginHideUsername
+```pascal
+function TRSCacheParser.LoginHideUsername(bytes: TByteArray = []): Boolean;
+```
+Returns true or false if we have the username hidden on the loginscreen.
+
+Example:
+```pascal
+WriteLn RSCacheParser.LoginHideUsername();
+```
+*)
+function TRSCacheParser.LoginHideUsername(bytes: TByteArray = []): Boolean;
+begin
+  if bytes = [] then
+    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+
+  Result := Boolean(bytes[Self.UsernameEndIndex(bytes)]);
+end;
+
+(*
+## RSCacheParser.Brightness
+```pascal
+function TRSCacheParser.Brightness(bytes: TByteArray = []): Int32;
+```
+Returns the brightness value converted to a 0-100 value.
+
+Example:
+```pascal
+WriteLn RSCacheParser.Brightness();
+```
+*)
+function TRSCacheParser.Brightness(bytes: TByteArray = []): Int32;
+var
+  i: Int32;
+begin
+  if bytes = [] then
+    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+
+  i := Self.UsernameEndIndex(bytes) + 1;
+  if Length(bytes) >= i then
+    Result := (Int32(bytes[i]) - 100) * -2;
+end;
+
+(*
+## RSCacheParser.MusicVolume
+```pascal
+function TRSCacheParser.MusicVolume(bytes: TByteArray = []): Integer;
+```
+Returns the music volume value converted to a 0-100 value.
+
+Example:
+```pascal
+WriteLn RSCacheParser.MusicVolume();
+```
+*)
+function TRSCacheParser.MusicVolume(bytes: TByteArray = []): Integer;
+var
+  i: Integer;
+begin
+  if bytes = [] then
+    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+
+  i := Self.UsernameEndIndex(bytes) + 2;
+  if Length(bytes) >= i then
+    Result := Round(Integer(bytes[i]) / 2.55);
+end;
+
+(*
+## RSCacheParser.SoundEffectsVolume
+```pascal
+function TRSCacheParser.SoundEffectsVolume(bytes: TByteArray = []): Integer;
+```
+Returns the sound effects volume value converted to a 0-100 value.
+
+Example:
+```pascal
+WriteLn RSCacheParser.SoundEffectsVolume();
+```
+*)
+function TRSCacheParser.SoundEffectsVolume(bytes: TByteArray = []): Integer;
+var
+  i: Integer;
+begin
+  if bytes = [] then
+    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+
+  i := Self.UsernameEndIndex(bytes) + 3;
+  if Length(bytes) >= i then
+    Result := Round(Integer(bytes[i]) / 1.27);
+end;
+
+(*
+## RSCacheParser.AreaSoundVolume
+```pascal
+function TRSCacheParser.AreaSoundVolume(bytes: TByteArray = []): Integer;
+```
+Returns the area sound volume value converted to a 0-100 value.
+
+Example:
+```pascal
+WriteLn RSCacheParser.AreaSoundVolume();
+```
+*)
+function TRSCacheParser.AreaSoundVolume(bytes: TByteArray = []): Integer;
+var
+  i: Integer;
+begin
+  if bytes = [] then
+    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+
+  i := Self.UsernameEndIndex(bytes) + 4;
+  if Length(bytes) >= i then
+    Result := Round(Integer(bytes[i]) / 1.27);
+end;
+
+(*
+## RSCacheParser.Field1247
+```pascal
+function TRSCacheParser.Field1247(bytes: TByteArray = []): Integer;
+```
+I have absolutely no idea what this is. It's supposedly something, but AFAIK it's always 0.
+
+Example:
+```pascal
+WriteLn RSCacheParser.Field1247();
+```
+*)
+function TRSCacheParser.Field1247(bytes: TByteArray = []): Integer;
+var
+  i: Integer;
+begin
+  if bytes = [] then
+    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+
+  i := Self.UsernameEndIndex(bytes) + 5;
+  if Length(bytes) >= i then
+    Result := Integer(bytes[i]);
+end;
+
+var
+(*
+## RSCacheParser variable
+Global {ref}`TRSCacheParser` variable.
+*)
+  RSCacheParser: TRSCacheParser;

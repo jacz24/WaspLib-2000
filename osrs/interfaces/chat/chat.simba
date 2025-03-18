@@ -485,7 +485,6 @@ begin
 end;
 
 
-{$IFDEF SRLT_DEBUG_INTERFACES}
 procedure TRSChat.Draw(img: TImage);
 var
   tab: TRSChatTab;
@@ -506,16 +505,15 @@ begin
     tab.Button.Draw(img);
 end;
 
-procedure TRSChat.ShowOnClient();
+procedure ShowOnClient(chat: TRSChat); overload;
 var
   img: TImage;
 begin
   img := TImage.CreateFromTarget();
-  Self.Draw(img);
+  chat.Draw(img);
   img.Show();
   img.Free();
 end;
-{$ENDIF}
 
 var
 (*

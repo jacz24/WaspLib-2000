@@ -27,7 +27,6 @@ An enumeration representing different prayers in RuneScape.
 *)
 type
   ERSPrayer = enum(
-    UNKNOWN,
     THICK_SKIN,           BURST_OF_STRENGTH,  CLARITY_OF_THOUGHT,
     SHARP_EYE,            MYSTIC_WILL,        ROCK_SKIN,
     SUPERHUMAN_STRENGTH,  IMPROVED_REFLEXES,  RAPID_RESTORE,
@@ -62,7 +61,6 @@ A record for finding and managing prayer images.
 - `CacheDir`: Directory for storing cached prayer images
 - `ZIP`: Path to the zip file containing prayer images
 *)
-type
   TRSPrayerFinder = record
     PrayerImages: array [ERSPrayer] of TImage;
     Version: String;
@@ -159,9 +157,6 @@ function TRSPrayerFinder.GetImage(prayer: ERSPrayer): TImage;
 var
   name, path: String;
 begin
-  if prayer = ERSPrayer.UNKNOWN then
-    Exit();
-
   if Self.PrayerImages[prayer] <> nil then
     Exit(Self.PrayerImages[prayer]);
 
@@ -204,14 +199,10 @@ begin
 
   for prayer in prayers do
   begin
-    if prayer = ERSPrayer.UNKNOWN then
-      Continue;
-
     img := Self.GetImage(prayer);
     for i := 0 to High(boxes) do
     begin
-      if skip[i] then
-        Continue;
+      if skip[i] then Continue;
 
       match := Self.Similarity;
       if Self.ImageCompare.Compare(img, boxes[i], match) then
@@ -238,15 +229,11 @@ begin
 
   for prayer in prayers do
   begin
-    if prayer = ERSPrayer.UNKNOWN then
-      Continue;
-
     img := Self.GetImage(prayer);
 
     for i := 0 to High(boxes) do
     begin
-      if skip[i] then
-        Continue;
+      if skip[i] then Continue;
 
       match := Self.Similarity;
       if Self.ImageCompare.Compare(img, boxes[i], match) then
@@ -300,14 +287,10 @@ begin
 
   for prayer in prayers do
   begin
-    if prayer = ERSPrayer.UNKNOWN then
-      Continue;
-
     img := Self.GetImage(prayer);
     for i := 0 to High(boxes) do
     begin
-      if skip[i] then
-        Continue;
+      if skip[i] then Continue;
 
       similarity := Self.Similarity;
       if Self.ImageCompare.Compare(img, boxes[i], similarity) then
@@ -322,7 +305,3 @@ end;
 
 var
   PrayerFinder: TRSPrayerFinder;
-
-begin
-  PrayerFinder.Setup();
-end;

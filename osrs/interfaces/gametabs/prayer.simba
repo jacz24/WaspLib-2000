@@ -472,7 +472,5 @@ begin
   Result := Result and SleepUntil(((Self.GetActivePrayers() * prayers) = emptyPrayerSet), 100, 2000);
 end;
 
-{$H-}
 var
   Prayer: TRSPrayer;
-{$H+}

@@ -39,9 +39,8 @@ end;
   end;
 
 (*
-(TRSStats)=
-## type TRSStats
-Main record used to interact with the stats gametab.
+## TRSStats
+Main record used to interact with the {ref}`Stats` gametab.
 *)
   TRSStats = record
     Levels: array [ERSSkill] of Integer;
@@ -53,7 +52,9 @@ Main record used to interact with the stats gametab.
 ```pascal
 procedure TRSStats.SetupInterface();
 ```
-Internal method automatically called for you responsible for setting up the tab coordinates.
+Internal method used to setup the {ref}`TRSStats` coordinates and internal values.
+
+This is automatically called for you on the {ref}`Stats variable`.
 *)
 procedure TRSStats.SetupInterface();
 begin
@@ -236,11 +237,9 @@ begin
   if Self.Levels[skill] > 0 then Self.Levels[skill] += 1;
 end;
 
-
 var
 (*
-(Stats)=
-## var Stats
-Global TRSStats variable.
+## Stats variable
+Global {ref}`TRSStats` variable.
 *)
   Stats: TRSStats;

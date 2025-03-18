@@ -35,11 +35,44 @@ Record representing the RuneScape client.
   end;
 
 (*
+## RSClient.GetClient
+```pascal
+function TRSClient.GetClient(): ERSClient;
+```
+Returns the client type being used.
+
+Example:
+```pascal
+WriteLn RSClient.GetClient();
+```
+*)
+function TRSClient.GetClient(): ERSClient;
+begin
+  with Target.TargetWindow do
+  begin
+    case GetClassName() of
+      'JagRenderView', 'JagWindow': Exit(ERSClient.OFFICIAL);
+    end;
+
+    case GetRootWindow().GetTitle() of
+      'Old School RuneScape': Result := ERSClient.LEGACY;
+      'RuneLite': Result := ERSClient.RUNELITE;
+    end;
+  end;
+end;
+
+
+(*
 ## RSClient.GetMode
 ```pascal
 function TRSClient.GetMode(): ERSMode;
 ```
-Detects the client mode.
+Returns the client mode.
+
+Example:
+```pascal
+WriteLn RSClient.GetMode();
+```
 *)
 function TRSClient.GetMode(): ERSMode;
 begin
@@ -118,10 +151,6 @@ You can optionally delay losing focus by passing in a `delay`.
 *)
 procedure TRSClient.LoseFocus();
 begin
-  {$IFDEF SRLT_REMOTEINPUT_INCLUDED}
-  RemoteInput.LoseFocus();
-  Exit;
-  {$ENDIF}
   WriteLn(GetDebugLn('RSClient', 'LoseFocus method is not implemented.', EErrorLevel.WARN));
 end;
 

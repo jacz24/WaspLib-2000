@@ -1,18 +1,39 @@
 (*
 # Minimap
 Methods to interact with the minimap.
+```{figure} ../../images/minimap.png
+The minimap interface.
+```
 *)
 
 {$DEFINE SRLT_MINIMAP_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
+(*
+## ERSMinimapDots
+```pascal
+ERSMinimapDot  = enum(PLAYER, NPC, ITEM);
+```
+Enum representing the available minimap dots.
+*)
   ERSMinimapDot  = enum(PLAYER, NPC, ITEM);
   ERSMinimapDots = set of ERSMinimapDot;
   TRSMinimapDotArray = array [ERSMinimapDot] of TPointArray;
 
+(*
+## ERSMinimapOrb
+```pascal
+ERSMinimapOrb  = enum(HITPOINTS, PRAYER, ENERGY, SPECIAL);
+```
+Enum representing the 4 available minimap orbs.
+*)
   ERSMinimapOrb  = enum(HITPOINTS, PRAYER, ENERGY, SPECIAL);
 
+(*
+## TRSMinimap
+Main record used to interact with the {ref}`Minimap`.
+*)
   TRSMinimap = record
     Orbs: TCircleArray;
     Bounds: TBox;
@@ -43,7 +64,9 @@ type
 ```pascal
 procedure TRSMinimap.SetupInterface();
 ```
-Internal method used to setup the interface coordinates.
+Internal method used to setup the {ref}`TRSMinimap` coordinates.
+
+This is automatically called for you on the {ref}`Minimap variable`.
 *)
 procedure TRSMinimap.SetupInterface();
 var
@@ -739,11 +762,9 @@ begin
     Result := Target.GetPixelDifference(300, TBox.Create([X,Y], 40, 40)) >= minShift;
 end;
 
-
 var
 (*
-(Minimap)=
-## var Minimap
-Global TRSMinimap variable.
+## Minimap variable
+Global {ref}`TRSMinimap` variable.
 *)
   Minimap: TRSMinimap;

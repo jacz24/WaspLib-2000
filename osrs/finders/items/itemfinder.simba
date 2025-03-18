@@ -288,7 +288,3 @@ end;
 
 var
   ItemFinder: TRSItemFinder;
-
-begin
-  ItemFinder.Setup();
-end;

@@ -8,21 +8,27 @@ Methods to interact with the XP bar.
 
 type
 (*
-## XPBar Enums
+## ERSXPBarSize
 ```pascal
 ERSXPBarSize = enum(UNKNOWN, SMALL, MEDIUM, LARGE);
-ERSXPBarPosition = enum(UNKNOWN, LEFT, CENTER, RIGHT);
+Enum reprensenting the {ref}`XPBar` available sizes.
 ```
 *)
+  ERSXPBarSize = enum(UNKNOWN, SMALL, MEDIUM, LARGE);
 
 (*
-(TRSXPBar)=
-## type TRSXPBar
-Record responsible with interacting with the xp bar.
+## ERSXPBarPosition
+```pascal
+ERSXPBarPosition = enum(UNKNOWN, LEFT, CENTER, RIGHT);
+```
+Enum reprensenting the {ref}`XPBar` available positions.
 *)
-  ERSXPBarSize = enum(UNKNOWN, SMALL, MEDIUM, LARGE);
   ERSXPBarPosition = enum(UNKNOWN, LEFT, CENTER, RIGHT);
 
+(*
+## TRSXPBar
+Record responsible with interacting with the {ref}`XPBar`.
+*)
   TRSXPBar = record
     Size: ERSXPBarSize;
     Position: ERSXPBarPosition;
@@ -48,7 +54,9 @@ Record responsible with interacting with the xp bar.
 ```pascal
 procedure TRSXPBar.UpdateSize();
 ```
-Internal method used to update the XPBar bounds.
+Internal method used to update the {ref}`TRSXPBar` coordinates.
+
+This is automatically called for you on the {ref}`XPBar variable`.
 *)
 procedure TRSXPBar.UpdateSize();
 begin
@@ -86,7 +94,9 @@ end;
 ```pascal
 procedure TRSXPBar.SetupInterface();
 ```
-Internal method used to setup the XPBar coordinates and core values.
+Internal method used to setup the {ref}`TRSXPBar` coordinates and core values.
+
+This is automatically called for you on the {ref}`XPBar variable`.
 *)
 procedure TRSXPBar.SetupInterface();
 begin
@@ -341,8 +351,7 @@ end;
 
 var
 (*
-(XPBar)=
-## var XPBar
-Global TRSXPBar variable.
+## XPBar variable
+Global {ref}`TRSXPBar` variable.
 *)
   XPBar: TRSXPBar;

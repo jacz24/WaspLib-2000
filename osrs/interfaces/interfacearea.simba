@@ -1,7 +1,6 @@
 (*
 # InterfaceArea
 *)
-
 {$DEFINE SRLT_INTERFACE_AREA_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
@@ -46,7 +45,6 @@ begin
 
   Self.Quad := TQuad.CreateFromBox(Self.Bounds);
 end;
-
 
 (*
 ## TRSInterfaceArea.IsOpen

@@ -13,12 +13,9 @@ RuneScape has several types of buttons, {ref}`TRSButton` can be used for
 several of them but it's made specifically for buttons that have an
 "enabled" and "disabled" state:
 ```{figure} ../../images/trsbuttons.png
-2 buttons that have an enabled/disabled state.
 ```
-
 You can also use them very effectively for this type of buttons that are "linked" together:
 ```{figure} ../../images/linked_trsbuttons.png
-Several buttons that have their states linked.
 ```
 With "linked", it means that enabling one, disabled the linked one(s).
 
@@ -133,7 +130,7 @@ begin
   Result := SleepUntil(Self.Enabled(), 50, 600);
 end;
 
-{$IFDEF SRLT_DEBUG_INTERFACES}
+
 procedure TRSButton.Draw(img: TImage; color: Integer = $00FFFF);
 var
   oldColor: Integer;
@@ -177,14 +174,13 @@ begin
   img.Show();
   img.Free();
 end;
-{$ENDIF}
+
 
 type
 (*
 ## TRSSlider
 A record meant to handle sliders in the game interfaces:
 ```{figure} ../../images/sliders.png
-RuneScape sliders.
 ```
 *)
   TRSSlider = record
@@ -259,7 +255,6 @@ type
 ## TRSScrollBar
 Record to handle the game interface's scrollbars:
 ```{figure} ../../images/scrollbar.png
-A RuneScape scrollbar.
 ```
 *)
   TRSScrollBar = record
@@ -341,7 +336,6 @@ Example:
 ShowOnClient(Bank.Scroll.GetSlider());
 ```
 ```{figure} ../../images/scrollbar_slider.png
-The bank scrollbar slider.
 ```
 *)
 function TRSScrollBar.GetSlider(): TBox;
@@ -496,7 +490,6 @@ begin
 end;
 
 
-{$IFDEF SRLT_DEBUG_INTERFACES}
 procedure TRSScrollBar.Draw(img: TImage);
 var
   bounds: TBox;
@@ -533,7 +526,7 @@ begin
   img.Show();
   img.Free();
 end;
-{$ENDIF}
+
 
 type
 (*
@@ -550,7 +543,6 @@ Helper record to handle {ref}`TRSDropDown` options.
 ## TRSDropDown
 Record to handle drop downs in the game interfaces:
 ```{figure} ../../images/dropdowns.png
-Two game dropdowns.
 ```
 *)
   TRSDropDown = record
@@ -763,5 +755,37 @@ begin
   for idx := 0 to High(Self.Options) do
     if Self.Options[idx].Text.Contains(option) then
       Exit(Self.Select(idx));
+end;
+
+
+procedure TRSDropDown.Draw(img: TImage);
+var
+  i: Integer;
+begin
+  img.DrawColor := $00FF00;
+  img.DrawBox(Self.Bounds);
+
+  img.DrawColor := $FFFF00;
+  img.DrawBox(Self.Arrow);
+
+  if Self.IsOpen() then
+  begin
+    img.DrawColor := $FFFFFF;
+    for i := 0 to High(Self.Options) do
+      img.DrawBox(Self.Options[i].Bounds);
+  end;
+end;
+
+procedure ShowOnClient(dropdown: TRSDropDown); overload;
+var
+  img: TImage;
+  bounds: TBox;
+begin
+  img := TImage.CreateFromTarget();
+
+  dropdown.Draw(img);
+
+  img.Show();
+  img.Free();
 end;
 

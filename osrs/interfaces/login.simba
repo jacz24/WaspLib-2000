@@ -109,7 +109,7 @@ begin
   Result := RSClient.WaitLoggedIn(3000);
 end;
 
-{$IFDEF SRLT_DEBUG_INTERFACES}
+
 procedure TRSLobbyScreen.Draw(img: TImage);
 var
   i: Integer;
@@ -123,16 +123,15 @@ begin
   img.DrawBox(Self.Button);
 end;
 
-procedure TRSLobbyScreen.ShowOnClient();
+procedure ShowOnClient(lobby: TRSLobbyScreen); overload;
 var
   img: TImage;
 begin
   img := TImage.CreateFromTarget();
-  Self.Draw(img);
+  lobby.Draw(img);
   img.Show();
   img.Free();
 end;
-{$ENDIF}
 
 var
 (*
@@ -415,7 +414,7 @@ begin
   Result := SleepUntil(not Self.IsOpen(), 50, 600) and (Self.GetCurrent() = world);
 end;
 
-{$IFDEF SRLT_DEBUG_INTERFACES}
+
 procedure TRSLoginWorldSwitcher.Draw(img: TImage);
 var
   i: Integer;
@@ -436,16 +435,16 @@ begin
   img.DrawBox(Self.RightButton);
 end;
 
-procedure TRSLoginWorldSwitcher.ShowOnClient();
+procedure ShowOnClient(loginWorldSwitcher: TRSLoginWorldSwitcher); overload;
 var
   img: TImage;
 begin
   img := TImage.CreateFromTarget();
-  Self.Draw(img);
+  loginWorldSwitcher.Draw(img);
   img.Show();
   img.Free();
 end;
-{$ENDIF}
+
 
 var
 (*
@@ -1066,7 +1065,6 @@ begin
 end;
 
 
-{$IFDEF SRLT_DEBUG_INTERFACES}
 procedure TRSLogin.Draw(img: TImage);
 var
   i: Integer;
@@ -1089,16 +1087,16 @@ begin
   img.DrawBox(LoginWorldSwitcher.OpenButton);
 end;
 
-procedure TRSLogin.ShowOnClient();
+procedure ShowOnClient(login: TRSLogin); overload;
 var
   img: TImage;
 begin
   img := TImage.CreateFromTarget();
-  Self.Draw(img);
+  login.Draw(img);
   img.Show();
   img.Free();
 end;
-{$ENDIF}
+
 
 var
 (*

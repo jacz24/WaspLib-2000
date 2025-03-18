@@ -126,7 +126,3 @@ end;
 
 var
   RSFonts: TRSFonts;
-
-begin
-  RSFonts.Setup();
-end;

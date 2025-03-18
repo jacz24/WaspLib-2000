@@ -63,7 +63,10 @@ end;
 var
 (*
 ## MM2MS variable
-Global {ref}TRSMM2MS variable. It's unlikely you need to use this directly.
+Global {ref}`TRSMM2MS` variable.
+
+It's unlikely you need to use this directly.
+
 You usually only need the `TRSMinimap` and `TRSMainScreen` extensions below.
 *)
   MM2MS: TRSMM2MS;
@@ -621,9 +624,6 @@ function TRSMinimap.MakePointVisible(pt: TPoint): Boolean;
 begin
   Result := Self.SetZoom2Point(pt, Random(-5, 5)) and Self.FacePoint(pt, Random(-3, 3));
 end;
-
-
-
 
 
 (*

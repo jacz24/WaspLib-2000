@@ -395,13 +395,6 @@ Global {ref}`TRSMainScreen` variable.
 *)
   MainScreen: TRSMainScreen;
 
-begin
-  MainScreen.UptextOCR.Tolerance := 25;
-  MainScreen.UptextOCR.ShadowTolerance := 65;
-  MainScreen.UptextOCR.Whitelist := ['a'..'z', 'A'..'Z', '0'..'9', '-', '>', '(', ')', '/'];
-end;
-
-
 (*
 ## Biometrics.YellowClick
 ```pascal
@@ -463,4 +456,3 @@ begin
 
   Result := MainScreen.RedClicked() and not MainScreen.YellowClicked();
 end;
-

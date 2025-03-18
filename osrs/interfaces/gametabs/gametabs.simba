@@ -285,11 +285,76 @@ Global {ref}`TRSGameTabs` variable.
 *)
   GameTabs: TRSGameTabs;
 
+
+(*
+# GameTab
+Gametabs interfaces core.
+Whenever you want to use gametab coordinates that are not unique to a specific
+tab you should use this.
+
+Check {ref}`TRSInterface` to see what coordinates it has available.
+*)
+type
+(*
+(TRSGameTab)=
+## type TRSGameTab
+GameTab type that holds the core coordinates of a gametab.
+*)
+  TRSGameTab = type TRSInterface;
+
+(*
+## GameTab.SetupInterface
+```pascal
+procedure TRSGameTab.SetupInterface();
+```
+Internal method used to setup the {ref}`TRSGameTab` coordinates.
+
+This is automatically called for you on the {ref}`GameTab variable`.
+*)
+procedure TRSGameTab.SetupInterface();
 begin
-  GameTabs.KeybindsEnabled := True;
-  GameTabs.AvailableKeys := [
-    EKeyCode.ESCAPE, EKeyCode.F1, EKeyCode.F2, EKeyCode.F3, EKeyCode.F4,
-    EKeyCode.F5, EKeyCode.F6, EKeyCode.F7, EKeyCode.F8, EKeyCode.F9,
-    EKeyCode.F10, EKeyCode.F11, EKeyCode.F12
-  ];
+  case RSClient.Mode of
+    ERSMode.FIXED:
+    begin
+      Self.Bounds.X1 := Target.Bounds.X2 - 214;
+      Self.Bounds.X2 := Target.Bounds.X2 - 31;
+      Self.Bounds.Y1 := Target.Bounds.Y2 - 298;
+      Self.Bounds.Y2 := Target.Bounds.Y2 - 37;
+    end;
+
+    ERSMode.RESIZABLE_CLASSIC:
+    begin
+      Self.Bounds.X1 := Target.Bounds.X2 - 212;
+      Self.Bounds.X2 := Target.Bounds.X2 - 29;
+      Self.Bounds.Y1 := Target.Bounds.Y2 - 298;
+      Self.Bounds.Y2 := Target.Bounds.Y2 - 37;
+    end;
+
+    ERSMode.RESIZABLE_MODERN:
+    begin
+      Self.Bounds.X1 := Target.Bounds.X2 - 193;
+      Self.Bounds.X2 := Target.Bounds.X2 - 10;
+      Self.Bounds.Y1 := GameTabs.Bounds.Y1 - 269;
+      Self.Bounds.Y2 := GameTabs.Bounds.Y1 - 7;
+    end;
+  end;
+
+  Self.Width  := Self.Bounds.Width;
+  Self.Height := Self.Bounds.Height;
+  Self.Center := Self.Bounds.Center;
+
+  Self.TopLeft     := Self.Bounds.TopLeft;
+  Self.TopRight    := Self.Bounds.TopRight;
+  Self.BottomRight := Self.Bounds.BottomRight;
+  Self.BottomLeft  := Self.Bounds.BottomLeft;
+
+  Self.Quad := [Self.TopLeft, Self.TopRight, Self.BottomRight, Self.BottomLeft];
 end;
+
+var
+(*
+(GameTab variable)=
+## var GameTab
+Global {ref}`TRSGameTab` variable.
+*)
+  GameTab: TRSGameTab;

@@ -325,14 +325,9 @@ begin
     RSClient.IsLoggedIn(); //force trigger SetupInterfaces
 end;
 
-
 var
 (*
 ## Options variable
 Global {ref}`TRSOptions` variable.
 *)
   Options: TRSOptions;
-
-begin
-  Options.ZoomLevel := -1;
-end;

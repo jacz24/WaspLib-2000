@@ -1,20 +1,66 @@
+(*
+# ChatTabs
+Chat tabs refer to the tabs/buttons that are below the {ref}`Chat` box.
+
+You can use these to change the current chat being viewed.
+```{figure} ../../images/chattabs.png
+```
+*)
 {$DEFINE SRLT_CHAT_TABS_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
+(*
+## ERSChatTab
+```pascal
+ERSChatTab = enum(NONE, ALL, GAME, PUBLIC_, PRIVATE_, CHANNEL, CLAN, TRADE);
+```
+Enum representing each of the chat tabs available.
+*)
   ERSChatTab = enum(NONE, ALL, GAME, PUBLIC_, PRIVATE_, CHANNEL, CLAN, TRADE);
+
+(*
+## ERSChatTabState
+```pascal
+ERSChatTabState = (NONE, ENABLED, FILTERED, DISABLED, HIDE, AUTOCHAT);
+```
+Enum representing each of the filters a chat tab can have.
+
+You can see the filters when you right click the tab:
+```{figure} ../../images/chattab_filter.png
+```
+*)
   ERSChatTabState = (NONE, ENABLED, FILTERED, DISABLED, HIDE, AUTOCHAT);
 
+(*
+## TRSChatTab
+Helper record to interact with a tab.
+*)
   TRSChatTab = record
     Tab: ERSChatTab;
     Button: TRSButton;
   end;
 
+(*
+## TRSChatTabs
+Record responsible with interacting with the {ref}`ChatTabs`.
+
+In {ref}`TRSChat` you have a `Tabs` variable of this type.
+*)
   TRSChatTabs = record
     Bounds: TBox;
     Tabs: array [0..7] of TRSChatTab;
   end;
 
+(*
+## Chat.Tabs.SetupInterface
+```pascal
+procedure TRSChatTabs.SetupInterface();
+```
+Internal method used to setup the {ref}`TRSChatTabs` coordinates.
+
+This is automatically called for you on the {ref}`Chat.Tabs variable`.
+*)
 procedure TRSChatTabs.SetupInterface();
 var
   i: Int32;
@@ -33,12 +79,37 @@ begin
     end;
 end;
 
+(*
+## Chat.Tabs.Get
+```pascal
+function TRSChatTabs.Get(tab: ERSChatTab): TRSChatTab;
+```
+Returns the {ref}`TRSChatTab` that is represented by the specified {ref}`ERSChatTab`.
+
+This is mostly for internal use.
+
+Example:
+```pascal
+WriteLn Chat.Tabs.Get(ERSChatTab.GAME);
+```
+*)
 function TRSChatTabs.Get(tab: ERSChatTab): TRSChatTab;
 begin
   Result := Self.Tabs[tab-1];
 end;
 
+(*
+## Chat.Tabs.GetActive
+```pascal
+function TRSChatTabs.GetActive(): ERSChatTab;
+```
+Returns the {ref}`TRSChatTab` that is active right now.
 
+Example:
+```pascal
+WriteLn Chat.Tabs.GetActive();
+```
+*)
 function TRSChatTabs.GetActive(): ERSChatTab;
 var
   tab: ERSChatTab;
@@ -48,18 +119,42 @@ begin
       Exit(tab);
 end;
 
+(*
+## Chat.Tabs.IsActive
+```pascal
+function TRSChatTabs.IsActive(tab: ERSChatTab): Boolean;
+```
+Returns True/False if the specified {ref}`ERSChatTab` is active right now.
+
+Example:
+```pascal
+WriteLn Chat.Tabs.IsActive(ERSChatTab.ALL);
+```
+*)
 function TRSChatTabs.IsActive(tab: ERSChatTab): Boolean;
 begin
   Result := Self.Get(tab).Button.Enabled();
 end;
 
 
+(*
+## Chat.Tabs.Open
+```pascal
+function TRSChatTabs.Open(tab: ERSChatTab): Boolean;
+```
+Attempts to open the specified {ref}`ERSChatTab`.
+
+Example:
+```pascal
+WriteLn Chat.Tabs.Open(ERSChatTab.ALL);
+```
+*)
 function TRSChatTabs.Open(tab: ERSChatTab): Boolean;
 begin
   Result := Self.Get(tab).Button.Enable();
 end;
 
-
+{%codetools off}
 function TRSChatTab._GetState(): ERSChatTabState;
 const
   COLORS: array [1..5] of Integer = [65280, 65535, 255, 16776960, 16756480];
@@ -73,12 +168,38 @@ begin
     if Target.CountColor(COLORS[state], 0, Self.Button.Bounds) > 0 then
       Exit(state);
 end;
+{%codetools on}
 
+(*
+## Chat.Tabs.GetState
+```pascal
+function TRSChatTabs.GetState(tab: ERSChatTab): ERSChatTabState;
+```
+Returns the {ref}`ERSChatTabState` of the specified {ref}`ERSChatTab`.
+
+Example:
+```pascal
+WriteLn Chat.Tabs.GetState(ERSChatTab.PUBLIC_);
+```
+*)
 function TRSChatTabs.GetState(tab: ERSChatTab): ERSChatTabState;
 begin
   Result := Self.Get(tab)._GetState();
 end;
 
+(*
+## Chat.Tabs.ChangeState
+```pascal
+function TRSChatTabs.ChangeState(tab: ERSChatTab; state: ERSChatTabState): Boolean;
+```
+Attempts to change the state of the specified {ref}`ERSChatTab` to the
+specified {ref}`ERSChatTabState`.
+
+Example:
+```pascal
+WriteLn Chat.Tabs.GetState(ERSChatTab.PUBLIC_, ERSChatTabState.ENABLED);
+```
+*)
 function TRSChatTabs.ChangeState(tab: ERSChatTab; state: ERSChatTabState): Boolean;
 var
   chatTab: TRSChatTab;

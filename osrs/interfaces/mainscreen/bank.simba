@@ -1068,7 +1068,6 @@ begin
     Result := Self._InteractionHelper(ERSBankInteraction.DEPOSIT, slot, 1, useQuantityButton);
 end;
 
-{$IFDEF SRLT_DEBUG_INTERFACES}
 procedure TRSBank.Draw(img: TImage);
 var
   i: Integer;
@@ -1106,7 +1105,6 @@ begin
   img.Show();
   img.Free();
 end;
-{$ENDIF}
 
 var
 (*

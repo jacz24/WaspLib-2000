@@ -2,9 +2,7 @@
 # Make
 The "Make" menu is the {ref}`Chat` box menu that pops up when you attempt to
 craft certain items in OldSchool RuneScape.
-
 ```{figure} ../../images/make_interface.png
-The make interface.
 ```
 *)
 
@@ -112,7 +110,6 @@ ShowOnClient(Make.GetItemBoxes());
 ```
 
 ```{figure} ../../images/make_items.png
-The make interface item buttons.
 ```
 *)
 function TRSMake.GetItemBoxes(): TBoxArray;
@@ -177,6 +174,8 @@ Returns the hint tooltip bounds.
 Example:
 ```pascal
 ShowOnClient(Make.GetHintBox());
+```
+```{figure} ../../images/make_hint.png
 ```
 *)
 function TRSMake.GetHintBox(): TBox;
@@ -441,7 +440,7 @@ begin
   end;
 end;
 
-{$IFDEF SRLT_DEBUG_INTERFACES}
+
 procedure TRSMake.Draw(img: TImage);
 var
   boxes: TBoxArray;
@@ -458,16 +457,15 @@ begin
   img.DrawBox(Self.GetHintBox());
 end;
 
-procedure TRSMake.ShowOnClient();
+procedure ShowOnClient(make: TRSMake); overload;
 var
   img: TImage;
 begin
   img := TImage.CreateFromTarget();
-  Self.Draw(img);
+  make.Draw(img);
   img.Show();
   img.Free();
 end;
-{$ENDIF}
 
 var
 (*

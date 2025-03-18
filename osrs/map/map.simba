@@ -63,8 +63,6 @@ TRSMap = record
 Record responsible for positioning.
 *)
   TRSMap = record
-    Walker: TRSWalker;
-
     RegionIndex: Integer;
     Region: TRSMapRegion;
 
@@ -122,11 +120,11 @@ begin
 
   if not Self.IsSetup then
   begin
-    Self.Walker.Setup(
+    Walker.Setup(
       @Self.Position, @Self.Height, @Self.Loader.GetLocal,
       @Self.Loader.Graph, Self.Loader.Map
     );
-    Self.Walker.Name := 'Map.Walker';
+    Walker.Name := 'Map.Walker';
     Self.IsSetup := True;
   end;
 end;
@@ -554,7 +552,5 @@ begin
   img.Free();
 end;
 
-{$H-}
 var
   Map: TRSMap;
-{$H+}

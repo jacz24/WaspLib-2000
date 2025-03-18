@@ -1390,3 +1390,10 @@ function TRSWalker.MakePointVisible(pt: TPoint): Boolean;
 begin
   Result := Minimap.MakePointVisible(Self.Point2MM(Self.Position(), pt, Minimap.GetCompassAngle(False)));
 end;
+
+var
+(*
+## Walker variable
+Global {ref}`TRSWalker` variable.
+*)
+  Walker: TRSWalker;

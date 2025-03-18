@@ -306,15 +306,9 @@ begin
   Result := InRange(Options.ZoomLevel, level-4, level+4);
 end;
 
-
 var
 (*
 ## RSMouseZoom variable
 Global {ref}`TRSMouseZoom` variable.
 *)
   RSMouseZoom: TRSMouseZoom;
-
-begin
-  RSMouseZoom.ZoomLevel := -1;
-  RSMouseZoom.Enabled := True;
-end;
