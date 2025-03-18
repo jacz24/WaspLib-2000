@@ -1,5 +1,5 @@
 const
   SRLT_VERSION_YEAR: Integer = 2025;
   SRLT_VERSION_MONTH: Integer = 03;
-  SRLT_VERSION_DAY: Integer = 17;
-  SRLT_VERSION_COMMIT_HASH: String = '9c8e476';
+  SRLT_VERSION_DAY: Integer = 18;
+  SRLT_VERSION_COMMIT_HASH: String = '014bd16';
