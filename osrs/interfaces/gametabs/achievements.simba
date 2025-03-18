@@ -1,0 +1,92 @@
+(*
+# Achievements
+This page is dedicated to the achievements game tab and methods to interact with it.
+```{figure} ../../images/achievements.png
+```
+*)
+{$DEFINE SRLT_ACHIEVEMENTS_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+type
+(*
+## ERSAchievementTab
+```pascal
+ERSAchievementTab = enum(SUMMARY, QUESTS, DIARIES);
+```
+An enum representing each of the {ref}`Achievements` gametab tabs.
+*)
+  ERSAchievementTab = enum(SUMMARY, QUESTS, DIARIES);
+
+(*
+## ERSSummary
+```pascal
+ERSSummary = enum(USERNAME, COMBAT, TOTAL, XP, QUESTS, DIARIES, COMBAT_ACHIEVEMENTS, COLLECTION_LOG, TIME);
+```
+An enum representing each of the {ref}`Achievements` gametab summary blocks:
+TODO: ADD IMG
+
+You can access the tabs boxes through {ref}`TRSAchievement.Tabs`.
+*)
+  ERSSummary = enum(USERNAME, COMBAT, TOTAL, XP, QUESTS, DIARIES, COMBAT_ACHIEVEMENTS, COLLECTION_LOG, TIME);
+
+(*
+## ERSAchievementDiary
+```pascal
+ERSAchievementDiary = enum(
+  ARDOUGNE,
+  DESERT,
+  FALADOR,
+  FREMENNIK,
+  KANDARIN,
+  KARAMJA,
+  KOUREND_AND_KEBOS,
+  LUMBRIDGE_AND_DRAYNOR,
+  MORYTANIA,
+  VARROCK,
+  WESERT_PROVINCES,
+  WILDERNESS
+);
+```
+An enum representing each of the achievement diaries available.
+*)
+  ERSAchievementDiary = enum(
+    ARDOUGNE,
+    DESERT,
+    FALADOR,
+    FREMENNIK,
+    KANDARIN,
+    KARAMJA,
+    KOUREND_AND_KEBOS,
+    LUMBRIDGE_AND_DRAYNOR,
+    MORYTANIA,
+    VARROCK,
+    WESERT_PROVINCES,
+    WILDERNESS
+  );
+
+  TRSAchievements = record
+    Tabs: array [ERSAchievementTab] of TBox;
+    TabCount: Integer;
+  end;
+
+function TRSAchievements.CountTabs(): Integer;
+var
+  tpa: TPointArray;
+begin
+  with GameTab.Bounds do
+    tpa := Target.FindColor(RSColors.ITEM_BORDER, 0, [X1, Y1, X2, Y1 + 23]);
+  Result := Length(tpa.Cluster(1.5));
+end;
+
+procedure TRSAchievements.SetupTabs();
+var
+  tpa: TPointArray;
+begin
+  if Self.TabCount = 0 then Self.TabCount := Self.CountTabs();
+
+end;
+
+
+
+var
+  Achievements: TRSAchievements;

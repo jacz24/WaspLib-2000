@@ -6,7 +6,6 @@ receive game messages and even interact with some options and menus it hosts
 like the {ref}`Make` menu.
 
 ```{figure} ../../images/chat_interface.png
-The chat interface.
 ```
 *)
 {$DEFINE SRLT_CHAT_INCLUDED}
@@ -38,7 +37,7 @@ Enum representing each of the available ironman types.
   ERSIronMan = enum(NONE, IRONMAN, HARDCORE, ULTIMATE, GROUP, HARCORE_GROUP, UNRANKED_GROUP);
 
 (*
-## TRSChat
+## Chat
 Main record used to interact with the {ref}`Chat` interface.
 *)
   TRSChat = record
@@ -53,7 +52,7 @@ Main record used to interact with the {ref}`Chat` interface.
   end;
 
 (*
-## TRSChat.SetupInterface
+## Chat.SetupInterface
 ```pascal
 procedure TRSChat.SetupInterface();
 ```
@@ -92,7 +91,7 @@ begin
 end;
 
 (*
-## TRSChat.GetColors
+## Chat.GetColors
 ```pascal
 function TRSChat.GetColors(colors: ERSChatColorArray): TColorArray;
 ```
@@ -101,7 +100,7 @@ into a `TColorArray` which has the colors in BGR format.
 
 Example:
 ```pascal
-WriteLn Chat.GetColors([ERSChatColor.RED]);
+WriteLn Chat.GetColors([ERSChatColor.RED, ERSChatColor.WHITE]);
 ```
 *)
 function TRSChat.GetColors(colors: ERSChatColorArray): TColorArray;
@@ -113,7 +112,7 @@ end;
 
 
 (*
-## TRSChat.GetDisplayNameBox
+## Chat.GetDisplayNameBox
 ```pascal
 function TRSChat.GetDisplayNameBox(out color: Integer): TBox;
 function TRSChat.GetDisplayNameBox(): TBox; overload;
@@ -151,7 +150,7 @@ begin
 end;
 
 (*
-## TRSChat.GetDisplayName
+## Chat.GetDisplayName
 ```pascal
 function TRSChat.GetDisplayName(): String;
 ```
@@ -179,7 +178,7 @@ end;
 
 
 (*
-## TRSChat.GetIronManType
+## Chat.GetIronManType
 ```pascal
 function TRSChat.GetIronManType() : ERSIronMan;
 ```
@@ -225,7 +224,7 @@ end;
 
 
 (*
-## TRSChat.IsTransparent
+## Chat.IsTransparent
 ```pascal
 function TRSChat.IsTransparent(): Boolean;
 ```
@@ -250,7 +249,7 @@ end;
 
 
 (*
-## TRSChat.IsOpen
+## Chat.IsOpen
 ```pascal
 function TRSChat.IsOpen(): Boolean;
 ```
@@ -269,7 +268,7 @@ begin
 end;
 
 (*
-## TRSChat.Close
+## Chat.Close
 ```pascal
 function TRSChat.Close(): Boolean;
 ```
@@ -302,7 +301,7 @@ A chat query.
 *)
 
 (*
-### TRSChat.GetQuery
+### Chat.GetQuery
 ```pascal
 function TRSChat.GetQuery(): String;
 ```
@@ -319,7 +318,7 @@ begin
 end;
 
 (*
-### TRSChat.GetQueryAnswer
+### Chat.GetQueryAnswer
 ```pascal
 function TRSChat.GetQueryAnswer(): String;
 ```
@@ -337,7 +336,7 @@ begin
 end;
 
 (*
-### TRSChat.FindQuery
+### Chat.FindQuery
 ```pascal
 function TRSChat.FindQuery(query: String; caseSensitive: Boolean = False): Boolean;
 ```
@@ -355,7 +354,7 @@ begin
 end;
 
 (*
-### TRSChat.WaitQuery
+### Chat.WaitQuery
 ```pascal
 function TRSChat.WaitQuery(query: String; caseSensitive: Boolean = False; time: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -374,7 +373,7 @@ begin
 end;
 
 (*
-### TRSChat.AnswerQuery
+### Chat.AnswerQuery
 ```pascal
 function TRSChat.AnswerQuery(query, answer: String; waitTime: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -482,6 +481,24 @@ WriteLn Chat.ContainsMessage('Hello world');
 function TRSChat.ContainsMessage(msg: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): Boolean;
 begin
   Result := Self.FindMessageLine(msg, caseSensitive, colors) > -1;
+end;
+
+
+(*
+## Chat.InputHasText
+```pascal
+function TRSChat.InputHasText(): Boolean;
+```
+Returns True/False if input line has text written that was never sent.
+
+Example:
+```pascal
+WriteLn Chat.InputHasText();
+```
+*)
+function TRSChat.InputHasText(): Boolean;
+begin
+  Result := Target.HasColor(Self.Colors[ERSChatColor.BLUE], 0, 15, Self.InputLine);
 end;
 
 

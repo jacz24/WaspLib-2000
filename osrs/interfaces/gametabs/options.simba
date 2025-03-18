@@ -54,6 +54,7 @@ Main record responsible with interacting with the {ref}`Options` gametab.
     DropDowns: array [ERSOptionsDropDown] of TRSDropDown;
     Buttons: array [ERSOptionsButton] of TRSButton;
     ZoomLevel: Integer;
+    MaxBrightness, RoofsHidden: Boolean;
   end;
 
 (*
@@ -324,6 +325,158 @@ begin
   if Result and RSClient.WaitModeChange(4000) then
     RSClient.IsLoggedIn(); //force trigger SetupInterfaces
 end;
+
+
+(*
+## Options.RenderSelf
+```pascal
+TRSOptions.RenderSelf();
+```
+Writes "::renderself" on the chat and presses enter.
+
+This toggles your character being rendered.
+
+Example:
+```pascal
+Options.RenderSelf();
+```
+*)
+procedure TRSOptions.RenderSelf();
+begin
+  if Chat.InputHasText() then Keyboard.PressKey(EKeyCode.RETURN);
+  Keyboard.Send('::renderself', EKeyCode.RETURN);
+end;
+
+
+(*
+## Options.GetRoofsState
+```pascal
+function TRSOptions.GetRoofsState(): Boolean;
+```
+Returns the roofs state.
+
+Example:
+```pascal
+Options.GetRoofsState();
+```
+*)
+function TRSOptions.GetRoofsState(): Boolean;
+begin
+  Result := RSCacheParser.RoofsHidden();
+end;
+
+(*
+## Options.HideRoofs
+```pascal
+function TRSOptions.HideRoofs(): Boolean;
+```
+Attempts to hide roofs.
+
+Example:
+```pascal
+Options.HideRoofs();
+```
+*)
+function TRSOptions.HideRoofs(): Boolean;
+begin
+  if RSCacheParser.Disabled then Exit(True);
+
+  if Self.GetRoofsState() then Exit(True);
+
+  WriteLn GetDebugLn('Options', 'TODO: Finish HideRoofs with All Settings menu...', EErrorLevel.ERROR);
+
+  Result := SleepUntil(Self.GetRoofsState(), 100, 1200);
+
+  if Result then Self.RoofsHidden := True
+  else RSCacheParser.Disabled := True;
+end;
+
+(*
+## Options.ShowRoofs
+```pascal
+function TRSOptions.ShowRoofs(): Boolean;
+```
+Attempts to show roofs.
+
+Example:
+```pascal
+Options.ShowRoofs();
+```
+*)
+function TRSOptions.ShowRoofs(): Boolean;
+begin
+  if RSCacheParser.Disabled then Exit(True);
+
+  if not Self.GetRoofsState() then Exit(True);
+
+  WriteLn GetDebugLn('Options', 'TODO: Finish ShowRoofs with All Settings menu...', EErrorLevel.ERROR);
+
+  Result := SleepUntil(not Self.GetRoofsState(), 100, 1200);
+
+  if Result then Self.RoofsHidden := False
+  else RSCacheParser.Disabled := True;
+end;
+
+
+(*
+## Options.GetBrightness
+```pascal
+function TRSOptions.GetBrightness(): Integer;
+```
+Returns the current brightness level. By default it uses {ref}`RSCacheParser` for
+this so it doesn't need to open the options tab.
+
+Example:
+```pascal
+WriteLn Options.GetBrightness();
+```
+*)
+function TRSOptions.GetBrightness(): Integer;
+var
+  tmp: Integer;
+begin
+  if RSCacheParser.Disabled then
+    Exit(Self.Sliders[ERSOptionsSlider.BRIGHTNESS].GetLevel());
+
+  Result := RSCacheParser.Brightness();
+
+  if Self.IsOpen() and (Self.GetTab() = ERSOptionsTab.DISPLAY) then
+  begin
+    tmp := Self.Sliders[ERSOptionsSlider.BRIGHTNESS].GetLevel();
+    if tmp <> Result then //parser is reading wrong file?
+    begin
+      RSCacheParser.Disabled := True;
+      Result := tmp;
+    end;
+  end;
+
+  Self.MaxBrightness := Result = 100;
+end;
+
+(*
+## Options.SetMaxBrightness
+```pascal
+function TRSOptions.SetMaxBrightness(): Boolean;
+```
+Attempts to set your brightness to 100, which is the only value supported by SRLT.
+
+Example:
+```pascal
+WriteLn Options.SetMaxBrightness();
+```
+*)
+function TRSOptions.SetMaxBrightness(): Boolean;
+begin
+  if Self.GetBrightness() = 100 then Exit(True);
+  if not Self.OpenTab(ERSOptionsTab.DISPLAY) then Exit;
+
+  with Self.Sliders[ERSOptionsSlider.BRIGHTNESS].Bounds do
+    Mouse.Click(Point(X2 + Random(3, 5), Random(Y1, Y2)), EMouseButton.LEFT);
+
+  Result := Self.GetBrightness() = 100;
+end;
+
+
 
 var
 (*

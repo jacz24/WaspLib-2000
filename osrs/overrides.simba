@@ -20,6 +20,26 @@ begin
     WriteLn(GetDebugLn('RSClient', 'Client mode changed: ' + ToStr(Self.Mode), EErrorLevel.SUCCESS));
     SetupInterfaces();
   end;
+
+  if Result then
+  begin
+    if not MainScreen.HighestPitch then
+      MainScreen.SetHighestPitch();
+
+    if not Options.MaxBrightness then
+    begin
+      Options.SetMaxBrightness();
+      //Since we might have options open, take the time to setup the zoom level.
+      if (Options.ZoomLevel = -1) and Options.IsOpen() and (Options.GetTab() = ERSOptionsTab.DISPLAY) then
+        Options.GetZoomLevel();
+    end;
+
+    if not Options.RoofsHidden then
+      Options.HideRoofs();
+
+    if XPBar.Tracker.Current = 0 then
+      XPBar.Read();
+  end;
 end;
 
 procedure TRSClient.LoseFocus(); override;

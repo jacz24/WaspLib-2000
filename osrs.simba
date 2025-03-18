@@ -67,12 +67,13 @@ They should be self-explanatory.
 {$IFNDEF SRLT_PRAYER_INCLUDED}              {$INCLUDE_ONCE osrs/interfaces/gametabs/prayer.simba}
 {$IFNDEF SRLT_WORLDSWITCHER_INCLUDED}       {$INCLUDE_ONCE osrs/interfaces/gametabs/worldswitcher.simba}
 {$IFNDEF SRLT_LOGOUT_INCLUDED}              {$INCLUDE_ONCE osrs/interfaces/gametabs/logout.simba}
+{$IFNDEF SRLT_STATS_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/gametabs/stats.simba}
+{$IFNDEF SRLT_ACHIEVEMENTS_INCLUDED}        {$INCLUDE_ONCE osrs/interfaces/gametabs/achievements.simba}
 {$IFNDEF SRLT_MOUSEZOOM_INCLUDED}           {$INCLUDE_ONCE osrs/mousezoom.simba}
 
 {$IFNDEF SRLT_MM2MS_PROJECTOR_INCLUDED}     {$INCLUDE_ONCE osrs/interfaces/mm2ms_projector.simba}
 {$IFNDEF SRLT_MM2MS_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/mm2ms.simba}
 {$IFNDEF SRLT_XPBAR_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/xpbar.simba}
-{$IFNDEF SRLT_STATS_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/gametabs/stats.simba}
 {$IFNDEF SRLT_ANTIBAN_INCLUDED}             {$INCLUDE_ONCE osrs/antiban/antiban.simba}
 
 {$IFNDEF SRLT_WALKER_INCLUDED}              {$INCLUDE_ONCE osrs/walker.simba}
@@ -91,6 +92,7 @@ They should be self-explanatory.
 {$IFNDEF SRLT_OVERRIDES_INCLUDED}           {$INCLUDE_ONCE osrs/overrides.simba}
 
 
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}
