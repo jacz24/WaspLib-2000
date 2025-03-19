@@ -1,5 +1,5 @@
 (*
-# Prayer
+## Prayer
 Methods to interact with the prayer gametab.
 *)
 
@@ -28,7 +28,7 @@ This type is intended to be used through the variable `Prayer`.
   end;
 
 (*
-## Prayer.SetupGameTab
+### Prayer.SetupGameTab
 ```pascal
 procedure TRSPrayer.SetupGameTab();
 ```
@@ -44,7 +44,7 @@ begin
 end;
 
 (*
-## TRSPrayer.IsOpen
+### TRSPrayer.IsOpen
 ```pascal
 function TRSPrayer.IsOpen(): Boolean;
 ```
@@ -71,7 +71,7 @@ begin
 end;
 
 (*
-## Prayer.Open
+### Prayer.Open
 ```pascal
 function TRSPrayer.Open(): Boolean;
 ```
@@ -98,7 +98,7 @@ begin
 end;
 
 (*
-## Prayer.GetInfoBox
+### Prayer.GetInfoBox
 ```pascal
 function TRSPrayer.GetInfoBox(): TBox;
 ```
@@ -130,7 +130,7 @@ begin
 end;
 
 (*
-## Prayer.InfoIsOpen
+### Prayer.InfoIsOpen
 ```pascal
 function TRSPrayer.InfoIsOpen(): Boolean;
 ```
@@ -154,7 +154,7 @@ begin
 end;
 
 (*
-## Prayer.CloseInfo
+### Prayer.CloseInfo
 ```pascal
 function TRSPrayer.CloseInfo(): Boolean;
 ```
@@ -194,7 +194,7 @@ begin
 end;
 
 (*
-## Prayer.Find
+### Prayer.Find
 ```pascal
 function TRSPrayer.Find(prayer: ERSPrayer; out b: TBox; attempts: Int32 = 2): Boolean;
 ```
@@ -237,7 +237,7 @@ begin
 end;
 
 (*
-## Prayer.Hover
+### Prayer.Hover
 ```pascal
 function TRSPrayer.Hover(prayer: ERSPrayer; checkUpText: Boolean = False): Boolean;
 ```
@@ -272,7 +272,7 @@ begin
 end;
 
 (*
-## Prayer.Click
+### Prayer.Click
 ```pascal
 function TRSPrayer.Click(prayer: ERSPrayer; button: EMouseButton = EMouseButton.LEFT; checkUpText: Boolean = False): Boolean;
 ```
@@ -300,7 +300,7 @@ begin
 end;
 
 (*
-## Prayer.CanActivate
+### Prayer.CanActivate
 ```pascal
 function TRSPrayer.CanActivate(prayer: ERSPrayer): Boolean;
 ```
@@ -326,7 +326,7 @@ begin
 end;
 
 (*
-## Prayer.IsActive
+### Prayer.IsActive
 ```pascal
 function TRSPrayer.IsActive(prayers: TRSPrayerSet): Boolean; overload;
 ```
@@ -360,7 +360,7 @@ begin
 end;
 
 (*
-## Prayer.GetActivePrayers
+### Prayer.GetActivePrayers
 ```pascal
 function TRSPrayer.GetActivePrayers(): TRSPrayerSet;
 ```
@@ -387,7 +387,7 @@ begin
 end;
 
 (*
-## Prayer.Activate
+### Prayer.Activate
 ```pascal
 function TRSPrayer.Activate(prayers: TRSPrayerSet): Boolean;
 ```
@@ -432,7 +432,7 @@ begin
 end;
 
 (*
-## Prayer.Deactivate
+### Prayer.Deactivate
 ```pascal
 function TRSPrayer.Deactivate(prayers: TRSPrayerSet): Boolean;
 ```

@@ -1,0 +1,118 @@
+(*
+## Data
+This page is about fetching OSRS data with SRLT.
+SRLT has several tools to get information about items, npcs, weapons, ...
+*)
+
+{$DEFINE SRLT_DATA_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+type
+  TItemData = record
+    PricesJSON: TJSONParser;
+    CacheDir, Filename: String;
+    Timeout: UInt64;
+    Disabled: Boolean;
+    const ReloadInterval: Integer = 3600; //1h in unix time
+    const PRICES_URL: String = 'https://prices.runescape.wiki/api/v1/osrs/latest';
+  end;
+
+procedure TItemData.Free();
+begin
+  if Self.PricesJSON = nil then Exit;
+  Self.PricesJSON.Free();
+  Self.PricesJSON := nil;
+end;
+
+procedure TItemData.UpdateFile();
+var
+  t: UInt64;
+  files: TStringArray;
+  i: Integer;
+begin
+  files := DirList(Self.CacheDir).Sorted();
+  for i := 0 to High(files)-1 do FileDelete(files[i]);
+
+  if files <> [] then
+  begin
+    Self.Filename := files.Last;
+    Self.Timeout := StrToInt64(PathExtractNameWithoutExt(Self.Filename), Self.Timeout);
+  end;
+
+  t := UnixTime();
+
+  if Self.Timeout < t then
+  begin
+    if Self.Filename <> '' then
+    begin
+      WriteLn GetDebugLn('ItemData', 'Data cached is old and will be updated.');
+      FileDelete(Self.Filename);
+    end;
+    Self.Timeout := t + Self.ReloadInterval;
+    Self.Filename := Self.CacheDir + ToStr(Self.Timeout) + '.json';
+    HTTPClient.GetFile(Self.PRICES_URL, Self.Filename);
+  end;
+end;
+
+procedure TItemData.Reload();
+var
+  current, content: String;
+begin
+  if Self.Disabled then Exit;
+
+  current := Self.Filename;
+  Self.UpdateFile();
+  if current = Self.Filename then Exit;
+
+  Self.Free();
+
+  content := FileRead(Self.Filename);
+
+  try
+    Self.PricesJSON := TJSONParser.Create(content);
+  except
+    FileDelete(Self.Filename);
+    Self.Disabled := True;
+  end;
+end;
+
+
+
+
+procedure TItemData.Setup();
+var
+  files: TStringArray;
+begin
+  Self.CacheDir := SRLTEnv.CacheDir + 'data' + PATH_SEP + 'items' + PATH_SEP;
+  if not DirCreate(Self.CacheDir) then
+    raise GetDebugLn('ItemData', 'Failed to create cache directory: ' + Self.CacheDir);
+
+  AddOnterminate(@Self.Free);
+  Self.Reload();
+end;
+
+
+function TItemData.GetTradeableID(item: TRSItem): Integer;
+var
+  ids: TStringArray;
+  id: String;
+begin
+  if item.IsNumeric then ids := [item]
+  else ids := ItemFinder.Database.GetAll(item, 'item', 'id');
+
+  for id in ids do
+  begin
+
+  end;
+end;
+
+
+var
+  ItemData: TItemData;
+
+begin
+  ItemData.Setup();
+  ItemData.Reload();
+
+
+end;

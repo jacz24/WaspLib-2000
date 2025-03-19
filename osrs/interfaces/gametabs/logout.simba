@@ -1,5 +1,5 @@
 (*
-# Logout
+## Logout
 Methods to interact with the logout tab.
 *)
 {$DEFINE SRLT_LOGOUT_INCLUDED}
@@ -9,7 +9,7 @@ Methods to interact with the logout tab.
 
 type
 (*
-## Logout Enums
+### Logout Enums
 ```pascal
 ERSRating = (ONE, TWO, THREE, FOUR, FIVE);
 ERSLogoutButton = (WORLD_SWITCHER, CLICK_HERE);
@@ -30,7 +30,7 @@ Main record that holds and the methods to interact with the logout gametab.
   end;
 
 (*
-## Logout.SetupGameTab
+### Logout.SetupGameTab
 ```pascal
 procedure TRSLogout.SetupGameTab();
 ```
@@ -60,7 +60,7 @@ begin
 end;
 
 (*
-## Logout.IsOpen
+### Logout.IsOpen
 ```pascal
 function TRSLogout.IsOpen(): Boolean;
 ```
@@ -77,7 +77,7 @@ begin
 end;
 
 (*
-## Logout.Open
+### Logout.Open
 ```pascal
 function TRSLogout.Open(): Boolean;
 ```
@@ -97,7 +97,7 @@ end;
 
 
 (*
-## Logout.IsRated
+### Logout.IsRated
 ```pascal
 function TRSLogout.IsRated(): Boolean;
 ```
@@ -114,7 +114,7 @@ begin
 end;
 
 (*
-## Logout.Rate
+### Logout.Rate
 ```pascal
 function TRSLogout.Rate(star: ERSRating): Boolean;
 ```
@@ -136,7 +136,7 @@ begin
 end;
 
 (*
-## Logout.Logout
+### Logout.Logout
 ```pascal
 function TRSLogout.Logout(attempts: UInt32 = 5; time: UInt32 = 20000): Boolean;
 ```

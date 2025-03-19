@@ -1,5 +1,5 @@
 (*
-# ChatTabs
+## ChatTabs
 Chat tabs refer to the tabs/buttons that are below the {ref}`Chat` box.
 
 You can use these to change the current chat being viewed.
@@ -11,7 +11,7 @@ You can use these to change the current chat being viewed.
 
 type
 (*
-## ERSChatTab
+### ERSChatTab
 ```pascal
 ERSChatTab = enum(NONE, ALL, GAME, PUBLIC_, PRIVATE_, CHANNEL, CLAN, TRADE);
 ```
@@ -20,7 +20,7 @@ Enum representing each of the chat tabs available.
   ERSChatTab = enum(NONE, ALL, GAME, PUBLIC_, PRIVATE_, CHANNEL, CLAN, TRADE);
 
 (*
-## ERSChatTabState
+### ERSChatTabState
 ```pascal
 ERSChatTabState = (NONE, ENABLED, FILTERED, DISABLED, HIDE, AUTOCHAT);
 ```
@@ -33,7 +33,7 @@ You can see the filters when you right click the tab:
   ERSChatTabState = (NONE, ENABLED, FILTERED, DISABLED, HIDE, AUTOCHAT);
 
 (*
-## TRSChatTab
+### TRSChatTab
 Helper record to interact with a tab.
 *)
   TRSChatTab = record
@@ -42,7 +42,7 @@ Helper record to interact with a tab.
   end;
 
 (*
-## TRSChatTabs
+### TRSChatTabs
 Record responsible with interacting with the {ref}`ChatTabs`.
 
 In {ref}`TRSChat` you have a `Tabs` variable of this type.
@@ -53,7 +53,7 @@ In {ref}`TRSChat` you have a `Tabs` variable of this type.
   end;
 
 (*
-## Chat.Tabs.SetupInterface
+### Chat.Tabs.SetupInterface
 ```pascal
 procedure TRSChatTabs.SetupInterface();
 ```
@@ -80,7 +80,7 @@ begin
 end;
 
 (*
-## Chat.Tabs.Get
+### Chat.Tabs.Get
 ```pascal
 function TRSChatTabs.Get(tab: ERSChatTab): TRSChatTab;
 ```
@@ -99,7 +99,7 @@ begin
 end;
 
 (*
-## Chat.Tabs.GetActive
+### Chat.Tabs.GetActive
 ```pascal
 function TRSChatTabs.GetActive(): ERSChatTab;
 ```
@@ -120,7 +120,7 @@ begin
 end;
 
 (*
-## Chat.Tabs.IsActive
+### Chat.Tabs.IsActive
 ```pascal
 function TRSChatTabs.IsActive(tab: ERSChatTab): Boolean;
 ```
@@ -138,7 +138,7 @@ end;
 
 
 (*
-## Chat.Tabs.Open
+### Chat.Tabs.Open
 ```pascal
 function TRSChatTabs.Open(tab: ERSChatTab): Boolean;
 ```
@@ -171,7 +171,7 @@ end;
 {%codetools on}
 
 (*
-## Chat.Tabs.GetState
+### Chat.Tabs.GetState
 ```pascal
 function TRSChatTabs.GetState(tab: ERSChatTab): ERSChatTabState;
 ```
@@ -188,7 +188,7 @@ begin
 end;
 
 (*
-## Chat.Tabs.ChangeState
+### Chat.Tabs.ChangeState
 ```pascal
 function TRSChatTabs.ChangeState(tab: ERSChatTab; state: ERSChatTabState): Boolean;
 ```

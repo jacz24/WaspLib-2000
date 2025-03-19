@@ -1,6 +1,6 @@
 (*
-# Biometrics
-Biometrics related methods that are unique to the current account being used.
+## Biometrics
+Biometrics related methods that are unique to the current player being used.
 
 For your convenience you can use {ref}`TBiometrics` methods through the {ref}`Biometrics variable`.
 *)
@@ -12,7 +12,7 @@ For your convenience you can use {ref}`TBiometrics` methods through the {ref}`Bi
 
 type
 (*
-## EBiometric
+### EBiometric
 ```pascal
 EBiometric = enum(
   MULTIPLIER,
@@ -26,8 +26,7 @@ EBiometric = enum(
   RATING, LIKES, DISLIKES
 );
 ```
-Enum that represent biometrics affected by the user user unique
-account seed.
+Enum that represent biometrics affected by the user user unique player seed.
 *)
   EBiometric = enum(
     MULTIPLIER,
@@ -42,7 +41,7 @@ account seed.
   );
 
 (*
-## TBiometrics
+### TBiometrics
 Record responsible for biometrics and beiometric behaviour.
 *)
   TBiometrics = record
@@ -51,15 +50,15 @@ Record responsible for biometrics and beiometric behaviour.
   end;
 
 (*
-## TBiometrics.GetHash
+### TBiometrics.GetHash
 ```pascal
 function TBiometrics.GetHash(): TByteArray;
 ```
 Get the current unique hash `TBiometrics.Hash` being used.
 If none is set yet one will be set.
-If the currently used account changed, we also reset the hash.
+If the currently used player changed, we also reset the hash.
 
-If there's no accounts availble we will use a random hash.
+If there's no players availble we will use a random hash.
 
 Example:
 ```pascal
@@ -71,10 +70,10 @@ var
   i: Integer;
   hash: String;
 begin
-  if Self.Index <> AccountIndex then Self.Hash := [];
+  if Self.Index <> PlayerIndex then Self.Hash := [];
   if Self.Hash <> [] then Exit(Self.Hash);
 
-  if (AccountIndex > High(Accounts)) or (Accounts[AccountIndex].Username = '') then
+  if (PlayerIndex > High(Players)) or (Players[PlayerIndex].Username = '') then
   begin
     for i := 0 to Ord(High(EBiometric)) do
       Self.Hash += Random(256);
@@ -86,15 +85,15 @@ begin
     Exit(Self.Hash);
   end;
 
-  hash := HashString(EHashAlgo.SHA1, Accounts[AccountIndex].Username);
-  WriteLn GetDebugLn('Accounts', 'Current account seed: ' + hash, EErrorLevel.SUCCESS);
+  hash := HashString(EHashAlgo.SHA1, Players[PlayerIndex].Username);
+  WriteLn GetDebugLn('Players', 'Current account seed: ' + hash, EErrorLevel.SUCCESS);
 
   Self.Hash := hash.ToBytes();
   Result := Self.Hash;
 end;
 
 (*
-## Biometrics.GetBiometric
+### Biometrics.GetBiometric
 ```pascal
 function TBiometrics.GetBiometric(biometric: EBiometric): Integer;
 ```
@@ -112,7 +111,7 @@ begin
 end;
 
 (*
-## Biometrics.GetProbability
+### Biometrics.GetProbability
 ```pascal
 function TBiometrics.GetProbability(biometric: EBiometric): Single;
 ```
@@ -131,7 +130,7 @@ end;
 
 
 (*
-## Biometrics.Random
+### Biometrics.Random
 ```pascal
 function TBiometrics.RandomDouble(input: Double): Double;
 function TBiometrics.RandomInteger(input: Integer): Integer;
@@ -156,7 +155,7 @@ begin
 end;
 
 (*
-## Biometrics.RandomMode
+### Biometrics.RandomMode
 ```pascal
 function TBiometrics.RandomModeDouble(input, minimum, maximum: Double): Double;
 function TBiometrics.RandomModeInteger(input, minimum, maximum: Integer): Integer; overload;
@@ -183,7 +182,7 @@ end;
 
 
 (*
-## Biometrics.RandomBoolean
+### Biometrics.RandomBoolean
 ```pascal
 function TBiometrics.RandomBoolean(): Boolean;
 function TBiometrics.RandomBoolean(behaviour: EBiometric): Boolean; overload;
@@ -214,11 +213,11 @@ end;
 
 
 (*
-## Biometrics.GetSleepHour
+### Biometrics.GetSleepHour
 ```pascal
 function TBiometrics.GetSleepHour(): String;
 ```
-Gives you a unique sleep hour for the current account being used that can be
+Gives you a unique sleep hour for the current player being used that can be
 anywhere from 23:00:00 to 04:00:00.
 
 Example:
@@ -240,11 +239,11 @@ begin
 end;
 
 (*
-## Biometrics.GetSleepLength
+### Biometrics.GetSleepLength
 ```pascal
 function TBiometrics.GetSleepLength(): Single;
 ```
-Gives you a unique sleep length for the current account being used that can be
+Gives you a unique sleep length for the current player being used that can be
 anywhere from 6 to 10 hours.
 
 Example:
@@ -259,12 +258,12 @@ end;
 
 
 (*
-## Biometrics.Sleep
+### Biometrics.Sleep
 ```pascal
 procedure TBiometrics.Sleep(time: UInt32);
 procedure TBiometrics.Sleep(minimum, maximum: UInt32; weight: ERandomDir = ERandomDir.MEAN); overload;
 ```
-Halts the script for `time` milliseconds influenced by your current account.
+Halts the script for `time` milliseconds influenced by your current player.
 
 Example:
 ```pascal
@@ -287,7 +286,7 @@ end;
 
 
 (*
-## Biometrics.Click
+### Biometrics.Click
 ```pascal
 procedure TBiometrics.Click(button: EMouseButton; clicks: UInt32 = 3);
 ```
@@ -316,7 +315,7 @@ end;
 
 var
 (*
-## Biometrics variable
+### Biometrics variable
 Global {ref}`TBiometrics` variable.
 *)
   Biometrics: TBiometrics;

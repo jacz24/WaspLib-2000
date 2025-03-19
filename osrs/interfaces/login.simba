@@ -1,5 +1,5 @@
 (*
-# Login
+## Login
 The login screen is the first screen you see that you can interact with when you open the game:
 
 ```{figure} ../../images/loginscreen.png
@@ -13,7 +13,7 @@ SRLT's {ref}`TRSLogin` can handle both resizable and fixed mode login screens.
 
 type
 (*
-## TRSLobbyScreen
+### TRSLobbyScreen
 Simple record that handles the login lobby screen.
 The lobby screen is the screen you see after logging in with the large red
 button with "CLICK HERE TO PLAY".
@@ -27,7 +27,7 @@ The lobbby screen.
   end;
 
 (*
-## Lobby.Setup
+### Lobby.Setup
 ```pascal
 procedure TRSLobbyScreen.Setup();
 ```
@@ -52,7 +52,7 @@ end;
 
 
 (*
-## Lobby.IsOpen
+### Lobby.IsOpen
 ```pascal
 function TRSLobbyScreen.IsOpen(): Boolean;
 ```
@@ -70,7 +70,7 @@ begin
 end;
 
 (*
-## Lobby.WaitOpen
+### Lobby.WaitOpen
 ```pascal
 function TRSLobbyScreen.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -89,7 +89,7 @@ begin
 end;
 
 (*
-## Lobby.EnterGame
+### Lobby.EnterGame
 ```pascal
 function TRSLobbyScreen.EnterGame(): Boolean;
 ```
@@ -135,14 +135,14 @@ end;
 
 var
 (*
-## Lobby variable
+### Lobby variable
 Global {ref}`TRSLobbyScreen` variable.
 *)
   Lobby: TRSLobbyScreen;
 
 type
 (*
-## TRSLoginWorldSwitcher
+### TRSLoginWorldSwitcher
 Reponsible for handling the login screen world switcher:
 ```{figure} ../../images/login_worldswitcher.png
 The login world switcher.
@@ -158,7 +158,7 @@ The login world switcher.
   end;
 
 (*
-## TRSLoginWorldSwitcher.Setup
+### TRSLoginWorldSwitcher.Setup
 ```pascal
 procedure TRSLoginWorldSwitcher.Setup();
 ```
@@ -196,7 +196,7 @@ begin
 end;
 
 (*
-## LoginWorldSwitcher.IsOpen
+### LoginWorldSwitcher.IsOpen
 ```pascal
 function TRSLoginWorldSwitcher.IsOpen(): Boolean;
 ```
@@ -213,7 +213,7 @@ begin
 end;
 
 (*
-## LoginWorldSwitcher.WaitOpen
+### LoginWorldSwitcher.WaitOpen
 ```pascal
 function TRSLoginWorldSwitcher.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -231,7 +231,7 @@ begin
 end;
 
 (*
-## LoginWorldSwitcher.Close
+### LoginWorldSwitcher.Close
 ```pascal
 function TRSLoginWorldSwitcher.Close(): Boolean;
 ```
@@ -251,7 +251,7 @@ begin
 end;
 
 (*
-## LoginWorldSwitcher.Open
+### LoginWorldSwitcher.Open
 ```pascal
 function TRSLoginWorldSwitcher.Open(): Boolean;
 ```
@@ -272,7 +272,7 @@ end;
 
 
 (*
-## LoginWorldSwitcher.Read
+### LoginWorldSwitcher.Read
 ```pascal
 function TRSLoginWorldSwitcher.Read(index: Integer): Integer;
 ```
@@ -291,7 +291,7 @@ end;
 
 
 (*
-## LoginWorldSwitcher Pagination
+### LoginWorldSwitcher Pagination
 ```pascal
 function TRSLoginWorldSwitcher.PreviousPage(): Boolean;
 function TRSLoginWorldSwitcher.NextPage(): Boolean;
@@ -330,7 +330,7 @@ end;
 
 
 (*
-## LoginWorldSwitcher GetCurrent
+### LoginWorldSwitcher GetCurrent
 ```pascal
 function TRSLoginWorldSwitcher.GetCurrent(): Integer;
 ```
@@ -352,7 +352,7 @@ end;
 
 
 (*
-## LoginWorldSwitcher.Find
+### LoginWorldSwitcher.Find
 ```pascal
 function TRSLoginWorldSwitcher.Find(world: Integer; out index: Integer): Boolean;
 ```
@@ -379,7 +379,7 @@ begin
 end;
 
 (*
-## LoginWorldSwitcher.Switch
+### LoginWorldSwitcher.Switch
 ```pascal
 function TRSLoginWorldSwitcher.Switch(world: Integer): Boolean;
 ```
@@ -448,7 +448,7 @@ end;
 
 var
 (*
-## LoginWorldSwitcher variable
+### LoginWorldSwitcher variable
 Global {ref}`TRSLoginWorldSwitcher` variable.
 *)
   LoginWorldSwitcher: TRSLoginWorldSwitcher;
@@ -504,7 +504,7 @@ Constant of all the login messages the login screen can handle.
 
 type
 (*
-## Login Enums
+### Login Enums
 ```pascal
 ERSLoginMode    = enum(UNKNOWN, LEGACY, LAUNCHER);
   ERSLoginButton  = enum(LAUNCHER, EXISTING_USER, LOGIN, RETRY, OKAY, CONTINUE);
@@ -512,7 +512,7 @@ ERSLoginMode    = enum(UNKNOWN, LEGACY, LAUNCHER);
   ERSLoginMessage = enum(
     UNKNOWN,
     WELCOME, CONNECTING, INVALID, INCORRECT, SKILL_TOTAL, ENTER_CREDENTIALS,
-    ERROR_CONNECTING, ACCOUNT_ONLINE, SERVER_OFFLINE, ERROR_LOADING, TIMED_OUT,
+    ERROR_CONNECTING, Player_ONLINE, SERVER_OFFLINE, ERROR_LOADING, TIMED_OUT,
     DISCONNECTED, LIMIT_EXCEEDED, WORLD_FULL, BANNED, NOT_MEMBER, ON_MEMBER_AREA,
     AUTHENTICATOR
   );
@@ -527,14 +527,14 @@ Enums representing various aspects of the login screen.
   ERSLoginMessage = enum(
     UNKNOWN,
     WELCOME, CONNECTING, INVALID, INCORRECT, SKILL_TOTAL, ENTER_CREDENTIALS,
-    ERROR_CONNECTING, ACCOUNT_ONLINE, SERVER_OFFLINE, ERROR_LOADING, TIMED_OUT,
+    ERROR_CONNECTING, Player_ONLINE, SERVER_OFFLINE, ERROR_LOADING, TIMED_OUT,
     DISCONNECTED,
     LIMIT_EXCEEDED, WORLD_FULL, BANNED, NOT_MEMBER, ON_MEMBER_AREA,
     AUTHENTICATOR
   );
 
 (*
-## TRSLogin
+### TRSLogin
 Main record responsible for handling the {ref}`Login` screen.
 
 ```{figure} ../../images/trslogin.png
@@ -557,7 +557,7 @@ The login screen.
   end;
 
 (*
-## Login.Setup
+### Login.Setup
 ```pascal
 procedure TRSLogin.Setup();
 ```
@@ -637,7 +637,7 @@ end;
 
 
 (*
-## Login.FindButton
+### Login.FindButton
 ```pascal
 function TRSLogin.FindButton(button: ERSLoginButton): Boolean;
 ```
@@ -662,7 +662,7 @@ begin
 end;
 
 (*
-## Login.ClickButton
+### Login.ClickButton
 ```pascal
 function TRSLogin.ClickButton(button: ERSLoginButton): Boolean;
 ```
@@ -682,7 +682,7 @@ end;
 
 
 (*
-## Login.SelectInput
+### Login.SelectInput
 ```pascal
 function TRSLogin.SelectInput(field: ERSLoginInput): Boolean;
 ```
@@ -709,7 +709,7 @@ begin
 end;
 
 (*
-## Login.InputIsFilled
+### Login.InputIsFilled
 ```pascal
 function TRSLogin.InputIsFilled(field: ERSLoginInput): Boolean;
 ```
@@ -726,7 +726,7 @@ begin
 end;
 
 (*
-## Login.ClearInput
+### Login.ClearInput
 ```pascal
 function TRSLogin.ClearInput(field: ERSLoginInput): Boolean;
 ```
@@ -748,7 +748,7 @@ begin
 end;
 
 (*
-## Login.FillInput
+### Login.FillInput
 ```pascal
 function TRSLogin.FillInput(field: ERSLoginInput; details: String): Boolean;
 ```
@@ -756,7 +756,7 @@ Attempts to fill the  specified `field` with `details`.
 
 Example:
 ```pascal
-WriteLn Login.FillInput(ERSLoginInput.USERNAME, 'myaccount@email.com');
+WriteLn Login.FillInput(ERSLoginInput.USERNAME, 'myPlayer@email.com');
 ```
 *)
 function TRSLogin.FillInput(field: ERSLoginInput; details: String): Boolean;
@@ -770,7 +770,7 @@ end;
 
 
 (*
-## Login.GetMessage
+### Login.GetMessage
 ```pascal
 function TRSLogin.GetMessage(): ERSLoginMessage;
 ```
@@ -799,7 +799,7 @@ end;
 
 
 (*
-## Login.GetMode
+### Login.GetMode
 ```pascal
 function TRSLogin.GetMode(): ERSLoginMode;
 ```
@@ -835,7 +835,7 @@ end;
 
 
 (*
-## Login.HandleWelcome
+### Login.HandleWelcome
 ```pascal
 function TRSLogin.HandleWelcome(): Boolean;
 ```
@@ -863,7 +863,7 @@ begin
 end;
 
 (*
-## Login.Back2Welcome
+### Login.Back2Welcome
 ```pascal
 function TRSLogin.Back2Welcome(): Boolean;
 ```
@@ -884,7 +884,7 @@ end;
 
 
 (*
-## Login.EnterCredentials
+### Login.EnterCredentials
 ```pascal
 function TRSLogin.EnterCredentials(username, password: String): Boolean;
 ```
@@ -912,7 +912,7 @@ end;
 
 
 (*
-## Login.Retry
+### Login.Retry
 ```pascal
 function TRSLogin.Retry(msg: ERSLoginMessage): Boolean;
 ```
@@ -930,7 +930,7 @@ begin
 end;
 
 (*
-## Login.HandleError
+### Login.HandleError
 ```pascal
 function TRSLogin.HandleError(msg: ERSLoginMessage): Boolean;
 ```
@@ -973,7 +973,7 @@ begin
 end;
 
 (*
-## Login.HandleMessage
+### Login.HandleMessage
 ```pascal
 function TRSLogin.HandleMessage(msg: ERSLoginMessage; username, password: String): Boolean;
 ```
@@ -983,11 +983,11 @@ Returns True if we succeed.
 The current `ERSLoginMessage` message has to be passed as `msg` so we know
 when we successfully handled the current error.
 
-The account `username` and `password` we want to use also have to be passed in.
+The Player `username` and `password` we want to use also have to be passed in.
 This can be empty value if we are using the Jagex Launcher, e.g.: `'', ''`.
 
 On certain `ERSLoginMessages` that cannot be handled this will raise an
-exception to shutdown your script. For example, if the account you are trying to
+exception to shutdown your script. For example, if the Player you are trying to
 use has been banned.
 *)
 function TRSLogin.HandleMessage(msg: ERSLoginMessage; username, password: String): Boolean;
@@ -1000,36 +1000,36 @@ begin
     ERSLoginMessage.INVALID, ERSLoginMessage.INCORRECT:  Result := Self.Retry(msg);
 
     ERSLoginMessage.ERROR_CONNECTING,ERSLoginMessage.LIMIT_EXCEEDED,
-    ERSLoginMessage.ACCOUNT_ONLINE, ERSLoginMessage.WORLD_FULL,
+    ERSLoginMessage.Player_ONLINE, ERSLoginMessage.WORLD_FULL,
     ERSLoginMessage.TIMED_OUT: Result := Self.HandleError(msg);
 
     ERSLoginMessage.SKILL_TOTAL:      raise GetDebugLn('Login', 'We are trying to login into a total level world you can''t login to.');
     ERSLoginMessage.SERVER_OFFLINE:   raise GetDebugLn('Login', 'Login server offline. The game is/was probably updated.');
     ERSLoginMessage.ERROR_LOADING:    raise GetDebugLn('Login', 'Game loading error. It was probably updated.');
-    ERSLoginMessage.BANNED:           raise GetDebugLn('Login', 'Account seems to be banned or disabled.');
-    ERSLoginMessage.NOT_MEMBER:       raise GetDebugLn('Login', 'Account is not members and we are trying to login into a P2P world.');
-    ERSLoginMessage.ON_MEMBER_AREA:   raise GetDebugLn('Login', 'Account is on a P2P area and we are trying to login into a F2P world.');
-    ERSLoginMessage.AUTHENTICATOR:    raise GetDebugLn('Login', 'Account needs authenticator to login.');
+    ERSLoginMessage.BANNED:           raise GetDebugLn('Login', 'Player seems to be banned or disabled.');
+    ERSLoginMessage.NOT_MEMBER:       raise GetDebugLn('Login', 'Player is not members and we are trying to login into a P2P world.');
+    ERSLoginMessage.ON_MEMBER_AREA:   raise GetDebugLn('Login', 'Player is on a P2P area and we are trying to login into a F2P world.');
+    ERSLoginMessage.AUTHENTICATOR:    raise GetDebugLn('Login', 'Player needs authenticator to login.');
     ERSLoginMessage.UNKNOWN:          if RSClient.IsLoggedIn() or Lobby.IsOpen() then Exit(True) else raise GetDebugLn('Login', 'Unknown login state.');
   end;
 end;
 
 
 (*
-## Login.DoLogin
+### Login.DoLogin
 ```pascal
-function TRSLogin.DoLogin(account: TRSAccount): Boolean;
+function TRSLogin.DoLogin(player: TRSPlayer): Boolean;
 ```
-Attempts to login into `account`.
+Attempts to login into `player`.
 If we login, the {ref}`Lobby` screen is handled for you.
 Returns true if we succeed.
 
 Example:
 ```pascal
-WriteLn Login.DoLogin(account);
+WriteLn Login.DoLogin(player);
 ```
 *)
-function TRSLogin.DoLogin(account: TRSAccount): Boolean;
+function TRSLogin.DoLogin(player: TRSPlayer): Boolean;
 var
   timeout: UInt64;
 begin
@@ -1043,7 +1043,7 @@ begin
       Exit;
     end;
 
-    if not Self.HandleMessage(Self.GetMessage(), account.Username, account.Password) then Exit;
+    if not Self.HandleMessage(Self.GetMessage(), player.Username, player.Password) then Exit;
     Sleep(600, 1200);
   end;
 
@@ -1100,7 +1100,7 @@ end;
 
 var
 (*
-## Login variable
+### Login variable
 Global {ref}`TRSLogin` variable.
 *)
   Login: TRSLogin;

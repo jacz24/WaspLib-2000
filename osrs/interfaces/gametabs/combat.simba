@@ -1,0 +1,16 @@
+{$DEFINE SRLT_COMBAT_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+type
+  TRSCombat = record
+    AttackStyles: TBoxArray;
+    Category: TBox;
+  end;
+
+procedure TRSCombat.SetupGameTab();
+begin
+  //TODO...
+end;
+
+var
+  Combat: TRSCombat;

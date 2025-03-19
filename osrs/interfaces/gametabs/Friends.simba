@@ -1,0 +1,16 @@
+{$DEFINE SRLT_FRIENDS_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+type
+  TRSFriends = record
+    Scroll: TRSScrollBar;
+    Toggle, Add, Del: TBox;
+  end;
+
+procedure TRSFriends.SetupGameTab();
+begin
+  //TODO...
+end;
+
+var
+  Friends: TRSFriends;

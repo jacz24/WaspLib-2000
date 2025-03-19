@@ -1,5 +1,5 @@
 (*
-# SRLT
+## SRLT
 SRLT is a library used to bot OldSchool RuneScape with Simba 2.0.
 SRLT stands for SRL Tribute and it's heavily inspired in previous work done by
 the SRL Community.
@@ -10,7 +10,7 @@ less confusing way.
 *)
 
 (*
-## Compile Directives
+### Compile Directives
 ```pascal
 {$DEFINE SRLT_DEBUG_MOUSE}
 {$DEFINE SRLT_DISABLE_REMOTEINPUT}
@@ -30,7 +30,7 @@ They should be self-explanatory.
 
 // The following allows individual include files to compile on their own with just having {$INCLUDE_ONCE SRLT/osr.simba}
 // Summary: It includes this file until the current file is reached.
-{$IFNDEF SRLT_ACCOUNT_INCLUDED}             {$INCLUDE_ONCE osrs/account.simba}
+{$IFNDEF SRLT_PLAYER_INCLUDED}             {$INCLUDE_ONCE osrs/player.simba}
 {$IFNDEF SRLT_BIOMETRICS_INCLUDED}          {$INCLUDE_ONCE osrs/antiban/biometrics.simba}
 
 {$IFNDEF SRLT_OCR_INCLUDED}                 {$INCLUDE_ONCE osrs/ocr/ocr.simba}
@@ -59,16 +59,25 @@ They should be self-explanatory.
 {$IFNDEF SRLT_SLOT_INTERFACE_INCLUDED}      {$INCLUDE_ONCE osrs/interfaces/slotinterface.simba}
 {$IFNDEF SRLT_ITEM_INTERFACE_INCLUDED}      {$INCLUDE_ONCE osrs/interfaces/iteminterface.simba}
 
-{$IFNDEF SRLT_INVENTORY_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/gametabs/inventory.simba}
-{$IFNDEF SRLT_EQUIPMENT_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/gametabs/equipment.simba}
-{$IFNDEF SRLT_MAGIC_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/gametabs/magic.simba}
-{$IFNDEF SRLT_HOUSEOPTIONS_INCLUDED}        {$INCLUDE_ONCE osrs/interfaces/gametabs/houseoptions.simba}
-{$IFNDEF SRLT_OPTIONS_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/gametabs/options.simba}
-{$IFNDEF SRLT_PRAYER_INCLUDED}              {$INCLUDE_ONCE osrs/interfaces/gametabs/prayer.simba}
-{$IFNDEF SRLT_WORLDSWITCHER_INCLUDED}       {$INCLUDE_ONCE osrs/interfaces/gametabs/worldswitcher.simba}
-{$IFNDEF SRLT_LOGOUT_INCLUDED}              {$INCLUDE_ONCE osrs/interfaces/gametabs/logout.simba}
+{$IFNDEF SRLT_COMBAT_INCLUDED}              {$INCLUDE_ONCE osrs/interfaces/gametabs/combat.simba}
 {$IFNDEF SRLT_STATS_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/gametabs/stats.simba}
 {$IFNDEF SRLT_ACHIEVEMENTS_INCLUDED}        {$INCLUDE_ONCE osrs/interfaces/gametabs/achievements.simba}
+{$IFNDEF SRLT_INVENTORY_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/gametabs/inventory.simba}
+{$IFNDEF SRLT_EQUIPMENT_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/gametabs/equipment.simba}
+{$IFNDEF SRLT_PRAYER_INCLUDED}              {$INCLUDE_ONCE osrs/interfaces/gametabs/prayer.simba}
+{$IFNDEF SRLT_MAGIC_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/gametabs/magic.simba}
+
+{$IFNDEF SRLT_GROUPING_INCLUDED}            {$INCLUDE_ONCE osrs/interfaces/gametabs/grouping.simba}
+{$IFNDEF SRLT_FRIENDS_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/gametabs/friends.simba}
+{$IFNDEF SRLT_ACCOUNT_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/gametabs/account.simba}
+{$IFNDEF SRLT_WORLDSWITCHER_INCLUDED}       {$INCLUDE_ONCE osrs/interfaces/gametabs/worldswitcher.simba}
+{$IFNDEF SRLT_LOGOUT_INCLUDED}              {$INCLUDE_ONCE osrs/interfaces/gametabs/logout.simba}
+{$IFNDEF SRLT_HOUSEOPTIONS_INCLUDED}        {$INCLUDE_ONCE osrs/interfaces/gametabs/houseoptions.simba}
+{$IFNDEF SRLT_OPTIONS_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/gametabs/options.simba}
+{$IFNDEF SRLT_EMOTES_INCLUDED}              {$INCLUDE_ONCE osrs/interfaces/gametabs/emotes.simba}
+{$IFNDEF SRLT_MUSIC_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/gametabs/music.simba}
+
+
 {$IFNDEF SRLT_MOUSEZOOM_INCLUDED}           {$INCLUDE_ONCE osrs/mousezoom.simba}
 
 {$IFNDEF SRLT_MM2MS_PROJECTOR_INCLUDED}     {$INCLUDE_ONCE osrs/interfaces/mm2ms_projector.simba}
@@ -92,6 +101,12 @@ They should be self-explanatory.
 {$IFNDEF SRLT_OVERRIDES_INCLUDED}           {$INCLUDE_ONCE osrs/overrides.simba}
 
 
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}

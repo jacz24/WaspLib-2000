@@ -1,5 +1,5 @@
 (*
-# MainScreen
+## MainScreen
 Methods to interact with the mainscreen.
 *)
 
@@ -8,7 +8,7 @@ Methods to interact with the mainscreen.
 
 type
 (*
-## TRSMainScreen
+### TRSMainScreen
 Main record to handle the mainscreen and methods relating to it.
 *)
   TRSMainScreen = record
@@ -24,7 +24,7 @@ Main record to handle the mainscreen and methods relating to it.
   end;
 
 (*
-## MainScreen.SetupInterface
+### MainScreen.SetupInterface
 ```pascal
 procedure TRSMainScreen.SetupInterface();
 ```
@@ -77,7 +77,7 @@ to your script **before** you include SRLT:
 *)
 
 (*
-### MainScreen.GetUpText
+#### MainScreen.GetUpText
 ```pascal
 function TRSMainScreen.GetUpText(): String;
 ```
@@ -101,7 +101,7 @@ begin
 end;
 
 (*
-### MainScreen.IsUpText
+#### MainScreen.IsUpText
 ```pascal
 function TRSMainScreen.IsUpText(text: String; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean;
 ```
@@ -131,7 +131,7 @@ begin
 end;
 
 (*
-### MainScreen.AnyIsUpText
+#### MainScreen.AnyIsUpText
 ```pascal
 function TRSMainScreen.AnyIsUpText(strings: TStringArray; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean;
 ```
@@ -174,7 +174,7 @@ simply attempt to switch worlds.
 *)
 
 (*
-### MainScreen.GetServerMessage
+#### MainScreen.GetServerMessage
 ```pascal
 function TRSMainScreen.GetServerMessage(): String;
 ```
@@ -195,7 +195,7 @@ begin
 end;
 
 (*
-### MainScreen.IsServerMessage
+#### MainScreen.IsServerMessage
 ```pascal
 function TRSMainScreen.IsServerMessage(text: String; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean;
 ```
@@ -228,7 +228,7 @@ end;
 
 
 (*
-## MainScreen.SetHighestPitch
+### MainScreen.SetHighestPitch
 ```pascal
 procedure TRSMainScreen.SetHighestPitch();
 ```
@@ -257,7 +257,7 @@ end;
 
 
 (*
-## MainScreen.IsVisible
+### MainScreen.IsVisible
 ```pascal
 function TRSMainScreen.IsVisible(pt: TPoint): Boolean;
 ```
@@ -297,7 +297,7 @@ end;
 {%codetools on}
 
 (*
-## MainScreen.RedClicked
+### MainScreen.RedClicked
 ```pascal
 function TRSMainScreen.RedClicked(): Boolean;
 ```
@@ -318,7 +318,7 @@ begin
 end;
 
 (*
-## MainScreen.WaiRedClick
+### MainScreen.WaiRedClick
 ```pascal
 function TRSMainScreen.WaiRedClick(time: Integer = 250): Boolean;
 ```
@@ -347,7 +347,7 @@ end;
 {%codetools on}
 
 (*
-## MainScreen.YellowClicked
+### MainScreen.YellowClicked
 ```pascal
 function TRSMainScreen.YellowClicked(): Boolean;
 ```
@@ -368,7 +368,7 @@ begin
 end;
 
 (*
-## MainScreen.WaiYellowClick
+### MainScreen.WaiYellowClick
 ```pascal
 function TRSMainScreen.WaiYellowClick(time: Integer = 250): Boolean;
 ```
@@ -390,13 +390,13 @@ end;
 
 var
 (*
-## MainScreen variable
+### MainScreen variable
 Global {ref}`TRSMainScreen` variable.
 *)
   MainScreen: TRSMainScreen;
 
 (*
-## Biometrics.YellowClick
+### Biometrics.YellowClick
 ```pascal
 function TBiometrics.YellowClick(button: EMouseButton; clicks: UInt32 = 3): Boolean;
 ```
@@ -427,7 +427,7 @@ begin
 end;
 
 (*
-## Biometrics.RedClick
+### Biometrics.RedClick
 ```pascal
 function TBiometrics.RedClick(button: EMouseButton; clicks: UInt32 = 3): Boolean;
 ```

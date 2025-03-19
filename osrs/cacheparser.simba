@@ -1,5 +1,5 @@
 (*
-# RSCacheParser
+## RSCacheParser
 RSCacheParser as the name implies is a record made to parse information from certain files that are part of the OSRS cache.
 - preferences.dat is where most client settings are stored.
 - preferences2.dat I have no idea? some values in address 00000020 seem to change after some times has passed randomly. (related to 6h log maybe!?!?)
@@ -14,19 +14,21 @@ For more information check this file: https://github.com/open-osrs/runelite/blob
 {$I SRLT/osrs.simba}
 
 (*
-## TRSCacheParser
+### TRSCacheParser
 Type responsible for handling osrs cache parsing.
 *)
 type
   TRSCacheParser = record
     Disabled: Boolean;
     Directory: String;
+    const CACHE: String = PATH_SEP + 'jagexcache' + PATH_SEP + 'oldschool' + PATH_SEP + 'LIVE' + PATH_SEP + 'main_file_cache.dat2';
+    const IDX2:  String = PATH_SEP + 'jagexcache' + PATH_SEP + 'oldschool' + PATH_SEP + 'LIVE' + PATH_SEP + 'main_file_cache.idx2';
     const PREFERENCES:  String = PATH_SEP + 'jagexcache' + PATH_SEP + 'oldschool' + PATH_SEP + 'LIVE' + PATH_SEP + 'preferences.dat';
     const PREFERENCES2: String = PATH_SEP + 'jagexcache' + PATH_SEP + 'oldschool' + PATH_SEP + 'LIVE' + PATH_SEP + 'preferences2.dat';
   end;
 
 (*
-## RSCacheParser.Setup
+### RSCacheParser.Setup
 ```pascal
 procedure TRSCacheParser.Setup();
 ```
@@ -64,23 +66,28 @@ begin
   end;
 
   if not FileExists(Self.Directory + Self.PREFERENCES) then
+  begin
     Self.Disabled := True;
+    Exit;
+  end;
+
+
 end;
 
 
 (*
-## RSCacheParser.Read
+### RSCacheParser.ReadPreference
 ```pascal
-function TRSCacheParser.Read(): TByteArray;
+function TRSCacheParser.ReadPreference(pref: Integer = 1): TByteArray;
 ```
 Returns the bytes of the preferences file which can only be 1 or 2.
 
 Example:
 ```pascal
-WriteLn RSCacheParser.Read(1);
+WriteLn RSCacheParser.ReadPreference(1);
 ```
 *)
-function TRSCacheParser.Read(pref: Integer = 1): TByteArray;
+function TRSCacheParser.ReadPreference(pref: Integer = 1): TByteArray;
 begin
   case pref of
     1: Result := FileReadBytes(Self.Directory + Self.PREFERENCES);
@@ -89,7 +96,44 @@ begin
 end;
 
 (*
-## RSCacheParser.CountOptions
+### RSCacheParser.ReadIndex
+```pascal
+function TRSCacheParser.ReadIndex(idx: Integer = 2): TByteArray;
+```
+Returns the bytes of the index files.
+
+Example:
+```pascal
+WriteLn RSCacheParser.ReadIndex(2);
+```
+*)
+function TRSCacheParser.ReadIndex(idx: Integer = 2): TByteArray;
+begin
+  WriteLn Self.Directory;
+  case idx of
+    2: Result := FileReadBytes(Self.Directory + Self.IDX2);
+  end;
+end;
+
+(*
+### RSCacheParser.ReadCache
+```pascal
+unction TRSCacheParser.ReadCache(offset: Integer = 0): TByteArray;
+```
+Returns the bytes of the cache file.
+
+Example:
+```pascal
+WriteLn RSCacheParser.ReadCache();
+```
+*)
+function TRSCacheParser.ReadCache(offset: Integer = 0): TByteArray;
+begin
+  Result := FileReadBytesEx(Self.Directory + Self.CACHE, offset);
+end;
+
+(*
+### RSCacheParser.CountOptions
 ```pascal
 function TRSCacheParser.CountOptions(bytes: TByteArray = []): Integer;
 ```
@@ -112,7 +156,7 @@ end;
 
 
 (*
-## RSCacheParser.RoofsHidden
+### RSCacheParser.RoofsHidden
 ```pascal
 function TRSCacheParser.RoofsHidden(bytes: TByteArray = []): Boolean;
 ```
@@ -131,7 +175,7 @@ begin
 end;
 
 (*
-## RSCacheParser.LoginMusicDisabled
+### RSCacheParser.LoginMusicDisabled
 ```pascal
 function TRSCacheParser.LoginMusicDisabled(bytes: TByteArray = []): Boolean;
 ```
@@ -150,7 +194,7 @@ begin
 end;
 
 (*
-## RSCacheParser.WindowMode
+### RSCacheParser.WindowMode
 ```pascal
 function TRSCacheParser.WindowMode(bytes: TByteArray = []): Integer;
 ```
@@ -170,7 +214,7 @@ end;
 
 
 (*
-## RSCacheParser.CountAuthenticators
+### RSCacheParser.CountAuthenticators
 ```pascal
 function TRSCacheParser.CountAuthenticators(bytes: TByteArray = []): Integer;
 ```
@@ -193,7 +237,7 @@ begin
 end;
 
 (*
-## RSCacheParser.GetAuthenticators
+### RSCacheParser.GetAuthenticators
 ```pascal
 function TRSCacheParser.GetAuthenticators(): TStringArray;
 ```
@@ -228,7 +272,7 @@ begin
 end;
 
 (*
-## RSCacheParser.GetUsernameIndex
+### RSCacheParser.GetUsernameIndex
 ```pascal
 function TRSCacheParser.GetUsernameIndex(bytes: TByteArray = []): Integer;
 ```
@@ -244,7 +288,7 @@ begin
 end;
 
 (*
-## RSCacheParser.GetUsername
+### RSCacheParser.GetUsername
 ```pascal
 function TRSCacheParser.GetUsername(bytes: TByteArray = []): String;
 ```
@@ -272,7 +316,7 @@ begin
 end;
 
 (*
-## RSCacheParser.UsernameEndIndex
+### RSCacheParser.UsernameEndIndex
 ```pascal
 function TRSCacheParser.UsernameEndIndex(bytes: TByteArray = []): Int32;
 ```
@@ -294,7 +338,7 @@ begin
 end;
 
 (*
-## RSCacheParser.LoginHideUsername
+### RSCacheParser.LoginHideUsername
 ```pascal
 function TRSCacheParser.LoginHideUsername(bytes: TByteArray = []): Boolean;
 ```
@@ -314,7 +358,7 @@ begin
 end;
 
 (*
-## RSCacheParser.Brightness
+### RSCacheParser.Brightness
 ```pascal
 function TRSCacheParser.Brightness(bytes: TByteArray = []): Int32;
 ```
@@ -338,7 +382,7 @@ begin
 end;
 
 (*
-## RSCacheParser.MusicVolume
+### RSCacheParser.MusicVolume
 ```pascal
 function TRSCacheParser.MusicVolume(bytes: TByteArray = []): Integer;
 ```
@@ -362,7 +406,7 @@ begin
 end;
 
 (*
-## RSCacheParser.SoundEffectsVolume
+### RSCacheParser.SoundEffectsVolume
 ```pascal
 function TRSCacheParser.SoundEffectsVolume(bytes: TByteArray = []): Integer;
 ```
@@ -386,7 +430,7 @@ begin
 end;
 
 (*
-## RSCacheParser.AreaSoundVolume
+### RSCacheParser.AreaSoundVolume
 ```pascal
 function TRSCacheParser.AreaSoundVolume(bytes: TByteArray = []): Integer;
 ```
@@ -410,7 +454,7 @@ begin
 end;
 
 (*
-## RSCacheParser.Field1247
+### RSCacheParser.Field1247
 ```pascal
 function TRSCacheParser.Field1247(bytes: TByteArray = []): Integer;
 ```
@@ -435,7 +479,7 @@ end;
 
 var
 (*
-## RSCacheParser variable
+### RSCacheParser variable
 Global {ref}`TRSCacheParser` variable.
 *)
   RSCacheParser: TRSCacheParser;

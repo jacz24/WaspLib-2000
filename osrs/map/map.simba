@@ -1,5 +1,5 @@
 (*
-# Map
+## Map
 This file is responsible for the TRSMap positioning system.
 It was made from scratch by Torwent but heavily inspired in the original
 TRSWalker by Slacky and it's future iterations made by Olly.
@@ -24,7 +24,7 @@ Record holding a player's full position:
   end;
 
 (*
-## type TRSMapSample
+### type TRSMapSample
 Record used to customize the sample retrieved from the minimap for TRSMap.
 *)
   TRSMapSample = record
@@ -86,7 +86,7 @@ function TRSMap.Height(pt: TPoint = [0,0]): Single; forward;
 
 
 (*
-## Map.InternalSetup
+### Map.InternalSetup
 ```pascal
 procedure TRSMap.InternalSetup();
 ```
@@ -181,7 +181,7 @@ end;
 
 
 (*
-## Map.ScaledSearch
+### Map.ScaledSearch
 ```pascal
 function TRSMap.ScaledSearch(img: TImage): TPointArray;
 ```
@@ -234,7 +234,7 @@ begin
 end;
 
 (*
-## Map.FullSearch
+### Map.FullSearch
 ```pascal
 function TRSMap.FullSearch(template, world: TImage; position: TPoint; out match: Single): TPoint;
 ```
@@ -280,7 +280,7 @@ begin
 end;
 
 (*
-## Map.Position
+### Map.Position
 ```pascal
 function TRSMap.Position(): TPoint;
 function TRSMap.FullPosition(): TRSPosition;
@@ -353,7 +353,7 @@ end;
 
 
 (*
-## Map.Height
+### Map.Height
 ```pascal
 function TRSMap.Height(p: TPoint = [-1,-1]; global: Boolean): Single;
 function TRSMap.Height(p: TPoint = [-1,-1]): Single; overload;
@@ -412,7 +412,7 @@ end;
 
 
 (*
-## Map.DebugPosition
+### Map.DebugPosition
 ```pascal
 function TRSMap.DebugPosition(): TPoint;
 ```
@@ -521,7 +521,7 @@ end;
 
 
 (*
-## TRSMap.Debug
+### TRSMap.Debug
 ```pascal
 procedure TRSMap.Debug(map: ERSMapType = ERSMapType.NORMAL; graph: Boolean = False);
 ```

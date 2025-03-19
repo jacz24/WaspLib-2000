@@ -1,5 +1,5 @@
 (*
-# RemoteInput
+## RemoteInput
 Remote Input is an external plugin which provides, well, "remote" input.
 
 In other words, it's the tool SRLT uses so Simba doesn't use your real mouse and
@@ -27,7 +27,7 @@ You can find remote input source code here: https://github.com/Brandon-T/RemoteI
 
 type
 (*
-## TRemoteInput
+### TRemoteInput
 Main record used to interact with the remote input plugin.
 *)
   TRemoteInput = record
@@ -36,7 +36,7 @@ Main record used to interact with the remote input plugin.
   end;
 
 (*
-## TRemoteInput.Setup
+### TRemoteInput.Setup
 ```pascal
 procedure TRemoteInput.Setup();
 ```
@@ -67,7 +67,7 @@ begin
 end;
 
 (*
-## TRemoteInput.LoseFocus
+### TRemoteInput.LoseFocus
 ```pascal
 procedure TRemoteInput.LoseFocus();
 procedure TRemoteInput.LoseFocus(delay: Integer); overload;
@@ -98,7 +98,7 @@ end;
 
 
 (*
-## TRemoteInput.LoseFocus
+### TRemoteInput.LoseFocus
 ```pascal
 function TRemoteInput.IsInputEnabled(): Boolean;
 ```
@@ -117,7 +117,7 @@ end;
 
 
 (*
-## TRemoteInput.DisableRealInput
+### TRemoteInput.DisableRealInput
 ```pascal
 procedure TRemoteInput.DisableRealInput();
 ```
@@ -135,7 +135,7 @@ begin
 end;
 
 (*
-## TRemoteInput.EnableRealInput
+### TRemoteInput.EnableRealInput
 ```pascal
 procedure TRemoteInput.EnableRealInput();
 ```
@@ -154,7 +154,7 @@ end;
 
 var
 (*
-## RemoteInput variable
+### RemoteInput variable
 Global {ref}`TRemoteInput` variable.
 *)
   RemoteInput: TRemoteInput;

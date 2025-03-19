@@ -1,0 +1,15 @@
+{$DEFINE SRLT_EMOTES_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+type
+  TRSEmotes = record
+    Slots: TBoxArray;
+  end;
+
+procedure TRSEmotes.SetupGameTab();
+begin
+  //TODO...
+end;
+
+var
+  Emotes: TRSEmotes;

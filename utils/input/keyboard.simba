@@ -18,7 +18,7 @@ begin
 end;
 
 (*
-## Keyboard.KeyDown
+### Keyboard.KeyDown
 ```pascal
 procedure TKeyboard.KeyDown(key: EKeyCode);
 ```
@@ -31,7 +31,7 @@ begin
 end;
 
 (*
-## Keyboard.KeyUp
+### Keyboard.KeyUp
 ```pascal
 procedure TKeyboard.KeyUp(key: EKeyCode);
 ```
@@ -43,7 +43,7 @@ begin
 end;
 
 (*
-## Keyboard.PressKey
+### Keyboard.PressKey
 ```pascal
 procedure TKeyboard.PressKey(key: Integer);
 ```
@@ -57,7 +57,7 @@ end;
 
 
 (*
-## Keyboard.IsKeyDown
+### Keyboard.IsKeyDown
 ```pascal
 procedure TKeyboard.IsKeyDown(Key: EKeyCode);
 ```
@@ -69,7 +69,7 @@ begin
 end;
 
 (*
-## Keyboard.Send
+### Keyboard.Send
 ```pascal
 procedure TKeyboard.Send(text: String);
 procedure TKeyboard.Send(text: String; keyPressAfter: EKeyCode); overload;

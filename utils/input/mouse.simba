@@ -1,5 +1,5 @@
 (*
-# Mouse
+## Mouse
 Methods to interact with the mouse.
 
 To see a click heatmap at the end of your botting session add the following
@@ -17,7 +17,7 @@ compiler directive before you include SRLT:
 {$IFDEF SIMBAHEADLESS}{$UNDEF SRLT_DEBUG_MOUSE}{$ENDIF}
 
 (*
-## EMouseDistribution
+### EMouseDistribution
 ```pascal
 EMouseDistribution = enum(
   DEFAULT, // Use Mouse.Distribution
@@ -33,7 +33,7 @@ type
   EMouseDistribution = enum(DEFAULT, RANDOM, GAUSS, SKEWED, ROWP);
 
 (*
-## TMouse
+### TMouse
 ```pascal
 TMouse = record(TSRLBaseRecord)
   Speed: Double;                     // Overall mouse speed (Default: 12)
@@ -139,7 +139,7 @@ end;
 {$ENDIF}
 
 (*
-## Mouse.Setup()
+### Mouse.Setup()
 ```pascal
 procedure TMouse.Setup;
 ```
@@ -165,7 +165,7 @@ begin
 end;
 
 (*
-## Mouse.Teleport()
+### Mouse.Teleport()
 ```pascal
 procedure TMouse.Teleport(coordinate: TPoint);
 ```
@@ -182,7 +182,7 @@ begin
 end;
 
 (*
-## Mouse.Position()
+### Mouse.Position()
 ```pascal
 function TMouse.Position(): TPoint;
 ```
@@ -203,7 +203,7 @@ begin
 end;
 
 (*
-## Mouse.Hold()
+### Mouse.Hold()
 ```pascal
 procedure TMouse.Hold(button: EMouseButton);
 ```
@@ -220,7 +220,7 @@ begin
 end;
 
 (*
-## Mouse.Release()
+### Mouse.Release()
 ```pascal
 procedure TMouse.Release(button: EMouseButton);
 ```
@@ -238,7 +238,7 @@ end;
 
 
 (*
-## Mouse.Idle()
+### Mouse.Idle()
 ```pascal
 procedure TMouse.Idle();
 ```
@@ -256,7 +256,7 @@ begin
 end;
 
 (*
-## Mouse.Miss()
+### Mouse.Miss()
 ```pascal
 function TMouse.Miss(P: TPoint): TPoint;
 ```
@@ -287,7 +287,7 @@ end;
 
 
 (*
-## Mouse.Move()
+### Mouse.Move()
 ```pascal
 procedure TMouse.Move(destination: TPoint);
 procedure TMouse.Move(circle: TCircle; forcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
@@ -397,7 +397,7 @@ end;
 
 
 (*
-## Mouse.Click()
+### Mouse.Click()
 ```pascal
 procedure TMouse.Click(button: EMouseButton);
 procedure TMouse.Click(destination: TPoint; button: EMouseButton); overload;
@@ -448,7 +448,7 @@ end;
 
 
 (*
-## Mouse.Scroll()
+### Mouse.Scroll()
 ```pascal
 procedure TMouse.Scroll(amount: Integer; down: Boolean);
 procedure TMouse.Scroll(pt: TPoint; amount: Integer; down: Boolean);

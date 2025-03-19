@@ -13,15 +13,21 @@ begin
   GameTabs.SetupInterface(); //Has to be before gametab
   GameTab.SetupInterface();  //Has to be before all gametabs
 
-  Inventory.SetupGameTab();
-  Equipment.SetupGameTab();
-  HouseOptions.SetupGameTab();
-  Options.SetupGameTab();
-  WorldSwitcher.SetupGameTab();
-  Logout.SetupGameTab();
-  Prayer.SetupGameTab();
+  Combat.SetupGameTab();
   Stats.SetupGameTab();
   Achievements.SetupGameTab();
+  Inventory.SetupGameTab();
+  Equipment.SetupGameTab();
+  Prayer.SetupGameTab();
+  Grouping.SetupGameTab();
+  Friends.SetupGameTab();
+  Account.SetupGameTab();
+  WorldSwitcher.SetupGameTab();
+  Logout.SetupGameTab();
+  HouseOptions.SetupGameTab();
+  Options.SetupGameTab();
+  Emotes.SetupGameTab();
+  Music.SetupGameTab();
 
   MM2MS.Setup();
 

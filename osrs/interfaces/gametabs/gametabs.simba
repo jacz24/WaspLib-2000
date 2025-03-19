@@ -1,5 +1,5 @@
 (*
-# GameTabs
+## GameTabs
 Methods to interact with the gametab buttons.
 
 By default it will attempt to use "F-Keys" to open gametabs.
@@ -46,7 +46,7 @@ Main record responsible for handling the gametabs.
   end;
 
 (*
-## GameTabs.SetupInterface
+### GameTabs.SetupInterface
 ```pascal
 procedure TRSGameTabs.SetupInterface();
 ```
@@ -121,7 +121,7 @@ begin
 end;
 
 (*
-## GameTabs.GetCurrent
+### GameTabs.GetCurrent
 ```pascal
 function TRSGameTabs.GetCurrent(): ERSGametab;
 ```
@@ -147,7 +147,7 @@ end;
 
 
 (*
-## GameTabs.IsOpen
+### GameTabs.IsOpen
 ```pascal
 function TRSGameTabs.IsOpen(tab: ERSGameTab): Boolean;
 ```
@@ -164,7 +164,7 @@ begin
 end;
 
 (*
-## GameTabs.WaitOpen
+### GameTabs.WaitOpen
 ```pascal
 function TRSGameTabs.WaitOpen(tab: ERSGameTab; time: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -184,7 +184,7 @@ end;
 
 
 (*
-## GameTabs.FKeyOpen
+### GameTabs.FKeyOpen
 ```pascal
 function TRSGameTabs.FKeyOpen(tab: ERSGameTab): Boolean;
 ```
@@ -237,7 +237,7 @@ end;
 
 
 (*
-## GameTabs.Open
+### GameTabs.Open
 ```pascal
 function TRSGameTabs.Open(tab: ERSGameTab; fkeyProbability: Single = -1): Boolean;
 ```
@@ -287,7 +287,7 @@ Global {ref}`TRSGameTabs` variable.
 
 
 (*
-# GameTab
+## GameTab
 Gametabs interfaces core.
 Whenever you want to use gametab coordinates that are not unique to a specific
 tab you should use this.
@@ -303,7 +303,7 @@ GameTab type that holds the core coordinates of a gametab.
   TRSGameTab = type TRSInterface;
 
 (*
-## GameTab.SetupInterface
+### GameTab.SetupInterface
 ```pascal
 procedure TRSGameTab.SetupInterface();
 ```

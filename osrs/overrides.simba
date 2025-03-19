@@ -1,5 +1,5 @@
 (*
-# Overrides
+## Overrides
 Several final overrides to add some final behaviour to certain methods.
 This is the very last file being included in the library.
 *)
@@ -75,7 +75,7 @@ end;
 
 
 (*
-## HouseOptions.Open override
+### HouseOptions.Open override
 ```pascal
 function TRSHouseOptions.Open(): Boolean; override;
 ```
@@ -98,7 +98,7 @@ begin
 end;
 
 (*
-## WorldSwitcher.Open override
+### WorldSwitcher.Open override
 ```pascal
 function TRSWorldSwitcher.Open(waitLoad: Boolean = True): Boolean; override;
 ```

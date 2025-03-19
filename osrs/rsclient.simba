@@ -1,5 +1,5 @@
 (*
-# RSClient
+## RSClient
 Methods relating to targeting the RS client and detecting client states.
 *)
 
@@ -8,7 +8,7 @@ Methods relating to targeting the RS client and detecting client states.
 
 type
 (*
-## ERSClient
+### ERSClient
 ```pascal
 ERSClient = enum(UNKNOWN, LEGACY, RUNELITE, OFFICIAL);
 ```
@@ -17,7 +17,7 @@ Enums that represent the client type.
   ERSClient = enum(UNKNOWN, LEGACY, RUNELITE, OFFICIAL);
 
 (*
-## ERSMode
+### ERSMode
 ```pascal
 ERSMode = enum(UNKNOWN, FIXED, RESIZABLE_CLASSIC, RESIZABLE_MODERN);
 ```
@@ -26,7 +26,7 @@ Enums that represent the client mode.
   ERSMode = enum(UNKNOWN, FIXED, RESIZABLE_CLASSIC, RESIZABLE_MODERN);
 
 (*
-## TRSClient
+### TRSClient
 Record representing the RuneScape client.
 *)
   TRSClient = record
@@ -35,7 +35,7 @@ Record representing the RuneScape client.
   end;
 
 (*
-## RSClient.GetClient
+### RSClient.GetClient
 ```pascal
 function TRSClient.GetClient(): ERSClient;
 ```
@@ -63,7 +63,7 @@ end;
 
 
 (*
-## RSClient.GetMode
+### RSClient.GetMode
 ```pascal
 function TRSClient.GetMode(): ERSMode;
 ```
@@ -86,7 +86,7 @@ begin
 end;
 
 (*
-## RSClient.WaitModeChange
+### RSClient.WaitModeChange
 ```pascal
 function TRSClient.WaitModeChange(time: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -106,7 +106,7 @@ end;
 
 
 (*
-## RSClient.IsLoggedIn
+### RSClient.IsLoggedIn
 ```pascal
 function TRSClient.IsLoggedIn(): Boolean;
 ```
@@ -123,7 +123,7 @@ begin
 end;
 
 (*
-## RSClient.WaitLoggedIn
+### RSClient.WaitLoggedIn
 ```pascal
 function TRSClient.WaitLoggedIn(time: Integer = 2000; interval: Integer = -1): Boolean;
 ```
@@ -141,7 +141,7 @@ begin
 end;
 
 (*
-## RSClient.LoseFocus()
+### RSClient.LoseFocus()
 ```pascal
 procedure TRSClient.LoseFocus();
 procedure TRSClient.LoseFocus(delay: Int32);
@@ -162,7 +162,7 @@ end;
 
 var
 (*
-## RSClient variable
+### RSClient variable
 Global {ref}`TRSClient` variable.
 *)
   RSClient: TRSClient;

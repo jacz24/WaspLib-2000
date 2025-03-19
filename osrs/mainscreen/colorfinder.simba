@@ -171,7 +171,7 @@ You can access the `TColorFinder` transformer through the
   end;
 
 (*
-## TColorFinderTransformer.Normalize
+### TColorFinderTransformer.Normalize
 ```pascal
 function TColorFinderTransformer.Normalize(): TColorFinder;
 ```
@@ -200,7 +200,7 @@ begin
 end;
 
 (*
-## TColorFinderTransformer.Process
+### TColorFinderTransformer.Process
 ```pascal
 function TColorFinderTransformer.Process(tpa: TPointArray): T2DPointArray;
 ```
@@ -270,7 +270,7 @@ Main record used to find and interact with complex color objects.
   end;
 
 (*
-## TColorFinder.Find
+### TColorFinder.Find
 ```pascal
 function TColorFinder.Find(out atpa: T2DPointArray; areas: TBoxArray): Boolean;
 function TColorFinder.Find(out atpa: T2DPointArray; areas: TPolygonArray): Boolean; overload;

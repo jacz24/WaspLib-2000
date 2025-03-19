@@ -30,7 +30,7 @@ begin
 end;
 
 (*
-## Level2XP
+### Level2XP
 ```pascal
 function Level2XP(level: Integer): Integer;
 ```
@@ -52,7 +52,7 @@ begin
 end;
 
 (*
-## XP2Level
+### XP2Level
 ```pascal
 function XP2Level(xp: Integer): Integer;
 ```

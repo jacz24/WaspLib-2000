@@ -1,5 +1,5 @@
 (*
-## Inventory Tests
+### Inventory Tests
 Tests the integrety of several inventory methods.
 *)
 {$I SRLT/osrs.simba}

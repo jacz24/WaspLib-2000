@@ -1,5 +1,5 @@
 (*
-# Inventory
+## Inventory
 Methods to interact with the inventory gametab.
 *)
 
@@ -8,7 +8,7 @@ Methods to interact with the inventory gametab.
 
 type
 (*
-## TRSInventory
+### TRSInventory
 Main record responsible with handling the inventory gametab.
 *)
   TRSInventory = record
@@ -18,7 +18,7 @@ Main record responsible with handling the inventory gametab.
   end;
 
 (*
-## Inventory.SetupGameTab
+### Inventory.SetupGameTab
 ```pascal
 procedure TRSInventory.SetupGameTab();
 ```
@@ -34,7 +34,7 @@ begin
 end;
 
 (*
-## Inventory.IsOpen
+### Inventory.IsOpen
 ```pascal
 function TRSInventory.IsOpen(): Boolean;
 ```
@@ -51,7 +51,7 @@ begin
 end;
 
 (*
-## Inventory.Open
+### Inventory.Open
 ```pascal
 function TRSInventory.Open(): Boolean;
 ```
@@ -69,7 +69,7 @@ end;
 
 
 (*
-## Inventory.IsFull
+### Inventory.IsFull
 ```pascal
 function TRSInventory.IsFull(): Boolean;
 ```
@@ -87,7 +87,7 @@ end;
 
 
 (*
-## Inventory.IsSelected
+### Inventory.IsSelected
 ```pascal
 function TRSInventory.IsSelected(slot: TBox): Boolean;
 function TRSInventory.IsSelected(slot: Integer): Boolean; overload;
@@ -112,7 +112,7 @@ begin
 end;
 
 (*
-## Inventory.GetSelected
+### Inventory.GetSelected
 ```pascal
 function TRSInventory.GetSelected(): Integer;
 ```
@@ -147,7 +147,7 @@ end;
 
 
 (*
-## Inventory.Select
+### Inventory.Select
 ```pascal
 function TRSInventory.Select(slot: Integer; wait: Boolean = False): Boolean;
 function TRSInventory.Select(item: TRSItem; wait: Boolean = False): Boolean; overload;
@@ -202,7 +202,7 @@ end;
 
 
 (*
-## Inventory.Combine
+### Inventory.Combine
 ```pascal
 function TRSInventory.Combine(slotA, slotB: Integer): Boolean;
 function TRSInventory.Combine(itemA, itemB: TRSItem): Boolean; overload;
@@ -258,7 +258,7 @@ end;
 
 
 (*
-## Inventory.Drop
+### Inventory.Drop
 ```pascal
 function TRSInventory.Drop(slots: TIntegerArray; attempts: Integer = 5): Boolean;
 function TRSInventory.Drop(items: TRSItemArray; pattern: TIntegerArray = []): Boolean; overload;
@@ -313,7 +313,7 @@ end;
 
 
 (*
-## Inventory.ShiftDrop
+### Inventory.ShiftDrop
 ```pascal
 function TRSInventory.ShiftDrop(slots: TIntegerArray; attempts: Integer = 5): Boolean;
 function TRSInventory.ShiftDrop(slots, pattern: TIntegerArray): Boolean; overload;
@@ -390,7 +390,7 @@ end;
 
 var
 (*
-## Inventory variable
+### Inventory variable
 Global {ref}`TRSInventory` variable.
 *)
   Inventory: TRSInventory;

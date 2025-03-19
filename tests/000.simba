@@ -1,5 +1,5 @@
 (*
-# Tests
+## Tests
 Automated tests to ensure the library is working as expected.
 All the test files run whenever there's a commit to the library and only if
 they all pass without crashing a release is created.
@@ -9,7 +9,7 @@ interaction with the game can be tested through this process.
 *)
 
 (*
-## Compile Test
+### Compile Test
 Simple compile test.
 *)
 {$I SRLT/osrs.simba}

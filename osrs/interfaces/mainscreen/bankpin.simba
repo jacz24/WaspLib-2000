@@ -1,5 +1,5 @@
 (*
-# BankPin
+## BankPin
 Methods to interact with the bank pin interface.
 
 ```{figure} ../../images/bankpin_interface.png
@@ -11,7 +11,7 @@ Methods to interact with the bank pin interface.
 
 type
 (*
-## TRSBankPin
+### TRSBankPin
 Main record to interact with the {ref}`BankPin` interface.
 *)
   TRSBankPin = record
@@ -20,7 +20,7 @@ Main record to interact with the {ref}`BankPin` interface.
   end;
 
 (*
-## BankPin.SetupInterface
+### BankPin.SetupInterface
 ```pascal
 procedure TRSBankPin.SetupInterface();
 ```
@@ -42,7 +42,7 @@ begin
 end;
 
 (*
-## BankPin.IsOpen
+### BankPin.IsOpen
 ```pascal
 function TRSBankPin.IsOpen(): Boolean;
 ```
@@ -59,7 +59,7 @@ begin
 end;
 
 (*
-## BankPin.WaitOpen
+### BankPin.WaitOpen
 ```pascal
 function TRSBankPin.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -78,7 +78,7 @@ end;
 
 
 (*
-## BankPin.IsLoading
+### BankPin.IsLoading
 ```pascal
 function TRSBankPin.IsLoading(): Boolean;
 ```
@@ -97,7 +97,7 @@ begin
 end;
 
 (*
-## BankPin.WaitLoading
+### BankPin.WaitLoading
 ```pascal
 function TRSBankPin.WaitLoading(time: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -117,7 +117,7 @@ end;
 
 
 (*
-## BankPin.FindDigit
+### BankPin.FindDigit
 ```pascal
 function TRSBankPin.FindDigit(digit: Char): Integer;
 ```
@@ -150,7 +150,7 @@ begin
 end;
 
 (*
-## BankPin.ClickDigit
+### BankPin.ClickDigit
 ```pascal
 function TRSBankPin.ClickDigit(digit: Char): Boolean;
 ```
@@ -173,7 +173,7 @@ end;
 
 
 (*
-## BankPin.GetDigitIndex
+### BankPin.GetDigitIndex
 ```pascal
 function TRSBankPin.GetDigitIndex(): Integer;
 ```
@@ -196,7 +196,7 @@ begin
 end;
 
 (*
-## BankPin.Enter
+### BankPin.Enter
 ```pascal
 function TRSBankPin.Enter(pin: String): Boolean;
 ```
@@ -277,7 +277,7 @@ end;
 
 var
 (*
-## BankPin variable
+### BankPin variable
 Global {ref}`TRSBankPin` variable.
 *)
   BankPin: TRSBankPin;

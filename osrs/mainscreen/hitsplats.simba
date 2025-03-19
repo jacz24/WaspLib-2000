@@ -1,5 +1,5 @@
 (*
-# HitSplats
+## HitSplats
 *)
 {$DEFINE SRLT_HITSPLATS_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
@@ -64,7 +64,7 @@ begin
 end;
 
 (*
-## TRSHitSplat.Find
+### TRSHitSplat.Find
 ```pascal
 function TRSHitSplat.Find(out splats: TRSHitSplatArray; areas: TBoxArray): Boolean; static;
 function TRSHitSplat.Find(out splats: TRSHitSplatArray; areas: TPolygonArray): Boolean; static; overload;

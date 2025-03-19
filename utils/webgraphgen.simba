@@ -1,5 +1,5 @@
 (*
-# WebGraph Generator
+## WebGraph Generator
 File responsible for webgraph generation out of collision map images.
 *)
 
@@ -147,7 +147,7 @@ end;
 
 
 (*
-## TRSChunkLoader.BuildGraph
+### TRSChunkLoader.BuildGraph
 ```pascal
 function TRSChunkLoader._BuildGraph(map: TMufasaBitmap; white, red: TPointArray): TWebGraphV2;
 function TRSChunkLoader.BuildGraph(name: String; map: TMufasaBitmap): TWebGraphV2;

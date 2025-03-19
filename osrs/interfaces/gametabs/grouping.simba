@@ -1,0 +1,16 @@
+{$DEFINE SRLT_GROUPING_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+type
+  TRSGrouping = record
+    DropDown: TRSDropDown;
+    Scroll: TRSScrollBar;
+  end;
+
+procedure TRSGrouping.SetupGameTab();
+begin
+  //TODO...
+end;
+
+var
+  Grouping: TRSGrouping;

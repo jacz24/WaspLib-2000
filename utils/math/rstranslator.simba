@@ -1,5 +1,5 @@
 (*
-# RSTranslator
+## RSTranslator
 This file is responsible for conversions or internal RuneScape values to values
 that can be used by Simba and back.
 *)
@@ -34,7 +34,7 @@ that can be used by Simba and back.
   end;
 
 (*
-## RSTranslator.RSWidth
+### RSTranslator.RSWidth
 ```pascal
 function TRSTranslator.RSWidth(): Integer;
 ```
@@ -51,7 +51,7 @@ begin
 end;
 
 (*
-## RSTranslator.RSHeight
+### RSTranslator.RSHeight
 ```pascal
 function TRSTranslator.RSHeight(): Integer;
 ```
@@ -68,7 +68,7 @@ begin
 end;
 
 (*
-## RSTranslator.MapWidth
+### RSTranslator.MapWidth
 ```pascal
 function TRSTranslator.MapWidth(): UInteger;
 ```
@@ -85,7 +85,7 @@ begin
 end;
 
 (*
-## RSTranslator.MapHeight
+### RSTranslator.MapHeight
 ```pascal
 function TRSTranslator.MapHeight(): Integer;
 ```
@@ -103,7 +103,7 @@ end;
 
 
 (*
-## RSTranslator.RSArea
+### RSTranslator.RSArea
 ```pascal
 function TRSTranslator.RSArea(): UInteger;
 ```
@@ -120,7 +120,7 @@ begin
 end;
 
 (*
-## RSTranslator.MapArea
+### RSTranslator.MapArea
 ```pascal
 function TRSTranslator.MapArea(): UInteger;
 ```
@@ -138,7 +138,7 @@ end;
 
 
 (*
-## RSTranslator.RSCoordinate2Chunk
+### RSTranslator.RSCoordinate2Chunk
 ```pascal
 function TRSTranslator.RSCoordinate2Chunk(p: TPoint): TPoint;
 ```
@@ -156,7 +156,7 @@ end;
 
 
 (*
-## RSTranslator.Global2Chunk
+### RSTranslator.Global2Chunk
 ```pascal
 function TRSTranslator.Global2Chunk(p: TPoint): TPoint;
 function TRSTranslator.Global2Chunk(b: TBox): TBox; overload;
@@ -186,7 +186,7 @@ end;
 
 
 (*
-## RSTranslator.Chunk2RSCoordinate
+### RSTranslator.Chunk2RSCoordinate
 ```pascal
 function TRSTranslator.Chunk2RSCoordinate(p: TPoint): TPoint;
 ```
@@ -204,7 +204,7 @@ end;
 
 
 (*
-## RSTranslator.Chunk2Coordinate
+### RSTranslator.Chunk2Coordinate
 ```pascal
 function TRSTranslator.Chunk2Coordinate(p: TPoint): TPoint;
 function TRSTranslator.Chunk2Coordinate(b: TBox): TBox; overload;
@@ -233,7 +233,7 @@ end;
 
 
 (*
-## RSTranslator.Coordinate2RSCoordinate
+### RSTranslator.Coordinate2RSCoordinate
 ```pascal
 function TRSTranslator.Coordinate2RSCoordinate(p: TPoint): TPoint;
 ```
@@ -251,7 +251,7 @@ begin
 end;
 
 (*
-## RSTranslator.RSCoordinate2Coordinate
+### RSTranslator.RSCoordinate2Coordinate
 ```pascal
 function TRSTranslator.RSCoordinate2Coordinate(p: TPoint): TPoint;
 ```
@@ -308,7 +308,7 @@ end;
 
 
 (*
-## TRSTranslator.GetChunks
+### TRSTranslator.GetChunks
 ```pascal
 function TRSTranslator.GetChunks(start, finish: TPoint): TPointArray; static;
 ```

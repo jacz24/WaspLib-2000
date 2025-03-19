@@ -1,0 +1,103 @@
+{$DEFINE SRLT_PLAYER_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+var
+  PlayerIndex: Integer;
+
+type
+  TRSPlayer = record
+    Username, Password, Pin: String;
+    Worlds: TIntegerArray;
+    Active: Boolean;
+  end;
+
+  TRSPlayerArray = array of TRSPlayer;
+
+(*
+### TRSPlayerArray.Add
+```pascal
+procedure TRSPlayerArray.Add(user, pass: String; pin: String = ''; worlds: TIntegerArray = []);
+```
+Adds a TRSPlayer to the TRSPlayerArray.
+
+Example:
+```pascal
+//TODO
+```
+*)
+procedure TRSPlayerArray.Add(user, pass: String; pin: String = ''; worlds: TIntegerArray = []);
+begin
+  Self += [user, pass, pin, worlds, true];
+end;
+
+procedure TRSPlayerArray.NextPlayer(disableCurrent: Boolean);
+
+  function _Next(): Integer;
+  var
+    i: Integer;
+  begin
+    for i := PlayerIndex + 1 to High(Self) do
+      if Self[i].Active then
+        Exit(i);
+
+    for i := 0 to PlayerIndex - 1 do // wrap around
+      if Self[i].Active then
+        Exit(i);
+
+    Result := -1;
+  end;
+
+begin
+  Self[PlayerIndex].Active := not disableCurrent;
+
+  PlayerIndex := _Next();
+  if PlayerIndex < 0 then
+    raise GetDebugLn('Players', 'No active players to switch to.');
+end;
+
+(*
+### Players.GetPlayer
+```pascal
+function TRSPlayerArray.GetPlayer(): TRSPlayer;
+```
+Returns the currently selected TRSPlayer.
+The currently selected TRSPlayer is decided by `PlayerIndex` which
+is an index of the TRSPlayerArra.
+
+Example:
+```pascal
+  WriteLn Players.GetPlayer().Username;
+```
+*)
+function TRSPlayerArray.GetPlayer(): TRSPlayer;
+begin
+  if Self = [] then
+    raise GetDebugLn('Players', 'No Players declared: Add an Player if you want scripts to handle login.');
+  if not InRange(PlayerIndex, 0, High(Self)) then
+    raise GetDebugLn('Players', 'Player is out of range: Player number selected in script does not exist.');
+
+  Result := Self[PlayerIndex];
+end;
+
+(*
+### Players.GetPin
+```pascal
+function TRSPlayerArray.GetPin(): String;
+```
+Get the current Player bank pin.
+
+Example:
+```pascal
+if BankPin.IsOpen() then
+  BankPin.Enter(Players.GetPin());
+```
+*)
+function TRSPlayerArray.GetPin(): String;
+begin
+  Result := Self.GetPlayer().Pin;
+  if (Length(Result) <> 4) or (not Result.IsNumeric) then
+    raise GetDebugLn('Players', 'Invalid bank pin.');
+end;
+
+var
+  Players: TRSPlayerArray;

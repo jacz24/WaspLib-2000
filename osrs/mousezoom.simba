@@ -1,5 +1,5 @@
 (*
-# RSMouseZoom
+## RSMouseZoom
 Methods to handle the zoom levels with he mouse wheel.
 
 This file was developed with help from data available through the RuneLite camera plugin.
@@ -10,7 +10,7 @@ This file was developed with help from data available through the RuneLite camer
 
 type
 (*
-## TRSMouseZoom
+### TRSMouseZoom
 Record responsible to handle zooming with the mouse wheel and keep MM2MS.ZoomLevel in sync with the zoom slider.
 *)
   TRSMouseZoom = record
@@ -20,7 +20,7 @@ Record responsible to handle zooming with the mouse wheel and keep MM2MS.ZoomLev
   end;
 
 (*
-## RSMouseZoom.GetNext
+### RSMouseZoom.GetNext
 ```pascal
 function TRSMouseZoom.GetNext(value: Integer; down: Boolean): Integer;
 function TRSMouseZoom.GetNext(value: Integer; amount: Integer = 1; down: Boolean = True): Integer; overload;
@@ -51,7 +51,7 @@ begin
 end;
 
 (*
-## RSMouseZoom.Level2Slider
+### RSMouseZoom.Level2Slider
 ```pascal
 function TRSMouseZoom.Level2Slider(value: Integer = -1): Integer;
 ```
@@ -81,7 +81,7 @@ begin
 end;
 
 (*
-## RSMouseZoom.Slider2Level
+### RSMouseZoom.Slider2Level
 ```pascal
 function TRSMouseZoom.Slider2Level(value: Integer = -1): Integer;
 ```
@@ -123,7 +123,7 @@ end;
 
 
 (*
-## RSMouseZoom.Scroll
+### RSMouseZoom.Scroll
 ```pascal
 procedure TRSMouseZoom.Scroll(amount: Integer = 1; down: Boolean; forceMove: Boolean = True);
 procedure TRSMouseZoom.Scroll(amount: Integer = 1; forceMove: Boolean = True); overload;
@@ -184,7 +184,7 @@ end;
 
 
 (*
-## RSMouseZoom.MaxZoom
+### RSMouseZoom.MaxZoom
 ```pascal
 procedure TRSMouseZoom.MaxZoom(down: Boolean = True);
 ```
@@ -205,7 +205,7 @@ begin
 end;
 
 (*
-## RSMouseZoom.MaxZoomBlind
+### RSMouseZoom.MaxZoomBlind
 ```pascal
 procedure TRSMouseZoom.MaxZoomBlind(down: Boolean = True);
 ```
@@ -230,7 +230,7 @@ begin
 end;
 
 (*
-## RSMouseZoom.GetZoomLevel
+### RSMouseZoom.GetZoomLevel
 ```pascal
 function TRSMouseZoom.GetZoomLevel(): Integer;
 ```
@@ -263,7 +263,7 @@ end;
 
 
 (*
-## RSMouseZoom.SetZoomLevel
+### RSMouseZoom.SetZoomLevel
 ```pascal
 function TRSMouseZoom.SetZoomLevel(level: Integer): Boolean;
 ```
@@ -308,7 +308,7 @@ end;
 
 var
 (*
-## RSMouseZoom variable
+### RSMouseZoom variable
 Global {ref}`TRSMouseZoom` variable.
 *)
   RSMouseZoom: TRSMouseZoom;

@@ -1,5 +1,5 @@
 (*
-# Chat Options
+## Chat Options
 The {ref}`Chat` interface options menu that shows up when you are interacting
 with certain objects or NPCs.
 
@@ -12,7 +12,7 @@ A chat options menu.
 
 type
 (*
-## TRSChatOption
+### TRSChatOption
 Helper record to handler chat options.
 *)
   TRSChatOption = record
@@ -23,7 +23,7 @@ Helper record to handler chat options.
   TRSChatOptionArray = array of TRSChatOption;
 
 (*
-## Chat.GetOptions
+### Chat.GetOptions
 ```pascal
 function TRSChat.GetOptions(colors: TIntegerArray = []): TRSChatOptionArray;
 function TRSChat.GetOptions(): String; overload;
@@ -70,7 +70,7 @@ begin
 end;
 
 (*
-## Chat.GetOptionsString
+### Chat.GetOptionsString
 ```pascal
 function TRSChat.GetOptionsString(): String;
 ```
@@ -93,7 +93,7 @@ begin
 end;
 
 (*
-## Chat.FindOption
+### Chat.FindOption
 ```pascal
 function TRSChat.FindOption(chatOption: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): TRSChatOption;
 ```
@@ -125,7 +125,7 @@ begin
 end;
 
 (*
-## Chat.FindOption
+### Chat.FindOption
 ```pascal
 function TRSChat.FindOption(chatOption: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): TRSChatOption;
 ```
@@ -148,7 +148,7 @@ begin
 end;
 
 (*
-## Chat.WaitOption
+### Chat.WaitOption
 ```pascal
 function TRSChat.WaitOption(chatOption: String; caseSensitive: Boolean = False; colors: TIntegerArray = []; time: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -169,7 +169,7 @@ end;
 
 
 (*
-## Chat.Select
+### Chat.Select
 ```pascal
 function TRSChat.Select(chatOption: String; caseSensitive: Boolean = False; keyboardProbability: Single = -1; colors: TIntegerArray = []): Boolean;
 ```
@@ -201,7 +201,7 @@ begin
 end;
 
 (*
-## Chat.ContinueChat
+### Chat.ContinueChat
 ```pascal
 function TRSChat.ContinueChat(keyboardProbability: Single = -1): Boolean;
 ```
@@ -227,7 +227,7 @@ begin
 end;
 
 (*
-## Chat.ContinueUntilOption
+### Chat.ContinueUntilOption
 ```pascal
 function TRSChat.ContinueUntilOption(option: String; timeout: Integer = 10000): Boolean;
 ```
@@ -254,7 +254,7 @@ end;
 
 
 (*
-## Chat.GetTitle
+### Chat.GetTitle
 ```pascal
 function TRSChat.GetTitle(): String;
 ```
@@ -276,7 +276,7 @@ begin
 end;
 
 (*
-## Chat.IsTitle
+### Chat.IsTitle
 ```pascal
 function TRSChat.IsTitle(text: String; similarity: Single = 0.8): Boolean;
 ```

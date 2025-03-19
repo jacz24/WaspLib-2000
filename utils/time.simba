@@ -8,13 +8,14 @@ const
   ONE_DAY: Integer    = ONE_HOUR   * 24;
   TIME_FORMAL: String = 'h \ho\ur\s, m \min\ute\s and s \second\s';
   MINUTES_FORMAL: String = 'm \min\ute\s and s \second\s';
+  FILE_TIME_FORMAT: String = 'YY';
 
 function TimeStamp(): String;
 begin
   Result := FormatMilliseconds(GetTimeRunning(), '[hh:mm:ss:uu]');
 end;
 (*
-## TCountDown
+### TCountDown
 A neat and simple timer type.
 
 Example:

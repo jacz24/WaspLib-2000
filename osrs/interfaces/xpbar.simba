@@ -1,5 +1,5 @@
 (*
-# XPBar
+## XPBar
 Methods to interact with the XP bar.
 *)
 
@@ -8,7 +8,7 @@ Methods to interact with the XP bar.
 
 type
 (*
-## ERSXPBarSize
+### ERSXPBarSize
 ```pascal
 ERSXPBarSize = enum(UNKNOWN, SMALL, MEDIUM, LARGE);
 Enum reprensenting the {ref}`XPBar` available sizes.
@@ -17,7 +17,7 @@ Enum reprensenting the {ref}`XPBar` available sizes.
   ERSXPBarSize = enum(UNKNOWN, SMALL, MEDIUM, LARGE);
 
 (*
-## ERSXPBarPosition
+### ERSXPBarPosition
 ```pascal
 ERSXPBarPosition = enum(UNKNOWN, LEFT, CENTER, RIGHT);
 ```
@@ -26,7 +26,7 @@ Enum reprensenting the {ref}`XPBar` available positions.
   ERSXPBarPosition = enum(UNKNOWN, LEFT, CENTER, RIGHT);
 
 (*
-## TRSXPBar
+### TRSXPBar
 Record responsible with interacting with the {ref}`XPBar`.
 *)
   TRSXPBar = record
@@ -50,7 +50,7 @@ Record responsible with interacting with the {ref}`XPBar`.
   end;
 
 (*
-## XPBar.UpdateSize
+### XPBar.UpdateSize
 ```pascal
 procedure TRSXPBar.UpdateSize();
 ```
@@ -90,7 +90,7 @@ begin
 end;
 
 (*
-## XPBar.SetupInterface
+### XPBar.SetupInterface
 ```pascal
 procedure TRSXPBar.SetupInterface();
 ```
@@ -147,7 +147,7 @@ end;
 
 
 (*
-## XPBar.IsOpen
+### XPBar.IsOpen
 ```pascal
 function TRSXPBar.IsOpen(): Boolean;
 ```
@@ -166,7 +166,7 @@ begin
 end;
 
 (*
-## XPBar.WaitOpen
+### XPBar.WaitOpen
 ```pascal
 function TRSXPBar.WaitOpen(): Boolean;
 ```
@@ -186,7 +186,7 @@ begin
 end;
 
 (*
-## XPBar.Open
+### XPBar.Open
 ```pascal
 function TRSXPBar.Open(): Boolean;
 ```
@@ -207,7 +207,7 @@ end;
 
 
 (*
-## XPBar.Setup
+### XPBar.Setup
 ```pascal
 function TRSXPBar.Setup(): Boolean;
 ```
@@ -266,7 +266,7 @@ end;
 
 
 (*
-## XPBar.Read
+### XPBar.Read
 ```pascal
 function TRSXPBar.Read(): Integer;
 ```
@@ -300,7 +300,7 @@ begin
 end;
 
 (*
-## XPBar.EarnedXP
+### XPBar.EarnedXP
 ```pascal
 function TRSXPBar.EarnedXP(): Boolean;
 ```
@@ -321,7 +321,7 @@ begin
 end;
 
 (*
-## XPBar.WaitXP
+### XPBar.WaitXP
 ```pascal
 function TRSXPBar.WaitXP(time: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -335,7 +335,7 @@ end;
 
 
 (*
-## XPBar.TotalEarnedXP
+### XPBar.TotalEarnedXP
 ```pascal
 function TRSXPBar.TotalEarnedXP(update: Boolean = False): UInt64;
 ```
@@ -351,7 +351,7 @@ end;
 
 var
 (*
-## XPBar variable
+### XPBar variable
 Global {ref}`TRSXPBar` variable.
 *)
   XPBar: TRSXPBar;

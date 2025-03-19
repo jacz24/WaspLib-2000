@@ -1,5 +1,5 @@
 (*
-# Antiban
+## Antiban
 Methods to handle antiban.
 *)
 
@@ -92,7 +92,7 @@ end;
 
 
 (*
-## Antiban.AddTask
+### Antiban.AddTask
 ```pascal
 procedure TAntiban.AddTask(interval: Double; method: TAntibanMethod; randomness: Double = 0.2);
 ```
@@ -126,7 +126,7 @@ begin
 end;
 
 (*
-## Antiban.AddBreak
+### Antiban.AddBreak
 ```pascal
 procedure TAntiban.AddBreak(interval, length: Double; randomness: Double = 0.2; logoutChance: Double = 0.33);
 ```
@@ -158,7 +158,7 @@ begin
 end;
 
 (*
-## Antiban.AddSleep
+### Antiban.AddSleep
 ```pascal
 procedure TAntiban.AddSleep(time: String; length: Double; randomness: Double = 0.10; logoutChance: Double = 0.5);
 ```
@@ -197,7 +197,7 @@ end;
 
 
 (*
-## Antiban.TakeSleep
+### Antiban.TakeSleep
 ```pascal
 procedure TAntiban.TakeSleep(var task: TSleepTask);
 ```
@@ -260,7 +260,7 @@ begin
 end;
 
 (*
-## Antiban.TakeBreak
+### Antiban.TakeBreak
 ```pascal
 procedure TAntiban.TakeBreak(var task: TBreakTask);
 ```
@@ -322,7 +322,7 @@ end;
 
 
 (*
-## Antiban.DoTask
+### Antiban.DoTask
 ```pascal
 function TAntiban.DoTask(): Boolean;
 ```
@@ -372,7 +372,7 @@ begin
 end;
 
 (*
-## Antiban.DoBreak
+### Antiban.DoBreak
 ```pascal
 function TAntiban.DoBreak(): Boolean;
 ```
@@ -401,7 +401,7 @@ begin
 end;
 
 (*
-## Antiban.DoSleep
+### Antiban.DoSleep
 ```pascal
 function TAntiban.DoSleep(): Boolean;
 ```
@@ -431,7 +431,7 @@ end;
 
 
 (*
-## Antiban.DoAntiban
+### Antiban.DoAntiban
 ```pascal
 function TAntiban.DoAntiban(checkTasks, checkBreaks, checkSleeps: Boolean = True): Boolean;
 ```
@@ -467,7 +467,7 @@ end;
 
 
 (*
-## Antiban.TimeUntilBreak
+### Antiban.TimeUntilBreak
 ```pascal
 function TAntiban.TimeUntilBreak(task: TBreakTask): String;
 ```
@@ -479,7 +479,7 @@ begin
 end;
 
 (*
-## Antiban.TimeUntilSleep
+### Antiban.TimeUntilSleep
 ```pascal
 function TAntiban.TimeUntilSleep(task: TSleepTask): String;
 ```
@@ -491,7 +491,7 @@ begin
 end;
 
 (*
-## Antiban.SimulateBreaks
+### Antiban.SimulateBreaks
 ```pascal
 procedure TAntiban.SimulateBreaks(bottingDays: UInt64 = 1000);
 ```
@@ -535,7 +535,7 @@ end;
 
 var
 (*
-## Antiban variable
+### Antiban variable
 Global {ref}`TAntiban` variable.
 *)
   Antiban: TAntiban;

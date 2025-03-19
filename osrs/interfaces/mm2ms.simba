@@ -1,5 +1,5 @@
 (*
-# MM2MS
+## MM2MS
 The core for our minimap to mainscreen projection.
 Supports rotation, and zoom, and resizable client.
 
@@ -19,7 +19,7 @@ The MM2MS projection.
 
 type
 (*
-## TRSMM2MS
+### TRSMM2MS
 Main record responsible for minimap to mainscreen ({ref}`MM2MS`) conversion.
 *)
   TRSMM2MS = record
@@ -37,7 +37,7 @@ begin
 end;
 
 (*
-## MM2MS.Run
+### MM2MS.Run
 ```pascal
 function TRSMM2MS.Run(arr: Vector3Array; roll: Single): TPointArray;
 ```
@@ -62,7 +62,7 @@ end;
 
 var
 (*
-## MM2MS variable
+### MM2MS variable
 Global {ref}`TRSMM2MS` variable.
 
 It's unlikely you need to use this directly.
@@ -72,7 +72,7 @@ You usually only need the `TRSMinimap` and `TRSMainScreen` extensions below.
   MM2MS: TRSMM2MS;
 
 (*
-## Minimap Vectors To MainScreen
+### Minimap Vectors To MainScreen
 ```pascal
 function TRSMinimap.Vectors2MS(vectors: Vector3Array; angle: Single): TPointArray;
 function TRSMinimap.Vector2MS(vector: Vector3; angle: Single): TPoint;
@@ -101,7 +101,7 @@ end;
 
 
 (*
-## Minimap Points To MainScreen
+### Minimap Points To MainScreen
 ```pascal
 function TRSMinimap.Points2MS(points: TPointArray; angle: Single = $FFFF): TPointArray;
 function TRSMinimap.Point2MS(pt: TPoint; angle: Single = $FFFF): TPoint;
@@ -148,7 +148,7 @@ end;
 
 
 (*
-## Minimap Points To MainScreen Quads
+### Minimap Points To MainScreen Quads
 ```pascal
 function TRSMinimap.Vector2MSQuad(vector: Vector3; angle: Single; size: Vector2 = [1,1]; offset: Vector3 = [0,0,0]): TQuad;
 function TRSMinimap.Point2MSQuad(pt: TPoint; size: Vector2 = [1,1]; angle: Single = $FFFF): TQuad;
@@ -201,7 +201,7 @@ end;
 
 
 (*
-## Minimap Points To MainScreen Cuboids
+### Minimap Points To MainScreen Cuboids
 ```pascal
 function TRSMinimap.Vector2MSCuboid(vector, size: Vector3; angle: Single; offset: Vector3 = [0,0,0]): TCuboid;
 function TRSMinimap.Point2MSCuboid(pt: TPoint; size: Vector3; angle: Single = $FFFF): TCuboid;
@@ -258,7 +258,7 @@ end;
 
 
 (*
-## MainScreen.Point2MM
+### MainScreen.Point2MM
 ```pascal
 function TRSMainScreen.Point2MM(pt: TPoint; height: Integer; angle: Single; accuracy: Single = 0.2): Vector3;
 ```
@@ -315,7 +315,7 @@ end;
 
 
 (*
-## Minimap.GetZoomQuad
+### Minimap.GetZoomQuad
 ```pascal
 function TRSMinimap.GetZoomQuad(): TQuad;
 ```
@@ -349,7 +349,7 @@ begin
 end;
 
 (*
-## Minimap.PointOnZoomQuad
+### Minimap.PointOnZoomQuad
 ```pascal
 function TRSMinimap.PointOnZoomQuad(pt: TPoint): Boolean;
 ```
@@ -367,7 +367,7 @@ begin
 end;
 
 (*
-## Minimap.RandomPointOnZoomQuad
+### Minimap.RandomPointOnZoomQuad
 ```pascal
 function TRSMinimap.RandomPointOnZoomQuad(pt: TPoint; randomness: Integer): TPoint;
 ```
@@ -399,7 +399,7 @@ end;
 
 
 (*
-## Minimap.FacePoint
+### Minimap.FacePoint
 ```pascal
 function TRSMinimap.FacePoint(pt: TPoint; randomness: Integer = 0): Boolean;
 ```
@@ -440,7 +440,7 @@ begin
 end;
 
 (*
-## MainScreen.FacePoint
+### MainScreen.FacePoint
 ```pascal
 function TRSMainScreen.FacePoint(pt: TPoint; randomness: Integer = 0): Boolean; override;
 ```
@@ -452,7 +452,7 @@ begin
 end;
 
 (*
-## MainScreen.NormalizeDistance
+### MainScreen.NormalizeDistance
 ```pascal
 function TRSMainScreen.NormalizeDistance(dist: Integer; accuracy: Single = 1.05): Integer;
 ```
@@ -521,7 +521,7 @@ end;
 
 
 (*
-## Minimap.InZoomRange
+### Minimap.InZoomRange
 ```pascal
 function TRSMinimap.InZoomRangeEx(pt: TPoint; out corner: TPoint): Boolean;
 function TRSMinimap.InZoomRange(pt: TPoint): Boolean;
@@ -571,7 +571,7 @@ end;
 
 
 (*
-## Minimap.GetZoomToPoint
+### Minimap.GetZoomToPoint
 ```pascal
 function TRSMinimap.GetZoomToPoint(p: TPoint; randomness: Integer = 0): Integer;
 ```
@@ -594,7 +594,7 @@ begin
 end;
 
 (*
-## Minimap.SetZoom2Point
+### Minimap.SetZoom2Point
 ```pascal
 function TRSMinimap.SetZoom2Point(pt: TPoint; randomness: Integer = 0): Boolean;
 ```
@@ -614,7 +614,7 @@ end;
 
 
 (*
-## Minimap.MakePointVisible
+### Minimap.MakePointVisible
 ```pascal
 function TRSMinimap.MakePointVisible(p: TPoint): Boolean;
 ```
@@ -627,7 +627,7 @@ end;
 
 
 (*
-## Minimap.DebugTiles
+### Minimap.DebugTiles
 ```pascal
 procedure TRSMinimap.DebugTiles(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER, ERSMinimapDot.NPC, ERSMinimapDot.ITEM]);
 ```

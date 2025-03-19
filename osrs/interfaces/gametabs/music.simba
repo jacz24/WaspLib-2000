@@ -1,0 +1,15 @@
+{$DEFINE SRLT_MUSIC_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+type
+  TRSMusic = record
+    Slots: TBoxArray;
+  end;
+
+procedure TRSMusic.SetupGameTab();
+begin
+  //TODO...
+end;
+
+var
+  Music: TRSMusic;

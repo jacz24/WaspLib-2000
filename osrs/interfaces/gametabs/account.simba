@@ -1,0 +1,16 @@
+{$DEFINE SRLT_ACCOUNT_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+type
+  ERSAccountTab = enum(ACCOUNT, COMMUNITY, LINKS);
+  TRSAccount = record
+    Tabs: TBoxArray;
+  end;
+
+procedure TRSAccount.SetupGameTab();
+begin
+  //TODO...
+end;
+
+var
+  Account: TRSAccount;

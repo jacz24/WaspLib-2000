@@ -1,5 +1,5 @@
 (*
-# Stats
+## Stats
 Methods responsible for dealing with the stats tab.
 *)
 {$DEFINE SRLT_STATS_INCLUDED}
@@ -39,7 +39,7 @@ end;
   end;
 
 (*
-## TRSStats
+### TRSStats
 Main record used to interact with the {ref}`Stats` gametab.
 *)
   TRSStats = record
@@ -48,7 +48,7 @@ Main record used to interact with the {ref}`Stats` gametab.
   end;
 
 (*
-## Stats.SetupGameTab
+### Stats.SetupGameTab
 ```pascal
 procedure TRSStats.SetupGameTab();
 ```
@@ -63,7 +63,7 @@ end;
 
 
 (*
-## Stats.IsOpen
+### Stats.IsOpen
 ```pascal
 function TRSStats.IsOpen(): Boolean;
 ```
@@ -80,7 +80,7 @@ begin
 end;
 
 (*
-## Stats.Open
+### Stats.Open
 ```pascal
 function TRSStats.Open(): Boolean;
 ```
@@ -97,7 +97,7 @@ begin
 end;
 
 (*
-## Stats.Hover
+### Stats.Hover
 ```pascal
 function TRSStats.Hover(skill: ERSSkill): Boolean;
 ```
@@ -117,7 +117,7 @@ end;
 
 
 (*
-## Stats.FindSkillInfo
+### Stats.FindSkillInfo
 ```pascal
 function TRSStats.FindSkillInfo(skill: ERSSkill; out skillInfo: TRSSkillInfo): Boolean;
 ```
@@ -155,7 +155,7 @@ begin
 end;
 
 (*
-## Stats.GetSkillInfo
+### Stats.GetSkillInfo
 ```pascal
 function TRSStats.GetSkillInfo(skill: ERSSkill; waitTime: Integer = 1000): TRSSkillInfo;
 ```
@@ -174,7 +174,7 @@ end;
 
 
 (*
-## Stats.GetLevel
+### Stats.GetLevel
 ```pascal
 function TRSStats.GetLevel(skill: ERSSkill; useCache: Boolean = True): Integer;
 ```
@@ -204,7 +204,7 @@ begin
 end;
 
 (*
-## Stats.CacheStats
+### Stats.CacheStats
 ```pascal
 procedure TRSStats.CacheStats();
 ```
@@ -219,7 +219,7 @@ begin
 end;
 
 (*
-## Stats.IncrementCachedLevel
+### Stats.IncrementCachedLevel
 ```pascal
 procedure TRSStats.IncrementCachedLevel(skill: ERSSkill);
 ```
@@ -239,7 +239,7 @@ end;
 
 var
 (*
-## Stats variable
+### Stats variable
 Global {ref}`TRSStats` variable.
 *)
   Stats: TRSStats;

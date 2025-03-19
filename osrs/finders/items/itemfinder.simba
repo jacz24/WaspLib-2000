@@ -1,5 +1,5 @@
 (*
-# ItemFinder
+## ItemFinder
 Methods to find and compare item images
 *)
 
@@ -70,7 +70,7 @@ end;
 
 procedure TRSItemFinder.Setup();
 var
-  dir, tmp: String;
+  path, tmp: String;
 begin
   Self.Version := HashFile(EHashAlgo.MD5, Self.ZIP);
   SetLength(Self.Version, 6);
@@ -79,11 +79,11 @@ begin
   Self.CacheDir := SRLTEnv.CacheDir + 'itemfinder' + PATH_SEP;
 
   //Delete old cache files if they exist
-  for dir in DirList(Self.CacheDir) do
+  for path in DirList(Self.CacheDir) do
   begin
-    tmp := Copy(dir, 1, Length(dir)-Length(Self.Version));
+    tmp := Copy(path, 1, Length(path)-Length(Self.Version));
     if tmp = Self.Version then Continue;
-    DirDelete(dir, False);
+    DirDelete(path, False);
   end;
 
   Self.CacheDir += Self.Version + PATH_SEP;

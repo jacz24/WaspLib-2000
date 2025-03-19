@@ -1,5 +1,5 @@
 (*
-# ChooseOption
+## ChooseOption
 Methods to interact with the runescape context menu.
 
 ```{figure} ../../images/choose_option.png
@@ -24,7 +24,7 @@ Helper record to interact with {ref}`ChooseOption`.
   TRSOptionArray = array of TRSOption;
 
 (*
-## TRSChooseOption
+### TRSChooseOption
 Core record responsible with interacting with the {ref}`ChooseOption` context menu.
 *)
   TRSChooseOption = record
@@ -33,7 +33,7 @@ Core record responsible with interacting with the {ref}`ChooseOption` context me
   end;
 
 (*
-## ChooseOption.IsOpen
+### ChooseOption.IsOpen
 ```pascal
 function TRSChooseOption.IsOpen(): Boolean;
 ```
@@ -63,7 +63,7 @@ begin
 end;
 
 (*
-## ChooseOption.WaitOpen
+### ChooseOption.WaitOpen
 ```pascal
 function TRSChooseOption.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
 ```
@@ -81,7 +81,7 @@ begin
 end;
 
 (*
-## ChooseOption.Open
+### ChooseOption.Open
 ```pascal
 function TRSChooseOption.Open(): Boolean;
 ```
@@ -102,7 +102,7 @@ end;
 
 
 (*
-## ChooseOption.GetOptions
+### ChooseOption.GetOptions
 ```pascal
 function TRSChooseOption.GetOptions(): TRSChooseOption_OptionArray;
 ```
@@ -134,7 +134,7 @@ begin
 end;
 
 (*
-## ChooseOption.Close
+### ChooseOption.Close
 ```pascal
 function TRSChooseOption.Close(): Boolean;
 ```
@@ -166,7 +166,7 @@ end;
 
 
 (*
-## ChooseOption.HasOption
+### ChooseOption.HasOption
 ```pascal
 function TRSChooseOption.HasOption(text: TStringArray; out option: TRSChooseOption_Option; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean;
 function TRSChooseOption.HasOption(text: TStringArray; out index: Int32; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
@@ -227,7 +227,7 @@ end;
 
 
 (*
-## ChooseOption.Select
+### ChooseOption.Select
 ```pascal
 procedure TRSChooseOption.Select(option: TRSChooseOption_Option; mouseAction: Int32 = MOUSE_LEFT);
 function TRSChooseOption.Select(text: TStringArray; mouseAction: Int32 = MOUSE_LEFT; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
@@ -262,7 +262,7 @@ end;
 
 
 (*
-## ChooseOption.Select
+### ChooseOption.Select
 ```pascal
 procedure TRSChooseOption.Select(option: TRSChooseOption_Option; mouseAction: Int32 = MOUSE_LEFT);
 function TRSChooseOption.Select(text: TStringArray; mouseAction: Int32 = MOUSE_LEFT; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
@@ -294,7 +294,7 @@ end;
 
 var
 (*
-## ChooseOption variable
+### ChooseOption variable
 Global {ref}`TRSChooseOption` variable.
 *)
   ChooseOption: TRSChooseOption;

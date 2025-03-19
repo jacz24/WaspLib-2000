@@ -1,5 +1,5 @@
 (*
-# InterfaceArea
+## InterfaceArea
 *)
 {$DEFINE SRLT_INTERFACE_AREA_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
@@ -47,7 +47,7 @@ begin
 end;
 
 (*
-## TRSInterfaceArea.IsOpen
+### TRSInterfaceArea.IsOpen
 ```pascal
 function TRSInterfaceArea.IsOpen(interfaceType: ERSInterfaceType = ERSInterfaceType.ANY): Boolean;
 ```
@@ -63,7 +63,7 @@ begin
 end;
 
 (*
-## TRSInterfaceArea.WaitOpen
+### TRSInterfaceArea.WaitOpen
 ```pascal
 function TRSInterfaceArea.WaitOpen(interfaceType: ERSInterfaceType = ERSInterfaceType.ANY; time: Integer = 600; interval: Integer = -1): Boolean;
 ```

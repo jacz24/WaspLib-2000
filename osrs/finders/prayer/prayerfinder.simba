@@ -1,5 +1,5 @@
 (*
-# PrayerFinder
+## PrayerFinder
 Methods to find and compare spell images
 *)
 
@@ -7,7 +7,7 @@ Methods to find and compare spell images
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 (*
-## ERSPrayer
+### ERSPrayer
 ```pascal
 ERSPrayer = enum(
   UNKNOWN,
@@ -40,7 +40,7 @@ type
   );
 
 (*
-## TRSPrayerFinder
+### TRSPrayerFinder
 ```pascal
 type TRSPrayerFinder = record
   PrayerImages: array [ERSPrayer] of TImage;
@@ -71,7 +71,7 @@ A record for finding and managing prayer images.
   end;
 
 (*
-## PrayerFinder.Clean
+### PrayerFinder.Clean
 ```pascal
 procedure TRSPrayerFinder.Clean(image, template: TImage);
 ```
@@ -93,7 +93,7 @@ begin
 end;
 
 (*
-## PrayerFinder.Setup
+### PrayerFinder.Setup
 ```pascal
 procedure TRSPrayerFinder.Setup();
 ```
@@ -134,7 +134,7 @@ begin
 end;
 
 (*
-## PrayerFinder.GetImage
+### PrayerFinder.GetImage
 ```pascal
 function TRSPrayerFinder.GetImage(prayer: ERSPrayer): TImage;
 ```
@@ -173,7 +173,7 @@ begin
 end;
 
 (*
-## PrayerFinder.FindAll
+### PrayerFinder.FindAll
 ```pascal
 function TRSPrayerFinder.FindAll(prayers: array of ERSPrayer; boxes: TBoxArray; maxToFind: Integer = 0): TImageMatchArray;
 function TRSPrayerFinder.FindAll(prayers: array of ERSPrayer; boxes: TBoxArray; out matches: TImageMatchArray): Boolean; overload;
@@ -254,7 +254,7 @@ begin
 end;
 
 (*
-## PrayerFinder.Find
+### PrayerFinder.Find
 ```pascal
 function TRSPrayerFinder.Find(prayers: array of ERSPrayer; boxes: TBoxArray; out match: TImageMatch): Boolean;
 ```

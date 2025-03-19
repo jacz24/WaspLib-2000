@@ -1,5 +1,5 @@
 (*
-# Chat
+## Chat
 The {ref}`Chat` interface is the interface that shows up at the bottom left
 corner of the game client where you can communicate with other players,
 receive game messages and even interact with some options and menus it hosts
@@ -13,7 +13,7 @@ like the {ref}`Make` menu.
 
 type
 (*
-## ERSChatColor
+### ERSChatColor
 ```pascal
 ERSChatColor = enum(
   BLACK, MAROON, BLUE, PURPLE, RED, LIGHT_RED, WHITE, LIGHT_PURPLE, NAVY, GREEN
@@ -28,7 +28,7 @@ Enum representing each of the available chat text colors.
   ERSChatColorArray = array of ERSChatColor;
 
 (*
-## ERSIronMan
+### ERSIronMan
 ```pascal
 ERSIronMan = enum(NONE, IRONMAN, HARDCORE, ULTIMATE, GROUP, HARCORE_GROUP, UNRANKED_GROUP);
 ```
@@ -37,7 +37,7 @@ Enum representing each of the available ironman types.
   ERSIronMan = enum(NONE, IRONMAN, HARDCORE, ULTIMATE, GROUP, HARCORE_GROUP, UNRANKED_GROUP);
 
 (*
-## Chat
+### Chat
 Main record used to interact with the {ref}`Chat` interface.
 *)
   TRSChat = record
@@ -52,7 +52,7 @@ Main record used to interact with the {ref}`Chat` interface.
   end;
 
 (*
-## Chat.SetupInterface
+### Chat.SetupInterface
 ```pascal
 procedure TRSChat.SetupInterface();
 ```
@@ -91,7 +91,7 @@ begin
 end;
 
 (*
-## Chat.GetColors
+### Chat.GetColors
 ```pascal
 function TRSChat.GetColors(colors: ERSChatColorArray): TColorArray;
 ```
@@ -112,7 +112,7 @@ end;
 
 
 (*
-## Chat.GetDisplayNameBox
+### Chat.GetDisplayNameBox
 ```pascal
 function TRSChat.GetDisplayNameBox(out color: Integer): TBox;
 function TRSChat.GetDisplayNameBox(): TBox; overload;
@@ -150,7 +150,7 @@ begin
 end;
 
 (*
-## Chat.GetDisplayName
+### Chat.GetDisplayName
 ```pascal
 function TRSChat.GetDisplayName(): String;
 ```
@@ -178,7 +178,7 @@ end;
 
 
 (*
-## Chat.GetIronManType
+### Chat.GetIronManType
 ```pascal
 function TRSChat.GetIronManType() : ERSIronMan;
 ```
@@ -224,7 +224,7 @@ end;
 
 
 (*
-## Chat.IsTransparent
+### Chat.IsTransparent
 ```pascal
 function TRSChat.IsTransparent(): Boolean;
 ```
@@ -249,7 +249,7 @@ end;
 
 
 (*
-## Chat.IsOpen
+### Chat.IsOpen
 ```pascal
 function TRSChat.IsOpen(): Boolean;
 ```
@@ -268,7 +268,7 @@ begin
 end;
 
 (*
-## Chat.Close
+### Chat.Close
 ```pascal
 function TRSChat.Close(): Boolean;
 ```
@@ -290,7 +290,7 @@ end;
 
 
 (*
-## Chat Queries
+### Chat Queries
 A chat query is when you have some kind of question on the chatbox which you have
 to reply to.
 
@@ -301,7 +301,7 @@ A chat query.
 *)
 
 (*
-### Chat.GetQuery
+#### Chat.GetQuery
 ```pascal
 function TRSChat.GetQuery(): String;
 ```
@@ -318,7 +318,7 @@ begin
 end;
 
 (*
-### Chat.GetQueryAnswer
+#### Chat.GetQueryAnswer
 ```pascal
 function TRSChat.GetQueryAnswer(): String;
 ```
@@ -336,7 +336,7 @@ begin
 end;
 
 (*
-### Chat.FindQuery
+#### Chat.FindQuery
 ```pascal
 function TRSChat.FindQuery(query: String; caseSensitive: Boolean = False): Boolean;
 ```
@@ -354,7 +354,7 @@ begin
 end;
 
 (*
-### Chat.WaitQuery
+#### Chat.WaitQuery
 ```pascal
 function TRSChat.WaitQuery(query: String; caseSensitive: Boolean = False; time: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -373,7 +373,7 @@ begin
 end;
 
 (*
-### Chat.AnswerQuery
+#### Chat.AnswerQuery
 ```pascal
 function TRSChat.AnswerQuery(query, answer: String; waitTime: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -400,7 +400,7 @@ end;
 
 
 (*
-## Chat.GetMessage
+### Chat.GetMessage
 ```pascal
 function TRSChat.GetMessage(line: Integer; colors: TIntegerArray = []): String;
 ```
@@ -445,7 +445,7 @@ begin
 end;
 
 (*
-## Chat.FindMessageLine
+### Chat.FindMessageLine
 ```pascal
 function TRSChat.FindMessageLine(msg: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): Integer;
 ```
@@ -467,7 +467,7 @@ begin
 end;
 
 (*
-## Chat.ContainsMessage
+### Chat.ContainsMessage
 ```pascal
 function TRSChat.ContainsMessage(msg: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): Boolean;
 ```
@@ -485,7 +485,7 @@ end;
 
 
 (*
-## Chat.InputHasText
+### Chat.InputHasText
 ```pascal
 function TRSChat.InputHasText(): Boolean;
 ```
@@ -534,7 +534,7 @@ end;
 
 var
 (*
-## Chat variable
+### Chat variable
 Global {ref}`TRSChat` variable.
 *)
   Chat: TRSChat;
