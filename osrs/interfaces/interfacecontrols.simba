@@ -434,10 +434,10 @@ begin
   value := EnsureRange(value, 0, 100);
 
   old := Self.GetLevel();
-  direction := old < value;
+  direction := old > value;
   area := Self.GetScrollArea();
 
-  while direction = (old < value) do
+  while direction = (old > value) do
   begin
     Mouse.Move(area);
     scrolls := Random(1, 3);

@@ -40,15 +40,15 @@ Main record reponsible for handling the equipment gametab.
   end;
 
 (*
-## Equipment.SetupInterface
+## Equipment.SetupGameTab
 ```pascal
-procedure TRSEquipment.SetupInterface();
+procedure TRSEquipment.SetupGameTab();
 ```
 Internal method used to setup the {ref}`TRSEquipment` coordinates.
 
 This is automatically called for you on the {ref}`Equipment variable`.
 *)
-procedure TRSEquipment.SetupInterface();
+procedure TRSEquipment.SetupGameTab();
 var
   slots, btns: TBoxArray;
   i: Integer;

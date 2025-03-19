@@ -48,15 +48,15 @@ Main record used to interact with the {ref}`Stats` gametab.
   end;
 
 (*
-## Stats.SetupInterface
+## Stats.SetupGameTab
 ```pascal
-procedure TRSStats.SetupInterface();
+procedure TRSStats.SetupGameTab();
 ```
 Internal method used to setup the {ref}`TRSStats` coordinates and internal values.
 
 This is automatically called for you on the {ref}`Stats variable`.
 *)
-procedure TRSStats.SetupInterface();
+procedure TRSStats.SetupGameTab();
 begin
   Self.Skills := TBoxArray.Create(GameTab.TopLeft.Offset(2, 6), 3, 8, 53, 23, [10, 9]);
 end;

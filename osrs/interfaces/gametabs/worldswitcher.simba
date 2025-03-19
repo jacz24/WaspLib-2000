@@ -56,15 +56,15 @@ Main record that interacts with the {ref}`WorldSwitcher`.
   end;
 
 (*
-## TRSWorldSwitcher.SetupInterface
+## TRSWorldSwitcher.SetupGameTab
 ```pascal
-procedure TRSWorldSwitcher.SetupInterface();
+procedure TRSWorldSwitcher.SetupGameTab();
 ```
 Interal method used to setup the {ref}`TRSWorldSwitcher` coordinates.
 
 This is automatically called for you on the {ref}`WorldSwitcher variable`.
 *)
-procedure TRSWorldSwitcher.SetupInterface();
+procedure TRSWorldSwitcher.SetupGameTab();
 begin
   with GameTab.Bounds do
   begin

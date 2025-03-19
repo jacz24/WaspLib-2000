@@ -17,6 +17,9 @@ type
     const TEXT_WHITE: TColor = $FFFFFF;
     const TEXT_ORANGE: TColor = $1F98FF;
     const TEXT_GREY: TColor   = $9F9F9F;
+    const TEXT_GREEN: TColor = $0DC10D;
+    const TEXT_YELLOW: TColor = $00FFFF;
+    const TEXT_RED: TColor = $0000FF;
     const TEXT_LIGHT_YELLOW: TColor = $A2D8E4;
   end;
 

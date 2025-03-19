@@ -3,9 +3,7 @@
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 procedure SetupInterfaces();
-{$IFDEF SRLT_DEBUG_INTERFACES}
-var t: UInt64 := GetTickCount();
-{$ENDIF}
+{$IFDEF SRLT_DEBUG_INTERFACES}var t: UInt64 := GetTickCount();{$ENDIF}
 begin
   //interfaces that depend on other's bounds need to be in the right order
   //e.g., gametabs need to go after GameTab and GameTab after GameTabs.
@@ -14,14 +12,16 @@ begin
 
   GameTabs.SetupInterface(); //Has to be before gametab
   GameTab.SetupInterface();  //Has to be before all gametabs
-  Inventory.SetupInterface();
-  Equipment.SetupInterface();
-  HouseOptions.SetupInterface();
-  Options.SetupInterface();
-  WorldSwitcher.SetupInterface();
-  Logout.SetupInterface();
-  Prayer.SetupInterface();
-  Stats.SetupInterface();
+
+  Inventory.SetupGameTab();
+  Equipment.SetupGameTab();
+  HouseOptions.SetupGameTab();
+  Options.SetupGameTab();
+  WorldSwitcher.SetupGameTab();
+  Logout.SetupGameTab();
+  Prayer.SetupGameTab();
+  Stats.SetupGameTab();
+  Achievements.SetupGameTab();
 
   MM2MS.Setup();
 

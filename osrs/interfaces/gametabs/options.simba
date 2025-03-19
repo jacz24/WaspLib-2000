@@ -58,15 +58,15 @@ Main record responsible with interacting with the {ref}`Options` gametab.
   end;
 
 (*
-## Options.SetupInterface
+## Options.SetupGameTab
 ```pascal
-procedure TRSOptions.SetupInterface();
+procedure TRSOptions.SetupGameTab();
 ```
 Internal method used to setup the {ref}`TRSOptions` coordinates.
 
 This is automatically called for you on the {ref}`Options variable`.
 *)
-procedure TRSOptions.SetupInterface();
+procedure TRSOptions.SetupGameTab();
 var
   boxes: TBoxArray;
   i: Integer;

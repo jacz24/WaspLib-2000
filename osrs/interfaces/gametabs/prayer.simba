@@ -28,9 +28,9 @@ This type is intended to be used through the variable `Prayer`.
   end;
 
 (*
-## Prayer.SetupAlignment
+## Prayer.SetupGameTab
 ```pascal
-procedure TRSPrayer.SetupInterface(); overload;
+procedure TRSPrayer.SetupGameTab();
 ```
 Setups up the interface alignment for the current client mode.
 
@@ -38,7 +38,7 @@ Setups up the interface alignment for the current client mode.
 This is automatically called on the **TRSClient.ClientModeChanged** function.
 ```
 *)
-procedure TRSPrayer.SetupInterface();
+procedure TRSPrayer.SetupGameTab();
 begin
   Self.Slots := TBoxArray.Create(GameTab.Bounds.TopLeft.Offset(1,10), 5, 6, 33, 33, [4, 4]);
 end;

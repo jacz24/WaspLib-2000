@@ -30,14 +30,14 @@ Main record that holds and the methods to interact with the logout gametab.
   end;
 
 (*
-## Logout.SetupInterface
+## Logout.SetupGameTab
 ```pascal
-procedure TRSLogout.SetupInterface();
+procedure TRSLogout.SetupGameTab();
 ```
 Internal method used to setup {ref}`TRSLogout` coordinates.
 This is called automatically for you on the {ref}`Logout` variable.
 *)
-procedure TRSLogout.SetupInterface();
+procedure TRSLogout.SetupGameTab();
 var
   btns: TBoxArray;
   i: Integer;

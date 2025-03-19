@@ -18,15 +18,15 @@ Main record responsible with handling the inventory gametab.
   end;
 
 (*
-## Inventory.SetupInterface
+## Inventory.SetupGameTab
 ```pascal
-procedure TRSInventory.SetupInterface();
+procedure TRSInventory.SetupGameTab();
 ```
 Internal method used to setup the {ref}`TRSInventory` coordinates.
 
 This is automatically called for you on the {ref}`Inventory variable`.
 *)
-procedure TRSInventory.SetupInterface();
+procedure TRSInventory.SetupGameTab();
 begin
   Self.Slots.Setup('Inventory.Slots', TBoxArray.Create(GameTab.TopLeft.Offset(13,9), 4, 7, 31, 31, [11, 5]));
   Self.Items.Setup('Inventory.Items', @Self.Slots, [0, 9, 4, 0]);

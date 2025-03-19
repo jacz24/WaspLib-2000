@@ -30,14 +30,14 @@ Main record responsible with interacting with the house options.
 
 
 (*
-## HouseOptions.SetupInterface
+## HouseOptions.SetupGameTab
 ```pascal
-procedure TRSHouseOptions.SetupInterface();
+procedure TRSHouseOptions.SetupGameTab();
 ```
 Internal method used to setup the {ref}`TRSHouseOptions` coordinates.
 This is automatically called for you on the {ref}`HouseOptions` variable.
 *)
-procedure TRSHouseOptions.SetupInterface();
+procedure TRSHouseOptions.SetupGameTab();
 begin
   with Self.Buttons[ERSHouseOptionsButton.CLOSE] do
   begin
