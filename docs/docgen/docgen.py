@@ -9,8 +9,8 @@ import re
 import os, sys
 
 DOCNAME         = 'SRLT'
-IGNORE_FOLDERS  = ['.git', '.github', 'docgen']
-FILE_EXTENSIONS = ['.simba']
+IGNORE_FOLDERS  = ['.git', '.github', 'docs', 'plugins', 'tests']
+FILE_EXTENSIONS = ['.md', '.simba']
 
 commentregex = re.compile('\(\*.+?\*\)', re.DOTALL)
 
