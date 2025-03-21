@@ -399,7 +399,7 @@ Global {ref}`TRSMainScreen` variable.
 ```pascal
 function TBiometrics.YellowClick(button: EMouseButton; clicks: UInt32 = 3): Boolean;
 ```
-Basically the same as {ref}`TBiometrics.Click()` but returns true if we yellow clicked.
+Basically the same as {ref}`TBiometrics.Click` but returns true if we yellow clicked.
 
 Example:
 ```pascal
@@ -430,7 +430,7 @@ end;
 ```pascal
 function TBiometrics.RedClick(button: EMouseButton; clicks: UInt32 = 3): Boolean;
 ```
-Basically the same as {ref}`TBiometrics.Click()` but returns true if we red clicked.
+Basically the same as {ref}`TBiometrics.Click` but returns true if we red clicked.
 
 Example:
 ```pascal

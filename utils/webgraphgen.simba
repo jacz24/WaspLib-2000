@@ -7,6 +7,10 @@ File responsible for webgraph generation out of collision map images.
 {$INCLUDE_ONCE SRLT/utils.simba}
 
 type
+(*
+## TWebGraphGenerator
+Record responsible for generating webgraphs from collision map images.
+*)
   TWebGraphGenerator = record
     Spacing, MinimumTiles, NodeRadius, MaxConnections: Integer;
     WallCrossings, Disabled: Boolean;

@@ -404,7 +404,7 @@ end;
 ```pascal
 function TRSAchievements.GetTab():  ERSAchievementTab;
 ```
-Returns the currently active {ref}` ERSAchievementTab`.
+Returns the currently active {ref}`ERSAchievementTab`.
 
 Example:
 ```pascal
@@ -432,7 +432,7 @@ end;
 ```pascal
 function TRSAchievements.OpenTab(tab:  ERSAchievementTab): Boolean;
 ```
-Attempts to open the specified `tab` {ref}` ERSAchievementTab`.
+Attempts to open the specified `tab` {ref}`ERSAchievementTab`.
 
 Example:
 ```pascal

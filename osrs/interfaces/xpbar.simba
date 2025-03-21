@@ -11,8 +11,8 @@ type
 ## ERSXPBarSize
 ```pascal
 ERSXPBarSize = enum(UNKNOWN, SMALL, MEDIUM, LARGE);
-Enum reprensenting the {ref}`XPBar` available sizes.
 ```
+Enum reprensenting the {ref}`XPBar` available sizes.
 *)
   ERSXPBarSize = enum(UNKNOWN, SMALL, MEDIUM, LARGE);
 

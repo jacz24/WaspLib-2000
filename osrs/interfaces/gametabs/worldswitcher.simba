@@ -18,10 +18,18 @@ Enum representing the world switcher buttons.
 *)
   ERSWorldSwitcherButton = enum(CONFIGURE, CLOSE, LOGOUT);
 
+(*
+## TRSWorld
+Helper record for {ref}`TRSworldSwitcher`.
+*)
   TRSWorld = record
     Number: Integer;
     Bounds: TBox;
   end;
+(*
+## TRSWorldArray
+Helper type for {ref}`TRSworldSwitcher`.
+*)
   TRSWorldArray = array of TRSWorld;
 
 procedure ShowOnClient(worlds: TRSWorldArray); overload;

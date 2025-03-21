@@ -91,7 +91,7 @@ begin
 end;
 
 (*
-## Chat.ChatTabs
+## Chat.Tabs variable
 ```pascal
 Tabs: TRSChatTabs;
 ```
