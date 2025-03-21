@@ -76,11 +76,11 @@ var
   current, res: TDateTime;
 begin
   current := Now();
-  res := (current.Date + TDateTime.CreateFromString(time)) - current;
+  res := (current.Date + TDateTime.CreateFromISO(time)) - current;
   if (res < 0) then res += 1;
 
   Result := GetTimeRunning() + Trunc(res * ONE_DAY);
-  Result += Trunc(GaussRand(0, TDateTime.CreateFromString(ToStr(randomness * 10)) * ONE_DAY));
+  Result += Trunc(GaussRand(0, TDateTime.CreateFromISO(ToStr(randomness * 10)) * ONE_DAY));
   Result := Max(0, Result);
 end;
 

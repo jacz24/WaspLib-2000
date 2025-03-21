@@ -161,7 +161,7 @@ texinfo_documents = [(master_doc, project, project+' Documentation', author, pro
 
 
 # -- Extension configuration -------------------------------------------------
-intersphinx_mapping = {'WaspLib': ('https://torwent.github.io/WaspLib', None)}
+intersphinx_mapping = {'Simba': ('https://villavu.github.io/Simba', None)}
 intersphinx_disabled_reftypes = ["*"]
 
 myst_enable_extensions = [

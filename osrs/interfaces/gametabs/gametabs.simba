@@ -36,8 +36,7 @@ ERSGameTab = enum(NONE, COMBAT, STATS, ACHIEVEMENTS, INVENTORY, EQUIPMENT, PRAYE
   );
 
 (*
-(TRSGameTabs)=
-# type TRSGameTabs
+## TRSGameTabs
 Main record responsible for handling the gametabs.
 *)
   TRSGameTabs = record
@@ -285,12 +284,10 @@ end;
 
 var
 (*
-(GameTabs variable)=
-# var GameTabs
+## GameTabs variable
 Global {ref}`TRSGameTabs` variable.
 *)
   GameTabs: TRSGameTabs;
-
 
 (*
 # GameTab
@@ -302,9 +299,8 @@ Check {ref}`TRSInterface` to see what coordinates it has available.
 *)
 type
 (*
-(TRSGameTab)=
-# type TRSGameTab
-GameTab type that holds the core coordinates of a gametab.
+## TRSGameTab
+The TRSGameTab type that holds the core coordinates of a gametab.
 *)
   TRSGameTab = type TRSInterface;
 
@@ -359,8 +355,7 @@ end;
 
 var
 (*
-(GameTab variable)=
-## var GameTab
+## GameTab variable
 Global {ref}`TRSGameTab` variable.
 *)
   GameTab: TRSGameTab;
