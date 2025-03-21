@@ -44,8 +44,7 @@ def generate_index_rst(TOC, root):
       with open(readme_path, "r", encoding="utf-8") as readme_file:
         readme_content = readme_file.read()
       index += readme_content + "\n\n"
-
-    print(readme_content)
+      print(readme_content)
 
     class rstFile:
       def __init__(self, r, t):
