@@ -195,7 +195,7 @@ function TItemData.GetPrice(item: TRSItem): Integer;
 var
   id: String;
   json: TJSONElement;
-  lo, hi: Int32;
+  lo, hi: Integer;
 begin
   id := Self.GetTradeableID(item);
   if id = '' then Exit;
@@ -217,6 +217,65 @@ begin
   if hi = 0 then Exit(lo);
 
   Result := (hi + lo) div 2;
+end;
+
+
+(*
+## ItemData.GetLowAlch()
+```pascal
+function TItemData.GetLowAlch(item: TRSItem): Integer;
+```
+Method used to get the the low alchemy value of an item.
+
+Example:
+```pascal
+WriteLn ItemData.GetLowAlch('Magic longbow');
+```
+*)
+function TItemData.GetLowAlch(item: TRSItem): Integer;
+var
+  ids: TStringArray;
+  id: String;
+  json: TJSONElement;
+begin
+  if item.IsNumeric then ids := [item]
+  else ids := ItemFinder.Database.GetAll(item.ToLower(), 'item', 'id');
+
+  for id in ids do
+  begin
+    json := Self.GetDefinition(id);
+    if json.Item[8].Value > 0 then
+      Exit(json.Item[8].Value * 0.4); //8 is "cost" key
+  end;
+end;
+
+(*
+## ItemData.GetHighAlch()
+```pascal
+function TItemData.GetHighAlch(item: TRSItem): Integer;
+```
+Method used to get the the high alchemy value of an item.
+
+Example:
+```pascal
+WriteLn ItemData.GetHighAlch('Magic longbow');
+```
+*)
+function TItemData.GetHighAlch(item: TRSItem): Integer;
+var
+  ids: TStringArray;
+  id: String;
+  json: TJSONElement;
+begin
+  if item.IsNumeric then ids := [item]
+  else ids := ItemFinder.Database.GetAll(item.ToLower(), 'item', 'id');
+
+  for id in ids do
+  begin
+    json := Self.GetDefinition(id);
+    if json.Item[8].Value > 0 then
+      Exit(json.Item[8].Value * 0.6); //8 is "cost" key
+  end;
 end;
 
 
