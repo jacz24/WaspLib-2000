@@ -29,7 +29,7 @@ def get_files(root):
         result.append(root+os.sep+name)
     return result
 
-def generate_index_rst(TOC):
+def generate_index_rst(TOC, root):
     '''
       Generates the index.rst file
 
@@ -39,7 +39,7 @@ def generate_index_rst(TOC):
     index = "Welcome to %s documentation" %  (DOCNAME,)
     index += "\n"+ ("="*len(index)) + "\n\n"
 
-    readme_path = os.path.join(os.getcwd(), "readme.md")
+    readme_path = os.path.join(root, "readme.md")
     if os.path.exists(readme_path):
       with open(readme_path, "r", encoding="utf-8") as readme_file:
         readme_content = readme_file.read()
@@ -160,7 +160,7 @@ def generate(root):
       TOC[NameToID[dir]][1].append(name)
 
     # finally build the index file
-    generate_index_rst(TOC)
+    generate_index_rst(TOC, root)
     os.system('sphinx-build source build -c .')
 
 if __name__ == '__main__':
