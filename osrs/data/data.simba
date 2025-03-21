@@ -1,5 +1,5 @@
 (*
-## Data
+# Data
 This page is about fetching OSRS data with SRLT.
 SRLT has several tools to get information about items, npcs, weapons, ...
 *)
@@ -8,6 +8,10 @@ SRLT has several tools to get information about items, npcs, weapons, ...
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
+(*
+## TItemData
+Record responsible for providing item information in SRLT.
+*)
   TItemData = record
     DefinitionsJSON, PricesJSON: TJSONParser;
     Filename: String;
@@ -218,7 +222,3 @@ end;
 
 var
   ItemData: TItemData;
-begin
-  ItemData.Setup();
-  WriteLn itemData.GetPrice('abyssal whip');
-end;

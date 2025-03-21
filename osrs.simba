@@ -1,5 +1,5 @@
 (*
-## SRLT
+# SRLT
 SRLT is a library used to bot OldSchool RuneScape with Simba 2.0.
 SRLT stands for SRL Tribute and it's heavily inspired in previous work done by
 the SRL Community.
@@ -10,7 +10,7 @@ less confusing way.
 *)
 
 (*
-### Compile Directives
+## Compile Directives
 ```pascal
 {$DEFINE SRLT_DEBUG_MOUSE}
 {$DEFINE SRLT_DISABLE_REMOTEINPUT}
@@ -41,6 +41,7 @@ They should be self-explanatory.
 {$IFNDEF SRLT_ITEMFINDER_INCLUDED}          {$INCLUDE_ONCE osrs/finders/items/itemfinder.simba}
 {$IFNDEF SRLT_SPELLFINDER_INCLUDED}         {$INCLUDE_ONCE osrs/finders/spells/spellfinder.simba}
 {$IFNDEF SRLT_PRAYERFINDER_INCLUDED}        {$INCLUDE_ONCE osrs/finders/prayer/prayerfinder.simba}
+{$IFNDEF SRLT_DATA_INCLUDED}                {$INCLUDE_ONCE osrs/data/data.simba}
 
 {$IFNDEF SRLT_INTERFACE_CORE_INCLUDED}      {$INCLUDE_ONCE osrs/interfaces/interface.simba}
 {$IFNDEF SRLT_LOGIN_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/login.simba}
@@ -101,6 +102,7 @@ They should be self-explanatory.
 {$IFNDEF SRLT_OVERRIDES_INCLUDED}           {$INCLUDE_ONCE osrs/overrides.simba}
 
 
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}

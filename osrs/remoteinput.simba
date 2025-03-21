@@ -98,7 +98,7 @@ end;
 
 
 (*
-## TRemoteInput.LoseFocus
+## TRemoteInput.IsInputEnabled
 ```pascal
 function TRemoteInput.IsInputEnabled(): Boolean;
 ```
@@ -145,12 +145,12 @@ Example:
 ```pascal
 RemoteInput.EnableRealInput();
 ```
-*)procedure TRemoteInput.EnableRealInput();
+*)
+procedure TRemoteInput.EnableRealInput();
 begin
   EIOS_SetMouseInputEnabled(Self.EIOS, True);
   EIOS_SetKeyboardInputEnabled(Self.EIOS, True);
 end;
-
 
 var
 (*

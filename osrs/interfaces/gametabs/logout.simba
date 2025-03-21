@@ -1,6 +1,8 @@
 (*
-## Logout
+# Logout
 Methods to interact with the logout tab.
+```{figure} ../../images/inventory.png
+```
 *)
 {$DEFINE SRLT_LOGOUT_INCLUDED}
 {$IFNDEF SRLT_OSR}
@@ -9,33 +11,38 @@ Methods to interact with the logout tab.
 
 type
 (*
-### Logout Enums
+## ERSRating
 ```pascal
 ERSRating = (ONE, TWO, THREE, FOUR, FIVE);
-ERSLogoutButton = (WORLD_SWITCHER, CLICK_HERE);
 ```
-Enums representing the buttons available in the logout gametab.
+Enum representing the star buttons on the {ref}`Logout` gametab.
 *)
   ERSRating = (ONE, TWO, THREE, FOUR, FIVE);
+(*
+## ERSLogoutButton
+```pascal
+ERSLogoutButton = (WORLD_SWITCHER, CLICK_HERE);
+```
+Enum representing the buttons available on the {ref}`Logout` gametab.
+*)
   ERSLogoutButton = (WORLD_SWITCHER, CLICK_HERE);
 
 (*
-(TRSLogout)=
-## type TRSLogout
+## TRSLogout
 Main record that holds and the methods to interact with the logout gametab.
 *)
   TRSLogout = record
-    Buttons: array [ERSLoginButton] of TRSButton;
     Ratings: array [ERSRating] of TRSButton;
+    Buttons: array [ERSLoginButton] of TRSButton;
   end;
 
 (*
-### Logout.SetupGameTab
+## Logout.SetupGameTab
 ```pascal
 procedure TRSLogout.SetupGameTab();
 ```
 Internal method used to setup {ref}`TRSLogout` coordinates.
-This is called automatically for you on the {ref}`Logout` variable.
+This is called automatically for you on the {ref}`Logout variable`.
 *)
 procedure TRSLogout.SetupGameTab();
 var
@@ -60,7 +67,57 @@ begin
 end;
 
 (*
-### Logout.IsOpen
+## TRSLogout.Ratings
+```pascal
+Ratings: array [ERSRating] of TRSButton;
+```
+`TRSButton` for each of the {ref}`Logout` rating buttons.
+
+Example:
+```pascal
+ShowOnClient(Logout.Ratings);
+```
+```{figure} ../../images/logout_ratings.png
+```
+
+You can also access each button with an index or, more conveniently, with a
+{ref}`ERSRating`.
+
+Example:
+```pascal
+ShowOnClient(Logout.Ratings[ERSRating.THREE]);
+```
+```{figure} ../../images/logout_rating.png
+```
+*)
+
+(*
+## TRSLogout.Buttons
+```pascal
+Buttons: array [ERSLogoutButton] of TRSButton;
+```
+`TRSButton` for each of the {ref}`Logout` buttons.
+
+Example:
+```pascal
+ShowOnClient(Logout.Buttons);
+```
+```{figure} ../../images/logout_buttons.png
+```
+
+You can also access each button with an index or, more conveniently, with a
+{ref}`ERSLogoutButton`.
+
+Example:
+```pascal
+ShowOnClient(Logout.Buttons[ERSLogoutButton.WORLD_SWITCHER]);
+```
+```{figure} ../../images/logout_button.png
+```
+*)
+
+(*
+## Logout.IsOpen
 ```pascal
 function TRSLogout.IsOpen(): Boolean;
 ```
@@ -77,7 +134,7 @@ begin
 end;
 
 (*
-### Logout.Open
+## Logout.Open
 ```pascal
 function TRSLogout.Open(): Boolean;
 ```
@@ -97,7 +154,7 @@ end;
 
 
 (*
-### Logout.IsRated
+## Logout.IsRated
 ```pascal
 function TRSLogout.IsRated(): Boolean;
 ```
@@ -114,7 +171,7 @@ begin
 end;
 
 (*
-### Logout.Rate
+## Logout.Rate
 ```pascal
 function TRSLogout.Rate(star: ERSRating): Boolean;
 ```
@@ -136,7 +193,7 @@ begin
 end;
 
 (*
-### Logout.Logout
+## Logout.Logout
 ```pascal
 function TRSLogout.Logout(attempts: UInt32 = 5; time: UInt32 = 20000): Boolean;
 ```
@@ -183,4 +240,8 @@ begin
 end;
 
 var
+(*
+## Logout variable
+Global {ref}`TRSLogout` variable.
+*)
   Logout: TRSLogout;

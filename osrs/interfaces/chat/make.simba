@@ -294,17 +294,15 @@ begin
 end;
 
 (*
-### Make.IndexOfQuantity
+### Make.IsQuantitySelected
 ```pascal
-function TRSMake.IndexOfQuantity(amount: Integer): Integer;
+function TRSMake.IsQuantitySelected(idx: Integer): Boolean;
 ```
-Finds the index of a quantity button by the specified `amount`.
-If the `amount` we are looking for, the custom quantity button is returned,
-otherwise the result is `-1`.
+Checks if the specified `idx` quantity button is currently selected.
 
 Example:
 ```pascal
-WriteLn Make.IndexOfQuantity(Make.QUANTITY_ALL);
+WriteLn Make.IsQuantitySelected(Make.QUANTITY_ALL);
 ```
 *)
 function TRSMake.IsQuantitySelected(idx: Integer): Boolean;

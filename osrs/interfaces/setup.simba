@@ -119,6 +119,8 @@ begin
   RSMouseZoom.Enabled := True;
   Antiban.Zoom.Max := 100;
 
+  ItemData.Setup();
+
   RSClient.IsLoggedIn();
   if RSClient.Mode = ERSMode.UNKNOWN then
     RSClient.Mode := ERSMode.FIXED;

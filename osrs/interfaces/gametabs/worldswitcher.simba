@@ -300,7 +300,7 @@ begin
 end;
 
 (*
-## WorldSwitcher.GetWorlds
+## WorldSwitcher.FindWorld
 ```pascal
 function TRSWorldSwitcher.FindWorld(number: Integer; out world: TRSWorld): Boolean;
 ```

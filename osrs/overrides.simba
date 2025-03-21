@@ -1,5 +1,5 @@
 (*
-## Overrides
+# Overrides
 Several final overrides to add some final behaviour to certain methods.
 This is the very last file being included in the library.
 *)
@@ -7,6 +7,27 @@ This is the very last file being included in the library.
 {$DEFINE SRLT_OVERRIDES_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
+(*
+## RSClient.IsLoggedIn override
+```pascal
+function TRSClient.IsLoggedIn(): Boolean; override;
+```
+Checks for a bunch of game settings when being logged in returns true.
+
+These settings are checked at least once and SRLT and cache the results so we
+don't check it again unless for some reason is needed.
+
+These ensures things like:
+- The mainscreen is set to the highest pitch
+- The client has max brightness set
+- The roofs are hidden
+- XPBar is set properly (this check can fail and more checks will be done).
+
+Example:
+```pascal
+WriteLn RSClient.IsLoggedIn();
+```
+*)
 function TRSClient.IsLoggedIn(): Boolean; override;
 var
   mode: ERSMode;
@@ -51,6 +72,20 @@ begin
   inherited;
 end;
 
+(*
+## GameTabs.GetCurrent override
+```pascal
+function TRSGameTabs.GetCurrent(): ERSGameTab; override;
+```
+Override that handles several scenarios where the "current" gametab is not visible.
+
+E.g., when the bank is open, all gametab buttons are hidden but you have the inventory open.
+
+Example:
+```pascal
+WriteLn GameTabs.GetCurrent();
+```
+*)
 function TRSGameTabs.GetCurrent(): ERSGameTab; override;
 begin
   Result := inherited;
@@ -75,7 +110,7 @@ end;
 
 
 (*
-### HouseOptions.Open override
+## HouseOptions.Open override
 ```pascal
 function TRSHouseOptions.Open(): Boolean; override;
 ```
@@ -98,7 +133,7 @@ begin
 end;
 
 (*
-### WorldSwitcher.Open override
+## WorldSwitcher.Open override
 ```pascal
 function TRSWorldSwitcher.Open(waitLoad: Boolean = True): Boolean; override;
 ```

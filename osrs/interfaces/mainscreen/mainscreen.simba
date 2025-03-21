@@ -60,7 +60,6 @@ begin
 end;
 
 (*
-(uptext)=
 ## UpText
 {ref}`UpText` refers to the text that shows up on the top left corner of the
 mainscreen describing what action you will perform if you click.
