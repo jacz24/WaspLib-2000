@@ -1,6 +1,8 @@
 (*
-## Options
+# Options
 Methods to interact with the options gametab.
+```{figure} ../../images/options.png
+```
 *)
 
 {$DEFINE SRLT_OPTIONS_INCLUDED}
@@ -8,7 +10,7 @@ Methods to interact with the options gametab.
 
 type
 (*
-### ERSOptionsTab
+## ERSOptionsTab
 ```pascal
 ERSOptionsTab = enum(CONTROLS, AUDIO, DISPLAY);
 ```
@@ -17,7 +19,7 @@ Enum representing each of the options tabs.
   ERSOptionsTab = enum(CONTROLS, AUDIO, DISPLAY);
 
 (*
-### ERSOptionsSlider
+## ERSOptionsSlider
 ```pascal
 ERSOptionsSlider = enum(BRIGHTNESS, ZOOM);
 ```
@@ -27,7 +29,7 @@ Could be expanded in the future to include the sound sliders but for now only ha
   ERSOptionsSlider = enum(BRIGHTNESS, ZOOM);
 
 (*
-### ERSOptionsDropDown
+## ERSOptionsDropDown
 ```pascal
 ERSOptionsDropDown = enum(PLAYER_ATTACK, NPC_ATTACK, CLIENT_MODE);
 ```
@@ -36,7 +38,7 @@ Enum representing each of the options gametab dropdowns.
   ERSOptionsDropDown = enum(PLAYER_ATTACK, NPC_ATTACK, CLIENT_MODE);
 
 (*
-### ERSOptionsButton
+## ERSOptionsButton
 ```pascal
 ERSOptionsButton = enum(AID, RUN, HOUSE, BOND, ALL_SETTINGS);
 ```
@@ -45,7 +47,7 @@ Enum representing each of the options gametab buttons.
   ERSOptionsButton = enum(AID, RUN, HOUSE, BOND, ALL_SETTINGS);
 
 (*
-### TRSOptions
+## TRSOptions
 Main record responsible with interacting with the {ref}`Options` gametab.
 *)
   TRSOptions = record
@@ -58,7 +60,7 @@ Main record responsible with interacting with the {ref}`Options` gametab.
   end;
 
 (*
-### Options.SetupGameTab
+## Options.SetupGameTab
 ```pascal
 procedure TRSOptions.SetupGameTab();
 ```
@@ -113,9 +115,33 @@ begin
   end;
 end;
 
+(*
+## TRSOptions.Buttons
+```pascal
+Buttons: array [ERSOptionsButton] of TRSButton;
+```
+`TRSButton` for each of the {ref}`Options` buttons.
+
+Example:
+```pascal
+ShowOnClient(Options.Buttons);
+```
+```{figure} ../../images/options_buttons.png
+```
+
+You can also access each button with an index or, more conveniently, with a
+{ref}`ERSHouseOptionsButton`.
+
+Example:
+```pascal
+ShowOnClient(Options.Buttons[ERSOptionsButton.HOUSE]);
+```
+```{figure} ../../images/options_button.png
+```
+*)
 
 (*
-### Options.IsOpen
+## Options.IsOpen
 ```pascal
 function TRSOptions.IsOpen(): Boolean;
 ```
@@ -132,7 +158,7 @@ begin
 end;
 
 (*
-### Options.Open
+## Options.Open
 ```pascal
 function TRSOptions.Open(): Boolean;
 ```
@@ -150,7 +176,7 @@ end;
 
 
 (*
-### Options.GetTab
+## Options.GetTab
 ```pascal
 function TRSOptions.GetTab(): ERSOptionsTab;
 ```
@@ -172,7 +198,7 @@ begin
 end;
 
 (*
-### Options.OpenTab
+## Options.OpenTab
 ```pascal
 function TRSOptions.OpenTab(tab: ERSOptionsTab): Boolean;
 ```
@@ -195,7 +221,7 @@ end;
 
 
 (*
-### Options.GetZoomLevel
+## Options.GetZoomLevel
 ```pascal
 function TRSOptions.GetZoomLevel(useCache: Boolean = True): Integer;
 ```
@@ -226,7 +252,7 @@ begin
 end;
 
 (*
-### Options.SetZoomLevel
+## Options.SetZoomLevel
 ```pascal
 function TRSOptions.SetZoomLevel(level: Integer): Boolean;
 ```
@@ -252,7 +278,7 @@ end;
 
 
 (*
-### Options.SetPlayerAttack
+## Options.SetPlayerAttack
 ```pascal
 function TRSOptions.SetPlayerAttack(index: Integer): Boolean;
 function TRSOptions.SetPlayerAttack(option: String): Boolean; overload;
@@ -279,7 +305,7 @@ end;
 
 
 (*
-### Options.SetNPCAttack
+## Options.SetNPCAttack
 ```pascal
 function TRSOptions.SetNPCAttack(index: Integer): Boolean;
 function TRSOptions.SetNPCAttack(option: String): Boolean; overload;
@@ -306,7 +332,7 @@ end;
 
 
 (*
-### Options.SetClientMode
+## Options.SetClientMode
 ```pascal
 function TRSOptions.SetClientMode(mode: ERSMode): Boolean;
 ```
@@ -328,7 +354,7 @@ end;
 
 
 (*
-### Options.RenderSelf
+## Options.RenderSelf
 ```pascal
 TRSOptions.RenderSelf();
 ```
@@ -349,7 +375,7 @@ end;
 
 
 (*
-### Options.GetRoofsState
+## Options.GetRoofsState
 ```pascal
 function TRSOptions.GetRoofsState(): Boolean;
 ```
@@ -366,7 +392,7 @@ begin
 end;
 
 (*
-### Options.HideRoofs
+## Options.HideRoofs
 ```pascal
 function TRSOptions.HideRoofs(): Boolean;
 ```
@@ -392,7 +418,7 @@ begin
 end;
 
 (*
-### Options.ShowRoofs
+## Options.ShowRoofs
 ```pascal
 function TRSOptions.ShowRoofs(): Boolean;
 ```
@@ -419,7 +445,7 @@ end;
 
 
 (*
-### Options.GetBrightness
+## Options.GetBrightness
 ```pascal
 function TRSOptions.GetBrightness(): Integer;
 ```
@@ -454,7 +480,7 @@ begin
 end;
 
 (*
-### Options.SetMaxBrightness
+## Options.SetMaxBrightness
 ```pascal
 function TRSOptions.SetMaxBrightness(): Boolean;
 ```
@@ -480,7 +506,7 @@ end;
 
 var
 (*
-### Options variable
+## Options variable
 Global {ref}`TRSOptions` variable.
 *)
   Options: TRSOptions;

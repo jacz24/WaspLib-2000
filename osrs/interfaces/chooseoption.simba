@@ -2,8 +2,7 @@
 # ChooseOption
 Methods to interact with the runescape context menu.
 
-```{figure} ../../images/choose_option.png
-The choose option context menu.
+```{figure} ../../images/chooseoption.png
 ```
 *)
 {$DEFINE SRLT_CHOOSEOPTION_INCLUDED}

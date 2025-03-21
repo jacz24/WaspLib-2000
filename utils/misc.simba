@@ -1,15 +1,6 @@
 {$DEFINE SRLT_MISC_INCLUDED}
 {$INCLUDE_ONCE SRLT/utils.simba}
 
-{$IFDEF WINDOWS}
-function CopyFile(filename, newfile: String): LongBool;
-type PChar = ^Char;
-function _Copy(name, new: PChar; fail: LongBool): LongBool; external 'CopyFileA@kernel32.dll ' + {$IFDEF CPU386}'stdcall'{$ELSE}'win64'{$ENDIF};
-begin
-  Result := _Copy(PChar(filename), PChar(newfile), True);
-end;
-{$ENDIF}
-
 type
   RSColors = record
     const ITEM_SHADOW: TColor = $202030;

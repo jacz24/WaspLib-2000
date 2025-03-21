@@ -1,6 +1,6 @@
 (*
-Original MM2MS Projector done by slacky.
-
+# MM2MS Projector
+Originally created by slacky.
 This is basically the same thing with some pre-calculated math
 *)
 {$DEFINE SRLT_MM2MS_PROJECTOR_INCLUDED}

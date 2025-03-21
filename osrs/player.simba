@@ -26,7 +26,7 @@ Adds a TRSPlayer to the TRSPlayerArray.
 
 Example:
 ```pascal
-//TODO
+Players.Add('username', 'password', '0000');
 ```
 *)
 procedure TRSPlayerArray.Add(user, pass: String; pin: String = ''; worlds: TIntegerArray = []);
@@ -70,7 +70,7 @@ is an index of the TRSPlayerArra.
 
 Example:
 ```pascal
-  WriteLn Players.GetPlayer().Username;
+WriteLn Players.GetPlayer().Username;
 ```
 *)
 function TRSPlayerArray.GetPlayer(): TRSPlayer;
@@ -104,4 +104,8 @@ begin
 end;
 
 var
+(*
+## Players variable
+Global {ref}`TRSPlayers` variable.
+*)
   Players: TRSPlayerArray;

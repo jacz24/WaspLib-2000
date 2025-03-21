@@ -1,5 +1,5 @@
 (*
-## PrayerFinder
+# PrayerFinder
 Methods to find and compare spell images
 *)
 
@@ -7,7 +7,7 @@ Methods to find and compare spell images
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 (*
-### ERSPrayer
+## ERSPrayer
 ```pascal
 ERSPrayer = enum(
   UNKNOWN,
@@ -40,7 +40,7 @@ type
   );
 
 (*
-### TRSPrayerFinder
+## TRSPrayerFinder
 ```pascal
 type TRSPrayerFinder = record
   PrayerImages: array [ERSPrayer] of TImage;
@@ -53,7 +53,7 @@ end;
 ```
 A record for finding and managing prayer images.
 
-### Fields:
+## Fields:
 - `PrayerImages`: Stores images for each prayer type
 - `Version`: Stores the version hash of the image set
 - `Similarity`: Threshold for image comparison
@@ -71,17 +71,13 @@ A record for finding and managing prayer images.
   end;
 
 (*
-### PrayerFinder.Clean
+## PrayerFinder.Clean
 ```pascal
 procedure TRSPrayerFinder.Clean(image, template: TImage);
 ```
 Cleans the template image by drawing its black-colored points.
 
-### Parameters:
-- `image`: The source image
-- `template`: The template image to be cleaned
-
-### Example Usage:
+ Example:
 ```pascal
 PrayerFinder.Clean(sourceImage, templateImage);
 ```
@@ -93,13 +89,13 @@ begin
 end;
 
 (*
-### PrayerFinder.Setup
+## PrayerFinder.Setup
 ```pascal
 procedure TRSPrayerFinder.Setup();
 ```
 Sets up the PrayerFinder, including cache management and similarity settings.
 
-### Example:
+Example:
 ```pascal
 PrayerFinder.Setup();
 ```
@@ -134,19 +130,13 @@ begin
 end;
 
 (*
-### PrayerFinder.GetImage
+## PrayerFinder.GetImage
 ```pascal
 function TRSPrayerFinder.GetImage(prayer: ERSPrayer): TImage;
 ```
-Retrieves the image for a specific prayer, loading it from cache or extracting from ZIP if needed.
+Retrieves the image for a specific `prayer`, loading it from cache or extracting from ZIP if needed.
 
-### Parameters:
-- `prayer`: The prayer type to get an image for
-
-### Returns:
-- The TImage for the specified prayer
-
-### Example:
+Example:
 ```pascal
 img := PrayerFinder.GetImage(ERSPrayer.PIETY);
 img.Show();
@@ -173,14 +163,14 @@ begin
 end;
 
 (*
-### PrayerFinder.FindAll
+## PrayerFinder.FindAll
 ```pascal
 function TRSPrayerFinder.FindAll(prayers: array of ERSPrayer; boxes: TBoxArray; maxToFind: Integer = 0): TImageMatchArray;
 function TRSPrayerFinder.FindAll(prayers: array of ERSPrayer; boxes: TBoxArray; out matches: TImageMatchArray): Boolean; overload;
 ```
 Finds matches for specified prayers within given boxes.
 
-### Example:
+Example:
 ```pascal
 if PrayerFinder.FindAll(prayers, boxes, matches) then
   for match in matches do
@@ -254,22 +244,14 @@ begin
 end;
 
 (*
-### PrayerFinder.Find
+## PrayerFinder.Find
 ```pascal
 function TRSPrayerFinder.Find(prayers: array of ERSPrayer; boxes: TBoxArray; out match: TImageMatch): Boolean;
 ```
-Finds the first match for specified prayers within given boxes.
+Finds the first match for specified `prayers` within given `boxes`.
 
-### Parameters:
-- `prayers`: Array of prayers to search for
-- `boxes`: Boxes to search within
-- `match`: Output parameter to store the first match found
 
-### Returns:
-- True if a match is found
-- False if no match is found
-
-### Example:
+Example:
 ```pascal
 if PrayerFinder.Find([ERSPrayer.PIETY], boxes, match) then
   ShowOnClient(match.Box);
@@ -304,4 +286,8 @@ begin
 end;
 
 var
+(*
+## PrayerFinder variable
+Global {ref}`TRSPrayerFinder` variable.
+*)
   PrayerFinder: TRSPrayerFinder;

@@ -1,15 +1,16 @@
 (*
-## WorldSwitcher
+# WorldSwitcher
 WorldSwitcher is resposible for changing worlds with the logged in world
 switcher in the {ref}`Logout` gametab.
+```{figure} ../../images/worldswitcher.png
+```
 *)
 {$DEFINE SRLT_WORLDSWITCHER_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
 (*
-(ERSWorldSwitcherButton)=
-## Enum ERSWorldSwitcherButton
+## ERSWorldSwitcherButton
 ```pascal
 ERSWorldSwitcherButton = enum(CONFIGURE, CLOSE, LOGOUT);
 ```
@@ -43,7 +44,7 @@ end;
 
 type
 (*
-### TRSWorldSwitcher
+## TRSWorldSwitcher
 Main record that interacts with the {ref}`WorldSwitcher`.
 *)
   TRSWorldSwitcher = record
@@ -56,7 +57,7 @@ Main record that interacts with the {ref}`WorldSwitcher`.
   end;
 
 (*
-### TRSWorldSwitcher.SetupGameTab
+## TRSWorldSwitcher.SetupGameTab
 ```pascal
 procedure TRSWorldSwitcher.SetupGameTab();
 ```
@@ -111,7 +112,7 @@ end;
 {%codetools on}
 
 (*
-### WorldSwitcher.IsOpen
+## WorldSwitcher.IsOpen
 ```pascal
 function TRSWorldSwitcher.IsOpen(): Boolean;
 ```
@@ -129,7 +130,7 @@ end;
 
 
 (*
-### WorldSwitcher.IsLoading
+## WorldSwitcher.IsLoading
 ```pascal
 function TRSWorldSwitcher.IsLoading(): Boolean;
 ```
@@ -147,7 +148,7 @@ begin
 end;
 
 (*
-### WorldSwitcher.WaitLoading
+## WorldSwitcher.WaitLoading
 ```pascal
 function TRSWorldSwitcher.WaitLoading(time: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -166,7 +167,7 @@ begin
 end;
 
 (*
-### WorldSwitcher.Open
+## WorldSwitcher.Open
 ```pascal
 function TRSWorldSwitcher.Open(waitLoad: Boolean = True): Boolean;
 ```
@@ -191,7 +192,7 @@ end;
 
 
 (*
-### Logout.CloseWorldSwitcher
+## Logout.CloseWorldSwitcher
 ```pascal
 function TRSLogout.CloseWorldSwitcher(): Boolean;
 ```
@@ -210,7 +211,7 @@ begin
 end;
 
 (*
-### WorldSwitcher.Logout
+## WorldSwitcher.Logout
 ```pascal
 function TRSWorldSwitcher.Logout(attempts: UInt32 = 5; time: UInt32 = 20000): Boolean;
 ```
@@ -242,7 +243,7 @@ end;
 
 
 (*
-### WorldSwitcher.GetCurrentWorld
+## WorldSwitcher.GetCurrentWorld
 ```pascal
 function TRSWorldSwitcher.GetCurrentWorld(): Integer;
 ```
@@ -259,7 +260,7 @@ begin
 end;
 
 (*
-### WorldSwitcher.GetWorlds
+## WorldSwitcher.GetWorlds
 ```pascal
 function TRSWorldSwitcher.GetWorlds(): TRSWorldArray;
 ```
@@ -299,7 +300,7 @@ begin
 end;
 
 (*
-### WorldSwitcher.GetWorlds
+## WorldSwitcher.GetWorlds
 ```pascal
 function TRSWorldSwitcher.FindWorld(number: Integer; out world: TRSWorld): Boolean;
 ```
@@ -335,7 +336,7 @@ begin
 end;
 
 (*
-### WorldSwitcher.IsSorted
+## WorldSwitcher.IsSorted
 ```pascal
 function TRSWorldSwitcher.IsSorted(): Boolean;
 ```
@@ -358,7 +359,7 @@ begin
 end;
 
 (*
-### WorldSwitcher.Sort
+## WorldSwitcher.Sort
 ```pascal
 function TRSWorldSwitcher.Sort(): Boolean;
 ```
@@ -378,7 +379,7 @@ begin
 end;
 
 (*
-### WorldSwitcher.WaitSwitch
+## WorldSwitcher.WaitSwitch
 ```pascal
 function TRSWorldSwitcher.WaitSwitch(world: Integer; failCooldown: Boolean = True): Boolean;
 ```
@@ -398,7 +399,7 @@ begin
 end;
 
 (*
-### WorldSwitcher.Hop
+## WorldSwitcher.Hop
 ```pascal
 function TRSWorldSwitcher.Hop(worlds: TIntegerArray): Boolean;
 ```
@@ -447,7 +448,7 @@ end;
 
 var
 (*
-### WorldSwitcher variable
+## WorldSwitcher variable
 Global {ref}`TRSWorldSwitcher` variable.
 *)
   WorldSwitcher: TRSWorldSwitcher;

@@ -1,3 +1,7 @@
+(*
+# Time
+Time related misc functions and variables
+*)
 {$DEFINE SRLT_TIME_INCLUDED}
 {$INCLUDE_ONCE SRLT/utils.simba}
 
@@ -10,12 +14,26 @@ const
   MINUTES_FORMAL: String = 'm \min\ute\s and s \second\s';
   FILE_TIME_FORMAT: String = 'YY';
 
+(*
+## TimeStamp
+```pascal
+function TimeStamp(): String;
+```
+Returns a formated timestamp.
+
+Example:
+```pascal
+WriteLn TimeStamp();
+```
+*)
 function TimeStamp(): String;
 begin
   Result := FormatMilliseconds(GetTimeRunning(), '[hh:mm:ss:uu]');
 end;
+
+type
 (*
-### TCountDown
+## TCountDown
 A neat and simple timer type.
 
 Example:
@@ -29,7 +47,6 @@ while not myTimer.IsFinished() do
   {do something};
 ```
 *)
-type
   TCountDown = record
     Length: UInt64;
     Timeout: UInt64;

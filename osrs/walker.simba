@@ -1,5 +1,5 @@
 (*
-## Walker
+# Walker
 This file is responsible for our walking system.
 It is heavily inspired in the original TRSWalker by Slacky and it's future
 iterations made by Olly.
@@ -11,14 +11,14 @@ iterations made by Olly.
 type
 (*
 (PRSWalker)=
-## type PRSWalker
+# type PRSWalker
 TRSWalker pointer.
 *)
   PRSWalker = ^TRSWalker;
 
 (*
 (TRSWalkerEvent)=
-## type TRSWalkerEvent
+# type TRSWalkerEvent
 Callback object method to use while walking. This can be used to perform custom tasks while walking.
 
 Example:
@@ -41,7 +41,7 @@ end;
 
 (*
 (TRSWalker)=
-## type TRSWalker
+# type TRSWalker
 TRSWalker is the record responsible for walking.
 To work you need to set it up with something that gives it a position function
 as by itself it doesn't really do anything.
@@ -86,7 +86,7 @@ var
   WALKER_ADAPTIVE_SCREEN_TOGGLE_DISTANCES: TPoint = [25,110];
 
 (*
-### TRSWalker.Setup
+## TRSWalker.Setup
 ```pascal
 procedure TRSWalker.Setup(
   position: function (): TPoint of object;
@@ -118,7 +118,7 @@ function TRSWalker.DummyGetLocal(pt: TPoint; offset: TPoint = [0,0]): TPoint; be
 {%codetools on}
 
 (*
-### Walker.Setup
+## Walker.Setup
 ```pascal
 procedure TRSWalker.Setup(position: TRSWalkerPositionFunction; height: TRSWalkerHeightFunction; getLocal: TRWalkerGetLocalFunction; graph: ^TWebGraph; mapImage: TImage);
 ```
@@ -149,7 +149,7 @@ end;
 
 
 (*
-### Walker Conversions
+## Walker Conversions
 ```pascal
 function TRSWalker.Point2MM(playerPoint, pt: TPoint; radians: Double): TPoint;
 function TRSWalker.Point2MMVec(playerPoint, pt: TPoint; radians: Double): Vector2;
@@ -219,7 +219,7 @@ end;
 
 
 (*
-### TRSWalker.InRange
+## TRSWalker.InRange
 ```pascal
 function TRSWalker.InRangeEx(me, coordinate: TPoint; distance: Integer = 4): Boolean;
 function TRSWalker.InRange(coordinate: TPoint; distance: Integer = 4): Boolean;
@@ -239,7 +239,7 @@ end;
 
 
 (*
-### Walker.CheckRunEnergy
+## Walker.CheckRunEnergy
 ```pascal
 procedure TRSWalker.CheckRunEnergy();
 ```
@@ -274,7 +274,7 @@ begin
 end;
 
 (*
-### Walker.AdaptiveWalkCheck
+## Walker.AdaptiveWalkCheck
 ```pascal
 procedure TRSWalker.AdaptiveWalkCheck(position: TPoint);
 ```
@@ -300,7 +300,7 @@ begin
 end;
 
 (*
-### Walker.DoMouseAhead
+## Walker.DoMouseAhead
 ```pascal
 procedure TRSWalker.DoMouseAhead(position: TPoint; forced: Boolean = False);
 ```
@@ -360,7 +360,7 @@ begin
 end;
 
 (*
-### Walker.WaitMoving
+## Walker.WaitMoving
 ```pascal
 procedure TRSWalker.WaitMoving(destination: TPoint; waitUntilDistance: Integer);
 ```
@@ -460,7 +460,7 @@ end;
 
 
 (*
-### Walker.Click
+## Walker.Click
 ```pascal
 function TRSWalker.Click(minimapPoint: TPoint; Randomness: Integer): Boolean;
 ```
@@ -532,7 +532,7 @@ begin
 end;
 
 (*
-### Walker.WalkStepHelper()
+## Walker.WalkStepHelper()
 ```pascal
 function TRSWalker.WalkStepHelper(playerPoint, walkerPoint: TPoint; out minimapPoint: TPoint): Boolean;
 ```
@@ -565,7 +565,7 @@ begin
 end;
 
 (*
-### Walker.WalkFinalStep
+## Walker.WalkFinalStep
 ```pascal
 function TRSWalker.WalkFinalStep(playerPoint, walkerPoint: TPoint; waitUntilDistance: Integer): Boolean;
 ```
@@ -628,7 +628,7 @@ begin
 end;
 
 (*
-### Walker.WalkStep
+## Walker.WalkStep
 ```pascal
 function TRSWalker.WalkStep(playerPoint, walkerPoint: TPoint): Boolean;
 ```
@@ -690,7 +690,7 @@ begin
 end;
 
 (*
-### Walker.IsWalkable
+## Walker.IsWalkable
 ```pascal
 function TRSWalker.IsWalkable(walkerPoint: TPoint; playerPoint: TPoint; Angle: Double): Boolean;
 ```
@@ -856,7 +856,7 @@ end;
 {%codetools on}
 
 (*
-### TRSWalker.WalkPath
+## TRSWalker.WalkPath
 ```pascal
 function TRSWalker.WalkPath(Path: TPointArray; waitUntilDistance: Integer = 0): Boolean;
 ```
@@ -1098,7 +1098,7 @@ end;
 
 
 (*
-### TRSWalker.WalkBlind
+## TRSWalker.WalkBlind
 ```pascal
 function TRSWalker.WalkBlind(Destination: TPoint; waitUntilDistance: Integer = 0): Boolean;
 ```
@@ -1125,7 +1125,7 @@ end;
 
 
 (*
-### TRSWalker.GetClosestPoint
+## TRSWalker.GetClosestPoint
 ```pascal
 function TRSWalker.GetClosestPointEx(me: TPoint; destinations: TPointArray): TPoint;
 function TRSWalker.GetClosestPoint(destinations: TPointArray): TPoint;
@@ -1248,7 +1248,7 @@ end;
 
 
 (*
-### TRSWalker.WebWalk
+## TRSWalker.WebWalk
 ```pascal
 function TRSWalker.WebWalkEx(me: TPoint; destination: TPoint; waitUntilDistance: Integer = 0; pathRandomness: Double = 0): Boolean;
 function TRSWalker.WebWalk(destination: TPoint; waitUntilDistance: Integer = 0; pathRandomness: Double = 0): Boolean;
@@ -1379,7 +1379,7 @@ begin
 end;
 
 (*
-### TRSWalker.MakePointVisible
+## TRSWalker.MakePointVisible
 ```pascal
 function TRSWalker.MakePointVisible(p: TPoint): Boolean;
 function TRSWalker.MakePointVisible(tpa: TPointArray): Boolean; overload;
@@ -1390,10 +1390,3 @@ function TRSWalker.MakePointVisible(pt: TPoint): Boolean;
 begin
   Result := Minimap.MakePointVisible(Self.Point2MM(Self.Position(), pt, Minimap.GetCompassAngle(False)));
 end;
-
-var
-(*
-### Walker variable
-Global {ref}`TRSWalker` variable.
-*)
-  Walker: TRSWalker;

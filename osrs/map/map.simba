@@ -64,6 +64,8 @@ Record responsible for positioning.
     RegionIndex: Integer;
     Region: TRSMapRegion;
 
+    Walker: TRSWalker;
+
     Similarity: Single;
     Cache: TMatchTemplateCache;
     Loader: TRSMapLoader;
@@ -118,11 +120,11 @@ begin
 
   if not Self.IsSetup then
   begin
-    Walker.Setup(
+    Self.Walker.Setup(
       @Self.Position, @Self.Height, @Self.Loader.GetLocal,
       @Self.Loader.Graph, Self.Loader.Map
     );
-    Walker.Name := 'Map.Walker';
+    Self.Walker.Name := 'Map.Walker';
     Self.IsSetup := True;
   end;
 end;
