@@ -1,0 +1,224 @@
+(*
+## Data
+This page is about fetching OSRS data with SRLT.
+SRLT has several tools to get information about items, npcs, weapons, ...
+*)
+
+{$DEFINE SRLT_DATA_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+type
+  TItemData = record
+    DefinitionsJSON, PricesJSON: TJSONParser;
+    Filename: String;
+    Timeout: UInt64;
+    Disabled: Boolean;
+    const CacheDir: String = SRLTEnv.CacheDir + 'data' + PATH_SEP;
+    const ReloadInterval: Integer = 3600; //1h in unix time
+    const ZIP: String = {$MACRO DIR} + 'items.zip';
+    const PRICES_URL: String = 'https://prices.runescape.wiki/api/v1/osrs/latest';
+  end;
+
+procedure TItemData.Free();
+begin
+  if Self.PricesJSON = nil then Exit;
+  Self.PricesJSON.Free();
+  Self.PricesJSON := nil;
+end;
+
+procedure TItemData.UpdateFile();
+var
+  t: UInt64;
+  files: TStringArray;
+  i: Integer;
+begin
+  files := DirList(Self.CacheDir + 'prices' + PATH_SEP).Sorted();
+  for i := 0 to High(files)-1 do FileDelete(files[i]);
+
+  if files <> [] then
+  begin
+    Self.Filename := files.Last;
+    Self.Timeout := StrToInt64(PathExtractNameWithoutExt(Self.Filename), Self.Timeout);
+  end;
+
+  t := UnixTime();
+
+  if Self.Timeout < t then
+  begin
+    if Self.Filename <> '' then
+    begin
+      WriteLn GetDebugLn('ItemData', 'Data cached is old and will be updated.');
+      FileDelete(Self.Filename);
+    end;
+    Self.Timeout := t + Self.ReloadInterval;
+    Self.Filename := Self.CacheDir  + 'prices' + PATH_SEP + ToStr(Self.Timeout) + '.json';
+    HTTPClient.GetFile(Self.PRICES_URL, Self.Filename);
+  end;
+end;
+
+procedure TItemData.Reload();
+var
+  current: String;
+begin
+  if Self.Disabled then Exit;
+
+  current := Self.Filename;
+  Self.UpdateFile();
+  if current = Self.Filename then Exit;
+
+  Self.Free();
+
+  try
+    Self.PricesJSON := TJSONParser.CreateFromFile(Self.Filename);
+  except
+    FileDelete(Self.Filename);
+    Self.Disabled := True;
+  end;
+end;
+
+procedure TItemData.Setup();
+begin
+  if not DirCreate(Self.CacheDir + 'prices' + PATH_SEP) then
+    raise GetDebugLn('ItemData', 'Failed to create cache directory: ' + Self.CacheDir + 'prices' + PATH_SEP);
+  if not DirCreate(Self.CacheDir + 'items' + PATH_SEP) then
+    raise GetDebugLn('ItemData', 'Failed to create cache directory: ' + Self.CacheDir + 'items' + PATH_SEP);
+
+  Self.DefinitionsJSON := TJSONParser.Create();
+  AddOnTerminate(@Self.DefinitionsJSON.Free);
+  AddOnterminate(@Self.Free);
+end;
+
+
+(*
+## ItemData.GetDefinition
+```pascal
+function TItemData.GetDefinition(itemID: String): TJSONElement;
+```
+This is mostly for internal use but you may use it for whatever you wish.
+
+This returns a `TJSONElement` of the item definition.
+
+Item definitions are items information stored in the game cache, things like:
+- Item ID
+- Item name
+- Item is tradeable
+- Item is stackable
+- Item is members
+- ...
+
+SRLT includes a zip file with item definitions for all non "null" items as .json files
+in `SRLT\osrs\data\items.zip`.
+
+Example:
+```pascal
+id := ItemFinder.Database.Get('abyssal whip', 'item', 'id');
+json := ItemData.GetDefinition(id);
+parser := json.ToParser();
+WriteLn parser.ToString();
+parser.Free();
+```
+*)
+function TItemData.GetDefinition(itemID: String): TJSONElement;
+var
+  path, filename: String;
+  parser: TJSONParser;
+begin
+  if Self.DefinitionsJSON.Find(itemID, Result) then Exit;
+
+  path := Self.CacheDir  + 'items' + PATH_SEP;
+  filename := path + itemID + '.json';
+  if not FileExists(filename) then
+    if not ZipExtractEntry(Self.ZIP, itemID +'.json', path) then
+      raise  GetDebugLn('ItemData', 'Couldn''t find ' + itemID + '.json');
+
+  parser := TJSONParser.CreateFromFile(filename);
+  Result := parser.ToElement();
+  parser.Free();
+  Self.DefinitionsJSON.AddElement(itemID, Result);
+end;
+
+(*
+## ItemData.GetTradeableID
+```pascal
+function TItemData.GetTradeableID(item: TRSItem): String;
+```
+Mostly for internal use but you may use it as you see fit.
+
+Some items in the game have versions of themselves that are not tradeable and
+can't be used to fetch item prices, such as degraded items, ornamented items, etc.
+
+This function checks every id associated with the specified `item` and checks
+the item definition of each one (check {ref}`TItemData.GetDefinition`) for the
+tradeable key.
+
+The first tradeable id found is returned.
+
+Example:
+```pascal
+WriteLn ItemData.GetTradeableID('Rune scimitar'); //rune scimitar has 2 ids and one is not tradeable.
+```
+*)
+function TItemData.GetTradeableID(item: TRSItem): String;
+var
+  ids: TStringArray;
+  id: String;
+  json: TJSONElement;
+begin
+  if item.IsNumeric then ids := [item]
+  else ids := ItemFinder.Database.GetAll(item.ToLower(), 'item', 'id');
+
+  for id in ids do
+  begin
+    json := Self.GetDefinition(id);
+    if json.Item[9].Value then Exit(id); //9 is "tradeable" key
+  end;
+end;
+
+
+(*
+## ItemData.GetPrice
+```pascal
+function TItemData.GetPrice(item: TRSItem): Integer;
+```
+Method used to return the average price of the specified `item`.
+
+Example:
+```pascal
+WriteLn ItemData.GetPrice('Abyssal whip');
+```
+*)
+function TItemData.GetPrice(item: TRSItem): Integer;
+var
+  id: String;
+  json: TJSONElement;
+  lo, hi: Int32;
+begin
+  id := Self.GetTradeableID(item);
+  if id = '' then Exit;
+
+  case item of
+    '995', '996', '997', '998', '999',
+    '1000', '1001', '1002', '1003', '1004': Exit(1);
+  end;
+
+  Self.Reload();
+  if Self.Disabled then Exit;
+  if not Self.PricesJSON.Item[0].Find(id, json) then Exit;
+
+  hi := json.Values[0]; //"high" key
+  lo := json.Values[2]; //"lo" key
+
+  if lo = hi then Exit(lo);
+  if lo = 0 then Exit(hi);
+  if hi = 0 then Exit(lo);
+
+  Result := (hi + lo) div 2;
+end;
+
+
+var
+  ItemData: TItemData;
+begin
+  ItemData.Setup();
+  WriteLn itemData.GetPrice('abyssal whip');
+end;

@@ -1,5 +1,5 @@
 (*
-## Login
+# Login
 The login screen is the first screen you see that you can interact with when you open the game:
 
 ```{figure} ../../images/loginscreen.png
@@ -13,7 +13,7 @@ SRLT's {ref}`TRSLogin` can handle both resizable and fixed mode login screens.
 
 type
 (*
-### TRSLobbyScreen
+## TRSLobbyScreen
 Simple record that handles the login lobby screen.
 The lobby screen is the screen you see after logging in with the large red
 button with "CLICK HERE TO PLAY".
@@ -27,7 +27,7 @@ The lobbby screen.
   end;
 
 (*
-### Lobby.Setup
+## Lobby.Setup
 ```pascal
 procedure TRSLobbyScreen.Setup();
 ```
@@ -52,7 +52,7 @@ end;
 
 
 (*
-### Lobby.IsOpen
+## Lobby.IsOpen
 ```pascal
 function TRSLobbyScreen.IsOpen(): Boolean;
 ```
@@ -70,7 +70,7 @@ begin
 end;
 
 (*
-### Lobby.WaitOpen
+## Lobby.WaitOpen
 ```pascal
 function TRSLobbyScreen.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -89,7 +89,7 @@ begin
 end;
 
 (*
-### Lobby.EnterGame
+## Lobby.EnterGame
 ```pascal
 function TRSLobbyScreen.EnterGame(): Boolean;
 ```
@@ -135,14 +135,14 @@ end;
 
 var
 (*
-### Lobby variable
+## Lobby variable
 Global {ref}`TRSLobbyScreen` variable.
 *)
   Lobby: TRSLobbyScreen;
 
 type
 (*
-### TRSLoginWorldSwitcher
+## TRSLoginWorldSwitcher
 Reponsible for handling the login screen world switcher:
 ```{figure} ../../images/login_worldswitcher.png
 The login world switcher.
@@ -158,7 +158,7 @@ The login world switcher.
   end;
 
 (*
-### TRSLoginWorldSwitcher.Setup
+## TRSLoginWorldSwitcher.Setup
 ```pascal
 procedure TRSLoginWorldSwitcher.Setup();
 ```
@@ -196,7 +196,7 @@ begin
 end;
 
 (*
-### LoginWorldSwitcher.IsOpen
+## LoginWorldSwitcher.IsOpen
 ```pascal
 function TRSLoginWorldSwitcher.IsOpen(): Boolean;
 ```
@@ -213,7 +213,7 @@ begin
 end;
 
 (*
-### LoginWorldSwitcher.WaitOpen
+## LoginWorldSwitcher.WaitOpen
 ```pascal
 function TRSLoginWorldSwitcher.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -231,7 +231,7 @@ begin
 end;
 
 (*
-### LoginWorldSwitcher.Close
+## LoginWorldSwitcher.Close
 ```pascal
 function TRSLoginWorldSwitcher.Close(): Boolean;
 ```
@@ -251,7 +251,7 @@ begin
 end;
 
 (*
-### LoginWorldSwitcher.Open
+## LoginWorldSwitcher.Open
 ```pascal
 function TRSLoginWorldSwitcher.Open(): Boolean;
 ```
@@ -272,7 +272,7 @@ end;
 
 
 (*
-### LoginWorldSwitcher.Read
+## LoginWorldSwitcher.Read
 ```pascal
 function TRSLoginWorldSwitcher.Read(index: Integer): Integer;
 ```
@@ -291,7 +291,7 @@ end;
 
 
 (*
-### LoginWorldSwitcher Pagination
+## LoginWorldSwitcher Pagination
 ```pascal
 function TRSLoginWorldSwitcher.PreviousPage(): Boolean;
 function TRSLoginWorldSwitcher.NextPage(): Boolean;
@@ -330,7 +330,7 @@ end;
 
 
 (*
-### LoginWorldSwitcher GetCurrent
+## LoginWorldSwitcher GetCurrent
 ```pascal
 function TRSLoginWorldSwitcher.GetCurrent(): Integer;
 ```
@@ -352,7 +352,7 @@ end;
 
 
 (*
-### LoginWorldSwitcher.Find
+## LoginWorldSwitcher.Find
 ```pascal
 function TRSLoginWorldSwitcher.Find(world: Integer; out index: Integer): Boolean;
 ```
@@ -379,7 +379,7 @@ begin
 end;
 
 (*
-### LoginWorldSwitcher.Switch
+## LoginWorldSwitcher.Switch
 ```pascal
 function TRSLoginWorldSwitcher.Switch(world: Integer): Boolean;
 ```
@@ -448,7 +448,7 @@ end;
 
 var
 (*
-### LoginWorldSwitcher variable
+## LoginWorldSwitcher variable
 Global {ref}`TRSLoginWorldSwitcher` variable.
 *)
   LoginWorldSwitcher: TRSLoginWorldSwitcher;
@@ -456,7 +456,7 @@ Global {ref}`TRSLoginWorldSwitcher` variable.
 const
 (*
 (LOGIN_MESSAGES)=
-## const LOGIN_MESSAGES
+# const LOGIN_MESSAGES
 ```pascal
 LOGIN_MESSAGES = [
   'Welcome to RuneScape',
@@ -504,7 +504,7 @@ Constant of all the login messages the login screen can handle.
 
 type
 (*
-### Login Enums
+## Login Enums
 ```pascal
 ERSLoginMode    = enum(UNKNOWN, LEGACY, LAUNCHER);
   ERSLoginButton  = enum(LAUNCHER, EXISTING_USER, LOGIN, RETRY, OKAY, CONTINUE);
@@ -534,7 +534,7 @@ Enums representing various aspects of the login screen.
   );
 
 (*
-### TRSLogin
+## TRSLogin
 Main record responsible for handling the {ref}`Login` screen.
 
 ```{figure} ../../images/trslogin.png
@@ -557,7 +557,7 @@ The login screen.
   end;
 
 (*
-### Login.Setup
+## Login.Setup
 ```pascal
 procedure TRSLogin.Setup();
 ```
@@ -637,7 +637,7 @@ end;
 
 
 (*
-### Login.FindButton
+## Login.FindButton
 ```pascal
 function TRSLogin.FindButton(button: ERSLoginButton): Boolean;
 ```
@@ -662,7 +662,7 @@ begin
 end;
 
 (*
-### Login.ClickButton
+## Login.ClickButton
 ```pascal
 function TRSLogin.ClickButton(button: ERSLoginButton): Boolean;
 ```
@@ -682,7 +682,7 @@ end;
 
 
 (*
-### Login.SelectInput
+## Login.SelectInput
 ```pascal
 function TRSLogin.SelectInput(field: ERSLoginInput): Boolean;
 ```
@@ -709,7 +709,7 @@ begin
 end;
 
 (*
-### Login.InputIsFilled
+## Login.InputIsFilled
 ```pascal
 function TRSLogin.InputIsFilled(field: ERSLoginInput): Boolean;
 ```
@@ -726,7 +726,7 @@ begin
 end;
 
 (*
-### Login.ClearInput
+## Login.ClearInput
 ```pascal
 function TRSLogin.ClearInput(field: ERSLoginInput): Boolean;
 ```
@@ -748,7 +748,7 @@ begin
 end;
 
 (*
-### Login.FillInput
+## Login.FillInput
 ```pascal
 function TRSLogin.FillInput(field: ERSLoginInput; details: String): Boolean;
 ```
@@ -770,7 +770,7 @@ end;
 
 
 (*
-### Login.GetMessage
+## Login.GetMessage
 ```pascal
 function TRSLogin.GetMessage(): ERSLoginMessage;
 ```
@@ -799,7 +799,7 @@ end;
 
 
 (*
-### Login.GetMode
+## Login.GetMode
 ```pascal
 function TRSLogin.GetMode(): ERSLoginMode;
 ```
@@ -835,7 +835,7 @@ end;
 
 
 (*
-### Login.HandleWelcome
+## Login.HandleWelcome
 ```pascal
 function TRSLogin.HandleWelcome(): Boolean;
 ```
@@ -863,7 +863,7 @@ begin
 end;
 
 (*
-### Login.Back2Welcome
+## Login.Back2Welcome
 ```pascal
 function TRSLogin.Back2Welcome(): Boolean;
 ```
@@ -884,7 +884,7 @@ end;
 
 
 (*
-### Login.EnterCredentials
+## Login.EnterCredentials
 ```pascal
 function TRSLogin.EnterCredentials(username, password: String): Boolean;
 ```
@@ -912,7 +912,7 @@ end;
 
 
 (*
-### Login.Retry
+## Login.Retry
 ```pascal
 function TRSLogin.Retry(msg: ERSLoginMessage): Boolean;
 ```
@@ -930,7 +930,7 @@ begin
 end;
 
 (*
-### Login.HandleError
+## Login.HandleError
 ```pascal
 function TRSLogin.HandleError(msg: ERSLoginMessage): Boolean;
 ```
@@ -973,7 +973,7 @@ begin
 end;
 
 (*
-### Login.HandleMessage
+## Login.HandleMessage
 ```pascal
 function TRSLogin.HandleMessage(msg: ERSLoginMessage; username, password: String): Boolean;
 ```
@@ -1016,7 +1016,7 @@ end;
 
 
 (*
-### Login.DoLogin
+## Login.DoLogin
 ```pascal
 function TRSLogin.DoLogin(player: TRSPlayer): Boolean;
 ```
@@ -1100,7 +1100,7 @@ end;
 
 var
 (*
-### Login variable
+## Login variable
 Global {ref}`TRSLogin` variable.
 *)
   Login: TRSLogin;

@@ -1,5 +1,5 @@
 (*
-## Magic
+# Magic
 Methods to interact with the magic gametab.
 *)
 
@@ -76,8 +76,7 @@ const
 
 type
 (*
-(TRSMagic)=
-## type TRSMagic
+## TRSMagic
 Main record reponsible for handling the magic gametab.
 *)
   TRSMagic = record
@@ -88,7 +87,7 @@ Main record reponsible for handling the magic gametab.
   end;
 
 (*
-### Magic.IsOpen
+## Magic.IsOpen
 ```pascal
 function TRSMagic.IsOpen(): Boolean;
 ```
@@ -105,7 +104,7 @@ begin
 end;
 
 (*
-### Magic.Open
+## Magic.Open
 ```pascal
 function TRSMagic.Open(): Boolean;
 ```
@@ -134,7 +133,7 @@ end;
 {%codetools on}
 
 (*
-### Magic.IsSpellBook
+## Magic.IsSpellBook
 ```pascal
 function TRSMagic.IsSpellBook(book: ERSSpellBook): Boolean;
 ```
@@ -151,7 +150,7 @@ begin
 end;
 
 (*
-### Magic.GetSpellBook
+## Magic.GetSpellBook
 ```pascal
 function TRSMagic.GetSpellBook(): ERSSpellBook;
 ```
@@ -175,7 +174,7 @@ end;
 
 
 (*
-### Magic.InfoIsOpen
+## Magic.InfoIsOpen
 ```pascal
 function TRSMagic.InfoIsOpen(): Boolean;
 ```
@@ -193,7 +192,7 @@ end;
 
 
 (*
-### Magic.CloseInfo
+## Magic.CloseInfo
 ```pascal
 function TRSMagic.CloseInfo(): Boolean;
 function TRSMagic.CloseInfo(spell: ERSSpell): Boolean; overload;
@@ -243,7 +242,7 @@ end;
 
 
 (*
-### Magic.FindSpell
+## Magic.FindSpell
 ```pascal
 function TRSMagic.FindSpell(spell: ERSSpell; out box: TBox): Boolean;
 ```
@@ -298,7 +297,7 @@ begin
 end;
 
 (*
-### Magic.ContainsSpell
+## Magic.ContainsSpell
 ```pascal
 function TRSMagic.ContainsSpell(spell: ERSSpell): Boolean;
 ```
@@ -313,7 +312,7 @@ end;
 
 
 (*
-### Magic.Hover
+## Magic.Hover
 ```pascal
 function TRSMagic.Hover(spell: ERSSpell): Boolean;
 ```
@@ -352,7 +351,7 @@ begin
 end;
 
 (*
-### Magic.Click
+## Magic.Click
 ```pascal
 function TRSMagic.Click(spell: ERSSpell; button: EMouseButton = EMouseButton.LEFT): Boolean;
 ```
@@ -370,7 +369,7 @@ begin
 end;
 
 (*
-### Magic.Interact
+## Magic.Interact
 ```pascal
 function TRSMagic.Interact(spell: ERSSpell; option: String = ''): Boolean;
 ```
@@ -394,7 +393,7 @@ end;
 
 
 (*
-### Magic.FindSelected
+## Magic.FindSelected
 ```pascal
 function TRSMagic.FindSelected(out tpa: TPointArray): Boolean;
 ```
@@ -425,7 +424,7 @@ begin
 end;
 
 (*
-### Magic.ContainsSelected
+## Magic.ContainsSelected
 ```pascal
 function TRSMagic.ContainsSelected(): Boolean;
 ```
@@ -447,7 +446,7 @@ end;
 
 
 (*
-### Magic.IsSelected
+## Magic.IsSelected
 ```pascal
 function TRSMagic.IsSelected(spell: ERSSpell): Boolean;
 function TRSMagic.IsSelected(spell: ERSSpell; selected: TPointArray): Boolean; overload;
@@ -498,7 +497,7 @@ begin
 end;
 
 (*
-### Magic.CanActivate
+## Magic.CanActivate
 ```pascal
 function TRSMagic.CanActivate(spell: ERSSpell): Boolean;
 ```
@@ -516,7 +515,7 @@ begin
 end;
 
 (*
-### Magic.SpellWasCast
+## Magic.SpellWasCast
 ```pascal
 function TRSMagic.SpellWasCast(spell: ERSSpell): Boolean;
 ```
@@ -537,7 +536,7 @@ begin
 end;
 
 (*
-### Magic.CastSpell
+## Magic.CastSpell
 ```pascal
 function TRSMagic.CastSpell(spell: ERSSpell): Boolean;
 ```
@@ -572,11 +571,10 @@ end;
 
 
 (*
-### Magic.GetBookSpellCount
+## Magic.GetBookSpellCount
 ```pascal
 function TRSMagic.GetBookSpellCount(): Int32;
 ```
-
 Returns the number of spells declared in SRL for the current spellbook.
 
 Example:
@@ -598,8 +596,7 @@ end;
 
 var
 (*
-(Magic variable)=
-## var Magic
+## Magic variable
 Global {ref}`TRSMagic` variable.
 *)
   Magic: TRSMagic;

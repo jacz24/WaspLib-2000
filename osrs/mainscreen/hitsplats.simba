@@ -1,13 +1,19 @@
 (*
-## HitSplats
+# HitSplats
+Find and read hitsplats on the screen.
+
+```{figure} ../../images/hitsplats.png
+```
+
+At the moment only your hitsplats are supported, tinted ones by other players or
+NPCs are not.
 *)
 {$DEFINE SRLT_HITSPLATS_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
 (*
-(ERSHitSplat)=
-## type ERSHitSplat
+## ERSHitSplat
 ```pascal
 ERSHitSplat = enum(BLUE, RED, MAX);
 ```
@@ -16,8 +22,7 @@ Enum representing the main hitsplat colors.
   ERSHitSplat = enum(BLUE, RED, MAX);
 
 (*
-(TRSHitsplat)=
-## type TRSHitSplat
+## TRSHitSplat
 Hitsplat record that holds the methods used to find hitsplats.
 *)
   TRSHitsplat = record
@@ -64,7 +69,7 @@ begin
 end;
 
 (*
-### TRSHitSplat.Find
+## TRSHitSplat.Find
 ```pascal
 function TRSHitSplat.Find(out splats: TRSHitSplatArray; areas: TBoxArray): Boolean; static;
 function TRSHitSplat.Find(out splats: TRSHitSplatArray; areas: TPolygonArray): Boolean; static; overload;

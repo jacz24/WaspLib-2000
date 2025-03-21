@@ -1,5 +1,5 @@
 (*
-## Biometrics
+# Biometrics
 Biometrics related methods that are unique to the current player being used.
 
 For your convenience you can use {ref}`TBiometrics` methods through the {ref}`Biometrics variable`.
@@ -12,7 +12,7 @@ For your convenience you can use {ref}`TBiometrics` methods through the {ref}`Bi
 
 type
 (*
-### EBiometric
+## EBiometric
 ```pascal
 EBiometric = enum(
   MULTIPLIER,
@@ -41,7 +41,7 @@ Enum that represent biometrics affected by the user user unique player seed.
   );
 
 (*
-### TBiometrics
+## TBiometrics
 Record responsible for biometrics and beiometric behaviour.
 *)
   TBiometrics = record
@@ -50,7 +50,7 @@ Record responsible for biometrics and beiometric behaviour.
   end;
 
 (*
-### TBiometrics.GetHash
+## TBiometrics.GetHash
 ```pascal
 function TBiometrics.GetHash(): TByteArray;
 ```
@@ -93,7 +93,7 @@ begin
 end;
 
 (*
-### Biometrics.GetBiometric
+## Biometrics.GetBiometric
 ```pascal
 function TBiometrics.GetBiometric(biometric: EBiometric): Integer;
 ```
@@ -111,7 +111,7 @@ begin
 end;
 
 (*
-### Biometrics.GetProbability
+## Biometrics.GetProbability
 ```pascal
 function TBiometrics.GetProbability(biometric: EBiometric): Single;
 ```
@@ -130,7 +130,7 @@ end;
 
 
 (*
-### Biometrics.Random
+## Biometrics.Random
 ```pascal
 function TBiometrics.RandomDouble(input: Double): Double;
 function TBiometrics.RandomInteger(input: Integer): Integer;
@@ -155,7 +155,7 @@ begin
 end;
 
 (*
-### Biometrics.RandomMode
+## Biometrics.RandomMode
 ```pascal
 function TBiometrics.RandomModeDouble(input, minimum, maximum: Double): Double;
 function TBiometrics.RandomModeInteger(input, minimum, maximum: Integer): Integer; overload;
@@ -182,7 +182,7 @@ end;
 
 
 (*
-### Biometrics.RandomBoolean
+## Biometrics.RandomBoolean
 ```pascal
 function TBiometrics.RandomBoolean(): Boolean;
 function TBiometrics.RandomBoolean(behaviour: EBiometric): Boolean; overload;
@@ -213,7 +213,7 @@ end;
 
 
 (*
-### Biometrics.GetSleepHour
+## Biometrics.GetSleepHour
 ```pascal
 function TBiometrics.GetSleepHour(): String;
 ```
@@ -239,7 +239,7 @@ begin
 end;
 
 (*
-### Biometrics.GetSleepLength
+## Biometrics.GetSleepLength
 ```pascal
 function TBiometrics.GetSleepLength(): Single;
 ```
@@ -258,7 +258,7 @@ end;
 
 
 (*
-### Biometrics.Sleep
+## Biometrics.Sleep
 ```pascal
 procedure TBiometrics.Sleep(time: UInt32);
 procedure TBiometrics.Sleep(minimum, maximum: UInt32; weight: ERandomDir = ERandomDir.MEAN); overload;
@@ -286,7 +286,7 @@ end;
 
 
 (*
-### Biometrics.Click
+## Biometrics.Click
 ```pascal
 procedure TBiometrics.Click(button: EMouseButton; clicks: UInt32 = 3);
 ```
@@ -315,7 +315,7 @@ end;
 
 var
 (*
-### Biometrics variable
+## Biometrics variable
 Global {ref}`TBiometrics` variable.
 *)
   Biometrics: TBiometrics;

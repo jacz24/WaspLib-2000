@@ -1,8 +1,7 @@
 (*
-## Bank
-Methods to interact with the bank interface
+# Bank
+Methods to interact with the bank interface:
 ```{figure} ../../images/bank_interface.png
-The bank interface.
 ```
 *)
 
@@ -11,7 +10,7 @@ The bank interface.
 
 type
 (*
-### ERSBankButtons
+## ERSBankButtons
 ```pascal
 ERSBankButtons = enum(WORN, MENU);
 ```
@@ -20,7 +19,7 @@ Enum representing the 2 top buttons of the {ref}`Bank` interface.
   ERSBankButtons = enum(WORN, MENU);
 
 (*
-### ERSBankArrangement
+## ERSBankArrangement
 ```pascal
 ERSBankArrangement = enum(SWAP, INSERT);
 ```
@@ -29,7 +28,7 @@ Enum representing the 2 arrangement buttons of the {ref}`Bank` interface.
   ERSBankArrangement = enum(SWAP, INSERT);
 
 (*
-### ERSWithdrawMode
+## ERSWithdrawMode
 ```pascal
 ERSWithdrawMode = enum(ITEM, NOTE);
 ```
@@ -38,7 +37,7 @@ Enum representing the 2 withdraw mode buttons of the {ref}`Bank` interface.
   ERSWithdrawMode = enum(ITEM, NOTE);
 
 (*
-### ERSBankDynamicButtons
+## ERSBankDynamicButtons
 ```pascal
 ERSBankDynamicButtons = enum(PLACEHOLDERS, SEARCH, DEPOSIT_INVENTORY, DEPOSIT_WORN);
 ```
@@ -48,7 +47,7 @@ These buttons are dynamic because they can be enabled/disabled and shift places.
   ERSBankDynamicButtons = enum(PLACEHOLDERS, SEARCH, DEPOSIT_INVENTORY, DEPOSIT_WORN);
 
 (*
-### ERSBankInteraction
+## ERSBankInteraction
 ```pascal
 ERSBankInteraction = enum(WITHDRAW, DEPOSIT);
 ```
@@ -57,7 +56,7 @@ Enum representing 2 core actions you can perform on the {ref}`Bank` interface.
   ERSBankInteraction = enum(WITHDRAW, DEPOSIT);
 
 (*
-### TBankPosition
+## TBankPosition
 Helper record to cache items positions on the {ref}`Bank` interface.
 *)
   TBankPosition = record
@@ -67,7 +66,7 @@ Helper record to cache items positions on the {ref}`Bank` interface.
   end;
 
 (*
-### TRSBank
+## TRSBank
 Record responsible to handle the {ref}`Bank` interface.
 *)
   TRSBank = record
@@ -104,7 +103,7 @@ Record responsible to handle the {ref}`Bank` interface.
   end;
 
 (*
-### Bank.FindItemBoundaries
+## Bank.FindItemBoundaries
 ```pascal
 function TRSBank.FindItemBoundaries(): TBoxArray;
 ```
@@ -114,7 +113,6 @@ You have 2 ways of getting the bank slots, a static one:
 ```pascal
 ShowOnClient(Bank.SlotBoxes);
 ```
-
 ```{figure} ../../images/bank_static_slots.png
 The bank static slots.
 ```
@@ -123,7 +121,6 @@ And a dynamic one:
 ```pascal
 ShowOnClient(Self.FindItemBoundaries());
 ```
-
 ```{figure} ../../images/bank_item_boundaries.png
 The bank "dynamic" slots.
 ```
@@ -157,7 +154,7 @@ begin
 end;
 
 (*
-### Bank.SetupInterface
+## Bank.SetupInterface
 ```pascal
 procedure TRSBank.SetupInterface();
 ```
@@ -250,7 +247,7 @@ begin
 end;
 
 (*
-### Bank.UpdateButtons
+## Bank.UpdateButtons
 ```pascal
 procedure TRSBank.UpdateButtons(offset: Integer);
 ```
@@ -285,7 +282,7 @@ end;
 
 
 (*
-### Bank.HasJagexAccountAd
+## Bank.HasJagexAccountAd
 ```pascal
 function TRSBank.HasJagexAccountAd(): Boolean;
 ```
@@ -304,7 +301,7 @@ begin
 end;
 
 (*
-### Bank.CloseJagexAccountAd
+## Bank.CloseJagexAccountAd
 ```pascal
 function TRSBank.CloseJagexAccountAd(): Boolean;
 ```
@@ -323,7 +320,7 @@ end;
 
 
 (*
-### Bank.IsOpen
+## Bank.IsOpen
 ```pascal
 function TRSBank.IsOpen(): Boolean;
 ```
@@ -369,13 +366,13 @@ begin
 end;
 
 (*
-### Bank.WaitOpen
+## Bank.WaitOpen
 ```pascal
 function TRSBank.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
 ```
 Returns true if the bank is open within `time` milliseconds.
 
-### Example:
+## Example:
 ```pascal
 WriteLn Bank.WaitOpen();
 ```
@@ -387,7 +384,7 @@ begin
 end;
 
 (*
-### Bank.Close
+## Bank.Close
 ```pascal
 function TRSBank.Close(escape: Boolean): Boolean;
 function TRSBank.Close(escapeProbability: Single = 0): Boolean; overload;
@@ -411,21 +408,20 @@ begin
 end;
 
 (*
-### Bank.Tabs
+## Bank.Tabs
 You can access the bank tabs coordinates via the `TRSBank.Tabs` variable.
 
 Example:
 ```pascal
 ShowOnClient(Bank.Tabs);
 ```
-
 ```{figure} ../../images/bank_tabs.png
 The bank interface.
 ```
 *)
 
 (*
-#### Bank.CountTabs
+### Bank.CountTabs
 ```pascal
 function TRSBank.CountTabs: Integer;
 ```
@@ -446,7 +442,7 @@ begin
 end;
 
 (*
-#### Bank.GetCurrentTab
+### Bank.GetCurrentTab
 ```pascal
 function TRSBank.GetCurrentTab(): Integer;
 ```
@@ -470,7 +466,7 @@ begin
 end;
 
 (*
-#### Bank.OpenTab
+### Bank.OpenTab
 ```pascal
 function TRSBank.OpenTab(tab: Integer): Boolean;
 ```
@@ -498,7 +494,7 @@ end;
 
 
 (*
-### Bank.SetArrangement
+## Bank.SetArrangement
 ```pascal
 function TRSBank.SetArrangement(arrangement: ERSBankArrangement): Boolean;
 ```
@@ -516,7 +512,7 @@ begin
 end;
 
 (*
-### Bank.SetWithdrawMode
+## Bank.SetWithdrawMode
 ```pascal
 function TRSBank.SetWithdrawMode(noted: Boolean): Boolean;
 ```
@@ -540,7 +536,7 @@ begin
 end;
 
 (*
-### Bank.SetQuantity
+## Bank.SetQuantity
 ```pascal
 function TRSBank.SetQuantity(quantity: ERSItemQuantity): Boolean;
 ```
@@ -560,7 +556,7 @@ end;
 
 
 (*
-### Bank.IsSearchOpen
+## Bank.IsSearchOpen
 ```pascal
 function TRSBank.IsSearchOpen(): Boolean;
 ```
@@ -577,7 +573,7 @@ begin
 end;
 
 (*
-### Bank.WaitSearchOpen
+## Bank.WaitSearchOpen
 ```pascal
 function TRSBank.WaitSearchOpen(time: Integer = 600): Boolean;
 ```
@@ -594,7 +590,7 @@ begin
 end;
 
 (*
-### Bank.OpenSearch
+## Bank.OpenSearch
 ```pascal
 function TRSBank.OpenSearch(waitTime: Integer = 0): Boolean;
 ```
@@ -613,7 +609,7 @@ begin
 end;
 
 (*
-### Bank.ClearSearch
+## Bank.ClearSearch
 ```pascal
 function TRSBank.ClearSearch(): Boolean;
 ```
@@ -632,7 +628,7 @@ begin
 end;
 
 (*
-### Bank.Search
+## Bank.Search
 ```pascal
 function TRSBank.Search(item: String): Boolean;
 ```
@@ -657,7 +653,7 @@ begin
 end;
 
 (*
-### Bank.CloseSearch
+## Bank.CloseSearch
 ```pascal
 function TRSBank.CloseSearch(): Boolean;
 ```
@@ -679,7 +675,7 @@ end;
 
 
 (*
-### Bank.HasIncinerator
+## Bank.HasIncinerator
 ```pascal
 function TRSBank.HasIncinerator(): Boolean;
 ```
@@ -698,7 +694,7 @@ begin
 end;
 
 (*
-### Bank.InceneratorTooltipVisible
+## Bank.InceneratorTooltipVisible
 ```pascal
 function TRSBank.InceneratorTooltipVisible(): Boolean;
 ```
@@ -718,7 +714,7 @@ begin
 end;
 
 (*
-### Bank.CloseInceneratorTooltip
+## Bank.CloseInceneratorTooltip
 ```pascal
 function TRSBank.CloseInceneratorTooltip(): Boolean;
 ```
@@ -747,7 +743,7 @@ end;
 
 
 (*
-### Bank.HasPotionStorage
+## Bank.HasPotionStorage
 ```pascal
 function TRSBank.HasPotionStorage(): Boolean;
 ```
@@ -764,7 +760,7 @@ begin
 end;
 
 (*
-### Bank.PotionStorageIsOpen
+## Bank.PotionStorageIsOpen
 ```pascal
 function TRSBank.PotionStorageIsOpen(): Boolean;
 ```
@@ -783,7 +779,7 @@ end;
 
 {%codetools off}
 (*
-### Bank._FindTabText
+## Bank._FindTabText
 ```pascal
 function TRSBank._FindTabText(tpa: TPointArray; out bounds: TBox): Boolean;
 ```
@@ -816,7 +812,7 @@ end;
 {%codetools on}
 
 (*
-### Bank.FindTab
+## Bank.FindTab
 ```pascal
 function TRSBank.FindTab(item: TRSItem; openTab: Boolean = True): Integer;
 ```
@@ -848,7 +844,7 @@ begin
 end;
 
 (*
-### Bank.FindScroll
+## Bank.FindScroll
 ```pascal
 function TRSBank.FindScroll(item: TRSItem): Integer;
 ```
@@ -899,7 +895,7 @@ begin
 end;
 
 (*
-### Bank._InteractionHelper
+## Bank._InteractionHelper
 ```pascal
 function TRSBank._InteractionHelper(mode: ERSBankInteraction; slot: TBox; amount: Integer; useQuantityButton: Boolean): Boolean;
 ```
@@ -954,7 +950,7 @@ end;
 {%codetools on}
 
 (*
-### Bank.Find
+## Bank.Find
 ```pascal
 function TRSBank.Find(item: TRSItem; out data: TBankPosition; attempts: Int32 = 3): Boolean;
 ```
@@ -1007,7 +1003,7 @@ end;
 
 
 (*
-### Bank.Withdraw
+## Bank.Withdraw
 ```pascal
 function TRSBank.Withdraw(item: TRSBankItem; useQuantityButton: Boolean = True; useCache: Boolean = True): Boolean;
 function TRSBank.Withdraw(item: TRSItem; useQuantityButton: Boolean = True; useCache: Boolean = True): Boolean; overload;
@@ -1040,7 +1036,7 @@ begin
 end;
 
 (*
-### Bank.Deposit
+## Bank.Deposit
 ```pascal
 function TRSBank.Deposit(item: TRSBankItem; useQuantityButton: Boolean = True): Boolean;
 function TRSBank.Deposit(item: TRSItem; useQuantityButton: Boolean = True): Boolean; overload;
@@ -1108,7 +1104,7 @@ end;
 
 var
 (*
-### Bank variable
+## Bank variable
 Global {ref}`TRSBank` variable.
 *)
   Bank: TRSBank;

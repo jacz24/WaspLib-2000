@@ -1,5 +1,5 @@
 (*
-## ChooseOption
+# ChooseOption
 Methods to interact with the runescape context menu.
 
 ```{figure} ../../images/choose_option.png
@@ -11,7 +11,6 @@ The choose option context menu.
 
 type
 (*
-(Option)=
 ## TRSOption
 Helper record to interact with {ref}`ChooseOption`.
 *)
@@ -24,7 +23,7 @@ Helper record to interact with {ref}`ChooseOption`.
   TRSOptionArray = array of TRSOption;
 
 (*
-### TRSChooseOption
+## TRSChooseOption
 Core record responsible with interacting with the {ref}`ChooseOption` context menu.
 *)
   TRSChooseOption = record
@@ -33,11 +32,11 @@ Core record responsible with interacting with the {ref}`ChooseOption` context me
   end;
 
 (*
-### ChooseOption.IsOpen
+## ChooseOption.IsOpen
 ```pascal
 function TRSChooseOption.IsOpen(): Boolean;
 ```
-Returns True/False if the choose option menu is currently visible/open.
+Returns True/False if the {ref}`ChooseOption` menu is currently visible/open.
 
 Example:
 ```pascal
@@ -63,11 +62,11 @@ begin
 end;
 
 (*
-### ChooseOption.WaitOpen
+## ChooseOption.WaitOpen
 ```pascal
 function TRSChooseOption.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
 ```
-Returns True/False if the choose option menu is becomes visible/open within the specified `time`.
+Returns True/False if the {ref}`ChooseOption` menu is becomes visible/open within the specified `time`.
 
 Example:
 ```pascal
@@ -81,11 +80,11 @@ begin
 end;
 
 (*
-### ChooseOption.Open
+## ChooseOption.Open
 ```pascal
 function TRSChooseOption.Open(): Boolean;
 ```
-Opens the choose option context menu if it's not currently open.
+Opens the {ref}`ChooseOption` context menu if it's not currently open.
 
 Example:
 ```pascal
@@ -102,11 +101,11 @@ end;
 
 
 (*
-### ChooseOption.GetOptions
+## ChooseOption.GetOptions
 ```pascal
 function TRSChooseOption.GetOptions(): TRSChooseOption_OptionArray;
 ```
-Returns a `TRSChooseOption_OptionArray` of all available options in the Choose Option context menu.
+Returns a `TRSChooseOption_OptionArray` of all available options in the {ref}`ChooseOption` context menu.
 This is a internal method, you probably don't need to call it.
 *)
 function TRSChooseOption.GetOptions(): TRSOptionArray;
@@ -134,11 +133,11 @@ begin
 end;
 
 (*
-### ChooseOption.Close
+## ChooseOption.Close
 ```pascal
 function TRSChooseOption.Close(): Boolean;
 ```
-Closes the Choose option context menu if it's open.
+Closes the {ref}`ChooseOption` context menu if it's open.
 Returns True on success.
 
 Example:
@@ -166,14 +165,14 @@ end;
 
 
 (*
-### ChooseOption.HasOption
+## ChooseOption.HasOption
 ```pascal
 function TRSChooseOption.HasOption(text: TStringArray; out option: TRSChooseOption_Option; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean;
 function TRSChooseOption.HasOption(text: TStringArray; out index: Int32; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
 function TRSChooseOption.HasOption(text: TStringArray; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
 function TRSChooseOption.HasOption(text: String; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
 ```
-Methods to check if an option is available in the choose option context menu.
+Methods to check if an option is available in the {ref}`ChooseOption` context menu.
 Returns true if the option specified is available.
 
 Example:
@@ -227,13 +226,13 @@ end;
 
 
 (*
-### ChooseOption.Select
+## ChooseOption.Hover
 ```pascal
-procedure TRSChooseOption.Select(option: TRSChooseOption_Option; mouseAction: Int32 = MOUSE_LEFT);
-function TRSChooseOption.Select(text: TStringArray; mouseAction: Int32 = MOUSE_LEFT; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
-function TRSChooseOption.Select(text: String; mouseAction: Int32 = MOUSE_LEFT; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
+procedure TRSChooseOption.Hover(option: TRSOption);
+function TRSChooseOption.Hover(text: TStringArray; caseSensitive, closeOnFalse: Boolean = True): Boolean; overload;
+function TRSChooseOption.Hover(text: String; caseSensitive, closeOnFalse: Boolean = True): Boolean; overload;
 ```
-Selects the specified option if it exists on the Choose option context menu.
+Hovers the specified option if it exists on the {ref}`ChooseOption` context menu.
 
 Example:
 ```pascal
@@ -262,13 +261,13 @@ end;
 
 
 (*
-### ChooseOption.Select
+## ChooseOption.Select
 ```pascal
 procedure TRSChooseOption.Select(option: TRSChooseOption_Option; mouseAction: Int32 = MOUSE_LEFT);
 function TRSChooseOption.Select(text: TStringArray; mouseAction: Int32 = MOUSE_LEFT; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
 function TRSChooseOption.Select(text: String; mouseAction: Int32 = MOUSE_LEFT; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
 ```
-Selects the specified option if it exists on the Choose option context menu.
+Selects the specified option if it exists on the {ref}`ChooseOption` context menu.
 
 Example:
 ```pascal
@@ -294,7 +293,7 @@ end;
 
 var
 (*
-### ChooseOption variable
+## ChooseOption variable
 Global {ref}`TRSChooseOption` variable.
 *)
   ChooseOption: TRSChooseOption;

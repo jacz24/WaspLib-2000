@@ -5,6 +5,7 @@
 {$IFNDEF SRLT_GEOMETRY_INCLUDED}     {$INCLUDE_ONCE utils/math/geometry.simba}
 {$IFNDEF SRLT_TIME_INCLUDED}         {$INCLUDE_ONCE utils/time.simba}
 {$IFNDEF SRLT_BASE_INCLUDED}         {$INCLUDE_ONCE utils/base.simba}
+{$IFNDEF SRLT_JSON_INCLUDED}         {$INCLUDE_ONCE utils/json.simba}
 {$IFNDEF SRLT_MISC_INCLUDED}         {$INCLUDE_ONCE utils/misc.simba}
 {$IFNDEF SRLT_MOUSE_INCLUDED}        {$INCLUDE_ONCE utils/input/mouse.simba}
 {$IFNDEF SRLT_KEYBOARD_INCLUDED}     {$INCLUDE_ONCE utils/input/keyboard.simba}
@@ -16,7 +17,7 @@
 {$IFNDEF SRLT_WEBGRAPHGEN_INCLUDED}  {$INCLUDE_ONCE utils/webgraphgen.simba}
 {$IFNDEF SRLT_RSCHUNKS_INCLUDED}     {$INCLUDE_ONCE utils/rschunks.simba}
 
-
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}

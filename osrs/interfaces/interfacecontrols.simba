@@ -1,5 +1,5 @@
 (*
-## RSInterface Controls
+# RSInterface Controls
 This page is about controls on runescape interfaces.
 These can be buttons, scrollbars, dropdowns, checkboxes, etc.
 *)
@@ -8,7 +8,7 @@ These can be buttons, scrollbars, dropdowns, checkboxes, etc.
 
 type
 (*
-### TRSButton
+## TRSButton
 RuneScape has several types of buttons, {ref}`TRSButton` can be used for
 several of them but it's made specifically for buttons that have an
 "enabled" and "disabled" state:
@@ -35,7 +35,7 @@ methods.
   TRSButtonArray = array of TRSButton;
 
 (*
-#### TRSButton.Enabled
+### TRSButton.Enabled
 ```pascal
 function TRSButton.Enabled(): Boolean;
 ```
@@ -56,7 +56,7 @@ begin
 end;
 
 (*
-#### TRSButton.WaitEnabled
+### TRSButton.WaitEnabled
 ```pascal
 function TRSButton.WaitEnabled(time: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -74,7 +74,7 @@ begin
 end;
 
 (*
-#### TRSButton.Click
+### TRSButton.Click
 ```pascal
 procedure TRSButton.Click(button: EMouseButton = EMouseButton.LEFT);
 ```
@@ -91,7 +91,7 @@ begin
 end;
 
 (*
-#### TRSButton.Enable
+### TRSButton.Enable
 ```pascal
 function TRSButton.Enable(): Boolean;
 ```
@@ -111,7 +111,7 @@ begin
 end;
 
 (*
-#### TRSButton.Disable
+### TRSButton.Disable
 ```pascal
 function TRSButton.Disable(): Boolean;
 ```
@@ -178,7 +178,7 @@ end;
 
 type
 (*
-### TRSSlider
+## TRSSlider
 A record meant to handle sliders in the game interfaces:
 ```{figure} ../../images/sliders.png
 ```
@@ -190,7 +190,7 @@ A record meant to handle sliders in the game interfaces:
   end;
 
 (*
-#### TRSSlider.GetLevel
+### TRSSlider.GetLevel
 ```pascal
 function TRSSlider.GetLevel(): Integer;
 ```
@@ -214,7 +214,7 @@ begin
 end;
 
 (*
-#### TRSSlider.SetLevel
+### TRSSlider.SetLevel
 ```pascal
 function TRSSlider.SetLevel(level: Integer): Boolean;
 ```
@@ -252,7 +252,7 @@ end;
 
 type
 (*
-### TRSScrollBar
+## TRSScrollBar
 Record to handle the game interface's scrollbars:
 ```{figure} ../../images/scrollbar.png
 ```
@@ -264,7 +264,7 @@ Record to handle the game interface's scrollbars:
   end;
 
 (*
-#### TRSScrollBar.Setup
+### TRSScrollBar.Setup
 ```pascal
 procedure TRSScrollBar.Setup();
 ```
@@ -306,7 +306,7 @@ begin
 end;
 
 (*
-#### TRSScrollBar.IsVisible
+### TRSScrollBar.IsVisible
 ```pascal
 function TRSScrollBar.IsVisible(): Boolean;
 ```
@@ -325,7 +325,7 @@ begin
 end;
 
 (*
-#### TRSScrollBar.GetSlider
+### TRSScrollBar.GetSlider
 ```pascal
 function TRSScrollBar.GetSlider(): TBox;
 ```
@@ -353,7 +353,7 @@ begin
 end;
 
 (*
-#### TRSScrollBar.CanScroll
+### TRSScrollBar.CanScroll
 ```pascal
 function TRSScrollBar.CanScroll(): Boolean;
 ```
@@ -373,7 +373,7 @@ end;
 
 
 (*
-#### TRSScrollBar.GetLevel
+### TRSScrollBar.GetLevel
 ```pascal
 function TRSScrollBar.GetLevel(): Integer;
 ```
@@ -392,7 +392,7 @@ begin
 end;
 
 (*
-#### TRSScrollBar.GetScrollArea
+### TRSScrollBar.GetScrollArea
 ```pascal
 function TRSScrollBar.GetScrollArea(): TBox;
 ```
@@ -413,7 +413,7 @@ begin
 end;
 
 (*
-#### TRSScrollBar.SetLevel
+### TRSScrollBar.SetLevel
 ```pascal
 function TRSScrollBar.SetLevel(value: Integer): Integer;
 ```
@@ -452,7 +452,7 @@ begin
 end;
 
 (*
-#### TRSScrollBar.Scroll
+### TRSScrollBar.Scroll
 ```pascal
 function TRSScrollBar.Scroll(amount: Integer; down: Boolean): Boolean;
 ```
@@ -530,7 +530,7 @@ end;
 
 type
 (*
-### TRSDropDownOption
+## TRSDropDownOption
 Helper record to handle {ref}`TRSDropDown` options.
 *)
   TRSDropDownOption = record
@@ -540,7 +540,7 @@ Helper record to handle {ref}`TRSDropDown` options.
   end;
 
 (*
-### TRSDropDown
+## TRSDropDown
 Record to handle drop downs in the game interfaces:
 ```{figure} ../../images/dropdowns.png
 ```
@@ -556,7 +556,7 @@ Record to handle drop downs in the game interfaces:
 
 
 (*
-#### TRSDropDown.Setup
+### TRSDropDown.Setup
 ```pascal
 procedure TRSDropDown.Setup(options: TStringArray);
 ```
@@ -597,7 +597,7 @@ end;
 
 
 (*
-#### TRSDropDown.IsVisible
+### TRSDropDown.IsVisible
 ```pascal
 function TRSDropDown.IsVisible(): Boolean;
 ```
@@ -615,7 +615,7 @@ end;
 
 
 (*
-#### TRSDropDown.IsOpen
+### TRSDropDown.IsOpen
 ```pascal
 function TRSDropDown.IsOpen(): Boolean;
 ```
@@ -636,7 +636,7 @@ end;
 
 
 (*
-#### TRSDropDown.WaitOpen
+### TRSDropDown.WaitOpen
 ```pascal
 function TRSDropDown.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -655,7 +655,7 @@ end;
 
 
 (*
-#### TRSDropDown.Open
+### TRSDropDown.Open
 ```pascal
 function TRSDropDown.Open(): Boolean;
 ```
@@ -675,7 +675,7 @@ begin
 end;
 
 (*
-#### TRSDropDown.Close
+### TRSDropDown.Close
 ```pascal
 function TRSDropDown.Close(): Boolean;
 ```
@@ -695,7 +695,7 @@ end;
 
 
 (*
-#### TRSDropDown.GetSelected
+### TRSDropDown.GetSelected
 ```pascal
 function TRSDropDown.GetSelected(): Integer;
 ```
@@ -722,7 +722,7 @@ end;
 
 
 (*
-#### TRSDropDown.Select
+### TRSDropDown.Select
 ```pascal
 function TRSDropDown.Select(index: Integer): Boolean;
 function TRSDropDown.Select(option: String): Boolean; overload;

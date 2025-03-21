@@ -1,5 +1,5 @@
 (*
-## Antiban Tasks
+# Antiban Tasks
 Collection of antiban tasks to be used with {ref}`TAntiban`.
 *)
 
@@ -10,7 +10,7 @@ Collection of antiban tasks to be used with {ref}`TAntiban`.
 
 
 (*
-### Built in Antiban Tasks
+## Built in Antiban Tasks
 ```pascal
 procedure TAntiban.SmallRandomMouse;
 procedure TAntiban.RandomMouse;

@@ -1,3 +1,7 @@
+(*
+# Keyboard
+Methods to use the keyboard.
+*)
 {$DEFINE SRLT_KEYBOARD_INCLUDED}
 {$INCLUDE_ONCE SRLT/utils.simba}
 
@@ -11,6 +15,15 @@ type
     const MISC: EKeycodeArray = [EKeyCode.LCONTROL, EKeyCode.CONTROL, EKeyCode.SPACE, EKeyCode.SHIFT, EKeyCode.RSHIFT];
   end;
 
+(*
+## Keyboard.Setup
+```pascal
+procedure TKeyboard.Setup();
+```
+Sets up internal {ref}`TKeyboard` values.
+
+This is automatically called for you on the {ref}`Keyboard variable`.
+*)
 procedure TKeyboard.Setup();
 begin
   Target.KeyOptions.MinPressTime := 30;
@@ -18,7 +31,7 @@ begin
 end;
 
 (*
-### Keyboard.KeyDown
+## Keyboard.KeyDown
 ```pascal
 procedure TKeyboard.KeyDown(key: EKeyCode);
 ```
@@ -31,7 +44,7 @@ begin
 end;
 
 (*
-### Keyboard.KeyUp
+## Keyboard.KeyUp
 ```pascal
 procedure TKeyboard.KeyUp(key: EKeyCode);
 ```
@@ -43,7 +56,7 @@ begin
 end;
 
 (*
-### Keyboard.PressKey
+## Keyboard.PressKey
 ```pascal
 procedure TKeyboard.PressKey(key: Integer);
 ```
@@ -57,7 +70,7 @@ end;
 
 
 (*
-### Keyboard.IsKeyDown
+## Keyboard.IsKeyDown
 ```pascal
 procedure TKeyboard.IsKeyDown(Key: EKeyCode);
 ```
@@ -69,7 +82,7 @@ begin
 end;
 
 (*
-### Keyboard.Send
+## Keyboard.Send
 ```pascal
 procedure TKeyboard.Send(text: String);
 procedure TKeyboard.Send(text: String; keyPressAfter: EKeyCode); overload;
@@ -116,6 +129,10 @@ end;
 
 
 var
+(*
+## Keyboard variable
+Global {ref}`TKeyboard` variable.
+*)
   Keyboard: TKeyboard;
 
 begin

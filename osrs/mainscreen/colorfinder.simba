@@ -1,6 +1,5 @@
 (*
-(ColorFinder)=
-# TColorFinder
+# ColorFinder
 Methods to find and interact with complex color objects on the {ref}`MainScreen`.
 
 * **TColorFinder Zoom**
@@ -79,8 +78,7 @@ CTS2(5526875, 15, 0.19, 0.06), // grey
 
 type
 (*
-(TColorFinderTransformer)=
-## type TColorFinderTransformer
+## TColorFinderTransformer
 Helper record that helps transforming a {ref}`TColorFinder` after finding it's
 colors and/or colors clusters.
 
@@ -256,8 +254,7 @@ end;
 
 type
 (*
-(TColorFinder)=
-## type TColorFinder
+## TColorFinder
 Main record used to find and interact with complex color objects.
 *)
   TColorFinder = record

@@ -1,5 +1,5 @@
 (*
-## RSCacheParser
+# RSCacheParser
 RSCacheParser as the name implies is a record made to parse information from certain files that are part of the OSRS cache.
 - preferences.dat is where most client settings are stored.
 - preferences2.dat I have no idea? some values in address 00000020 seem to change after some times has passed randomly. (related to 6h log maybe!?!?)
@@ -13,22 +13,31 @@ For more information check this file: https://github.com/open-osrs/runelite/blob
 {$DEFINE SRLT_CACHEPARSER_INCLUDED}
 {$I SRLT/osrs.simba}
 
-(*
-### TRSCacheParser
-Type responsible for handling osrs cache parsing.
-*)
 type
-  TRSCacheParser = record
-    Disabled: Boolean;
-    Directory: String;
-    const CACHE: String = PATH_SEP + 'jagexcache' + PATH_SEP + 'oldschool' + PATH_SEP + 'LIVE' + PATH_SEP + 'main_file_cache.dat2';
-    const IDX2:  String = PATH_SEP + 'jagexcache' + PATH_SEP + 'oldschool' + PATH_SEP + 'LIVE' + PATH_SEP + 'main_file_cache.idx2';
-    const PREFERENCES:  String = PATH_SEP + 'jagexcache' + PATH_SEP + 'oldschool' + PATH_SEP + 'LIVE' + PATH_SEP + 'preferences.dat';
-    const PREFERENCES2: String = PATH_SEP + 'jagexcache' + PATH_SEP + 'oldschool' + PATH_SEP + 'LIVE' + PATH_SEP + 'preferences2.dat';
+  TIndexData = record
+    Size: Integer;
+    Sector: Integer;
+  end;
+
+  TIndex = record
+    Sectors: Integer;
+    Data: array of TIndexData;
   end;
 
 (*
-### RSCacheParser.Setup
+## TRSCacheParser
+Type responsible for handling osrs cache parsing.
+*)
+  TRSCacheParser = record
+    Disabled: Boolean;
+    Directory: String;
+    const IDX_FILE:  String = PATH_SEP + 'jagexcache' + PATH_SEP + 'oldschool' + PATH_SEP + 'LIVE' + PATH_SEP + 'main_file_cache.idx';
+    const PREFERENCES:  String = PATH_SEP + 'jagexcache' + PATH_SEP + 'oldschool' + PATH_SEP + 'LIVE' + PATH_SEP + 'preferences.dat';
+    const PREFERENCES2:  String = PATH_SEP + 'jagexcache' + PATH_SEP + 'oldschool' + PATH_SEP + 'LIVE' + PATH_SEP + 'preferences2.dat';
+  end;
+
+(*
+## RSCacheParser.Setup
 ```pascal
 procedure TRSCacheParser.Setup();
 ```
@@ -70,17 +79,38 @@ begin
     Self.Disabled := True;
     Exit;
   end;
-
-
 end;
 
+
+(*
+## Preferences
+This section is about reading the game preferences that get cached.
+There's 2 preferences files:
+- `jagexcache/oldschool/LIVE/preferences.dat`
+- `jagexcache/oldschool/LIVE/preferences2.dat`
+
+The second file is actually not used for anything at the moment but the first one
+specifically has a lot of useful client information, things such as:
+- Brightness level
+- Roofs state
+- Window mode (fixed or resizable)
+- Sound volumes
+- ...
+
+All this information is stored in binary, but with the following methods you can read it easily and
+this is very useful because you can do things like:
+- Check brightness level without opening the options gametab nor the display tab.
+- Know if the roofs are hidden, this is something that can break scripts big time and is notoriously hard to know with color alone.
+*)
 
 (*
 ### RSCacheParser.ReadPreference
 ```pascal
 function TRSCacheParser.ReadPreference(pref: Integer = 1): TByteArray;
 ```
+Internal method to returns the bytes of the preferences file.
 Returns the bytes of the preferences file which can only be 1 or 2.
+It's also useful for debugging
 
 Example:
 ```pascal
@@ -90,47 +120,11 @@ WriteLn RSCacheParser.ReadPreference(1);
 function TRSCacheParser.ReadPreference(pref: Integer = 1): TByteArray;
 begin
   case pref of
-    1: Result := FileReadBytes(Self.Directory + Self.PREFERENCES);
-    2: Result := FileReadBytes(Self.Directory + Self.PREFERENCES2);
+    1: Result := OpenFileReadBytes(Self.Directory + Self.PREFERENCES);
+    2: Result := OpenFileReadBytes(Self.Directory + Self.PREFERENCES2);
   end;
 end;
 
-(*
-### RSCacheParser.ReadIndex
-```pascal
-function TRSCacheParser.ReadIndex(idx: Integer = 2): TByteArray;
-```
-Returns the bytes of the index files.
-
-Example:
-```pascal
-WriteLn RSCacheParser.ReadIndex(2);
-```
-*)
-function TRSCacheParser.ReadIndex(idx: Integer = 2): TByteArray;
-begin
-  WriteLn Self.Directory;
-  case idx of
-    2: Result := FileReadBytes(Self.Directory + Self.IDX2);
-  end;
-end;
-
-(*
-### RSCacheParser.ReadCache
-```pascal
-unction TRSCacheParser.ReadCache(offset: Integer = 0): TByteArray;
-```
-Returns the bytes of the cache file.
-
-Example:
-```pascal
-WriteLn RSCacheParser.ReadCache();
-```
-*)
-function TRSCacheParser.ReadCache(offset: Integer = 0): TByteArray;
-begin
-  Result := FileReadBytesEx(Self.Directory + Self.CACHE, offset);
-end;
 
 (*
 ### RSCacheParser.CountOptions
@@ -138,6 +132,7 @@ end;
 function TRSCacheParser.CountOptions(bytes: TByteArray = []): Integer;
 ```
 Returns the number of options saved in the cache.
+Only used for debugging, you probably don't need this at all.
 
 This is not very useful, AFAIK there's only 2 possible values for this: 0 and 11.
 0 is only if you haven't accepted the EULA in the client.
@@ -150,7 +145,7 @@ WriteLn RSCacheParser.CountOptions();
 function TRSCacheParser.CountOptions(bytes: TByteArray = []): Integer;
 begin
   if bytes = [] then
-    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+    bytes := OpenFileReadBytes(Self.Directory + Self.PREFERENCES);
   if Length(bytes) > 0 then Result := bytes[0];
 end;
 
@@ -170,7 +165,7 @@ WriteLn RSCacheParser.RoofsHidden();
 function TRSCacheParser.RoofsHidden(bytes: TByteArray = []): Boolean;
 begin
   if bytes = [] then
-    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+    bytes := OpenFileReadBytes(Self.Directory + Self.PREFERENCES);
   if Length(bytes) > 0 then Result := Boolean(bytes[1]);
 end;
 
@@ -179,7 +174,7 @@ end;
 ```pascal
 function TRSCacheParser.LoginMusicDisabled(bytes: TByteArray = []): Boolean;
 ```
-Checks if the music is enabled in the login screen.
+Checks if the music is enabled on the login screen.
 
 Example:
 ```pascal
@@ -189,7 +184,7 @@ WriteLn RSCacheParser.LoginMusicDisabled();
 function TRSCacheParser.LoginMusicDisabled(bytes: TByteArray = []): Boolean;
 begin
   if bytes = [] then
-    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+    bytes := OpenFileReadBytes(Self.Directory + Self.PREFERENCES);
   if Length(bytes) > 1 then Result := Boolean(bytes[2]);
 end;
 
@@ -198,7 +193,8 @@ end;
 ```pascal
 function TRSCacheParser.WindowMode(bytes: TByteArray = []): Integer;
 ```
-Returns 1 for fixed mode and 2 for resizable mode. Resizable modern and resizable classic make no difference here.
+Returns 1 for fixed mode and 2 for resizable mode.
+Resizable modern and resizable classic make no difference here.
 
 Example:
 ```pascal
@@ -208,7 +204,7 @@ WriteLn RSCacheParser.WindowMode();
 function TRSCacheParser.WindowMode(bytes: TByteArray = []): Integer;
 begin
   if bytes = [] then
-    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+    bytes := OpenFileReadBytes(Self.Directory + Self.PREFERENCES);
   if Length(bytes) > 2 then Result := bytes[3];
 end;
 
@@ -218,11 +214,11 @@ end;
 ```pascal
 function TRSCacheParser.CountAuthenticators(bytes: TByteArray = []): Integer;
 ```
-Returns the number of authenticators saved for the next 30 days.
+Internal helper method that returns the number of authenticators saved for the next 30 days.
 
 If this is more than 0, you will have 8 bytes for each of the saved authenticators.
 
-This is important to know so we know where the saved username starts if we have saved authenticators so we can skip bytes.
+This is important to know so we know how many bytes we have to skip to continue reading the preferences file.
 
 Example:
 ```pascal
@@ -232,7 +228,7 @@ WriteLn RSCacheParser.CountAuthenticators();
 function TRSCacheParser.CountAuthenticators(bytes: TByteArray = []): Integer;
 begin
   if bytes = [] then
-    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+    bytes := OpenFileReadBytes(Self.Directory + Self.PREFERENCES);
   if Length(bytes) > 4 then Result := bytes[4];
 end;
 
@@ -241,9 +237,13 @@ end;
 ```pascal
 function TRSCacheParser.GetAuthenticators(): TStringArray;
 ```
+No real use other than debugging.
+
 Returns each authenticator saved in a TStringArray.
 
 Each string is 8 bytes like mentioned in {ref}`RSCacheParser.CountAuthenticators` documentation.
+
+Also, you can't just use this to login as someone, don't bother trying.
 
 Example:
 ```pascal
@@ -256,7 +256,7 @@ var
   authStr: String;
 begin
   if bytes = [] then
-    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+    bytes := OpenFileReadBytes(Self.Directory + Self.PREFERENCES);
 
   count := Self.CountAuthenticators(bytes);
   if count = 0 then Exit;
@@ -276,13 +276,15 @@ end;
 ```pascal
 function TRSCacheParser.GetUsernameIndex(bytes: TByteArray = []): Integer;
 ```
-Internal function that returns byte index where the username starts.
-This is required because depending on whether we have authenticators saved or not, the bytes shift.
+Internal helper function that returns byte index where the saved username starts.
+
+This is required because depending on whether we have authenticators saved or not,
+the bytes shift like mentioned in {ref}`RSCacheParser.CountAuthenticators`.
 *)
 function TRSCacheParser.GetUsernameIndex(bytes: TByteArray = []): Integer;
 begin
   if bytes = [] then
-    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+    bytes := OpenFileReadBytes(Self.Directory + Self.PREFERENCES);
 
   Result := 5 + Self.CountAuthenticators(bytes) * 8;
 end;
@@ -292,7 +294,8 @@ end;
 ```pascal
 function TRSCacheParser.GetUsername(bytes: TByteArray = []): String;
 ```
-Returns the saved username in the osrs cache. This is the username you clicked to save on the client when logging in.
+Returns the saved username in the osrs cache.
+This is the username you clicked to save on the client when logging in.
 
 Example:
 ```pascal
@@ -304,7 +307,7 @@ var
   i, startIdx: Int32;
 begin
   if bytes = [] then
-    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+    bytes := OpenFileReadBytes(Self.Directory + Self.PREFERENCES);
 
   startIdx := Self.GetUsernameIndex(bytes);
   for i := startIdx to Length(bytes) do
@@ -320,20 +323,23 @@ end;
 ```pascal
 function TRSCacheParser.UsernameEndIndex(bytes: TByteArray = []): Int32;
 ```
-Internal function used to get the index of the byte of where the username ends.
+Internal helper function used to get the index of the byte of where the username ends.
+We can know the index of the byte by know where it starts with
+{ref}`RSCacheParser.GetUsernameIndex` and iterating all next bytes until we
+find one that is `0` which marks the end of the username.
+
+This is required so we can keep reading the preferences file.
 *)
 function TRSCacheParser.UsernameEndIndex(bytes: TByteArray = []): Int32;
 var
   i: Int32;
 begin
   if bytes = [] then
-    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+    bytes := OpenFileReadBytes(Self.Directory + Self.PREFERENCES);
 
   for i := Self.GetUsernameIndex(bytes) to Length(bytes) do
-  begin
     if bytes[i] = 0 then
       Break;
-  end;
   Result := i + 1;
 end;
 
@@ -352,7 +358,7 @@ WriteLn RSCacheParser.LoginHideUsername();
 function TRSCacheParser.LoginHideUsername(bytes: TByteArray = []): Boolean;
 begin
   if bytes = [] then
-    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+    bytes := OpenFileReadBytes(Self.Directory + Self.PREFERENCES);
 
   Result := Boolean(bytes[Self.UsernameEndIndex(bytes)]);
 end;
@@ -360,21 +366,21 @@ end;
 (*
 ### RSCacheParser.Brightness
 ```pascal
-function TRSCacheParser.Brightness(bytes: TByteArray = []): Int32;
+function TRSCacheParser.Brightness(bytes: TByteArray = []): Integer;
 ```
-Returns the brightness value converted to a 0-100 value.
+Returns the brightness value converted to a 0-100 value (the value in cache if between 50-100 in a byte format).
 
 Example:
 ```pascal
 WriteLn RSCacheParser.Brightness();
 ```
 *)
-function TRSCacheParser.Brightness(bytes: TByteArray = []): Int32;
+function TRSCacheParser.Brightness(bytes: TByteArray = []): Integer;
 var
   i: Int32;
 begin
   if bytes = [] then
-    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+    bytes := OpenFileReadBytes(Self.Directory + Self.PREFERENCES);
 
   i := Self.UsernameEndIndex(bytes) + 1;
   if Length(bytes) >= i then
@@ -398,7 +404,7 @@ var
   i: Integer;
 begin
   if bytes = [] then
-    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+    bytes := OpenFileReadBytes(Self.Directory + Self.PREFERENCES);
 
   i := Self.UsernameEndIndex(bytes) + 2;
   if Length(bytes) >= i then
@@ -422,7 +428,7 @@ var
   i: Integer;
 begin
   if bytes = [] then
-    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+    bytes := OpenFileReadBytes(Self.Directory + Self.PREFERENCES);
 
   i := Self.UsernameEndIndex(bytes) + 3;
   if Length(bytes) >= i then
@@ -446,7 +452,7 @@ var
   i: Integer;
 begin
   if bytes = [] then
-    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+    bytes := OpenFileReadBytes(Self.Directory + Self.PREFERENCES);
 
   i := Self.UsernameEndIndex(bytes) + 4;
   if Length(bytes) >= i then
@@ -458,7 +464,8 @@ end;
 ```pascal
 function TRSCacheParser.Field1247(bytes: TByteArray = []): Integer;
 ```
-I have absolutely no idea what this is. It's supposedly something, but AFAIK it's always 0.
+I have absolutely no idea what this is.
+It's supposedly something, but AFAIK it's always 0.
 
 Example:
 ```pascal
@@ -470,18 +477,86 @@ var
   i: Integer;
 begin
   if bytes = [] then
-    bytes := FileReadBytes(Self.Directory + Self.PREFERENCES);
+    bytes := OpenFileReadBytes(Self.Directory + Self.PREFERENCES);
 
   i := Self.UsernameEndIndex(bytes) + 5;
   if Length(bytes) >= i then
     Result := Integer(bytes[i]);
 end;
 
+
+(*
+## RSCacheParser Indices
+This section is dedicated at reading the cache `idx` files.
+
+This has no use yet and might not be working properly but does seem like it is.
+
+There's very little resources online about this but some useful ones can be found here:
+- [OSRSBox](https://www.osrsbox.com/osrs-cache/)
+- [OpenRS](https://github.com/kfricilone/OpenRS/tree/master/source/net/openrs/cache)
+
+`idx` files are basically pointers to data on the `main_file_cache.dat2` where
+pretty much all the game cache information is stored.
+
+An `idx` file will tell you where on that file the data you want is, and it's size.
+*)
+
+(*
+### RSCacheParser.ReadMediumInt
+```pascal
+function TRSCacheParser.ReadMediumInt(const bytes: TByteArray; offset: Integer): Integer;
+```
+Internal helper method to partially read a sector of an `idx` file that are stored in big endian format.
+*)
+function TRSCacheParser.ReadMediumInt(const bytes: TByteArray; offset: Integer): Integer;
+begin
+  Result := (bytes[offset] shl 16) or (bytes[offset + 1] shl 8) or bytes[offset + 2]; //Read 3 byte big endian int
+end;
+
+(*
+### RSCacheParser.DecodeIndexSector
+```pascal
+function TRSCacheParser.DecodeIndexSector(const bytes: TByteArray; offset: Integer): TIndexData;
+```
+Internal helper method to read a sector of an `idx` file.
+
+`idx` files are split into "sectors" of 6 bytes each. Each sector contains information about:
+- size of the data this sector points to
+- where that data starts.
+*)
+function TRSCacheParser.DecodeIndexSector(const bytes: TByteArray; offset: Integer): TIndexData;
+begin
+  Result.Size := Self.ReadMediumInt(bytes, offset);
+  Result.Sector := Self.ReadMediumInt(bytes, offset + 3);
+end;
+
+(*
+### RSCacheParser.ReadIdx
+```pascal
+function TRSCacheParser.ReadIdx(idx: Integer): TIndex;
+```
+Read an `idx` file and return it's information as a `TIndex`.
+
+Example:
+```pascal
+WriteLn RSCacheParser.ReadIndex(255);
+```
+*)
+function TRSCacheParser.ReadIndex(idx: Integer): TIndex;
+var
+  bytes: TByteArray;
+  i: Integer;
+begin
+  bytes := OpenFileReadBytes(Self.Directory + Self.IDX_FILE + ToStr(idx));
+
+  Result.Sectors := Length(bytes) div 6;
+  for i := 0 to Result.Sectors - 1 do
+    Result.Data += Self.DecodeIndexSector(bytes, i * 6);
+end;
+
 var
 (*
-### RSCacheParser variable
+## RSCacheParser variable
 Global {ref}`TRSCacheParser` variable.
 *)
   RSCacheParser: TRSCacheParser;
-
-

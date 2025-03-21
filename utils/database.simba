@@ -1,8 +1,5 @@
 (*
-## Database
-
-Credits: Dinis Bela Grilo (Torwent)
-
+# Database
 TDatabase is used to create a extremely basic but effective database.
 You can this when you have a large set of data and need to retrieve values very fast.
 

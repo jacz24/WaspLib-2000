@@ -1,5 +1,5 @@
 (*
-## Minimap
+# Minimap
 Methods to interact with the minimap.
 ```{figure} ../../images/minimap.png
 The minimap interface.
@@ -11,7 +11,7 @@ The minimap interface.
 
 type
 (*
-### ERSMinimapDots
+## ERSMinimapDots
 ```pascal
 ERSMinimapDot  = enum(PLAYER, NPC, ITEM);
 ```
@@ -22,7 +22,7 @@ Enum representing the available minimap dots.
   TRSMinimapDotArray = array [ERSMinimapDot] of TPointArray;
 
 (*
-### ERSMinimapOrb
+## ERSMinimapOrb
 ```pascal
 ERSMinimapOrb  = enum(HITPOINTS, PRAYER, ENERGY, SPECIAL);
 ```
@@ -31,7 +31,7 @@ Enum representing the 4 available minimap orbs.
   ERSMinimapOrb  = enum(HITPOINTS, PRAYER, ENERGY, SPECIAL);
 
 (*
-### TRSMinimap
+## TRSMinimap
 Main record used to interact with the {ref}`Minimap`.
 *)
   TRSMinimap = record
@@ -60,7 +60,7 @@ Main record used to interact with the {ref}`Minimap`.
   end;
 
 (*
-### Minimap.SetupInterface
+## Minimap.SetupInterface
 ```pascal
 procedure TRSMinimap.SetupInterface();
 ```
@@ -120,7 +120,7 @@ begin
 end;
 
 (*
-### Minimap.Contains
+## Minimap.Contains
 ```pascal
 function TRSMinimap.Contains(pt: TPoint): Boolean;
 ```
@@ -137,7 +137,7 @@ begin
 end;
 
 (*
-### Minimap.Filter
+## Minimap.Filter
 ```pascal
 function TRSMinimap.Filter(tpa: TPointArray): TPointArray;
 ```
@@ -156,7 +156,7 @@ end;
 
 
 (*
-### Minimap.RandomPoint
+## Minimap.RandomPoint
 ```pascal
 function TRSMinimap.RandomPoint(pt: TPoint; randomness: Integer): TPoint;
 ```
@@ -183,7 +183,7 @@ end;
 
 
 (*
-### Minimap.GetCompassAngle
+## Minimap.GetCompassAngle
 ```pascal
 function TRSMinimap.GetCompassAngle(asDegrees: Boolean = True): Single;
 ```
@@ -228,7 +228,7 @@ end;
 
 
 (*
-### Minimap.SetCompassAngle
+## Minimap.SetCompassAngle
 ```pascal
 function TRSMinimap.SetCompassAngleEx(degrees, accuracy: Single): Boolean;
 function TRSMinimap.SetCompassAngle(degrees: Single): Boolean;
@@ -311,7 +311,7 @@ end;
 
 
 (*
-### Minimap.GetLevel
+## Minimap.GetLevel
 ```pascal
 function TRSMinimap.GetLevel(orb: ERSMinimapOrb): Integer;
 ```
@@ -331,7 +331,7 @@ end;
 
 
 (*
-### Minimap Orb Status
+## Minimap Orb Status
 ```pascal
 function TRSMinimap.Poisoned(): Boolean;
 function TRSMinimap.Envenomed(): Boolean;
@@ -385,7 +385,7 @@ end;
 
 
 (*
-### Minimap.Toggle
+## Minimap.Toggle
 ```pascal
 function TRSMinimap.Toggle(orb: ERSMinimapOrb): Boolean;
 ```
@@ -424,7 +424,7 @@ end;
 
 
 (*
-### Minimap.FindFlag
+## Minimap.FindFlag
 ```pascal
 function TRSMinimap.FindFlag(out pt: TPoint): Boolean;
 ```
@@ -444,7 +444,7 @@ begin
 end;
 
 (*
-### Minimap.HasFlag
+## Minimap.HasFlag
 ```pascal
 function TRSMinimap.HasFlag(): Boolean;
 ```
@@ -464,7 +464,7 @@ begin
 end;
 
 (*
-### Minimap.WaitFlag
+## Minimap.WaitFlag
 ```pascal
 function TRSMinimap.WaitFlag(time: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -486,7 +486,7 @@ end;
 
 
 (*
-### Minimap.Normalize
+## Minimap.Normalize
 ```pascal
 function TRSMinimap.Normalize(pt: TPoint; angle: Single): TPoint;
 function TRSMinimap.NormalizeEx(vector: Vector2; angle: Single): Vector2;
@@ -524,7 +524,7 @@ end;
 
 
 (*
-### Minimap.GetDots
+## Minimap.GetDots
 ```pascal
 function TRSMinimap.GetDots(dot: ERSMinimapDot; bounds: TBox): TPointArray;
 function TRSMinimap.GetDots(dot: ERSMinimapDot): TPointArray; overload;
@@ -584,7 +584,7 @@ end;
 
 
 (*
-### Minimap.CleanImage
+## Minimap.CleanImage
 ```pascal
 function TRSMinimap.CleanImage(img: TImage): TImage;
 ```
@@ -665,7 +665,7 @@ begin
 end;
 
 (*
-### Minimap.GetCleanImage
+## Minimap.GetCleanImage
 ```pascal
 function TRSMinimap.GetCleanImage(angle: Single = $FFFF): TImage;
 ```
@@ -694,7 +694,7 @@ begin
 end;
 
 (*
-### Minimap.ScaleMinimap
+## Minimap.ScaleMinimap
 ```pascal
 function TRSMinimap.ScaleMinimap(img: TImage; scaling: Integer; radius: Integer = 67): TImage;
 ```
@@ -745,7 +745,7 @@ end;
 
 
 (*
-### Minimap.IsPlayerMoving
+## Minimap.IsPlayerMoving
 ```pascal
 function TRSMinimap.IsPlayerMoving(minShift: Integer = 500): Boolean;
 ```
@@ -764,7 +764,7 @@ end;
 
 var
 (*
-### Minimap variable
+## Minimap variable
 Global {ref}`TRSMinimap` variable.
 *)
   Minimap: TRSMinimap;

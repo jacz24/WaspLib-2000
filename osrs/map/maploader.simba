@@ -1,5 +1,5 @@
 (*
-## MapLoader
+# MapLoader
 This file is responsible for loading chunk maps for TRSMap.
 It was made from scratch but heavily inspired in the original
 TRSWalker by Slacky and it's future iterations made by Olly.
@@ -20,7 +20,7 @@ Credits: Torwent
 
 type
 (*
-### TMapLoader Enums
+## TMapLoader Enums
 ```pascal
 ERSMap = enum(NORMAL, HEIGHT, COLLISION);
 ERSMapJSON = enum(OBJECTS, NPCS);
@@ -31,7 +31,7 @@ ERSMapJSON = enum(OBJECTS, NPCS);
 
 (*
 (TRSMapRegion)=
-## type TRSMapRegion
+# type TRSMapRegion
 Map region record, responsible for storing the map region/chunk data.
 ```{note}
 This is an internal type. Don't use it if you don't know what you are doing.
@@ -47,7 +47,7 @@ This is an internal type. Don't use it if you don't know what you are doing.
 
 (*
 (TRSMapLoader)=
-## type TRSMapLoader
+# type TRSMapLoader
 TRSMapLoader is what's responsible for loading a map for TRSMap based on chunks.
 ```{note}
 This is an internal type. Don't use it if you don't know what you are doing.
@@ -275,7 +275,7 @@ end;
 
 
 (*
-### TRSChunkLoader.GetBitmap
+## TRSChunkLoader.GetBitmap
 ```pascal
 function TRSChunkLoader.GetBitmap(chunk: String; plane: Integer; map: ERSMap): TMufasaBitmap;
 function TRSChunkLoader.GetBitmap(chunk: TPoint; plane: Integer; map: ERSMap): TMufasaBitmap; overload;
@@ -328,7 +328,7 @@ end;
 
 
 (*
-### MapLoader.GetMap
+## MapLoader.GetMap
 ```pascal
 function TRSMapLoader.GetMap(chunks: TPointArray; plane: Integer; map: ERSMap): TImage;
 ```
@@ -380,7 +380,7 @@ end;
 
 
 (*
-### MapLoader.GetGraph
+## MapLoader.GetGraph
 ```pascal
 function TRSMapLoader.GetGraph(name: String; plane: Integer; map: TMufasaBitmap): TWebGraphV2;
 ```

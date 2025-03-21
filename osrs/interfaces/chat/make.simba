@@ -1,5 +1,5 @@
 (*
-## Make
+# Make
 The "Make" menu is the {ref}`Chat` box menu that pops up when you attempt to
 craft certain items in OldSchool RuneScape.
 ```{figure} ../../images/make_interface.png
@@ -11,7 +11,7 @@ craft certain items in OldSchool RuneScape.
 
 type
 (*
-### TRSMakeItem
+## TRSMakeItem
 Helper record used to cache make menu items.
 *)
   TRSMakeItem = record
@@ -20,7 +20,7 @@ Helper record used to cache make menu items.
   end;
 
 (*
-### TRSMake
+## TRSMake
 Main record used to interact with the {ref}`Make` menu.
 *)
   TRSMake = record
@@ -34,7 +34,7 @@ Main record used to interact with the {ref}`Make` menu.
   end;
 
 (*
-### Make.SetupInterface
+## Make.SetupInterface
 ```pascal
 procedure TRSMake.SetupInterface();
 ```
@@ -62,7 +62,7 @@ begin
 end;
 
 (*
-### Make.IsOpen
+## Make.IsOpen
 ```pascal
 function TRSMake.IsOpen(): Boolean;
 ```
@@ -79,7 +79,7 @@ begin
 end;
 
 (*
-### Make.WaitOpen
+## Make.WaitOpen
 ```pascal
 function TRSMake.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -98,7 +98,7 @@ end;
 
 
 (*
-### Make.GetItemBoxes
+## Make.GetItemBoxes
 ```pascal
 function TRSMake.GetItemBoxes(): TBoxArray;
 ```
@@ -128,7 +128,7 @@ end;
 
 
 (*
-### Make.HasHint
+## Make.HasHint
 ```pascal
 function TRSMake.HasHint(): Boolean;
 ```
@@ -146,7 +146,7 @@ begin
 end;
 
 (*
-### Make.WaitHint
+## Make.WaitHint
 ```pascal
 function TRSMake.WaitHint(time: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -165,7 +165,7 @@ begin
 end;
 
 (*
-### Make.GetHintBox
+## Make.GetHintBox
 ```pascal
 function TRSMake.GetHintBox(): TBox;
 ```
@@ -187,7 +187,7 @@ begin
 end;
 
 (*
-### Make.ReadHint
+## Make.ReadHint
 ```pascal
 function TRSMake.ReadHint(): String;
 ```
@@ -204,7 +204,7 @@ begin
 end;
 
 (*
-### Make.CloseHint
+## Make.CloseHint
 ```pascal
 function TRSMake.CloseHint(): Boolean;
 ```
@@ -230,7 +230,7 @@ begin
 end;
 
 (*
-### Make.QuantityButtons
+## Make.QuantityButtons
 The quantity buttons are dynamic there can be anywhere from 1 to 6 available.
 
 You have their coordinates available at anytime through the
@@ -248,7 +248,7 @@ are visible which you can do easily through the next methods.
 *)
 
 (*
-#### Make.IndexOfQuantity
+### Make.IndexOfQuantity
 ```pascal
 function TRSMake.IndexOfQuantity(amount: Integer): Integer;
 ```
@@ -294,7 +294,7 @@ begin
 end;
 
 (*
-#### Make.IndexOfQuantity
+### Make.IndexOfQuantity
 ```pascal
 function TRSMake.IndexOfQuantity(amount: Integer): Integer;
 ```
@@ -314,7 +314,7 @@ end;
 
 
 (*
-#### Make.SetQuantity
+### Make.SetQuantity
 ```pascal
 function TRSMake.SetQuantity(amount: Integer): Boolean;
 ```
@@ -348,7 +348,7 @@ end;
 
 
 (*
-### Make._SelectHelper
+## Make._SelectHelper
 ```pascal
 function TRSMake._SelectHelper(index: Integer; boxes: TBoxArray; keyboardProbability: Single): Boolean;
 ```
@@ -380,7 +380,7 @@ begin
 end;
 
 (*
-### Make.Select
+## Make.Select
 ```pascal
 function TRSMake.Select(index, quantity: Integer; keyboardProbability: Single = -1): Boolean;
 function TRSMake.Select(item: String; quantity: Integer; keyboardProbability: Single = -1): Boolean; overload;
@@ -469,7 +469,7 @@ end;
 
 var
 (*
-### Make variable
+## Make variable
 Global {ref}`TRSMake` variable.
 *)
   Make: TRSMake;

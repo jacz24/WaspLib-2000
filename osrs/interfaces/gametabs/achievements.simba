@@ -1,5 +1,5 @@
 (*
-## Achievements
+# Achievements
 This page is dedicated to the achievements game tab and methods to interact with it.
 ```{figure} ../../images/achievements.png
 ```
@@ -9,7 +9,7 @@ This page is dedicated to the achievements game tab and methods to interact with
 
 type
 (*
-### ERSAchievementTab
+## ERSAchievementTab
 ```pascal
 ERSAchievementTab = enum(SUMMARY, QUESTS, DIARIES);
 ```
@@ -18,7 +18,7 @@ An enum representing each of the {ref}`Achievements` gametab tabs.
   ERSAchievementTab = enum(SUMMARY, QUESTS, DIARIES, ADVENTURE_PATHS);
 
 (*
-### ERSAchievementDiary
+## ERSAchievementDiary
 ```pascal
 ERSAchievementDiary = enum(
   ARDOUGNE,
@@ -53,7 +53,7 @@ An enum representing each of the achievement diaries available.
   );
 
 (*
-### TRSAchievementsSummary
+## TRSAchievementsSummary
 Helper record used to interact with the {ref]`Achievements` gametab "Summary" tab:
 ```{figure} ../../images/achievements.png
 ```
@@ -64,7 +64,7 @@ Helper record used to interact with the {ref]`Achievements` gametab "Summary" ta
   end;
 
 (*
-### TRSAchievementsSummary.SetupGameTab
+## TRSAchievementsSummary.SetupGameTab
 ```pascal
 procedure TRSAchievementsSummary.SetupGameTab();
 ```
@@ -94,7 +94,7 @@ end;
 
 type
 (*
-### TRSQuestList
+## TRSQuestList
 Helper record used to interact with the {ref]`Achievements` gametab "Quests" tab:
 ```{figure} ../../images/achievements_quests.png
 ```
@@ -104,7 +104,7 @@ Helper record used to interact with the {ref]`Achievements` gametab "Quests" tab
   end;
 
 (*
-### TRSQuestList.SetupGameTab
+## TRSQuestList.SetupGameTab
 ```pascal
 procedure TRSQuestList.SetupGameTab();
 ```
@@ -121,7 +121,7 @@ end;
 
 type
 (*
-### TRSDiarySlot
+## TRSDiarySlot
 Helper record used to interact with a {ref}`TRSDiaryList` slot.
 *)
   TRSDiarySlot = record
@@ -130,7 +130,7 @@ Helper record used to interact with a {ref}`TRSDiaryList` slot.
   end;
 
 (*
-### TRSDiaryList
+## TRSDiaryList
 Helper record used to interact with the {ref]`Achievements` gametab "Diaries" tab:
 ```{figure} ../../images/achievements_diaries.png
 ```
@@ -141,7 +141,7 @@ Helper record used to interact with the {ref]`Achievements` gametab "Diaries" ta
   end;
 
 (*
-### TRSDiaryList.SetupGameTab
+## TRSDiaryList.SetupGameTab
 ```pascal
 procedure TRSDiaryList.SetupGameTab();
 ```
@@ -162,7 +162,7 @@ begin
 end;
 
 (*
-### TRSDiaryList.GetSlots
+## TRSDiaryList.GetSlots
 ```pascal
 function TRSDiaryList.GetSlots(): array of TRSDiarySlot;
 ```
@@ -219,7 +219,7 @@ begin
 end;
 
 (*
-### TRSDiaryList.GetSlot
+## TRSDiaryList.GetSlot
 ```pascal
 function TRSDiaryList.GetSlot(diary: ERSAchievementDiary): TRSDiarySlot;
 ```
@@ -260,7 +260,7 @@ end;
 
 
 (*
-### TRSDiaryList.ScrollTo
+## TRSDiaryList.ScrollTo
 ```pascal
 procedure TRSDiaryList.ScrollTo(diary : ERSAchievementDiary);
 ```
@@ -284,7 +284,7 @@ end;
 
 type
 (*
-### TRSAchievements
+## TRSAchievements
 Main record used to interact with the {ref]`Achievements` gametab.
 
 Each tab has it's own specific variable:
@@ -307,7 +307,7 @@ WriteLn Achievements.Diaries.GetLevel(ERSAchievementDiary.ARDOUGNE);
   end;
 
 (*
-### Achievements.SetupGameTab();
+## Achievements.SetupGameTab();
 ```pascal
 procedure TRSAchievements.SetupGameTab();
 ```
@@ -328,7 +328,7 @@ begin
 end;
 
 (*
-### Achievements.IsOpen
+## Achievements.IsOpen
 ```pascal
 function TRSAchievements.IsOpen(): Boolean;
 ```
@@ -345,7 +345,7 @@ begin
 end;
 
 (*
-### Achievements.Open
+## Achievements.Open
 ```pascal
 function TRSAchievements.Open(): Boolean;
 ```
@@ -362,7 +362,7 @@ begin
 end;
 
 (*
-### Achievements Tabs
+## Achievements Tabs
 The {ref}`Achievements` tabs are dynamic as one of them can be hidden away on certain types of accounts:
 ![3 tabs](../../images/achievements_tabs3.png) ![4 tabs](../../images/achievements_tabs4.png)
 To handle this, you have the 2 following methods, they are used automatically for you on the
@@ -370,7 +370,7 @@ To handle this, you have the 2 following methods, they are used automatically fo
 *)
 
 (*
-#### Achievements.CountTabs
+### Achievements.CountTabs
 ```pascal
 function TRSAchievements.CountTabs(): Integer;
 ```
@@ -382,7 +382,7 @@ begin
 end;
 
 (*
-#### Achievements.SetupTabs
+### Achievements.SetupTabs
 ```pascal
 procedure TRSAchievements.SetupTabs();
 ```
@@ -400,7 +400,7 @@ begin
 end;
 
 (*
-### Achievements.GetTab
+## Achievements.GetTab
 ```pascal
 function TRSAchievements.GetTab(): ERSAchievementsTab;
 ```
@@ -428,7 +428,7 @@ begin
 end;
 
 (*
-### Achievements.OpenTab
+## Achievements.OpenTab
 ```pascal
 function TRSAchievements.OpenTab(tab: ERSAchievementsTab): Boolean;
 ```
@@ -464,13 +464,13 @@ end;
 
 var
 (*
-### Achievements variable
+## Achievements variable
 Global {ref}`TRSAchivements` variable.
 *)
   Achievements: TRSAchievements;
 
 (*
-### TRSDiaryList.GetLevel
+## TRSDiaryList.GetLevel
 ```pascal
 function TRSDiaryList.GetLevel(diary: ERSAchievementDiary): Integer;
 ```

@@ -1,6 +1,8 @@
 (*
-## Equipment
-Methods to interact with the Equipment tab.
+# Equipment
+Methods to interact with the Equipment gametab.
+```{figure} ../../images/equipment.png
+```
 *)
 {$DEFINE SRLT_EQUIPMENT_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
@@ -8,7 +10,7 @@ Methods to interact with the Equipment tab.
 
 type
 (*
-### ERSEquipmentSlot
+## ERSEquipmentSlot
 ```pascal
 ERSEquipment = (
   HEAD, SECONDARY_AMMO, CAPE, NECK, AMMO, WEAPON, BODY, SHIELD, LEGS, HANDS, FEET, RING
@@ -21,7 +23,7 @@ Enumerator of the equipment slots.
   );
 
 (*
-### ERSEquipmentButton
+## ERSEquipmentButton
 ```pascal
 ERSEquipmentButton = (STATS, PRICES, DEATH, FOLLOWER);
 ```
@@ -30,7 +32,7 @@ Enumerator of the equipment buttons.
   ERSEquipmentButton = enum(STATS, PRICES, DEATH, FOLLOWER);
 
 (*
-### TRSEquipment
+## TRSEquipment
 Main record reponsible for handling the equipment gametab.
 *)
   TRSEquipment = record
@@ -40,7 +42,7 @@ Main record reponsible for handling the equipment gametab.
   end;
 
 (*
-### Equipment.SetupGameTab
+## Equipment.SetupGameTab
 ```pascal
 procedure TRSEquipment.SetupGameTab();
 ```
@@ -72,7 +74,7 @@ begin
 end;
 
 (*
-### Equipment.IsOpen
+## Equipment.IsOpen
 ```pascal
 function TRSEquipment.IsOpen(): Boolean;
 ```
@@ -89,7 +91,7 @@ begin
 end;
 
 (*
-### Equipment.Open
+## Equipment.Open
 ```pascal
 function TRSEquipment.Open(): Boolean;
 ```
@@ -108,7 +110,7 @@ end;
 
 var
 (*
-### Equipment variable
+## Equipment variable
 Global {ref}`TRSEquipment` variable.
 *)
   Equipment: TRSEquipment;

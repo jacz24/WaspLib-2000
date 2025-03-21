@@ -1,6 +1,11 @@
 (*
-## GameTabs
+# GameTabs
 Methods to interact with the gametab buttons.
+
+```{figure} ../../images/gametabs_compact.png
+```
+```{figure} ../../images/gametabs_flat.png
+```
 
 By default it will attempt to use "F-Keys" to open gametabs.
 You can turn this off by setting `TRSGameTabs.KeybindsEnabled` to `False`.
@@ -20,8 +25,7 @@ the correct "F-Key".
 
 type
 (*
-(ERSGameTab)=
-## type ERSGameTab
+## ERSGameTab
 ```pascal
 ERSGameTab = enum(NONE, COMBAT, STATS, ACHIEVEMENTS, INVENTORY, EQUIPMENT, PRAYER, MAGIC, CLAN, FRIENDS, ACCOUNT, LOGOUT, OPTIONS, EMOTES, MUSIC);
 ```
@@ -33,7 +37,7 @@ ERSGameTab = enum(NONE, COMBAT, STATS, ACHIEVEMENTS, INVENTORY, EQUIPMENT, PRAYE
 
 (*
 (TRSGameTabs)=
-## type TRSGameTabs
+# type TRSGameTabs
 Main record responsible for handling the gametabs.
 *)
   TRSGameTabs = record
@@ -46,7 +50,7 @@ Main record responsible for handling the gametabs.
   end;
 
 (*
-### GameTabs.SetupInterface
+## GameTabs.SetupInterface
 ```pascal
 procedure TRSGameTabs.SetupInterface();
 ```
@@ -121,7 +125,7 @@ begin
 end;
 
 (*
-### GameTabs.GetCurrent
+## GameTabs.GetCurrent
 ```pascal
 function TRSGameTabs.GetCurrent(): ERSGametab;
 ```
@@ -129,7 +133,9 @@ Get the currently active ERSGameTab.
 
 Example:
 ```pascal
-WriteLn GameTabs.GetCurrent();
+ShowOnClient(GameTabs.Tabs[GameTabs.GetCurrent()]);
+```
+```{figure} ../../images/gametabs_selected.png
 ```
 *)
 function TRSGameTabs.GetCurrent(): ERSGametab;
@@ -147,7 +153,7 @@ end;
 
 
 (*
-### GameTabs.IsOpen
+## GameTabs.IsOpen
 ```pascal
 function TRSGameTabs.IsOpen(tab: ERSGameTab): Boolean;
 ```
@@ -164,7 +170,7 @@ begin
 end;
 
 (*
-### GameTabs.WaitOpen
+## GameTabs.WaitOpen
 ```pascal
 function TRSGameTabs.WaitOpen(tab: ERSGameTab; time: Integer = 600; interval: Integer = -1): Boolean;
 ```
@@ -184,7 +190,7 @@ end;
 
 
 (*
-### GameTabs.FKeyOpen
+## GameTabs.FKeyOpen
 ```pascal
 function TRSGameTabs.FKeyOpen(tab: ERSGameTab): Boolean;
 ```
@@ -237,7 +243,7 @@ end;
 
 
 (*
-### GameTabs.Open
+## GameTabs.Open
 ```pascal
 function TRSGameTabs.Open(tab: ERSGameTab; fkeyProbability: Single = -1): Boolean;
 ```
@@ -280,14 +286,14 @@ end;
 var
 (*
 (GameTabs variable)=
-## var GameTabs
+# var GameTabs
 Global {ref}`TRSGameTabs` variable.
 *)
   GameTabs: TRSGameTabs;
 
 
 (*
-## GameTab
+# GameTab
 Gametabs interfaces core.
 Whenever you want to use gametab coordinates that are not unique to a specific
 tab you should use this.
@@ -297,13 +303,13 @@ Check {ref}`TRSInterface` to see what coordinates it has available.
 type
 (*
 (TRSGameTab)=
-## type TRSGameTab
+# type TRSGameTab
 GameTab type that holds the core coordinates of a gametab.
 *)
   TRSGameTab = type TRSInterface;
 
 (*
-### GameTab.SetupInterface
+## GameTab.SetupInterface
 ```pascal
 procedure TRSGameTab.SetupInterface();
 ```

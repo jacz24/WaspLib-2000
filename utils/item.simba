@@ -1,3 +1,7 @@
+(*
+# Item
+Page dedicated to runescape items and misc functions related to them.
+*)
 {$DEFINE SRLT_ITEM_INCLUDED}
 {$INCLUDE_ONCE SRLT/utils.simba}
 
@@ -9,7 +13,7 @@ type
   ERSItemQuantity = enum(ONE, FIVE, TEN, CUSTOM, ALL);
 
 (*
-### Bank.Integer2Quantity
+## Bank.Integer2Quantity
 ```pascal
 function TRSBank.Integer2Quantity(quantity: Integer): ERSItemQuantity;
 ```
@@ -50,7 +54,7 @@ begin
 end;
 
 (*
-### TRSItem.SimplifyName
+## TRSItem.SimplifyName
 ```pascal
 function TRSItem.SimplifyName(): String;
 ```

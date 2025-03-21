@@ -1,5 +1,5 @@
 (*
-## Map
+# Map
 This file is responsible for the TRSMap positioning system.
 It was made from scratch by Torwent but heavily inspired in the original
 TRSWalker by Slacky and it's future iterations made by Olly.
@@ -11,8 +11,7 @@ Without them, this wouldn't be possible.
 
 type
 (*
-(TRSPosition)=
-## type TRSPosition
+## TRSPosition
 Record holding a player's full position:
 - X, Y coordinate
 - Z which is the player height on the current heightmap
@@ -24,7 +23,7 @@ Record holding a player's full position:
   end;
 
 (*
-### type TRSMapSample
+## TRSMapSample
 Record used to customize the sample retrieved from the minimap for TRSMap.
 *)
   TRSMapSample = record
@@ -38,8 +37,7 @@ end;
 
 type
 (*
-(TRSMap)=
-## type TRSMap
+## TRSMap
 ```pascal
 TRSMap = record
     Walker: TRSWalkerV2;
@@ -86,7 +84,7 @@ function TRSMap.Height(pt: TPoint = [0,0]): Single; forward;
 
 
 (*
-### Map.InternalSetup
+## Map.InternalSetup
 ```pascal
 procedure TRSMap.InternalSetup();
 ```
@@ -130,7 +128,17 @@ begin
 end;
 
 
-
+(*
+## Map.InternalSetup
+```pascal
+procedure TRSMap.SetupEx(boxes: TBoxArray; planes: TIntegerArray = [0]; downscale: Integer = 8);
+procedure TRSMap.Setup(chunks: array of TRSMapChunk; downscale: Integer = 8);
+procedure TRSMap.Setup(chunk: TRSMapChunk; downscale: Integer = 8); overload;
+procedure TRSMap.Setup(echunks: set of ERSChunk; downscale: UInt32 = 8); overload;
+procedure TRSMap.Setup(echunk: ERSChunk; downscale: UInt32 = 8); overload;
+```
+Sets up a {ref}`TRSMap`.
+*)
 procedure TRSMap.SetupEx(boxes: TBoxArray; planes: TIntegerArray = [0]; downscale: Integer = 8);
 var
   i: Int32;
@@ -179,9 +187,8 @@ begin
 end;
 
 
-
 (*
-### Map.ScaledSearch
+## Map.ScaledSearch
 ```pascal
 function TRSMap.ScaledSearch(img: TImage): TPointArray;
 ```
@@ -234,7 +241,7 @@ begin
 end;
 
 (*
-### Map.FullSearch
+## Map.FullSearch
 ```pascal
 function TRSMap.FullSearch(template, world: TImage; position: TPoint; out match: Single): TPoint;
 ```
@@ -280,7 +287,7 @@ begin
 end;
 
 (*
-### Map.Position
+## Map.Position
 ```pascal
 function TRSMap.Position(): TPoint;
 function TRSMap.FullPosition(): TRSPosition;
@@ -353,7 +360,7 @@ end;
 
 
 (*
-### Map.Height
+## Map.Height
 ```pascal
 function TRSMap.Height(p: TPoint = [-1,-1]; global: Boolean): Single;
 function TRSMap.Height(p: TPoint = [-1,-1]): Single; overload;
@@ -412,7 +419,7 @@ end;
 
 
 (*
-### Map.DebugPosition
+## Map.DebugPosition
 ```pascal
 function TRSMap.DebugPosition(): TPoint;
 ```
@@ -519,38 +526,9 @@ begin
   Target.UnFreezeImage();
 end;
 
-
+var
 (*
-### TRSMap.Debug
-```pascal
-procedure TRSMap.Debug(map: ERSMapType = ERSMapType.NORMAL; graph: Boolean = False);
-```
-Displays one of the maps loaded. You can optionally overlay the webgraph on top of you map.
-
-Example:
-```pascal
-Map.SetupChunks([[18,56,22,60], [42,50, 46, 45]], [0, 1]);
-Map.Debug(ERSMapType.HEIGHT);
-```
+## Map variable
+Global {ref}`TRSMap` variable.
 *)
-procedure TRSMap.SimpleDebug(emap: ERSMap; showGraph: Boolean = True);
-var
-  img: TImage;
-begin
-  case emap of
-    ERSMap.NORMAL:    img := Self.Loader.Map.Copy();
-    ERSMap.HEIGHT:    img := Self.Loader.Heightmap.Copy();
-    ERSMap.COLLISION: img := Self.Loader.Collision.Copy();
-  end;
-
-  if showGraph then
-  begin
-    Self.Loader.Graph.Draw(img);
-  end;
-
-  img.Show();
-  img.Free();
-end;
-
-var
   Map: TRSMap;

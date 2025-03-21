@@ -1,6 +1,6 @@
 (*
-## Interface
-Interface core .
+# Interface
+The core of interface handling.
 *)
 
 {$DEFINE SRLT_INTERFACE_CORE_INCLUDED}
