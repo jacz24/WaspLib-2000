@@ -207,7 +207,7 @@ end;
 ```pascal
 procedure TMouse.Hold(button: EMouseButton);
 ```
-Holds the desired mouse button down. The button will continue to be held down until {ref}`Mouse.Release()` is called.
+Holds the desired mouse button down. The button will continue to be held down until {ref}`Mouse.Release` is called.
 
 Example:
 ```pascal
