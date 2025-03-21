@@ -249,7 +249,7 @@ function TRSGameTabs.Open(tab: ERSGameTab; fkeyProbability: Single = -1): Boolea
 ```
 Attempts to open the specified `tab` gametab.
 If `TRSGameTabs.KeybindsEnabled` is true, we might attempt to open the tab
-with {ref}`TRSGameTabs.FKeyOpen`, subject to `fkeyProbability`.
+with {ref}`GameTabs.FKeyOpen`, subject to `fkeyProbability`.
 
 Example:
 ```pascal

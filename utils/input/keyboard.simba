@@ -8,6 +8,10 @@ Methods to use the keyboard.
 type
   EKeycodeArray = array of EKeyCode;
 
+(*
+## TKeyboard
+Main record responsible with handling {ref}`Keyboard` input.
+*)
   TKeyboard = record
     LastKey: EKeyCode;
     const ARROWS: EKeycodeArray = [EKeyCode.LEFT, EKeycode.UP, EKeycode.Right, EKeycode.DOWN];

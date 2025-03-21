@@ -1,5 +1,9 @@
 (*
-Almost exact copy of what SRL-Development had.
+# Vector
+All sort of vector math.
+To put it simply, a `Vector` is a more precise version of `TPoint`.
+
+Almost exact copy of what SRLT-T and SRL-Development had.
 All credits to the original author whoever that was.
 *)
 {$DEFINE SRLT_VECTOR_INCLUDED}

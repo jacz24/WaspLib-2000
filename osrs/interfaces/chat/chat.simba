@@ -91,6 +91,21 @@ begin
 end;
 
 (*
+## Chat.ChatTabs
+```pascal
+Tabs: TRSChatTabs;
+```
+For more information on chat tabs read {ref}`ChatTabs`.
+
+You can access the {ref}`TRSChat` {ref}`ChatTabs` through the `Tabs variable`:
+```pascal
+ShowOnClient(Chat.Tabs.Bounds);
+```
+```{figure} ../../images/chattabs_bounds.png
+```
+*)
+
+(*
 ## Chat.GetColors
 ```pascal
 function TRSChat.GetColors(colors: ERSChatColorArray): TColorArray;

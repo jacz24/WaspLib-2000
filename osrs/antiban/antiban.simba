@@ -106,7 +106,7 @@ break your main script.
 
 `interval` is the aproximate interval of time that has to pass for the antiban
 task to occur and it will be repeated everytime that the interval has passed
-and the antiban is checked with {ref}`Antiban.DoAntiban()`.
+and the antiban is checked with {ref}`Antiban.DoAntiban`.
 
 `method` is a pointer to the task you want to perform. SRLT includes a couple of them but you may make your own if you want.
 
@@ -138,10 +138,10 @@ Schedule a break. Breaks can be of short or medium length and should be shorter 
 
 `interval` is the aproximate interval of time that has to pass for the break to
 occur and it will be repeated everytime that interval passes and the antiban is
-checked either with {ref}`Antiban.DoBreak()` or {ref}`Antiban.DoAntiban()`.
+checked either with {ref}`Antiban.DoBreak` or {ref}`Antiban.DoAntiban`.
 `length`, `randomness` and `logoutChance` are the same as {ref}`Antiban.AddSleep`.
 
-This break will only occur when {ref}`Antiban.DoAntiban()` is called.
+This break will only occur when {ref}`Antiban.DoAntiban` is called.
 
 Example:
 ```pascal
@@ -180,7 +180,7 @@ sleep at and it's length too.
 `logoutChance` is the probability of logging out for the sleep break or to
 simply afk and logout from inactivity.
 
-This sleep break will only occur when {ref}`Antiban.DoAntiban()` is called and our sleep break is due.
+This sleep break will only occur when {ref}`Antiban.DoAntiban` is called and our sleep break is due.
 
 Example:
 ```pascal
@@ -205,7 +205,7 @@ end;
 ```pascal
 procedure TAntiban.TakeSleep(var task: TSleepTask);
 ```
-Internal function used by {ref}`Antiban.DoAntiban()` and is responsible for
+Internal function used by {ref}`Antiban.DoAntiban` and is responsible for
 performing the specified sleep `task`.
 In other words, this is what makes the script take the sleep break.
 *)
@@ -268,7 +268,7 @@ end;
 ```pascal
 procedure TAntiban.TakeBreak(var task: TBreakTask);
 ```
-Internal function used by {ref}`Antiban.DoAntiban()` and is responsible for
+Internal function used by {ref}`Antiban.DoAntiban` and is responsible for
 performing the specified break `task`.
 In other words, this is what makes the script take the break.
 *)

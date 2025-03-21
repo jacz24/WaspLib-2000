@@ -152,7 +152,7 @@ Some items in the game have versions of themselves that are not tradeable and
 can't be used to fetch item prices, such as degraded items, ornamented items, etc.
 
 This function checks every id associated with the specified `item` and checks
-the item definition of each one (check {ref}`TItemData.GetDefinition`) for the
+the item definition of each one (check {ref}`ItemData.GetDefinition`) for the
 tradeable key.
 
 The first tradeable id found is returned.

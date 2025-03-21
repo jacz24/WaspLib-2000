@@ -402,9 +402,9 @@ end;
 (*
 ## Achievements.GetTab
 ```pascal
-function TRSAchievements.GetTab(): ERSAchievementsTab;
+function TRSAchievements.GetTab():  ERSAchievementTab;
 ```
-Returns the currently active {ref}`ERSAchievementsTab`.
+Returns the currently active {ref}` ERSAchievementTab`.
 
 Example:
 ```pascal
@@ -430,13 +430,13 @@ end;
 (*
 ## Achievements.OpenTab
 ```pascal
-function TRSAchievements.OpenTab(tab: ERSAchievementsTab): Boolean;
+function TRSAchievements.OpenTab(tab:  ERSAchievementTab): Boolean;
 ```
-Attempts to open the specified `tab` {ref}`ERSAchievementsTab`.
+Attempts to open the specified `tab` {ref}` ERSAchievementTab`.
 
 Example:
 ```pascal
-WriteLn Achievements.OpenTab(ERSAchievementsTab.DIARIES);
+WriteLn Achievements.OpenTab( ERSAchievementTab.DIARIES);
 ```
 *)
 function TRSAchievements.OpenTab(tab: ERSAchievementTab): Boolean;
@@ -465,7 +465,7 @@ end;
 var
 (*
 ## Achievements variable
-Global {ref}`TRSAchivements` variable.
+Global {ref}`TRSAchievements` variable.
 *)
   Achievements: TRSAchievements;
 

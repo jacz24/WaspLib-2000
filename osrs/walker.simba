@@ -10,15 +10,13 @@ iterations made by Olly.
 
 type
 (*
-(PRSWalker)=
-# type PRSWalker
+## type PRSWalker
 TRSWalker pointer.
 *)
   PRSWalker = ^TRSWalker;
 
 (*
-(TRSWalkerEvent)=
-# type TRSWalkerEvent
+## type TRSWalkerEvent
 Callback object method to use while walking. This can be used to perform custom tasks while walking.
 
 Example:
@@ -40,15 +38,14 @@ end;
   TRWalkerGetLocalFunction  = function (pt: TPoint; offset: TPoint = [0,0]): TPoint of object;
 
 (*
-(TRSWalker)=
-# type TRSWalker
+## TRSWalker
 TRSWalker is the record responsible for walking.
 To work you need to set it up with something that gives it a position function
 as by itself it doesn't really do anything.
 
 Once you have a function that gives you an accurate position, you can pass it to
 into a `TRSWalker` variable or into the {ref}`Walker` one, either directly or
-via the {ref}`Walker.Setup()` method.
+via the {ref}`Walker.Setup` method.
 *)
   TRSWalker = record
     Name: String;

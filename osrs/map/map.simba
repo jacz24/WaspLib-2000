@@ -131,7 +131,7 @@ end;
 
 
 (*
-## Map.InternalSetup
+## Map.Setup
 ```pascal
 procedure TRSMap.SetupEx(boxes: TBoxArray; planes: TIntegerArray = [0]; downscale: Integer = 8);
 procedure TRSMap.Setup(chunks: array of TRSMapChunk; downscale: Integer = 8);

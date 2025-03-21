@@ -6,6 +6,11 @@ Page dedicated to handling player accounts.
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 var
+(*
+## PlayerIndex variable
+This variable is what tells SRLT which account you will be using of the ones you have in a {ref}`TRSPlayerArray` you want to
+use for this botting session.
+*)
   PlayerIndex: Integer;
 
 type
@@ -15,6 +20,10 @@ type
     Active: Boolean;
   end;
 
+(*
+## TRSPlayerArray
+Type that holds player account information for {ref}`login`, world hopping and {ref}`bankpin` handling.
+*)
   TRSPlayerArray = array of TRSPlayer;
 
 (*
@@ -106,6 +115,6 @@ end;
 var
 (*
 ## Players variable
-Global {ref}`TRSPlayers` variable.
+Global {ref}`TRSPlayerArray` variable.
 *)
   Players: TRSPlayerArray;

@@ -3,7 +3,6 @@
 The login screen is the first screen you see that you can interact with when you open the game:
 
 ```{figure} ../../images/loginscreen.png
-The login screen.
 ```
 
 SRLT's {ref}`TRSLogin` can handle both resizable and fixed mode login screens.
@@ -11,6 +10,10 @@ SRLT's {ref}`TRSLogin` can handle both resizable and fixed mode login screens.
 {$DEFINE SRLT_LOGIN_INCLUDED}
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
+(*
+## Lobby
+Methods to interact with the lobby screen
+*)
 type
 (*
 ## TRSLobbyScreen
@@ -94,7 +97,7 @@ end;
 function TRSLobbyScreen.EnterGame(): Boolean;
 ```
 Attempts to enter the game from the lobby screen.
-This is automatically called for you with {ref}`Login.DoLogin()`.
+This is automatically called for you with {ref}`Login.DoLogin`.
 
 Example:
 ```pascal
@@ -140,6 +143,10 @@ Global {ref}`TRSLobbyScreen` variable.
 *)
   Lobby: TRSLobbyScreen;
 
+(*
+## Login World Switcher
+Methods to interact with the login world switcher
+*)
 type
 (*
 ## TRSLoginWorldSwitcher
@@ -297,7 +304,7 @@ function TRSLoginWorldSwitcher.PreviousPage(): Boolean;
 function TRSLoginWorldSwitcher.NextPage(): Boolean;
 ```
 Attempts to switch the current login screen world switcher page using the
-{ref}`LoginWorldSwitcher Buttons`.
+`LoginWorldSwitcher.LeftButton` and `LoginWorldSwitcher.RightButton`.
 Returns True if we successfully changed page.
 
 Example:
