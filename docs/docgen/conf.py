@@ -40,6 +40,7 @@ release = u''
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'myst_parser',
     'sphinx.ext.githubpages',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
@@ -47,8 +48,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx_copybutton',
     'sphinx_togglebutton',
-    'sphinxemoji.sphinxemoji',
-    'myst_parser'
+    'sphinxemoji.sphinxemoji'
 ]
 
 autodoc_default_flags = ['members']

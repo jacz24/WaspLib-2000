@@ -7,6 +7,7 @@
 
 import re
 import os, sys
+import shutil
 
 DOCNAME         = 'SRLT'
 IGNORE_FOLDERS  = ['.git', '.github', 'docs', 'plugins', 'tests']
@@ -29,17 +30,27 @@ def get_files(root):
         result.append(root+os.sep+name)
     return result
 
-def generate_index_rst(TOC):
+def generate_index_rst(TOC, root):
     '''
       Generates the index.rst file
 
       Builds a table of contents for every seperate folder
     '''
 
+    readme_src = os.path.join(root, "README.md")
+    readme_dst = "source/README.md"
+
+    shutil.copy(readme_src, readme_dst)
+
     index = "Welcome to %s documentation" %  (DOCNAME,)
     index += "\n"+ ("="*len(index)) + "\n\n"
 
-    index += ".. include:: ../../README.md\n\n"
+    index += ".. include:: README.md\n"
+    index += "   :parser: myst_parser.sphinx_\n\n"
+
+    index += "================\n"
+    index += "Library Contents\n"
+    index += "================\n\n"
 
     class rstFile:
       def __init__(self, r, t):
@@ -156,7 +167,7 @@ def generate(root):
       TOC[NameToID[dir]][1].append(name)
 
     # finally build the index file
-    generate_index_rst(TOC)
+    generate_index_rst(TOC, root)
     os.system('sphinx-build source build -c .')
 
 if __name__ == '__main__':
