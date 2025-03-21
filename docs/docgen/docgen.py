@@ -14,10 +14,10 @@ FILE_EXTENSIONS = ['.md', '.simba']
 
 commentregex = re.compile('\(\*.+?\*\)', re.DOTALL)
 
-def get_files(root): 
+def get_files(root):
     ''' recursively walks every and graps every file name and path '''
     lst = os.listdir(root)
-    result = [] 
+    result = []
     for name in lst:
       if os.path.isdir(root+os.sep+name):
         if not name in IGNORE_FOLDERS:
@@ -30,24 +30,30 @@ def get_files(root):
     return result
 
 def generate_index_rst(TOC):
-    ''' 
-      Generates the index.rst file 
+    '''
+      Generates the index.rst file
 
       Builds a table of contents for every seperate folder
     '''
 
     index = "Welcome to %s documentation" %  (DOCNAME,)
-    index += "\n"+ ("="*len(index)) + "\n\n" 
-  
+    index += "\n"+ ("="*len(index)) + "\n\n"
+
+    readme_path = os.path.join(os.getcwd(), "readme.md")
+    if os.path.exists(readme_path):
+      with open(readme_path, "r", encoding="utf-8") as readme_file:
+        readme_content = readme_file.read()
+      index += readme_content + "\n\n"
+
     class rstFile:
       def __init__(self, r, t):
         self.Root = r
         self.Text = t
-        
+
     fileArr = []
     index += ".. toctree::\n    :titlesonly:\n"
 
-    for dir,value in TOC:  
+    for dir,value in TOC:
 
       print('Value: ' + str(value))
       fileName = os.path.splitext(dir)[0].split(os.sep)[0]
@@ -70,8 +76,8 @@ def generate_index_rst(TOC):
           index += "\n    " + fileName
       else:
         fileText += "\n\n-----------\n\n"
-         
-      if fileName != "root":   
+
+      if fileName != "root":
         fileText += ".. toctree::\n  :maxdepth: 2\n  :caption: %s\n" % (dir.upper().replace(os.sep," -> "),)
 
       for name in value:
@@ -93,7 +99,7 @@ def generate_index_rst(TOC):
         tmp = open(f.Root, "w+")
         title = os.path.splitext(os.path.basename(f.Root).upper())[0]
         title += "\n" + ("=" * len(title)) + "\n\n"
-        tmp.write(title + f.Text)  
+        tmp.write(title + f.Text)
       tmp.close()
 
 
@@ -103,17 +109,17 @@ def generate_index_rst(TOC):
     i.close()
 
 def generate(root):
-    ''' 
-      Generates md by walking the specified directly
-    '''   
+    '''
+      Generates rst and md files by walking the specified directly
+    '''
     if not os.path.exists('source'):
       os.mkdir('source')
-    
+
     paths = get_files(root)
     NameToID = {}
-    TOC = []  
+    TOC = []
     added = set()
-    
+
     for filename in paths:
       path = os.path.dirname(filename)
       dir  = path[len(root)+1:]
@@ -122,30 +128,30 @@ def generate(root):
       # read in the sourcefile
       with open(filename, 'r') as f:
         contents = f.read()
-      
+
       # if the file is already added to the set rename it so that
       # there will be no conflicts, expects the headers to have unique names
-      if name in added: 
+      if name in added:
         name = name + '('+dir.replace(os.sep,'_')+')'
       added.add(name)
-      
+
       # extract all comments
       res = commentregex.findall(contents)
       if len(res) == 0:
         print("WARNING: ", name, " is not documented")
         continue
-      
+
       # generate a output file
       out = open("source/%s.md" % name, "w+")
       # write the markdown-style'd comments to the output file
-      for comment in res:  
+      for comment in res:
         doc = comment[2:][:-2];
         out.write(doc)
         if comment != res[-1]:
           out.write('\n\n')
           out.write('- - -\n')
       out.close()
-      
+
       # Table of Contents
       if dir.strip() == '': dir = 'root'
       if dir not in NameToID:
@@ -161,5 +167,5 @@ if __name__ == '__main__':
     generate(sys.argv[1])
     if os.path.exists('source'):
         for filename in os.listdir('source'):
-            os.remove('source' + os.sep + filename)      
+            os.remove('source' + os.sep + filename)
         os.rmdir('source')
