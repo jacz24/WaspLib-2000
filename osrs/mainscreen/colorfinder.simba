@@ -210,7 +210,7 @@ var
   i, l, s: Integer;
   weights: TIntegerArray;
 begin
-  if tpa <> [] then Exit;
+  if tpa = [] then Exit;
 
   // Transform the TPA
   if Self.Grow  > 0 then tpa := tpa.Grow(Self.Grow);
