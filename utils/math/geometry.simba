@@ -48,14 +48,14 @@ begin
 end;
 
 
-procedure TCuboid.Draw(img: TImage);
+procedure TImage.DrawCuboid(cuboid: TCuboid);
 begin
-  img.DrawColor := $00FFFF;
-  img.DrawTPA(Self.Bottom.Corners.Connect().Grow(1));
-  img.DrawTPA(Self.Bottom.Corners.Connect().Grow(1));
+  Self.DrawColor := $00FFFF;
+  Self.DrawTPA(cuboid.Bottom.Corners.Connect().Grow(1));
+  Self.DrawTPA(cuboid.Bottom.Corners.Connect().Grow(1));
 
-  img.DrawColor := $FFFFFF;
-  img.DrawTPA(Self.Edges());
+  Self.DrawColor := $FFFFFF;
+  Self.DrawTPA(cuboid.Edges());
 end;
 
 procedure ShowOnClient(cuboid: TCuboid); overload;
@@ -63,7 +63,34 @@ var
   img: TImage;
 begin
   img := TImage.CreateFromTarget();
-  cuboid.Draw(img);
+  img.DrawCuboid(cuboid);
+  img.Show();
+  img.Free();
+end;
+
+
+procedure TImage.DrawCuboidArray(cuboids: TCuboidArray);
+var
+  i: Integer;
+begin
+  Self.DrawColor := $00FFFF;
+  for i := 0 to High(cuboids) do
+  begin
+    Self.DrawTPA(cuboids[i].Bottom.Corners.Connect().Grow(1));
+    Self.DrawTPA(cuboids[i].Bottom.Corners.Connect().Grow(1));
+  end;
+
+  Self.DrawColor := $FFFFFF;
+  for i := 0 to High(cuboids) do
+    Self.DrawTPA(cuboids[i].Edges());
+end;
+
+procedure ShowOnClient(cuboids: TCuboidArray); overload;
+var
+  img: TImage;
+begin
+  img := TImage.CreateFromTarget();
+  img.DrawCuboidArray(cuboids);
   img.Show();
   img.Free();
 end;

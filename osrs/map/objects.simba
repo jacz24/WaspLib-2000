@@ -1,0 +1,243 @@
+(*
+# RSObjects
+This file is responsible for interacting with map objects.
+*)
+
+{$DEFINE SRLT_MAPOBJECT_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+type
+  TRSObject = record
+    UpText: TStringArray;
+    Size: Vector3;
+    Coordinates: TPointArray;
+    Rotations: TIntegerArray;
+    Finder: TColorFinder;
+    Track: Boolean;
+    Walker: PRSWalker;
+  end;
+
+
+function TRSObject.GetCuboidArray(me: TPoint; angle: Single = $FFFF): TCuboidArray;
+var
+  weights: TDoubleArray;
+  pt: TPoint;
+  h, diff: Single;
+  i: Integer;
+  dist: Double;
+begin
+  if angle = $FFFF then angle := Minimap.GetCompassAngle(False);
+
+  h := Self.Walker^.Height(me);
+
+  for i := 0 to High(Self.Coordinates) do
+  begin
+    pt := Self.Coordinates[i];
+    dist := me.DistanceTo(pt);
+    if dist <= 85 then
+    begin
+      weights += dist;
+      diff := -(h-Self.Walker^.Height(pt));
+      with Self.Walker^.Point2MMVec(me, pt, angle) do
+        Result += Minimap.Vector2MSCuboid([X + 0.15*diff, Y + 0.11*diff, 0], Self.Size, angle - DegToRad(Self.Rotations[i]),  [0,0,diff]);
+    end;
+  end;
+
+  if Result <> [] then
+    Result.Sort(weights, True);
+end;
+
+(*
+## TRSObject.Find
+```pascal
+function TRSObject.Find(cuboidArray: TCuboidArray): T2DPointArray;
+```
+Internal TRSObject method responsible for filtering a TCuboidArray by what's visible in the mainscren.
+This is meant to filter TRSObject.GetCuboidArray() so targets that are outside of the mainscreen are filtered out.
+You will probably never need to use this directly.
+*)
+function TRSObject.FindOnMainScreen(cuboidArray: TCuboidArray): T2DPointArray;
+var
+  i: Integer;
+  tpa: TPointArray;
+begin
+  if Self.Finder <> Default(TColorFinder) then
+  begin
+    Self.Finder.Find(Result, cuboidArray);
+    Exit;
+  end;
+
+  for i := 0 to High(cuboidArray) do
+  begin
+    tpa := cuboidArray[i].ShapeFill();
+    if tpa <> [] then
+      Result += tpa;
+  end;
+end;
+
+(*
+## TRSObjectV2.Find
+```pascal
+function TRSObjectV2.FindEx(out cuboids: TCuboidArray; out atpa: T2DPointArray): Boolean;
+function TRSObjectV2.Find(out atpa: T2DPointArray): Boolean;
+function TRSObjectV2.FindFromPosition(me: TPoint; out atpa: T2DPointArray): Boolean;
+```
+TRSObjectV2 method used to find a {ref}`TRSObjectV2`. If found returns true, if not returns false.
+The "extended" method in particular is mostly meant for debugging and is the one used when you call `Debug(TRSObject)`.
+
+Example:
+```pascal
+WriteLn RSObjects.GEBank.Find(atpa); //Be in ge and with a walker setup there.
+Debug(atpa);
+```
+*)
+function TRSObject.FindEx(me: TPoint; out cuboids: TCuboidArray; out atpa: T2DPointArray): Boolean;
+begin
+  if Self.Walker = nil then
+    raise GetDebugLn('TRSObject', 'Object is missing the walker pointer.');
+  if Self.Coordinates = [] then
+    raise GetDebugLn('TRSObject', 'FindFrom requires the object to have coordinates.');
+  if Length(Self.Coordinates) <> Length(Self.Rotations) then
+    raise GetDebugLn('TRSObject', 'FindFrom requires the object to have rotations.');
+
+  cuboids := Self.GetCuboidArray(me);
+  if cuboids = [] then Exit;
+  atpa := Self.FindOnMainScreen(cuboids);
+
+  Result := atpa <> [];
+end;
+
+(*
+## TRSObjectV2.Draw
+```pascal
+procedure TRSObject.Draw(out bitmap: TMufasaBitmap);
+```
+Helper method to debug TRSObjects used in `Debug(TRSObject)`.
+*)
+procedure TImage.DrawObject(obj: TRSObject);
+var
+  atpa: T2DPointArray;
+  cuboids: TCuboidArray;
+  i: Integer;
+begin
+  if not obj.FindEx(obj.Walker^.Position(), cuboids, atpa) then Exit;
+
+  Self.DrawColor := $00FFFF;
+  for i := 0 to High(cuboids) do
+  begin
+    Self.DrawTPA(cuboids[i].Bottom.Corners.Connect().Grow(1));
+    Self.DrawTPA(cuboids[i].Bottom.Corners.Connect().Grow(1));
+  end;
+
+  Self.DrawATPA(atpa);
+
+  Self.DrawColor := $FFFFFF;
+  for i := 0 to High(cuboids) do
+    Self.DrawTPA(cuboids[i].Edges());
+end;
+
+procedure ShowOnClient(obj: TRSObject); overload;
+var
+  img: TImage;
+begin
+  img := TImage.CreateFromTarget();
+  img.DrawObject(obj);
+  img.Show();
+  img.Free();
+end;
+
+
+function TRSObject.Find(out atpa: T2DPointArray): Boolean;
+var
+  cuboids: TCuboidArray;
+begin
+  Result := Self.FindEx(Self.Walker^.Position(), cuboids, atpa);
+end;
+
+function TRSObject.FindFrom(position: TPoint; out atpa: T2DPointArray): Boolean;
+var
+  cuboids: TCuboidArray;
+begin
+  Result := Self.FindEx(position, cuboids, atpa);
+end;
+
+(*
+## TRSObject._UpTextCheck
+```pascal
+function TRSObject._UpTextCheck(out shouldExit: Boolean): Boolean;
+```
+Internal TRSObject helper method that is used by all hovering methods.
+You probably don't need to use this directly.
+*)
+function TRSObject._UpTextCheck(out shouldExit: Boolean): Boolean;
+var
+  text: String;
+begin
+  shouldExit := True;
+
+  if (RSClient.Mode = ERSMode.FIXED) and RSInterface.IsOpen() then
+    Exit;
+
+  if (Self.UpText <> []) then
+    Self.Walker^.TargetUpText := Copy(Self.UpText);
+
+  text := MainScreen.GetUpText();
+
+  if text.Contains('>') and not Self.Walker^.ActionUpText.Contains(['>']) then
+  begin
+    ChooseOption.Close();
+    Exit;
+  end;
+
+  if (Self.UpText <> []) and text.ContainsAny(Self.UpText) then
+    Exit(True);
+
+  shouldExit := False;
+end;
+
+(*
+## TRSObject._HoverHelper
+```pascal
+function TRSObject._HoverHelper(attempts: Integer; trackTarget: Boolean): Boolean;
+```
+Internal helper method used to hover a TRSObject target.
+You should not use this directly.
+*)
+function TRSObject._HoverHelper(attempts: Integer): Boolean;
+var
+  shouldExit: Boolean;
+  attempt: Integer;
+  atpa: T2DPointArray;
+  tpa: TPointArray;
+  angle: Double;
+begin
+  Result := Self._UpTextCheck(shouldExit);
+  if shouldExit then Exit;
+
+  for attempt := 0 to attempts do
+  begin
+    if Self.Find(atpa) then
+    begin
+      if attempt < 2 then
+        tpa := atpa[0] // 0 for the closest one.
+      else if Length(atpa) > (attempt - 2) then
+        tpa := atpa[attempt - 2]
+      else
+        tpa := atpa.Random();
+
+      Mouse.Move(tpa.Random());
+
+      if Self.UpText = [] then
+        Exit(True);
+    end;
+
+    if MainScreen.AnyIsUpText(Self.UpText) then
+      Exit(True);
+
+    if attempt = (attempts - 1) then
+    begin
+      angle := Minimap.GetCompassAngle();
+      Minimap.SetCompassAngle(angle-50, angle+50);
+    end;
+  end;
+end;

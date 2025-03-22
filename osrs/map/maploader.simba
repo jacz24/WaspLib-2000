@@ -30,8 +30,7 @@ ERSMapJSON = enum(OBJECTS, NPCS);
   ERSJSON = enum(OBJECTS, NPCS);
 
 (*
-(TRSMapRegion)=
-# type TRSMapRegion
+## TRSMapRegion
 Map region record, responsible for storing the map region/chunk data.
 ```{note}
 This is an internal type. Don't use it if you don't know what you are doing.
@@ -46,8 +45,7 @@ This is an internal type. Don't use it if you don't know what you are doing.
   end;
 
 (*
-(TRSMapLoader)=
-# type TRSMapLoader
+## TRSMapLoader
 TRSMapLoader is what's responsible for loading a map for TRSMap based on chunks.
 ```{note}
 This is an internal type. Don't use it if you don't know what you are doing.

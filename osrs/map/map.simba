@@ -4,6 +4,8 @@ This file is responsible for the TRSMap positioning system.
 It was made from scratch by Torwent but heavily inspired in the original
 TRSWalker by Slacky and it's future iterations made by Olly.
 Without them, this wouldn't be possible.
+
+For a online interactive map you can visit [](https://map.waspscripts.com/)
 *)
 
 {$DEFINE SRLT_MAP_INCLUDED}
