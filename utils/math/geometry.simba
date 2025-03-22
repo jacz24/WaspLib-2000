@@ -52,7 +52,7 @@ procedure TImage.DrawCuboid(cuboid: TCuboid);
 begin
   Self.DrawColor := $00FFFF;
   Self.DrawTPA(cuboid.Bottom.Corners.Connect().Grow(1));
-  Self.DrawTPA(cuboid.Bottom.Corners.Connect().Grow(1));
+  Self.DrawTPA(cuboid.Top.Corners.Connect().Grow(1));
 
   Self.DrawColor := $FFFFFF;
   Self.DrawTPA(cuboid.Edges());
@@ -77,7 +77,7 @@ begin
   for i := 0 to High(cuboids) do
   begin
     Self.DrawTPA(cuboids[i].Bottom.Corners.Connect().Grow(1));
-    Self.DrawTPA(cuboids[i].Bottom.Corners.Connect().Grow(1));
+    Self.DrawTPA(cuboids[i].Top.Corners.Connect().Grow(1));
   end;
 
   Self.DrawColor := $FFFFFF;

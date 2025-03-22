@@ -102,9 +102,10 @@ end;
 (*
 ### MainScreen.IsUpText
 ```pascal
-function TRSMainScreen.IsUpText(text: String; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean;
+function TRSMainScreen.IsUpText(text: String; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean
+function TRSMainScreen.IsUpText(strings: TStringArray; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean; overload;;
 ```
-Compares `text` with the {ref}`uptext` on the mainscreen.
+Compares `text` or `strings` with the {ref}`uptext` on the mainscreen.
 Returns True if the match above the threshold `similarity`.
 
 Example:
@@ -129,22 +130,7 @@ begin
   Result := text.Similarity(upText) >= similarity;
 end;
 
-(*
-### MainScreen.AnyIsUpText
-```pascal
-function TRSMainScreen.AnyIsUpText(strings: TStringArray; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean;
-```
-Same as {ref}`MainScreen.IsUpText` but compares multiple `strings` for a valid match.
-This is very useful when you are having trouble reading {ref}`uptext` properly as
-you can try something like the following example:
-
-Example:
-```pascal
-if MainScreen.AnyIsUpText(['Wal', 'ere']) then
-  Mouse.Click(EMouseButton.LEFT);
-```
-*)
-function TRSMainScreen.AnyIsUpText(strings: TStringArray; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean;
+function TRSMainScreen.IsUpText(strings: TStringArray; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean; overload;
 var
   upText, str, tmp: String;
 begin

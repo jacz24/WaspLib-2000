@@ -17,6 +17,12 @@ type
     Walker: PRSWalker;
   end;
 
+procedure TRSObject.Setup(size: Vector3; coordinates: TPointArray);
+begin
+  Self.Coordinates := coordinates;
+  SetLength(Self.Rotations, Length(coordinates));
+  Self.Size := size;
+end;
 
 function TRSObject.GetCuboidArray(me: TPoint; angle: Single = $FFFF): TCuboidArray;
 var
@@ -93,57 +99,11 @@ Debug(atpa);
 *)
 function TRSObject.FindEx(me: TPoint; out cuboids: TCuboidArray; out atpa: T2DPointArray): Boolean;
 begin
-  if Self.Walker = nil then
-    raise GetDebugLn('TRSObject', 'Object is missing the walker pointer.');
-  if Self.Coordinates = [] then
-    raise GetDebugLn('TRSObject', 'FindFrom requires the object to have coordinates.');
-  if Length(Self.Coordinates) <> Length(Self.Rotations) then
-    raise GetDebugLn('TRSObject', 'FindFrom requires the object to have rotations.');
-
   cuboids := Self.GetCuboidArray(me);
   if cuboids = [] then Exit;
   atpa := Self.FindOnMainScreen(cuboids);
 
   Result := atpa <> [];
-end;
-
-(*
-## TRSObjectV2.Draw
-```pascal
-procedure TRSObject.Draw(out bitmap: TMufasaBitmap);
-```
-Helper method to debug TRSObjects used in `Debug(TRSObject)`.
-*)
-procedure TImage.DrawObject(obj: TRSObject);
-var
-  atpa: T2DPointArray;
-  cuboids: TCuboidArray;
-  i: Integer;
-begin
-  if not obj.FindEx(obj.Walker^.Position(), cuboids, atpa) then Exit;
-
-  Self.DrawColor := $00FFFF;
-  for i := 0 to High(cuboids) do
-  begin
-    Self.DrawTPA(cuboids[i].Bottom.Corners.Connect().Grow(1));
-    Self.DrawTPA(cuboids[i].Bottom.Corners.Connect().Grow(1));
-  end;
-
-  Self.DrawATPA(atpa);
-
-  Self.DrawColor := $FFFFFF;
-  for i := 0 to High(cuboids) do
-    Self.DrawTPA(cuboids[i].Edges());
-end;
-
-procedure ShowOnClient(obj: TRSObject); overload;
-var
-  img: TImage;
-begin
-  img := TImage.CreateFromTarget();
-  img.DrawObject(obj);
-  img.Show();
-  img.Free();
 end;
 
 
@@ -178,7 +138,7 @@ begin
   if (RSClient.Mode = ERSMode.FIXED) and RSInterface.IsOpen() then
     Exit;
 
-  if (Self.UpText <> []) then
+  if Self.UpText <> [] then
     Self.Walker^.TargetUpText := Copy(Self.UpText);
 
   text := MainScreen.GetUpText();
@@ -227,17 +187,398 @@ begin
 
       Mouse.Move(tpa.Random());
 
-      if Self.UpText = [] then
-        Exit(True);
+      if Self.UpText = [] then Exit(True);
     end;
 
-    if MainScreen.AnyIsUpText(Self.UpText) then
-      Exit(True);
+    if MainScreen.IsUpText(Self.UpText) then Exit(True);
 
-    if attempt = (attempts - 1) then
-    begin
-      angle := Minimap.GetCompassAngle();
-      Minimap.SetCompassAngle(angle-50, angle+50);
-    end;
+    if attempt <> (attempts - 1) then Continue;
+
+    angle := Minimap.GetCompassAngle();
+    Minimap.SetCompassAngle(angle-50, angle+50);
   end;
 end;
+
+(*
+## TRSObject._WalkHoverHelper
+```pascal
+function TRSObject._WalkHoverHelper(attempts: Integer; trackTarget: Boolean): Boolean;
+```
+Internal helper method used to walk and hover a TRSObject target.
+You should not use this directly.
+
+This is responsible for deciding wether we should walk to a TRSObject target or not before attempting to hover it.
+*)
+function TRSObject._WalkHoverHelper(attempts: Integer): Boolean;
+var
+  shouldExit: Boolean;
+  attempt: Integer;
+  atpa: T2DPointArray;
+  tpa, path: TPointArray;
+  me, closest: TPoint;
+begin
+  Result := Self._UpTextCheck(shouldExit) or Self.Walker^.RedClicked;
+  if shouldExit then Exit;
+
+  for attempt := 0 to attempts do
+  begin
+    if Self.Find(atpa) then
+    begin
+      if attempt < 2 then
+        tpa := atpa[0]
+      else if Length(atpa) > (attempt - 2) then
+        tpa := atpa[attempt - 2]
+      else
+        tpa := atpa.Random();
+
+      Mouse.Move(tpa.Random());
+
+      if Self.UpText = [] then Exit(True);
+    end;
+
+    if MainScreen.IsUpText(Self.UpText) then Exit(True);
+
+    me := Self.Walker^.Position();
+    closest := Self.Walker^.GetClosestPointEx(me, Self.Coordinates, path);
+
+    if path = [] then
+    begin
+      path := Self.Walker^.WebGraph^.FindObjectPath(me, closest);
+      if path = [] then
+        raise GetDebugLn('TRSObject', 'Can''t path to object.');
+    end;
+
+    if me.DistanceTo(closest) > 50 then
+    begin
+      Self.Walker^.WebWalkEx(me, closest, 30, 0.15);
+      Continue;
+    end;
+
+    if attempt <> (attempts - 1) then Continue;
+
+    if me.DistanceTo(closest) > 25 then
+    begin
+      Self.Walker^.WebWalkEx(me, closest, 25, 0.15);
+      Continue;
+    end;
+
+    Minimap.SetCompassAngle(Minimap.GetCompassAngle(), 50);
+  end;
+end;
+
+(*
+## TRSObject._PreHoverHelper
+```pascal
+function TRSObject.PreHoverHelper(attempts: Integer): Boolean;
+```
+Internal helper method used to pre-hover a TRSObject target.
+You should not use this directly.
+*)
+function TRSObject._PreHoverHelper(me: TPoint; attempts: Integer = 2): Boolean;
+var
+  attempt: Integer;
+  atpa: T2DPointArray;
+begin
+  for attempt := 0 to attempts do
+  begin
+    if not Self.FindFrom(me, atpa) then Continue;
+    ASync.MouseMove(atpa.Random().Random());
+    Exit(True);
+  end;
+end;
+
+
+(*
+## TRSObject._ClickHelper
+```pascal
+function TRSObject._ClickHelper(leftClick: Boolean): Boolean;
+```
+Internal TRSObject helper method that is used by other clicking methods.
+You probably don't need to use this directly.
+
+This is what's responsible for deciding if we click a target we are hovering or not.
+*)
+function TRSObject._ClickHelper(leftClick: Boolean): Boolean;
+begin
+  Self.Walker^.TargetUpText := [];
+  Self.Walker^.ActionUpText := [];
+
+  if Self.Walker^.RedClicked then
+  begin
+    Self.Walker^.RedClicked := False;
+    Exit(True);
+  end;
+
+  if ChooseOption.IsOpen() then
+  begin
+    if (Self.UpText <> []) and ChooseOption.Select(Self.UpText) then
+      Exit(True);
+    ChooseOption.Close();
+    Exit;
+  end;
+
+  if leftClick and Biometrics.RedClick(EMouseButton.LEFT, 2) then
+    Exit(True);
+
+  Result := not leftClick and (Self.UpText <> []) and ChooseOption.Select(Self.UpText);
+end;
+
+(*
+## TRSObject._SelectHelper
+```pascal
+function TRSObject._SelectHelper(action: TStringArray): Boolean;
+```
+Internal TRSObject helper method that is used by other select methods.
+You probably don't need to use this directly.
+
+This is what is responsible for deciding if we just left click a target we are hovering or right click it and choose an option.
+*)
+function TRSObject._SelectHelper(action: TStringArray): Boolean;
+begin
+  Self.Walker^.TargetUpText := [];
+  Self.Walker^.ActionUpText := [];
+
+  if Self.Walker^.RedClicked then
+  begin
+    Self.Walker^.RedClicked := False;
+    Exit(True);
+  end;
+
+  if ChooseOption.IsOpen() and ChooseOption.Select(action) then
+    Exit(True);
+
+  if MainScreen.IsUpText(action) then
+    Exit(Biometrics.RedClick(EMouseButton.LEFT, 2));
+
+  Result := ChooseOption.Select(action);
+end;
+
+
+(*
+## TRSObject.Hover
+```pascal
+function TRSObject.Hover(attempts: Integer = 2; trackTarget: Boolean = TRSObject.TrackTarget): Boolean;
+```
+Method used to hover a TRSObject target if it's found on the mainscreen.
+It can update the target position while the mouse moves with **trackTarget**.
+
+Example:
+```pascal
+RSW.WebWalk(WaspWeb.LOCATION_VARROCK);
+RSObjects.GEBank.Hover(); //Be in GE with a walker setup there.
+```
+*)
+function TRSObject.Hover(attempts: Integer = 2): Boolean;
+begin
+  if ChooseOption.IsOpen() then
+  begin
+    if (Self.UpText <> []) and ChooseOption.Find(Self.UpText) then
+      Exit(True);
+    ChooseOption.Close();
+  end;
+
+  if Self.Walker = nil then
+    raise GetDebugLn('TRSObject', 'Missing the walker pointer.');
+  if Self.Coordinates = [] then
+    raise GetDebugLn('TRSObject', 'FindFrom requires the object to have coordinates.');
+  if Length(Self.Coordinates) <> Length(Self.Rotations) then
+    raise GetDebugLn('TRSObject', 'FindFrom requires the object to have rotations.');
+
+  //TODO:
+  //if not Self.Walker^.MakePointVisible(Self.Coordinates) then Exit;
+
+  Result := Self._HoverHelper(attempts);
+end;
+
+(*
+## TRSObject.WalkHover
+```pascal
+function TRSObject.WalkHover(attempts: Integer = 2; trackTarget: Boolean = TRSObject.TrackTarget): Boolean;
+```
+Method used to walk and hover a TRSObject target if it's found on the mainscreen after walking.
+It can update the target position while the mouse moves with **trackTarget**.
+
+Example:
+```pascal
+//Be in varrock with a varrock map loaded.
+RSW.WebWalk(WaspWeb.LOCATION_VARROCK);
+RSObjects.GEBank.WalkHover();
+```
+*)
+function TRSObject.WalkHover(attempts: Integer = 2): Boolean;
+var
+  me, closest: TPoint;
+  path: TPointArray;
+  hasPath: Boolean;
+begin
+  if ChooseOption.IsOpen() then
+  begin
+    if (Self.UpText <> []) and ChooseOption.Find(Self.UpText) then
+      Exit(True);
+    ChooseOption.Close();
+  end;
+
+  if Self.UpText <> [] then
+    Self.Walker^.TargetUpText := Copy(Self.UpText);
+
+  me :=  Self.Walker^.Position();
+  closest := Self.Walker^.GetClosestPointEx(me, Self.Coordinates, path);
+
+  //if the point is not reachable with the webgraph (like a banker behind a booth) then pick nearest node as target
+  if path = [] then
+  begin
+    path := Self.Walker^.WebGraph^.FindObjectPath(me, closest);
+    if path = [] then
+      raise GetDebugLn('TRSObject', 'Can''t path to object.');
+    hasPath := True;
+  end;
+
+  // check if doors need to be passed to reach target
+  if hasPath or Self.Walker^.WebGraph^.WalkableClusters.InSameTPA(me, closest) then
+  begin
+    if not Self.Walker^.MakePointVisible(closest) and not Self.Walker^.WebWalkEx(me, closest, 30, 0.15) then
+      Exit;
+  end
+  else
+  if not Self.Walker^.WebWalk(closest, 30, 0.15) then
+    Exit;
+
+  Result := Self._WalkHoverHelper(attempts);
+end;
+
+
+(*
+## TRSObject.Click
+```pascal
+function TRSObject.Click(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
+```
+Method used to click a TRSObject target if it's found on the mainscreen.
+
+Example:
+```pascal
+//Be in ge with a ge map loaded.
+WriteLn RSObjects.GEBank.Click();
+```
+*)
+function TRSObject.Click(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
+begin
+  Result := Self.Hover(attempts) and Self._ClickHelper(leftClick);
+end;
+
+(*
+## TRSObject.SelectOption
+```pascal
+function TRSObject.SelectOption(action: TStringArray; attempts: Integer = 2): Boolean;
+```
+Method used to select an option on a TRSObject target if it's found on the mainscreen.
+
+Example:
+```pascal
+//Be in ge with a ge map loaded.
+WriteLn RSObjects.GEBank.SelectOption(['Collect']);
+```
+*)
+function TRSObject.Select(action: TStringArray; attempts: Integer = 2): Boolean;
+begin
+  Self.Walker^.ActionUpText := action;
+  Result := Self.Hover(attempts) and Self._SelectHelper(action);
+  Self.Walker^.ActionUpText := [];
+end;
+
+(*
+## TRSObject.WalkClick
+```pascal
+function TRSObject.WalkClick(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
+```
+Method used to walk and click a TRSObject target if it's found on the mainscreen.
+
+Example:
+```pascal
+//Be in ge with a ge map loaded, preferably far away so it has to walk.
+WriteLn RSObjects.GEBank.WalkClick();
+```
+*)
+function TRSObject.WalkClick(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
+begin
+  if Self.Walker = nil then
+    raise GetDebugLn('TRSObject', 'Missing the walker pointer.');
+  if Self.Coordinates = [] then
+    raise GetDebugLn('TRSObject', 'FindFrom requires the object to have coordinates.');
+  if Length(Self.Coordinates) <> Length(Self.Rotations) then
+    raise GetDebugLn('TRSObject', 'FindFrom requires the object to have rotations.');
+
+  Result := Self.WalkHover(attempts) and Self._ClickHelper(leftClick);
+  Self.Walker^.TargetUpText := [];
+end;
+
+(*
+## TRSObject.WalkSelectOption
+```pascal
+function TRSObject.WalkSelectOption(action: TStringArray; attempts: Integer = 2): Boolean;
+```
+Method used to walk and select an option on a TRSObject target if it's found on the mainscreen.
+
+Example:
+```pascal
+//Be in ge with a ge map loaded, preferably far away so it has to walk.
+WriteLn RSObjects.GEBank.WalkSelectOption(['Collect']);
+```
+*)
+function TRSObject.WalkSelect(action: TStringArray; attempts: Integer = 2): Boolean;
+begin
+  if Self.Walker = nil then
+    raise GetDebugLn('TRSObject', 'Missing the walker pointer.');
+  if Self.Coordinates = [] then
+    raise GetDebugLn('TRSObject', 'FindFrom requires the object to have coordinates.');
+  if Length(Self.Coordinates) <> Length(Self.Rotations) then
+    raise GetDebugLn('TRSObject', 'FindFrom requires the object to have rotations.');
+
+  Self.Walker^.ActionUpText := action;
+
+  Result := Self.WalkHover(attempts) and Self._SelectHelper(action);
+
+  Self.Walker^.TargetUpText := [];
+  Self.Walker^.ActionUpText := [];
+end;
+
+
+(*
+## TRSObjectV2.Draw
+```pascal
+procedure TRSObject.Draw(out bitmap: TMufasaBitmap);
+```
+Helper method to debug TRSObjects used in `Debug(TRSObject)`.
+*)
+procedure TImage.DrawObject(obj: TRSObject);
+var
+  atpa: T2DPointArray;
+  cuboids: TCuboidArray;
+  i: Integer;
+begin
+  if not obj.FindEx(obj.Walker^.Position(), cuboids, atpa) then Exit;
+
+  Self.DrawColor := $00FFFF;
+  for i := 0 to High(cuboids) do
+  begin
+    Self.DrawTPA(cuboids[i].Bottom.Corners.Connect().Grow(1));
+    Self.DrawTPA(cuboids[i].Top.Corners.Connect().Grow(1));
+  end;
+
+  Self.DrawColor := $AF9A30;
+  Self.DrawATPA(atpa);
+
+  Self.DrawColor := $FFFFFF;
+  for i := 0 to High(cuboids) do
+    Self.DrawTPA(cuboids[i].Edges());
+end;
+
+procedure ShowOnClient(obj: TRSObject); overload;
+var
+  img: TImage;
+begin
+  img := TImage.CreateFromTarget();
+  img.DrawObject(obj);
+  img.Show();
+  img.Free();
+end;
+

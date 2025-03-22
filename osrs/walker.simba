@@ -945,7 +945,7 @@ begin
   Self._DoorHandler.Skipped := False; //I can't explain why but without this like, it always skips the door
 
   //Check Uptext and walk through
-  if Mainscreen.AnyIsUpText(['Open', 'Squeeze']) then
+  if Mainscreen.IsUpText(['Open', 'Squeeze']) then
   begin
     Target.MouseClick(EMouseButton.LEFT);
     Exit;
@@ -1203,10 +1203,10 @@ begin
   with quad.Mean do
     Mouse.Move([(X + middleBottom.X) div 2, (Y + middleBottom.Y) div 2]);
 
-  if Mainscreen.AnyIsUpText(['Open', 'Squeeze']) then
+  if Mainscreen.IsUpText(['Open', 'Squeeze']) then
   begin
     Target.MouseClick(EMouseButton.LEFT);
-    if not SleepUntil(not Mainscreen.AnyIsUpText(['Open', 'Close', 'Squeeze']), 100, 2000) then
+    if not SleepUntil(not Mainscreen.IsUpText(['Open', 'Close', 'Squeeze']), 100, 2000) then
       Exit;
   end;
 
