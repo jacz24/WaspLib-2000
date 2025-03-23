@@ -564,7 +564,7 @@ begin
     Self.DrawTPA(cuboids[i].Top.Corners.Connect().Grow(1));
   end;
 
-  Self.DrawColor := $AF9A30;
+  Self.DrawColor := Colors.Random();
   Self.DrawATPA(atpa);
 
   Self.DrawColor := $FFFFFF;

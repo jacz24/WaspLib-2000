@@ -115,33 +115,6 @@ begin
   Result := tpa.Offset(Self.Regions[regionIndex].Offset - [Self.Regions[regionIndex].Region.X1, Self.Regions[regionIndex].Region.Y1] + offset);
 end;
 
-function TRSMapLoader.GetGlobal(tpa: TPointArray; offset: TPoint = [0,0]): TPointArray; overload;
-var
-  p: TPoint;
-begin
-  if Length(Self.Regions) = 1 then
-    Exit(Self.GetGlobal(Self.LocalIndex(tpa[0]), tpa, offset));
-
-  for p in tpa do
-    Result += Self.GetGlobal(Self.LocalIndex(p), p, offset);
-end;
-
-function TRSMapLoader.GetGlobal(regionIndex: Integer; b: TBox; offset: TPoint = [0,0]): TBox; overload;
-var
-  tpa: TPointArray;
-begin
-  if regionIndex = -1 then Exit(b);
-  tpa := b.Corners().Offset(
-           Self.Regions[regionIndex].Offset -
-           Self.Regions[regionIndex].Region.TopLeft + offset
-         );
-  Result := tpa.Bounds();
-end;
-
-function TRSMapLoader.GetGlobal(b: TBox; offset: TPoint = [0,0]): TBox; overload;
-begin
-  Result := Self.GetGlobal(Self.LocalIndex(b.Center), b, offset);
-end;
 
 
 function TRSMapLoader.GetLocal(regionIndex: Integer; pt: TPoint; offset: TPoint = [0,0]): TPoint;
@@ -153,15 +126,6 @@ end;
 function TRSMapLoader.GetLocal(pt: TPoint; offset: TPoint = [0,0]): TPoint; overload;
 begin
   Result := Self.GetLocal(Self.GlobalIndex(pt), pt, offset);
-end;
-
-function TRSMapLoader.GetLocal(regionIndex: Integer; tpa: TPointArray; offset: TPoint = [0,0]): TPointArray; overload;
-var
-  pt: TPoint;
-begin
-  if regionIndex = -1 then Exit(tpa);
-  for pt in tpa do
-    Result += pt - Self.Regions[regionIndex].Offset + Self.Regions[regionIndex].Region.TopLeft + offset;
 end;
 
 function TRSMapLoader.GetLocal(tpa: TPointArray; offset: TPoint = [0,0]): TPointArray; overload;

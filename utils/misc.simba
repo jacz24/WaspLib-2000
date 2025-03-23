@@ -101,7 +101,7 @@ begin
 end;
 
 
-function RandomColor(): TColor;
+function Colors.Random(): TColor; static;
 var
   R, G, B: Byte;
 begin
