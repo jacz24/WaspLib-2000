@@ -42,14 +42,13 @@ end;
 
 type
 (*
-## TMapLoader Enums
+## ERSMap
 ```pascal
 ERSMap = enum(NORMAL, HEIGHT, COLLISION);
-ERSMapJSON = enum(OBJECTS, NPCS);
+Enum representing the types of map files available in TRSMap and TRSMapLoader.
 ```
 *)
   ERSMap = enum(NORMAL, HEIGHT, COLLISION);
-  ERSJSON = enum(OBJECTS, NPCS);
 
 (*
 ## TRSMapLoader
@@ -334,63 +333,6 @@ end;
 
 
 (*
-## TRSChunkLoader.GetBitmap
-```pascal
-function TRSChunkLoader.GetBitmap(chunk: String; plane: Integer; map: ERSMap): TMufasaBitmap;
-function TRSChunkLoader.GetBitmap(chunk: TPoint; plane: Integer; map: ERSMap): TMufasaBitmap; overload;
-```
-Returns a chunk bitmap.
-If possible, it will be loaded from a cached .bmp file.
-If no cache file exists, the .png file is unzipped, loaded and saved as a .bmp for future uses.
-The files are cached as .bmp because .bmp is a raw format and simba loads them much faster that way.
-```{note}
-This are internal methods. Don't use them if you don't know what you are doing.
-```
-*)
-function TRSMapLoader.GetJSONFile(chunk: TPoint; plane: Integer; json: ERSJSON): TJSONParser;
-var
-  filename, cachename: String;
-begin
-  if Self._UnzipQueue > 0 then
-    if not SleepUntil(Self._UnzipQueue <= 0, 100, 30000) then
-      raise GetDebugLn('MapLoader', 'Unzipping files timed out.');
-
-  filename := PATH_SEP + ToStr(chunk.X) + '-' + ToStr(chunk.Y) + '.json';
-
-  case json of
-    ERSJSON.OBJECTS: cachename := Self.CacheDir + 'objects' + PATH_SEP + ToStr(plane) + filename;
-    ERSJSON.NPCS:    cachename := Self.CacheDir + 'npcs'    + PATH_SEP + ToStr(plane) + filename;
-  end;
-
-  if FileExists(cachename) then;
-    Result.CreateFromFile(cachename);
-end;
-
-(*
-## MapLoader.GetMap
-```pascal
-function TRSMapLoader.GetMap(chunks: TPointArray; plane: Integer; map: ERSMap): TImage;
-```
-This returns a bitmap of all the `chunks` you pass into it or `start` and `finish` plus everything inbetween.
-```{note}
-This is an internal method. Don't use it if you don't know what you are doing.
-```
-*)
-function TRSMapLoader.GetJSON(chunks: TPointArray; plane: Integer; json: ERSJSON): TJSONParser;
-var
-  i: Integer;
-  tmp: TJSONParser;
-begin
-  for i := 0 to High(chunks) do
-  begin
-    tmp := Self.GetJSONFile(chunks[i], plane, json);
-    //TODO: Result MERGE tmp
-    tmp.Free();
-  end;
-end;
-
-
-(*
 ## MapLoader.GetGraph
 ```pascal
 function TRSMapLoader.GetGraph(name: String; plane: Integer; map: TMufasaBitmap): TWebGraphV2;
@@ -531,22 +473,6 @@ begin
 
   Result.UseCollisionData := Self.Graph.UseCollisionData;
 end;
-
-
-function TRSMapLoader.GetAssets(json: ERSJSON): TJSONParser;
-var
-  region: TRSMapRegion;
-  chunk: TPoint;
-  tmp: TJSONParser;
-begin
-  for region in Self.Regions do
-  begin
-    tmp := Self.GetJSON(region.Chunks, region.Plane, json);
-    //TODO: Result Mege tmp;
-    tmp.Free();
-  end;
-end;
-
 
 procedure TRSMapLoader.Load(chunks: TRSMapChunkArray; downscale: Integer = 8; padding: Integer = 40);
 var

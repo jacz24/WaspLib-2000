@@ -92,6 +92,7 @@ They should be self-explanatory.
 {$IFNDEF SRLT_MAP_INCLUDED}                 {$INCLUDE_ONCE osrs/map/map.simba}
 {$IFNDEF SRLT_MAPOBJECT_INCLUDED}           {$INCLUDE_ONCE osrs/map/objects.simba}
 {$IFNDEF SRLT_MAPDEBUGGER_INCLUDED}         {$INCLUDE_ONCE osrs/map/mapdebugger.simba}
+{$IFNDEF SRL_MAPJSONPARSER_INCLUDED}        {$INCLUDE_ONCE osrs/map/mapjsonparser.simba}
 {$IFNDEF SRLT_BANKPIN_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/mainscreen/bankpin.simba}
 {$IFNDEF SRLT_BANK_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/mainscreen/bank.simba}
 
@@ -104,6 +105,7 @@ They should be self-explanatory.
 {$IFNDEF SRLT_OVERRIDES_INCLUDED}           {$INCLUDE_ONCE osrs/overrides.simba}
 
 
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}

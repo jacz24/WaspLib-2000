@@ -1,0 +1,126 @@
+(*
+# Map JSON Parser
+Utility to help load and parse json files related to {ref}`Map`.
+*)
+{$DEFINE SRL_MAPJSONPARSER_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+type
+  TObjectJSONParser = type TJSONParser;
+
+(*
+## Objects.GetFile
+```pascal
+function TObjectJSONParser.GetFile(chunk: TPoint; plane: Integer): TJSONParser;
+```
+Internal method.
+*)
+function TObjectJSONParser.GetFile(chunk: TPoint; plane: Integer): TJSONParser;
+var
+  filename, cachename: String;
+begin
+  if Map.Loader._UnzipQueue > 0 then
+    if not SleepUntil(Map.Loader._UnzipQueue <= 0, 100, 30000) then
+      raise GetDebugLn('MapJSONParser', 'Unzipping files timed out.');
+
+  filename := PATH_SEP + ToStr(chunk.X) + '-' + ToStr(chunk.Y) + '.json';
+  cachename := Map.Loader.CacheDir + 'objects' + PATH_SEP + ToStr(plane) + filename;
+
+  if FileExists(cachename) then;
+    Result.CreateFromFile(cachename);
+end;
+
+(*
+## Objects.GetJSON
+```pascal
+function TObjectJSONParser.GetJSON(chunks: TPointArray; plane: Integer): TJSONParser;
+```
+Internal method.
+*)
+function TObjectJSONParser.GetJSON(chunks: TPointArray; plane: Integer): TJSONParser;
+var
+  i: Integer;
+  json: TJSONParser;
+begin
+  for i := 0 to High(chunks) do
+  begin
+    json := Self.GetFile(chunks[i], plane);
+    //TODO: Result MERGE tmp
+    json.Free();
+  end;
+end;
+
+function TObjectJSONParser.GetAssets(regions: array of TRSMapRegion): TJSONParser;
+var
+  region: TRSMapRegion;
+  json: TJSONParser;
+begin
+  for region in regions do
+  begin
+    json := Self.GetJSON(region.Chunks, region.Plane);
+    //TODO: Result Mege tmp;
+    json.Free();
+  end;
+end;
+
+
+type
+  TNPCJSONParser = type TJSONParser;
+
+(*
+## TRSObjectJSONParser.GetBitmap
+```pascal
+function TRSObjectJSONParser.GetJSONFile(chunk: TPoint; plane: Integer; json: ERSJSON): TJSONParser;
+```
+*)
+function TNPCJSONParser.GetFile(chunk: TPoint; plane: Integer): TJSONParser;
+var
+  filename, cachename: String;
+begin
+  if Map.Loader._UnzipQueue > 0 then
+    if not SleepUntil(Map.Loader._UnzipQueue <= 0, 100, 30000) then
+      raise GetDebugLn('MapJSONParser', 'Unzipping files timed out.');
+
+  filename := PATH_SEP + ToStr(chunk.X) + '-' + ToStr(chunk.Y) + '.json';
+  cachename := Map.Loader.CacheDir + 'objects' + PATH_SEP + ToStr(plane) + filename;
+
+  if FileExists(cachename) then;
+    Result.CreateFromFile(cachename);
+end;
+
+(*
+## MapLoader.GetMap
+```pascal
+function TRSMapLoader.GetMap(chunks: TPointArray; plane: Integer; map: ERSMap): TImage;
+```
+This returns a bitmap of all the `chunks` you pass into it or `start` and `finish` plus everything inbetween.
+```{note}
+This is an internal method. Don't use it if you don't know what you are doing.
+```
+*)
+function TNPCJSONParser.GetJSON(chunks: TPointArray; plane: Integer): TJSONParser;
+var
+  i: Integer;
+  json: TJSONParser;
+begin
+  for i := 0 to High(chunks) do
+  begin
+    json := Self.GetFile(chunks[i], plane);
+    //TODO: Result MERGE tmp
+    json.Free();
+  end;
+end;
+
+function TNPCJSONParser.GetAssets(regions: array of TRSMapRegion): TJSONParser;
+var
+  region: TRSMapRegion;
+  json: TJSONParser;
+begin
+  for region in regions do
+  begin
+    json := Self.GetJSON(region.Chunks, region.Plane);
+    //TODO: Result Mege tmp;
+    json.Free();
+  end;
+end;
+
