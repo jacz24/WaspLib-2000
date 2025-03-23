@@ -480,7 +480,7 @@ begin
     '',
     'Region:',
     ' - Index   : ' + ToStr(Self.RegionIndex),
-    ' - Name    : ' + ToStr(Self.Region.Name),
+    ' - Name    : ' + ToStr(Self.Region.GetName()),
     ' - Plane   : ' + ToStr(Self.Region.Plane),
     ' - Local   : ' + _BoxStr(Self.Region.Region),
     ' - Original: ' + _BoxStr(Self.Region.Original),
