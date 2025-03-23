@@ -66,7 +66,6 @@ This is an internal type. Don't use it if you don't know what you are doing.
   end;
 
 
-
 function TRSMapLoader.LocalIndex(pt: TPoint): Integer;
 begin
   for Result := 0 to High(Self.Regions) do
@@ -106,15 +105,6 @@ function TRSMapLoader.GetGlobal(p: TPoint; offset: TPoint = [0,0]): TPoint; over
 begin
   Result := Self.GetGlobal(Self.LocalIndex(p), p, offset);
 end;
-
-function TRSMapLoader.GetGlobal(regionIndex: Integer; tpa: TPointArray; offset: TPoint = [0,0]): TPointArray; overload;
-begin
-  if regionIndex = -1 then
-    Exit(tpa);
-
-  Result := tpa.Offset(Self.Regions[regionIndex].Offset - [Self.Regions[regionIndex].Region.X1, Self.Regions[regionIndex].Region.Y1] + offset);
-end;
-
 
 
 function TRSMapLoader.GetLocal(regionIndex: Integer; pt: TPoint; offset: TPoint = [0,0]): TPoint;
@@ -188,7 +178,6 @@ begin
   WriteLn GetDebugLn('MapLoader', msg, EErrorLevel.SUCCESS);
   Self._UnzipQueue -= 1;
 end;
-
 
 procedure TRSMapLoader.Setup(downscale: Integer);
 var
@@ -424,25 +413,26 @@ begin
 end;
 
 
-function TRSMapLoader.SetupGraph(name: String; idx, plane, padding: Integer; collision: TImage): TWebGraph;
+function TRSMapLoader.SetupGraph(name: String; offset: TPoint; plane: Integer; collision: TImage): TWebGraph;
 var
   i: Integer;
 begin
   Result := Self.GetGraph(name, plane, collision);
-  Result.Nodes := Self.GetGlobal(idx, Result.Nodes, [padding,padding]);
 
-  Result.WalkableSpace := Self.GetGlobal(idx, Result.WalkableSpace, [padding,padding]);
+  Result.Nodes := Result.Nodes.Offset(offset);
+  Result.WalkableSpace := Result.WalkableSpace.Offset(offset);
+
   for i := 0 to High(Result.WalkableClusters) do
-    Result.WalkableClusters[i] := Self.GetGlobal(idx, Result.WalkableClusters[i], [padding,padding]);
+    Result.WalkableClusters[i] :=  Result.WalkableClusters[i].Offset(offset);
 
   for i := 0 to High(Result.ObjectClusters) do
-    Result.ObjectClusters[i] := Self.GetGlobal(idx, Result.ObjectClusters[i], [padding,padding]);
+    Result.ObjectClusters[i] := Result.ObjectClusters[i].Offset(offset);
 
   for i := 0 to High(Result.Doors) do
   begin
-    Result.Doors[i].Before := Self.GetGlobal(idx, Result.Doors[i].Before, [padding, padding]);
-    Result.Doors[i].After  := Self.GetGlobal(idx, Result.Doors[i].After,  [padding, padding]);
-    Result.Doors[i].Center := Self.GetGlobal(idx, Result.Doors[i].Center, [padding, padding]);
+    Result.Doors[i].Before := Result.Doors[i].Before + offset;
+    Result.Doors[i].After  := Result.Doors[i].After + offset;
+    Result.Doors[i].Center := Result.Doors[i].Center + offset;
   end;
 end;
 
@@ -482,11 +472,13 @@ end;
 
 
 
-procedure TRSMapLoader.Load(chunks: array of TRSMapChunk; downscale: Integer = 8; padding: Integer = 40);
+procedure TRSMapLoader.Load(chunks: TRSMapChunkArray; downscale: Integer = 8; padding: Integer = 40);
 var
-  i, j, idx: Integer;
+  chunk: TRSMapChunk;
+  region: TRSMapRegion;
+  i, plane: Integer;
   maps, heightmaps, collisionmaps: TImageArray;
-  s, f, tmp: TPoint;
+  topLeft, btmRight: TPoint;
   graphs: array of TWebGraph;
   //json: TJSONArray;
   //objects, npcs: array of TJSONArray;
@@ -494,66 +486,51 @@ var
   boxes: TBoxArray;
 begin
   Self.Setup(downscale);
-
-  for i := 0 to High(chunks) do j += Length(chunks[i].Planes);
-
-  SetLength(Self.Regions, j);
-  SetLength(boxes, j);
-
   Self.Padding := padding;
-  idx := -1;
 
-  for i := 0 to High(chunks) do
-    for j := 0 to High(chunks[i].Planes) do
+  for chunk in chunks do
+    for plane in chunk.Planes do
     begin
-      idx += 1;
+      topLeft  := Point(Min(chunk.Chunk.X1, chunk.Chunk.X2), Max(chunk.Chunk.Y1, chunk.Chunk.Y2));
+      btmRight := Point(Max(chunk.Chunk.X1, chunk.Chunk.X2), Min(chunk.Chunk.Y1, chunk.Chunk.Y2));
+      chunk.Chunk := TBox.Create(topLeft.X, topLeft.Y, btmRight.X, btmRight.Y); //ensure the box values are in order
 
-      with chunks[i] do
+      name := ToStr(topLeft.X) + '-' + ToStr(topLeft.Y) + '_' +
+              ToStr(btmRight.X) + '-' + ToStr(btmRight.Y);
+
+      region.Name     :=  ToStr(plane) + '_' + name;
+      region.Original := RSTranslator.Chunk2Coordinate(chunk.Chunk);
+
+      region.Plane := plane;
+
+      if plane = 0 then
       begin
-        s := Point(Min(Chunk.X1, Chunk.X2), Max(Chunk.Y1, Chunk.Y2));
-        f := Point(Max(Chunk.X1, Chunk.X2), Min(Chunk.Y1, Chunk.Y2));
-        Chunk := TBox.Create(s.X, s.Y, f.X, f.Y);
-      end;
+        heightmaps += Self.GetMap(topLeft, btmRight, 0, ERSMap.HEIGHT);
+        heightmaps.Last.Pad(padding);
+      end
+      else
+        region.Original := region.Original.Offset([RSTranslator.MapWidth() * plane, 0]);
 
-      name := ToStr(s.X) + '-' + ToStr(s.Y) + '_' + ToStr(f.X) + '-' + ToStr(f.Y);
+      with RSTranslator.Chunk2Coordinate(topLeft) do
+        region.Offset := [X + RSTranslator.MapWidth() * plane - padding, Y - padding];
 
-      Self.Regions[idx].Name     :=  ToStr(chunks[i].Planes[j]) + '_' + name;
-      Self.Regions[idx].Original := RSTranslator.Chunk2Coordinate(chunks[i].Chunk);
+      maps += Self.GetMap(topLeft, btmRight, plane, ERSMap.NORMAL);
+      maps.Last.Pad(padding);
 
-      if chunks[i].Planes[j] > 0 then
-        Self.Regions[idx].Original := Self.Regions[idx].Original.Offset([RSTranslator.MapWidth() * chunks[i].Planes[j], 0]);
-
-      Self.Regions[idx].Plane := chunks[i].Planes[j];
-
-      tmp :=  RSTranslator.Chunk2Coordinate(s);
-      tmp.X += RSTranslator.MapWidth() * chunks[i].Planes[j]; //easy way to handle upper levels
-      Self.Regions[idx].Offset := [tmp.X-padding, tmp.Y - padding];
-
-      maps += Self.GetMap(s, f, chunks[i].Planes[j], ERSMap.NORMAL);
-      maps[idx].Pad(padding);
-
-      if chunks[i].Planes[j] = 0 then
-      begin
-        heightmaps += Self.GetMap(s, f, 0, ERSMap.HEIGHT);
-        heightmaps[High(heightmaps)].Pad(padding);
-      end;
-
-      collisionmaps += Self.GetMap(s, f, chunks[i].Planes[j], ERSMap.COLLISION);
+      collisionmaps += Self.GetMap(topLeft, btmRight, plane, ERSMap.COLLISION);
 
       if not WebGraphGenerator.Disabled then
-        graphs += Self.SetupGraph(name, idx, chunks[i].Planes[j], padding, collisionmaps[idx]);
+        graphs += Self.SetupGraph(name, region.Offset - region.Region.TopLeft + [padding, padding], plane, collisionmaps.Last);
 
-      collisionmaps[idx].Pad(padding);
+      collisionmaps.Last.Pad(padding);
 
       (* TODO
-      json := Self.GetJSON(s, f, chunks[i].Planes[j], ERSMapJSON.OBJECTS);
-      objects += json;
-      json := Self.GetJSON(s, f, chunks[i].Planes[j], ERSMapJSON.NPCS);
-      npcs += json;
+      objects += Self.GetJSON(topLeft, btmRight, plane, ERSMapJSON.OBJECTS);
+      npcs += Self.GetJSON(topLeft, btmRight, plane, ERSMapJSON.NPCS);
       *)
 
-      Self.Regions[idx].Region := TBox.Create(0, 0, maps[idx].Width, maps[idx].Height);
-      boxes[idx] := Self.Regions[idx].Region;
+      boxes += TBox.Create(0, 0, maps.Last.Width, maps.Last.Height);
+      Self.Regions += region;
     end;
 
   boxes := boxes.Pack(); //pack our boxes into the smallest possible space
