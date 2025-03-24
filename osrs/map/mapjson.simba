@@ -9,7 +9,7 @@ type
   TMapObjectJSON = type TJSONItem;
 
 (*
-## Objects.GetFile
+## ObjectsJSON.GetFile
 ```pascal
 function TMapObjectJSON.GetFile(chunk: TPoint; plane: Integer): TJSONItem;
 ```
@@ -31,7 +31,7 @@ begin
 end;
 
 (*
-## Objects.GetJSON
+## ObjectsJSON.GetJSON
 ```pascal
 function TMapObjectJSON.GetJSON(chunks: TPointArray; plane: Integer): TJSONItem;
 ```
@@ -68,7 +68,7 @@ begin
 end;
 
 (*
-## Objects.Load
+## ObjectsJSON.Load
 ```pascal
 function TMapObjectJSON.Load(regions: array of TRSMapRegion): TJSONItem;
 ```
@@ -100,6 +100,77 @@ begin
 
     json.Free();
   end;
+end;
+
+
+(*
+## ObjectsJSON.Get
+```pascal
+function TMapObjectJSON.Get(name: String; amount: Integer = 0): TJSONItem;
+```
+Returns a `TJSONItem` JSON array of a map object that matches the specified `name`.
+By default you get all objects that match the `name`, however,
+if you want you can specify how many you want through `amount`.
+*)
+function TMapObjectJSON.Get(name: String; amount: Integer = 0): TJSONItem;
+var
+  i, found: Integer;
+begin
+  Result := NewJSONArray();
+  for i := 0 to  Self.Count-1 do
+    if Self.Items[i].Items[1].AsString = name then
+    begin
+      Result.AddObject('', Self.Items[i]);
+      if Inc(found) = amount then Exit;
+    end;
+
+  if found = 0 then
+    raise GetDebugLn('Object with name ' + name + ' doesn''t exist on the loaded maps.');
+end;
+
+(*
+## ObjectsJSON.GetByID
+```pascal
+function TMapObjectJSON.GetByID(id: Integer): TJSONItem;
+```
+Returns a `TJSONItem` JSON object of a map object that matches the specified `id`.
+*)
+function TMapObjectJSON.GetByID(id: Integer): TJSONItem;
+var
+  i: Integer;
+begin
+  for i := 0 to  Self.Count-1 do
+    if Self.Items[i].Items[0].AsInt = id then
+      Exit(Self.Items[i]);
+  raise GetDebugLn('Object with ID ' + ToStr(id) + ' doesn''t exist on the loaded maps.');
+end;
+
+(*
+## ObjectsJSON.GetByAction
+```pascal
+function TMapObjectJSON.GetByAction(action: String; amount: Integer = 0): TJSONItem;
+```
+Returns a `TJSONItem` JSON array of a map object that has an action that matches
+the specified `action`.
+By default you get all objects that match the `action`, however, if you want
+you can specify how many you want through `amount`.
+*)
+function TMapObjectJSON.GetByAction(action: String; amount: Integer = 0): TJSONItem;
+var
+  i, j, found: Integer;
+begin
+  Result := NewJSONArray();
+  for i := 0 to  Self.Count-1 do
+    for j := 0 to Self.Items[i].Items[4].Count-1 do
+      if Self.Items[i].Items[4].Items[j].AsString = action then
+      begin
+        Result.AddObject('', Self.Items[i]);
+        if Inc(found) = amount then Exit;
+        Continue(2);
+      end;
+
+  if found = 0 then
+    raise GetDebugLn('Object with action ' + action + ' doesn''t exist on the loaded maps.');
 end;
 
 
@@ -264,6 +335,78 @@ begin
     json.Free();
   end;
 end;
+
+
+(*
+## NPCsJSON.Get
+```pascal
+function TMapNPCJSON.Get(name: String; amount: Integer = 0): TJSONItem;
+```
+Returns a `TJSONItem` JSON array of a map npcs that matches the specified `name`.
+By default you get all npcs that match the `name`, however,
+if you want you can specify how many you want through `amount`.
+*)
+function TMapNPCJSON.Get(name: String; amount: Integer = 0): TJSONItem;
+var
+  i, found: Integer;
+begin
+  Result := NewJSONArray();
+  for i := 0 to  Self.Count-1 do
+    if Self.Items[i].Items[1].AsString = name then
+    begin
+      Result.AddObject('', Self.Items[i]);
+      if Inc(found) = amount then Exit;
+    end;
+
+  if found = 0 then
+    raise GetDebugLn('Object with name ' + name + ' doesn''t exist on the loaded maps.');
+end;
+
+(*
+## NPCsJSON.GetByID
+```pascal
+function TMapNPCJSON.GetByID(id: Integer): TJSONItem;
+```
+Returns a `TJSONItem` JSON object of a map npcs that matches the specified `id`.
+*)
+function TMapNPCJSON.GetByID(id: Integer): TJSONItem;
+var
+  i: Integer;
+begin
+  for i := 0 to  Self.Count-1 do
+    if Self.Items[i].Items[0].AsInt = id then
+      Exit(Self.Items[i]);
+  raise GetDebugLn('Object with ID ' + ToStr(id) + ' doesn''t exist on the loaded maps.');
+end;
+
+(*
+## NPCsJSON.GetByAction
+```pascal
+function TMapNPCJSON.GetByAction(action: String; amount: Integer = 0): TJSONItem;
+```
+Returns a `TJSONItem` JSON array of a map npcs that has an action that matches
+the specified `action`.
+By default you get all npcs that match the `action`, however, if you want
+you can specify how many you want through `amount`.
+*)
+function TMapNPCJSON.GetByAction(action: String; amount: Integer = 0): TJSONItem;
+var
+  i, j, found: Integer;
+begin
+  Result := NewJSONArray();
+  for i := 0 to  Self.Count-1 do
+    for j := 0 to Self.Items[i].Items[5].Count-1 do
+      if Self.Items[i].Items[5].Items[j].AsString = action then
+      begin
+        Result.AddObject('', Self.Items[i]);
+        if Inc(found) = amount then Exit;
+        Continue(2);
+      end;
+
+  if found = 0 then
+    raise GetDebugLn('Object with action ' + action + ' doesn''t exist on the loaded maps.');
+end;
+
 
 procedure TMapNPCJSON.Print();
 var
