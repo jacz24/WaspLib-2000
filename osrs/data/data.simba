@@ -13,7 +13,7 @@ type
 Record responsible for providing item information in SRLT.
 *)
   TItemData = record
-    DefinitionsJSON, PricesJSON: TJSONParser;
+    DefinitionsJSON, PricesJSON: TJSONItem;
     Filename: String;
     Timeout: UInt64;
     Disabled: Boolean;
@@ -73,7 +73,7 @@ begin
   Self.Free();
 
   try
-    Self.PricesJSON := TJSONParser.CreateFromFile(Self.Filename);
+    Self.PricesJSON := LoadJSON(Self.Filename);
   except
     FileDelete(Self.Filename);
     Self.Disabled := True;
@@ -87,7 +87,7 @@ begin
   if not DirCreate(Self.CacheDir + 'items' + PATH_SEP) then
     raise GetDebugLn('ItemData', 'Failed to create cache directory: ' + Self.CacheDir + 'items' + PATH_SEP);
 
-  Self.DefinitionsJSON := TJSONParser.Create();
+  Self.DefinitionsJSON := NewJSONObject();
   AddOnTerminate(@Self.DefinitionsJSON.Free);
   AddOnterminate(@Self.Free);
 end;
@@ -96,11 +96,11 @@ end;
 (*
 ## ItemData.GetDefinition
 ```pascal
-function TItemData.GetDefinition(itemID: String): TJSONElement;
+function TItemData.GetDefinition(itemID: String): TJSONItem;
 ```
 This is mostly for internal use but you may use it for whatever you wish.
 
-This returns a `TJSONElement` of the item definition.
+This returns a `TJSONItem` of the item definition.
 
 Item definitions are items information stored in the game cache, things like:
 - Item ID
@@ -122,12 +122,12 @@ WriteLn parser.ToString();
 parser.Free();
 ```
 *)
-function TItemData.GetDefinition(itemID: String): TJSONElement;
+function TItemData.GetDefinition(itemID: String): TJSONItem;
 var
   path, filename: String;
-  parser: TJSONParser;
+  item: TJSONItem;
 begin
-  if Self.DefinitionsJSON.Find(itemID, Result) then Exit;
+  if Self.DefinitionsJSON.GetObject(itemID, Result) then Exit;
 
   path := Self.CacheDir  + 'items' + PATH_SEP;
   filename := path + itemID + '.json';
@@ -135,10 +135,8 @@ begin
     if not ZipExtractEntry(Self.ZIP, itemID +'.json', path) then
       raise  GetDebugLn('ItemData', 'Couldn''t find ' + itemID + '.json');
 
-  parser := TJSONParser.CreateFromFile(filename);
-  Result := parser.ToElement();
-  parser.Free();
-  Self.DefinitionsJSON.AddElement(itemID, Result);
+  Result := LoadJSON(filename);
+  Self.DefinitionsJSON.Add(itemID, Result);
 end;
 
 (*
@@ -166,7 +164,7 @@ function TItemData.GetTradeableID(item: TRSItem): String;
 var
   ids: TStringArray;
   id: String;
-  json: TJSONElement;
+  json: TJSONItem;
 begin
   if item.IsNumeric then ids := [item]
   else ids := ItemFinder.Database.GetAll(item.ToLower(), 'item', 'id');
@@ -174,7 +172,8 @@ begin
   for id in ids do
   begin
     json := Self.GetDefinition(id);
-    if json.Item[9].Value then Exit(id); //9 is "tradeable" key
+    if json.Items[9].AsBool then
+      Exit(id); //9 is "tradeable" key
   end;
 end;
 
@@ -194,7 +193,7 @@ WriteLn ItemData.GetPrice('Abyssal whip');
 function TItemData.GetPrice(item: TRSItem): Integer;
 var
   id: String;
-  json: TJSONElement;
+  json: TJSONItem;
   lo, hi: Integer;
 begin
   id := Self.GetTradeableID(item);
@@ -207,10 +206,10 @@ begin
 
   Self.Reload();
   if Self.Disabled then Exit;
-  if not Self.PricesJSON.Item[0].Find(id, json) then Exit;
+  if not Self.PricesJSON.Items[0].GetObject(id, json) then Exit;
 
-  hi := json.Values[0]; //"high" key
-  lo := json.Values[2]; //"lo" key
+  hi := json.Items[0].AsInt; //"high" key
+  lo := json.Items[2].AsInt; //"lo" key
 
   if lo = hi then Exit(lo);
   if lo = 0 then Exit(hi);
@@ -236,7 +235,8 @@ function TItemData.GetLowAlch(item: TRSItem): Integer;
 var
   ids: TStringArray;
   id: String;
-  json: TJSONElement;
+  json: TJSONItem;
+  value: Integer;
 begin
   if item.IsNumeric then ids := [item]
   else ids := ItemFinder.Database.GetAll(item.ToLower(), 'item', 'id');
@@ -244,8 +244,9 @@ begin
   for id in ids do
   begin
     json := Self.GetDefinition(id);
-    if json.Item[8].Value > 0 then
-      Exit(json.Item[8].Value * 0.4); //8 is "cost" key
+    value := json.Items[8].AsInt; //8 is "cost" key
+    if value > 0 then
+      Exit(Round(value * 0.4));
   end;
 end;
 
@@ -265,7 +266,8 @@ function TItemData.GetHighAlch(item: TRSItem): Integer;
 var
   ids: TStringArray;
   id: String;
-  json: TJSONElement;
+  json: TJSONItem;
+  value: Integer;
 begin
   if item.IsNumeric then ids := [item]
   else ids := ItemFinder.Database.GetAll(item.ToLower(), 'item', 'id');
@@ -273,8 +275,9 @@ begin
   for id in ids do
   begin
     json := Self.GetDefinition(id);
-    if json.Item[8].Value > 0 then
-      Exit(json.Item[8].Value * 0.6); //8 is "cost" key
+    value := json.Items[8].AsInt; //8 is "cost" key
+    if value > 0 then
+      Exit(Round(value * 0.6));
   end;
 end;
 

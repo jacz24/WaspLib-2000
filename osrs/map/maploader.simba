@@ -231,18 +231,13 @@ end;
 
 
 (*
-## TRSChunkLoader.GetBitmap
+## MapLoader.GetFile
 ```pascal
-function TRSChunkLoader.GetBitmap(chunk: String; plane: Integer; map: ERSMap): TMufasaBitmap;
-function TRSChunkLoader.GetBitmap(chunk: TPoint; plane: Integer; map: ERSMap): TMufasaBitmap; overload;
+function TRSMapLoader.GetFile(chunk: TPoint; plane: Integer; map: ERSMap): TImage;
 ```
-Returns a chunk bitmap.
+Internal method that returns a chunk image.
 If possible, it will be loaded from a cached .bmp file.
-If no cache file exists, the .png file is unzipped, loaded and saved as a .bmp for future uses.
-The files are cached as .bmp because .bmp is a raw format and simba loads them much faster that way.
-```{note}
-This are internal methods. Don't use them if you don't know what you are doing.
-```
+If no .bmp file exists, the .png file is loaded instead, it's saved as .bmp for future uses and the .png file is deleted.
 *)
 function TRSMapLoader.GetFile(chunk: TPoint; plane: Integer; map: ERSMap): TImage;
 var
@@ -287,10 +282,7 @@ end;
 ```pascal
 function TRSMapLoader.GetMap(chunks: TPointArray; plane: Integer; map: ERSMap): TImage;
 ```
-This returns a bitmap of all the `chunks` you pass into it or `start` and `finish` plus everything inbetween.
-```{note}
-This is an internal method. Don't use it if you don't know what you are doing.
-```
+Internal method that returns a `TImage` of all the `chunks` you pass into it.
 *)
 function TRSMapLoader.GetMap(chunks: TPointArray; plane: Integer; map: ERSMap): TImage;
 var
