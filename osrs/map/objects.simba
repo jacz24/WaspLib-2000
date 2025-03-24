@@ -17,12 +17,53 @@ type
     Walker: PRSWalker;
   end;
 
+  TRSObjectArray = array of TRSObject;
+
 procedure TRSObject.Setup(size: Vector3; coordinates: TPointArray);
 begin
   Self.Coordinates := coordinates;
   SetLength(Self.Rotations, Length(coordinates));
   Self.Size := size;
 end;
+
+procedure TRSObject.Setup(json: TJSONItem); overload;
+var
+  i: Integer;
+  colors: TColorArray;
+  best: TBestColor;
+begin
+  Self.UpText := [json.Items[1].AsString];
+  //5 is coordinates key in trsmap jsons
+  for i := 0 to json.Items[5].Count-1 do
+    Self.Coordinates += [json.Items[5].Items[i].Items[0].AsInt, json.Items[5].Items[i].Items[0].AsInt];
+
+  //6 is size key in trsmap jsons
+  Self.Size.X := json.Items[6].Items[0].AsInt * 0.8;
+  Self.Size.Y := json.Items[6].Items[1].AsInt * 0.8;
+  Self.Size.Z := json.Items[6].Items[2].AsInt / 40;
+
+  //7 is rotations key in trsmap jsons
+  for i := 0 to json.Items[7].Count-1 do
+    Self.Rotations += json.Items[7].Items[i].AsInt;
+
+  //8 is colors key in trsmap jsons
+  for i := 0 to json.Items[8].Count-1 do
+    colors += json.Items[8].Items[i].AsInt;
+
+  best := GetBestColor(EColorSpace.HSV, colors);
+  Self.Finder.Colors += [best.Color, best.Tolerance, EColorSpace.HSV, best.Mods];
+  Self.Walker := @Map.Walker;
+end;
+
+procedure TRSObjectArray.Setup(json: TJSONItem); overload;
+var
+  i: Integer;
+begin
+  SetLength(Self, json.Count);
+  for i := 0 to High(Self) do
+    Self[i].Setup(json.Items[i]);
+end;
+
 
 function TRSObject.GetCuboidArray(me: TPoint; angle: Single = $FFFF): TCuboidArray;
 var
@@ -582,3 +623,13 @@ begin
   img.Free();
 end;
 
+
+function ToString(constref obj: TRSObject): String; override;
+begin
+  Result := '[' + ToString(obj.UpText) + ', ' +
+                  ToString(obj.Size) + ', ' +
+                  ToString(obj.Coordinates) + ', ' +
+                  ToString(obj.Rotations) + ', ' +
+                  ToString(obj.Finder) + ', ' +
+                  ToString(obj.Track) + ']';
+end;
