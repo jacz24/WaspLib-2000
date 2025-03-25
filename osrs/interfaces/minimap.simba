@@ -610,7 +610,7 @@ function TRSMinimap.CleanImage(img: TImage): TImage;
     pixel: Integer;
     x, y: Integer;
   begin
-    area := TBox.Create(p.X - 2, p.Y - 2, p.X + 2, p.Y + 3);
+    area := TBox.Create(p.X - 2, p.Y - 2, p.X + 2, p.Y + 4);
     area := area.Clip([0,0,img.Width-1, img.Height-1]);
 
     for y := area.Y1 to area.Y2 do
@@ -618,16 +618,16 @@ function TRSMinimap.CleanImage(img: TImage): TImage;
       begin
         pixel := img.Pixel[x, y];
 
-        if SimilarColors($FFFFFF, pixel, 30) then
+        if SimilarColors($FFFFFF, pixel, 20) then
           img.Pixel[x, y] := 0;
 
-        if SimilarColors($00FFFF, pixel, 30) then
+        if SimilarColors($00FFFF, pixel, 20) then
           img.Pixel[x, y] := 0;
 
-        if SimilarColors($0000FF, pixel, 30) then
+        if SimilarColors($0000FF, pixel, 20) then
           img.Pixel[x, y] := 0;
 
-        if SimilarColors($000000, pixel, 1) then
+        if SimilarColors($000000, pixel, 5) then
           img.Pixel[x, y] := 0;
       end;
   end;
@@ -647,20 +647,21 @@ begin
   _Paint(img.Center); // our own player
 
   //idk what the heck is this 3 lines
-  img.ReplaceColor(255,0);
-  img.ReplaceColor(284358,0);
-  img.ReplaceColor(1127261,0);
+  img.ReplaceColor($0000FF, $0);
+  img.ReplaceColor($0456C6, $0);
+  img.ReplaceColor($11335D, $0);
 
-  img.DrawColor := 0;
+  img.DrawColor := $0;
 
   case RSClient.Mode of
     ERSMode.FIXED: img.DrawImage(Self.Masks.FIXED, [0,0]);
     ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN: img.DrawImage(Self.Masks.RESIZABLE, [0,0]);
   end;
 
-  tpa := img.FindColor($0, 0).SortFrom(img.Center);
+  tpa := img.FindColor($0, 0) + img.FindColor($010000, 0);
+  tpa := tpa.SortFrom(img.Center);
 
-  Result := img.Blend(tpa, 5);
+  Result := img.Blend(tpa, 32);
   Result.Pad(10);
 end;
 
@@ -724,20 +725,16 @@ begin
     if RSClient.Mode = ERSMode.FIXED then
       center := center.Offset(0, -8).Rotate(-Self.GetCompassAngle(False), center);
 
-    tmp.DrawColor := $0;
-    tmp.DrawCircleInverted(center, radius);
+    radius += 6;
 
-    radius += 3;
-
-    tmp.Crop(Box(center, radius, radius));
+    tmp.Crop(TBox.Create(center, radius, radius));
     tpa := tmp.FindColor($0, 0).SortFrom(tmp.Center);
 
-    blend := tmp.Blend(tpa, 3);
-
-    blend.DrawColor := $0;
-    blend.DrawCircleInverted(blend.Center, radius);
-
+    blend := tmp.Blend(tpa, 30);
     Result := blend.Downsample(scaling);
+
+    Result.DrawColor := $0;
+    Result.DrawCircleInverted(Result.Center, radius div scaling);
   finally
     Free([Result]);
   end;

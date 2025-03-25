@@ -40,26 +40,6 @@ end;
 type
 (*
 ## TRSMap
-```pascal
-TRSMap = record
-    Walker: TRSWalkerV2;
-
-    RegionIndex: Int32;
-    Region: TRSMapRegion;
-    Similarity: Double;
-    Cache: TMatchTemplateRGBCache;
-    Loader: TRSMapLoader;
-
-    Sample: TRSMapSample;
-
-    Filters: array of record
-      Box: TBox;
-      Inside: Boolean;
-    end;
-
-    IsSetup, DisableHeightmap: Boolean;
-  end
-```
 Record responsible for positioning.
 *)
   TRSMap = record
@@ -97,21 +77,20 @@ This is caleld automatically for you and you shouldn't need to call it.
 *)
 procedure TRSMap.InternalSetup();
 var
-  minimapImage, minimapSample: TImage;
+  img, sample: TImage;
   i: Integer;
   b: TBox;
 begin
-  if Self.Sample.Amount = 0 then Self.Sample.Amount := 3;
+  if Self.Sample.Amount = 0 then Self.Sample.Amount := 2;
   if Self.Sample.Radius = 0 then Self.Sample.Radius := 67;
 
-  minimapImage := Minimap.GetCleanImage();
-  minimapSample := Minimap.ScaleMinimap(minimapImage, Self.Loader.Downscale, Self.Sample.Radius);
+  img := Minimap.GetCleanImage();
+  sample := Minimap.ScaleMinimap(img, Self.Loader.Downscale, Self.Sample.Radius);
+  img.Free();
 
-  Self.Cache := TMatchTemplateCache.Create(Self.Loader.DownscaledMap.ToMatrix(), minimapSample.ToMatrix(), ETMFormula.TM_CCOEFF_NORMED);
+  Self.Cache := TMatchTemplateCache.Create(Self.Loader.DownscaledMap, sample, ETMFormula.TM_CCOEFF_NORMED);
   Self.Cache.FreeOnTerminate := True;
-
-  minimapImage.Free();
-  minimapSample.Free();
+  sample.Free();
 
   Self.Filters := [];
   for i := 0 to High(Self.Loader.Regions) do
@@ -206,7 +185,7 @@ function TRSMap.ScaledSearch(img: TImage): TPointArray;
 var
   sample: TImage;
   matrix: TSingleMatrix;
-  w, h, n, loops: Integer;
+  w, h, i, loops: Integer;
   pt, loaderOffset: TPoint;
   width, height: Integer;
 begin
@@ -219,8 +198,7 @@ begin
     sample.Free();
   end;
 
-  loaderOffset.X := Self.Loader.Downscale div 2;
-  loaderOffset.Y := loaderOffset.X;
+  loaderOffset := [Self.Loader.Downscale div 2, Self.Loader.Downscale div 2];
   matrix.GetSize(width, height);
   width -= 1;
   height -= 1;
@@ -229,17 +207,20 @@ begin
   begin
     with matrix.ArgMax() do
     begin
-      pt := Offset(w, h) * Self.Loader.Downscale;
+      pt := Offset(w, h);
+      pt := pt * Self.Loader.Downscale;
 
-      for n := 0 to High(Self.Filters) do
-        if Self.Filters[n].Valid(pt) then
+      for i := 0 to High(Self.Filters) do
+      begin
+        if Self.Filters[i].Valid(pt) then
         begin
           Result += pt + loaderOffset;
           matrix.Fill([Max(0, X-5), Max(0, Y-5), Min(width, X+5), Min(height, Y+5)], 0);
           Continue(2);
         end;
+      end;
 
-      matrix.Fill([X - 5, Y - 5, X + 5, Y + 5], 0);
+      matrix.Fill([Max(0, X-5), Max(0, Y-5), Min(width, X+5), Min(height, Y+5)], 0);
     end;
 
     if Inc(loops) > 70 then Break;
@@ -336,7 +317,6 @@ begin
   finally
     clean.Free();
   end;
-
 
   Self.RegionIndex := Self.Loader.LocalIndex(Result);
   if Self.RegionIndex < 0 then
@@ -486,6 +466,7 @@ begin
     ' - Plane   : ' + ToStr(Self.Region.Plane),
     ' - Local   : ' + _BoxStr(Self.Region.Region),
     ' - Original: ' + _BoxStr(Self.Region.Original),
+    ' - Compass: ' + ToStr(Minimap.GetCompassAngle()),
     '',
     'Certainty: '    + ToStr(Round(Self.Similarity, 3)),
     'Time: '         + ToStr(Round(time)) + ' ms'
