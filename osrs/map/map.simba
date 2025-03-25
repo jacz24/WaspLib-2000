@@ -98,10 +98,10 @@ This is caleld automatically for you and you shouldn't need to call it.
 procedure TRSMap.InternalSetup();
 var
   minimapImage, minimapSample: TImage;
-  i: Int32;
+  i: Integer;
   b: TBox;
 begin
-  if Self.Sample.Amount = 0 then Self.Sample.Amount := 2;
+  if Self.Sample.Amount = 0 then Self.Sample.Amount := 3;
   if Self.Sample.Radius = 0 then Self.Sample.Radius := 67;
 
   minimapImage := Minimap.GetCleanImage();
@@ -210,38 +210,40 @@ var
   pt, loaderOffset: TPoint;
   width, height: Integer;
 begin
-    try
-      sample := Minimap.ScaleMinimap(img, Self.Loader.Downscale, Self.Sample.Radius);
-      matrix := MatchTemplateMask(Self.Cache, sample.ToMatrix(), ETMFormula.TM_CCOEFF_NORMED);
-      w := sample.Width div 2;
-      h := sample.Height div 2;
-    finally
-      sample.Free();
-    end;
+  try
+    sample := Minimap.ScaleMinimap(img, Self.Loader.Downscale, Self.Sample.Radius);
+    matrix := MatchTemplateMask(Self.Cache, sample.ToMatrix(), ETMFormula.TM_CCOEFF_NORMED);
+    w := sample.Width div 2;
+    h := sample.Height div 2;
+  finally
+    sample.Free();
+  end;
 
-    loaderOffset.X := Self.Loader.Downscale div 2;
-    loaderOffset.Y := loaderOffset.X;
-    matrix.GetSize(width, height);
+  loaderOffset.X := Self.Loader.Downscale div 2;
+  loaderOffset.Y := loaderOffset.X;
+  matrix.GetSize(width, height);
+  width -= 1;
+  height -= 1;
 
-    while Length(Result) < Self.Sample.Amount do
+  while Length(Result) < Self.Sample.Amount do
+  begin
+    with matrix.ArgMax() do
     begin
-      with matrix.ArgMax() do
-      begin
-        pt := Offset(w, h) * Self.Loader.Downscale;
+      pt := Offset(w, h) * Self.Loader.Downscale;
 
-        for n := 0 to High(Self.Filters) do
-          if Self.Filters[n].Valid(pt) then
-          begin
-            Result += pt + loaderOffset;
-            matrix.Fill([Max(0, X-5), Max(0, Y-5), Min(width, X+5), Min(height, Y+5)], 0);
-            Continue(2);
-          end;
+      for n := 0 to High(Self.Filters) do
+        if Self.Filters[n].Valid(pt) then
+        begin
+          Result += pt + loaderOffset;
+          matrix.Fill([Max(0, X-5), Max(0, Y-5), Min(width, X+5), Min(height, Y+5)], 0);
+          Continue(2);
+        end;
 
-        matrix.Fill([X - 5, Y - 5, X + 5, Y + 5], 0);
-      end;
-
-      if Inc(loops) > 70 then Break;
+      matrix.Fill([X - 5, Y - 5, X + 5, Y + 5], 0);
     end;
+
+    if Inc(loops) > 70 then Break;
+  end;
 end;
 
 (*
@@ -309,7 +311,7 @@ function TRSMap.Position(): TPoint;
 var
   clean: TImage;
   tpa: TPointArray;
-  i: Int32;
+  i: Integer;
   hit: TPoint;
   match: Single;
 begin

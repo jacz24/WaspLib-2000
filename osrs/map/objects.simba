@@ -35,7 +35,7 @@ begin
   Self.UpText := [json.Items[1].AsString];
   //5 is coordinates key in trsmap jsons
   for i := 0 to json.Items[5].Count-1 do
-    Self.Coordinates += [json.Items[5].Items[i].Items[0].AsInt, json.Items[5].Items[i].Items[0].AsInt];
+    Self.Coordinates += [json.Items[5].Items[i].Items[0].AsInt, json.Items[5].Items[i].Items[1].AsInt];
 
   //6 is size key in trsmap jsons
   Self.Size.X := json.Items[6].Items[0].AsInt * 0.8;
