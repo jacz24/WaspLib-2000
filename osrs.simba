@@ -30,7 +30,7 @@ They should be self-explanatory.
 
 // The following allows individual include files to compile on their own with just having {$INCLUDE_ONCE SRLT/osr.simba}
 // Summary: It includes this file until the current file is reached.
-{$IFNDEF SRLT_PLAYER_INCLUDED}             {$INCLUDE_ONCE osrs/player.simba}
+{$IFNDEF SRLT_PLAYER_INCLUDED}              {$INCLUDE_ONCE osrs/player.simba}
 {$IFNDEF SRLT_BIOMETRICS_INCLUDED}          {$INCLUDE_ONCE osrs/antiban/biometrics.simba}
 
 {$IFNDEF SRLT_OCR_INCLUDED}                 {$INCLUDE_ONCE osrs/ocr/ocr.simba}

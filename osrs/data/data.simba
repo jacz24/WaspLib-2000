@@ -172,7 +172,7 @@ begin
   for id in ids do
   begin
     json := Self.GetDefinition(id);
-    if json.Items[9].AsBool then
+    if json.Item[9].AsBool then
       Exit(id); //9 is "tradeable" key
   end;
 end;
@@ -206,10 +206,10 @@ begin
 
   Self.Reload();
   if Self.Disabled then Exit;
-  if not Self.PricesJSON.Items[0].GetObject(id, json) then Exit;
+  if not Self.PricesJSON.Item[0].GetObject(id, json) then Exit;
 
-  hi := json.Items[0].AsInt; //"high" key
-  lo := json.Items[2].AsInt; //"lo" key
+  hi := json.Item[0].AsInt; //"high" key
+  lo := json.Item[2].AsInt; //"lo" key
 
   if lo = hi then Exit(lo);
   if lo = 0 then Exit(hi);
@@ -244,7 +244,7 @@ begin
   for id in ids do
   begin
     json := Self.GetDefinition(id);
-    value := json.Items[8].AsInt; //8 is "cost" key
+    value := json.Item[8].AsInt; //8 is "cost" key
     if value > 0 then
       Exit(Round(value * 0.4));
   end;
@@ -275,7 +275,7 @@ begin
   for id in ids do
   begin
     json := Self.GetDefinition(id);
-    value := json.Items[8].AsInt; //8 is "cost" key
+    value := json.Item[8].AsInt; //8 is "cost" key
     if value > 0 then
       Exit(Round(value * 0.6));
   end;

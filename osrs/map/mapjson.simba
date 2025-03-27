@@ -53,15 +53,15 @@ begin
 
     for j := 0 to json.Count-1 do
     begin
-      id := json.Items[j].Items[0].AsInt;
+      id := json.Item[j].Item[0].AsInt;
       for n := 0 to Result.Count-1 do
-        if Result.Items[n].Items[0].AsInt = id then
+        if Result.Item[n].Item[0].AsInt = id then
         begin
-          for l := 0 to json.Items[j].Items[5].Count-1 do
-            Result.Items[n].Items[5].AddArray('', json.Items[j].Items[5].Items[l].Clone());
+          for l := 0 to json.Item[j].Item[5].Count-1 do
+            Result.Item[n].Item[5].AddArray('', json.Item[j].Item[5].Item[l].Clone());
           Continue(2);
         end;
-      Result.Add('', json.Items[j].Clone());
+      Result.Add('', json.Item[j].Clone());
     end;
     json.Free();
   end;
@@ -89,15 +89,15 @@ begin
 
     for i := 0 to json.Count-1 do
     begin
-      id := json.Items[i].Items[0].AsInt;
+      id := json.Item[i].Item[0].AsInt;
       for j := 0 to Self.Count-1 do
-        if Self.Items[j].Items[0].AsInt = id then
+        if Self.Item[j].Item[0].AsInt = id then
         begin
-          for n := 0 to json.Items[i].Items[5].Count-1 do
-            Self.Items[j].Items[5].AddArray('', json.Items[i].Items[5].Items[n].Clone());
+          for n := 0 to json.Item[i].Item[5].Count-1 do
+            Self.Item[j].Item[5].AddArray('', json.Item[i].Item[5].Item[n].Clone());
           Continue(2);
         end;
-      Self.Add('', json.Items[i].Clone());
+      Self.Add('', json.Item[i].Clone());
     end;
 
     json.Free();
@@ -122,9 +122,9 @@ begin
 
   Result := NewJSONArray();
   for i := 0 to  Self.Count-1 do
-    if Self.Items[i].Items[1].AsString = name then
+    if Self.Item[i].Item[1].AsString = name then
     begin
-      Result.AddObject('', Self.Items[i]);
+      Result.AddObject('', Self.Item[i]);
       if Inc(found) = amount then Exit;
     end;
 
@@ -146,8 +146,8 @@ begin
   if Self.Count = 0 then Self.Load();
 
   for i := 0 to  Self.Count-1 do
-    if Self.Items[i].Items[0].AsInt = id then
-      Exit(Self.Items[i]);
+    if Self.Item[i].Item[0].AsInt = id then
+      Exit(Self.Item[i]);
   raise GetDebugLn('Object with ID ' + ToStr(id) + ' doesn''t exist on the loaded maps.');
 end;
 
@@ -169,10 +169,10 @@ begin
 
   Result := NewJSONArray();
   for i := 0 to  Self.Count-1 do
-    for j := 0 to Self.Items[i].Items[4].Count-1 do
-      if Self.Items[i].Items[4].Items[j].AsString = action then
+    for j := 0 to Self.Item[i].Item[4].Count-1 do
+      if Self.Item[i].Item[4].Item[j].AsString = action then
       begin
-        Result.AddObject('', Self.Items[i]);
+        Result.AddObject('', Self.Item[i]);
         if Inc(found) = amount then Exit;
         Continue(2);
       end;
@@ -193,46 +193,46 @@ begin
   for i := 0 to Self.Count-1 do
   begin
     str += '  {' + LINE_SEP;
-    str += '    "id": ' + Self.Items[i].Items[0].ToJSON() + ',' + LINE_SEP;
-    str += '    "name": ' + Self.Items[i].Items[1].ToJSON() + ',' + LINE_SEP;
-    str += '    "type": ' + Self.Items[i].Items[2].ToJSON() + ',' + LINE_SEP;
-    str += '    "category": ' + Self.Items[i].Items[3].ToJSON() + ',' + LINE_SEP;
+    str += '    "id": ' + Self.Item[i].Item[0].ToJSON() + ',' + LINE_SEP;
+    str += '    "name": ' + Self.Item[i].Item[1].ToJSON() + ',' + LINE_SEP;
+    str += '    "type": ' + Self.Item[i].Item[2].ToJSON() + ',' + LINE_SEP;
+    str += '    "category": ' + Self.Item[i].Item[3].ToJSON() + ',' + LINE_SEP;
     str += '    "actions": [';
-    count := Self.Items[i].Items[4].Count-1;
+    count := Self.Item[i].Item[4].Count-1;
     for j := 0 to count do
     begin
-      str += '"' + Self.Items[i].Items[4].Items[j].AsString + '"';
+      str += '"' + Self.Item[i].Item[4].Item[j].AsString + '"';
       if j < count then str += ',';
     end;
     str += '],' + LINE_SEP;
 
     str += '    "coordinates": [';
-    count := Self.Items[i].Items[5].Count-1;
+    count := Self.Item[i].Item[5].Count-1;
     for j := 0 to count do
     begin
-      str += '[' + Self.Items[i].Items[5].Items[j].Items[0].AsString + ',' + Self.Items[i].Items[5].Items[j].Items[1].AsString + ']';
+      str += '[' + Self.Item[i].Item[5].Item[j].Item[0].AsString + ',' + Self.Item[i].Item[5].Item[j].Item[1].AsString + ']';
       if j < count then str += ',';
     end;
     str += '],' + LINE_SEP;
 
-    str += '    "size": [' + Self.Items[i].Items[6].Items[0].AsString + ',';
-    str += Self.Items[i].Items[6].Items[0].AsString + ',';
-    str += Self.Items[i].Items[6].Items[0].AsString + '],' + LINE_SEP;
+    str += '    "size": [' + Self.Item[i].Item[6].Item[0].AsString + ',';
+    str += Self.Item[i].Item[6].Item[0].AsString + ',';
+    str += Self.Item[i].Item[6].Item[0].AsString + '],' + LINE_SEP;
 
     str += '    "rotations": [';
-    count := Self.Items[i].Items[7].Count-1;
+    count := Self.Item[i].Item[7].Count-1;
     for j := 0 to count do
     begin
-      str += Self.Items[i].Items[7].Items[j].AsString;
+      str += Self.Item[i].Item[7].Item[j].AsString;
       if j < count then str += ',';
     end;
     str += '],' + LINE_SEP;
 
     str += '    "colors": [';
-    count := Self.Items[i].Items[8].Count-1;
+    count := Self.Item[i].Item[8].Count-1;
     for j := 0 to count do
     begin
-      str += Self.Items[i].Items[8].Items[j].AsString;
+      str += Self.Item[i].Item[8].Item[j].AsString;
       if j < count then str += ',';
     end;
     str += ']' + LINE_SEP;
@@ -297,15 +297,15 @@ begin
 
     for j := 0 to json.Count-1 do
     begin
-      id := json.Items[j].Items[0].AsInt;
+      id := json.Item[j].Item[0].AsInt;
       for n := 0 to Result.Count-1 do
-        if Result.Items[n].Items[0].AsInt = id then
+        if Result.Item[n].Item[0].AsInt = id then
         begin
-          for l := 0 to json.Items[j].Items[7].Count-1 do
-            Result.Items[n].Items[7].AddArray('', json.Items[j].Items[7].Items[l].Clone());
+          for l := 0 to json.Item[j].Item[7].Count-1 do
+            Result.Item[n].Item[7].AddArray('', json.Item[j].Item[7].Item[l].Clone());
           Continue(2);
         end;
-      Result.Add('', json.Items[j].Clone());
+      Result.Add('', json.Item[j].Clone());
     end;
     json.Free();
   end;
@@ -333,15 +333,15 @@ begin
 
     for i := 0 to json.Count-1 do
     begin
-      id := json.Items[i].Items[0].AsInt;
+      id := json.Item[i].Item[0].AsInt;
       for j := 0 to Self.Count-1 do
-        if Self.Items[j].Items[0].AsInt = id then
+        if Self.Item[j].Item[0].AsInt = id then
         begin
-          for n := 0 to json.Items[i].Items[7].Count-1 do
-            Self.Items[j].Items[7].AddArray('', json.Items[i].Items[7].Items[n].Clone());
+          for n := 0 to json.Item[i].Item[7].Count-1 do
+            Self.Item[j].Item[7].AddArray('', json.Item[i].Item[7].Item[n].Clone());
           Continue(2);
         end;
-      Self.Add('', json.Items[i].Clone());
+      Self.Add('', json.Item[i].Clone());
     end;
 
     json.Free();
@@ -366,9 +366,9 @@ begin
 
   Result := NewJSONArray();
   for i := 0 to  Self.Count-1 do
-    if Self.Items[i].Items[1].AsString = name then
+    if Self.Item[i].Item[1].AsString = name then
     begin
-      Result.AddObject('', Self.Items[i]);
+      Result.AddObject('', Self.Item[i]);
       if Inc(found) = amount then Exit;
     end;
 
@@ -390,8 +390,8 @@ begin
   if Self.Count = 0 then Self.Load();
 
   for i := 0 to  Self.Count-1 do
-    if Self.Items[i].Items[0].AsInt = id then
-      Exit(Self.Items[i]);
+    if Self.Item[i].Item[0].AsInt = id then
+      Exit(Self.Item[i]);
   raise GetDebugLn('Object with ID ' + ToStr(id) + ' doesn''t exist on the loaded maps.');
 end;
 
@@ -413,10 +413,10 @@ begin
 
   Result := NewJSONArray();
   for i := 0 to  Self.Count-1 do
-    for j := 0 to Self.Items[i].Items[5].Count-1 do
-      if Self.Items[i].Items[5].Items[j].AsString = action then
+    for j := 0 to Self.Item[i].Item[5].Count-1 do
+      if Self.Item[i].Item[5].Item[j].AsString = action then
       begin
-        Result.AddObject('', Self.Items[i]);
+        Result.AddObject('', Self.Item[i]);
         if Inc(found) = amount then Exit;
         Continue(2);
       end;
@@ -437,38 +437,38 @@ begin
   for i := 0 to Self.Count-1 do
   begin
     str += '  {' + LINE_SEP;
-    str += '    "id": ' + Self.Items[i].Items[0].AsString + ',' + LINE_SEP;
-    str += '    "name": ' + Self.Items[i].Items[1].AsString + ',' + LINE_SEP;
-    str += '    "level": ' + Self.Items[i].Items[2].AsString + ',' + LINE_SEP;
-    str += '    "category": ' + Self.Items[i].Items[3].AsString + ',' + LINE_SEP;
-    str += '    "minimapdot": ' + Self.Items[i].Items[4].AsString + ',' + LINE_SEP;
+    str += '    "id": ' + Self.Item[i].Item[0].AsString + ',' + LINE_SEP;
+    str += '    "name": ' + Self.Item[i].Item[1].AsString + ',' + LINE_SEP;
+    str += '    "level": ' + Self.Item[i].Item[2].AsString + ',' + LINE_SEP;
+    str += '    "category": ' + Self.Item[i].Item[3].AsString + ',' + LINE_SEP;
+    str += '    "minimapdot": ' + Self.Item[i].Item[4].AsString + ',' + LINE_SEP;
     str += '    "actions": [';
-    count := Self.Items[i].Items[5].Count-1;
+    count := Self.Item[i].Item[5].Count-1;
     for j := 0 to count do
     begin
-      str += '"' + Self.Items[i].Items[5].Items[j].AsString + '"';
+      str += '"' + Self.Item[i].Item[5].Item[j].AsString + '"';
       if j < count then str += ',';
     end;
     str += '],' + LINE_SEP;
 
-    str += '    "size": [' + Self.Items[i].Items[6].Items[0].AsString + ',';
-    str += Self.Items[i].Items[6].Items[0].AsString + ',';
-    str += Self.Items[i].Items[6].Items[0].AsString + '],' + LINE_SEP;
+    str += '    "size": [' + Self.Item[i].Item[6].Item[0].AsString + ',';
+    str += Self.Item[i].Item[6].Item[0].AsString + ',';
+    str += Self.Item[i].Item[6].Item[0].AsString + '],' + LINE_SEP;
 
     str += '    "coordinates": [';
-    count := Self.Items[i].Items[7].Count-1;
+    count := Self.Item[i].Item[7].Count-1;
     for j := 0 to count do
     begin
-      str += '[' + Self.Items[i].Items[7].Items[j].Items[0].AsString + ',' + Self.Items[i].Items[7].Items[j].Items[1].AsString + ']';
+      str += '[' + Self.Item[i].Item[7].Item[j].Item[0].AsString + ',' + Self.Item[i].Item[7].Item[j].Item[1].AsString + ']';
       if j < count then str += ',';
     end;
     str += '],' + LINE_SEP;
 
     str += '    "colors": [';
-    count := Self.Items[i].Items[8].Count-1;
+    count := Self.Item[i].Item[8].Count-1;
     for j := 0 to count do
     begin
-      str += Self.Items[i].Items[8].Items[j].AsString;
+      str += Self.Item[i].Item[8].Item[j].AsString;
       if j < count then str += ',';
     end;
     str += ']' + LINE_SEP;

@@ -32,23 +32,27 @@ var
   colors: TColorArray;
   best: TBestColor;
 begin
-  Self.UpText := [json.Items[1].AsString];
+  if json.Typ <> EJSONType.OBJ then
+    raise GetDebugLn('TRSObject', 'JSON Object expected, got ' + ToStr(json.Typ) + '.');
+
+  Self.UpText := [json.Item[1].AsString];
+
   //5 is coordinates key in trsmap jsons
-  for i := 0 to json.Items[5].Count-1 do
-    Self.Coordinates += [json.Items[5].Items[i].Items[0].AsInt, json.Items[5].Items[i].Items[1].AsInt];
+  for i := 0 to json.Item[5].Count-1 do
+    Self.Coordinates += [json.Item[5].Item[i].Item[0].AsInt, json.Item[5].Item[i].Item[1].AsInt];
 
   //6 is size key in trsmap jsons
-  Self.Size.X := json.Items[6].Items[0].AsInt * 0.8;
-  Self.Size.Y := json.Items[6].Items[1].AsInt * 0.8;
-  Self.Size.Z := json.Items[6].Items[2].AsInt / 40;
+  Self.Size.X := json.Item[6].Item[0].AsInt * 0.8;
+  Self.Size.Y := json.Item[6].Item[1].AsInt * 0.8;
+  Self.Size.Z := json.Item[6].Item[2].AsInt / 40;
 
   //7 is rotations key in trsmap jsons
-  for i := 0 to json.Items[7].Count-1 do
-    Self.Rotations += json.Items[7].Items[i].AsInt;
+  for i := 0 to json.Item[7].Count-1 do
+    Self.Rotations += json.Item[7].Item[i].AsInt;
 
   //8 is colors key in trsmap jsons
-  for i := 0 to json.Items[8].Count-1 do
-    colors += json.Items[8].Items[i].AsInt;
+  for i := 0 to json.Item[8].Count-1 do
+    colors += json.Item[8].Item[i].AsInt;
 
   best := GetBestColor(EColorSpace.HSV, colors);
   Self.Finder.Colors += [best.Color, best.Tolerance, EColorSpace.HSV, best.Mods];
@@ -59,9 +63,12 @@ procedure TRSObjectArray.Setup(json: TJSONItem); overload;
 var
   i: Integer;
 begin
+  if json.Typ <> EJSONType.ARR then
+    raise GetDebugLn('TRSObject', 'JSON Array expected, got ' + ToStr(json.Typ) + '.');
+
   SetLength(Self, json.Count);
   for i := 0 to High(Self) do
-    Self[i].Setup(json.Items[i]);
+    Self[i].Setup(json.Item[i]);
 end;
 
 

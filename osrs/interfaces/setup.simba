@@ -41,9 +41,6 @@ begin
   BankPin.SetupInterface();
   Bank.SetupInterface();
 
-  ObjectsJSON := NewJSONArray();
-  NPCsJSON := NewJSONArray();
-
   {$IFDEF SRLT_DEBUG_INTERFACES}
   WriteLn GetDebugLn('RSClient', 'Interface setup took ' + ToStr(GetTickCount()-t) + ' ms to calculate.');
   {$ENDIF}
@@ -123,6 +120,8 @@ begin
   Antiban.Zoom.Max := 100;
 
   ItemData.Setup();
+  ObjectsJSON := NewJSONArray();
+  NPCsJSON := NewJSONArray();
 
   RSClient.IsLoggedIn();
   if RSClient.Mode = ERSMode.UNKNOWN then

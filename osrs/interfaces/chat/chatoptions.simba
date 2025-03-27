@@ -45,7 +45,7 @@ Highlighting Chat.GetOptions()
 *)
 function TRSChat.GetOptions(colors: TIntegerArray = []): TRSChatOptionArray;
 var
-  p: TPoint;
+  pt: TPoint;
   i: Integer;
 begin
   if colors = [] then
@@ -56,11 +56,11 @@ begin
 
   SetLength(Result, Length(OCR.Engine.Matches));
 
-  p := Self.Bounds.TopLeft;
+  pt := Self.Bounds.TopLeft;
 
   for i := 0 to High(OCR.Engine.Matches) do
   begin
-    Result[i].Bounds := OCR.Engine.Matches[i].Bounds.Offset(p);
+    Result[i].Bounds := OCR.Engine.Matches[i].Bounds.Offset(pt);
     Result[i].Text := OCR.Engine.Matches[i].Text;
     Result[i].Key := EKeyCode(Ord(EKeyCode.NUM_1) + i);
   end;
