@@ -121,7 +121,9 @@ begin
 
   ItemData.Setup();
   ObjectsJSON := NewJSONArray();
+  AddOnTerminate(@ObjectsJSON.Free);
   NPCsJSON := NewJSONArray();
+  AddOnTerminate(@NPCsJSON.Free);
 
   RSClient.IsLoggedIn();
   if RSClient.Mode = ERSMode.UNKNOWN then
