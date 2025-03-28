@@ -88,11 +88,14 @@ They should be self-explanatory.
 
 {$IFNDEF SRLT_WALKER_INCLUDED}              {$INCLUDE_ONCE osrs/walker.simba}
 {$IFNDEF SRLT_COLORFINDER_INCLUDED}         {$INCLUDE_ONCE osrs/mainscreen/colorfinder.simba}
+
 {$IFNDEF SRLT_MAPLOADER_INCLUDED}           {$INCLUDE_ONCE osrs/map/maploader.simba}
 {$IFNDEF SRLT_MAP_INCLUDED}                 {$INCLUDE_ONCE osrs/map/map.simba}
-{$IFNDEF SRLT_MAPOBJECT_INCLUDED}           {$INCLUDE_ONCE osrs/map/objects.simba}
+{$IFNDEF SRLT_RSOBJECTS_INCLUDED}           {$INCLUDE_ONCE osrs/map/objects.simba}
+{$IFNDEF SRLT_RSNPCS_INCLUDED}              {$INCLUDE_ONCE osrs/map/npcs.simba}
 {$IFNDEF SRLT_MAPDEBUGGER_INCLUDED}         {$INCLUDE_ONCE osrs/map/mapdebugger.simba}
 {$IFNDEF SRLT_MAPJSON_INCLUDED}             {$INCLUDE_ONCE osrs/map/mapjson.simba}
+
 {$IFNDEF SRLT_BANKPIN_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/mainscreen/bankpin.simba}
 {$IFNDEF SRLT_BANK_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/mainscreen/bank.simba}
 
@@ -105,6 +108,7 @@ They should be self-explanatory.
 {$IFNDEF SRLT_OVERRIDES_INCLUDED}           {$INCLUDE_ONCE osrs/overrides.simba}
 
 
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}

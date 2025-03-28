@@ -755,8 +755,24 @@ WriteLn Minimap.IsPlayerMoving();
 *)
 function TRSMinimap.IsPlayerMoving(minShift: Integer = 500): Boolean;
 begin
-  with Self.Center do
-    Result := Target.GetPixelDifference(300, TBox.Create([X,Y], 40, 40)) >= minShift;
+  Result := Target.GetPixelDifference(300, TBox.Create(Self.Center, 40, 40)) >= minShift;
+end;
+
+procedure TRSMinimap.WaitMoving(time: Integer = 20000; minShift: Integer = 500);
+var
+  timeout, countdown: TCountDown;
+  moving: Boolean;
+begin
+  timeout.Init(time);
+  countdown.Init(500);
+
+  repeat
+    moving := Self.IsPlayerMoving();
+
+    if moving then
+      countdown.Restart(0, 1000);
+
+  until timeout.IsFinished() or (not moving and countdown.IsFinished()) or not Self.HasFlag();
 end;
 
 var

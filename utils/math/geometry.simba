@@ -120,7 +120,7 @@ var
   i: Integer;
 begin
   if Length(Self) < 2 then Exit;
-  for i := 0 to Length(Self) do
+  for i := 0 to High(Self)-1 do
     Result += Self[i].DistanceTo(Self[i+1]);
 end;
 

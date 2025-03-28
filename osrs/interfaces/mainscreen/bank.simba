@@ -100,6 +100,8 @@ Record responsible to handle the {ref}`Bank` interface.
     end;
     _IsOpenHelperBox: TBox;
     {%codetools on}
+    Banks: TRSObjectArray;
+    Bankers: TRSNPCArray;
   end;
 
 (*
@@ -1064,6 +1066,79 @@ begin
     Result := Self._InteractionHelper(ERSBankInteraction.DEPOSIT, slot, 1, useQuantityButton);
 end;
 
+
+procedure TRSBank._SetupMapObjects();
+begin
+  Self.Banks.Setup(ObjectsJSON.GetByAction('Bank'));
+  Self.Bankers.Setup(NPCsJSON.GetByAction('Bank'));
+end;
+
+
+function TRSBank.Hover(walk: Boolean = True): Boolean;
+var
+  obj: TRSObject;
+  npc: TRSNPC;
+  me: TPoint;
+begin
+  if (Self.Banks = []) or (Self.Bankers = []) then
+    Self._SetupMapObjects();
+
+  me := Map.Position();
+  obj := Self.Banks[Self.Banks.ClosestIndex(me)];
+  npc := Self.Bankers[Self.Bankers.ClosestIndex(me)];
+
+  if obj.DistanceTo(me) < npc.DistanceTo(me) then
+  begin
+    if walk then Exit(obj.WalkHover());
+    Exit(obj.Hover());
+  end;
+
+  if walk then Exit(npc.WalkHover());
+  Result := npc.Hover();
+end;
+
+function TRSBank.Open(walk: Boolean = True): Boolean;
+var
+  obj: TRSObject;
+  npc: TRSNPC;
+  me: TPoint;
+begin
+  if RSInterface.IsOpen() then
+  begin
+    if Self.IsOpen() then Exit(True);
+    RSInterface.Close(True);
+  end;
+
+  if (Self.Banks = []) or (Self.Bankers = []) then
+    Self._SetupMapObjects();
+
+  me := Map.Position();
+  obj := Self.Banks[Self.Banks.ClosestIndex(me)];
+  npc := Self.Bankers[Self.Bankers.ClosestIndex(me)];
+
+  if obj.DistanceTo(me) < npc.DistanceTo(me) then
+  begin
+    if walk then Result := obj.WalkSelect(['Bank B', 'Bank E'])
+    else Result := obj.Select(['Bank B', 'Bank E']);
+  end
+  else
+  begin
+    if walk then Result := npc.WalkSelect(['Bank B', 'Bank E'])
+    else Result := npc.Select(['Bank B', 'Bank E']);
+  end;
+
+
+  if not Result then
+  begin
+    Result := MainScreen.IsUpText('Bank') and ChooseOption.Select(['Bank B', 'Bank E']);
+    if not Result then Exit;
+  end;
+
+  Minimap.WaitMoving();
+  Result := Self.WaitOpen(3000);
+end;
+
+
 procedure TRSBank.Draw(img: TImage);
 var
   i: Integer;
@@ -1101,6 +1176,7 @@ begin
   img.Show();
   img.Free();
 end;
+
 
 var
 (*

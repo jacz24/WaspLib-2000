@@ -49,6 +49,7 @@ begin
   for i := 0 to High(chunks) do
   begin
     json := Self.GetFile(chunks[i], plane);
+
     if json = nil then Continue;
 
     for j := 0 to json.Count-1 do
