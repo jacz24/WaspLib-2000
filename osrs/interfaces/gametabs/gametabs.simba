@@ -121,8 +121,6 @@ begin
         Self.Tabs[10].Y2 := Target.Bounds.Y1 + 18;
       end;
   end;
-
-  MainScreen.Mask.Fill(Self.Bounds, $0);
 end;
 
 (*

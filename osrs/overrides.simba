@@ -153,3 +153,34 @@ begin
   Logout.Buttons[ERSLogoutButton.WORLD_SWITCHER].Click();
   Result := inherited;
 end;
+
+function TRSMainScreen.IsVisible(pt: TPoint): Boolean; override;
+begin
+  Result := Self.Bounds.Contains(pt) and Self.Mask[pt.Y, pt.X];
+
+  if Result and (RSClient.Mode = ERSMode.FIXED) then Exit;
+
+  if Chat.IsOpen() and Chat.Bounds.Contains(pt) then Exit(False);
+  if not GameTabs.IsOpen(ERSGameTab.NONE) and GameTab.Bounds.Contains(pt) then Exit(False);
+  if Bank.IsOpen() and Bank.Bounds.Contains(pt) then Exit(False);
+end;
+
+
+function TRSMainScreen.Filter(tpa: TPointArray): TPointArray; override;
+var
+  i: Integer;
+begin
+  Result := Copy(tpa);
+  for i := High(Result) downto 0 do
+    if not Self.Bounds.Contains(Result[i]) or not Self.Mask[Result[i].Y, Result[i].X] then
+      Delete(Result, i, 1);
+
+  if Chat.IsOpen() then
+    Result := Result.ExcludeBox(Chat.Bounds);
+
+  if not GameTabs.IsOpen(ERSGameTab.NONE) then
+    Result := Result.ExcludeBox(GameTab.Bounds);
+
+  if Bank.IsOpen() then
+    Result := Result.ExcludeBox(Bank.Bounds);
+end;

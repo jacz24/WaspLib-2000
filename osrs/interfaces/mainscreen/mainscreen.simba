@@ -22,7 +22,7 @@ Main record to handle the mainscreen and methods relating to it.
 
     HighestPitch: Boolean;
 
-    Mask: TIntegerMatrix;
+    Mask: TBooleanMatrix;
   end;
 
 (*
@@ -36,6 +36,8 @@ coordinates.
 This is called automatically for you on the {ref}`MainScreen variable`.
 *)
 procedure TRSMainScreen.SetupInterface();
+var
+  y, x: Integer;
 begin
   case RSClient.Mode of
     ERSMode.FIXED: Self.Bounds := TBox.Create(4,4,515,337);
@@ -62,7 +64,9 @@ begin
 
   Self.Mask := [];
   SetLength(Self.Mask, Self.Bounds.Y2+1, Self.Bounds.X2+1);
-  Self.Mask.Fill(Self.Bounds, $FFFFFF);
+  for y := Self.Bounds.Y1 to Self.Bounds.Y2 do
+    for x := Self.Bounds.X1 to Self.Bounds.X2 do
+      Self.Mask[y,x] := True;
 end;
 
 
@@ -71,12 +75,12 @@ var
   pt: TPoint;
 begin
   for pt in tpa.ExtractBox(Self.Bounds) do
-    Self.Mask[pt.Y, pt.X] := $0;
+    Self.Mask[pt.Y, pt.X] := False;
 end;
 
 procedure TRSMainScreen.AddMask(box: TBox); overload;
 begin
-  Self.Mask.Fill(box, $0);
+  Self.AddMask(TPointArray.CreateFromBox(box, True));
 end;
 
 procedure TRSMainScreen.AddMask(circle: TCircle); overload;
@@ -282,19 +286,15 @@ WriteLn MainScreen.IsVisible([100,100]);
 *)
 function TRSMainScreen.IsVisible(pt: TPoint): Boolean;
 begin
-  Result := Self.Bounds.Contains(pt) and (Self.Mask[pt.Y, pt.X] = $FFFFFF);
+  Result := False;
 end;
 
 
 function TRSMainScreen.Filter(tpa: TPointArray): TPointArray;
-var
-  pt: TPoint;
 begin
-  for pt in tpa do
-    if InRange(pt.Y, Self.Bounds.Y1, Self.Bounds.Y2) and InRange(pt.X, Self.Bounds.X1, Self.Bounds.X2) then
-    if Self.Mask[pt.Y, pt.X] = $FFFFFF then
-      Result += pt;
+  Result := [];
 end;
+
 
 {%codetools off}
 function TRSMainScreen._RedClicked(area: TBox): Boolean;
