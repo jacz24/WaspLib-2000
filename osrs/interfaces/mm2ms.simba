@@ -663,8 +663,8 @@ begin
       vector := Vec3(p.X, p.Y).RotateXY(angle, Self.Center);
       if not Self.PointOnZoomQuad(vector.ToPoint()) then Continue;
       quad := Self.Vector2MSQuad(vector, angle, [1,1]);
-      tpa := quad.Corners.Connect();
-      img.DrawTPA(tpa.ExtractBox(MainScreen.Bounds));
+      tpa := MainScreen.Filter(quad.Corners.Connect());
+      img.DrawTPA(tpa);
     end;
 
   for dot in dots do
@@ -675,8 +675,8 @@ begin
       vector := Vec3(p.X, p.Y, 0);
       if not Self.PointOnZoomQuad(vector.ToPoint()) then Continue;
       quad := Self.Vector2MSQuad(vector, angle, [1,1]);
-      tpa := quad.Corners.Connect().Grow(1);
-      img.DrawTPA(tpa.ExtractBox(MainScreen.Bounds));
+      tpa := MainScreen.Filter(quad.Corners.Connect().Grow(1));
+      img.DrawTPA(tpa);
     end;
   end;
 

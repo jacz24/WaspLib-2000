@@ -77,6 +77,8 @@ begin
       Self.Tabs[i].Button.EnabledColors := [[1555,6], [5399922, 0], [795452, 0]];
       Self.Tabs[i].Button.Bounds := Box(X1 + 3 + (i * 62), Y1, X1 + 58 + (i * 62), Y2 - 1);
     end;
+
+  MainScreen.AddMask(Self.Bounds);
 end;
 
 (*

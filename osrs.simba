@@ -47,6 +47,7 @@ They should be self-explanatory.
 {$IFNDEF SRLT_LOGIN_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/login.simba}
 {$IFNDEF SRLT_INTERFACE_CONTROLS_INCLUDED}  {$INCLUDE_ONCE osrs/interfaces/interfacecontrols.simba}
 {$IFNDEF SRLT_CHOOSEOPTION_INCLUDED}        {$INCLUDE_ONCE osrs/interfaces/chooseoption.simba}
+{$IFNDEF SRLT_MAINSCREEN_INCLUDED}          {$INCLUDE_ONCE osrs/interfaces/mainscreen/mainscreen.simba}
 {$IFNDEF SRLT_MINIMAP_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/minimap.simba}
 
 {$IFNDEF SRLT_GAMETABS_INCLUDED}            {$INCLUDE_ONCE osrs/interfaces/gametabs/gametabs.simba}
@@ -54,7 +55,6 @@ They should be self-explanatory.
 {$IFNDEF SRLT_CHAT_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/chat/chat.simba}
 {$IFNDEF SRLT_CHAT_OPTIONS_INCLUDED}        {$INCLUDE_ONCE osrs/interfaces/chat/chatoptions.simba}
 {$IFNDEF SRLT_MAKE_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/chat/make.simba}
-{$IFNDEF SRLT_MAINSCREEN_INCLUDED}          {$INCLUDE_ONCE osrs/interfaces/mainscreen/mainscreen.simba}
 {$IFNDEF SRLT_INTERFACE_AREA_INCLUDED}      {$INCLUDE_ONCE osrs/interfaces/interfacearea.simba}
 
 {$IFNDEF SRLT_SLOT_INTERFACE_INCLUDED}      {$INCLUDE_ONCE osrs/interfaces/slotinterface.simba}
@@ -78,12 +78,14 @@ They should be self-explanatory.
 {$IFNDEF SRLT_EMOTES_INCLUDED}              {$INCLUDE_ONCE osrs/interfaces/gametabs/emotes.simba}
 {$IFNDEF SRLT_MUSIC_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/gametabs/music.simba}
 
+{$IFNDEF SRLT_XPBAR_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/xpbar.simba}
 
 {$IFNDEF SRLT_MOUSEZOOM_INCLUDED}           {$INCLUDE_ONCE osrs/mousezoom.simba}
 
+
 {$IFNDEF SRLT_MM2MS_PROJECTOR_INCLUDED}     {$INCLUDE_ONCE osrs/interfaces/mm2ms_projector.simba}
 {$IFNDEF SRLT_MM2MS_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/mm2ms.simba}
-{$IFNDEF SRLT_XPBAR_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/xpbar.simba}
+
 {$IFNDEF SRLT_ANTIBAN_INCLUDED}             {$INCLUDE_ONCE osrs/antiban/antiban.simba}
 
 {$IFNDEF SRLT_WALKER_INCLUDED}              {$INCLUDE_ONCE osrs/walker.simba}

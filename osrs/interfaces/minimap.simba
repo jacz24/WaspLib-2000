@@ -28,14 +28,19 @@ ERSMinimapOrb  = enum(HITPOINTS, PRAYER, ENERGY, SPECIAL);
 ```
 Enum representing the 4 available minimap orbs.
 *)
-  ERSMinimapOrb  = enum(HITPOINTS, PRAYER, ENERGY, SPECIAL);
+  ERSMinimapOrb = enum(HITPOINTS, PRAYER, ENERGY, SPECIAL);
+
+  TRSMinimapOrb = record
+    Bounds: TBox;
+    Circle: TCircle;
+  end;
 
 (*
 ## TRSMinimap
 Main record used to interact with the {ref}`Minimap`.
 *)
   TRSMinimap = record
-    Orbs: TCircleArray;
+    Orbs: array of TRSMinimapOrb;
     Bounds: TBox;
     Center: TPoint;
     Polygon: TPolygon;
@@ -71,6 +76,7 @@ This is automatically called for you on the {ref}`Minimap variable`.
 procedure TRSMinimap.SetupInterface();
 var
   tpa: TPointArray;
+  i: Integer;
 begin
   case RSClient.Mode of
     ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
@@ -97,23 +103,46 @@ begin
       ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
       begin
         Self.Compass.Circle := [X1 - 2,  Y1 + 14,  17];
-        Self.Orbs[ERSMinimapOrb.HITPOINTS] := [X1 - 13, Y1 + 55,  12];
-        Self.Orbs[ERSMinimapOrb.PRAYER]    := [X1 - 13, Y1 + 90,  12];
-        Self.Orbs[ERSMinimapOrb.ENERGY]    := [X1 - 3,  Y1 + 121, 12];
-        Self.Orbs[ERSMinimapOrb.SPECIAL]   := [X1 + 19, Y1 + 148, 12];
-        tpa := [[0, -76], [21, -73], [40, -64], [56, -51], [68, -33], [75, -1], [68, 31], [50, 43], [40, 62], [21, 71], [0, 74], [-21, 71], [-40, 62], [-56, 49], [-68, 31], [-75, -1], [-68, -33], [-56, -51], [-40, -64], [-21, -73]];
+        Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle := [X1 - 13, Y1 + 55,  12];
+        Self.Orbs[ERSMinimapOrb.PRAYER].Circle    := [X1 - 13, Y1 + 90,  12];
+        Self.Orbs[ERSMinimapOrb.ENERGY].Circle    := [X1 - 3,  Y1 + 121, 12];
+        Self.Orbs[ERSMinimapOrb.SPECIAL].Circle   := [X1 + 18, Y1 + 147, 12];
+        tpa := [[0, -76], [21, -73], [40, -64], [56, -51], [68, -33], [75, -1], [67, 34], [52, 43], [40, 62], [21, 72], [0, 75], [-21, 72], [-40, 62], [-56, 49], [-68, 31], [-75, -1], [-68, -33], [-56, -51], [-40, -64], [-21, -73]];
       end;
 
       ERSMode.FIXED:
       begin
-        Self.Compass.Circle := [X1 - 8,  Y1 + 12,  17];
-        Self.Orbs[ERSMinimapOrb.HITPOINTS] := [X1 - 13, Y1 + 49,  12];
-        Self.Orbs[ERSMinimapOrb.PRAYER]    := [X1 - 13, Y1 + 84,  12];
-        Self.Orbs[ERSMinimapOrb.ENERGY]    := [X1 - 3,  Y1 + 116, 12];
-        Self.Orbs[ERSMinimapOrb.SPECIAL]   := [X1 + 19, Y1 + 142, 12];
+        Self.Compass.Circle := [X1 - 9,  Y1 + 11,  16];
+        Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle := [X1 - 13, Y1 + 49,  12];
+        Self.Orbs[ERSMinimapOrb.PRAYER].Circle    := [X1 - 13, Y1 + 84,  12];
+        Self.Orbs[ERSMinimapOrb.ENERGY].Circle    := [X1 - 3,  Y1 + 116, 12];
+        Self.Orbs[ERSMinimapOrb.SPECIAL].Circle   := [X1 + 19, Y1 + 142, 12];
         tpa := [[21, -71], [39, -62], [55, -49], [67, -32], [70, 0], [66, 19], [57, 32], [41, 43], [20, 58], [12, 71], [0, 74], [-11, 72], [-24, 55], [-47, 39], [-60, 31], [-66, 22], [-71, 0], [-72, -14], [-67, -32], [-55, -49], [-39, -62], [-21, -71], [0, -74]];
       end;
     end;
+
+
+  MainScreen.AddMask(Self.Compass.Circle.Expand(4));
+  MainScreen.AddMask(TPointArray.CreateFromCircle(Self.Center, 82, True));
+
+  for i := 0 to High(Self.Orbs) do
+    with Self.Orbs[i].Circle do
+    begin
+      Self.Orbs[i].Bounds := TBox.Create(X-35, Y-1, X-15, Y+9);
+      MainScreen.AddMask(TPointArray.CreateFromCircle(Center, Radius+5, True));
+    end;
+
+  with Self.Orbs[ERSMinimapOrb.HITPOINTS].Bounds do
+    MainScreen.AddMask([X1 - 5, Y1 - 5, X2 + 7, Y2 + 6]);
+
+  with Self.Orbs[ERSMinimapOrb.PRAYER].Bounds do
+    MainScreen.AddMask([X1 - 5, Y1 - 6, X2 + 7, Y2 + 5]);
+
+  with Self.Orbs[ERSMinimapOrb.ENERGY].Bounds do
+    MainScreen.AddMask([X1 - 5, Y1 - 5, X2 + 7, Y2 + 6]);
+
+  with Self.Orbs[ERSMinimapOrb.SPECIAL].Bounds do
+    MainScreen.AddMask([X1 - 5, Y1 - 7, X2 + 7, Y2 + 4]);
 
   Self.Center := Self.Bounds.Center;
   Self.Polygon := tpa.Offset(Self.Center);
@@ -199,31 +228,46 @@ WriteLn Minimap.GetCompassAngle();
 *)
 function TRSMinimap.GetCompassAngle(asDegrees: Boolean = True): Single;
 var
-  dotpts: TPointArray;
-  g: T2DPointArray;
+  center: TPoint;
+  bounds: TBox;
+  north,south,west,east: TPoint;
+  Nclr, dials, southArr, westArr, eastArr: TPointArray;
+  n,w,e,s,x,y: Single;
 begin
-  with Self.Compass.Circle do
-  begin
-    dotpts := Target.FindColor(ColorTolerance($2220A1, 0.811, EColorSpace.HSL, [2.608, 0.137, 0.256]), Bounds); // red
-    if dotpts = [] then Exit;
+  center := Self.Compass.Circle.Center;
+  bounds := Self.Compass.Circle.Bounds;
+  dials := Target.FindColor($0E0C9F,  1, bounds);
+  Nclr  := Target.FindColor($1D2931, 1, bounds);
 
-    g := dotpts.ExtractDist([X,Y], 10, Radius).Cluster(4);
+  dials := dials.ExtractDist(center, 10, $FF);
+  north := Nclr.ExtractDist(center, 0,20).Mean();
 
-    if Length(g) < 3 then Exit;
+  southArr := dials.ExtractDist(north, 21, $FF);
+  south    := southArr.FurthestPoint(center);
 
-    if (g[0].Mean().DistanceTo(g[1].Mean()) > 25) then Swap(g[0], g[2]);
-    if (g[0].Mean().DistanceTo(g[2].Mean()) > 25) then Swap(g[0], g[1]);
+  dials  := dials.Difference(southArr);
 
-    if Abs(DeltaAngle(ArcTan2(g[1,0].Y - Y, g[1,0].X - X)+PI/2, ArcTan2(g[0,0].Y - Y, g[0,0].X - X), 2*PI)) > PI/2 then
-      Swap(g[1], g[2]);
+  for dials in dials.Cluster(3) do
+    if CrossProduct(dials.Mean(), north, south) > 0 then
+      westArr := dials
+    else
+      eastArr := dials;
 
-    Result := RadNormalize(ArcTan2(g[1].Mean().Y - g[2].Mean().Y, g[1].Mean().X - g[2].Mean().X));
+  west := westArr.FurthestPoint(eastArr.Mean()); //late edit: Should not this be middle, not eastarr.mean
+  east := eastArr.FurthestPoint(westArr.Mean()); //late edit: Should not this be middle, not westarr.mean
 
-    Self.Compass.PreviousRadians := Result;
+  n := ArcTan2(north.y-center.y, north.x-center.x)+PI/2;
+  s := ArcTan2(south.y-center.y, south.x-center.x)-PI/2;
+  w := ArcTan2(west.y-center.y, west.x-center.x)+PI;
+  e := ArcTan2(east.y-center.y, east.x-center.x);
 
-    if asDegrees then
-      Result := radToDeg(Result);
-  end;
+  x := Cos(s) + Cos(e) + Cos(w) + Cos(n);
+  y := Sin(s) + Sin(e) + Sin(w) + Sin(n);
+
+  Result := ArcTan2(y/4, x/4);
+  if Result < 0 then Result := Result + PI*2;
+
+  if asDegrees then Result := RadToDeg(Result);
 end;
 
 
@@ -324,9 +368,7 @@ WriteLn Minimap.GetLevel(ERSMinimapOrb.PRAYER);
 *)
 function TRSMinimap.GetLevel(orb: ERSMinimapOrb): Integer;
 begin
-  raise GetDebugLn('Minimap.GetLevel' , 'TODO');
-  //TODO:
-  //Result := OCR.RecognizeNumber([Self.Orbs[orb].X-35, Self.Orbs[orb].Y-1, Self.Orbs[orb].X-15, Self.Orbs[orb].Y+9], Self.OrbOCR, RSFonts.PLAIN_11);
+  Result := OCR.RecognizeShadow(Self.Orbs[orb].Bounds, RSFonts.PLAIN_11, 0).ExtractInteger();
 end;
 
 
@@ -412,7 +454,7 @@ begin
         state := Self.SpecialEnabled();
   end;
 
-  Mouse.Click(Self.Orbs[orb], EMouseButton.LEFT);
+  Mouse.Click(Self.Orbs[orb].Circle, EMouseButton.LEFT);
 
   case orb of
     ERSMinimapOrb.HITPOINTS: Exit;

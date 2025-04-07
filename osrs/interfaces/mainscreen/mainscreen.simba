@@ -21,6 +21,8 @@ Main record to handle the mainscreen and methods relating to it.
     UptextOCR: TPixelOCR;
 
     HighestPitch: Boolean;
+
+    Mask: TIntegerMatrix;
   end;
 
 (*
@@ -57,7 +59,31 @@ begin
   Self.ServerMsgBounds.Y1 := Self.Bounds.Y1 + 2;
   Self.ServerMsgBounds.X2 := Self.ServerMsgBounds.X1 + 129;
   Self.ServerMsgBounds.Y2 := Self.ServerMsgBounds.Y1 + 20;
+
+  Self.Mask := [];
+  SetLength(Self.Mask, Self.Bounds.Y2+1, Self.Bounds.X2+1);
+  Self.Mask.Fill(Self.Bounds, $FFFFFF);
 end;
+
+
+procedure TRSMainScreen.AddMask(tpa: TPointArray);
+var
+  pt: TPoint;
+begin
+  for pt in tpa.ExtractBox(Self.Bounds) do
+    Self.Mask[pt.Y, pt.X] := $0;
+end;
+
+procedure TRSMainScreen.AddMask(box: TBox); overload;
+begin
+  Self.Mask.Fill(box, $0);
+end;
+
+procedure TRSMainScreen.AddMask(circle: TCircle); overload;
+begin
+  Self.AddMask(TPointArray.CreateFromCircle(circle.Center, circle.Radius, True));
+end;
+
 
 (*
 ## UpText
@@ -256,22 +282,18 @@ WriteLn MainScreen.IsVisible([100,100]);
 *)
 function TRSMainScreen.IsVisible(pt: TPoint): Boolean;
 begin
-  Result := Self.Bounds.Expand(-10).Contains(pt);
+  Result := Self.Bounds.Contains(pt) and (Self.Mask[pt.Y, pt.X] = $FFFFFF);
+end;
 
-  if not Result or (RSClient.Mode = ERSMode.FIXED) then
-    Exit;
 
-  if Chat.Bounds.Expand(5).Contains(pt) and Chat.IsOpen() then
-    Exit(False);
-  if Chat.Tabs.Bounds.Expand(5).Contains(pt) then
-    Exit(False);
-  if Minimap.Bounds.Expand(55).Contains(pt) then
-    Exit(False);
-
-  if GameTab.Bounds.Expand(5).Contains(pt) then
-    Exit(False);
-  if GameTabs.Bounds.Expand(5).Contains(pt) then
-    Exit(False);
+function TRSMainScreen.Filter(tpa: TPointArray): TPointArray;
+var
+  pt: TPoint;
+begin
+  for pt in tpa do
+    if InRange(pt.Y, Self.Bounds.Y1, Self.Bounds.Y2) and InRange(pt.X, Self.Bounds.X1, Self.Bounds.X2) then
+    if Self.Mask[pt.Y, pt.X] = $FFFFFF then
+      Result += pt;
 end;
 
 {%codetools off}
@@ -372,6 +394,7 @@ begin
   area := TBox.Create(Target.MouseXY, 10, 10).Clip(Self.Bounds);
   Result := SleepUntil(Self._YellowClicked(area), 50, time);
 end;
+
 
 var
 (*

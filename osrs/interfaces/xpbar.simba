@@ -87,6 +87,9 @@ begin
 
   if Self.Position <> ERSXPBarPosition.UNKNOWN then
     Self.Bounds := Self.AvailableBounds[Self.Position-1];
+
+  with Self.Bounds do
+    MainScreen.AddMask([X1, Y1, X2, Y2+1]);
 end;
 
 (*
@@ -107,6 +110,8 @@ begin
     ERSMode.FIXED:
       Self.Button := [Minimap.Bounds.X1 - 40, Minimap.Bounds.Y1 + 26,  11];
   end;
+
+  MainScreen.AddMask(TPointArray.CreateFromCircle(Self.Button.Center, Self.Button.Radius + 2, True));
 
   SetLength(Self.AvailableBounds, 3);
 

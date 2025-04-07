@@ -281,10 +281,7 @@ var
   tpa: TPointArray;
 begin
   if Self.Tree.Size = 0 then
-  begin
     Self.Tree.Init(System.Copy(Self.Nodes));
-    //AddOnTerminate(@Self.Tree.Free);
-  end;
 
   tpa := Self.Tree.KNearest(p, amount);
 

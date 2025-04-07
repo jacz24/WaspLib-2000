@@ -140,3 +140,21 @@ begin
     False: Result := not (pt in Self.Box);
   end;
 end;
+
+
+procedure ShowOnClient(data: TIntegerMatrix; transparent: TColor = $0); overload;
+var
+  img: TImage;
+  y,x: Integer;
+begin
+  img := TImage.CreateFromTarget();
+
+  for y := 0 to High(data) do
+    for x := 0 to High(data[y]) do
+      if data[y,x] <> transparent then
+        img.Pixel[x, y] := data[y,x];
+
+  img.Show();
+  img.Free();
+end;
+

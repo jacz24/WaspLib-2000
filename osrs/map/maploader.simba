@@ -158,19 +158,7 @@ begin
     Self.Collision := nil;
   end;
 
-  (* TODO
-  if Assigned(Self.ObjectData) then
-  begin
-    Self.ObjectData.Free();
-    Self.ObjectData := nil;
-  end;
-
-  if Assigned(Self.NPCData) then
-  begin
-    Self.NPCData.Free();
-    Self.NPCData := nil;
-  end;
-  *)
+  Self.Graph := [];
 end;
 
 procedure TRSMapLoader.Unzipped(constref result: TASyncUnzipResult);

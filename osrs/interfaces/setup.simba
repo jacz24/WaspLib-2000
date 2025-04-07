@@ -7,8 +7,8 @@ procedure SetupInterfaces();
 begin
   //interfaces that depend on other's bounds need to be in the right order
   //e.g., gametabs need to go after GameTab and GameTab after GameTabs.
-  Minimap.SetupInterface();
   MainScreen.SetupInterface();
+  Minimap.SetupInterface();
 
   GameTabs.SetupInterface(); //Has to be before gametab
   GameTab.SetupInterface();  //Has to be before all gametabs
