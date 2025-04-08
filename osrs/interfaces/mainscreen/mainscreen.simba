@@ -70,6 +70,18 @@ begin
 end;
 
 
+(*
+## MainScreen.AddMask
+```pascal
+procedure TRSMainScreen.AddMask(tpa: TPointArray);
+procedure TRSMainScreen.AddMask(box: TBox); overload;
+procedure TRSMainScreen.AddMask(circle: TCircle); overload;
+```
+Helper methods to help building the `TRSMainScreen.Mask`.
+`TRSMainScreen.Mask` is a helper variable used by {ref}`MainScreen.IsVisible`
+and {ref}`MainScreen.Filter` to reduce computation it would require without a mask.
+This is only useful for resizable modes.
+*)
 procedure TRSMainScreen.AddMask(tpa: TPointArray);
 var
   pt: TPoint;
@@ -275,6 +287,7 @@ end;
 ## MainScreen.IsVisible
 ```pascal
 function TRSMainScreen.IsVisible(pt: TPoint): Boolean;
+function TRSMainScreen.IsVisible(tpa: TPointArray): Boolean; overload;
 ```
 Returns `True` if a point `pt` is visible on the mainscreen.
 This also checks for open interfaces to check if the point is not behind them.
@@ -289,7 +302,24 @@ begin
   Result := False;
 end;
 
+function TRSMainScreen.IsVisible(tpa: TPointArray): Boolean; overload;
+var
+  pt: TPoint;
+begin
+  for pt in tpa do
+    if Self.IsVisible(pt) then
+      Exit(True);
+end;
 
+
+(*
+## MainScreen.Filter
+```pascal
+function TRSMainScreen.Filter(tpa: TPointArray): TPointArray;
+```
+Filters a TPA returning only the points visible on the mainscreens.
+This also checks for open interfaces to check if the points are not behind them.
+*)
 function TRSMainScreen.Filter(tpa: TPointArray): TPointArray;
 begin
   Result := [];

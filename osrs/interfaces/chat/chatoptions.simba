@@ -198,6 +198,16 @@ begin
   Result := True;
 end;
 
+
+function TRSChat.HasContinue(): Boolean;
+var
+  colors: TIntegerArray;
+begin
+  colors := Self.GetColors([ERSChatColor.BLUE, ERSChatColor.WHITE]);
+  Result := Self.ContainsOption('Click here to continue', True, colors) or
+            Self.ContainsOption('Please wait', True, colors);
+end;
+
 (*
 ## Chat.ContinueChat
 ```pascal
@@ -210,7 +220,7 @@ Example:
 WriteLn Chat.ContinueChat();
 ```
 *)
-function TRSChat.ContinueChat(keyboardProbability: Single = -1): Boolean;
+function TRSChat.Continue(keyboardProbability: Single = -1): Boolean;
 var
   colors: TIntegerArray;
 begin
@@ -243,7 +253,7 @@ begin
   while (GetTickCount() < timeout) do
   begin
     if Self.ContainsOption(option) then Break;
-    Self.ContinueChat();
+    Self.Continue();
     Sleep(0, 2500, ERandomDir.LEFT);
   end;
 

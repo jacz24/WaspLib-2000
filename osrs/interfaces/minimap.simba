@@ -817,6 +817,7 @@ begin
   until timeout.IsFinished() or (not moving and countdown.IsFinished()) or not Self.HasFlag();
 end;
 
+
 var
 (*
 ## Minimap variable

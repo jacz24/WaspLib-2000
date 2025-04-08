@@ -33,7 +33,6 @@ They should be self-explanatory.
 {$IFNDEF SRLT_PLAYER_INCLUDED}              {$INCLUDE_ONCE osrs/player.simba}
 {$IFNDEF SRLT_BIOMETRICS_INCLUDED}          {$INCLUDE_ONCE osrs/antiban/biometrics.simba}
 
-{$IFNDEF SRLT_OCR_INCLUDED}                 {$INCLUDE_ONCE osrs/ocr/ocr.simba}
 {$IFNDEF SRLT_RSCLIENT_INCLUDED}            {$INCLUDE_ONCE osrs/rsclient.simba}
 {$IFNDEF SRLT_REMOTEINPUT_INCLUDED}         {$INCLUDE_ONCE osrs/remoteinput.simba}
 {$IFNDEF SRLT_CACHEPARSER_INCLUDED}         {$INCLUDE_ONCE osrs/cacheparser.simba}
@@ -110,7 +109,6 @@ They should be self-explanatory.
 {$IFNDEF SRLT_OVERRIDES_INCLUDED}           {$INCLUDE_ONCE osrs/overrides.simba}
 
 
-{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}

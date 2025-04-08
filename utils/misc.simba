@@ -143,6 +143,9 @@ begin
   Result := (pXCross and pYCross) or (qXCross and qYCross);
 end;
 
+
+
+
 //credits: Simba1400/Source/MML/simba.tpa.pas#L2440C10-L2440C21
 function TImage.ColorsInLine(start, stop: TPoint; colors: TIntegerArray): Boolean;
 var
@@ -203,3 +206,5 @@ begin
     if Self.Pixel[current.X, current.Y] in colors then Exit(True);
   until (current.Y = stop.Y);
 end;
+
+

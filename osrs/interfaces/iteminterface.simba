@@ -213,7 +213,7 @@ var
   b: TBox;
 begin
   if not Self.Find([item], b) then Exit(-1);
-  Result := Self.Slots^.ReadStack(b);
+  Result := TRSItem.ReadStack(b);
 end;
 
 

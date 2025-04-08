@@ -421,6 +421,25 @@ begin
   until timeout.IsFinished() or countdown.IsFinished() or (position.Current.DistanceTo(destination) <= waitUntilDistance);
 end;
 
+procedure TRSWalker.WaitMoving(time: Integer = 20000; minShift: Integer = 500; doAntiban: Boolean = True); overload;
+var
+  timeout, countdown: TCountDown;
+  moving: Boolean;
+begin
+  timeout.Init(time);
+  countdown.Init(500);
+
+  repeat
+    if doAntiban then
+      Antiban.WalkingTasks();
+
+    moving := Minimap.IsPlayerMoving();
+
+    if moving then
+      countdown.Restart(0, 1000);
+
+  until timeout.IsFinished() or (not moving and countdown.IsFinished()) or not Minimap.HasFlag();
+end;
 
 function TRSWalker.FindFlagMove(out flag: TPoint): Boolean;
 var

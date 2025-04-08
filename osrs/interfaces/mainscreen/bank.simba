@@ -1120,13 +1120,20 @@ begin
   begin
     if walk then Result := obj.WalkSelect(['Bank B', 'Bank E'])
     else Result := obj.Select(['Bank B', 'Bank E']);
-  end
-  else
-  begin
-    if walk then Result := npc.WalkSelect(['Bank B', 'Bank E'])
-    else Result := npc.Select(['Bank B', 'Bank E']);
+
+    if not Result then
+    begin
+      Result := MainScreen.IsUpText('Bank') and ChooseOption.Select(['Bank B', 'Bank E']);
+      if not Result then Exit;
+    end;
+
+    obj.Walker^.WaitMoving();
+    Result := Self.WaitOpen(3000);
+    Exit;
   end;
 
+  if walk then Result := npc.WalkSelect(['Bank B', 'Bank E'])
+  else Result := npc.Select(['Bank B', 'Bank E']);
 
   if not Result then
   begin
@@ -1134,7 +1141,7 @@ begin
     if not Result then Exit;
   end;
 
-  Minimap.WaitMoving();
+  npc.Walker^.WaitMoving();
   Result := Self.WaitOpen(3000);
 end;
 

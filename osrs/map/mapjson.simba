@@ -6,7 +6,9 @@ Utilities to help load and parse json files related to {ref}`Map`.
 {$INCLUDE_ONCE SRLT/osrs.simba}
 
 type
-  TMapObjectJSON = type TJSONItem;
+  TMapObjectJSON = record
+    Data: TJSONItem;
+  end;
 
 (*
 ## ObjectsJSON.GetFile
@@ -91,14 +93,14 @@ begin
     for i := 0 to json.Count-1 do
     begin
       id := json.Item[i].Item[0].AsInt;
-      for j := 0 to Self.Count-1 do
-        if Self.Item[j].Item[0].AsInt = id then
+      for j := 0 to Self.Data.Count-1 do
+        if Self.Data.Item[j].Item[0].AsInt = id then
         begin
           for n := 0 to json.Item[i].Item[5].Count-1 do
-            Self.Item[j].Item[5].AddArray('', json.Item[i].Item[5].Item[n].Clone());
+            Self.Data.Item[j].Item[5].AddArray('', json.Item[i].Item[5].Item[n].Clone());
           Continue(2);
         end;
-      Self.Add('', json.Item[i].Clone());
+      Self.Data.Add('', json.Item[i].Clone());
     end;
 
     json.Free();
@@ -115,17 +117,17 @@ Returns a `TJSONItem` JSON array of a map object that matches the specified `nam
 By default you get all objects that match the `name`, however,
 if you want you can specify how many you want through `amount`.
 *)
-function TMapObjectJSON.Get(name: String; amount: Integer = 0): TJSONItem;
+function TMapObjectJSON.GetByName(name: String; amount: Integer = 0): TJSONItem;
 var
   i, found: Integer;
 begin
-  if Self.Count = 0 then Self.Load();
+  if Self.Data.Count = 0 then Self.Load();
 
   Result := NewJSONArray();
-  for i := 0 to  Self.Count-1 do
-    if Self.Item[i].Item[1].AsString = name then
+  for i := 0 to  Self.Data.Count-1 do
+    if Self.Data.Item[i].Item[1].AsString = name then
     begin
-      Result.AddObject('', Self.Item[i]);
+      Result.AddObject('', Self.Data.Item[i]);
       if Inc(found) = amount then Exit;
     end;
 
@@ -144,11 +146,11 @@ function TMapObjectJSON.GetByID(id: Integer): TJSONItem;
 var
   i: Integer;
 begin
-  if Self.Count = 0 then Self.Load();
+  if Self.Data.Count = 0 then Self.Load();
 
-  for i := 0 to  Self.Count-1 do
-    if Self.Item[i].Item[0].AsInt = id then
-      Exit(Self.Item[i]);
+  for i := 0 to  Self.Data.Count-1 do
+    if Self.Data.Item[i].Item[0].AsInt = id then
+      Exit(Self.Data.Item[i]);
   raise GetDebugLn('Object with ID ' + ToStr(id) + ' doesn''t exist on the loaded maps.');
 end;
 
@@ -166,14 +168,14 @@ function TMapObjectJSON.GetByAction(action: String; amount: Integer = 0): TJSONI
 var
   i, j, found: Integer;
 begin
-  if Self.Count = 0 then Self.Load();
+  if Self.Data.Count = 0 then Self.Load();
 
   Result := NewJSONArray();
-  for i := 0 to  Self.Count-1 do
-    for j := 0 to Self.Item[i].Item[4].Count-1 do
-      if Self.Item[i].Item[4].Item[j].AsString = action then
+  for i := 0 to  Self.Data.Count-1 do
+    for j := 0 to Self.Data.Item[i].Item[4].Count-1 do
+      if Self.Data.Item[i].Item[4].Item[j].AsString = action then
       begin
-        Result.AddObject('', Self.Item[i]);
+        Result.AddObject('', Self.Data.Item[i]);
         if Inc(found) = amount then Exit;
         Continue(2);
       end;
@@ -188,57 +190,57 @@ var
   i, j, count: Integer;
   str: String;
 begin
-  if Self.Count = 0 then Self.Load();
+  if Self.Data.Count = 0 then Self.Load();
 
   str += '[' + LINE_SEP;
-  for i := 0 to Self.Count-1 do
+  for i := 0 to Self.Data.Count-1 do
   begin
     str += '  {' + LINE_SEP;
-    str += '    "id": ' + Self.Item[i].Item[0].ToJSON() + ',' + LINE_SEP;
-    str += '    "name": ' + Self.Item[i].Item[1].ToJSON() + ',' + LINE_SEP;
-    str += '    "type": ' + Self.Item[i].Item[2].ToJSON() + ',' + LINE_SEP;
-    str += '    "category": ' + Self.Item[i].Item[3].ToJSON() + ',' + LINE_SEP;
+    str += '    "id": ' + Self.Data.Item[i].Item[0].ToJSON() + ',' + LINE_SEP;
+    str += '    "name": ' + Self.Data.Item[i].Item[1].ToJSON() + ',' + LINE_SEP;
+    str += '    "type": ' + Self.Data.Item[i].Item[2].ToJSON() + ',' + LINE_SEP;
+    str += '    "category": ' + Self.Data.Item[i].Item[3].ToJSON() + ',' + LINE_SEP;
     str += '    "actions": [';
-    count := Self.Item[i].Item[4].Count-1;
+    count := Self.Data.Item[i].Item[4].Count-1;
     for j := 0 to count do
     begin
-      str += '"' + Self.Item[i].Item[4].Item[j].AsString + '"';
+      str += '"' + Self.Data.Item[i].Item[4].Item[j].AsString + '"';
       if j < count then str += ',';
     end;
     str += '],' + LINE_SEP;
 
     str += '    "coordinates": [';
-    count := Self.Item[i].Item[5].Count-1;
+    count := Self.Data.Item[i].Item[5].Count-1;
     for j := 0 to count do
     begin
-      str += '[' + Self.Item[i].Item[5].Item[j].Item[0].AsString + ',' + Self.Item[i].Item[5].Item[j].Item[1].AsString + ']';
+      str += '[' + Self.Data.Item[i].Item[5].Item[j].Item[0].AsString + ',' + Self.Data.Item[i].Item[5].Item[j].Item[1].AsString + ']';
       if j < count then str += ',';
     end;
     str += '],' + LINE_SEP;
 
-    str += '    "size": [' + Self.Item[i].Item[6].Item[0].AsString + ',';
-    str += Self.Item[i].Item[6].Item[0].AsString + ',';
-    str += Self.Item[i].Item[6].Item[0].AsString + '],' + LINE_SEP;
+    str += '    "size": [' + Self.Data.Item[i].Item[6].Item[0].AsString + ',';
+    str += Self.Data.Item[i].Item[6].Item[0].AsString + ',';
+    str += Self.Data.Item[i].Item[6].Item[0].AsString + '],' + LINE_SEP;
 
     str += '    "rotations": [';
-    count := Self.Item[i].Item[7].Count-1;
+    count := Self.Data.Item[i].Item[7].Count-1;
     for j := 0 to count do
     begin
-      str += Self.Item[i].Item[7].Item[j].AsString;
+      str += Self.Data.Item[i].Item[7].Item[j].AsString;
       if j < count then str += ',';
     end;
     str += '],' + LINE_SEP;
 
     str += '    "colors": [';
-    count := Self.Item[i].Item[8].Count-1;
+    count := Self.Data.Item[i].Item[8].Count-1;
     for j := 0 to count do
     begin
-      str += Self.Item[i].Item[8].Item[j].AsString;
+      str += Self.Data.Item[i].Item[8].Item[j].AsString;
       if j < count then str += ',';
     end;
     str += ']' + LINE_SEP;
     str += '  }';
-    if i <= Self.Count-2 then str += ',';
+    if i <= Self.Data.Count-2 then str += ',';
     str += LINE_SEP;
   end;
   str += ']';
@@ -250,7 +252,9 @@ var
   ObjectsJSON: TMapObjectJSON;
 
 type
-  TMapNPCJSON = type TJSONItem;
+  TMapNPCJSON = record
+    Data: TJSONItem;
+  end;
 
 (*
 ## NPCsJSON.GetFile
@@ -335,14 +339,14 @@ begin
     for i := 0 to json.Count-1 do
     begin
       id := json.Item[i].Item[0].AsInt;
-      for j := 0 to Self.Count-1 do
-        if Self.Item[j].Item[0].AsInt = id then
+      for j := 0 to Self.Data.Count-1 do
+        if Self.Data.Item[j].Item[0].AsInt = id then
         begin
           for n := 0 to json.Item[i].Item[7].Count-1 do
-            Self.Item[j].Item[7].AddArray('', json.Item[i].Item[7].Item[n].Clone());
+            Self.Data.Item[j].Item[7].AddArray('', json.Item[i].Item[7].Item[n].Clone());
           Continue(2);
         end;
-      Self.Add('', json.Item[i].Clone());
+      Self.Data.Add('', json.Item[i].Clone());
     end;
 
     json.Free();
@@ -363,13 +367,13 @@ function TMapNPCJSON.Get(name: String; amount: Integer = 0): TJSONItem;
 var
   i, found: Integer;
 begin
-  if Self.Count = 0 then Self.Load();
+  if Self.Data.Count = 0 then Self.Load();
 
   Result := NewJSONArray();
-  for i := 0 to  Self.Count-1 do
-    if Self.Item[i].Item[1].AsString = name then
+  for i := 0 to  Self.Data.Count-1 do
+    if Self.Data.Item[i].Item[1].AsString = name then
     begin
-      Result.AddObject('', Self.Item[i]);
+      Result.AddObject('', Self.Data.Item[i]);
       if Inc(found) = amount then Exit;
     end;
 
@@ -388,11 +392,11 @@ function TMapNPCJSON.GetByID(id: Integer): TJSONItem;
 var
   i: Integer;
 begin
-  if Self.Count = 0 then Self.Load();
+  if Self.Data.Count = 0 then Self.Load();
 
-  for i := 0 to  Self.Count-1 do
-    if Self.Item[i].Item[0].AsInt = id then
-      Exit(Self.Item[i]);
+  for i := 0 to  Self.Data.Count-1 do
+    if Self.Data.Item[i].Item[0].AsInt = id then
+      Exit(Self.Data.Item[i]);
   raise GetDebugLn('Object with ID ' + ToStr(id) + ' doesn''t exist on the loaded maps.');
 end;
 
@@ -410,14 +414,14 @@ function TMapNPCJSON.GetByAction(action: String; amount: Integer = 0): TJSONItem
 var
   i, j, found: Integer;
 begin
-  if Self.Count = 0 then Self.Load();
+  if Self.Data.Count = 0 then Self.Load();
 
   Result := NewJSONArray();
-  for i := 0 to  Self.Count-1 do
-    for j := 0 to Self.Item[i].Item[5].Count-1 do
-      if Self.Item[i].Item[5].Item[j].AsString = action then
+  for i := 0 to  Self.Data.Count-1 do
+    for j := 0 to Self.Data.Item[i].Item[5].Count-1 do
+      if Self.Data.Item[i].Item[5].Item[j].AsString = action then
       begin
-        Result.AddObject('', Self.Item[i]);
+        Result.AddObject('', Self.Data.Item[i]);
         if Inc(found) = amount then Exit;
         Continue(2);
       end;
@@ -432,49 +436,49 @@ var
   i, j, count: Integer;
   str: String;
 begin
-  if Self.Count = 0 then Self.Load();
+  if Self.Data.Count = 0 then Self.Load();
 
   str += '[' + LINE_SEP;
-  for i := 0 to Self.Count-1 do
+  for i := 0 to Self.Data.Count-1 do
   begin
     str += '  {' + LINE_SEP;
-    str += '    "id": ' + Self.Item[i].Item[0].AsString + ',' + LINE_SEP;
-    str += '    "name": ' + Self.Item[i].Item[1].AsString + ',' + LINE_SEP;
-    str += '    "level": ' + Self.Item[i].Item[2].AsString + ',' + LINE_SEP;
-    str += '    "category": ' + Self.Item[i].Item[3].AsString + ',' + LINE_SEP;
-    str += '    "minimapdot": ' + Self.Item[i].Item[4].AsString + ',' + LINE_SEP;
+    str += '    "id": ' + Self.Data.Item[i].Item[0].AsString + ',' + LINE_SEP;
+    str += '    "name": ' + Self.Data.Item[i].Item[1].AsString + ',' + LINE_SEP;
+    str += '    "level": ' + Self.Data.Item[i].Item[2].AsString + ',' + LINE_SEP;
+    str += '    "category": ' + Self.Data.Item[i].Item[3].AsString + ',' + LINE_SEP;
+    str += '    "minimapdot": ' + Self.Data.Item[i].Item[4].AsString + ',' + LINE_SEP;
     str += '    "actions": [';
-    count := Self.Item[i].Item[5].Count-1;
+    count := Self.Data.Item[i].Item[5].Count-1;
     for j := 0 to count do
     begin
-      str += '"' + Self.Item[i].Item[5].Item[j].AsString + '"';
+      str += '"' + Self.Data.Item[i].Item[5].Item[j].AsString + '"';
       if j < count then str += ',';
     end;
     str += '],' + LINE_SEP;
 
-    str += '    "size": [' + Self.Item[i].Item[6].Item[0].AsString + ',';
-    str += Self.Item[i].Item[6].Item[0].AsString + ',';
-    str += Self.Item[i].Item[6].Item[0].AsString + '],' + LINE_SEP;
+    str += '    "size": [' + Self.Data.Item[i].Item[6].Item[0].AsString + ',';
+    str += Self.Data.Item[i].Item[6].Item[0].AsString + ',';
+    str += Self.Data.Item[i].Item[6].Item[0].AsString + '],' + LINE_SEP;
 
     str += '    "coordinates": [';
-    count := Self.Item[i].Item[7].Count-1;
+    count := Self.Data.Item[i].Item[7].Count-1;
     for j := 0 to count do
     begin
-      str += '[' + Self.Item[i].Item[7].Item[j].Item[0].AsString + ',' + Self.Item[i].Item[7].Item[j].Item[1].AsString + ']';
+      str += '[' + Self.Data.Item[i].Item[7].Item[j].Item[0].AsString + ',' + Self.Data.Item[i].Item[7].Item[j].Item[1].AsString + ']';
       if j < count then str += ',';
     end;
     str += '],' + LINE_SEP;
 
     str += '    "colors": [';
-    count := Self.Item[i].Item[8].Count-1;
+    count := Self.Data.Item[i].Item[8].Count-1;
     for j := 0 to count do
     begin
-      str += Self.Item[i].Item[8].Item[j].AsString;
+      str += Self.Data.Item[i].Item[8].Item[j].AsString;
       if j < count then str += ',';
     end;
     str += ']' + LINE_SEP;
     str += '  }';
-    if i <= Self.Count-2 then str += ',';
+    if i <= Self.Data.Count-2 then str += ',';
     str += LINE_SEP;
   end;
   str += ']';

@@ -79,13 +79,48 @@ begin
   Result := Result.CopyRange(0, Random(short, long));
 end;
 
-function TRSItem.ToBankItem(): TRSBankItem;
+function TRSItem.ToBankItem(quantity: Integer = QUANTITY_ALL_BUT_ONE): TRSBankItem;
 begin
-  Result.Quantity := 1;
+  Result.Quantity := quantity;
   Result.Noted := Self.StartsWith('Noted ', False);
   if Result.Noted then Result.Item := Self.After('Noted ')
   else Result.Item := Self;
 end;
+
+
+(*
+## GetItemAmountBox
+```pascal
+function TRSItem.GetItemAmountBox(constref area: TBox): TBox; static;
+```
+Returns the correct text box of an item's amount text based on the item box.
+*)
+function TRSItem.GetStackBox(slot: TBox): TBox; static;
+begin
+  Result := [slot.X1, slot.Y1-1, slot.X1 + 35, slot.Y1 + 11];
+end;
+
+(*
+## SRL.GetItemAmount
+```pascal
+function TSRL.GetItemAmount(area: TBox): Int32;
+```
+For use with items in like bankscreen, inventory, shops and so on to
+get the number of stacked items there are.
+*)
+function TRSItem.ReadStack(slot: TBox): Integer; static;
+var
+  i: Integer;
+begin
+  slot := TRSItem.GetStackBox(slot);
+
+  for i := 0 to High(RSColors.STACK_COLORS) do
+    if Target.HasColor(RSColors.STACK_COLORS[i], 0, 1, slot) then
+      Exit(OCR.RecognizeNumber(slot, RSFonts.PLAIN_11, [RSColors.STACK_COLORS[i]], 0) * Round(10 ** (3 * i)));
+  Result := -1;
+end;
+
+
 
 function TRSBankItem.ToItem(): TRSItem;
 begin
@@ -94,3 +129,7 @@ begin
     Result := 'Noted ' + Result.ToLower();
 end;
 
+function TRSBankItem.Create(item: TRSItem; quantity: Integer = QUANTITY_ALL_BUT_ONE): TRSBankItem; static;
+begin
+  Result := item.ToBankItem(quantity);
+end;

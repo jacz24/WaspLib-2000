@@ -236,7 +236,7 @@ begin
   chatCache := Chat.GetOptionsString();
   if 'try again' in chatCache then
   begin
-    Chat.ContinueChat();
+    Chat.Continue();
     Exit(Self.Enter(pin, Dec(attempts)));
   end;
 

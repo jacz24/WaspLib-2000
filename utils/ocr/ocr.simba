@@ -3,7 +3,7 @@ OCR
 ===
 *)
 {$DEFINE SRLT_OCR_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$INCLUDE_ONCE SRLT/utils.simba}
 
 type
   TOCR = record

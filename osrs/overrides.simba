@@ -154,6 +154,7 @@ begin
   Result := inherited;
 end;
 
+
 function TRSMainScreen.IsVisible(pt: TPoint): Boolean; override;
 begin
   Result := Self.Bounds.Contains(pt) and Self.Mask[pt.Y, pt.X];
@@ -165,15 +166,13 @@ begin
   if Bank.IsOpen() and Bank.Bounds.Contains(pt) then Exit(False);
 end;
 
-
 function TRSMainScreen.Filter(tpa: TPointArray): TPointArray; override;
 var
-  i: Integer;
+  pt: TPoint;
 begin
-  Result := Copy(tpa);
-  for i := High(Result) downto 0 do
-    if not Self.Bounds.Contains(Result[i]) or not Self.Mask[Result[i].Y, Result[i].X] then
-      Delete(Result, i, 1);
+  for pt in tpa do
+    if Self.Bounds.Contains(pt) and Self.Mask[pt.Y, pt.X] then
+      Result += pt;
 
   if Chat.IsOpen() then
     Result := Result.ExcludeBox(Chat.Bounds);
@@ -184,3 +183,30 @@ begin
   if Bank.IsOpen() then
     Result := Result.ExcludeBox(Bank.Bounds);
 end;
+
+procedure TAntiban.WalkingTasks(); override;
+begin
+  case Random(0, 500) of //only about 1% chance of antiban while walking
+    0:
+    begin
+      if (Random(20) <= 17) then Self.RandomChatTab();
+    end;
+
+    1..5:
+    begin
+      if (Random(10) <= 3) then Self.SmallCameraRotation();
+    end;
+
+    6..10:
+    begin
+      if (Random(10) <= 3) then Self.RandomRightClick()
+      else Self.SmallRandomMouse();
+    end;
+
+    10, 14:
+    begin
+      if (Random(10) <= 9) then Self.RandomTab();
+    end;
+  end;
+end;
+

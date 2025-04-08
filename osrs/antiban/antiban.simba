@@ -537,6 +537,12 @@ begin
   WriteLn('Running for ', FormatMilliseconds(Round(active), TIME_FORMAL), ' per day, on average.');
 end;
 
+
+procedure TAntiban.WalkingTasks();
+begin
+end;
+
+
 var
 (*
 ## Antiban variable

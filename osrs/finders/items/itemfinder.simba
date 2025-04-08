@@ -21,7 +21,6 @@ type
     const ZIP: String = {$MACRO DIR} + 'images.zip';
   end;
 
-
 function TRSItemFinder.Align(image, template: TImage): Boolean;
 var
   borderA, borderB: TPointArray;
@@ -102,6 +101,18 @@ begin
 end;
 
 
+function TRSItemFinder.GetIDs(item: String): TStringArray;
+begin
+  Result := Self.Database.GetAll(item, 'item', 'id');
+end;
+
+procedure TRSItemFinder.MapItem(item, id: String);
+begin
+  Self.Database.AddRow([id, item, '']);
+end;
+
+
+
 function TRSItemFinder.GetFilter(item: String): TImageCompareFilter;
 var
   i: Integer;
@@ -135,10 +146,8 @@ var
   ids: TStringArray;
   id: String;
 begin
-  if item.IsNumeric then
-    ids := [item]
-  else
-    ids := Self.Database.GetAll(item, 'item', 'id');
+  if item.IsNumeric then ids := [item]
+  else ids := Self.GetIDs(item);
 
   for id in ids do
     Result += Self.GetImage(id);

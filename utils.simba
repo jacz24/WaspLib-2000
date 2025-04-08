@@ -8,6 +8,7 @@
 {$IFNDEF SRLT_MISC_INCLUDED}         {$INCLUDE_ONCE utils/misc.simba}
 {$IFNDEF SRLT_MOUSE_INCLUDED}        {$INCLUDE_ONCE utils/input/mouse.simba}
 {$IFNDEF SRLT_KEYBOARD_INCLUDED}     {$INCLUDE_ONCE utils/input/keyboard.simba}
+{$IFNDEF SRLT_OCR_INCLUDED}          {$INCLUDE_ONCE utils/ocr/ocr.simba}
 {$IFNDEF SRLT_ITEM_INCLUDED}         {$INCLUDE_ONCE utils/item.simba}
 {$IFNDEF SRLT_DATABASE_INCLUDED}     {$INCLUDE_ONCE utils/database.simba}
 {$IFNDEF SRLT_IMAGECOMPARE_INCLUDED} {$INCLUDE_ONCE utils/imagecompare.simba}
@@ -16,6 +17,7 @@
 {$IFNDEF SRLT_WEBGRAPHGEN_INCLUDED}  {$INCLUDE_ONCE utils/webgraphgen.simba}
 {$IFNDEF SRLT_RSCHUNKS_INCLUDED}     {$INCLUDE_ONCE utils/rschunks.simba}
 
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}
