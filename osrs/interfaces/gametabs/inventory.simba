@@ -390,6 +390,12 @@ begin
   Result := (slots <> []) and Self.ShiftDrop(pattern.Intersection(slots));
 end;
 
+
+function TRSInventory.RandomPattern(): TIntegerArray;
+begin
+  Result := [];
+end;
+
 var
 (*
 ## Inventory variable

@@ -12,7 +12,7 @@ const
   ONE_DAY: Integer    = ONE_HOUR   * 24;
   TIME_FORMAL: String = 'h \ho\ur\s, m \min\ute\s and s \second\s';
   MINUTES_FORMAL: String = 'm \min\ute\s and s \second\s';
-  FILE_TIME_FORMAT: String = 'YY';
+  FILE_TIME_FORMAT: String = 'YY-MM-DD_hh-mm-ss';
 
 (*
 ## TimeStamp

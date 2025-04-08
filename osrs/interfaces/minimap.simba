@@ -359,7 +359,7 @@ end;
 ```pascal
 function TRSMinimap.GetLevel(orb: ERSMinimapOrb): Integer;
 ```
-Returns the level of the specified orb.
+Returns the level of the specified `orb`.
 
 Example:
 ```pascal
@@ -369,6 +369,40 @@ WriteLn Minimap.GetLevel(ERSMinimapOrb.PRAYER);
 function TRSMinimap.GetLevel(orb: ERSMinimapOrb): Integer;
 begin
   Result := OCR.RecognizeShadow(Self.Orbs[orb].Bounds, RSFonts.PLAIN_11, 0).ExtractInteger();
+end;
+
+(*
+## Minimap.UnderLevel
+```pascal
+function TRSMinimap.UnderLevel(orb: ERSMinimapOrb; level: Integer): Boolean;
+```
+Returns true if the level of the specified `orb` is below the specified `level` threshold.
+
+Example:
+```pascal
+WriteLn Minimap.UnderLevel(ERSMinimapOrb.PRAYER, 50);
+```
+*)
+function TRSMinimap.UnderLevel(orb: ERSMinimapOrb; level: Integer): Boolean;
+begin
+  Result := Self.GetLevel(orb) < level;
+end;
+
+(*
+## Minimap.OverLevel
+```pascal
+function TRSMinimap.OverLevel(orb: ERSMinimapOrb; level: Integer): Boolean;
+```
+Returns true if the level of the specified `orb` is over the specified `level` threshold.
+
+Example:
+```pascal
+WriteLn Minimap.OverLevel(ERSMinimapOrb.PRAYER, 50);
+```
+*)
+function TRSMinimap.OverLevel(orb: ERSMinimapOrb; level: Integer): Boolean;
+begin
+  Result := Self.GetLevel(orb) > level;
 end;
 
 

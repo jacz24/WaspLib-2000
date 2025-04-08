@@ -210,3 +210,43 @@ begin
   end;
 end;
 
+(*
+## Chat.LeveledUp override
+```pascal
+function TRSChat.LeveledUp(): Boolean; override;
+```
+Returns true if we have the level up message on the chat box and attempts to
+increment {ref}`Stats` `Levels` variables.
+
+Example:
+```pascal
+if Chat.LeveledUp() then
+  Chat.ClickContinue(True);
+```
+*)
+function TRSChat.LeveledUp(): Boolean; override;
+var
+  b: TBox;
+  i: Int32;
+  str: String;
+  img: TImage;
+begin
+  Result := Self.HasOption('Congratulations', True, Self.GetColors([ERSChatColor.NAVY]));
+  if not Result then Exit;
+
+  b := Self.Bounds;
+  b.Y1 += 60;
+  b.Y2 -= 75;
+
+  str := OCR.Recognize(b, RSFonts.QUILL_8, [0], 0);
+  str := Trim(str.Between('Your ', ' level').ToLower());
+
+  for i := 0 to Ord(High(ERSSkill)) do
+    if str in ToStr(ERSSkill(i)).After('ERSSkill.').ToLower() then
+      Break;
+
+  if ERSSkill(i) < High(ERSSkill) then //total never has level ups...
+    Stats.IncrementCachedLevel(ERSSkill(i));
+
+  SaveScreenshotEx('levelups', Self.Bounds);
+end;

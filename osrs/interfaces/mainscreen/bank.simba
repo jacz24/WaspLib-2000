@@ -93,7 +93,9 @@ Record responsible to handle the {ref}`Bank` interface.
       NotNow, MoreInfo: TBox;
     end;
 
-    {%codetools off}
+    Depleted: Boolean;
+
+    {%codetools on}
     Cache: record
       Quantity: Integer;
       Items: TStringMap<TBankPosition>;
@@ -1066,6 +1068,43 @@ begin
     Result := Self._InteractionHelper(ERSBankInteraction.DEPOSIT, slot, 1, useQuantityButton);
 end;
 
+
+(*
+## Bank.IsDepleted
+```pascal
+function TRSBank.IsDepleted(item: TRSBankItem; attempts: Integer = 3): Boolean;
+```
+Checks if a item is depleted in the bank.
+This returns true if the `item.Item` quantity in the bank is less than `item.Quantity`.
+
+It also sets the `Bank.Depleted` variable to true which you can use in your script for whatever you see fit.
+
+Example:
+```pascal
+WriteLn Bank.IsDepleted(item);
+```
+*)
+function TRSBank.IsDepleted(item: TRSBankItem; attempts: Integer = 3): Boolean;
+var
+  data: TBankPosition;
+begin
+  if attempts = 0 then Exit;
+
+  if Self.Find(item.Item, data) then
+  begin
+    if Max(1, TRSItem.ReadStack(data.Slot)) < Min(item.Quantity, 28) then
+    begin
+      Self.Depleted := Self.IsOpen();
+      Exit(True);
+    end;
+
+    Exit(False);
+  end;
+
+  Result := Self.IsDepleted(item, attempts-1);
+
+  Self.Depleted := Result and Self.IsOpen();
+end;
 
 procedure TRSBank._SetupMapObjects();
 begin

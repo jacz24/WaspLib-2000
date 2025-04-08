@@ -95,7 +95,7 @@ end;
 (*
 ## Chat.FindOption
 ```pascal
-function TRSChat.FindOption(chatOption: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): TRSChatOption;
+function TRSChat.FindOption(chatOption: String; caseSensitive: Boolean = True; colors: TIntegerArray = []): TRSChatOption;
 ```
 Returns the chat option with the specified `chatOption` text if it's visible with the specified `colors`.
 The result is returned as a {ref}`TRSChatOption`.
@@ -112,7 +112,7 @@ ShowOnClient(option.Bounds);
 Highlighting Chat.FindOption()
 ```
 *)
-function TRSChat.FindOption(chatOption: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): TRSChatOption;
+function TRSChat.FindOption(chatOption: String; caseSensitive: Boolean = True; colors: TIntegerArray = []): TRSChatOption;
 var
   option: TRSChatOption;
 begin
@@ -124,9 +124,9 @@ begin
 end;
 
 (*
-## Chat.ContainsOption
+## Chat.HasOption
 ```pascal
-function TRSChat.ContainsOption(chatOption: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): Boolean;
+function TRSChat.HasOption(chatOption: String; caseSensitive: Boolean = True; colors: TIntegerArray = []): Boolean;
 ```
 Returns True/False if the chat option with the specified `chatOption` text is visible with the specified `colors`.
 
@@ -135,10 +135,10 @@ If `colors` is empty like it is by default, `$0`, `$FFFFFF` and `$FF0000` (black
 
 Example:
 ```pascal
-WriteLn Chat.ContainsOption('access my bank');
+WriteLn Chat.HasOption('access my bank');
 ```
 *)
-function TRSChat.ContainsOption(chatOption: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): Boolean;
+function TRSChat.HasOption(chatOption: String; caseSensitive: Boolean = True; colors: TIntegerArray = []): Boolean;
 begin
   if colors = [] then
     colors := Self.GetColors([ERSChatColor.BLACK, ERSChatColor.WHITE, ERSChatColor.BLUE]);
@@ -148,28 +148,28 @@ end;
 (*
 ## Chat.WaitOption
 ```pascal
-function TRSChat.WaitOption(chatOption: String; caseSensitive: Boolean = False; colors: TIntegerArray = []; time: Integer = 600; interval: Integer = -1): Boolean;
+function TRSChat.WaitOption(chatOption: String; caseSensitive: Boolean = True; colors: TIntegerArray = []; time: Integer = 600; interval: Integer = -1): Boolean;
 ```
-Same as {ref}`Chat.ContainsOption` but waits up to `time` milliseconds for it to be true.
+Same as {ref}`Chat.HasOption` but waits up to `time` milliseconds for it to be true.
 
 Example:
 ```pascal
 WriteLn Chat.WaitOption('access my bank');
 ```
 *)
-function TRSChat.WaitOption(chatOption: String; caseSensitive: Boolean = False; colors: TIntegerArray = []; time: Integer = 600; interval: Integer = -1): Boolean;
+function TRSChat.WaitOption(chatOption: String; caseSensitive: Boolean = True; colors: TIntegerArray = []; time: Integer = 600; interval: Integer = -1): Boolean;
 begin
   if colors = [] then
     colors := Self.GetColors([ERSChatColor.BLACK, ERSChatColor.WHITE, ERSChatColor.BLUE]);
   if interval < 0 then interval := RandomMode(100, 50, 1500);
-  Result := SleepUntil(Self.ContainsOption(chatOption, caseSensitive, colors), time, interval);
+  Result := SleepUntil(Self.HasOption(chatOption, caseSensitive, colors), time, interval);
 end;
 
 
 (*
 ## Chat.Select
 ```pascal
-function TRSChat.Select(chatOption: String; caseSensitive: Boolean = False; keyboardProbability: Single = -1; colors: TIntegerArray = []): Boolean;
+function TRSChat.Select(chatOption: String; caseSensitive: Boolean = True; keyboardProbability: Single = -1; colors: TIntegerArray = []): Boolean;
 ```
 Selects a chat option whose text matches `chatOption`.
 
@@ -178,7 +178,7 @@ Example:
 WriteLn Chat.Select('access my bank');
 ```
 *)
-function TRSChat.Select(chatOption: String; caseSensitive: Boolean = False; keyboardProbability: Single = -1; colors: TIntegerArray = []): Boolean;
+function TRSChat.Select(chatOption: String; caseSensitive: Boolean = True; keyboardProbability: Single = -1; colors: TIntegerArray = []): Boolean;
 var
   option: TRSChatOption;
 begin
@@ -204,8 +204,8 @@ var
   colors: TIntegerArray;
 begin
   colors := Self.GetColors([ERSChatColor.BLUE, ERSChatColor.WHITE]);
-  Result := Self.ContainsOption('Click here to continue', True, colors) or
-            Self.ContainsOption('Please wait', True, colors);
+  Result := Self.HasOption('Click here to continue', True, colors) or
+            Self.HasOption('Please wait', True, colors);
 end;
 
 (*
@@ -231,7 +231,7 @@ begin
     Exit;
 
   Result := Self.WaitOption('Please wait', True, colors, 3000) and
-            SleepUntil(not Self.ContainsOption('Please wait', True, colors), RandomMode(100, 50, 1500), 3000);
+            SleepUntil(not Self.HasOption('Please wait', True, colors), RandomMode(100, 50, 1500), 3000);
 end;
 
 (*
@@ -252,7 +252,7 @@ begin
   timeout += GetTickCount();
   while (GetTickCount() < timeout) do
   begin
-    if Self.ContainsOption(option) then Break;
+    if Self.HasOption(option) then Break;
     Self.Continue();
     Sleep(0, 2500, ERandomDir.LEFT);
   end;
@@ -298,4 +298,68 @@ WriteLn Chat.IsTitle('Select an option');
 function TRSChat.IsTitle(text: String; similarity: Single = 0.8): Boolean;
 begin
   Result := Self.GetTitle().Similarity(text) >= similarity;
+end;
+
+(*
+## Chat.IsTitle
+```pascal
+function TRSChat.IsTitle(text: String; similarity: Single = 0.8): Boolean;
+```
+Returns True/False if the current chat title matches `text`.
+
+Example:
+```pascal
+WriteLn Chat.IsTitle('Select an option');
+```
+*)
+function TRSChat.WaitTitle(text: String; time: Integer = 600; similarity: Single = 0.8; interval: Integer = -1): Boolean;
+begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsTitle(text, similarity), time, interval);
+end;
+
+
+(*
+## Chat.LeveledUp
+```pascal
+function TRSChat.LeveledUp(): Boolean;
+```
+Returns true if we have the level up message on the chat box.
+This function is overriden in {ref}`Chat.LevelUp override` to increment {ref}`Stats` `Levels` variables.
+
+Example:
+```pascal
+if Chat.LeveledUp() then
+  Chat.Continue();
+```
+*)
+function TRSChat.LeveledUp(): Boolean;
+begin
+  Result := False;
+end;
+
+
+(*
+## Chat.HandleLevelUp
+```pascal
+function TRSChat.HandleLevelUp(keyboardProbability: Single = -1): Boolean;
+```
+Attempts to handle the {ref}`Chat.LevelUp` notification.
+
+Example:
+```pascal
+Chat.HandleLevelUp();
+```
+*)
+function TRSChat.HandleLevelUp(keyboardProbability: Single = -1): Boolean;
+var
+  useKeyboard: Boolean;
+  timeout: UInt64;
+begin
+  timeout := GetTickCount() + 8000;
+  repeat
+    Self.Continue(keyboardProbability);
+    Sleep(60, 3000, ERandomDir.LEFT);
+    Result := Chat.GetDisplayName() <> '';
+  until Result or (GetTickCount() > timeout);
 end;

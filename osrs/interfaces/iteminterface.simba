@@ -53,6 +53,21 @@ begin
 end;
 
 
+function TRSItemInterface.Find(items: TRSItemArray; out slot: Integer): Boolean; overload;
+var
+  match: TImageMatch;
+begin
+  Result := ItemFinder.Find(items, Self.Slots^.Boxes(), match);
+  if Result then
+    slot := match.Index;
+end;
+
+function TRSItemInterface.Find(item: TRSItem; out slot: Integer): Boolean; overload;
+begin
+  Result := Self.Find([item], slot);
+end;
+
+
 function TRSItemInterface.FindAll(items: TRSItemArray): TBoxArray;
 var
   match: TImageMatch;

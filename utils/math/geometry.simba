@@ -3,6 +3,68 @@
 
 {$loadlib ../../plugins/libtpaex/libtpaex}
 
+(*
+## TPoint.InRange
+```pascal
+function TPoint.InRange(other: TPoint; dist: Double): Boolean; constref;
+function TPoint.AnyInRange(other: TPointArray; dist: Double): Boolean; constref;
+function TPoint.AllInRange(other: TPointArray; dist: Double): Boolean; constref;
+```
+Checks if the current point is within `dist` distance of `other`.
+*)
+function TPoint.InRange(other: TPoint; dist: Double): Boolean;
+begin
+  Result := Self.DistanceTo(other) <= dist;
+end;
+
+function TPoint.AnyInRange(other: TPointArray; dist: Double): Boolean;
+var
+  p: TPoint;
+begin
+  for p in other do
+    if Self.InRange(p, dist) then
+      Exit(True);
+end;
+
+function TPoint.AllInRange(other: TPointArray; dist: Double): Boolean;
+var
+  p: TPoint;
+begin
+  for p in other do
+    if not Self.InRange(p, dist) then
+      Exit;
+  Result := True;
+end;
+
+
+function TPointArray.AStar(start, goal: TPoint; diagonalTravel: Boolean = True): TPointArray;
+begin
+  Result := AStarTPA(Self, start, goal, diagonalTravel);
+end;
+
+function T2DPointArray.InSameTPA(p, q: TPoint): Boolean;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self) do
+    with Self[i].Bounds() do
+      if Contains(p) and Contains(q) then
+        case Length(Self[i].Intersection([p, q])) of
+          1: if p = q then Exit(True);
+          2: Exit(True);
+        end;
+end;
+
+function TPointArray.PolylineLength(): Double;
+var
+  i: Integer;
+begin
+  if Length(Self) < 2 then Exit;
+  for i := 0 to High(Self)-1 do
+    Result += Self[i].DistanceTo(Self[i+1]);
+end;
+
+
 type
   TCuboid = record
     Top, Bottom: TQuad;
@@ -96,33 +158,6 @@ begin
 end;
 
 
-
-function TPointArray.AStar(start, goal: TPoint; diagonalTravel: Boolean = True): TPointArray;
-begin
-  Result := AStarTPA(Self, start, goal, diagonalTravel);
-end;
-
-function T2DPointArray.InSameTPA(p, q: TPoint): Boolean;
-var
-  i: Integer;
-begin
-  for i := 0 to High(Self) do
-    with Self[i].Bounds() do
-      if Contains(p) and Contains(q) then
-        case Length(Self[i].Intersection([p, q])) of
-          1: if p = q then Exit(True);
-          2: Exit(True);
-        end;
-end;
-
-function TPointArray.PolylineLength(): Double;
-var
-  i: Integer;
-begin
-  if Length(Self) < 2 then Exit;
-  for i := 0 to High(Self)-1 do
-    Result += Self[i].DistanceTo(Self[i+1]);
-end;
 
 
 type

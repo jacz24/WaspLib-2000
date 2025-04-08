@@ -208,3 +208,21 @@ begin
 end;
 
 
+function SaveScreenshotEx(folder: String; bounds: TBox = [-1,-1,-1,-1]): String;
+var
+  path: String;
+  img: TImage;
+begin
+  path := SimbaEnv.ScreenshotsPath + folder + PATH_SEP;
+  if not DirCreate(path) then Exit;
+
+  path += Now().ToString(FILE_TIME_FORMAT);
+
+  try
+    img := TImage.CreateFromTarget(bounds);
+    if img.Save(path, True) then
+      Result := path;
+  finally
+    img.Free();
+  end;
+end;
