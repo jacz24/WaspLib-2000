@@ -100,10 +100,24 @@ begin
   Self.Items.Setup('CollectionBox.Items', @Self.Slots, [0, 10, 3, 0]);
 end;
 
+
 procedure TRSCollectionBox.AsyncTask();
 begin
   Self.Depleted := False;
 end;
+
+procedure TRSCollectionBox.Free();
+begin
+  Async.ScheduleStop('CollectionBox.Timer');
+end;
+
+procedure TRSCollectionBox.Setup();
+begin
+  Async.ScheduleEvery('CollectionBox.Timer', @Self.AsyncTask, 10 * ONE_MINUTE);
+  AddOnTerminate(@Self.Free);
+end;
+
+
 
 (*
 ## CollectionBox.IsOpen

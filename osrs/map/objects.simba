@@ -32,6 +32,7 @@ var
   colors: TColorArray;
   best: TBestColor;
 begin
+  WriteLn json.ToJSON;
   if json.Typ <> EJSONType.OBJ then
     raise GetDebugLn('TRSObject', 'JSON Object expected, got ' + ToStr(json.Typ) + '.');
 

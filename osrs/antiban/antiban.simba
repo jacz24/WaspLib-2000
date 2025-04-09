@@ -459,14 +459,17 @@ function TAntiban.DoAntiban(checkTasks, checkBreaks, checkSleeps: Boolean = True
 begin
   if Self.DoingAntiban then Exit;
   Self.DoingAntiban := True;
+  Logger.TimeRunning.Stop();
 
-  try
-    if checkTasks and Self.DoTask() then Result := True;
-    if checkBreaks and Self.DoBreak() then Result := True;
-    if checkSleeps and Self.DoSleep() then Result := True;
-  finally
-    Self.DoingAntiban := False;
-  end;
+  if checkTasks  and Self.DoTask()  then Result := True;
+  if checkBreaks and Self.DoBreak() then Result := True;
+  if checkSleeps and Self.DoSleep() then Result := True;
+
+  if not RSClient.IsLoggedIn() then
+    Login.DoLogin(Players.GetPlayer());
+
+  Self.DoingAntiban := False;
+  Logger.TimeRunning.Start();
 end;
 
 

@@ -256,8 +256,8 @@ begin
   west := westArr.FurthestPoint(eastArr.Mean()); //late edit: Should not this be middle, not eastarr.mean
   east := eastArr.FurthestPoint(westArr.Mean()); //late edit: Should not this be middle, not westarr.mean
 
-  n := ArcTan2(north.y-center.y, north.x-center.x)+PI/2;
-  s := ArcTan2(south.y-center.y, south.x-center.x)-PI/2;
+  n := ArcTan2(north.y-center.y, north.x-center.x) + HALF_PI;
+  s := ArcTan2(south.y-center.y, south.x-center.x) - HALF_PI;
   w := ArcTan2(west.y-center.y, west.x-center.x)+PI;
   e := ArcTan2(east.y-center.y, east.x-center.x);
 

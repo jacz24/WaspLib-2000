@@ -7,6 +7,7 @@ type
   TLogger = record
     Name: String;
     Path: String;
+    TimeRunning: TSimpleStopWatch;
     IsSetup: Boolean;
   end;
 
@@ -42,6 +43,8 @@ begin
   Self.Path += 'SRLT_' + Now().ToString('yyyy-mm-dd_hh-mm-ss-ms') + '.log';
   if not FileCreate(Self.Path) then
     raise TimeStamp() + ':[Logger]: Failed to create log file: ' + PathExtractName(Self.Path);
+
+  Self.TimeRunning.Start();
 end;
 
 procedure TLogger.Setup(name: String = '');
@@ -72,10 +75,6 @@ end;
 
 var
   Logger: TLogger;
-
-begin
-  Logger._Setup();
-end;
 
 function GetDebugLn(text: String; log: Boolean = True): String;
 begin

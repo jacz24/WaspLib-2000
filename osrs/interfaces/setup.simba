@@ -93,6 +93,8 @@ begin
   Target.AddEvent(ETargetEvent.TARGET_RESIZE, @TargetResized);
   RSFonts.Setup();
 
+  Logger.Setup();
+
   RSClient.Client := RSClient.GetClient();
   {$IFNDEF SRLT_DISABLE_REMOTEINPUT}
   if RSClient.Client <> ERSClient.OFFICIAL then
@@ -125,7 +127,7 @@ begin
   NPCsJSON.Data := NewJSONArray();
   AddOnTerminate(@NPCsJSON.Data.Free);
 
-  Async.ScheduleEvery('CollectionBox.Timer', @CollectionBox.AsyncTask, 10 * ONE_MINUTE);
+  CollectionBox.Setup();
 
   RSClient.IsLoggedIn();
   if RSClient.Mode = ERSMode.UNKNOWN then

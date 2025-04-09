@@ -49,7 +49,7 @@ var
   i: Integer;
   splitA, splitB: Boolean;
 begin
-  inverted := direction.Rotate(PI/2, [0,0]);
+  inverted := direction.Rotate(HALF_PI, [0,0]);
 
   for i := 1 to 5 do
     with Point(center.X, center.Y) + (inverted*i) do

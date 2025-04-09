@@ -82,7 +82,7 @@ var
   b: TBox;
 begin
   if Self.Sample.Amount = 0 then Self.Sample.Amount := 2;
-  if Self.Sample.Radius = 0 then Self.Sample.Radius := 67;
+  if Self.Sample.Radius = 0 then Self.Sample.Radius := 65;
 
   img := Minimap.GetCleanImage();
   sample := Minimap.ScaleMinimap(img, Self.Loader.Downscale, Self.Sample.Radius);
