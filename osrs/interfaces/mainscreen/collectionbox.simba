@@ -46,6 +46,7 @@ Main record to interact with the {ref}`Collection Box` interface.
       Bounds: TBox;
       Slots: TBoxArray;
     end;
+    Depleted: Boolean;
   end;
 
 (*
@@ -99,6 +100,11 @@ begin
   Self.Items.Setup('CollectionBox.Items', @Self.Slots, [0, 10, 3, 0]);
 end;
 
+procedure TRSCollectionBox.AsyncTask();
+begin
+  Self.Depleted := False;
+end;
+
 (*
 ## CollectionBox.IsOpen
 ```pascal
@@ -113,6 +119,15 @@ WriteLn CollectionBox.IsOpen();
 *)
 function TRSCollectionBox.IsOpen(): Boolean;
 begin
+  if BankPin.IsOpen() then
+  begin
+    if not BankPin.WaitLoading(3000) then
+      raise GetDebugLn('BankPin', 'Bank pin buttons don''t seem to have loaded in 3 seconds.');
+
+    if not BankPin.Enter(Players.GetPin()) then
+      raise GetDebugLn('BankPin', 'Failed to enter bank pin.');
+  end;
+
   Result := Self.Title.IsTitle('Collection Box');
 end;
 
@@ -210,6 +225,109 @@ begin
 end;
 
 
+function TRSCollectionBox.Collect(items: TRSItemArray; buttonProbability: Single = -1): Boolean;
+var
+  slots: TIntegerArray;
+  slot: Integer;
+begin
+  if not Self.IsOpen() then Exit;
+  if not Self.Items.FindAll(items, slots) and (slots = []) then Exit;
+
+  if buttonProbability < 0 then
+    buttonProbability := Biometrics.RandomDouble(0.5);
+
+  if RandomBoolean(buttonProbability) then
+    Exit(Self.CollectToBank());
+
+  for slot in slots do
+  begin
+    Self.Slots.Interact(slot, 'Bank');
+
+    if Self.HasChange(slot) then
+    begin
+      Mouse.Move(Self.SlotBoxes[slot].Slots[ERSCollectSlots.CHANGE]);
+      ChooseOption.Select('Bank', True, True);
+    end;
+  end;
+
+  Result := SleepUntil(not Self.Items.FindAll(items, slots) and (slots = []), RandomMode(100, 50, 1500), 1000);
+end;
+
+
+
+function TRSCollectionBox.Hover(walk: Boolean = True): Boolean;
+var
+  obj: TRSObject;
+  npc: TRSNPC;
+  me: TPoint;
+begin
+  if (Bank.Banks = []) or (Bank.Bankers = []) then
+    Bank._SetupMapObjects();
+
+  me := Map.Position();
+  obj := Bank.Banks[Bank.Banks.ClosestIndex(me)];
+  npc := Bank.Bankers[Bank.Bankers.ClosestIndex(me)];
+
+  if obj.DistanceTo(me) < npc.DistanceTo(me) then
+  begin
+    if walk then Exit(obj.WalkHover());
+    Exit(obj.Hover());
+  end;
+
+  if walk then Exit(npc.WalkHover());
+  Result := npc.Hover();
+end;
+
+function TRSCollectionBox.Open(walk: Boolean = True): Boolean;
+var
+  obj: TRSObject;
+  npc: TRSNPC;
+  me: TPoint;
+begin
+  if MSInterface.IsOpen() then
+  begin
+    if Self.IsOpen() then Exit(True);
+    MSInterface.Close(True);
+  end;
+
+  if (Bank.Banks = []) or (Bank.Bankers = []) then
+    Bank._SetupMapObjects();
+
+  me := Map.Position();
+  obj := Bank.Banks[Bank.Banks.ClosestIndex(me)];
+  npc := Bank.Bankers[Bank.Bankers.ClosestIndex(me)];
+
+  if obj.DistanceTo(me) < npc.DistanceTo(me) then
+  begin
+    if walk then Result := obj.WalkSelect(['Collect'])
+    else Result := obj.Select(['Collect']);
+
+    if not Result then
+    begin
+      Result := MainScreen.IsUpText('Bank') and ChooseOption.Select(['Collect']);
+      if not Result then Exit;
+    end;
+
+    obj.Walker^.WaitMoving();
+    Result := Self.WaitOpen(3000);
+    Exit;
+  end;
+
+  if walk then Result := npc.WalkSelect(['Collect'])
+  else Result := npc.Select(['Collect']);
+
+  if not Result then
+  begin
+    Result := MainScreen.IsUpText('Bank') and ChooseOption.Select(['Collect']);
+    if not Result then Exit;
+  end;
+
+  npc.Walker^.WaitMoving();
+  Result := Self.WaitOpen(3000);
+end;
+
+
+
 
 procedure TRSCollectionBox.Draw(img: TImage);
 var
@@ -250,6 +368,7 @@ begin
   img.Show();
   img.Free();
 end;
+
 
 var
 (*

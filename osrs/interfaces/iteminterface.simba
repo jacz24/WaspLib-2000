@@ -38,7 +38,7 @@ begin
 end;
 
 
-function TRSItemInterface.Find(items: TRSItemArray; out slot: TBox): Boolean;
+function TRSItemInterface.FindAny(items: TRSItemArray; out slot: TBox): Boolean; overload;
 var
   match: TImageMatch;
 begin
@@ -49,7 +49,7 @@ end;
 
 function TRSItemInterface.Find(item: TRSItem; out slot: TBox): Boolean; overload;
 begin
-  Result := Self.Find([item], slot);
+  Result := Self.FindAny([item], slot);
 end;
 
 
@@ -76,11 +76,24 @@ begin
     Result += match.Box;
 end;
 
+function TRSItemInterface.FindAll(items: TRSItemArray; out slots: TIntegerArray): Boolean; overload;
+var
+  matches: TImageMatchArray;
+  i: Integer;
+begin
+  slots := [];
+  Result := ItemFinder.FindAll(items, Self.Slots^.Boxes(), matches);
+  if not Result then Exit;
+  for i := 0 to High(matches) do
+    slots += matches[i].Index;
+end;
+
 function TRSItemInterface.FindAll(items: TRSItemArray; out boxes: TBoxArray): Boolean; overload;
 var
   matches: TImageMatchArray;
   i: Integer;
 begin
+  boxes := [];
   Result := ItemFinder.FindAll(items, Self.Slots^.Boxes(), matches);
   if not Result then Exit;
   for i := 0 to High(matches) do
@@ -88,17 +101,10 @@ begin
 end;
 
 
-function TRSItemInterface.FindAny(items: TRSItemArray): TImageMatch;
+
+function TRSItemInterface.FindAny(items: TRSItemArray): TImageMatch; overload;
 begin
   ItemFinder.Find(items, Self.Slots^.Boxes(), Result);
-end;
-
-function TRSItemInterface.FindAny(items: TRSItemArray; out box: TBox): Boolean; overload;
-var
-  match: TImageMatch;
-begin
-  Result := ItemFinder.Find(items, Self.Slots^.Boxes(), match);
-  if Result then box := match.Box;
 end;
 
 
@@ -227,7 +233,7 @@ function TRSItemInterface.ReadStack(item: TRSItem): Integer; overload;
 var
   b: TBox;
 begin
-  if not Self.Find([item], b) then Exit(-1);
+  if not Self.FindAny([item], b) then Exit(-1);
   Result := TRSItem.ReadStack(b);
 end;
 
@@ -236,7 +242,7 @@ function TRSItemInterface.Hover(item: TRSItem): Boolean;
 var
   box: TBox;
 begin
-  Result := Self.Find([item], box);
+  Result := Self.FindAny([item], box);
   if Result then Mouse.Move(box);
 end;
 

@@ -38,8 +38,8 @@ begin
   XPBar.SetupInterface();
 
   BankPin.SetupInterface();
-  CollectionBox.SetupInterface();
   Bank.SetupInterface();
+  CollectionBox.SetupInterface();
 
   {$IFDEF SRLT_DEBUG_INTERFACES}
   WriteLn GetDebugLn('RSClient', 'Interface setup took ' + ToStr(GetTickCount()-t) + ' ms to calculate.');
@@ -124,6 +124,8 @@ begin
   AddOnTerminate(@ObjectsJSON.Data.Free);
   NPCsJSON.Data := NewJSONArray();
   AddOnTerminate(@NPCsJSON.Data.Free);
+
+  Async.ScheduleEvery('CollectionBox.Timer', @CollectionBox.AsyncTask, 10 * ONE_MINUTE);
 
   RSClient.IsLoggedIn();
   if RSClient.Mode = ERSMode.UNKNOWN then

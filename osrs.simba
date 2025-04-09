@@ -98,8 +98,8 @@ They should be self-explanatory.
 {$IFNDEF SRLT_MAPJSON_INCLUDED}             {$INCLUDE_ONCE osrs/map/mapjson.simba}
 
 {$IFNDEF SRLT_BANKPIN_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/mainscreen/bankpin.simba}
-{$IFNDEF SRLT_COLLECTIONBOX_INCLUDED}       {$INCLUDE_ONCE osrs/interfaces/mainscreen/collectionbox.simba}
 {$IFNDEF SRLT_BANK_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/mainscreen/bank.simba}
+{$IFNDEF SRLT_COLLECTIONBOX_INCLUDED}       {$INCLUDE_ONCE osrs/interfaces/mainscreen/collectionbox.simba}
 
 
 {$IFNDEF SRLT_HITSPLATS_INCLUDED}           {$INCLUDE_ONCE osrs/mainscreen/hitsplats.simba}
