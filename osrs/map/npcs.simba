@@ -179,7 +179,7 @@ var
 begin
   shouldExit := True;
 
-  if (RSClient.Mode = ERSMode.FIXED) and RSInterface.IsOpen() then
+  if (RSClient.Mode = ERSMode.FIXED) and MSInterface.IsOpen() then
     Exit;
 
   if Self.UpText <> [] then

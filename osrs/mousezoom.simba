@@ -154,7 +154,7 @@ begin
   end;
   {$ENDIF}
 
-  Mouse.Scroll(RSInterface.Bounds, amount, down, forceMove);
+  Mouse.Scroll(MSInterface.Bounds, amount, down, forceMove);
 
   {$IFNDEF SRLT_DISABLE_REMOTEINPUT}
   if inputState then RemoteInput.EnableRealInput();

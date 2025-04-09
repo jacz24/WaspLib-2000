@@ -169,12 +169,10 @@ procedure TRSBank.SetupInterface();
 var
   i: Integer;
 begin
-  with InterfaceArea do
-  begin
-    Self.Bounds.X1 := Max(Floor(Center.X-(Width-1)/2), Floor(Center.X-487/2));
-    Self.Bounds.X2 := Min(Floor(Center.X+(Width-1)/2), Floor(Center.X +487/2));
-    Self.Bounds.Y1 := Max(Floor(Center.Y-(Height-3)/2), Floor(Center.Y-799/2));
-    Self.Bounds.Y2 := Min(Floor(Center.Y+(Height-3)/2), Floor(Center.Y+799/2));
+  case RSClient.Mode of
+    ERSMode.FIXED: Self.Bounds := MSInterface.CreateBounds([0, 2, 0, -1], 488, 800);
+    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
+      Self.Bounds := MSInterface.CreateBounds([0, 2, 0, -2], 488, 800);
   end;
 
   Self.Scroll.Area.X1 := Self.Bounds.X1 + 5;
@@ -1142,10 +1140,10 @@ var
   npc: TRSNPC;
   me: TPoint;
 begin
-  if RSInterface.IsOpen() then
+  if MSInterface.IsOpen() then
   begin
     if Self.IsOpen() then Exit(True);
-    RSInterface.Close(True);
+    MSInterface.Close(True);
   end;
 
   if (Self.Banks = []) or (Self.Bankers = []) then

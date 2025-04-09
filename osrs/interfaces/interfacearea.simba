@@ -94,6 +94,47 @@ begin
   Result := SleepUntil(not Self.IsOpen(), 50, 600);
 end;
 
+
+function TRSInterfaceArea.CreateBounds(offset: TBox; width, height: Integer = 0): TBox;
 var
-  InterfaceArea: TRSInterfaceArea;
-  RSInterface: TRSInterfaceArea;
+  center, half, halfMax: Single;
+begin
+  offset.X1 += Self.Bounds.X1;
+  offset.Y1 += Self.Bounds.Y1;
+  offset.X2 += Self.Bounds.X2;
+  offset.Y2 += Self.Bounds.Y2;
+
+  if width > 0 then
+  begin
+    half := (offset.X2 - offset.X1) / 2;
+    center := offset.X1 + half;
+    halfMax := (width - 1) / 2;
+
+    Result.X1 := Max(Floor(center - half), Floor(center - halfMax));
+    Result.X2 := Min(Floor(center + half), Floor(center + halfMax));
+  end
+  else
+  begin
+    Result.X1 := offset.X1;
+    Result.X2 := offset.X2;
+  end;
+
+  if height > 0 then
+  begin
+    half := (offset.Y2 - offset.Y1) / 2;
+    center := offset.Y1 + half;
+    halfMax := (height - 1) / 2;
+
+    Result.Y1 := Max(Floor(center - half), Floor(center - halfMax));
+    Result.Y2 := Min(Floor(center + half), Floor(center + halfMax));
+  end
+  else
+  begin
+    Result.Y1 := offset.Y1;
+    Result.Y2 := offset.Y2;
+  end;
+end;
+
+
+var
+  MSInterface: TRSInterfaceArea;

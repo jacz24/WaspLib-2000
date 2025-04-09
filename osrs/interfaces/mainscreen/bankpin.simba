@@ -28,12 +28,10 @@ This is automatically called for you on the {ref}`BankPin variable`.
 *)
 procedure TRSBankPin.SetupInterface();
 begin
-  with InterfaceArea do
-  begin
-    Self.Bounds.X1 := Max(Floor(Center.X-(Width-1)/2), Floor(Center.X-487/2));
-    Self.Bounds.Y1 := Max(Floor(Center.Y-(Height-3)/2), Center.Y-148);
-    Self.Bounds.X2 := Min(Floor(Center.X+(Width-1)/2), Floor(Center.X +487/2));
-    Self.Bounds.Y2 := Min(Floor(Center.Y+(Height-3)/2), Center.Y+157);
+  case RSClient.Mode of
+    ERSMode.FIXED: Self.Bounds := MSInterface.CreateBounds([0, 11, 0, 0], 488, 305);
+    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
+      Self.Bounds := MSInterface.CreateBounds([0, 10, 0, 0], 488, 305);
   end;
 
   Self.Buttons := TBoxArray.Create(Self.Bounds.TopLeft.Offset(21,84), 3, 3, 63, 63, [31, 9]);

@@ -112,50 +112,45 @@ end;
 
 function TRSSlotInterface.IsUsed(slot: TBox): Boolean;
 begin
-  Result := Target.HasColor(RSColors.ITEM_BORDER, 8.5, 1, slot) or
-            Target.HasColor(RSColors.ITEM_BORDER_WHITE, 0, 1, slot);
+  Result := RSColors.HasItem(slot);
 end;
 
 function TRSSlotInterface.IsUsed(slot: Integer): Boolean; overload;
 begin
-  Result := Self.IsUsed(Self.Box(slot));
+  Result := RSColors.HasItem(Self.Box(slot));
 end;
 
 function TRSSlotInterface.IsEmpty(slot: TBox): Boolean;
 begin
-  Result := not Target.HasColor(RSColors.ITEM_BORDER, 8.5, 1, slot) and
-            not Target.HasColor(RSColors.ITEM_BORDER_WHITE, 0, 1, slot);
+  Result := not RSColors.HasItem(slot);
 end;
 
 function TRSSlotInterface.IsEmpty(slot: Integer): Boolean; overload;
 begin
-  Result := Self.IsEmpty(Self.Box(slot));
+  Result := not RSColors.HasItem(Self.Box(slot));
 end;
 
 
-
-function TRSSlotInterface.GetShift(slot: Integer; waitTime: Integer): Integer;
+function TRSSlotInterface.IsFaded(slot: TBox): Boolean;
 begin
-  Result := Target.GetPixelDifference(waitTime, Self.Box(slot));
+  Result := not RSColors.HasItem(slot, False) and RSColors.HasItem(slot, True);
 end;
 
-function TRSSlotInterface.IsFading(slot: Integer; waitTime: Integer = 5): Boolean;
-begin
-  Result := Self.GetShift(slot, waitTime) > 0;
-end;
-
-function TRSSlotInterface.WaitFade(slot: Integer; waitTime: Integer = 200): Boolean;
+function TRSSlotInterface.IsFaded(slot: Integer): Boolean; overload;
 var
   b: TBox;
 begin
   b := Self.Box(slot);
-  if not SleepUntil(Target.GetPixelDifference(5, b) > 5, 0, waitTime) then
-    Exit;
+  Result := not RSColors.HasItem(b, False) and RSColors.HasItem(b, True);
+end;
 
-  Result := SleepUntil(
-              Target.HasColor(RSColors.ITEM_BORDER, 8.5, 1, b) or
-              Target.HasColor(RSColors.ITEM_BORDER_WHITE, 0, 1, b), 100, 1000
-            );
+function TRSSlotInterface.WaitFade(slot: Integer; time: Integer = 200): Boolean;
+var
+  b: TBox;
+begin
+  b := Self.Box(slot);
+  if not Self.IsFaded(b) then Exit;
+  Result := SleepUntil(RSColors.HasItem(b, False), 100, 1000);
 end;
 
 

@@ -34,11 +34,11 @@ begin
   Chat.SetupInterface();
   Make.SetupInterface();
 
-  InterfaceArea.SetupInterface();
-  RSInterface.SetupInterface();
+  MSInterface.SetupInterface();
   XPBar.SetupInterface();
 
   BankPin.SetupInterface();
+  CollectionBox.SetupInterface();
   Bank.SetupInterface();
 
   {$IFDEF SRLT_DEBUG_INTERFACES}

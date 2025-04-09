@@ -49,9 +49,12 @@ Record holding a collection of constant colors used throughout the game.
     const TEXT_LIGHT_YELLOW: TColor = $A2D8E4;
   end;
 
-function RSColors.HasItem(bounds: TBox): Boolean; static;
+function RSColors.HasItem(bounds: TBox; faded: Boolean = True): Boolean; static;
+var
+  tolerance: Single;
 begin
-  Result := Target.HasColor(RSColors.ITEM_BORDER, 0, 1, bounds) or
+  if faded then tolerance := 8.5;
+  Result := Target.HasColor(RSColors.ITEM_BORDER, tolerance, 1, bounds) or
             Target.HasColor(RSColors.ITEM_BORDER_WHITE, 0, 1, bounds);
 end;
 

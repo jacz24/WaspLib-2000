@@ -134,10 +134,10 @@ begin
   if Stats.Hover(skill) then
   begin
     Mouse.Click(EMouseButton.LEFT);
-    RSInterface.WaitOpen(ERSInterfaceType.PAPER);
+    MSInterface.WaitOpen(ERSInterfaceType.PAPER);
     Biometrics.Sleep(time);
 
-    RSInterface.Close();
+    MSInterface.Close();
 
     if returnToCurrentTab then
       GameTabs.Open(tab);
@@ -302,7 +302,7 @@ begin
     Exit;
   end;
 
-  if RSInterface.IsOpen() then Exit;
+  if MSInterface.IsOpen() then Exit;
 
   zoom := Min(Self.Zoom.Max, Max(Self.Zoom.Min, Options.GetZoomLevel()));
 

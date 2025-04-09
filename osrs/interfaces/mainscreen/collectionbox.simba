@@ -1,0 +1,259 @@
+(*
+# Collection Box
+Methods to interact with the collection box interface.
+```{figure} ../../images/collectionbox_interface.png
+```
+*)
+
+{$DEFINE SRLT_COLLECTIONBOX_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+type
+(*
+## ERSCollectButton
+```pascal
+ERSCollectButton = enum(INVENTORY, BANK);
+```
+Enum representing the {ref}`Collection Box` buttons.
+*)
+  ERSCollectButton = enum(INVENTORY, BANK);
+
+(*
+## ERSCollectSlots
+```pascal
+ERSCollectSlots = enum(STATUS, OPERATION, THUMBNAIL, ITEM, CHANGE);
+```
+Enum representing the {ref}`Collection Box` slot slots.
+The {ref}`Collection Box`, like the {ref}`Grand Exchange` has 8 slots available,
+Each of those slots, has it's own 5 small slots which is what this represents:
+```{figure} ../../images/collectionbox_subslots.png
+```
+*)
+  ERSCollectSlots = enum(STATUS, OPERATION, THUMBNAIL, ITEM, CHANGE);
+
+(*
+## TRSCollectionBox
+Main record to interact with the {ref}`Collection Box` interface.
+*)
+  TRSCollectionBox = record
+    Title: TRSInterfaceTitle;
+    Slots: TRSSlotInterface;
+    Items: TRSItemInterface;
+    Bounds: TBox;
+    ItemSlotBoxes: TBoxArray;
+    Buttons: array [ERSCollectButton] of TRSButton;
+    SlotBoxes: array of record
+      Bounds: TBox;
+      Slots: TBoxArray;
+    end;
+  end;
+
+(*
+## CollectionBox.SetupInterface
+```pascal
+procedure TRSCollectionBox.SetupInterface();
+```
+Internal method used to setup the {ref}`TRSCollectionBox` coordinates.
+This is automatically called for you on the {ref}`CollectionBox variable`.
+*)
+procedure TRSCollectionBox.SetupInterface();
+var
+  boxes: TBoxArray;
+  i: Integer;
+begin
+  case RSClient.Mode of
+    ERSMode.FIXED: Self.Bounds := MSInterface.CreateBounds([0, 1, 0, -1], 460, 247);
+    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
+      Self.Bounds := MSInterface.CreateBounds([0, 1, 0, -3], 460, 247);
+  end;
+
+  Self.Title.Setup(Self.Bounds);
+
+  with Self.Bounds do
+  begin
+    boxes := TBoxArray.Create([X1 + 15, Y1 + 44], 4, 2, 100, 74, [10, 10]);
+
+    Self.Buttons[ERSCollectButton.INVENTORY].Bounds := TBox.Create(X1 + 140, Y2 - 33, X1 + 223, Y2 - 15);
+    Self.Buttons[ERSCollectButton.INVENTORY].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
+    Self.Buttons[ERSCollectButton.BANK].Bounds := TBox.Create(X1 + 236, Y2 - 33, X1 + 318, Y2 - 15);
+    Self.Buttons[ERSCollectButton.INVENTORY].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
+  end;
+
+  SetLength(Self.SlotBoxes, 8);
+
+  for i := 0 to High(boxes) do
+  begin
+    Self.SlotBoxes[i].Bounds := boxes[i];
+    Self.SlotBoxes[i].Slots := [
+      TBox.Create(boxes[i].X1 + 8,  boxes[i].Y1 + 8,  boxes[i].X1 + 47, boxes[i].Y1 + 25),
+      TBox.Create(boxes[i].X1 + 50, boxes[i].Y1 + 8,  boxes[i].X1 + 69, boxes[i].Y1 + 25),
+      TBox.Create(boxes[i].X1 + 72, boxes[i].Y1 + 8,  boxes[i].X1 + 91, boxes[i].Y1 + 25),
+      TBox.Create(boxes[i].X1 + 9,  boxes[i].Y1 + 31, boxes[i].X1 + 47, boxes[i].Y1 + 65),
+      TBox.Create(boxes[i].X1 + 53, boxes[i].Y1 + 31, boxes[i].X1 + 91, boxes[i].Y1 + 65)
+    ];
+
+    Self.ItemSlotBoxes += Self.SlotBoxes[i].Slots[ERSCollectSlots.ITEM];
+  end;
+
+  Self.Slots.Setup('CollectionBox.Slots', Self.ItemSlotBoxes);
+  Self.Items.Setup('CollectionBox.Items', @Self.Slots, [0, 10, 3, 0]);
+end;
+
+(*
+## CollectionBox.IsOpen
+```pascal
+function TRSCollectionBox.IsOpen(): Boolean;
+```
+Returns true if the collection box is open.
+
+Example:
+```pascal
+WriteLn CollectionBox.IsOpen();
+```
+*)
+function TRSCollectionBox.IsOpen(): Boolean;
+begin
+  Result := Self.Title.IsTitle('Collection Box');
+end;
+
+(*
+## CollectionBox.WaitOpen
+```pascal
+function TRSCollectionBox.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
+```
+Returns true if the collection box opens within `time` milliseconds..
+
+Example:
+```pascal
+WriteLn CollectionBox.WaitOpen();
+```
+*)
+function TRSCollectionBox.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
+begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsOpen(), interval, time);
+end;
+
+
+(*
+## CollectionBox.HasChange
+```pascal
+function TRSCollectionBox.HasChange(slot: Integer): Boolean;
+```
+Returns true if the specified collection box `slot` has change.
+
+Example:
+```pascal
+WriteLn CollectionBox.HasChange(0);
+```
+*)
+function TRSCollectionBox.HasChange(slot: Integer): Boolean;
+begin
+  if not Self.IsOpen() then Exit;
+  Result := RSColors.HasItem(Self.SlotBoxes[slot].Slots[ERSCollectSlots.CHANGE]);
+end;
+
+
+(*
+## CollectionBox.CollectSlot
+```pascal
+function TRSCollectionBox.CollectSlot(slot: Integer; button: ERSCollectButton = ERSCollectButton.INVENTORY): Boolean;
+```
+Attempts to collect the item and change of  the specified collection box `slot`.
+By default it attempts to collect things to your inventory, you can change it to the bank with the `button` parameter.
+
+Example:
+```pascal
+WriteLn CollectionBox.CollectSlot(0);
+```
+*)
+function TRSCollectionBox.CollectSlot(slot: Integer; button: ERSCollectButton = ERSCollectButton.INVENTORY): Boolean;
+begin
+  if not Self.IsOpen() then Exit;
+
+  case button of
+    ERSCollectButton.INVENTORY:
+    begin
+      Self.Slots.Click(slot);
+
+      if Self.HasChange(slot) then
+        Mouse.Click(Self.SlotBoxes[slot].Slots[ERSCollectSlots.CHANGE], EMouseButton.LEFT);
+    end;
+    ERSCollectButton.BANK:
+    begin
+      Self.Slots.Interact(slot, 'Bank');
+
+      if Self.HasChange(slot) then
+      begin
+        Mouse.Move(Self.SlotBoxes[slot].Slots[ERSCollectSlots.CHANGE]);
+        ChooseOption.Select('Bank', True, True);
+      end;
+    end;
+  end;
+
+  Result := SleepUntil(Self.Slots.IsEmpty(slot) and not Self.HasChange(slot), RandomMode(100, 50, 1500), 1000);
+end;
+
+
+function TRSCollectionBox.CollectToInventory(): Boolean;
+begin
+  if Self.Slots.Count() = 0 then Exit(True);
+  Self.Buttons[ERSCollectButton.INVENTORY].Click();
+  Result := SleepUntil(Self.Slots.Count() = 0, RandomMode(100, 50, 1500), 1000);
+end;
+
+function TRSCollectionBox.CollectToBank(): Boolean;
+begin
+  if Self.Slots.Count() = 0 then Exit(True);
+  Self.Buttons[ERSCollectButton.BANK].Click();
+  Result := SleepUntil(Self.Slots.Count() = 0, RandomMode(100, 50, 1500), 1000);
+end;
+
+
+
+procedure TRSCollectionBox.Draw(img: TImage);
+var
+  i: Integer;
+begin
+  if not Self.IsOpen() then Exit;
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
+
+  Self.Buttons[ERSCollectButton.INVENTORY].Draw(img);
+  Self.Buttons[ERSCollectButton.BANK].Draw(img);
+
+  for i := 0 to High(Self.SlotBoxes) do
+  begin
+    img.DrawColor := $0000FF;
+    img.DrawBox(Self.SlotBoxes[i].Bounds);
+
+    img.DrawColor := $FF0000;
+    img.DrawBox(Self.SlotBoxes[i].Slots[ERSCollectSlots.STATUS]);
+    img.DrawColor := $FFFF00;
+    img.DrawBox(Self.SlotBoxes[i].Slots[ERSCollectSlots.OPERATION]);
+    img.DrawColor := $FF00FF;
+    img.DrawBox(Self.SlotBoxes[i].Slots[ERSCollectSlots.THUMBNAIL]);
+    img.DrawColor := $00FFFF;
+    img.DrawBox(Self.SlotBoxes[i].Slots[ERSCollectSlots.ITEM]);
+    img.DrawColor := $FFFFFF;
+    img.DrawBox(Self.SlotBoxes[i].Slots[ERSCollectSlots.CHANGE]);
+  end;
+end;
+
+procedure ShowOnClient(collectionBox: TRSCollectionBox); overload;
+var
+  img: TImage;
+begin
+  img := TImage.CreateFromTarget();
+  CollectionBox.Draw(img);
+  img.Show();
+  img.Free();
+end;
+
+var
+(*
+## CollectionBox variable
+Global {ref}`TRSCollectionBox` variable.
+*)
+  CollectionBox: TRSCollectionBox;

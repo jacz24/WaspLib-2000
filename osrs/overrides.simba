@@ -229,7 +229,6 @@ var
   b: TBox;
   i: Int32;
   str: String;
-  img: TImage;
 begin
   Result := Self.HasOption('Congratulations', True, Self.GetColors([ERSChatColor.NAVY]));
   if not Result then Exit;

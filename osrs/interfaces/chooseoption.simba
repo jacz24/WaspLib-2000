@@ -275,7 +275,7 @@ WriteLn ChooseOption.Select('Take Bones');
 *)
 procedure TRSChooseOption.Select(option: TRSOption);
 begin
-  Self.Select(option);
+  Self.Hover(option);
   Target.MouseClick(EMouseButton.LEFT);
 end;
 

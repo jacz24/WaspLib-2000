@@ -1,3 +1,5 @@
+{$SCOPEDENUMS ON}
+
 {$IFNDEF SRLT_SRLTENV_INCLUDED}      {$INCLUDE_ONCE utils/srltenv.simba}
 {$IFNDEF SRLT_RANDOM_INCLUDED}       {$INCLUDE_ONCE utils/math/random.simba}
 {$IFNDEF SRLT_CONVERSIONS_INCLUDED}  {$INCLUDE_ONCE utils/math/conversions.simba}

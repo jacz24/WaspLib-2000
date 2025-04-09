@@ -125,8 +125,8 @@ begin
 
   with Self.AvailableBounds[ERSXPBarPosition.CENTER-1] do
   begin
-    X1 := InterfaceArea.Bounds.X1;
-    X2 := InterfaceArea.Bounds.X2;
+    X1 := MSInterface.Bounds.X1;
+    X2 := MSInterface.Bounds.X2;
     Y1 := MainScreen.Bounds.Y1 + 25;
     Y2 := Y1 + 27;
 
@@ -141,7 +141,7 @@ begin
 
   with Self.AvailableBounds[ERSXPBarPosition.RIGHT-1] do
   begin
-    X2 := InterfaceArea.Bounds.X2 - 2;
+    X2 := MSInterface.Bounds.X2 - 2;
     X1 := X2 - 139;
     Y1 := MainScreen.Bounds.Y1 + 2;
     Y2 := Y1 + 27;

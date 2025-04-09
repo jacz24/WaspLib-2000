@@ -1,0 +1,107 @@
+(*
+# CollectBox
+Methods to interact with the bank pin interface.
+```{figure} ../../images/CollectBox_interface.png
+```
+*)
+
+{$DEFINE SRLT_COLLECTBOX_INCLUDED}
+{$INCLUDE_ONCE SRLT/osrs.simba}
+
+type
+(*
+## TRSCollectBox
+Main record to interact with the {ref}`CollectBox` interface.
+*)
+  TRSCollectBox = record
+    Bounds: TBox;
+    Buttons: TBoxArray;
+  end;
+
+(*
+## CollectBox.SetupInterface
+```pascal
+procedure TRSCollectBox.SetupInterface();
+```
+Internal method used to setup the {ref}`TRSCollectBox` coordinates.
+This is automatically called for you on the {ref}`CollectBox variable`.
+*)
+procedure TRSCollectBox.SetupInterface();
+begin
+  with InterfaceArea do
+  begin
+    Self.Bounds.X1 := Max(Floor(Center.X-(Width-1)/2), Floor(Center.X-487/2));
+    Self.Bounds.Y1 := Max(Floor(Center.Y-(Height-3)/2), Center.Y-148);
+    Self.Bounds.X2 := Min(Floor(Center.X+(Width-1)/2), Floor(Center.X +487/2));
+    Self.Bounds.Y2 := Min(Floor(Center.Y+(Height-3)/2), Center.Y+157);
+  end;
+
+  Self.Buttons := TBoxArray.Create(Self.Bounds.TopLeft.Offset(21,84), 3, 3, 63, 63, [31, 9]);
+  Self.Buttons.Insert(Self.Buttons[2].Offset([84, 0]), 3);
+end;
+
+(*
+## CollectBox.IsOpen
+```pascal
+function TRSCollectBox.IsOpen(): Boolean;
+```
+Returns true if the bank pin is open.
+
+Example:
+```pascal
+WriteLn CollectBox.IsOpen();
+```
+*)
+function TRSCollectBox.IsOpen(): Boolean;
+begin
+  Result := Target.HasColor($060D56, 10, 3400, Self.Buttons[0]);
+end;
+
+(*
+## CollectBox.WaitOpen
+```pascal
+function TRSCollectBox.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
+```
+Returns true if the bank pin opens within `time` milliseconds..
+
+Example:
+```pascal
+WriteLn CollectBox.WaitOpen();
+```
+*)
+function TRSCollectBox.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
+begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsOpen(), interval, time);
+end;
+
+
+
+
+procedure TRSCollectBox.Draw(img: TImage);
+begin
+  if not Self.IsOpen() then Exit;
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
+
+  img.DrawColor := $FFFFFF;
+  img.DrawBoxArray(Self.Buttons, False);
+end;
+
+procedure ShowOnClient(CollectBox: TRSCollectBox); overload;
+var
+  img: TImage;
+begin
+  img := TImage.CreateFromTarget();
+  CollectBox.Draw(img);
+  img.Show();
+  img.Free();
+end;
+
+var
+(*
+## CollectBox variable
+Global {ref}`TRSCollectBox` variable.
+*)
+  CollectBox: TRSCollectBox;

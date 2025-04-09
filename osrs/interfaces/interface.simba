@@ -26,7 +26,6 @@ begin
   img.DrawBox(Self.Bounds);
 end;
 
-
 type
   TRSInterfaceTitle = record
     Bounds, CloseButton: TBox;
