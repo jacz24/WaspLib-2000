@@ -11,19 +11,23 @@ type
     Name: String;
     Slots: ^TRSSlotInterface;
     DiscoverOffset: TBox;
+    CheckFunction: function (): Boolean of object;
   end;
 
-procedure TRSItemInterface.Setup(name: String; slots: ^TRSSlotInterface; discoverOffset: TBox);
+procedure TRSItemInterface.Setup(name: String; slots: ^TRSSlotInterface; discoverOffset: TBox; checkFunc: function (): Boolean of object = nil);
 begin
   Self.Name := name;
   Self.Slots := slots;
   Self.DiscoverOffset := discoverOffset;
+  Self.CheckFunction := @checkFunc;
 end;
 
 function TRSItemInterface.IndexOf(items: TRSItemArray): Integer;
 var
   match: TImageMatch;
 begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit(-1);
   if ItemFinder.Find(items, Self.Slots^.Boxes(), match) then
     Exit(match.Index);
   Result := -1;
@@ -33,6 +37,9 @@ function TRSItemInterface.IndicesOf(items: TRSItemArray): TIntegerArray;
 var
   match: TImageMatch;
 begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
+
   for match in ItemFinder.FindAll(items, Self.Slots^.Boxes()) do
     Result += match.Index;
 end;
@@ -42,6 +49,9 @@ function TRSItemInterface.FindAny(items: TRSItemArray; out slot: TBox): Boolean;
 var
   match: TImageMatch;
 begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
+
   Result := ItemFinder.Find(items, Self.Slots^.Boxes(), match);
   if Result then
     slot := match.Box;
@@ -57,6 +67,9 @@ function TRSItemInterface.Find(items: TRSItemArray; out slot: Integer): Boolean;
 var
   match: TImageMatch;
 begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
+
   Result := ItemFinder.Find(items, Self.Slots^.Boxes(), match);
   if Result then
     slot := match.Index;
@@ -72,6 +85,9 @@ function TRSItemInterface.FindAll(items: TRSItemArray): TBoxArray;
 var
   match: TImageMatch;
 begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
+
   for match in ItemFinder.FindAll(items, Self.Slots^.Boxes()) do
     Result += match.Box;
 end;
@@ -82,6 +98,9 @@ var
   i: Integer;
 begin
   slots := [];
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
+
   Result := ItemFinder.FindAll(items, Self.Slots^.Boxes(), matches);
   if not Result then Exit;
   for i := 0 to High(matches) do
@@ -94,18 +113,15 @@ var
   i: Integer;
 begin
   boxes := [];
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
+
   Result := ItemFinder.FindAll(items, Self.Slots^.Boxes(), matches);
   if not Result then Exit;
   for i := 0 to High(matches) do
     boxes += matches[i].Box;
 end;
 
-
-
-function TRSItemInterface.FindAny(items: TRSItemArray): TImageMatch; overload;
-begin
-  ItemFinder.Find(items, Self.Slots^.Boxes(), Result);
-end;
 
 
 function TRSItemInterface.Contains(item: TRSItem): Boolean;
@@ -122,6 +138,8 @@ function TRSItemInterface.ContainsAll(items: TRSItemArray): Boolean;
 var
   matches: TImageMatchArray;
 begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
   Result := ItemFinder.FindAll(items, Self.Slots^.Boxes(), matches);
 end;
 
@@ -131,6 +149,8 @@ var
   b: TBox;
   img: TImage;
 begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
   for b in Self.Slots^.Boxes() do
   begin
     b.X1 += Self.DiscoverOffset.X1;
@@ -154,6 +174,8 @@ var
   b: TBox;
   img: TImage;
 begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
   for b in Self.Slots^.Boxes() do
   begin
     b.X1 += Self.DiscoverOffset.X1;
@@ -177,6 +199,8 @@ var
   b: TBox;
   img: TImage;
 begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
   b := Self.Slots^.Box(slot);
   b.X1 += Self.DiscoverOffset.X1;
   b.Y1 += Self.DiscoverOffset.Y1;
@@ -260,6 +284,8 @@ var
   center: TPoint;
   dist, closest: Double;
 begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
   slots := Self.Slots^.Boxes();
   if not ItemFinder.FindAll([item], slots, matches) then Exit;
 

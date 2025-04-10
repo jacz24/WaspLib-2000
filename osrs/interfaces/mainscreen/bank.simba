@@ -157,6 +157,8 @@ begin
   end;
 end;
 
+function TRSBank.IsOpen(): Boolean; forward;
+
 (*
 ## Bank.SetupInterface
 ```pascal
@@ -208,7 +210,7 @@ begin
   Self.PotionStorage.Y2 := Self.Bounds.Y2 - 118;
 
   Self.Slots.Setup('Bank.Slots', Self.SlotBoxes, @Self.FindItemBoundaries);
-  Self.Items.Setup('Bank.Items', @Self.Slots, [0, 10, 3, 0]);
+  Self.Items.Setup('Bank.Items', @Self.Slots, [0, 10, 3, 0], @Self.IsOpen);
 
   Self._IsOpenHelperBox.X1 := Self.Bounds.X1 + 235;
   Self._IsOpenHelperBox.Y1 := Self.Bounds.Y2 - 42;

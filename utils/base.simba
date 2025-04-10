@@ -7,7 +7,7 @@ type
   TLogger = record
     Name: String;
     Path: String;
-    TimeRunning: TSimpleStopWatch;
+    TimeRunning: TStopwatch;
     IsSetup: Boolean;
   end;
 
@@ -71,6 +71,11 @@ end;
 procedure TLogger.AddLine(line: String);
 begin
   FileAppend(Self.Path, line + LINE_SEP);
+end;
+
+function TLogger.GetTimeRunning(): String;
+begin
+  Result := Self.TimeRunning.ElapsedFmt();
 end;
 
 var

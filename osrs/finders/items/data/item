@@ -1412,6 +1412,7 @@ noted cosmic talisman
 death talisman
 noted death talisman
 law talisman
+auto-weed
 nature talisman
 noted nature talisman
 archery ticket
@@ -3450,8 +3451,8 @@ saradomin banner
 noted saradomin banner
 zamorak banner
 noted zamorak banner
-hooded cloak
-hooded cloak
+saradomin cloak
+zamorak cloak
 rock
 noted rock
 explosive potion
@@ -4871,10 +4872,13 @@ noted nature tiara
 chaos tiara
 noted chaos tiara
 law tiara
+auto-weed (deactivated)
 death tiara
 noted death tiara
 blood tiara
 noted blood tiara
+gricoller's can (refill)
+auto-weed (activated)
 rogue top
 rogue mask
 rogue trousers
@@ -7085,9 +7089,9 @@ medium statues
 large statues
 suit of armour
 small portrait
-minor head
-medium head
-major head
+teak mounted head display
+mahogany mounted head display
+gilded mounted head display
 mounted sword
 small landscape
 large portrait
@@ -9847,6 +9851,10 @@ noted zamorak mix(2)
 zamorak mix(1)
 noted zamorak mix(1)
 feather
+mounted harpoonfish
+oak mounted fish display
+mahogany mounted fish display
+teak mounted fish display
 ava's device
 book of knowledge
 noted astronomy book
@@ -17685,3 +17693,42 @@ giantsoul amulet (uncharged)
 giantsoul amulet
 desiccated page
 hunters' loot sack (supplies)
+classic imp tail
+classic imp hood
+teak display
+mahogany display
+gilded display
+cockatrice head
+cockatrice head
+basilisk head
+basilisk head
+kurask head
+abyssal head
+oak display
+teak display
+mahogany display
+mounted bass
+mounted bass
+mounted swordfish
+mounted harpoonfish
+nimbleness charm
+noted nimbleness charm
+stockpiling charm
+noted stockpiling charm
+accumulation charm
+noted accumulation charm
+vulnerability charm
+noted vulnerability charm
+broken charm
+trinket dust
+castle wars supply crate
+castle wars arrow
+castle wars bolts
+castle wars arrow
+castle wars arrow
+castle wars arrow
+castle wars arrow
+castle wars bolts
+castle wars bolts
+castle wars bolts
+castle wars bolts

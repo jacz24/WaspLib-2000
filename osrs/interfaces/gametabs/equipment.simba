@@ -50,6 +50,9 @@ Internal method used to setup the {ref}`TRSEquipment` coordinates.
 
 This is automatically called for you on the {ref}`Equipment variable`.
 *)
+
+function TRSEquipment.Open(): Boolean; forward;
+
 procedure TRSEquipment.SetupGameTab();
 var
   slots, btns: TBoxArray;
@@ -62,7 +65,7 @@ begin
   Delete(slots, 8, 2);
 
   Self.Slots.Setup('Equipment.Slots', slots);
-  Self.Items.Setup('Equipment.Items', @Self.Slots, [2, 11, 2, -2]);
+  Self.Items.Setup('Equipment.Items', @Self.Slots, [2, 11, 2, -2], @Self.Open);
 
   btns := TBoxArray.Create(GameTab.BottomLeft.Offset(4, -52), 4, 1, 39, 39, [6,0]);
 

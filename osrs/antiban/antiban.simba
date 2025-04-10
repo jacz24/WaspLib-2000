@@ -459,7 +459,7 @@ function TAntiban.DoAntiban(checkTasks, checkBreaks, checkSleeps: Boolean = True
 begin
   if Self.DoingAntiban then Exit;
   Self.DoingAntiban := True;
-  Logger.TimeRunning.Stop();
+  Logger.TimeRunning.Pause();
 
   if checkTasks  and Self.DoTask()  then Result := True;
   if checkBreaks and Self.DoBreak() then Result := True;

@@ -426,32 +426,32 @@ WriteLn Minimap.Poisoned();
 *)
 function TRSMinimap.Poisoned(): Boolean;
 begin
-  Result := Target.HasColor(16391, 3, 1, Self.Orbs[ERSMinimapOrb.HITPOINTS].Bounds);
+  Result := Target.HasColor(16391, 3, 1, Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle.Bounds);
 end;
 
 function TRSMinimap.Envenomed(): Boolean;
 begin
-  Result := Target.HasColor(1515790, 9, 1, Self.Orbs[ERSMinimapOrb.HITPOINTS].Bounds);
+  Result := Target.HasColor(1515790, 9, 1, Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle.Bounds);
 end;
 
 function TRSMinimap.RunEnabled(): Boolean;
 begin
-  Result := Target.HasColor(ColorTolerance($58B1CB, 4.504, EColorSpace.HSV, [1.869, 0.609, 0.524]), 1, Self.Orbs[ERSMinimapOrb.ENERGY].Bounds);
+  Result := Target.HasColor(ColorTolerance($58B1CB, 4.504, EColorSpace.HSV, [1.869, 0.609, 0.524]), 1, Self.Orbs[ERSMinimapOrb.ENERGY].Circle.Bounds);
 end;
 
 function TRSMinimap.HasStamina(): Boolean;
 begin
-  Result := Target.HasColor(ColorTolerance($2D61C1, 1.475, EColorSpace.HSV, [2.455, 0.300, 0.247]), 1, Self.Orbs[ERSMinimapOrb.ENERGY].Bounds);
+  Result := Target.HasColor(ColorTolerance($2D61C1, 1.475, EColorSpace.HSV, [2.455, 0.300, 0.247]), 1, Self.Orbs[ERSMinimapOrb.ENERGY].Circle.Bounds);
 end;
 
 function TRSMinimap.PrayerEnabled(): Boolean;
 begin
-  Result := Target.HasColor(ColorTolerance($2188AB, 10.980, EColorSpace.HSV, [1.317, 1.076, 0.609]), 1, Self.Orbs[ERSMinimapOrb.PRAYER].Bounds);
+  Result := Target.HasColor(ColorTolerance($2188AB, 10.980, EColorSpace.HSV, [1.317, 1.076, 0.609]), 1, Self.Orbs[ERSMinimapOrb.PRAYER].Circle.Bounds);
 end;
 
 function TRSMinimap.SpecialEnabled(): Boolean;
 begin
-  Result := Target.HasColor(ColorTolerance($999273, 1.308, EColorSpace.RGB, [0.122, 0.640, 2.240]), 1, Self.Orbs[ERSMinimapOrb.SPECIAL].Bounds);
+  Result := Target.HasColor(ColorTolerance($999273, 1.308, EColorSpace.RGB, [0.122, 0.640, 2.240]), 1, Self.Orbs[ERSMinimapOrb.SPECIAL].Circle.Bounds);
 end;
 
 function TRSMinimap.HasSpecialWeapon(): Boolean;
