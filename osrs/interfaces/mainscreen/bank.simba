@@ -513,6 +513,7 @@ function TRSBank.SetArrangement(arrangement: ERSBankArrangement): Boolean;
 begin
   if Self.ArrangementButtons[arrangement].Enabled() then Exit(True);
   Result := Self.ArrangementButtons[arrangement].Enable();
+  if Result then Sleep(600, 800);
 end;
 
 (*
@@ -537,6 +538,7 @@ begin
 
   if Self.WithdrawModeButtons[btn].Enabled() then Exit(True);
   Result := Self.WithdrawModeButtons[btn].Enable();
+  if Result then Sleep(600, 800);
 end;
 
 (*
@@ -554,7 +556,8 @@ WriteLn Bank.SetQuantity(ERSItemQuantity.FIVE);
 function TRSBank.SetQuantity(quantity: ERSItemQuantity): Boolean;
 begin
   if Self.QuantityButtons[quantity].Enabled() then Exit(True);
-  Exit(Self.QuantityButtons[quantity].Enable());
+  Result := Self.QuantityButtons[quantity].Enable();
+  if Result then Sleep(600, 800);
 end;
 
 
