@@ -213,20 +213,20 @@ begin
     count := Self.Data.Item[i].Item[5].Count-1;
     for j := 0 to count do
     begin
-      str += '[' + Self.Data.Item[i].Item[5].Item[j].Item[0].AsString + ',' + Self.Data.Item[i].Item[5].Item[j].Item[1].AsString + ']';
+      str += '[' + ToStr(Self.Data.Item[i].Item[5].Item[j].Item[0].AsInt) + ',' + ToStr(Self.Data.Item[i].Item[5].Item[j].Item[1].AsInt) + ']';
       if j < count then str += ',';
     end;
     str += '],' + LINE_SEP;
 
-    str += '    "size": [' + Self.Data.Item[i].Item[6].Item[0].AsString + ',';
-    str += Self.Data.Item[i].Item[6].Item[0].AsString + ',';
-    str += Self.Data.Item[i].Item[6].Item[0].AsString + '],' + LINE_SEP;
+    str += '    "size": [' + ToStr(Self.Data.Item[i].Item[6].Item[0].AsInt) + ',';
+    str += ToStr(Self.Data.Item[i].Item[6].Item[0].AsInt) + ',';
+    str += ToStr(Self.Data.Item[i].Item[6].Item[0].AsInt) + '],' + LINE_SEP;
 
     str += '    "rotations": [';
     count := Self.Data.Item[i].Item[7].Count-1;
     for j := 0 to count do
     begin
-      str += Self.Data.Item[i].Item[7].Item[j].AsString;
+      str += ToStr(Self.Data.Item[i].Item[7].Item[j].AsInt);
       if j < count then str += ',';
     end;
     str += '],' + LINE_SEP;
@@ -235,7 +235,7 @@ begin
     count := Self.Data.Item[i].Item[8].Count-1;
     for j := 0 to count do
     begin
-      str += Self.Data.Item[i].Item[8].Item[j].AsString;
+      str += ToStr(Self.Data.Item[i].Item[8].Item[j].AsInt);
       if j < count then str += ',';
     end;
     str += ']' + LINE_SEP;
@@ -442,11 +442,11 @@ begin
   for i := 0 to Self.Data.Count-1 do
   begin
     str += '  {' + LINE_SEP;
-    str += '    "id": ' + Self.Data.Item[i].Item[0].AsString + ',' + LINE_SEP;
+    str += '    "id": ' + ToStr(Self.Data.Item[i].Item[0].AsInt) + ',' + LINE_SEP;
     str += '    "name": ' + Self.Data.Item[i].Item[1].AsString + ',' + LINE_SEP;
     str += '    "level": ' + Self.Data.Item[i].Item[2].AsString + ',' + LINE_SEP;
-    str += '    "category": ' + Self.Data.Item[i].Item[3].AsString + ',' + LINE_SEP;
-    str += '    "minimapdot": ' + Self.Data.Item[i].Item[4].AsString + ',' + LINE_SEP;
+    str += '    "category": ' + ToStr(Self.Data.Item[i].Item[3].AsInt) + ',' + LINE_SEP;
+    str += '    "minimapdot": ' + ToStr(Self.Data.Item[i].Item[4].AsBool) + ',' + LINE_SEP;
     str += '    "actions": [';
     count := Self.Data.Item[i].Item[5].Count-1;
     for j := 0 to count do
@@ -456,15 +456,15 @@ begin
     end;
     str += '],' + LINE_SEP;
 
-    str += '    "size": [' + Self.Data.Item[i].Item[6].Item[0].AsString + ',';
-    str += Self.Data.Item[i].Item[6].Item[0].AsString + ',';
-    str += Self.Data.Item[i].Item[6].Item[0].AsString + '],' + LINE_SEP;
+    str += '    "size": [' + ToStr(Self.Data.Item[i].Item[6].Item[0].AsInt) + ',';
+    str += ToStr(Self.Data.Item[i].Item[6].Item[0].AsInt) + ',';
+    str += ToStr(Self.Data.Item[i].Item[6].Item[0].AsInt) + '],' + LINE_SEP;
 
     str += '    "coordinates": [';
     count := Self.Data.Item[i].Item[7].Count-1;
     for j := 0 to count do
     begin
-      str += '[' + Self.Data.Item[i].Item[7].Item[j].Item[0].AsString + ',' + Self.Data.Item[i].Item[7].Item[j].Item[1].AsString + ']';
+      str += '[' + ToStr(Self.Data.Item[i].Item[7].Item[j].Item[0].AsInt) + ',' + ToStr(Self.Data.Item[i].Item[7].Item[j].Item[1].AsInt) + ']';
       if j < count then str += ',';
     end;
     str += '],' + LINE_SEP;
@@ -473,7 +473,7 @@ begin
     count := Self.Data.Item[i].Item[8].Count-1;
     for j := 0 to count do
     begin
-      str += Self.Data.Item[i].Item[8].Item[j].AsString;
+      str += ToStr(Self.Data.Item[i].Item[8].Item[j].AsInt);
       if j < count then str += ',';
     end;
     str += ']' + LINE_SEP;
