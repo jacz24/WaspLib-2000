@@ -38,6 +38,7 @@ Main record reponsible for handling the equipment gametab.
   TRSEquipment = record
     Slots: TRSSlotInterface;
     Items: TRSItemInterface;
+    SlotBoxes: TBoxArray;
     Buttons: array [ERSEquipmentButton] of TRSButton;
   end;
 
@@ -55,16 +56,17 @@ function TRSEquipment.Open(): Boolean; forward;
 
 procedure TRSEquipment.SetupGameTab();
 var
-  slots, btns: TBoxArray;
+  btns: TBoxArray;
   i: Integer;
 begin
-  slots := TBoxArray.Create(GameTab.TopLeft.Offset(33, 5), 3,2, 35, 35, [6, 4]) +
-           TBoxArray.Create(GameTab.TopLeft.Offset(18, 83), 3, 3, 35, 35, [21, 5]);
+  Self.SlotBoxes := TBoxArray.Create(GameTab.TopLeft.Offset(33, 5), 3,2, 35, 35, [6, 4]) +
+                    TBoxArray.Create(GameTab.TopLeft.Offset(18, 83), 3, 3, 35, 35, [21, 5]);
 
-  Delete(slots, 0, 1);
-  Delete(slots, 8, 2);
+  Delete(Self.SlotBoxes, 0, 1);
+  Delete(Self.SlotBoxes, 8, 1);
+  Delete(Self.SlotBoxes, 9, 1);
 
-  Self.Slots.Setup('Equipment.Slots', slots);
+  Self.Slots.Setup('Equipment.Slots', Self.SlotBoxes);
   Self.Items.Setup('Equipment.Items', @Self.Slots, [2, 11, 2, -2], @Self.Open);
 
   btns := TBoxArray.Create(GameTab.BottomLeft.Offset(4, -52), 4, 1, 39, 39, [6,0]);

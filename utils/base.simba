@@ -9,10 +9,7 @@ type
     Path: String;
     TimeRunning: TStopwatch;
     IsSetup: Boolean;
-    Report: record
-      Names: TStringArray;
-      Length: Integer;
-    end;
+    ReportNames: TStringArray;
   end;
 
 procedure TLogger._Setup();
@@ -53,8 +50,8 @@ end;
 
 procedure TLogger.Setup(name: String = ''; reportNames: TStringArray = []);
 var
-  old: String;
-  i: Integer;
+  old, str: String;
+  i, len: Integer;
 begin
   Self.Name := name;
   Self.IsSetup := name <> '';
@@ -77,14 +74,20 @@ begin
       raise TimeStamp() + ':[Logger]: Failed to create log file: ' + PathExtractName(Self.Path);
   end;
 
-  Self.Report.Names := [];
-  Self.Report.Length := 0;
+  Self.ReportNames := [];
 
   for i := 0 to High(reportNames) do
   begin
-    Self.Report.Names += reportNames[i];
-    if Self.Report.Length < Length(reportNames[i]) then
-       Self.Report.Length := Length(reportNames[i]);
+    if len < Length(reportNames[i]) then
+      len := Length(reportNames[i]);
+  end;
+
+  len += 2;
+
+  for i := 0 to High(reportNames) do
+  begin
+    str := reportNames[i] + ': ';
+    Self.ReportNames += str.PadRight(len - Length(str), ' ');
   end;
 end;
 
@@ -101,17 +104,28 @@ end;
 
 function TLogger.GetReport(values: TStringArray): String;
 var
-  i: Integer;
-  names: TStringArray;
-  space: String;
+  i, len: Integer;
+  half: Single;
+  str, lines, btm, header: String;
 begin
-  if Length(Self.Report.Names) <> Length(values) then
-    raise TimeStamp() + ':[Logger]: `TLogger.Report.Names` and `values` need to be the same length!';
+  if Length(Self.ReportNames) <> Length(values) then
+    raise TimeStamp() + ':[Logger]: `TLogger.ReportNames` and `values` need to be the same length!';
 
-  for i := 0 to High(Self.Report.Names) do
+  for i := 0 to High(Self.ReportNames) do
   begin
-
+    str := '║ ' + Self.ReportNames[i] + values[i] + ' ║';
+    if len < Length(str) then len := Length(str);
+    lines += str + LINE_SEP;
   end;
+
+  btm := '╚' + '═' * (len-2) + '╝';
+
+  str := '🐝WaspScripts🐝';
+  half := (len - Length(str)-2)/2;
+
+  header := '╔' + '═' * Floor(half) +  str + '═' * Ceil(half) + '╗';
+
+  Result := header + LINE_SEP + lines + btm;
 end;
 
 
