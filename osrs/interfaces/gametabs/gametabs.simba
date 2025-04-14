@@ -257,8 +257,7 @@ WriteLn GameTabs.Open(ERSGameTab.INVENTORY);
 *)
 function TRSGameTabs.Open(tab: ERSGameTab; fkeyProbability: Single = -1): Boolean;
 begin
-  if Self.IsOpen(tab) then
-    Exit(True);
+  if Self.IsOpen(tab) then Exit(True);
 
   if Self.KeybindsEnabled then
   begin

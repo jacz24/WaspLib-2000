@@ -220,7 +220,7 @@ function TRSSlotInterface.Interact(slot: Integer; option: String = ''): Boolean;
 begin
   Self.Hover(slot);
 
-  if option <> '' then
+  if (option <> '') and not MainScreen.IsUpText(option) then
     Exit(ChooseOption.Select(option));
 
   Target.MouseClick(EMouseButton.LEFT);

@@ -94,7 +94,7 @@ function TRSChooseOption.Open(): Boolean;
 begin
   if Self.IsOpen() then Exit(True);
 
-  Target.MouseClick(EMouseButton.LEFT);
+  Mouse.Click(EMouseButton.RIGHT);
   Result := Self.WaitOpen(600);
 end;
 
@@ -194,11 +194,11 @@ begin
 
   for i := 0 to High(boxes) do
   begin
-    option.Bounds.Y1 := Self.Bounds.Y1 + (i * 15);
+    option.Bounds.Y1 := Self.Bounds.Y1 + i*15;
     option.Bounds.Y2 := option.Bounds.Y1 + 15;
     if option.Bounds.Y2 > Self.Bounds.Y2 then Exit;
 
-    option.Text := OCR.RecognizeStatic(option.Bounds, RSFonts.BOLD_SHADOW, [$47545D, $0], 0);
+    option.Text := OCR.RecognizeShadow(option.Bounds, RSFonts.BOLD_SHADOW, 0);
 
     if option.Text.ContainsAny(text, caseSensitive) then
       Exit(True);
@@ -241,8 +241,7 @@ WriteLn ChooseOption.Select('Take Bones');
 procedure TRSChooseOption.Hover(option: TRSOption);
 begin
   option.Bounds.Expand(-1);
-  Target.MouseMove(option.Bounds);
-  Target.MouseClick(EMouseButton.LEFT);
+  Mouse.Move(option.Bounds);
 end;
 
 function TRSChooseOption.Hover(text: TStringArray; caseSensitive, closeOnFalse: Boolean = True): Boolean; overload;
@@ -276,13 +275,13 @@ WriteLn ChooseOption.Select('Take Bones');
 procedure TRSChooseOption.Select(option: TRSOption);
 begin
   Self.Hover(option);
-  Target.MouseClick(EMouseButton.LEFT);
+  Mouse.Click(EMouseButton.LEFT);
 end;
 
 function TRSChooseOption.Select(text: TStringArray; caseSensitive, closeOnFalse: Boolean = True): Boolean; overload;
 begin
   Result := Self.Hover(text, caseSensitive, closeOnFalse);
-  Target.MouseClick(EMouseButton.LEFT);
+  Mouse.Click(EMouseButton.LEFT);
 end;
 
 function TRSChooseOption.Select(text: String; caseSensitive, closeOnFalse: Boolean = True): Boolean; overload;

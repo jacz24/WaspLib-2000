@@ -108,6 +108,23 @@ begin
   end;
 end;
 
+(*
+## GameTabs.Open override;
+```pascal
+function TRSGameTabs.Open(tab: ERSGameTab): Boolean; override;
+```
+Overrides {ref}`GameTabs.Open` to close the bank if the bank open.
+*)
+function TRSGameTabs.Open(tab: ERSGameTab; fkeyProbability: Single = -1): Boolean; override;
+begin
+  if Self.IsOpen(tab) then Exit(True);
+
+  //TODO: add deposit box and Store
+  if MSInterface.IsOpen() and (Bank.IsOpen()) then
+    MSInterface.Close();
+
+  Result := inherited(tab, fkeyProbability);
+end;
 
 (*
 ## HouseOptions.Open override
