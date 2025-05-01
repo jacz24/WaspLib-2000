@@ -24,14 +24,14 @@ begin
     begin
       Self.ScaleMin := 0.83 * MainScreen.Bounds.Height / 503; // fixed client height
       Self.ScaleMax := 6.32 * MainScreen.Bounds.Height / 503; // fixed client height
-      Self.ViewMatrix := TMatrix4.LookAtRH([0,-28,61],[0,0,1.0], VECTOR3_UNIT_Y);
+      Self.ViewMatrix := TMatrix4.LookAtRH([0,-28,61],[0,0,1.0], [0,1,0]);
     end;
 
     ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
     begin
       Self.ScaleMin := 0.635 * MainScreen.Bounds.Height / 503; // fixed client height
       Self.ScaleMax := 4.90 * MainScreen.Bounds.Height / 503; // fixed client height
-      Self.ViewMatrix := TMatrix4.LookAtRH([0,-21,61],[0,0,1.0], VECTOR3_UNIT_Y);
+      Self.ViewMatrix := TMatrix4.LookAtRH([0,-21,61],[0,0,1.0], [0,1,0]);
     end;
   end;
 
@@ -53,16 +53,23 @@ begin
   Self.Transformer.Z := MainScreen.Center.Y + (Self.RSZoom * 24); // fixed mainscreen height, y shift
 end;
 
-function TMM2MSProjector.Transform(coord: Vector3; matrix: TMatrix4): Vector3;
+function TMM2MSProjector.Transform(coord: TVector3; matrix: TMatrix4): TVector3;
 begin
-  with Vector3.TransformCoordinate(coord, matrix) do
+  with coord.Transform(matrix) do
   begin
     Result.X := (+X * Self.Transformer.X) + MainScreen.Center.X;
     Result.Y := (-Y * Self.Transformer.Y) + Self.Transformer.Z;
   end;
 end;
 
-function TMM2MSProjector.Run(coords: Vector3Array; rotation: Vector3): TPointArray;
+function TMM2MSProjector.Run(coords: TVector3Array; rotation: TVector3): TPointArray;
+const
+  MATRIX_IDENTITY: TMatrix4 = [
+    1.0, 0.0, 0.0, 0.0,
+    0.0, 1.0, 0.0, 0.0,
+    0.0, 0.0, 1.0, 0.0,
+    0.0, 0.0, 0.0, 1.0
+  ];
 var
   i: Integer;
 begin
@@ -79,7 +86,7 @@ begin
     end;
 end;
 
-function TMM2MSProjector.Run(coord: Vector3; rotation: Vector3): TPoint; overload;
+function TMM2MSProjector.Run(coord: TVector3; rotation: TVector3): TPoint; overload;
 begin
   Result := Self.Run([coord], rotation)[0];
 end;

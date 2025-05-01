@@ -428,7 +428,7 @@ var
 begin
   if worlds = [] then
     raise GetDebugLn('WorldSwitcher', 'worlds is empty.');
-  if not Self.Cooldown.IsFinished() then Exit;
+  if not Self.Cooldown.IsFinished then Exit;
   if not Self.Open() then Exit;
 
   current := Self.GetCurrentWorld();

@@ -116,7 +116,7 @@ begin
   MainScreen.UptextOCR.ShadowTolerance := 65;
   MainScreen.UptextOCR.Whitelist := ['a'..'z', 'A'..'Z', '0'..'9', '-', '>', '(', ')', '/'];
   Options.ZoomLevel := -1;
-  WorldSwitcher.Cooldown.Setup(8000);
+  WorldSwitcher.Cooldown.Start(8000);
   RSMouseZoom.ZoomLevel := -1;
   RSMouseZoom.Enabled := True;
   Antiban.Zoom.Max := 100;

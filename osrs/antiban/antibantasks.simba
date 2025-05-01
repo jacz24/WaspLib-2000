@@ -355,8 +355,8 @@ function TAntiban.GenerateSwivelPoints(a: TPoint; invCircularity: Double; curls:
 var
   t,o,rr: Double;
   i,j,k,rad: Int32;
-  vec,prev: Vector2;
-  v,tmp: array of Vector2;
+  vec,prev: TVector2;
+  v,tmp: TVector2Array;
   pts: TPointArray;
   c: TPoint;
 begin

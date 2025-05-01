@@ -9,7 +9,7 @@ This file is responsible for interacting with map objects.
 type
   TRSNPC = record
     UpText: TStringArray;
-    Size: Vector3;
+    Size: TVector3;
     Coordinates: TPointArray;
     //Filters: TRSDotFilter;
     Finder: TColorFinder;
@@ -19,7 +19,7 @@ type
 
   TRSNPCArray = array of TRSNPC;
 
-procedure TRSNPC.Setup(size: Vector3; coordinates: TPointArray);
+procedure TRSNPC.Setup(size: TVector3; coordinates: TPointArray);
 begin
   Self.Coordinates := coordinates;
   Self.Size := size;

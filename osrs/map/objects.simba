@@ -9,7 +9,7 @@ This file is responsible for interacting with map objects.
 type
   TRSObject = record
     UpText: TStringArray;
-    Size: Vector3;
+    Size: TVector3;
     Coordinates: TPointArray;
     Rotations: TIntegerArray;
     Finder: TColorFinder;
@@ -19,7 +19,7 @@ type
 
   TRSObjectArray = array of TRSObject;
 
-procedure TRSObject.Setup(size: Vector3; coordinates: TPointArray);
+procedure TRSObject.Setup(size: TVector3; coordinates: TPointArray);
 begin
   Self.Coordinates := coordinates;
   SetLength(Self.Rotations, Length(coordinates));

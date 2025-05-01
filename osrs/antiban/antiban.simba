@@ -90,7 +90,7 @@ var
   i: Integer;
 begin
   for i := 0 to High(Self.Tasks) do
-    if not Self.Tasks[i].Countdown.IsPaused() then
+    if not Self.Tasks[i].Countdown.IsPaused then
       Result += @Self.Tasks[i];
 end;
 
@@ -124,7 +124,7 @@ begin
   task.Interval := interval;
   task.Method := @method;
   task.StdVar := randomness;
-  task.Countdown.Init(Random(Trunc(Abs(GaussRand(task.Interval, task.Interval * task.StdVar)))));
+  task.Countdown.Start(Random(Trunc(Abs(GaussRand(task.Interval, task.Interval * task.StdVar)))));
 
   Self.Tasks += task;
 end;
@@ -220,9 +220,9 @@ begin
   for i := 0 to High(activeTasks) do
     activeTasks[i]^.countdown.Pause();
 
-  countdown.Init(Abs(Round(GaussRand(task.Length, task.Length * task.StdVar))));
+  countdown.Start(Abs(Round(GaussRand(task.Length, task.Length * task.StdVar))));
 
-  WriteLn GetDebugLn('Antiban', 'Sleeping for ' + FormatMilliseconds(countdown.Remaining(), TIME_FORMAL));
+  WriteLn GetDebugLn('Antiban', 'Sleeping for ' + FormatMilliseconds(countdown.Remaining, TIME_FORMAL));
 
   if @Self.OnStartSleep <> nil then Self.OnStartSleep(@task);
 
@@ -237,15 +237,15 @@ begin
   repeat
     if GetTickCount() > marker  then
     begin
-      WriteLn GetDebugLn('Antiban', 'Sleep time remaining: ' + FormatMilliseconds(countdown.Remaining(), TIME_FORMAL));
+      WriteLn GetDebugLn('Antiban', 'Sleep time remaining: ' + FormatMilliseconds(countdown.Remaining, TIME_FORMAL));
       //OnSleeping callback only runs every 5 mins.
       if (@Self.OnSleeping <> nil) then
         Self.OnSleeping(@task, countdown);
       marker := GetTickCount() + 5 * ONE_MINUTE;
     end;
 
-    Sleep(Min(countdown.Remaining(), 5 * ONE_SECOND));
-  until countdown.IsFinished();
+    Sleep(Round(Min(countdown.Remaining, 5 * ONE_SECOND)));
+  until countdown.IsFinished;
 
   WriteLn GetDebugLn('Antiban', 'Sleep finished.');
 
@@ -254,7 +254,7 @@ begin
 
   //Offset all tasks & breaks
   for i := 0 to High(Self.Breaks) do
-    Self.Breaks[i].Next += GetTickCount() - (countdown.Timeout - countdown.Length);
+    Self.Breaks[i].Next += GetTickCount() - (countdown.FinishTime - countdown.Milliseconds);
 
   for i := 0 to High(activeTasks) do
     activeTasks[i]^.countdown.Resume();
@@ -282,9 +282,9 @@ begin
   for i := 0 to High(activeTasks) do
     activeTasks[i]^.countdown.Pause();
 
-  countdown.Init(Abs(Round(GaussRand(task.Length, task.Length * task.StdVar))));
+  countdown.Start(Abs(Round(GaussRand(task.Length, task.Length * task.StdVar))));
 
-  WriteLn GetDebugLn('Antiban', 'Taking a break for ' + FormatMilliseconds(countdown.Remaining(), MINUTES_FORMAL));
+  WriteLn GetDebugLn('Antiban', 'Taking a break for ' + FormatMilliseconds(countdown.Remaining, MINUTES_FORMAL));
 
   if (@Self.OnStartBreak <> nil) then
     Self.OnStartBreak(@task);
@@ -300,13 +300,13 @@ begin
 
   repeat
     if (Inc(i) mod 12 = 0) then
-      WriteLn GetDebugLn('Antiban', 'Break time remaining: ' + FormatMilliseconds(countdown.Remaining(), MINUTES_FORMAL));
+      WriteLn GetDebugLn('Antiban', 'Break time remaining: ' + FormatMilliseconds(countdown.Remaining, MINUTES_FORMAL));
 
     if (@Self.OnBreaking <> nil) then //callback runs every 5 seconds
       Self.OnBreaking(@task, countdown);
 
-    Sleep(Min(countdown.Remaining(), 5 * ONE_SECOND));
-  until countdown.IsFinished();
+    Sleep(Round(Min(countdown.Remaining, 5 * ONE_SECOND)));
+  until countdown.IsFinished;
 
   WriteLn GetDebugLn('Antiban', 'Break finished');
 
@@ -315,7 +315,7 @@ begin
 
   // Offset all tasks & breaks
   for i := 0 to High(Self.Breaks) do
-    Self.Breaks[i].Next += GetTickCount() - (countdown.Timeout - countdown.Length);
+    Self.Breaks[i].Next += GetTickCount() - (countdown.FinishTime - countdown.Milliseconds );
 
   for I := 0 to High(activeTasks) do
     activeTasks[i]^.countdown.Resume();
@@ -355,13 +355,13 @@ begin
   begin
     task := activeTasks[i];
 
-    if task^.Countdown.Remaining() = 0 then
+    if task^.Countdown.Remaining = 0 then
     begin
       if (@Self.OnStartTask <> nil) then
         Self.OnStartTask(Task);
 
       task^.Method();
-      task^.Countdown.Init(Trunc(Abs(GaussRand(task^.Interval, task^.Interval * task^.StdVar))));
+      task^.Countdown.Start(Trunc(Abs(GaussRand(task^.Interval, task^.Interval * task^.StdVar))));
       task^.Countdown.Pause();
 
       if (@Self.OnFinishTask <> nil) then

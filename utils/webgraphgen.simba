@@ -314,7 +314,7 @@ begin
 
   WriteLn GetDebugLn('Generating webgraph for region: ' + name);
 
-  t := GetTickCount();
+  t := GetTimeRunning();
   Result := Self._BuildGraph(map, white, red);
 
   gray := map.FindColor($333333, 0);
@@ -341,7 +341,7 @@ begin
   Result.WalkableSpace    := white + gray;
   Result.ObjectClusters   := grayClusters;
 
-  WriteLn GetDebugLn('WebGraphGenerator', 'Generating webgraph took ' + ToStr(Round(((GetTickCount()-t)/1000), 2)) + ' seconds.', EErrorLevel.SUCCESS);
+  WriteLn GetDebugLn('WebGraphGenerator', 'Generating webgraph took ' + ToStr(Round(((GetTimeRunning()-t)/1000), 2)) + ' seconds.', EErrorLevel.SUCCESS);
 end;
 
 var

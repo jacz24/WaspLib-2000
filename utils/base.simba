@@ -35,15 +35,15 @@ begin
     end;
 
     if not FileDelete(filename) then
-      raise TimeStamp() + ':[Logger]: Failed to delete old log: ' + PathExtractName(filename);
+      raise GetTimeStamp() + ':[Logger]: Failed to delete old log: ' + PathExtractName(filename);
   end;
 
   if not DirCreate(Self.Path) then
-    raise TimeStamp() + ':[Logger]: Failed to create logs directory.';
+    raise GetTimeStamp() + ':[Logger]: Failed to create logs directory.';
 
-  Self.Path += 'SRLT_' + Now().ToString('yyyy-mm-dd_hh-mm-ss-ms') + '.log';
+  Self.Path += 'SRLT_' + Now().ToString(FILE_TIME_FORMAT) + '.log';
   if not FileCreate(Self.Path) then
-    raise TimeStamp() + ':[Logger]: Failed to create log file: ' + PathExtractName(Self.Path);
+    raise GetTimeStamp() + ':[Logger]: Failed to create log file: ' + PathExtractName(Self.Path);
 
   Self.TimeRunning.Start();
 end;
@@ -59,19 +59,19 @@ begin
   Self.Path := SRLTEnv.LogsDir + name + PATH_SEP;
 
   if not DirCreate(Self.Path) then
-    raise TimeStamp() + ':[Logger]: Failed to create log path: ' + Self.Path;
+    raise GetTimeStamp() + ':[Logger]: Failed to create log path: ' + Self.Path;
 
-  Self.Path += Now().ToString('yyyy-mm-dd_hh-mm-ss-ms') + '.log';
+  Self.Path += Now().ToString(FILE_TIME_FORMAT) + '.log';
 
   if Self.IsSetup and (old <> Self.Path) then
   begin
     if FileExists(old) then
     begin
       if not FileRename(old, Self.Path) then
-        raise TimeStamp() + ':[Logger]: Failed to rename log file: ' + PathExtractName(old) + ' > ' + PathExtractName(Self.Path);
+        raise GetTimeStamp() + ':[Logger]: Failed to rename log file: ' + PathExtractName(old) + ' > ' + PathExtractName(Self.Path);
     end;
     if not FileCreate(Self.Path) then
-      raise TimeStamp() + ':[Logger]: Failed to create log file: ' + PathExtractName(Self.Path);
+      raise GetTimeStamp() + ':[Logger]: Failed to create log file: ' + PathExtractName(Self.Path);
   end;
 
   Self.ReportNames := [];
@@ -109,7 +109,7 @@ var
   str, lines, btm, header: String;
 begin
   if Length(Self.ReportNames) <> Length(values) then
-    raise TimeStamp() + ':[Logger]: `TLogger.ReportNames` and `values` need to be the same length!';
+    raise GetTimeStamp() + ':[Logger]: `TLogger.ReportNames` and `values` need to be the same length!';
 
   for i := 0 to High(Self.ReportNames) do
   begin
@@ -135,13 +135,13 @@ var
 
 function GetDebugLn(text: String; log: Boolean = True): String;
 begin
-  Result := TimeStamp() + ': ' + text;
+  Result := GetTimeStamp() + ': ' + text;
   if log then Logger.AddLine(Result);
 end;
 
 function GetDebugLn(name, text: String; log: Boolean = True): String; overload;
 begin
-  Result := TimeStamp() + ':[' + name + ']: ' + text;
+  Result := GetTimeStamp() + ':[' + name + ']: ' + text;
   if log then Logger.AddLine(Result);
 end;
 

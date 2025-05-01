@@ -45,7 +45,7 @@ This is automatically called for you on the {ref}`RemoteInput variable`.
 *)
 procedure TRemoteInput.Setup();
 const
-  TIMEOUT: UInt64 := GetTickCount() + 2000;
+  TIMEOUT: UInt64 := GetTimeRunning() + 2000;
 begin
   if Target.TargetWindow.GetClassName() <> 'SunAwtCanvas' then Exit;
 
@@ -55,7 +55,7 @@ begin
     Self.EIOS := EIOS_PairClient(GetSimbaTargetPID());
     if Self.EIOS <> nil then Break;
     Sleep(100);
-  until GetTickCount() > TIMEOUT;
+  until GetTimeRunning() > TIMEOUT;
 
   if Self.EIOS = nil then
   begin

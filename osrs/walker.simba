@@ -170,10 +170,10 @@ begin
   Result := Result.Rotate(radians, Minimap.Center);
 end;
 
-function TRSWalker.Point2MMVec(playerPoint, pt: TPoint; radians: Double): Vector2;
+function TRSWalker.Point2MMVec(playerPoint, pt: TPoint; radians: Double): TVector2;
 begin
   with pt - playerPoint + Minimap.Center do
-    Result := Vec2(X,Y).Rotate(radians, Minimap.Center);
+    Result := ToVec2().Rotate(radians, Minimap.Center);
 end;
 
 function TRSWalker.Points2MM(playerPoint: TPoint; tpa: TPointArray; radians: Double): TPointArray;
@@ -193,17 +193,17 @@ begin
 end;
 
 
-function TRSWalker.GetQuadMS(playerPoint, mapPoint: TPoint; height: Double = 0; offset: Vector3 = [0,0,0]; radians: Single = $FFFF): TQuad;
+function TRSWalker.GetQuadMS(playerPoint, mapPoint: TPoint; height: Double = 0; offset: TVector3 = [0,0,0]; radians: Single = $FFFF): TQuad;
 var
-  vector: Vector2;
+  vector: TVector2;
 begin
   if radians = $FFFF then
     radians := Minimap.GetCompassAngle(False);
 
   with Minimap.Center + (mapPoint - playerPoint) do
-    vector := Vec2(X, Y).Rotate(radians, Minimap.Center);
+    vector := ToVec2().Rotate(radians, Minimap.Center);
 
-  Result := Minimap.Vector2MSQuad(Vec3(vector.X, vector.Y, height), radians, [1,1], offset);
+  Result := Minimap.Vector2MSQuad(vector.ToVec3(height), radians, [1,1], offset);
 end;
 
 function TRSWalker.MM2Map(playerPoint, minimapPoint: TPoint; radians: Single = $FFFF): TPoint;
@@ -331,7 +331,7 @@ var
     begin
       h := Self.Height(myPos);
       diff := Self.Height(Self.MM2Map(myPos, mmPos, angle));
-      mmPos := Minimap.Vector2MSQuad(Vec3(mmPos.X, mmPos.Y, h), angle, [1,1], Vec3(0,0,-diff)).Mean;
+      mmPos := Minimap.Vector2MSQuad(mmPos.ToVec3(h), angle, [1,1], [0,0,-diff]).Mean;
     end;
 
     speed := Target.MouseOptions.Speed;
@@ -372,11 +372,11 @@ var
   position: record Current, Previous: TPoint; end;
   awct: Int64;
 begin
-  timeout.Init(Round(GaussRand(20000, 25000)));
-  countdown.Init(Round(GaussRand(500, 1500)));
+  timeout.Start(Round(GaussRand(20000, 25000)));
+  countdown.Start(Round(GaussRand(500, 1500)));
 
   // initial timeout needs to be longer, as we might not have started walking yet.
-  countdown.Timeout := GetTickCount() + Round(GaussRand(2500, 3500));
+  countdown.FinishTime += Round(GaussRand(2500, 3500));
 
   position.Previous := Self.Position();
   position.Current := position.Previous;
@@ -418,7 +418,7 @@ begin
     if not Self.Walking then Break;
 
     Sleep(50, 150);
-  until timeout.IsFinished() or countdown.IsFinished() or (position.Current.DistanceTo(destination) <= waitUntilDistance);
+  until timeout.IsFinished or countdown.IsFinished or position.Current.InRange(destination, waitUntilDistance);
 end;
 
 procedure TRSWalker.WaitMoving(time: Integer = 20000; minShift: Integer = 500; doAntiban: Boolean = True); overload;
@@ -426,8 +426,8 @@ var
   timeout, countdown: TCountDown;
   moving: Boolean;
 begin
-  timeout.Init(time);
-  countdown.Init(500);
+  timeout.Start(time);
+  countdown.Start(500);
 
   repeat
     if doAntiban then
@@ -438,7 +438,7 @@ begin
     if moving then
       countdown.Restart(0, 1000);
 
-  until timeout.IsFinished() or (not moving and countdown.IsFinished()) or not Minimap.HasFlag();
+  until timeout.IsFinished or (not moving and countdown.IsFinished) or not Minimap.HasFlag();
 end;
 
 function TRSWalker.FindFlagMove(out flag: TPoint): Boolean;
@@ -504,7 +504,7 @@ begin
   if Self.ScreenWalk then
   begin
     p := Minimap.RandomPointOnZoomQuad(minimapPoint, randomness);
-    Mouse.Move(Minimap.Vector2MSQuad(Vec3(p.X, p.Y, height), Minimap.GetCompassAngle(False)).Mean);
+    Mouse.Move(Minimap.Vector2MSQuad(p.ToVec3(height), Minimap.GetCompassAngle(False)).Mean);
     upText := MainScreen.GetUpText();
 
     hoveringTarget := upText.ContainsAny(Self.TargetUpText);
@@ -725,7 +725,7 @@ begin
 
   h := Self.Height(playerPoint);
   diff := Self.Height(walkerPoint);
-  b := Minimap.Vector2MSQuad(Vec3(mmPoint.X, mmPoint.Y, h), angle, [1,1], Vec3(0,0, -diff)).Bounds;
+  b := Minimap.Vector2MSQuad(mmPoint.ToVec3(h), angle, [1,1], [0,0, -diff]).Bounds;
 
   if MainScreen.IsVisible(b.Center) then
     Result := not Target.HasColor($0, 0, 1, b.Expand(4, MainScreen.Bounds)); //Client doesn't always render everything when zoomed out

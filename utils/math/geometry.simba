@@ -1,7 +1,26 @@
+(*
+# Geometry
+Methods and functions related to geometry.
+*)
+
 {$DEFINE SRLT_GEOMETRY_INCLUDED}
 {$INCLUDE_ONCE SRLT/utils.simba}
 
 {$loadlib ../../plugins/libtpaex/libtpaex}
+
+function TPoint.ToVec2(): TVector2;
+begin
+  Result.X := Self.X;
+  Result.Y := Self.Y;
+end;
+
+function TPoint.ToVec3(z: Single = 0): TVector3;
+begin
+  Result.X := Self.X;
+  Result.Y := Self.Y;
+  Result.Z := z;
+end;
+
 
 (*
 ## TPoint.InRange
@@ -192,4 +211,15 @@ begin
   img.Show();
   img.Free();
 end;
+
+function TVector2.Rotate(angle: Single; center: TVector2): TVector2; overload;
+begin
+  Result := Self.Rotate(angle, center.X, center.Y);
+end;
+
+function TVector3.Rotate(angle: Single; center: TVector2): TVector3; overload;
+begin
+  Result := Self.Rotate(angle, center.X, center.Y);
+end;
+
 

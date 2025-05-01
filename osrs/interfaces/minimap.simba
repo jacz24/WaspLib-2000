@@ -589,9 +589,9 @@ begin
   end;
 end;
 
-function TRSMinimap.NormalizeEx(vector: Vector2; angle: Single): Vector2;
+function TRSMinimap.NormalizeEx(vector: TVector2; angle: Single): TVector2;
 begin
-  with vector.Rotate(-angle, Self.Center) do
+  with vector.Rotate(-angle, Self.Center.X, Self.Center.Y) do
   begin
     Result.X := Round((X - Self.Center.X) / 4) * 4 + Self.Center.X;
     Result.Y := Round((Y - Self.Center.Y) / 4) * 4 + Self.Center.Y;
@@ -839,16 +839,13 @@ var
   timeout, countdown: TCountDown;
   moving: Boolean;
 begin
-  timeout.Init(time);
-  countdown.Init(500);
+  timeout.Start(time);
+  countdown.Start(500);
 
   repeat
     moving := Self.IsPlayerMoving();
-
-    if moving then
-      countdown.Restart(0, 1000);
-
-  until timeout.IsFinished() or (not moving and countdown.IsFinished()) or not Self.HasFlag();
+    if moving then countdown.Restart(0, 1000);
+  until timeout.IsFinished or (not moving and countdown.IsFinished) or not Self.HasFlag();
 end;
 
 

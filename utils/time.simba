@@ -12,106 +12,16 @@ const
   ONE_DAY: Integer    = ONE_HOUR   * 24;
   TIME_FORMAL: String = 'h \ho\ur\s, m \min\ute\s and s \second\s';
   MINUTES_FORMAL: String = 'm \min\ute\s and s \second\s';
-  FILE_TIME_FORMAT: String = 'YY-MM-DD_hh-mm-ss';
+  FILE_TIME_FORMAT: String = 'YYYY-MM-DD_hh-mm-ss-ms';
 
 (*
-## TimeStamp
+## TCountDown.Restart
 ```pascal
-function TimeStamp(): String;
+procedure TCountDown.Restart(min, max: Integer); overload;
 ```
-Returns a formated timestamp.
-
-Example:
-```pascal
-WriteLn TimeStamp();
-```
+Restarts the `TCountDown` with a random value between `min` and `max`
 *)
-function TimeStamp(): String;
-begin
-  Result := FormatMilliseconds(GetTimeRunning(), '[hh:mm:ss:uu]');
-end;
-
-type
-(*
-## TCountDown
-A neat and simple timer type.
-
-Example:
-```pascal
-myTimer.Init(3000); //3000ms
-while not myTimer.IsFinished() do
-  {do something};
-
-myTimer.Restart(Random(-200,200)); //3000 +/- 200ms
-while not myTimer.IsFinished() do
-  {do something};
-```
-*)
-  TCountDown = record
-    Length: UInt64;
-    Timeout: UInt64;
-    Paused: UInt64;
-  end;
-
-procedure TCountDown.Setup(time: UInt32);
-begin
-  Self.Length  := time;
-  Self.Timeout := GetTickCount();
-  Self.Paused := 0;
-end;
-
-procedure TCountDown.Init(time: UInt32);
-begin
-  Self.Length  := time;
-  Self.Timeout := GetTickCount() + time;
-  Self.Paused := 0;
-end;
-
-procedure TCountDown.Restart(variation: Integer = 0);
-begin
-  if Self.Length < 1 then Exit;
-
-  Self.Paused := 0;
-  Self.Timeout := GetTickCount() + (Self.Length + variation);
-end;
-
-procedure TCountDown.Restart(min, max: UInt32); overload;
+procedure TCountDown.Restart(min, max: Integer); overload;
 begin
   Self.Restart(Random(min, max));
-end;
-
-
-procedure TCountDown.Extend(time: UInt32);
-begin
-  Self.Timeout := Self.Timeout + time;
-end;
-
-function TCountDown.Remaining(): UInt32;
-begin
-  if Self.IsPaused() then
-    Exit(Max(Self.Timeout - Self.Paused, 0));
-  Result := Max(Self.Timeout - GetTickCount(), 0);
-end;
-
-function TCountDown.IsFinished(): Boolean;
-begin
-  Result := (Self.Timeout > 0) and (Self.Paused = 0) and (Self.Remaining() = 0);
-end;
-
-function TCountDown.IsPaused(): Boolean;
-begin
-  Result := Self.Paused > 0;
-end;
-
-procedure TCountDown.Pause();
-begin
-  if not Self.IsPaused() then
-    Self.Paused := GetTickCount();
-end;
-
-procedure TCountDown.Resume();
-begin
-  if not Self.IsPaused() then Exit;
-  Self.Timeout := Self.Timeout + (GetTickCount() - Self.Paused);
-  Self.Paused := 0;
 end;
