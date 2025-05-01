@@ -376,7 +376,7 @@ begin
   countdown.Start(Round(GaussRand(500, 1500)));
 
   // initial timeout needs to be longer, as we might not have started walking yet.
-  countdown.FinishTime += Round(GaussRand(2500, 3500));
+  countdown.Extend(Round(GaussRand(2500, 3500)));
 
   position.Previous := Self.Position();
   position.Current := position.Previous;
