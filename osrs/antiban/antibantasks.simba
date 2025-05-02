@@ -3,9 +3,9 @@
 Collection of antiban tasks to be used with {ref}`TAntiban`.
 *)
 
-{$DEFINE SRLT_ANTIBAN_TASKS_INCLUDED}
-{$IFNDEF SRLT_OSR}
-  {$I SRLT/osrs.simba}
+{$DEFINE WL_ANTIBAN_TASKS_INCLUDED}
+{$IFNDEF WL_OSR}
+  {$I WaspLib/osrs.simba}
 {$ENDIF}
 
 
@@ -335,13 +335,13 @@ begin
 
     if Self.DebugRandoms then
     begin
-      DirCreate(SRLTEnv.CacheDir + 'randoms');
+      DirCreate(WaspLibEnv.CacheDir + 'randoms');
 
-      number := Length(DirList(SRLTEnv.CacheDir + 'randoms'));
+      number := Length(DirList(WaspLibEnv.CacheDir + 'randoms'));
       if number > 1000 then
         TerminateScript('Lots of randoms debugged');
 
-      SaveScreenshot(SRLTEnv.CacheDir + 'randoms' + PATH_SEP + IntToStr(number) + '.png');
+      SaveScreenshot(WaspLibEnv.CacheDir + 'randoms' + PATH_SEP + IntToStr(number) + '.png');
 
       Sleep(5000);
     end;

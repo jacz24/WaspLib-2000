@@ -1,5 +1,5 @@
-{$DEFINE SRLT_EMOTES_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_EMOTES_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
   TRSEmotes = record

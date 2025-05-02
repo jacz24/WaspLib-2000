@@ -10,8 +10,8 @@ For more information check this file: https://github.com/open-osrs/runelite/blob
 ```
 *)
 
-{$DEFINE SRLT_CACHEPARSER_INCLUDED}
-{$I SRLT/osrs.simba}
+{$DEFINE WL_CACHEPARSER_INCLUDED}
+{$I WaspLib/osrs.simba}
 
 type
   TIndexData = record

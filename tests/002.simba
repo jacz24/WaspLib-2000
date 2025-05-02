@@ -2,7 +2,7 @@
 ### Login Tests
 Tests the integrety of several login methods.
 *)
-{$I SRLT/osrs.simba}
+{$I WaspLib/osrs.simba}
 {$ASSERTIONS ON}
 
 const

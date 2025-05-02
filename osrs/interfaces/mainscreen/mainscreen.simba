@@ -3,8 +3,8 @@
 Methods to interact with the mainscreen.
 *)
 
-{$DEFINE SRLT_MAINSCREEN_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_MAINSCREEN_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*
@@ -111,9 +111,9 @@ combat bots and therefore you shouldn't rely on being able to read it 100%
 accurately because many times you won't.
 
 To debug uptext when uptext methods are used add the following compiler directive
-to your script **before** you include SRLT:
+to your script **before** you include WaspLib:
 ```pascal
-{$DEFINE SRLT_DEBUG_UPTEXT}
+{$DEFINE WL_DEBUG_UPTEXT}
 ```
 *)
 
@@ -136,7 +136,7 @@ begin
   img := TImage.CreateFromTarget(Self.UptextBounds);
   Result := Self.UptextOCR.Recognize(img, RSFonts.BOLD_SHADOW, [0,0]);
   img.Free();
-  {$IFDEF SRLT_DEBUG_UPTEXT}
+  {$IFDEF WaspLib_DEBUG_UPTEXT}
   WriteLn GetDebugLn('MainScreen', 'UpText: ' + Result);
   {$ENDIF}
 end;

@@ -2,8 +2,8 @@
 # InterfaceArea
 Interface area is the area where mainscreen interfaces can occupy.
 *)
-{$DEFINE SRLT_INTERFACE_AREA_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_INTERFACE_AREA_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
   ERSInterfaceType = (CLASSIC, PAPER, ANY);

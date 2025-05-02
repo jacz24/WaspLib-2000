@@ -2,8 +2,8 @@
 # Map JSONs
 Utilities to help load and parse json files related to {ref}`Map`.
 *)
-{$DEFINE SRLT_MAPJSON_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_MAPJSON_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
   TMapObjectJSON = record

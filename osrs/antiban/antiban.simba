@@ -3,9 +3,9 @@
 Methods to handle antiban.
 *)
 
-{$DEFINE SRLT_ANTIBAN_INCLUDED}
-{$IFNDEF SRLT_OSR}
-  {$I SRLT/osrs.simba}
+{$DEFINE WL_ANTIBAN_INCLUDED}
+{$IFNDEF WL_OSR}
+  {$I WaspLib/osrs.simba}
 {$ENDIF}
 
 type
@@ -43,7 +43,7 @@ type
 
 (*
 ## TAntiban
-Main record to handle the built-in SRLT antiban.
+Main record to handle the built-in WaspLib antiban.
 *)
   TAntiban = record
     DoingAntiban: Boolean;
@@ -108,7 +108,7 @@ break your main script.
 task to occur and it will be repeated everytime that the interval has passed
 and the antiban is checked with {ref}`Antiban.DoAntiban`.
 
-`method` is a pointer to the task you want to perform. SRLT includes a couple of them but you may make your own if you want.
+`method` is a pointer to the task you want to perform. WaspLib includes a couple of them but you may make your own if you want.
 
 This task will only occur when **TAntiban.DoAntiban** is called.
 

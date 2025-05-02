@@ -1,23 +1,23 @@
 (*
 # Data
-This page is about fetching OSRS data with SRLT.
-SRLT has several tools to get information about items, npcs, weapons, ...
+This page is about fetching OSRS data with WaspLib.
+WaspLib has several tools to get information about items, npcs, weapons, ...
 *)
 
-{$DEFINE SRLT_DATA_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_DATA_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*
 ## TItemData
-Record responsible for providing item information in SRLT.
+Record responsible for providing item information in WaspLib.
 *)
   TItemData = record
     DefinitionsJSON, PricesJSON: TJSONItem;
     Filename: String;
     Timeout: UInt64;
     Disabled: Boolean;
-    const CacheDir: String = SRLTEnv.CacheDir + 'data' + PATH_SEP;
+    const CacheDir: String = WaspLibEnv.CacheDir + 'data' + PATH_SEP;
     const ReloadInterval: Integer = 3600; //1h in unix time
     const ZIP: String = {$MACRO DIR} + 'items.zip';
     const PRICES_URL: String = 'https://prices.runescape.wiki/api/v1/osrs/latest';
@@ -110,8 +110,8 @@ Item definitions are items information stored in the game cache, things like:
 - Item is members
 - ...
 
-SRLT includes a zip file with item definitions for all non "null" items as .json files
-in `SRLT\osrs\data\items.zip`.
+WaspLib includes a zip file with item definitions for all non "null" items as .json files
+in `WaspLib\osrs\data\items.zip`.
 
 Example:
 ```pascal

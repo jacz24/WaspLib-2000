@@ -2,8 +2,8 @@
 # Misc
 Misc functions and methods that don't really fit in a single place at the moment
 *)
-{$DEFINE SRLT_MISC_INCLUDED}
-{$INCLUDE_ONCE SRLT/utils.simba}
+{$DEFINE WL_MISC_INCLUDED}
+{$INCLUDE_ONCE WaspLib/utils.simba}
 
 type
 (*

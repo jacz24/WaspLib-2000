@@ -7,8 +7,8 @@ with certain objects or NPCs.
 A chat options menu.
 ```
 *)
-{$DEFINE SRLT_CHAT_OPTIONS_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_CHAT_OPTIONS_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

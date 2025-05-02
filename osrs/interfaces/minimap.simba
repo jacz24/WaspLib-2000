@@ -6,8 +6,8 @@ The minimap interface.
 ```
 *)
 
-{$DEFINE SRLT_MINIMAP_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_MINIMAP_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

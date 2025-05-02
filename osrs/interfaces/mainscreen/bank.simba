@@ -5,8 +5,8 @@ Methods to interact with the bank interface:
 ```
 *)
 
-{$DEFINE SRLT_BANK_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_BANK_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

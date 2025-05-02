@@ -5,8 +5,8 @@ Methods to interact with the options gametab.
 ```
 *)
 
-{$DEFINE SRLT_OPTIONS_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_OPTIONS_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*
@@ -484,7 +484,7 @@ end;
 ```pascal
 function TRSOptions.SetMaxBrightness(): Boolean;
 ```
-Attempts to set your brightness to 100, which is the only value supported by SRLT.
+Attempts to set your brightness to 100, which is the only value supported by WaspLib.
 
 Example:
 ```pascal

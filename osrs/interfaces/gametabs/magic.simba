@@ -3,8 +3,8 @@
 Methods to interact with the magic gametab.
 *)
 
-{$DEFINE SRLT_MAGIC_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_MAGIC_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
   ERSSpellBook = enum(UNKNOWN, STANDARD, ANCIENT, LUNAR, ARCEUUS);

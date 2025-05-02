@@ -2,13 +2,13 @@
 # Players
 Page dedicated to handling player accounts.
 *)
-{$DEFINE SRLT_PLAYER_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_PLAYER_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 var
 (*
 ## PlayerIndex variable
-This variable is what tells SRLT which account you will be using of the ones you have in a {ref}`TRSPlayerArray` you want to
+This variable is what tells WaspLib which account you will be using of the ones you have in a {ref}`TRSPlayerArray` you want to
 use for this botting session.
 *)
   PlayerIndex: Integer;

@@ -5,8 +5,8 @@ It is heavily inspired in the original TRSWalker by Slacky and it's future
 iterations made by Olly.
 *)
 
-{$DEFINE SRLT_WALKER_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_WALKER_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

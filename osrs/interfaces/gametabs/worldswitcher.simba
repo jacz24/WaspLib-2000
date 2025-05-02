@@ -5,8 +5,8 @@ switcher in the {ref}`Logout` gametab.
 ```{figure} ../../images/worldswitcher.png
 ```
 *)
-{$DEFINE SRLT_WORLDSWITCHER_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_WORLDSWITCHER_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

@@ -5,8 +5,8 @@ Methods to handle the zoom levels with he mouse wheel.
 This file was developed with help from data available through the RuneLite camera plugin.
 *)
 
-{$DEFINE SRLT_MOUSEZOOM_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_MOUSEZOOM_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*
@@ -138,7 +138,7 @@ RSMouseZoom.Scroll(5, True);
 ```
 *)
 procedure TRSMouseZoom.Scroll(amount: Integer = 1; down: Boolean; forceMove: Boolean = True);
-{$IFNDEF SRLT_DISABLE_REMOTEINPUT}
+{$IFNDEF WL_DISABLE_REMOTEINPUT}
 var
   inputState: Boolean;
 {$ENDIF}
@@ -146,7 +146,7 @@ begin
   Self.ZoomLevel := Self.GetNext(Self.ZoomLevel, amount, down);
   Options.ZoomLevel := Self.Level2Slider(Self.ZoomLevel);
 
-  {$IFNDEF SRLT_DISABLE_REMOTEINPUT}
+  {$IFNDEF WL_DISABLE_REMOTEINPUT}
   if RemoteInput.EIOS <> nil then
   begin
     inputState := RemoteInput.IsInputEnabled();
@@ -156,18 +156,18 @@ begin
 
   Mouse.Scroll(MSInterface.Bounds, amount, down, forceMove);
 
-  {$IFNDEF SRLT_DISABLE_REMOTEINPUT}
+  {$IFNDEF WL_DISABLE_REMOTEINPUT}
   if inputState then RemoteInput.EnableRealInput();
   {$ENDIF}
 end;
 
 procedure TRSMouseZoom.Scroll(amount: Integer = 1; forceMove: Boolean = True); overload;
-{$IFNDEF SRLT_DISABLE_REMOTEINPUT}
+{$IFNDEF WL_DISABLE_REMOTEINPUT}
 var
   inputState: Boolean;
 {$ENDIF}
 begin
-  {$IFNDEF SRLT_DISABLE_REMOTEINPUT}
+  {$IFNDEF WL_DISABLE_REMOTEINPUT}
   if RemoteInput.EIOS <> nil then
   begin
     inputState := RemoteInput.IsInputEnabled();
@@ -177,7 +177,7 @@ begin
 
   Self.Scroll(Floor(Sqrt(Power(amount,2))), amount < 0, forceMove);
 
-  {$IFNDEF SRLT_DISABLE_REMOTEINPUT}
+  {$IFNDEF WL_DISABLE_REMOTEINPUT}
   if inputState then RemoteInput.EnableRealInput();
   {$ENDIF}
 end;

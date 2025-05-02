@@ -3,8 +3,8 @@
 Methods and functions related to geometry.
 *)
 
-{$DEFINE SRLT_GEOMETRY_INCLUDED}
-{$INCLUDE_ONCE SRLT/utils.simba}
+{$DEFINE WL_GEOMETRY_INCLUDED}
+{$INCLUDE_ONCE WaspLib/utils.simba}
 
 {$loadlib ../../plugins/libtpaex/libtpaex}
 

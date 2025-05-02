@@ -5,8 +5,8 @@ Methods to interact with the collection box interface.
 ```
 *)
 
-{$DEFINE SRLT_COLLECTIONBOX_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_COLLECTIONBOX_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

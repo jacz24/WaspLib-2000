@@ -3,8 +3,8 @@
 This page is about controls on runescape interfaces.
 These can be buttons, scrollbars, dropdowns, checkboxes, etc.
 *)
-{$DEFINE SRLT_INTERFACE_CONTROLS_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_INTERFACE_CONTROLS_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

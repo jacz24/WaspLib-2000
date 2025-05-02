@@ -5,10 +5,10 @@ The login screen is the first screen you see that you can interact with when you
 ```{figure} ../../images/loginscreen.png
 ```
 
-SRLT's {ref}`TRSLogin` can handle both resizable and fixed mode login screens.
+WaspLib's {ref}`TRSLogin` can handle both resizable and fixed mode login screens.
 *)
-{$DEFINE SRLT_LOGIN_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_LOGIN_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 (*
 ## Lobby

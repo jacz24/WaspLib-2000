@@ -2,9 +2,9 @@
 # MapChunks
 Helper enum and functions for a more "human" accessible way of using map chunks.
 *)
-{$DEFINE SRLT_RSCHUNKS_INCLUDED}
-{$IFNDEF SRLT_OSRS}
-  {$I SRLT/utils.simba}
+{$DEFINE WL_RSCHUNKS_INCLUDED}
+{$IFNDEF WL_OSRS}
+  {$I WaspLib/utils.simba}
 {$ENDIF}
 
 type

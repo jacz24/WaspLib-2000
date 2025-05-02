@@ -10,7 +10,7 @@ Methods to interact with the gametab buttons.
 By default it will attempt to use "F-Keys" to open gametabs.
 You can turn this off by setting `TRSGameTabs.KeybindsEnabled` to `False`.
 
-The way keybindings work in SRLT is that it will try a random "F-Key" everytime
+The way keybindings work in WaspLib is that it will try a random "F-Key" everytime
 you want to open a gametab. Because it uses a random "F-Key", it will probably
 not open the gametab you want but whatever opens, gets cached and mapped to the
 random "F-Key" used.
@@ -18,10 +18,10 @@ random "F-Key" used.
 Next time you want to open a gametab that has already been mapped, it will use
 the correct "F-Key".
 *)
-{$DEFINE SRLT_GAMETABS_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_GAMETABS_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
-{.$DEFINE SRLT_KEYBINDS_DEBUG}
+{.$DEFINE WL_KEYBINDS_DEBUG}
 
 type
 (*
@@ -210,7 +210,7 @@ var
   i: Integer;
   switched: Boolean;
 begin
-  {$IFDEF SRLT_KEYBINDS_DEBUG}
+  {$IFDEF WaspLib_KEYBINDS_DEBUG}
   for current := ERSGameTab.COMBAT to ERSGameTab.MUSIC do
     WriteLn GetDebugLn('GameTabs', 'Keybinds -> ' + ToStr(current) + ' -> ' ToStr(Self.Keybinds[current]));
   {$ENDIF}

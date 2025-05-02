@@ -3,8 +3,8 @@
 Originally created by slacky.
 This is basically the same thing with some pre-calculated math
 *)
-{$DEFINE SRLT_MM2MS_PROJECTOR_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_MM2MS_PROJECTOR_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
   TMM2MSProjector = record

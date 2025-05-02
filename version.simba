@@ -1,5 +1,5 @@
 const
-  SRLT_VERSION_YEAR: Integer = 2025;
-  SRLT_VERSION_MONTH: Integer = 04;
-  SRLT_VERSION_DAY: Integer = 13;
-  SRLT_VERSION_COMMIT_HASH: String = '08f22db';
+  WaspLib_VERSION_YEAR: Integer = 2025;
+  WaspLib_VERSION_MONTH: Integer = 04;
+  WaspLib_VERSION_DAY: Integer = 13;
+  WaspLib_VERSION_COMMIT_HASH: String = '08f22db';

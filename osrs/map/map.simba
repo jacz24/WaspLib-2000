@@ -8,8 +8,8 @@ Without them, this wouldn't be possible.
 For a online interactive map you can visit [](https://map.waspscripts.com/)
 *)
 
-{$DEFINE SRLT_MAP_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_MAP_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

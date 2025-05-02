@@ -13,8 +13,8 @@ It's thanks to {ref}`MM2MS` that we can have the following grid:
 ```
 *)
 
-{$DEFINE SRLT_MM2MS_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_MM2MS_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

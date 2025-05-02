@@ -1,5 +1,5 @@
-{$DEFINE SRLT_COMBAT_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_COMBAT_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
   TRSCombat = record

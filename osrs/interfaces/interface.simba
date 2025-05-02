@@ -3,8 +3,8 @@
 The core of interface handling.
 *)
 
-{$DEFINE SRLT_INTERFACE_CORE_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_INTERFACE_CORE_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

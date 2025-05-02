@@ -5,9 +5,9 @@ Biometrics related methods that are unique to the current player being used.
 For your convenience you can use {ref}`TBiometrics` methods through the {ref}`Biometrics variable`.
 *)
 
-{$DEFINE SRLT_BIOMETRICS_INCLUDED}
-{$IFNDEF SRLT_OSR}
-  {$I SRLT/osrs.simba}
+{$DEFINE WL_BIOMETRICS_INCLUDED}
+{$IFNDEF WL_OSR}
+  {$I WaspLib/osrs.simba}
 {$ENDIF}
 
 type

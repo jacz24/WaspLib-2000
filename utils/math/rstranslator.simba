@@ -4,8 +4,8 @@ This file is responsible for conversions or internal RuneScape values to values
 that can be used by Simba and back.
 *)
 
-{$DEFINE SRLT_RSTRANSLATOR_INCLUDED}
-{$INCLUDE_ONCE SRLT/utils.simba}
+{$DEFINE WL_RSTRANSLATOR_INCLUDED}
+{$INCLUDE_ONCE WaspLib/utils.simba}
 
 type
 (*

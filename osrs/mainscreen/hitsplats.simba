@@ -8,8 +8,8 @@ Find and read hitsplats on the screen.
 At the moment only your hitsplats are supported, tinted ones by other players or
 NPCs are not.
 *)
-{$DEFINE SRLT_HITSPLATS_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_HITSPLATS_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

@@ -4,9 +4,9 @@ Methods to interact with the logout tab.
 ```{figure} ../../images/inventory.png
 ```
 *)
-{$DEFINE SRLT_LOGOUT_INCLUDED}
-{$IFNDEF SRLT_OSR}
-  {$I SRLT/osrs.simba}
+{$DEFINE WL_LOGOUT_INCLUDED}
+{$IFNDEF WL_OSR}
+  {$I WaspLib/osrs.simba}
 {$ENDIF}
 
 type

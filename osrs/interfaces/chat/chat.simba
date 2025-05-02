@@ -8,8 +8,8 @@ like the {ref}`Make` menu.
 ```{figure} ../../images/chat_interface.png
 ```
 *)
-{$DEFINE SRLT_CHAT_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_CHAT_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

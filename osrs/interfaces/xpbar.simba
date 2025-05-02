@@ -3,8 +3,8 @@
 Methods to interact with the XP bar.
 *)
 
-{$DEFINE SRLT_XPBAR_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_XPBAR_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*
@@ -216,7 +216,7 @@ end;
 ```pascal
 function TRSXPBar.Setup(): Boolean;
 ```
-Internal method automatically called by SRLT once when attempting to read the XPBar.
+Internal method automatically called by WaspLib once when attempting to read the XPBar.
 Should only ever run once.
 *)
 function TRSXPBar.Setup(): Boolean;

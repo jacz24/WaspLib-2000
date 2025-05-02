@@ -2,26 +2,26 @@
 # RemoteInput
 Remote Input is an external plugin which provides, well, "remote" input.
 
-In other words, it's the tool SRLT uses so Simba doesn't use your real mouse and
+In other words, it's the tool WaspLib uses so Simba doesn't use your real mouse and
 keyboard while botting.
 
 Remote input also gives you a full reflection environment to bot with if you
-desire but in the case of SRLT, it's used exclusively for input and you need to
+desire but in the case of WaspLib, it's used exclusively for input and you need to
 either include a reflection library, implement one yourself or use the plugin
 functions directly.
 
 If you wish to completely disable remote input you can do so by adding the
-following compiler directive before you include SRLT in your script:
+following compiler directive before you include WaspLib in your script:
 ```pascal
-{$DEFINE SRLT_DISABLE_REMOTEINPUT}
+{$DEFINE WL_DISABLE_REMOTEINPUT}
 ```
 
 You can find remote input source code here: https://github.com/Brandon-T/RemoteInput
 *)
-{$DEFINE SRLT_REMOTEINPUT_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_REMOTEINPUT_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
-{.$DEFINE SRLT_DISABLE_REMOTEINPUT}
+{.$DEFINE WL_DISABLE_REMOTEINPUT}
 
 {$loadlib ../plugins/libremoteinput/libremoteinput}
 

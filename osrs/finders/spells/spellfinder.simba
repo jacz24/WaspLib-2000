@@ -3,8 +3,8 @@
 Methods to find and compare spell images
 *)
 
-{$DEFINE SRLT_SPELLFINDER_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_SPELLFINDER_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
   ERSSpell = enum(
@@ -37,7 +37,7 @@ begin
   Self.Version := HashFile(EHashAlgo.MD5, Self.ZIP);
   SetLength(Self.Version, 6);
 
-  Self.CacheDir := SRLTEnv.CacheDir + 'spellfinder' + PATH_SEP;
+  Self.CacheDir := WaspLibEnv.CacheDir + 'spellfinder' + PATH_SEP;
 
   //Delete old cache files if they exist
   for dir in DirList(Self.CacheDir) do

@@ -4,8 +4,8 @@ Methods responsible for dealing with the stats tab.
 ```{figure} ../../images/stats.png
 ```
 *)
-{$DEFINE SRLT_STATS_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_STATS_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

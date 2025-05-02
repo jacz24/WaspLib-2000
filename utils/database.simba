@@ -122,8 +122,8 @@ So with the examples above, if we want to get `abyssal whip` id:
 
 You successfully retrieved the abyssal whip ID.
 *)
-{$DEFINE SRLT_DATABASE_INCLUDED}
-{$INCLUDE_ONCE SRLT/utils.simba}
+{$DEFINE WL_DATABASE_INCLUDED}
+{$INCLUDE_ONCE WaspLib/utils.simba}
 
 type
   TDatabase = record
@@ -151,7 +151,7 @@ var
   weights: TIntegerArray;
 begin
   Self.Name := name + '.database';
-  Self.CacheDir := SRLTEnv.CacheDir + 'databases' + PATH_SEP + name + PATH_SEP;
+  Self.CacheDir := WaspLibEnv.CacheDir + 'databases' + PATH_SEP + name + PATH_SEP;
 
   //Delete old cache files if they exist
   for dir in DirList(Self.CacheDir) do

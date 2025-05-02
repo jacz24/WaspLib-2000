@@ -5,8 +5,8 @@ Methods to interact with the bank pin interface.
 ```
 *)
 
-{$DEFINE SRLT_BANKPIN_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_BANKPIN_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

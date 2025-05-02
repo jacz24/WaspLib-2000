@@ -5,8 +5,8 @@ Methods to interact with the inventory gametab.
 ```
 *)
 
-{$DEFINE SRLT_INVENTORY_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_INVENTORY_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

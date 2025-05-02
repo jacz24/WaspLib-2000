@@ -5,8 +5,8 @@ Methods to interact with the runescape context menu.
 ```{figure} ../../images/chooseoption.png
 ```
 *)
-{$DEFINE SRLT_CHOOSEOPTION_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_CHOOSEOPTION_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

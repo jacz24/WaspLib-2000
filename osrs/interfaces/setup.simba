@@ -1,9 +1,9 @@
 //Design by olly.
-{$DEFINE SRLT_SETUP_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_SETUP_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 procedure SetupInterfaces();
-{$IFDEF SRLT_DEBUG_INTERFACES}var t: UInt64 := GetTickCount();{$ENDIF}
+{$IFDEF WaspLib_DEBUG_INTERFACES}var t: UInt64 := GetTickCount();{$ENDIF}
 begin
   //interfaces that depend on other's bounds need to be in the right order
   //e.g., gametabs need to go after GameTab and GameTab after GameTabs.
@@ -41,7 +41,7 @@ begin
   Bank.SetupInterface();
   CollectionBox.SetupInterface();
 
-  {$IFDEF SRLT_DEBUG_INTERFACES}
+  {$IFDEF WaspLib_DEBUG_INTERFACES}
   WriteLn GetDebugLn('RSClient', 'Interface setup took ' + ToStr(GetTickCount()-t) + ' ms to calculate.');
   {$ENDIF}
 end;
@@ -96,7 +96,7 @@ begin
   Logger.Setup();
 
   RSClient.Client := RSClient.GetClient();
-  {$IFNDEF SRLT_DISABLE_REMOTEINPUT}
+  {$IFNDEF WL_DISABLE_REMOTEINPUT}
   if RSClient.Client <> ERSClient.OFFICIAL then
     RemoteInput.Setup();
   {$ENDIF}

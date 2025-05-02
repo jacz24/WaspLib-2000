@@ -3,8 +3,8 @@
 Methods to interact item interfaces.
 *)
 
-{$DEFINE SRLT_ITEM_INTERFACE_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_ITEM_INTERFACE_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
   TRSItemInterface = record

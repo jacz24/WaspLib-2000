@@ -4,8 +4,8 @@ This page is dedicated to the achievements game tab and methods to interact with
 ```{figure} ../../images/achievements.png
 ```
 *)
-{$DEFINE SRLT_ACHIEVEMENTS_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_ACHIEVEMENTS_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

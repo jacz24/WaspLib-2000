@@ -4,8 +4,8 @@ Methods to interact with the Equipment gametab.
 ```{figure} ../../images/equipment.png
 ```
 *)
-{$DEFINE SRLT_EQUIPMENT_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_EQUIPMENT_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 
 type

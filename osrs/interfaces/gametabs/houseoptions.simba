@@ -5,8 +5,8 @@ Methods to interact with the house options that live on the options gametab.
 ```
 *)
 
-{$DEFINE SRLT_HOUSEOPTIONS_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_HOUSEOPTIONS_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

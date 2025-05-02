@@ -12,5 +12,5 @@ interaction with the game can be tested through this process.
 ### Compile Test
 Simple compile test.
 *)
-{$I SRLT/osrs.simba}
+{$I WaspLib/osrs.simba}
 

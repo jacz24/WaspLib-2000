@@ -3,8 +3,8 @@
 This file is responsible for interacting with map objects.
 *)
 
-{$DEFINE SRLT_RSOBJECTS_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_RSOBJECTS_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
   TRSNPC = record

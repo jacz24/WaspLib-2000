@@ -6,8 +6,8 @@ craft certain items in OldSchool RuneScape.
 ```
 *)
 
-{$DEFINE SRLT_MAKE_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_MAKE_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

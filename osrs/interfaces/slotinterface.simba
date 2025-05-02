@@ -3,8 +3,8 @@
 Methods to interact slotted interfaces.
 *)
 
-{$DEFINE SRLT_SLOT_INTERFACE_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_SLOT_INTERFACE_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
   TRSSlotInterface = record

@@ -4,8 +4,8 @@ Several final overrides to add some final behaviour to certain methods.
 This is the very last file being included in the library.
 *)
 
-{$DEFINE SRLT_OVERRIDES_INCLUDED}
-{$INCLUDE_ONCE SRLT/osrs.simba}
+{$DEFINE WL_OVERRIDES_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 (*
 ## RSClient.IsLoggedIn override
@@ -14,7 +14,7 @@ function TRSClient.IsLoggedIn(): Boolean; override;
 ```
 Checks for a bunch of game settings when being logged in returns true.
 
-These settings are checked at least once and SRLT and cache the results so we
+These settings are checked at least once and WaspLib and cache the results so we
 don't check it again unless for some reason is needed.
 
 These ensures things like:
@@ -65,7 +65,7 @@ end;
 
 procedure TRSClient.LoseFocus(); override;
 begin
-  {$IFDEF SRLT_REMOTEINPUT_INCLUDED}
+  {$IFDEF WaspLib_REMOTEINPUT_INCLUDED}
   RemoteInput.LoseFocus();
   Exit;
   {$ENDIF}
