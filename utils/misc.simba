@@ -219,7 +219,7 @@ begin
   path := SimbaEnv.ScreenshotsPath + folder + PATH_SEP;
   if not DirCreate(path) then Exit;
 
-  path += Now().ToString(FILE_TIME_FORMAT);
+  path += TDateTime.CreateFromSystem().ToString(FILE_TIME_FORMAT);
 
   try
     img := TImage.CreateFromTarget(bounds);

@@ -697,7 +697,7 @@ begin
   Self.RandomAchievementTab();
 
   time := Round(SRL.TruncatedGauss(500*BioHash, 7000*BioHash));
-  done := GetTickCount() + time;
+  done := Time() + time;
 
   if Self.BioDice(50) then
   begin
@@ -709,7 +709,7 @@ begin
 
   repeat
     System.Wait(50, 150);
-  until GetTickCount() > done;
+  until Time() > done;
 
   Achievements.OpenTab(currentTab);
 end;

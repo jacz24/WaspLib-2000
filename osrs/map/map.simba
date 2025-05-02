@@ -432,10 +432,10 @@ var
 begin
   Target.FreezeImage();
 
-  time   := PerformanceTimer();
+  time   := PerformanceTime();
   Result := Self.Position();
 
-  time   := PerformanceTimer() - time;
+  time   := PerformanceTime() - time;
 
   case Self.RegionIndex of
     -1:  local := Result;

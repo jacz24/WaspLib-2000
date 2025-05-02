@@ -158,9 +158,9 @@ begin
   destination := GameTab.Bounds.Expand(10).NearestEdge(Target.MouseXY);
   Async.MouseMove(destination);
 
-  timeout := GetTickCount() + 3000;
+  timeout := Time() + 3000;
 
-  while Self.InfoIsOpen() or (GetTickCount() > timeout) do
+  while Self.InfoIsOpen() or (Time() > timeout) do
     Sleep(20, 100, ERandomDir.LEFT);
 
   Async.MouseStop();

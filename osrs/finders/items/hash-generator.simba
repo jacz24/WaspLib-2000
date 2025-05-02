@@ -253,7 +253,7 @@ begin
         TerminateScript();
       end;
 
-    t := GetTickCount();
+    t := Time();
 
     for current in Sorted(FindFiles(TMP_PATH + '\', ['.png']), @FileSort) do
     begin
@@ -288,7 +288,7 @@ begin
       bmp.Free();
     end;
 
-    WriteLn('Hashing all files took: ', (GetTickCount()-t) div 1000, ' seconds.');
+    WriteLn('Hashing all files took: ', (Time()-t) div 1000, ' seconds.');
   finally
     if CLEANUP then
     begin

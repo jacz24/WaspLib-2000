@@ -408,10 +408,10 @@ begin
     if @Self.OnWaitMovingEvent <> nil then
       Self.OnWaitMovingEvent(@Self, position.Current, destination);
 
-    if (Self.AdaptiveWalk) and (GetTickCount() > awct) then
+    if (Self.AdaptiveWalk) and (Time() > awct) then
     begin
       Self.AdaptiveWalkCheck(Position.Current);
-      awct := GetTickCount() + 1000;
+      awct := Time() + 1000;
     end;
 
     if Self.FancyMouse then Self.DoMouseAhead(position.Current);
@@ -559,14 +559,14 @@ function TRSWalker.WalkStepHelper(playerPoint, walkerPoint: TPoint; out minimapP
 var
   event_time: UInt64;
 begin
-  event_time := GetTickCount();
+  event_time := Time();
 
   // run events
   if @Self.OnWalkEvent <> nil then
     Self.OnWalkEvent(@Self, playerPoint, walkerPoint);
 
   // in case the events used a bit of time, while our character was moving towards a point, we have to update the current position.
-  if GetTickCount() - event_time > 100 then
+  if Time() - event_time > 100 then
     playerPoint := Self.Position();
 
   if not Self.Walking then

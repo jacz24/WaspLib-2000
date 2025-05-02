@@ -249,8 +249,8 @@ WriteLn Chat.ContinueUntilOption('access my bank');
 *)
 function TRSChat.ContinueUntilOption(option: String; timeout: Integer = 10000): Boolean;
 begin
-  timeout += GetTickCount();
-  while (GetTickCount() < timeout) do
+  timeout += Time();
+  while (Time() < timeout) do
   begin
     if Self.HasOption(option) then Break;
     Self.Continue();
@@ -356,10 +356,10 @@ var
   useKeyboard: Boolean;
   timeout: UInt64;
 begin
-  timeout := GetTickCount() + 8000;
+  timeout := Time() + 8000;
   repeat
     Self.Continue(keyboardProbability);
     Sleep(60, 3000, ERandomDir.LEFT);
     Result := Chat.GetDisplayName() <> '';
-  until Result or (GetTickCount() > timeout);
+  until Result or (Time() > timeout);
 end;

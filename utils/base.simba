@@ -47,7 +47,7 @@ begin
   if not DirCreate(Self.Path) then
     raise GetTimeStamp() + ':[Logger]: Failed to create logs directory.';
 
-  Self.Path += 'WaspLib_' + Now().ToString(FILE_TIME_FORMAT) + '.log';
+  Self.Path += 'WaspLib_' + TDateTime.CreateFromSystem().ToString(FILE_TIME_FORMAT) + '.log';
   if not FileCreate(Self.Path) then
     raise GetTimeStamp() + ':[Logger]: Failed to create log file: ' + PathExtractName(Self.Path);
 
@@ -67,7 +67,7 @@ begin
   if not DirCreate(Self.Path) then
     raise GetTimeStamp() + ':[Logger]: Failed to create log path: ' + Self.Path;
 
-  Self.Path += Now().ToString(FILE_TIME_FORMAT) + '.log';
+  Self.Path += TDateTime.CreateFromSystem().ToString(FILE_TIME_FORMAT) + '.log';
 
   if Self.IsSetup and (old <> Self.Path) then
   begin

@@ -299,7 +299,7 @@ var
 begin
   available := Target.Bounds.Expand(-10);
   degrees := DegNormalize(degrees);
-  timeout := GetTickCount() + RandomMean(6000, 8000);
+  timeout := Time() + RandomMean(6000, 8000);
 
   repeat
     remaining := Round(DeltaAngle(Self.GetCompassAngle(), degrees));
@@ -330,7 +330,7 @@ begin
     Target.MouseUp(EMouseButton.MIDDLE);
 
     Sleep(100, 1000, ERandomDir.LEFT);
-  until GetTickCount() > timeout;
+  until Time() > timeout;
 
   WriteLn GetDebugLn('Minimap', 'SetCompassAngle timed out.', EErrorLevel.WARN);
   //TODO:

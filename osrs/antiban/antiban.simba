@@ -75,7 +75,7 @@ function TAntiban.TimeRunningAtClock(time: String; randomness: Double = 0.10): I
 var
   current, res: TDateTime;
 begin
-  current := Now();
+  current := TDateTime.CreateFromSystem();
   res := (current.Date + TDateTime.CreateFromISO(time)) - current;
   if (res < 0) then res += 1;
 
@@ -235,13 +235,13 @@ begin
   if RandomBoolean(0.7) then RSClient.LoseFocus();
 
   repeat
-    if GetTickCount() > marker  then
+    if Time() > marker  then
     begin
       WriteLn GetDebugLn('Antiban', 'Sleep time remaining: ' + FormatMilliseconds(countdown.Remaining, TIME_FORMAL));
       //OnSleeping callback only runs every 5 mins.
       if (@Self.OnSleeping <> nil) then
         Self.OnSleeping(@task, countdown);
-      marker := GetTickCount() + 5 * ONE_MINUTE;
+      marker := Time() + 5 * ONE_MINUTE;
     end;
 
     Sleep(Round(Min(countdown.Remaining, 5 * ONE_SECOND)));
@@ -254,7 +254,7 @@ begin
 
   //Offset all tasks & breaks
   for i := 0 to High(Self.Breaks) do
-    Self.Breaks[i].Next += GetTickCount() - (countdown.FinishTime - countdown.Milliseconds);
+    Self.Breaks[i].Next += Time() - (countdown.FFinishTime - countdown.FLength);
 
   for i := 0 to High(activeTasks) do
     activeTasks[i]^.countdown.Resume();
@@ -315,7 +315,7 @@ begin
 
   // Offset all tasks & breaks
   for i := 0 to High(Self.Breaks) do
-    Self.Breaks[i].Next += GetTickCount() - (countdown.FinishTime - countdown.Milliseconds );
+    Self.Breaks[i].Next += Time() - (countdown.FFinishTime - countdown.FLength );
 
   for I := 0 to High(activeTasks) do
     activeTasks[i]^.countdown.Resume();

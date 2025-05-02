@@ -1040,11 +1040,11 @@ function TRSLogin.DoLogin(player: TRSPlayer): Boolean;
 var
   timeout: UInt64;
 begin
-  timeout := GetTickCount() + 40000;
+  timeout := Time() + 40000;
 
   while not RSClient.IsLoggedIn() or not Lobby.IsOpen() do
   begin
-    if GetTickCount() > timeout then
+    if Time() > timeout then
     begin
       WriteLn GetDebugLn('Login', 'Timed out trying to login.', EErrorLevel.ERROR);
       Exit;
@@ -1056,10 +1056,10 @@ begin
 
   Self.Attempts := 0;
 
-  timeout := GetTickCount() + 15000;
+  timeout := Time() + 15000;
   while Lobby.IsOpen() do
   begin
-    if GetTickCount() > timeout then
+    if Time() > timeout then
     begin
       WriteLn GetDebugLn('Login', 'Timed out trying to handle the lobbyscreen.', EErrorLevel.ERROR);
       Exit;

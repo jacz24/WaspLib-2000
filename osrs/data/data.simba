@@ -18,7 +18,6 @@ Record responsible for providing item information in WaspLib.
     Timeout: UInt64;
     Disabled: Boolean;
     const CacheDir: String = WLEnv.CacheDir + 'data' + PATH_SEP;
-    const ReloadInterval: Integer = 3600; //1h in unix time
     const ZIP: String = {$MACRO DIR} + 'items.zip';
     const PRICES_URL: String = 'https://prices.runescape.wiki/api/v1/osrs/latest';
   end;
@@ -45,7 +44,7 @@ begin
     Self.Timeout := StrToInt64(PathExtractNameWithoutExt(Self.Filename), Self.Timeout);
   end;
 
-  t := UnixTime();
+  t := Time();
 
   if Self.Timeout < t then
   begin
@@ -54,7 +53,8 @@ begin
       WriteLn GetDebugLn('ItemData', 'Data cached is old and will be updated.');
       FileDelete(Self.Filename);
     end;
-    Self.Timeout := t + Self.ReloadInterval;
+
+    Self.Timeout := t + ONE_HOUR;
     Self.Filename := Self.CacheDir  + 'prices' + PATH_SEP + ToStr(Self.Timeout) + '.json';
     HTTPClient.GetFile(Self.PRICES_URL, Self.Filename);
   end;

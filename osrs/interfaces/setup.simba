@@ -3,7 +3,7 @@
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 procedure SetupInterfaces();
-{$IFDEF WaspLib_DEBUG_INTERFACES}var t: UInt64 := GetTickCount();{$ENDIF}
+{$IFDEF WaspLib_DEBUG_INTERFACES}var t: UInt64 := Time();{$ENDIF}
 begin
   //interfaces that depend on other's bounds need to be in the right order
   //e.g., gametabs need to go after GameTab and GameTab after GameTabs.
@@ -42,7 +42,7 @@ begin
   CollectionBox.SetupInterface();
 
   {$IFDEF WaspLib_DEBUG_INTERFACES}
-  WriteLn GetDebugLn('RSClient', 'Interface setup took ' + ToStr(GetTickCount()-t) + ' ms to calculate.');
+  WriteLn GetDebugLn('RSClient', 'Interface setup took ' + ToStr(Time()-t) + ' ms to calculate.');
   {$ENDIF}
 end;
 
