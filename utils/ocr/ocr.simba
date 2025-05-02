@@ -106,16 +106,8 @@ type
     const PATH = WLEnv.CacheDir + 'fonts' + PATH_SEP;
   end;
 
-procedure TRSFonts.Setup();
+procedure TRSFonts._Setup();
 begin
-  if DirList(Self.PATH) = [] then
-  begin
-    if not DirCreate(Self.PATH) then
-      raise GetDebugLn('OCR', 'Failed to create path: ' + Self.PATH);
-    if not ZipExtract({$MACRO DIR} + 'fonts.zip', Self.PATH) then
-      raise GetDebugLn('OCR', 'Failed to unzip fonts');
-  end;
-
   Self.PLAIN_11 := OCR.Engine.LoadFont(Self.PATH + 'Plain 11', 4);
   Self.PLAIN_12 := OCR.Engine.LoadFont(Self.PATH + 'Plain 12', 4);
 
@@ -124,6 +116,26 @@ begin
 
   Self.QUILL_8 := OCR.Engine.LoadFont(Self.PATH + 'Quill 8', 4);
   Self.QUILL   := OCR.Engine.LoadFont(Self.PATH + 'Quill', 4);
+end;
+
+procedure TRSFonts._UnzipFinished(constref result: TASyncUnzipResult);
+begin
+  if not result.Success then
+    raise GetDebugLn('RSFonts', 'Failed to unzip fonts: '  + result.Exception);
+  Self._Setup();
+end;
+
+procedure TRSFonts.Setup();
+begin
+  if DirList(Self.PATH) <> [] then
+  begin
+    Self._Setup();
+    Exit;
+  end;
+
+  if not DirCreate(Self.PATH) then
+    raise GetDebugLn('OCR', 'Failed to create path: ' + Self.PATH);
+  Async.FileUnZip({$MACRO DIR} + 'fonts.zip', Self.PATH, @Self._UnzipFinished, nil);
 end;
 
 var

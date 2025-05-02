@@ -1,0 +1,52 @@
+(*
+# WaspClient
+Client to interact with https://waspscripts.com
+*)
+
+{$DEFINE WL_WASPCLIENT_INCLUDED}
+{$INCLUDE_ONCE WaspLib/utils.simba}
+
+(*
+## TWaspClient
+Responsible for connecting to waspscripts.com database.
+*)
+type
+  TWaspClient = record
+    Server, APIKey, Schema: String;
+
+    User: record
+      ID: String;
+      Username: String;
+      AccessToken: String;
+      RefreshToken: String;
+    end;
+
+    Config: TJSONItem;
+    IsSetup: Boolean;
+  end;
+
+procedure TWaspClient.Setup(constref result: TASyncHTTPResult);
+var
+  json: TJSONItem;
+begin
+  if result.Response <> EHTTPStatus.OK then
+  begin
+    WriteLn GetDebugLn('WaspClient', 'Failed to connect to https://api.waspscripts.com/ to get the database connection info.', EErrorLevel.WARN);
+    Exit;
+  end;
+
+  try
+    json := ParseJSON(result.Data);
+    if not json.GetString('url', Self.Server) then Exit;
+    if not json.GetString('anon_key', Self.APIKey) then Exit;
+  finally
+    json.Free();
+  end;
+
+  if not Self.Server.EndsWith('/') then Self.Server += '/';
+
+  Self.IsSetup := True;
+end;
+
+var
+  WaspClient: TWaspClient;
