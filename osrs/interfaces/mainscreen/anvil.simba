@@ -1,0 +1,111 @@
+(*
+# Anvil
+Anvil interface.
+```{figure} ../../images/anvil_interface.png
+```
+*)
+
+{$DEFINE WL_ANVIL_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+(*
+## TRSAnvil
+Main record to interact with the {ref}`Anvil` interface.
+*)
+  TRSAnvil = record
+    Title: TRSInterfaceTitle;
+    Slots: TRSSlotInterface;
+    Items: TRSItemInterface;
+    Bounds, SlotsArea: TBox;
+    SlotBoxes: TBoxArray;
+  end;
+
+function TRSAnvil.GetSlots(): TBoxArray;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self.SlotBoxes) do
+    if Target.HasColor($00FF00, 0, 1, Self.SlotBoxes[i]) or Target.HasColor($1F98FF, 0, 1, Self.SlotBoxes[i]) then
+      Result += Self.SlotBoxes[i];
+end;
+
+(*
+## Anvil.Setup
+```pascal
+procedure Anvil.Setup;
+```
+Initializes Anvil variables.
+
+```{note}
+This is automatically called on the **Anvil** variable.
+```
+*)
+procedure TRSAnvil.SetupInterface();
+var
+  i: Integer;
+begin
+  case RSClient.Mode of
+    ERSMode.FIXED: Self.Bounds := MSInterface.CreateBounds([0, 2, 0, -1], 500, 320);
+    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
+      Self.Bounds := MSInterface.CreateBounds([0, -1, 0, 0], 500, 320);
+  end;
+
+  Self.Title.Setup(Self.Bounds);
+
+  Self.SlotsArea.X1 := Self.Bounds.X1 + 4;
+  Self.SlotsArea.Y1 := Self.Bounds.Y1 + 30;
+  Self.SlotsArea.X2 := Self.Bounds.X2 - 50;
+  Self.SlotsArea.Y2 := Self.Bounds.Y2 - 4;
+
+  Self.SlotBoxes := TBoxArray.Create(Self.Bounds.TopLeft + [10, 36], 6, 5, 54, 54, [26, 1]);
+  for i in [5, 11, 17, 23, 29] do
+    Self.SlotBoxes[i] := Self.SlotBoxes[i].Offset([-15, 0]);
+
+  Self.Slots.Setup('Bank.Slots', Self.SlotBoxes, @Self.GetSlots);
+  Self.Items.Setup('Bank.Items', @Self.Slots, [0, 10, 3, 0]);
+end;
+
+
+(*
+## Anvil.IsOpen
+```pascal
+function TRSAnvil.IsOpen(): Boolean;
+```
+Returns true if the {ref}`Anvil` is open.
+
+Example:
+```pascal
+WriteLn Anvil.IsOpen();
+```
+*)
+function TRSAnvil.IsOpen(): Boolean;
+begin
+  Result := MSInterface.IsOpen(ERSInterfaceType.CLASSIC) and
+            Target.HasColor($00FF00, 0, 300, Self.SlotsArea);
+end;
+
+(*
+## Anvil.WaitOpen
+```pascal
+function TRSAnvil.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
+```
+Returns true if the {ref}`Anvil` is open within `time` milliseconds.
+
+## Example:
+```pascal
+WriteLn Anvil.WaitOpen();
+```
+*)
+function TRSAnvil.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
+begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsOpen(), interval, time);
+end;
+
+var
+(*
+## Anvil variable
+Global {ref}`TRSAnvil` variable.
+*)
+  Anvil: TRSAnvil;

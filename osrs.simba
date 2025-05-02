@@ -99,6 +99,7 @@ They should be self-explanatory.
 {$IFNDEF WL_BANKPIN_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/mainscreen/bankpin.simba}
 {$IFNDEF WL_BANK_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/mainscreen/bank.simba}
 {$IFNDEF WL_COLLECTIONBOX_INCLUDED}       {$INCLUDE_ONCE osrs/interfaces/mainscreen/collectionbox.simba}
+{$IFNDEF WL_ANVIL_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/mainscreen/anvil.simba}
 
 
 {$IFNDEF WL_HITSPLATS_INCLUDED}           {$INCLUDE_ONCE osrs/mainscreen/hitsplats.simba}
@@ -109,6 +110,7 @@ They should be self-explanatory.
 {$IFNDEF WL_OVERRIDES_INCLUDED}           {$INCLUDE_ONCE osrs/overrides.simba}
 
 
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}

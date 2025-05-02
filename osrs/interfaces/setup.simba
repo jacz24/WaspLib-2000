@@ -40,6 +40,7 @@ begin
   BankPin.SetupInterface();
   Bank.SetupInterface();
   CollectionBox.SetupInterface();
+  Anvil.SetupInterface();
 
   {$IFDEF WaspLib_DEBUG_INTERFACES}
   WriteLn GetDebugLn('RSClient', 'Interface setup took ' + ToStr(Time()-t) + ' ms to calculate.');
