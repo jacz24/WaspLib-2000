@@ -2,7 +2,7 @@
 ### Bank Tests
 Tests the integrety of several bankpin and bank methods.
 *)
-{$I WaspLib2/osrs.simba}
+{$I WaspLib/osrs.simba}
 {$ASSERTIONS ON}
 
 function TMouse.Position(): TPoint; override;

@@ -46,12 +46,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
         with:
-          path: ./Includes/SRLT
+          path: ./Includes/WaspLib
 
       - name: Run tests
         shell: bash
         run: |
-          testFiles=(./Includes/SRLT/tests/*.simba)
+          testFiles=(./Includes/WaspLib/tests/*.simba)
 
           for testFile in "${testFiles[@]}"; do
               echo "Running test: $testFile" on 32 bits
