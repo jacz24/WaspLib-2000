@@ -2,7 +2,7 @@
 ### Inventory Tests
 Tests the integrety of several inventory methods.
 *)
-{$I WaspLib/osrs.simba}
+{$I WaspLib2/osrs.simba}
 {$ASSERTIONS ON}
 
 const
