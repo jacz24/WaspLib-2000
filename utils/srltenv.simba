@@ -1,9 +1,0 @@
-{$DEFINE WL_WaspLibENV_INCLUDED}
-{$INCLUDE_ONCE WaspLib/utils.simba}
-
-type
-  WaspLibEnv = record
-    const ConfigsDir: String = SimbaEnv.SimbaPath + 'Configs' + PATH_SEP;
-    const CacheDir:    String = SimbaEnv.DataPath + 'Cache' + PATH_SEP;
-    const LogsDir:    String = SimbaEnv.DataPath + 'Logs' + PATH_SEP;
-  end;

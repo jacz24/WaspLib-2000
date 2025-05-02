@@ -103,7 +103,7 @@ type
     BOLD_SHADOW:    TPixelFont;
     QUILL_8:        TPixelFont;
     QUILL:          TPixelFont;
-    const PATH = WaspLibEnv.CacheDir + 'fonts' + PATH_SEP;
+    const PATH = WLEnv.CacheDir + 'fonts' + PATH_SEP;
   end;
 
 procedure TRSFonts.Setup();

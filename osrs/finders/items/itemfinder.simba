@@ -75,7 +75,7 @@ begin
   SetLength(Self.Version, 6);
   Self.Database.Setup('ItemFinder', ['id', 'item', 'hash'], {$MACRO DIR} + 'data' + PATH_SEP, Self.Version);
 
-  Self.CacheDir := WaspLibEnv.CacheDir + 'itemfinder' + PATH_SEP;
+  Self.CacheDir := WLEnv.CacheDir + 'itemfinder' + PATH_SEP;
 
   //Delete old cache files if they exist
   for path in DirList(Self.CacheDir) do

@@ -335,13 +335,13 @@ begin
 
     if Self.DebugRandoms then
     begin
-      DirCreate(WaspLibEnv.CacheDir + 'randoms');
+      DirCreate(WLEnv.CacheDir + 'randoms');
 
-      number := Length(DirList(WaspLibEnv.CacheDir + 'randoms'));
+      number := Length(DirList(WLEnv.CacheDir + 'randoms'));
       if number > 1000 then
         TerminateScript('Lots of randoms debugged');
 
-      SaveScreenshot(WaspLibEnv.CacheDir + 'randoms' + PATH_SEP + IntToStr(number) + '.png');
+      SaveScreenshot(WLEnv.CacheDir + 'randoms' + PATH_SEP + IntToStr(number) + '.png');
 
       Sleep(5000);
     end;

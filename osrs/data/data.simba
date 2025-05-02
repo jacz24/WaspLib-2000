@@ -17,7 +17,7 @@ Record responsible for providing item information in WaspLib.
     Filename: String;
     Timeout: UInt64;
     Disabled: Boolean;
-    const CacheDir: String = WaspLibEnv.CacheDir + 'data' + PATH_SEP;
+    const CacheDir: String = WLEnv.CacheDir + 'data' + PATH_SEP;
     const ReloadInterval: Integer = 3600; //1h in unix time
     const ZIP: String = {$MACRO DIR} + 'items.zip';
     const PRICES_URL: String = 'https://prices.runescape.wiki/api/v1/osrs/latest';

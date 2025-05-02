@@ -2,6 +2,12 @@
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
 type
+  WLEnv = record
+    const ConfigsDir: String = SimbaEnv.SimbaPath + 'Configs' + PATH_SEP;
+    const CacheDir:   String = SimbaEnv.DataPath + 'Cache' + PATH_SEP;
+    const LogsDir:    String = SimbaEnv.DataPath + 'Logs' + PATH_SEP;
+  end;
+
   EErrorLevel = enum(SUCCESS, WARN, ERROR);
 
   TLogger = record
@@ -19,7 +25,7 @@ var
   date, oldest: TDateTime;
   filename: String;
 begin
-  Self.Path := WaspLibEnv.LogsDir;
+  Self.Path := WLEnv.LogsDir;
 
   files := DirList(Self.Path);
   if Length(files) > 100 then
@@ -56,7 +62,7 @@ begin
   Self.Name := name;
   Self.IsSetup := name <> '';
   old := Self.Path;
-  Self.Path := WaspLibEnv.LogsDir + name + PATH_SEP;
+  Self.Path := WLEnv.LogsDir + name + PATH_SEP;
 
   if not DirCreate(Self.Path) then
     raise GetTimeStamp() + ':[Logger]: Failed to create log path: ' + Self.Path;

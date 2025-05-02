@@ -151,7 +151,7 @@ var
   weights: TIntegerArray;
 begin
   Self.Name := name + '.database';
-  Self.CacheDir := WaspLibEnv.CacheDir + 'databases' + PATH_SEP + name + PATH_SEP;
+  Self.CacheDir := WLEnv.CacheDir + 'databases' + PATH_SEP + name + PATH_SEP;
 
   //Delete old cache files if they exist
   for dir in DirList(Self.CacheDir) do
