@@ -70,7 +70,7 @@ procedure TMapDebugger.ImgBoxMouseDown(sender: TImageBox; button: ELazMouseButto
 var
   p: TPoint;
 begin
-  if Button <> ELazMouseButton.Left then Exit;
+  if button <> ELazMouseButton.Left then Exit;
 
   p := [x, y];
 
