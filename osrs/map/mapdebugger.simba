@@ -66,6 +66,20 @@ begin
   sender.Repaint();
 end;
 
+procedure TMapDebugger.ImgBoxMouseDown(sender: TImageBox; button: ELazMouseButton; {$H-}shift: ELazShiftStates;{$H+} x, y: Integer);
+var
+  p: TPoint;
+begin
+  if Button <> ELazMouseButton.Left then Exit;
+
+  p := [x, y];
+
+  if @Self.GetGlobal <> nil then
+    p := Self.GetGlobal(p, [0,0]);
+
+  WriteLn('Clicked: ' + Format('[%d, %d]', [p.X, p.Y]));
+end;
+
 
 procedure TMapDebugger.GraphOnChange(sender: TObject);
 begin
@@ -178,7 +192,8 @@ begin
   Self.ImageBox.Align := ELazAlign.Client;
   Self.ImageBox.SetImage(Self.Images[0], False);
   Self.ImageBox.OnImgPaint := @Self.ImgBoxPaint;
-  Self.ImageBox.OnImgMouseMove := @Self.ImgBoxMouseMove;
+  Self.ImageBox.OnImgMouseMove := @Self.ImgBoxMouseMove; 
+  Self.ImageBox.OnImgMouseDown := @Self.ImgBoxMouseDown;
 
   Form.ShowModal();
 end;
