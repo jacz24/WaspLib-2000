@@ -51,7 +51,6 @@ var
   i: Integer;
 begin
   Self.Projector.UpdateZoom(Options.GetZoomLevel(True));
-
   with Minimap.Center do
     for i := 0 to High(arr) do
       arr[i] := [arr[i].X - X, Y - arr[i].Y, arr[i].Z];
@@ -195,7 +194,7 @@ end;
 function TRSMinimap.Point2MSQuad(pt: TPoint; size: TVector2 = [1,1]; angle: Single = $FFFF): TQuad;
 begin
   if angle = $FFFF then angle := Self.GetCompassAngle(False);
-  Result := Self.Vector2MSQuad([pt.X, pt.Y, 0], angle, size);
+  Result := Self.Vector2MSQuad(pt.ToVec3(), angle, size);
 end;
 
 
@@ -252,7 +251,7 @@ end;
 function TRSMinimap.Point2MSCuboid(pt: TPoint; size: TVector3; angle: Single = $FFFF): TCuboid;
 begin
   if angle = $FFFF then angle := Self.GetCompassAngle(False);
-  Result := Self.Vector2MSCuboid([pt.X, pt.Y, 0], size, angle);
+  Result := Self.Vector2MSCuboid(pt.ToVec3(), size, angle);
 end;
 
 

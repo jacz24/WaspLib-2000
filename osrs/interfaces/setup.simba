@@ -118,9 +118,11 @@ begin
   MainScreen.UptextOCR.ShadowTolerance := 65;
   MainScreen.UptextOCR.Whitelist := ['a'..'z', 'A'..'Z', '0'..'9', '-', '>', '(', ')', '/'];
   Options.ZoomLevel := -1;
-  WorldSwitcher.Cooldown.Start(8000);
+  MM2MS.Projector.RSZoom := -1;
   RSMouseZoom.ZoomLevel := -1;
   RSMouseZoom.Enabled := True;
+  WorldSwitcher.Cooldown.Start(8000);
+
   Antiban.Zoom.Max := 100;
 
   ItemData.Setup();

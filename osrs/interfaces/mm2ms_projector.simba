@@ -47,6 +47,7 @@ begin
     Exit;
 
   Self.RSZoom := ZOOM2RSZOOM[zoom];
+
   scale := Self.ScaleMin + Self.RSZoom * (Self.ScaleMax - Self.ScaleMin);
   Self.Transformer.X := 513 * scale; // fixed mainscreen width
   Self.Transformer.Y := 335 * scale;
