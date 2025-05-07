@@ -757,16 +757,18 @@ img.Free();
 ```
 *)
 function TRSMinimap.GetCleanImage(angle: Single = $FFFF): TImage;
+var
+  minimapImg, cleanImg: TImage;
 begin
   if angle = $FFFF then angle := Self.GetCompassAngle(False);
-  with TImagePool.Create() do
   try
-    Result := TImage.CreateFromTarget(Self.Bounds);
-    Result.ReplaceColor(0, 1);
-    Result := Self.CleanImage(Result);
-    Result := Result.Rotate(EImageRotateAlgo.BILINEAR, angle, False);
+    minimapImg := Target.GetImage(Self.Bounds);
+    minimapImg.ReplaceColor(0, 1);
+    cleanImg := Self.CleanImage(minimapImg);
+    Result := cleanImg.Rotate(EImageRotateAlgo.BILINEAR, angle, False);
   finally
-    Free([Result]);
+    minimapImg.Free;
+    cleanImg.Free;
   end;
 end;
 
@@ -793,7 +795,6 @@ var
   tmp, blend: TImage;
   tpa: TPointArray;
 begin
-  with TImagePool.Create() do
   try
     tmp := img.Copy();
 
@@ -812,7 +813,8 @@ begin
     Result.DrawColor := $0;
     Result.DrawCircleInverted(Result.Center, radius div scaling);
   finally
-    Free([Result]);
+    tmp.Free;
+    blend.Free;
   end;
 end;
 
