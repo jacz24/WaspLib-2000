@@ -254,7 +254,7 @@ begin
     Min(map.Height - 1, position.Y + SLICE_SIZE)
   ];
 
-  with TImagePool.Create() do
+
   try
     slice := map.Copy(area);
     downscaledSlice := slice.Downsample(SCALING);
@@ -269,7 +269,9 @@ begin
       Result.Y := area.Y1 + (Y + TEMPL_SIZE) * SCALING;
     end;
   finally
-    Free();
+    slice.Free;
+    downscaledSlice.Free;
+    downscaledTemplate.Free;
   end;
 end;
 
