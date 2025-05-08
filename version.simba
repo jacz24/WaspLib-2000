@@ -1,5 +1,5 @@
 const
   WL_VERSION_YEAR: Integer = 2025;
-  WL_VERSION_MONTH: Integer = 04;
-  WL_VERSION_DAY: Integer = 13;
-  WL_VERSION_COMMIT_HASH: String = '08f22db';
+  WL_VERSION_MONTH: Integer = 05;
+  WL_VERSION_DAY: Integer = 08;
+  WL_VERSION_COMMIT_HASH: String = '4858c0c';
