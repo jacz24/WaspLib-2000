@@ -462,7 +462,11 @@ var
   tmp: Integer;
 begin
   if RSCacheParser.Disabled then
-    Exit(Self.Sliders[ERSOptionsSlider.BRIGHTNESS].GetLevel());
+  begin
+    Result := Self.Sliders[ERSOptionsSlider.BRIGHTNESS].GetLevel();
+    Self.MaxBrightness := Result = 100;
+    Exit;
+  end;
 
   Result := RSCacheParser.Brightness();
 
