@@ -106,12 +106,15 @@ begin
   Result := Self.Database.GetAll(item, 'item', 'id');
 end;
 
+function TRSItemFinder.GetHashItems(hash: String): TRSItemArray;
+begin
+  Result := Self.Database.GetAll(hash, 'hash', 'item');
+end;
+
 procedure TRSItemFinder.MapItem(item, id: String);
 begin
   Self.Database.AddRow([id, item, '']);
 end;
-
-
 
 function TRSItemFinder.GetFilter(item: String): TImageCompareFilter;
 var
@@ -292,6 +295,47 @@ begin
   finally
     display.Free();
   end;
+end;
+
+function TRSItemFinder.GetHash(img: TImage): String;
+var
+  pixels: TColorArray;
+  h, i: Int32;
+  str: String;
+begin
+  pixels := img.GetColors;
+
+  h := $811C9DC5;
+  for i:=0 to High(pixels) do
+  begin
+    if pixels[i] = $0 then Continue;
+    h := (h * $1000193) xor pixels[i];
+  end;
+
+  str := LowerCase(IntToHex(h, 16));
+  Result := str.CopyRange(Length(str)-8, Length(str));
+end;
+
+function TRSItemFinder.CleanItemBitmap(img: TImage): Boolean;
+var
+  black, text1, shade, tpa: TPointArray;
+  atpa: T2DPointArray;
+  i: Int32;
+begin
+  black := img.FindColor(65536 , 0);
+  text1 := img.FindColor(65535, 0);
+  shade := img.FindColor(3355443, 0);
+  tpa := black + text1;
+  tpa := tpa.Invert([0,0,img.Width-1, img.Height-1]);
+  atpa := tpa.Cluster(1);
+  for i := High(atpa) downto 0 do
+    if atpa[i].Intersection(shade).Length <> 0 then
+      atpa.Delete(i);
+  tpa := atpa.Merge + black;
+  img.DrawColor := $0;
+  img.DrawTPA(tpa.Invert([0,0,img.Width-1, img.Height-1]));
+  img.show;
+  sleep(5000);
 end;
 
 

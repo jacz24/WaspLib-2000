@@ -355,19 +355,19 @@ begin
 end;
 
 (*
-## MainScreen.WaiRedClick
+## MainScreen.WaitRedClick
 ```pascal
-function TRSMainScreen.WaiRedClick(time: Integer = 250): Boolean;
+function TRSMainScreen.WaitRedClick(time: Integer = 250): Boolean;
 ```
 Returns `True` if a the red cross from clicking an entity is visible on the
 mainscreen within `time` milliseconds.
 
 Example:
 ```pascal
-WriteLn MainScreen.WaiRedClick();
+WriteLn MainScreen.WaitRedClick();
 ```
 *)
-function TRSMainScreen.WaiRedClick(time: Integer = 250): Boolean;
+function TRSMainScreen.WaitRedClick(time: Integer = 250): Boolean;
 var
   area: TBox;
 begin
@@ -405,19 +405,19 @@ begin
 end;
 
 (*
-## MainScreen.WaiYellowClick
+## MainScreen.WaitYellowClick
 ```pascal
-function TRSMainScreen.WaiYellowClick(time: Integer = 250): Boolean;
+function TRSMainScreen.WaitYellowClick(time: Integer = 250): Boolean;
 ```
 Returns `True` if a the yellow cross from clicking to "walk here" is visible on the
 mainscreen within `time` milliseconds.
 
 Example:
 ```pascal
-WriteLn MainScreen.WaiYellowClick();
+WriteLn MainScreen.WaitYellowClick();
 ```
 *)
-function TRSMainScreen.WaiYellowClick(time: Integer = 250): Boolean;
+function TRSMainScreen.WaitYellowClick(time: Integer = 250): Boolean;
 var
   area: TBox;
 begin

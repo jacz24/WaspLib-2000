@@ -161,11 +161,15 @@ begin
     if (b.Width <> 36) or (b.Height <> 23) then
       raise GetDebugLn(Self.Name, 'DiscoverAllEx box has to be 36x23. You passed w: ' + ToStr(b.Width) + ' h: ' + ToStr(b.Height));
 
+    b := b.Expand(1, 0);
     img := TImage.CreateFromTarget(b);
-    //TODO:
-    //if ItemFinder.CleanItemBitmap(img) then
-    //  Result += ItemFinder.GetHashItems(ItemFinder.GetHash(bmp));
-    img.Free();
+    try
+      ItemFinder.CleanItemBitmap(img);
+      img.Crop(Box(1,0,img.Width-2,img.Height-1));
+      Result += ItemFinder.GetHashItems(ItemFinder.GetHash(img));
+    finally
+      img.Free();
+    end;
   end;
 end;
 
@@ -173,6 +177,7 @@ function TRSItemInterface.DiscoverAll(): TRSItemArray;
 var
   b: TBox;
   img: TImage;
+  items: TRSItemArray;
 begin
   if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
     Exit;
@@ -186,11 +191,17 @@ begin
     if (b.Width <> 36) or (b.Height <> 23) then
       raise GetDebugLn(Self.Name, 'DiscoverAll box has to be 36x23. You passed w: ' + ToStr(b.Width) + ' h: ' + ToStr(b.Height));
 
+    b := b.Expand(1, 0);
     img := TImage.CreateFromTarget(b);
-    //TODO:
-    //if ItemFinder.CleanItemBitmap(img) then
-    //  Result += ItemFinder.GetHashItems(ItemFinder.GetHash(img));
-    img.Free();
+    try
+      ItemFinder.CleanItemBitmap(img);
+      img.Crop(Box(1,0,img.Width-2,img.Height-1));
+      items := ItemFinder.GetHashItems(ItemFinder.GetHash(img));
+      if items.Length > 0 then
+        Result += items[0];
+    finally
+      img.Free();
+    end;
   end;
 end;
 
@@ -210,11 +221,15 @@ begin
   if (b.Width <> 36) or (b.Height <> 23) then
     raise GetDebugLn(Self.Name, 'Discover box has to be 36x23. You passed w: ' + ToStr(b.Width) + ' h: ' + ToStr(b.Height));
 
+  b := b.Expand(1, 0);
   img := TImage.CreateFromTarget(b);
-  //TODO:
-  //if ItemFinder.CleanItemBitmap(img) then
-  //  Result := ItemFinder.GetHashItems(ItemFinder.GetHash(img));
-  img.Free();
+  try
+    ItemFinder.CleanItemBitmap(img);
+    img.Crop(Box(1,0,img.Width-2,img.Height-1));
+    Result += ItemFinder.GetHashItems(ItemFinder.GetHash(img));
+  finally
+    img.Free();
+  end;
 end;
 
 
