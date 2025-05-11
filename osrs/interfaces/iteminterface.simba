@@ -143,63 +143,34 @@ begin
   Result := ItemFinder.FindAll(items, Self.Slots^.Boxes(), matches);
 end;
 
-
-function TRSItemInterface.DiscoverAllEx(): array of TRSItemArray;
+{%CODETOOLS OFF}
+function TRSItemInterface._Discover(slot: Integer): TRSItemArray;
 var
   b: TBox;
   img: TImage;
 begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
-    Exit;
-  for b in Self.Slots^.Boxes() do
-  begin
-    b.X1 += Self.DiscoverOffset.X1;
-    b.Y1 += Self.DiscoverOffset.Y1;
-    b.X2 += Self.DiscoverOffset.X2;
-    b.Y2 += Self.DiscoverOffset.Y2;
+  b := Self.Slots^.Box(slot);
+  b.X1 += Self.DiscoverOffset.X1;
+  b.Y1 += Self.DiscoverOffset.Y1;
+  b.X2 += Self.DiscoverOffset.X2;
+  b.Y2 += Self.DiscoverOffset.Y2;
 
-    if (b.Width <> 36) or (b.Height <> 23) then
-      raise GetDebugLn(Self.Name, 'DiscoverAllEx box has to be 36x23. You passed w: ' + ToStr(b.Width) + ' h: ' + ToStr(b.Height));
+  if (b.Width <> 36) or (b.Height <> 32) then
+    raise GetDebugLn(Self.Name, 'Discover box has to be 36x32. You passed w: ' + ToStr(b.Width) + ' h: ' + ToStr(b.Height));
 
-    img := TImage.CreateFromTarget(b);
-    try
-      ItemFinder.CleanItemBackground(img);
-      Result += ItemFinder.GetHashItems(ItemFinder.GetHash(img));
-    finally
-      img.Free();
-    end;
+  img := TImage.CreateFromTarget(b);
+  try
+    img.SetSize(img.Width + 1, img.Height + 1);
+    img.Offset(1,1);
+    ItemFinder.CleanItemBackground(img);
+    img.Crop([1, 10, 36, 32]);
+    img.Show;
+    Result := ItemFinder.GetHashItems(ItemFinder.GetHash(img));
+  finally
+    img.Free();
   end;
 end;
-
-function TRSItemInterface.DiscoverAll(): TRSItemArray;
-var
-  b: TBox;
-  img: TImage;
-  items: TRSItemArray;
-begin
-  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
-    Exit;
-  for b in Self.Slots^.Boxes() do
-  begin
-    b.X1 += Self.DiscoverOffset.X1;
-    b.Y1 += Self.DiscoverOffset.Y1;
-    b.X2 += Self.DiscoverOffset.X2;
-    b.Y2 += Self.DiscoverOffset.Y2;
-
-    if (b.Width <> 36) or (b.Height <> 23) then
-      raise GetDebugLn(Self.Name, 'DiscoverAll box has to be 36x23. You passed w: ' + ToStr(b.Width) + ' h: ' + ToStr(b.Height));
-
-    img := TImage.CreateFromTarget(b);
-    try
-      ItemFinder.CleanItemBackground(img);
-      items := ItemFinder.GetHashItems(ItemFinder.GetHash(img));
-      if items.Length > 0 then
-        Result += items[0];
-    finally
-      img.Free();
-    end;
-  end;
-end;
+{%CODETOOLS ON}
 
 function TRSItemInterface.Discover(slot: Integer): TRSItemArray;
 var
@@ -208,25 +179,36 @@ var
 begin
   if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
     Exit;
-  b := Self.Slots^.Box(slot);
-  b.X1 += Self.DiscoverOffset.X1;
-  b.Y1 += Self.DiscoverOffset.Y1;
-  b.X2 += Self.DiscoverOffset.X2;
-  b.Y2 += Self.DiscoverOffset.Y2;
 
-  if (b.Width <> 36) or (b.Height <> 23) then
-    raise GetDebugLn(Self.Name, 'Discover box has to be 36x23. You passed w: ' + ToStr(b.Width) + ' h: ' + ToStr(b.Height));
-
-  img := TImage.CreateFromTarget(b);
-  try
-    ItemFinder.CleanItemBackground(img);
-    Result += ItemFinder.GetHashItems(ItemFinder.GetHash(img));
-  finally
-    img.Free();
-  end;
+  Result := Self._Discover(slot);
 end;
 
+function TRSItemInterface.DiscoverAllEx(): array of TRSItemArray;
+var
+  slot: Integer;
+begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
 
+  for slot := Low(Self.Slots^.Boxes()) to High(Self.Slots^.Boxes()) do
+    Result += Self._Discover(slot);
+end;
+
+function TRSItemInterface.DiscoverAll(): TRSItemArray;
+var
+  slot: Integer;
+  items: TRSItemArray;
+begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
+
+  for slot := Low(Self.Slots^.Boxes()) to High(Self.Slots^.Boxes()) do
+  begin
+    items := Self._Discover(slot);
+    if items.Length > 0 then
+      Result += items[0];
+  end;
+end;
 
 function TRSItemInterface.FindDifferent(items: TRSItemArray): TIntegerArray;
 begin

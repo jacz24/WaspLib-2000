@@ -58,20 +58,20 @@ procedure ClearItemBackground(img: TImage);
 var
   border, shadow, tpa: TPointArray;
   atpa: T2DPointArray;
-  i: Int32;
+  i: Integer;
 begin
-  img.SetSize(img.Width + 2, img.Height);
-  img.Offset(1, 0);
   border := img.FindColor(RSColors.ITEM_BORDER , 0);
+  tpa := border;
+  for i := 0 to High(RSColors.STACK_COLORS) do
+    tpa += img.FindColor(RSColors.STACK_COLORS[i], 0);
   shadow := img.FindColor(RSColors.ITEM_SHADOW_GRAY, 0) + img.FindColor(RSColors.ITEM_SHADOW, 0);
-  atpa := border.Invert([0,0,img.Width-1, img.Height-1]).Cluster(1);
+  atpa := tpa.Invert([0,0,img.Width-1, img.Height-1]).Cluster(1);
   for i := High(atpa) downto 0 do
     if atpa[i].Intersection(shadow).Length <> 0 then
       atpa.Delete(i);
   tpa := atpa.Merge + border;
   img.DrawColor := $0;
   img.DrawTPA(tpa.Invert([0,0,img.Width-1, img.Height-1]));
-  img.Crop([1, 0, img.Width - 2, img.Height - 1]);
 end;
 
 function FileSort(constref l, r: String): Int32;
@@ -132,18 +132,18 @@ begin
         Continue;
 
       img := TImage.Create(current);
-      img.Crop([0, 9, 35, 31]);
-
-      if (img.Width <> 36) or (img.Height <> 23) then
+      if (img.Width <> 36) or (img.Height <> 32) then
       begin
         WriteLn(PathExtractName(current), ' has wrong dimensions.');
         img.Free();
         Continue;
       end;
 
-      id := PathExtractName(current).Before('.png');
-
+      img.SetSize(img.Width + 1, img.Height + 1);
+      img.Offset(1,1);
       ClearItemBackground(img);
+      img.Crop([1, 10, 36, 32]);
+
       hash := img.GetHash();
       if not FileAppend(PATH + 'hash', hash + LINE_SEP) then
       begin
@@ -151,6 +151,7 @@ begin
         TerminateScript();
       end;
 
+      id := PathExtractName(current).Before('.png');
       if not img.Save(MODDED_PATH + id + '.png') then
       begin
         WriteLn 'Failed to write to img file';
@@ -197,9 +198,9 @@ begin
 
   img := TImage.Create(TMP_PATH + PATH_SEP + itemID + '.png');
   img.ReplaceColor(0, $00FF00);
-  img.Crop([0, 9, 35, 31]);
+  img.Crop([0, 0, 35, 31]);
 
-  if (img.Width <> 36) or (img.Height <> 23) then
+  if (img.Width <> 36) or (img.Height <> 32) then
   begin
     WriteLn(PathExtractName(current), ' has wrong dimensions.');
     img.Free();

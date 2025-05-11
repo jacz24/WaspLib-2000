@@ -321,20 +321,20 @@ procedure TRSItemFinder.CleanItemBackground(img: TImage);
 var
   border, shadow, tpa: TPointArray;
   atpa: T2DPointArray;
-  i: Int32;
+  i: Integer;
 begin
-  img.SetSize(img.Width + 2, img.Height);
-  img.Offset(1, 0);
   border := img.FindColor(RSColors.ITEM_BORDER , 0);
+  tpa := border;
+  for i := 0 to High(RSColors.STACK_COLORS) do
+    tpa += img.FindColor(RSColors.STACK_COLORS[i], 0);
   shadow := img.FindColor(RSColors.ITEM_SHADOW_GRAY, 0) + img.FindColor(RSColors.ITEM_SHADOW, 0);
-  atpa := border.Invert([0,0,img.Width-1, img.Height-1]).Cluster(1);
+  atpa := tpa.Invert([0,0,img.Width-1, img.Height-1]).Cluster(1);
   for i := High(atpa) downto 0 do
     if atpa[i].Intersection(shadow).Length <> 0 then
       atpa.Delete(i);
   tpa := atpa.Merge + border;
   img.DrawColor := $0;
   img.DrawTPA(tpa.Invert([0,0,img.Width-1, img.Height-1]));
-  img.Crop([1, 0, img.Width - 2, img.Height - 1]);
 end;
 
 var
