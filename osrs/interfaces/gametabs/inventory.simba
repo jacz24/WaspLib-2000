@@ -34,7 +34,7 @@ function TRSInventory.Open(): Boolean; forward;
 procedure TRSInventory.SetupGameTab();
 begin
   Self.Slots.Setup('Inventory.Slots', TBoxArray.Create(GameTab.TopLeft.Offset(13,9), 4, 7, 31, 31, [11, 5]));
-  Self.Items.Setup('Inventory.Items', @Self.Slots, [0, 9, 4, 0], @Self.Open);
+  Self.Items.Setup('Inventory.Items', @Self.Slots, [0, 0, 4, 0], @Self.Open);
   Self.ShiftEnabled := True;
 end;
 
