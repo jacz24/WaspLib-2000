@@ -688,3 +688,37 @@ begin
   img.Show();
   img.Free();
 end;
+
+(*
+## MainScreen.GetPlayerBox
+```pascal
+function TRSMainScreen.GetPlayerBox(): TBox;
+```
+Returns a `TBox` on the mainscreen that tightly bounds the player.
+
+Results are cached per zoom level to avoid unnecessary recomputation.
+
+Example:
+```pascal
+WriteLn(MainScreen.GetPlayerBox());
+```
+*)
+
+function TRSMainScreen.GetPlayerBox(): TBox;
+var
+  compassAngle: Double;
+  vectors: TVector3Array;
+begin
+  if MM2MS.PlayerBoxes[Options.GetZoomLevel()] <> [] then
+    Exit(MM2MS.PlayerBoxes[Options.GetZoomLevel()]);
+
+  compassAngle := Minimap.GetCompassAngle(False);
+
+  vectors := [
+    Minimap.Center.Offset(-2,0).ToVec3(9).Rotate(-compassAngle, Minimap.Center),
+    Minimap.Center.Offset(2,0).ToVec3(-3).Rotate(-compassAngle, Minimap.Center)
+  ];
+
+  Result := MM2MS.Run(vectors, compassAngle).Bounds;
+  MM2MS.PlayerBoxes[Options.GetZoomLevel()] := Result;
+end;

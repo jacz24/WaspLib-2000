@@ -164,7 +164,6 @@ begin
     img.Offset(1,1);
     ItemFinder.CleanItemBackground(img);
     img.Crop([1, 10, 36, 32]);
-    img.Show;
     Result := ItemFinder.GetHashItems(ItemFinder.GetHash(img));
   finally
     img.Free();
