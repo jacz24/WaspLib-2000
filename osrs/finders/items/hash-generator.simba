@@ -1,7 +1,7 @@
-{$I SRL-T/utils.simba}
+{$I WaspLib/utils.simba}
 
 const
-  PATH = {$macro CURRENT_DIRECTORY};
+  PATH = {$MACRO DIR};
   RS_ITEM_BORDER = $010000;
   RS_ITEM_SHADOW = $202030;
   CLEANUP = True;
@@ -31,7 +31,7 @@ begin
   shortHashes += short;
 end;
 
-function TMufasaBitmap.GetHash(): String;
+function TImage.GetHash(): String;
 var
   pixels: TIntegerArray;
   str: String;
@@ -48,171 +48,31 @@ begin
   end;
 
   str := LowerCase(IntToHex(h, 16));
-  Result := str.SubString(Length(str)-8, Length(str));
+  Result := str.CopyRange(str.Length-8, str.Length);
 
   AddHash(Result, Result);
 end;
 
-function ClearItemBackground(bmp: TMufasaBitmap): Boolean;
-const
-  NOTED_TPA: TPointArray = [[2,0],[2,1],[2,2],[2,3],[3,4],[4,4],[2,5],[1,6],[1,7],[1,8],[1,9],[1,10],[1,11],[1,12],[1,13],[1,14],[1,15],[1,16],[1,17],[2,18],[3,18],[4,18],[5,18],[6,18],[7,18],[8,18],[9,18],[10,18],[11,18],[12,19],[13,19],[14,19],[15,19],[16,19],[17,19],[18,19],[19,20],[20,20],[21,20],[22,20],[23,20],[24,20],[25,20],[26,20],[27,20],[28,19],[28,18],[28,17],[28,16],[28,15],[28,14],[28,13],[28,12],[28,11],[27,10],[27,9],[27,8],[28,7],[28,6],[28,5],[28,4],[28,3],[28,2],[29,1],[29,0]];
+//Author: Slacky
+procedure ClearItemBackground(img: TImage);
 var
-  border, shadow, tpa, item, corners, bg: TPointArray;
-  count, x, y, i: Int32;
-  p: TPoint;
-  b: TBox;
-  matrix: T2DIntArray;
+  border, shadow, tpa: TPointArray;
   atpa: T2DPointArray;
-  noted: Boolean;
+  i: Integer;
 begin
-  if not bmp.FindColors(border, RS_ITEM_BORDER) then
-    Exit;
-
-  Result := True;
-
-  bmp.FindColors(shadow, RS_ITEM_SHADOW);
-  if bmp.FindColors(tpa, $333333) then
-    shadow += tpa;
-
-  matrix := bmp.ToMatrix();
-
-  corners := [[0,bmp.getHeight()-1], [bmp.getWidth()-1,bmp.getHeight()-1]];
-
-  tpa := border.Invert(bmp.Bounds());
-  atpa := tpa.NRCluster(1);
+  border := img.FindColor(RSColors.ITEM_BORDER , 0);
+  tpa := border;
+  for i := 0 to High(RSColors.STACK_COLORS) do
+    tpa += img.FindColor(RSColors.STACK_COLORS[i], 0);
+  shadow := img.FindColor(RSColors.ITEM_SHADOW_GRAY, 0) + img.FindColor(RSColors.ITEM_SHADOW, 0);
+  atpa := tpa.Invert([0,0,img.Width-1, img.Height-1]).Cluster(1);
   for i := High(atpa) downto 0 do
-    if atpa[i].Contains(corners[0]) or atpa[i].Contains(corners[1]) then
-    begin
-      bg += atpa[i];
-      Delete(atpa, i, 1);
-    end;
-
-  noted := True;
-  for i := 0 to High(NOTED_TPA) do
-    if matrix[NOTED_TPA[i].y, NOTED_TPA[i].x] <> RS_ITEM_BORDER then
-    begin
-      noted := False;
-      Break;
-    end;
-
-  if noted then
-    b := border.Bounds().Expand(-2)
-  else
-    b := border.Bounds();
-
-  for y := b.Y1 to b.Y2 do
-  begin
-    count := 0;
-    tpa := [];
-
-    for x := b.X1 to b.X2 do
-    begin
-      case matrix[y,x] of
-        RS_ITEM_BORDER: if Inc(count) > 2 then Continue(2);
-        else if count = 1 then tpa += [x,y];
-      end;
-    end;
-
-    if (count = 2) and (Length(tpa) > 3) then
-      item += tpa;
-  end;
-
-  for x := b.X1 to b.X2 do
-  begin
-    count := 0;
-    tpa := [];
-
-    for y := b.Y1 to b.Y2 do
-    begin
-      case matrix[y,x] of
-        RS_ITEM_BORDER: if Inc(count) > 2 then Continue(2);
-        else if count = 1 then tpa += [x,y];
-      end;
-    end;
-
-    if (count = 2) and (Length(tpa) > 3) then
-      item += tpa;
-  end;
-
-  for p in item do matrix[p.Y, p.X] := $00FFFF;
-  item := [];
-
-  for y := b.Y2 downto b.Y1 do
-  begin
-    count := 0;
-    tpa := [];
-
-    for x := b.X2 downto b.X1 do
-    begin
-      case matrix[y,x] of
-        RS_ITEM_BORDER: if Inc(count) > 2 then Continue(2);
-        $00FFFF:
-        case count of
-         0: matrix[y,x] := $0;
-         1: Inc(count);
-         2: Continue(2);
-        end;
-        else if count = 1 then tpa += [x,y];
-      end;
-    end;
-
-    if (count = 2) and (Length(tpa) > 3) then
-      item += tpa;
-  end;
-
-  for x := b.X2 downto b.X1 do
-  begin
-    count := 0;
-    tpa := [];
-
-    for y := b.Y2 downto b.Y1 do
-    begin
-      case matrix[y,x] of
-        RS_ITEM_BORDER: if Inc(count) > 2 then Continue(2);
-        $00FFFF:
-        case count of
-         0: matrix[y,x] := $0;
-         1: Inc(count);
-         2: Continue(2);
-        end;
-        else if count = 1 then tpa += [x,y];
-      end;
-    end;
-
-    if (count = 2) and (Length(tpa) > 3) then
-      item += tpa;
-  end;
-
-  for p in shadow do
-  begin
-    p := [p.X-1, p.Y-1];
-    if p.InBox(b) then
-      item += p;
-  end;
-
-  for p in item do matrix[p.Y, p.X] := $00FFFF;
-
-  item := [];
-  for y := 0 to High(matrix) do
-    for x := 0 to High(matrix[y]) do
-      if matrix[y,x] = $00FFFF then
-        item += [x,y];
-
-  item += border;
-
-  for tpa in atpa do
-    for p in item do
-      if tpa.Contains(p) then
-      begin
-        item += tpa;
-        Continue(2);
-      end;
-
-  tpa := item.Invert(bmp.Bounds());
-
-  bmp.DrawTPA(tpa + bg, $0);
+    if atpa[i].Intersection(shadow).Length <> 0 then
+      atpa.Delete(i);
+  tpa := atpa.Merge + border;
+  img.DrawColor := $0;
+  img.DrawTPA(tpa.Invert([0,0,img.Width-1, img.Height-1]));
 end;
-
 
 function FileSort(constref l, r: String): Int32;
 begin
@@ -222,78 +82,91 @@ begin
   if l > r then Exit(1);
 end;
 
-
+(*
+CreateHashesFile
+----------------
+```
+procedure CreateHashesFile()
+```
+*)
 procedure CreateHashesFile();
 const
   ZIP_FILE = PATH + 'images.zip';
   TMP_PATH = PATH + 'images';
-  MODDED_PATH = PATH + 'modded' + DirectorySeparator;
+  MODDED_PATH = PATH + 'modded' + PATH_SEP;
 var
   current, hash, id: String;
-  bmp: TMufasaBitmap;
+  img: TImage;
   t: UInt64;
 begin
   try
-    if not DirectoryExists(TMP_PATH) then
+    if not DirExists(TMP_PATH) then
     begin
       WriteLn 'unzipping... this will take a while.';
-      UnZipFile(ZIP_FILE, TMP_PATH);
+      ZipExtract(ZIP_FILE, TMP_PATH);
       WriteLn 'Done unzipping.';
     end;
 
-    if DirectoryExists(MODDED_PATH) then
-      DeleteDirectory(MODDED_PATH, True);
+    if DirExists(MODDED_PATH) then
+      DirDelete(MODDED_PATH, True);
 
-    ForceDirectories(MODDED_PATH);
+    DirCreate(MODDED_PATH);
 
     if FileExists(PATH + 'hash') then
-      if not DeleteFile(PATH + 'hash') then
+      if not FileDelete(PATH + 'hash') then
       begin
         WriteLn 'Something went wrong deleting the old hashes file. No privilleges?';
         TerminateScript();
       end;
 
     t := Time();
-
-    for current in Sorted(FindFiles(TMP_PATH + '\', ['.png']), @FileSort) do
+    if not FileCreate(PATH + 'hash') then
     begin
-      bmp.Init();
-      bmp.LoadFromFile(current);
-      bmp.Crop(0, 9, 35, 31);
+      WriteLn 'Something went wrong creating a new hashes file.';
+      TerminateScript;
+    end;
 
-      if (bmp.getWidth() <> 36) or (bmp.getHeight() <> 23) then
+    for current in Sorted(DirList(TMP_PATH + '\'), @FileSort) do
+    begin
+      if not current.EndsWith('png', False) then
+        Continue;
+
+      img := TImage.Create(current);
+      if (img.Width <> 36) or (img.Height <> 32) then
       begin
-        WriteLn(ExtractFileName(current), ' has wrong dimensions.');
-        bmp.Free();
+        WriteLn(PathExtractName(current), ' has wrong dimensions.');
+        img.Free();
         Continue;
       end;
 
-      id := ExtractFileName(current).Before('.png');
+      img.SetSize(img.Width + 1, img.Height + 1);
+      img.Offset(1,1);
+      ClearItemBackground(img);
+      img.Crop([1, 10, 36, 32]);
 
-      ClearItemBackground(bmp);
-      hash := bmp.GetHash();
-
-      if not WriteFileContents(PATH + 'hash', hash + LineEnding, True) then
+      hash := img.GetHash();
+      if not FileAppend(PATH + 'hash', hash + LINE_SEP) then
       begin
         WriteLn 'Failed to write to hash';
         TerminateScript();
       end;
 
-      if not bmp.SaveToFile(MODDED_PATH + id + '.png') then
+      id := PathExtractName(current).Before('.png');
+      if not img.Save(MODDED_PATH + id + '.png') then
       begin
         WriteLn 'Failed to write to img file';
         TerminateScript();
       end;
 
-      bmp.Free();
+      img.Free();
     end;
 
     WriteLn('Hashing all files took: ', (Time()-t) div 1000, ' seconds.');
   finally
     if CLEANUP then
     begin
-      DeleteDirectory(TMP_PATH, False);
-      DeleteDirectory(MODDED_PATH, False);
+      DirDelete(TMP_PATH, False);
+      DirDelete(MODDED_PATH, False);
     end;
   end;
 end;
@@ -302,65 +175,63 @@ procedure TestHash(itemID: String);
 const
   ZIP_FILE = PATH + 'images.zip';
   TMP_PATH = PATH + 'images';
-  MODDED_PATH = PATH + 'modded' + DirectorySeparator;
+  MODDED_PATH = PATH + 'modded' + PATH_SEP;
 var
   current, hash, id: String;
-  bmp: TMufasaBitmap;
+  img: TImage;
 begin
-  if not DirectoryExists(TMP_PATH) then
+  if not DirExists(TMP_PATH) then
   begin
     WriteLn 'unzipping... this will take a while.';
-    UnZipFile(ZIP_FILE, TMP_PATH);
+    ZipExtract(ZIP_FILE, TMP_PATH);
     WriteLn 'Done unzipping.';
   end;
 
-  ForceDirectories(MODDED_PATH);
+  DirCreate(MODDED_PATH);
 
   if FileExists(MODDED_PATH + id + '.png') then
-    if not DeleteFile(MODDED_PATH + id + '.png') then
+    if not FileDelete(MODDED_PATH + id + '.png') then
     begin
       WriteLn 'Couldn''t delete modded/ ' + id + '.png';
       TerminateScript();
     end;
 
-  bmp.Init();
-  current := TMP_PATH + DirectorySeparator + itemID + '.png';
-  bmp.LoadFromFile(current);
-  bmp.ReplaceColor(0, $00FF00);
-  bmp.Crop(0, 9, 35, 31);
+  img := TImage.Create(TMP_PATH + PATH_SEP + itemID + '.png');
+  img.ReplaceColor(0, $00FF00);
+  img.Crop([0, 0, 35, 31]);
 
-  if (bmp.getWidth() <> 36) or (bmp.getHeight() <> 23) then
+  if (img.Width <> 36) or (img.Height <> 32) then
   begin
-    WriteLn(ExtractFileName(current), ' has wrong dimensions.');
-    bmp.Free();
+    WriteLn(PathExtractName(current), ' has wrong dimensions.');
+    img.Free();
     Exit;
   end;
 
-  id := ExtractFileName(current).Before('.png');
+  id := PathExtractName(current).Before('.png');
 
-  ClearItemBackground(bmp);
+  ClearItemBackground(img);
 
-  ShowBitmap(bmp);
+  img.Show();
 
-  hash := bmp.GetHash();
+  hash := img.GetHash();
 
-  if not bmp.SaveToFile(MODDED_PATH + id + '.png') then
+  if not img.Save(MODDED_PATH + id + '.png') then
   begin
     WriteLn 'Failed to write to img file';
     TerminateScript();
   end;
 
   WriteLn hash;
-  bmp.Free();
+  img.Free();
 end;
 
 begin
   CreateHashesFile();
   WriteLn(
-    'Total Unique Items: ', unique, LINEENDING,
-    'Total Full Hashes:', Length(fullHashes), LINEENDING,
-    'Total Short Hashes:', Length(shortHashes), LINEENDING,
-    'Total Collisions:', collisions, LINEENDING,
-    'Total Short Collisions:', shortCollisions, LINEENDING
+    'Total Unique Items: ', unique, LINE_SEP,
+    'Total Full Hashes:', Length(fullHashes), LINE_SEP,
+    'Total Short Hashes:', Length(shortHashes), LINE_SEP,
+    'Total Collisions:', collisions, LINE_SEP,
+    'Total Short Collisions:', shortCollisions, LINE_SEP
   );
 end.
