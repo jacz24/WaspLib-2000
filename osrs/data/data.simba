@@ -22,7 +22,7 @@ Record responsible for providing item information in WaspLib.
     const PRICES_URL: String = 'https://prices.runescape.wiki/api/v1/osrs/latest';
   end;
 
-  EItemDataKey = (
+  EItemDataKey = enum(
     ID,
     NAME,
     RESIZE_X,
