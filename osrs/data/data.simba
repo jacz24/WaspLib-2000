@@ -22,6 +22,57 @@ Record responsible for providing item information in WaspLib.
     const PRICES_URL: String = 'https://prices.runescape.wiki/api/v1/osrs/latest';
   end;
 
+  EItemDataKey = enum(
+    ID,
+    NAME,
+    RESIZE_X,
+    RESIZE_Y,
+    RESIZE_Z,
+    XAN_2D,
+    YAN_2D,
+    ZAN_2D,
+    COST,
+    TRADEABLE,
+    STACKABLE,
+    INVENTORY_MODEL,
+    WEAR_POS_1,
+    WEAR_POS_2,
+    WEAR_POS_3,
+    MEMBERS,
+    COLOR_FIND,
+    COLOR_REPLACE,
+    ZOOM_2D,
+    X_OFFSET_2D,
+    Y_OFFSET_2D,
+    AMBIENT,
+    CONTRAST,
+    OPTIONS,
+    INTERFACE_OPTIONS,
+    MALE_MODEL_0,
+    MALE_MODEL_1,
+    MALE_MODEL_2,
+    MALE_OFFSET,
+    MALE_HEAD_MODEL,
+    MALE_HEAD_MODEL_2,
+    FEMALE_MODEL_0,
+    FEMALE_MODEL_1,
+    FEMALE_MODEL_2,
+    FEMALE_OFFSET,
+    FEMALE_HEAD_MODEL,
+    FEMALE_HEAD_MODEL_2,
+    CATEGORY,
+    NOTED_ID,
+    NOTED_TEMPLATE,
+    TEAM,
+    WEIGHT,
+    SHIFT_CLICK_DROP_INDEX,
+    BOUGHT_ID,
+    BOUGHT_TEMPLATE_ID,
+    PLACEHOLDER_ID,
+    PLACEHOLDER_TEMPLATE_ID,
+    PARAMS
+  );
+
 procedure TItemData.Free();
 begin
   if Self.PricesJSON = nil then Exit;
@@ -172,7 +223,7 @@ begin
   for id in ids do
   begin
     json := Self.GetDefinition(id);
-    if json.Item[9].AsBool then
+    if json.Item[Ord(EItemDataKey.TRADEABLE)].AsBool then
       Exit(id); //9 is "tradeable" key
   end;
 end;
@@ -244,7 +295,7 @@ begin
   for id in ids do
   begin
     json := Self.GetDefinition(id);
-    value := json.Item[8].AsInt; //8 is "cost" key
+    value := json.Item[Ord(EItemDataKey.COST)].AsInt; //8 is "cost" key
     if value > 0 then
       Exit(Round(value * 0.4));
   end;
@@ -275,9 +326,27 @@ begin
   for id in ids do
   begin
     json := Self.GetDefinition(id);
-    value := json.Item[8].AsInt; //8 is "cost" key
+    value := json.Item[Ord(EItemDataKey.COST)].AsInt; //8 is "cost" key
     if value > 0 then
       Exit(Round(value * 0.6));
+  end;
+end;
+
+function TItemData.isStackable(item: TRSItem): Boolean;
+var
+  ids: TStringArray;
+  id: String;
+  json: TJSONItem;
+  stackable: Boolean;
+begin
+  if item.IsNumeric then ids := [item]
+  else ids := ItemFinder.Database.GetAll(item.ToLower(), 'item', 'id');
+  for id in ids do
+  begin
+    json := Self.GetDefinition(id);
+    stackable := json.Item[Ord(EItemDataKey.STACKABLE)].AsBool;
+    if stackable then
+      Exit(stackable);
   end;
 end;
 
