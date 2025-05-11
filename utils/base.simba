@@ -16,6 +16,7 @@ type
     TimeRunning: TStopwatch;
     IsSetup: Boolean;
     ReportNames: TStringArray;
+    ValuesGetter: function: TStringArray of Object;
   end;
 
 procedure TLogger._Setup();
@@ -134,6 +135,10 @@ begin
   Result := header + LINE_SEP + lines + btm;
 end;
 
+procedure TLogger.Report();
+begin
+  WriteLn self.GetReport(self.ValuesGetter());
+end;
 
 
 var
@@ -167,4 +172,22 @@ begin
     EErrorLevel.WARN:    Result := #0#0'000002' + GetDebugLn(name, text, log);
     EErrorLevel.ERROR:   Result := #0#0'000004' + GetDebugLn(name, text, log);
   end;
+end;
+
+procedure TLogger.Info(text: String; vars: array of Variant = []);
+begin
+  self.AddLine(Format('[Info] : %s', [text]));
+  WriteLn(GetDebugLn(self.Name, Format(text, vars), EErrorLevel.SUCCESS, True));
+end;
+
+procedure TLogger.Warn(text: String; vars: array of Variant = []);
+begin
+  self.AddLine(Format('[Warn] : %s', [text]));
+  WriteLn(GetDebugLn(self.Name, Format(text, vars), EErrorLevel.WARN, True));
+end;
+
+procedure TLogger.Error(text: String; vars: array of Variant = []);
+begin
+  self.AddLine(Format('[ERROR] : %s', [text]));
+  WriteLn(GetDebugLn(self.Name, Format(text, vars), EErrorLevel.ERROR, True));
 end;
