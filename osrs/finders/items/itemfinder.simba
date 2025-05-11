@@ -103,7 +103,7 @@ end;
 
 function TRSItemFinder.GetIDs(item: String): TStringArray;
 begin
-  Result := Self.Database.GetAll(item, 'item', 'id');
+  Result := Self.Database.GetAll(item.ToLower, 'item', 'id');
 end;
 
 function TRSItemFinder.GetHashItems(hash: String): TRSItemArray;
@@ -316,28 +316,26 @@ begin
   Result := str.CopyRange(Length(str)-8, Length(str));
 end;
 
-function TRSItemFinder.CleanItemBitmap(img: TImage): Boolean;
+//Author: Slacky
+procedure TRSItemFinder.CleanItemBackground(img: TImage);
 var
-  black, text1, shade, tpa: TPointArray;
+  border, shadow, tpa: TPointArray;
   atpa: T2DPointArray;
   i: Int32;
 begin
-  black := img.FindColor(65536 , 0);
-  text1 := img.FindColor(65535, 0);
-  shade := img.FindColor(3355443, 0);
-  tpa := black + text1;
-  tpa := tpa.Invert([0,0,img.Width-1, img.Height-1]);
-  atpa := tpa.Cluster(1);
+  img.SetSize(img.Width + 2, img.Height);
+  img.Offset(1, 0);
+  border := img.FindColor(RSColors.ITEM_BORDER , 0);
+  shadow := img.FindColor(RSColors.ITEM_SHADOW_GRAY, 0) + img.FindColor(RSColors.ITEM_SHADOW, 0);
+  atpa := border.Invert([0,0,img.Width-1, img.Height-1]).Cluster(1);
   for i := High(atpa) downto 0 do
-    if atpa[i].Intersection(shade).Length <> 0 then
+    if atpa[i].Intersection(shadow).Length <> 0 then
       atpa.Delete(i);
-  tpa := atpa.Merge + black;
+  tpa := atpa.Merge + border;
   img.DrawColor := $0;
   img.DrawTPA(tpa.Invert([0,0,img.Width-1, img.Height-1]));
-  img.show;
-  sleep(5000);
+  img.Crop([1, 0, img.Width - 2, img.Height - 1]);
 end;
-
 
 var
   ItemFinder: TRSItemFinder;
