@@ -20,7 +20,7 @@ You can also use them very effectively for this type of buttons that are "linked
 With "linked", it means that enabling one, disabled the linked one(s).
 
 You can also use them for other types of buttons and imagination is the limit
-but in a slot of cases you won't be able to make use of the {ref}`TRSButton`
+but in a lot of cases you won't be able to make use of the {ref}`TRSButton`
 methods.
 *)
   TRSButton = record
@@ -163,6 +163,14 @@ begin
     img.DrawBox(button.Bounds);
 
   img.DrawColor := oldColor;
+end;
+
+function TRSButtonArray.Create(enabledColors: array of record Color: TColor; Tolerance: Single; end; boxes: TBoxArray): TRSButtonArray; static;
+var
+  b: TBox;
+begin
+  for b in boxes do
+    Result += [enabledColors, b];
 end;
 
 procedure ShowOnClient(buttons: TRSButtonArray); overload;
