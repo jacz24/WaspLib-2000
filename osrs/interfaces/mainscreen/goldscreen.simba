@@ -61,12 +61,17 @@ end;
 
 function ERSGoldItem.FromItem(item: TRSItem): ERSGoldItem; static;
 var
-  e: ERSGoldItem;
+  e: ERSGoldItem;  
+  enumNormalString: String;
+  normalString: String;
 begin
   for e := Low(ERSGoldItem) to High(ERSGoldItem) do
-    if SameText(ToString(e).Replace('_', ' '),
-                ToString(item).Replace('(u)', '').Trim()) then
+  begin
+    enumNormalString := ToString(e).Replace('_', ' ').Replace('ERSGoldItem.', '').ToLower();
+    normalString := ToString(item).Replace('(u)', '').Trim().ToLower();
+    if SameText(enumNormalString, normalString) then
       Exit(e);
+  end;
 end;
 
 const
@@ -272,7 +277,6 @@ begin
       btn.Click();
       Exit(Chat.AnswerQuery('Enter amount', ToString(Amount), 3000));
     end;
-
 end;
 
 (*
