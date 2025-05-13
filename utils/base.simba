@@ -175,19 +175,28 @@ begin
 end;
 
 procedure TLogger.Info(text: String; vars: array of Variant = []);
+var
+  formatted: String;
 begin
-  self.AddLine(Format('[Info] : %s', [text]));
-  WriteLn(GetDebugLn(self.Name, Format(text, vars), EErrorLevel.SUCCESS, True));
+  formatted := Format(text, vars);
+  self.AddLine(Format('[Info] : %s', [formatted]));
+  WriteLn(GetDebugLn(self.Name, formatted, EErrorLevel.SUCCESS, True));
 end;
 
 procedure TLogger.Warn(text: String; vars: array of Variant = []);
+var
+  formatted: String;
 begin
-  self.AddLine(Format('[Warn] : %s', [text]));
-  WriteLn(GetDebugLn(self.Name, Format(text, vars), EErrorLevel.WARN, True));
+  formatted := Format(text, vars);
+  self.AddLine(Format('[Warn] : %s', [formatted]));
+  WriteLn(GetDebugLn(self.Name, formatted, EErrorLevel.WARN, True));
 end;
 
 procedure TLogger.Error(text: String; vars: array of Variant = []);
+var
+  formatted: String;
 begin
-  self.AddLine(Format('[ERROR] : %s', [text]));
-  WriteLn(GetDebugLn(self.Name, Format(text, vars), EErrorLevel.ERROR, True));
+  formatted := Format(text, vars);
+  self.AddLine(Format('[ERROR] : %s', [formatted]));
+  WriteLn(GetDebugLn(self.Name, formatted, EErrorLevel.ERROR, True));
 end;
