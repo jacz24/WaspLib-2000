@@ -8,6 +8,25 @@ Methods and functions related to geometry.
 
 {$loadlib ../../plugins/libtpaex/libtpaex}
 
+function TBox.ContainsBox(other: TBox): Boolean;
+begin
+  Result := InRange(other.X1, Self.X1, Self.X2) and
+            InRange(other.X2, Self.X1, Self.X2) and
+            InRange(other.Y1, Self.Y1, Self.Y2) and
+            InRange(other.Y2, Self.Y1, Self.Y2);
+end;
+
+function TBox.ContainsQuad(other: TQuad): Boolean;
+begin
+  Result := Self.Contains(other.Top) and Self.Contains(other.Left) and Self.Contains(other.Bottom) and Self.Contains(other.Right);
+end;
+
+function TBox.Overlap(other: TBox): Boolean;
+begin
+  Result := (Self.X1 <= other.X2) and (Self.X2 >= other.X1) and
+            (Self.Y1 <= other.Y2) and (Self.Y2 >= other.Y1);
+end;
+
 function TPoint.ToVec2(): TVector2;
 begin
   Result.X := Self.X;
@@ -211,15 +230,4 @@ begin
   img.Show();
   img.Free();
 end;
-
-function TVector2.Rotate(angle: Single; center: TVector2): TVector2; overload;
-begin
-  Result := Self.Rotate(angle, center.X, center.Y);
-end;
-
-function TVector3.Rotate(angle: Single; center: TVector2): TVector3; overload;
-begin
-  Result := Self.Rotate(angle, center.X, center.Y);
-end;
-
 

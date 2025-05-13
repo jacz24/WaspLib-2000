@@ -184,6 +184,37 @@ begin
     Result += Self.Point2MM(playerPoint, pt, radians);
 end;
 
+function TRSWalker.FilterToMM(playerPoint: TPoint; dotFilter: TRSDotFilter; radians: Single): TRSDotFilter;
+var pt: TPoint;
+begin
+  if dotFilter.Circle <> [] then
+    with Self.Point2MM(playerPoint, dotFilter.Circle.Center, radians) do
+      Result.Circle := [X, Y, dotFilter.Circle.Radius];
+
+  for pt in Self.Points2MM(playerPoint, dotFilter.Poly, radians) do
+    Result.Poly += pt;
+  Result.Inside  := dotFilter.Inside;
+  Result.Timeout := dotFilter.Timeout;
+  Result.Timer   := dotFilter.Timer;
+end;
+
+function TRSWalker.FiltersToMM(playerPoint: TPoint; dotFilters: TRSDotFilterArray; radians: Single): TRSDotFilterArray;
+var
+  i: Int32;
+begin
+
+  for i := High(dotFilters) downto 0 do
+  begin
+    if dotFilters[i].IsExpired() then
+    begin
+      Delete(dotFilters, i, 1);
+      Continue;
+    end;
+
+    Result += Self.FilterToMM(playerPoint, dotFilters[i], radians);
+  end;
+end;
+
 function TRSWalker.GetLocalEx(tpa: TPointArray; offset: TPoint = [0,0]): TPointArray;
 var
   pt: TPoint;

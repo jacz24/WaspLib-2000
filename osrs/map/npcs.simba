@@ -11,7 +11,7 @@ type
     UpText: TStringArray;
     Size: TVector3;
     Coordinates: TPointArray;
-    //Filters: TRSDotFilter;
+    Filter: TRSDotFilter;
     Finder: TColorFinder;
     UseDot, Track: Boolean;
     Walker: PRSWalker;
@@ -69,32 +69,56 @@ end;
 
 
 function TRSNPC.GetCuboidArray(me: TPoint; angle: Single = $FFFF): TCuboidArray;
+  //gets the points on the rotated minimap which correspond the closest to actual tile coordinates
+  function _GetMinimapGrid(angle: Single): TVector3Array;
+  var x,y: Integer;
+  begin
+    for x := Minimap.Center.X - 10 * 4 to Minimap.Center.X + 10 * 4 with 4 do
+      for y := Minimap.Center.Y - 10 * 4 to Minimap.Center.Y + 10 * 4 with 4 do
+        Result += point(x,y).ToVec3().Rotate(angle, Minimap.Center);
+  end;
 var
   weights: TDoubleArray;
   pt: TPoint;
   h, diff: Single;
   i: Integer;
   dist: Double;
+  vec2: TVector2;
+  vec3: TVector3;
+  dots: TPointArray;
 begin
   if angle = $FFFF then angle := Minimap.GetCompassAngle(False);
 
   h := Self.Walker^.Height(me);
 
-  for i := 0 to High(Self.Coordinates) do
+  if Self.Filter <> [] then
   begin
-    pt := Self.Coordinates[i];
-    dist := me.DistanceTo(pt);
-    if dist <= 85 then
-    begin
-      weights += dist;
-      diff := -(h-Self.Walker^.Height(pt));
-      with Self.Walker^.Point2MMVec(me, pt, angle) do
-        Result += Minimap.Vector2MSCuboid([X + 0.15*diff, Y + 0.11*diff, 0], Self.Size, angle,  [0,0,diff]);
-    end;
-  end;
+    dots := Minimap.GetFilteredDotArray(ERSMinimapDot.NPC, Self.Walker^.FiltersToMM(me, [Self.Filter], angle));
+    if dots = [] then Exit;
 
-  if Result <> [] then
-    Result.Sort(weights, True);
+    dots := dots.SortFrom(Minimap.Center);
+    for i := 0 to High(dots) do
+    begin
+      pt := Self.Walker^.MM2Map(me, dots[i], angle); // transfer back from minimap grid to map grid
+      pt := RSTranslator.NormalizeNearestTile(pt) + [2,2]*(Ceil(Max(Self.Size.X, Self.Size.Y))-1); //Go from topleft corner of npc to center
+      diff := -(h-Self.Walker^.Height(pt))/4;
+      vec2 := Self.Walker^.Point2MMVec(me, pt, angle); //translate back to MM space, use vectors to avoid rounding errors
+      vec3 := vec2.ToVec3(diff);
+      Result += Minimap.Vector2MSCuboid(vec3, Self.Size, angle, [0,0,diff]);
+    end;
+  end else
+    for i := 0 to High(Self.Coordinates) do
+    begin
+      pt := Self.Coordinates[i];
+      dist := me.DistanceTo(pt);
+      if dist <= 85 then
+      begin
+        weights += dist;
+        diff := -(h-Self.Walker^.Height(pt));
+        with Self.Walker^.Point2MMVec(me, pt, angle) do
+          Result += Minimap.Vector2MSCuboid([X + 0.15*diff, Y + 0.11*diff, 0], Self.Size, angle,  [0,0,diff]);
+      end;
+    end;
 end;
 
 (*
