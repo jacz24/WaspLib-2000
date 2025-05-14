@@ -4,5 +4,3 @@ name=WaspLib
 directory=Includes
 // flat extraction into directory
 flat=false
-// files not to install
-ignore=
