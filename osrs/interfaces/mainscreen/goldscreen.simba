@@ -161,7 +161,6 @@ Or caches it.
 *)
 function TRSGoldScreen.GetButtons(): TRSButtonArray;
 var
-  e: ERSGoldScreenButton;
   buttonGrid: TBoxArray;
 begin
   if (Self.Buttons[0].Bounds.Area = 1) then
@@ -349,7 +348,6 @@ Debug‑draws bounds, item slots, and quantity buttons on `Bmp`.
 procedure TRSGoldScreen.Draw();
 var
   btn: TRSButton;
-  img: TImage;
   allBoxes: TBoxArray;
 begin
   allBoxes += Self.Bounds;

@@ -66,7 +66,7 @@ begin
   sender.Repaint();
 end;
 
-procedure TMapDebugger.ImgBoxMouseDown(sender: TImageBox; button: ELazMouseButton; {$H-}shift: ELazShiftStates;{$H+} x, y: Integer);
+procedure TMapDebugger.ImgBoxMouseDown({$H-}sender: TImageBox; button: ELazMouseButton; shift: ELazShiftStates;{$H+} x, y: Integer);
 var
   p: TPoint;
 begin

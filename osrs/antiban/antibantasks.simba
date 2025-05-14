@@ -551,7 +551,6 @@ var
   msBox: TBox;
   dots,cTPA: TPointArray;
   cArr: TColorArray;
-  Finder: TColorFinder;
 begin
   dots := Minimap.GetDots(dotType);
   if dots.Length < 1 then Exit;
