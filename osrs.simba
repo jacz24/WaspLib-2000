@@ -79,6 +79,7 @@ They should be self-explanatory.
 {$IFNDEF WL_XPBAR_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/xpbar.simba}
 
 {$IFNDEF WL_MOUSEZOOM_INCLUDED}           {$INCLUDE_ONCE osrs/mousezoom.simba}
+{$IFNDEF WL_DOTFILTERSINCLUDED}           {$INCLUDE_ONCE osrs/dotfilters.simba}
 
 
 {$IFNDEF WL_MM2MS_PROJECTOR_INCLUDED}     {$INCLUDE_ONCE osrs/interfaces/mm2ms_projector.simba}
@@ -103,12 +104,15 @@ They should be self-explanatory.
 {$IFNDEF AEROSKUNK_GOLDSCREEN_INCLUDED}   {$INCLUDE_ONCE osrs/interfaces/mainscreen/goldscreen.simba}
 {$IFNDEF AEROSKUNK_SLVRSCREEN_INCLUDED}   {$INCLUDE_ONCE osrs/interfaces/mainscreen/silverscreen.simba}
 {$IFNDEF WL_HITSPLATS_INCLUDED}           {$INCLUDE_ONCE osrs/mainscreen/hitsplats.simba}
+{$IFNDEF WL_HPBARS_INCLUDED}              {$INCLUDE_ONCE osrs/mainscreen/hpbars.simba}
 
 {$IFNDEF WL_ANTIBAN_TASKS_INCLUDED}       {$INCLUDE_ONCE osrs/antiban/antibantasks.simba}
 
 {$IFNDEF WL_SETUP_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/setup.simba}
 {$IFNDEF WL_OVERRIDES_INCLUDED}           {$INCLUDE_ONCE osrs/overrides.simba}
 
+{$ENDIF}
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}

@@ -114,6 +114,21 @@ begin
   Result := (B shl 16) or (G shl 8) or R;
 end;
 
+function TColorArray.GetRarest(): TColor;
+var
+  weights: TIntegerArray;
+  i,L    : Int32;
+begin
+  L := High(Self);
+  if (L <= 0) then Exit;
+
+  SetLength(weights, L + 1);
+  for i := 0 To L do weights[i] := Self.IndicesOf(Self[i]).Length;
+
+  Self.Sort(weights, True);
+  Result := Self[0];
+end;
+
 function TStringArray.AnyContains(value: String; caseSensitive: Boolean = True): Boolean;
 var
   i: Integer;
