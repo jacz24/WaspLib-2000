@@ -37,6 +37,7 @@ Main record to interact with the *Silver Screen* interface.
     Slots     : TRSSlotInterface;
     Items     : TRSItemInterface;
 
+    ClickBoxes: TBoxArray;
     Bounds    : TBox;
     SlotBoxes : TBoxArray;
     Buttons   : array[ERSSilverScreenButton] of TRSButton;
@@ -92,6 +93,7 @@ end;
 procedure TRSSilverScreen.SetupInterface;
 var
   leftSlots, rightSlots : TBoxArray;
+  leftClickBoxes, rightClickBoxes : TBoxArray;
   btns                  : TRSButtonArray;
   i                     : Integer;
 begin
@@ -104,18 +106,31 @@ begin
 
   Self.Title.Setup(Self.Bounds);
 
-  leftSlots  := TBoxArray.Create(
+  leftClickBoxes  := TBoxArray.Create(
                  [Self.Bounds.X1 + 10,  Self.Bounds.Y1 + 40],  // anchor
                  3, 4,                                         // cols, rows
                  79, 55,                                       // w, h
                  [5,1]);                                       // gaps
 
-  rightSlots := TBoxArray.Create(
+  rightClickBoxes := TBoxArray.Create(
                  [Self.Bounds.X2 - 233, Self.Bounds.Y1 + 40],  // anchor
                  2, 4,                                         // cols, rows
                  109, 55,                                      // w, h
                  [5,1]);                                       // gaps
 
+  leftSlots  := TBoxArray.Create(
+                 [Self.Bounds.X1 + 32,  Self.Bounds.Y1 + 56],  // anchor
+                 3, 4,                                         // cols, rows
+                 36, 32,                                       // w, h
+                 [48,24]);                                     // gaps
+
+  rightSlots := TBoxArray.Create(
+                 [Self.Bounds.X2 - 195, Self.Bounds.Y1 + 56],  // anchor
+                 2, 4,                                         // cols, rows
+                 36, 32,                                       // w, h
+                 [78,24]);                                     // gaps
+
+  Self.ClickBoxes := leftClickBoxes + rightClickBoxes;
   Self.SlotBoxes := leftSlots + rightSlots;
 
   Self.Slots.Setup('SilverScreen.Slots', Self.SlotBoxes);
@@ -208,7 +223,7 @@ begin
   if not Self.Items.Find([Item], Slot) then
     Exit;
 
-  Box := Self.Slots.Slots[Slot];
+  Box := Self.ClickBoxes[Slot];
 
   TPA := Target.FindColor(READY_GOLD, 1, Box) + Target.FindColor(READY_WHITE, 1, Box);
   Result := TPA.Length > 0;
@@ -253,7 +268,8 @@ var
 begin
   allBoxes += Self.Bounds;
   allBoxes += Self.SlotBoxes;
-
+  allBoxes += Self.ClickBoxes;
+  
   for btn in Self.GetButtons do
     allBoxes += btn.Bounds;
 
