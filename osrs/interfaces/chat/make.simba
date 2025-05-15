@@ -121,7 +121,7 @@ begin
   for tpa in tpa.Cluster(1.5) do
   begin
     b := tpa.Bounds();
-    if (b.Height = 72) and (b.Width = 93) then
+    if InRange(b.Height, 60, 85) and InRange(b.Width, 20, 120) then
       Result += b;
   end;
 end;
