@@ -2,9 +2,6 @@
 (*
 # SilverScreen
 Methods to interact with the silver‑smelting **Silver Screen** interface.
-
-This unit mirrors the structure used in *GoldScreen* so you can drop it
-into the same project without further edits.
 *)
 
 {$DEFINE AEROSKUNK_SLVRSCREEN_INCLUDED}
@@ -69,13 +66,6 @@ Main record to interact with the *Silver Screen* interface.
 =====================================================================}
 
 {―― internal helpers ―――――――――――――――――――――――――――――――――――――――――――}
-
-(*  Build / cache the 5 quantity‑selection buttons.
-
-    • First we try to auto‑discover them via `FindButtons`.
-    • If that fails we fall back to a static 1 × 5 grid using the same
-      approach as *GoldScreen*.
-*)
 function TRSSilverScreen.GetButtons : TRSButtonArray;
 var
   buttonGrid : TBoxArray;
@@ -105,7 +95,6 @@ var
   btns                  : TRSButtonArray;
   i                     : Integer;
 begin
-  {─ outer bounds of the interface ─}
   case RSClient.Mode of
     ERSMode.FIXED:
       Self.Bounds := MSInterface.CreateBounds([0,1,0,-1], 505, 323);
@@ -113,10 +102,8 @@ begin
       Self.Bounds := MSInterface.CreateBounds([0,1,0,-3], 505, 323);
   end;
 
-  {─ title bar ─}
   Self.Title.Setup(Self.Bounds);
 
-  {─ 5 × 4 item-slot grid ─}
   leftSlots  := TBoxArray.Create(
                  [Self.Bounds.X1 + 10,  Self.Bounds.Y1 + 40],  // anchor
                  3, 4,                                         // cols, rows
@@ -131,11 +118,9 @@ begin
 
   Self.SlotBoxes := leftSlots + rightSlots;
 
-  {─ helpers for slot + item handling ─}
   Self.Slots.Setup('SilverScreen.Slots', Self.SlotBoxes);
   Self.Items.Setup('SilverScreen.Items', @Self.Slots, [0,10,3,0]);
 
-  {─ quantity buttons ─}
   btns := Self.GetButtons();
   if Length(btns) = Length(ERSSilverScreenButton) then
     for i := 0 to High(btns) do
@@ -148,9 +133,6 @@ function TRSSilverScreen.IsOpen(): Boolean;
 begin
   try
     Result := Self.Title.IsOpen();
-    //WriteLn('should draw: ', Result);
-    //if Result then
-    //  self.Draw();
   except
     Result := False;
   end;
@@ -278,9 +260,6 @@ begin
   ShowOnClient(allBoxes);
 end;
 
-{=====================================================================
-  GLOBAL
-=====================================================================}
 var
   SilverScreen: TRSSilverScreen;
 
