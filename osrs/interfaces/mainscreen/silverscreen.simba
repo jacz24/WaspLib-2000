@@ -1,0 +1,281 @@
+
+(*
+# SilverScreen
+Methods to interact with the silver‑smelting **Silver Screen** interface.
+*)
+
+{$DEFINE AEROSKUNK_SLVRSCREEN_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+(*
+## ERSSilverScreenButton
+```pascal
+ERSSilverScreenButton = enum(QUANT_1, QUANT_5, QUANT_10, QUANT_CUSTOM, QUANT_ALL);
+```
+Enum representing the quantity‑selection buttons.
+*)
+  ERSSilverScreenButton = enum(QUANT_1, QUANT_5, QUANT_10, QUANT_CUSTOM, QUANT_ALL);
+
+  ERSSilverItem = enum(
+    // Rings
+    OPAL_RING, JADE_RING, TOPAZ_RING,
+    // Necklaces
+    OPAL_NECKLACE, JADE_NECKLACE, TOPAZ_NECKLACE,
+    // Amulets
+    OPAL_AMULET, JADE_AMULET, TOPAZ_AMULET,
+    // Bracelets
+    OPAL_BRACELET, JADE_BRACELET, TOPAZ_BRACELET
+  );
+(*
+## TRSSilverScreen
+Main record to interact with the *Silver Screen* interface.
+*)
+  TRSSilverScreen = record
+    {── static GUI description ──}
+    Title     : TRSInterfaceTitle;
+    Slots     : TRSSlotInterface;
+    Items     : TRSItemInterface;
+
+    ClickBoxes: TBoxArray;
+    Bounds    : TBox;
+    SlotBoxes : TBoxArray;
+    Buttons   : array[ERSSilverScreenButton] of TRSButton;
+
+    {── internal helpers ──}
+    //procedure SetupInterface;
+    //function  GetButtons : TRSButtonArray;
+    //function  GetButton  (B : ERSSilverScreenButton) : TRSButton;
+
+    {── public API ──}
+    //function  IsOpen     : Boolean;
+    //function  WaitOpen   (time : Int32 = 600; interval : Int32 = -1) : Boolean;
+    //
+    //function  Close      (PressEscape : Boolean = False) : Boolean;
+    //
+    //function  SetQuantity     (Amount : Int32) : Boolean;
+    //function  CanCraftItem    (Item   : TRSItem; out Box : TBox) : Boolean;
+    //function  IsItemHighlighted(Item   : TRSItem) : Boolean;
+    //function  CraftItem       (Item   : TRSItem; Quantity : Int32;
+    //                           UseSpaceBar : Boolean = False) : Boolean;
+    //
+    //procedure Draw(Bmp : TMufasaBitmap);
+  end;
+
+{=====================================================================
+  IMPLEMENTATION
+=====================================================================}
+
+{―― internal helpers ―――――――――――――――――――――――――――――――――――――――――――}
+function TRSSilverScreen.GetButtons : TRSButtonArray;
+var
+  buttonGrid : TBoxArray;
+begin
+  { cache empty? ➜ build the static grid }
+  if Self.Buttons[0].Bounds.Area = 1 then
+  begin
+    buttonGrid := TBoxArray.Create(
+                    [Self.Bounds.X1 + 134,              // right‑align row
+                     Self.Bounds.Y2 - 45],            // vertical position
+                    5, 1,                             // 1 column × 5 rows
+                    36, 36,                           // width × height
+                    [14,0]);                           // 4 px vertical gap
+    Exit(TRSButtonArray.Create([[$25323B, 1.30]], buttonGrid));
+  end;
+  Result := Self.Buttons;
+end;
+
+function TRSSilverScreen.GetButton(B : ERSSilverScreenButton) : TRSButton;
+begin
+  Result := Self.Buttons[B];
+end;
+
+procedure TRSSilverScreen.SetupInterface;
+var
+  leftSlots, rightSlots : TBoxArray;
+  leftClickBoxes, rightClickBoxes : TBoxArray;
+  btns                  : TRSButtonArray;
+  i                     : Integer;
+begin
+  case RSClient.Mode of
+    ERSMode.FIXED:
+      Self.Bounds := MSInterface.CreateBounds([0,1,0,-1], 505, 323);
+    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
+      Self.Bounds := MSInterface.CreateBounds([0,1,0,-3], 505, 323);
+  end;
+
+  Self.Title.Setup(Self.Bounds);
+
+  leftClickBoxes  := TBoxArray.Create(
+                 [Self.Bounds.X1 + 10,  Self.Bounds.Y1 + 40],  // anchor
+                 3, 4,                                         // cols, rows
+                 79, 55,                                       // w, h
+                 [5,1]);                                       // gaps
+
+  rightClickBoxes := TBoxArray.Create(
+                 [Self.Bounds.X2 - 233, Self.Bounds.Y1 + 40],  // anchor
+                 2, 4,                                         // cols, rows
+                 109, 55,                                      // w, h
+                 [5,1]);                                       // gaps
+
+  leftSlots  := TBoxArray.Create(
+                 [Self.Bounds.X1 + 32,  Self.Bounds.Y1 + 56],  // anchor
+                 3, 4,                                         // cols, rows
+                 36, 32,                                       // w, h
+                 [48,24]);                                     // gaps
+
+  rightSlots := TBoxArray.Create(
+                 [Self.Bounds.X2 - 195, Self.Bounds.Y1 + 56],  // anchor
+                 2, 4,                                         // cols, rows
+                 36, 32,                                       // w, h
+                 [78,24]);                                     // gaps
+
+  Self.ClickBoxes := leftClickBoxes + rightClickBoxes;
+  Self.SlotBoxes := leftSlots + rightSlots;
+
+  Self.Slots.Setup('SilverScreen.Slots', Self.SlotBoxes);
+  Self.Items.Setup('SilverScreen.Items', @Self.Slots, [0,10,3,0]);
+
+  btns := Self.GetButtons();
+  if Length(btns) = Length(ERSSilverScreenButton) then
+    for i := 0 to High(btns) do
+      Self.Buttons[ERSSilverScreenButton(i)] := btns[i];
+end;
+
+{―― public API ―――――――――――――――――――――――――――――――――――――――――――――――}
+
+function TRSSilverScreen.IsOpen(): Boolean;
+begin
+  try
+    Result := Self.Title.IsOpen();
+  except
+    Result := False;
+  end;
+end;
+
+function TRSSilverScreen.WaitOpen(time, interval : Int32) : Boolean;
+begin
+  if interval < 0 then
+    interval := RandomMode(100,50,1500);
+  Result := SleepUntil(Self.IsOpen, interval, time);
+end;
+
+function TRSSilverScreen.Close(PressEscape : Boolean) : Boolean;
+begin
+  if not Self.IsOpen then
+    Exit(True);
+
+  Result := (not PressEscape and MSInterface.Close(False))
+            or
+            (PressEscape     and MSInterface.Close(True));
+
+  if Result then
+    Result := SleepUntil(not Self.IsOpen,
+                         RandomMode(100,50,1500),
+                         Random(1500,2000));
+end;
+
+function TRSSilverScreen.SetQuantity(Amount: Int32): Boolean;
+const
+  ENABLED_COLOR  = $FFFFFF;   // white (active button)
+  DISABLED_COLOR = $1F98FF;   // blue  (inactive / clickable)
+var
+  txt : String;
+  btn : TRSButton;
+begin
+  txt := ToString(Amount);
+  if Amount = -1 then
+    txt := 'All';
+
+  { already selected? }
+  for btn in Self.GetButtons do
+    if (OCR.Locate(btn.Bounds, txt, [ENABLED_COLOR], 1, RSFonts.PLAIN_11) > 0.85)
+    and btn.Enabled() then
+      Exit(True);
+
+  { preset button available? }
+  for btn in Self.GetButtons do
+    if OCR.Locate(btn.Bounds, txt, [DISABLED_COLOR], 1, RSFonts.PLAIN_11) > 0.85 then
+    begin
+      btn.Click();
+      Exit(True);
+    end;
+
+  { custom amount via “X” }
+  for btn in Self.GetButtons do
+    if OCR.Locate(btn.Bounds, 'X', [DISABLED_COLOR], 1, RSFonts.PLAIN_11) > 0.85 then
+    begin
+      btn.Click();
+      Exit(Chat.AnswerQuery('Enter amount', ToString(Amount), 3000));
+    end;
+end;
+
+function TRSSilverScreen.CanCraftItem(Item : TRSItem; out Box : TBox) : Boolean;
+const
+  READY_GOLD  = $1F98FF;  // gold text (craftable)
+  READY_WHITE = $FFFFFF;  // white (selected/ready)
+var
+  TPA : TPointArray;
+  Slot: Integer;
+begin
+  if not Self.IsOpen then Exit;
+
+  if not Self.Items.Find([Item], Slot) then
+    Exit;
+
+  Box := Self.ClickBoxes[Slot];
+
+  TPA := Target.FindColor(READY_GOLD, 1, Box) + Target.FindColor(READY_WHITE, 1, Box);
+  Result := TPA.Length > 0;
+end;
+
+function TRSSilverScreen.IsItemHighlighted(Item : TRSItem) : Boolean;
+var
+  highlight : TColor := 4807018;
+  box       : TBox;
+  TPA       : TPointArray;
+begin
+  if not Self.IsOpen then Exit;
+  if not Self.CanCraftItem(Item, box) then Exit;
+  TPA := Target.FindColor(highlight, 2, box);
+  Result := TPA.Length > 0;
+end;
+
+function TRSSilverScreen.CraftItem(Item : TRSItem; Quantity : Int32;
+                                   UseSpaceBar : Boolean) : Boolean;
+var
+  box : TBox;
+begin
+  WriteLn 1;
+  if not Self.CanCraftItem(Item, box) then Exit;
+  
+  WriteLn 2;
+  Result := Self.SetQuantity(Quantity);
+  WriteLn 3;
+  WriteLn Result;
+  if not Result then Exit;
+
+  if UseSpaceBar and Self.IsItemHighlighted(Item) then
+    Keyboard.PressKey(EKeyCode.SPACE)
+  else
+    Mouse.Click(box, EMouseButton.LEFT);
+end;
+
+procedure TRSSilverScreen.Draw();
+var
+  btn      : TRSButton;
+  allBoxes : TBoxArray;
+begin
+  allBoxes += Self.Bounds;
+  allBoxes += Self.SlotBoxes;
+  allBoxes += Self.ClickBoxes;
+  
+  for btn in Self.GetButtons do
+    allBoxes += btn.Bounds;
+
+  ShowOnClient(allBoxes);
+end;
+
+var
+  SilverScreen: TRSSilverScreen;
+
