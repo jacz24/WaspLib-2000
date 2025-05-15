@@ -30,6 +30,10 @@ begin
   borderA  := image.FindColor(RSColors.ITEM_BORDER, 0);
   borderB := template.FindColor(RSColors.ITEM_BORDER, 0) + template.FindColor(RSColors.ITEM_BORDER_WHITE, 0);
 
+  if (borderA.Length = 0) or (borderB.Length = 0) then
+  begin
+    Exit;
+  end;
   align := borderA[High(borderA)] - borderB[High(borderB)];
 
   borderB := borderB.Offset(align);
@@ -245,7 +249,6 @@ var
   skip: TBooleanArray;
 begin
   SetLength(skip, Length(boxes));
-
   for item in items do
   begin
     item := LowerCase(item);

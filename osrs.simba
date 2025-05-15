@@ -101,7 +101,7 @@ They should be self-explanatory.
 {$IFNDEF WL_COLLECTIONBOX_INCLUDED}       {$INCLUDE_ONCE osrs/interfaces/mainscreen/collectionbox.simba}
 {$IFNDEF WL_ANVIL_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/mainscreen/anvil.simba}
 {$IFNDEF AEROSKUNK_GOLDSCREEN_INCLUDED}   {$INCLUDE_ONCE osrs/interfaces/mainscreen/goldscreen.simba}
-
+{$IFNDEF AEROSKUNK_SLVRSCREEN_INCLUDED}   {$INCLUDE_ONCE osrs/interfaces/mainscreen/silverscreen.simba}
 {$IFNDEF WL_HITSPLATS_INCLUDED}           {$INCLUDE_ONCE osrs/mainscreen/hitsplats.simba}
 
 {$IFNDEF WL_ANTIBAN_TASKS_INCLUDED}       {$INCLUDE_ONCE osrs/antiban/antibantasks.simba}
@@ -109,7 +109,7 @@ They should be self-explanatory.
 {$IFNDEF WL_SETUP_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/setup.simba}
 {$IFNDEF WL_OVERRIDES_INCLUDED}           {$INCLUDE_ONCE osrs/overrides.simba}
 
-
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}

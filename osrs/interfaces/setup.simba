@@ -42,6 +42,7 @@ begin
   CollectionBox.SetupInterface();
   Anvil.SetupInterface();
   GoldScreen.SetupInterface();
+  SilverScreen.SetupInterface();
 
   {$IFDEF WaspLib_DEBUG_INTERFACES}
   WriteLn GetDebugLn('RSClient', 'Interface setup took ' + ToStr(Time()-t) + ' ms to calculate.');
