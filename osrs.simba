@@ -13,6 +13,7 @@ less confusing way.
 ```pascal
 {$DEFINE WL_DEBUG_MOUSE}
 {$DEFINE WL_DISABLE_REMOTEINPUT}
+{$DEFINE WL_DISABLE_WASPINPUT}
 {$DEFINE WL_KEYBINDS_DEBUG}
 {$DEFINE WL_DEBUG_UPTEXT}
 {$DEFINE WL_DEBUG_INTERFACES}
@@ -34,6 +35,7 @@ They should be self-explanatory.
 
 {$IFNDEF WL_RSCLIENT_INCLUDED}            {$INCLUDE_ONCE osrs/rsclient.simba}
 {$IFNDEF WL_REMOTEINPUT_INCLUDED}         {$INCLUDE_ONCE osrs/remoteinput.simba}
+{$IFNDEF WL_WASPINPUT_INCLUDED}           {$INCLUDE_ONCE osrs/waspinput.simba}
 {$IFNDEF WL_CACHEPARSER_INCLUDED}         {$INCLUDE_ONCE osrs/cacheparser.simba}
 
 {$IFNDEF WL_ITEMFINDER_INCLUDED}          {$INCLUDE_ONCE osrs/finders/items/itemfinder.simba}
@@ -111,6 +113,7 @@ They should be self-explanatory.
 {$IFNDEF WL_SETUP_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/setup.simba}
 {$IFNDEF WL_OVERRIDES_INCLUDED}           {$INCLUDE_ONCE osrs/overrides.simba}
 
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}
