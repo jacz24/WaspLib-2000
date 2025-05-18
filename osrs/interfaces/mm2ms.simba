@@ -464,8 +464,8 @@ WriteLn(MainScreen.TranslateDistance(20));
 ```
 *)
 function TRSMainScreen.NormalizeDistance(dist: Integer; accuracy: Single = 1.05): Integer;
-const
-  BASE: TPoint = [260,181];
+var
+  Base: TPoint;
 
   function _SearchUp(value: Single; target: Single; inc: Single): Single;
   var
@@ -501,12 +501,12 @@ var
 begin
   if dist = 0 then Exit;
 
+  Base := MM2MS.Normalizer.Run([0, 0, 0], [0, 0, 0]);
   hi := _SearchUp(0.1, dist, 1.50);
   lo := _SearchDown(hi, dist, 1.50);
 
   hi := _SearchUp(lo, dist, accuracy);
   lo := _SearchDown(hi, dist, accuracy);
-
   mean := lo + ((hi - lo) / 2);
 
   with Minimap.Center do

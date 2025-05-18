@@ -31,8 +31,8 @@ Enum representing the 4 available minimap orbs.
   ERSMinimapOrb = enum(HITPOINTS, PRAYER, ENERGY, SPECIAL);
 
   TRSMinimapOrb = record
-    Bounds: TBox;
-    Circle: TCircle;
+    Bounds : TBox;
+    Circle : TCircle;
   end;
 
 (*
@@ -103,9 +103,9 @@ begin
       ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
       begin
         Self.Compass.Circle := [X1 - 2,  Y1 + 14,  17];
-        Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle := [X1 - 13, Y1 + 55,  12];
-        Self.Orbs[ERSMinimapOrb.PRAYER].Circle    := [X1 - 13, Y1 + 90,  12];
-        Self.Orbs[ERSMinimapOrb.ENERGY].Circle    := [X1 - 3,  Y1 + 121, 12];
+        Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle := [X1 - 13, Y1 + 56,  12];
+        Self.Orbs[ERSMinimapOrb.PRAYER].Circle    := [X1 - 14, Y1 + 89,  12];
+        Self.Orbs[ERSMinimapOrb.ENERGY].Circle    := [X1 - 3,  Y1 + 122, 12];
         Self.Orbs[ERSMinimapOrb.SPECIAL].Circle   := [X1 + 18, Y1 + 147, 12];
         tpa := [[0, -76], [21, -73], [40, -64], [56, -51], [68, -33], [75, -1], [67, 34], [52, 43], [40, 62], [21, 72], [0, 75], [-21, 72], [-40, 62], [-56, 49], [-68, 31], [-75, -1], [-68, -33], [-56, -51], [-40, -64], [-21, -73]];
       end;
@@ -113,14 +113,13 @@ begin
       ERSMode.FIXED:
       begin
         Self.Compass.Circle := [X1 - 9,  Y1 + 11,  16];
-        Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle := [X1 - 13, Y1 + 49,  12];
-        Self.Orbs[ERSMinimapOrb.PRAYER].Circle    := [X1 - 13, Y1 + 84,  12];
-        Self.Orbs[ERSMinimapOrb.ENERGY].Circle    := [X1 - 3,  Y1 + 116, 12];
-        Self.Orbs[ERSMinimapOrb.SPECIAL].Circle   := [X1 + 19, Y1 + 142, 12];
+        Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle := [X1 - 15, Y1 + 48,  12];
+        Self.Orbs[ERSMinimapOrb.PRAYER].Circle    := [X1 - 15, Y1 + 82,  12];
+        Self.Orbs[ERSMinimapOrb.ENERGY].Circle    := [X1 - 4,  Y1 + 115, 12];
+        Self.Orbs[ERSMinimapOrb.SPECIAL].Circle   := [X1 + 17, Y1 + 140, 12];
         tpa := [[21, -71], [39, -62], [55, -49], [67, -32], [70, 0], [66, 19], [57, 32], [41, 43], [20, 58], [12, 71], [0, 74], [-11, 72], [-24, 55], [-47, 39], [-60, 31], [-66, 22], [-71, 0], [-72, -14], [-67, -32], [-55, -49], [-39, -62], [-21, -71], [0, -74]];
       end;
     end;
-
 
   MainScreen.AddMask(Self.Compass.Circle.Expand(4));
   MainScreen.AddMask(TPointArray.CreateFromCircle(Self.Center, 82, True));
@@ -431,7 +430,7 @@ end;
 
 function TRSMinimap.Envenomed(): Boolean;
 begin
-  Result := Target.HasColor(1515790, 9, 1, Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle.Bounds);
+  Result := Target.HasColor(ColorTolerance($283818, 0.637, EColorSpace.HSL, [1.885, 0.891, 0.226]), 1, Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle.Bounds);
 end;
 
 function TRSMinimap.RunEnabled(): Boolean;
@@ -457,6 +456,45 @@ end;
 function TRSMinimap.HasSpecialWeapon(): Boolean;
 begin
   Result := Target.HasColor(ColorTolerance($A68F56, 5.999, EColorSpace.RGB, [0.270, 1.494, 1.237]), 1, Self.Orbs[ERSMinimapOrb.SPECIAL].Bounds);
+end;
+
+(*
+## Minimap.GetPercent
+```pascal
+function TRSMinimap.GetPercent(orb: ERSMinimapOrb): Integer;
+```
+Returns the percent remaining of the specified `orb`.
+
+Example:
+```pascal
+WriteLn Minimap.GetPercent(ERSMinimapOrb.HITPOINTS);
+```
+*)
+function TRSMinimap.GetPercent(orb: ERSMinimapOrb): Integer;
+var
+  tpa: TPointArray;
+  col: TColorTolerance;
+begin
+  case orb of
+    ERSMinimapOrb.HITPOINTS:
+    begin
+      col := ColorTolerance($030575, 1.242, EColorSpace.RGB, [0.064, 1.068, 1.869]);
+      if Self.Poisoned  then col := ColorTolerance($02851C, 1.688, EColorSpace.LCH, [0.201, 0.166, 2.635]);
+      if Self.Envenomed then col := ColorTolerance($27361A, 0.983, EColorSpace.LCH, [0.227, 0.346, 2.428]);
+    end;
+    ERSMinimapOrb.PRAYER:
+    begin
+      col := ColorTolerance($42232D, 2.354, EColorSpace.HSL, [1.309, 1.314, 0.378]);
+      if Self.PrayerEnabled then col := ColorTolerance($643940, 6.384, EColorSpace.HSV, [1.045, 1.532, 0.424]);
+    end;
+    ERSMinimapOrb.ENERGY:  Exit(Self.GetLevel(orb));
+    ERSMinimapOrb.SPECIAL: Exit(Self.GetLevel(orb));
+  end;
+
+  tpa := Target.FindColor(col, Self.Orbs[orb].Circle.Bounds.Expand(1));
+  if Length(tpa) < 1 then Exit;
+  tpa := tpa.SortByY(True);
+  Result := Round(((tpa[High(TPA)].Y-tpa[0].Y)/25)*100);
 end;
 
 

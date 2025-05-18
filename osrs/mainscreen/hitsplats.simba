@@ -49,7 +49,7 @@ begin
     Exit;
   end;
 
-  red := Target.FindColor(ColorTolerance($0000A5, 0.498, EColorSpace.HSV, [1.413, 1.413, 0.176]), area);
+  red := Target.FindColor(ColorTolerance($0000A3, 0.479, EColorSpace.RGB, [0.066, 1.468, 1.468]), area);
   if red <> [] then
   begin
     Result.Position := area.TopLeft;
@@ -92,7 +92,9 @@ begin
   for area in areas do
   begin
     white := Target.FindColor($E3E3E3, 10.981, area);
+    white := white.ExcludeBox(Minimap.Bounds);
     black := Target.FindColor($0, 0, area);
+    black := black.ExcludeBox(Minimap.Bounds);
     clusters := white.PointsNearby(black, 1,3).Cluster(4);
 
     if clusters = [] then Exit;
@@ -120,9 +122,11 @@ begin
   splats := [];
   for poly in areas do
   begin
-    area := poly.Bounds();
+    area  := poly.Bounds();
     white := Target.FindColor($E3E3E3, 10.981, area);
+    white := white.ExcludeBox(Minimap.Bounds);
     black := Target.FindColor($0, 0, area);
+    black := black.ExcludeBox(Minimap.Bounds);
     clusters := white.PointsNearby(black, 1,3).Cluster(4);
 
     if clusters = [] then Exit;
@@ -157,7 +161,9 @@ begin
   begin
     bounds := area.Bounds();
     white := Target.FindColor($E3E3E3, 10.981, bounds);
+    white := white.ExcludeBox(Minimap.Bounds);
     black := Target.FindColor($0, 0, bounds);
+    black := black.ExcludeBox(Minimap.Bounds);
     clusters := white.PointsNearby(black, 1,3).Cluster(4);
 
     if clusters = [] then Exit;
