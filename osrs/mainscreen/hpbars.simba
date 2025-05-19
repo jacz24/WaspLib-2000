@@ -47,8 +47,8 @@ begin
     GTPA := Target.FindColor($00FF00, 0, Mainscreen.Bounds);
     RTPA := Target.FindColor($0000FF, 0, Mainscreen.Bounds);
 
-    if Length(GTPA) > 0 then GBars := GTPA.Cluster(10);
-    if Length(RTPA) > 0 then RBars := RTPA.Cluster(10);
+    if Length(GTPA) > 0 then GBars := GTPA.Cluster(13,1);
+    if Length(RTPA) > 0 then RBars := RTPA.Cluster(13,1);
 
     if Length(GBars) > 0 then
     begin
@@ -82,6 +82,15 @@ begin
           end;
         end else AddToBars(GBars[i].Bounds, 100);
       end;
+    end else if Length(GBars) = 0 then
+    begin
+      if Length(RBars) > 0 then
+        for i:=0 to High(RBars) do
+        begin
+          if (not InRange(RBars[i].Bounds.Height, 3, 5)) then Continue;
+          if (RBars[i].Bounds.Width < 10) then Continue;
+          AddToBars(RBars[i].Bounds, 0);
+        end;
     end;
   finally
     //Target.UnFreezeImage;
