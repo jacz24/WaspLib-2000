@@ -16,13 +16,21 @@ jobs:
           RELEASE_TAG: ${{ github.event.client_payload.tag_name }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Fetching release info for the latest release
+          echo "Fetching latest release info..."
           curl -s -H "Authorization: token $GITHUB_TOKEN" \
-            "https://api.github.com/repos/Torwent/wasp-input/releases/latest" > release.json
+            https://api.github.com/repos/Torwent/wasp-input/releases/latest > release.json
 
-          DLL1_URL=$(jq -r '.assets[] | select(.name=="waspinput32.dll") | .browser_download_url' release.json)
-          DLL2_URL=$(jq -r '.assets[] | select(.name=="waspinput64.dll") | .browser_download_url' release.json)
+          RELEASE_TAG=$(jq -r '.tag_name' release.json)
+          echo "Release tag: $RELEASE_TAG"
 
+          DLL1_URL=$(jq -r '.assets[] | select(.name == "waspinput32.dll") | .browser_download_url' release.json)
+          DLL2_URL=$(jq -r '.assets[] | select(.name == "waspinput64.dll") | .browser_download_url' release.json)
+
+          echo "DLL URLs:"
+          echo "$DLL1_URL"
+          echo "$DLL2_URL"
+
+          mkdir -p plugins/waspinput
           curl -L -o plugins/waspinput/waspinput32.dll "$DLL1_URL"
           curl -L -o plugins/waspinput/waspinput64.dll "$DLL2_URL"
 
@@ -31,5 +39,5 @@ jobs:
           git config --global user.name "Wasp Bot"
           git config --global user.email "waspbot@waspcripts.com"
           git add plugins/waspinput/waspinput32.dll plugins/waspinput/waspinput64.dll
-          git commit -m "Automatic WaspInput update."
+          git commit -m "Automatic WaspInput update to: $RELEASE_TAG" || echo "No changes to commit"
           git push
