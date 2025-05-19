@@ -1,0 +1,35 @@
+name: Update WaspInput
+
+on:
+  repository_dispatch:
+    types: [release-published]
+
+jobs:
+  update-dlls:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Download WaspInput
+        env:
+          RELEASE_TAG: ${{ github.event.client_payload.tag_name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Fetching release info for tag $RELEASE_TAG"
+          curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/repos/other-org/other-repo/releases/tags/$RELEASE_TAG" > release.json
+
+          DLL1_URL=$(jq -r '.assets[] | select(.name=="waspinput32.dll") | .browser_download_url' release.json)
+          DLL2_URL=$(jq -r '.assets[] | select(.name=="waspinput64.dll") | .browser_download_url' release.json)
+
+          curl -L -o plugins/waspinput/waspinput32.dll "$DLL1_URL"
+          curl -L -o plugins/waspinput/waspinput64.dll "$DLL2_URL"
+
+      - name: Commit changes
+        run: |
+          git config --global user.name "Wasp Bot"
+          git config --global user.email "waspbot@waspcripts.com"
+          git add plugins/waspinput/waspinput32.dll plugins/waspinput/waspinput64.dll
+          git commit -m "Automatica WaspInput update to: $RELEASE_TAG"
+          git push
