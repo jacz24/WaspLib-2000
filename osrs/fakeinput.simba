@@ -1,0 +1,294 @@
+(*
+# RemoteInput
+Remote Input is an external plugin which provides, well, "remote" input.
+
+In other words, it's the tool WaspLib uses so Simba doesn't use your real mouse and
+keyboard while botting.
+
+Remote input also gives you a full reflection environment to bot with if you
+desire but in the case of WaspLib, it's used exclusively for input and you need to
+either include a reflection library, implement one yourself or use the plugin
+functions directly.
+
+If you wish to completely disable remote input you can do so by adding the
+following compiler directive before you include WaspLib in your script:
+```pascal
+{$DEFINE WL_DISABLE_FAKE_INPUT}
+```
+
+You can find remote input source code here: https://github.com/Brandon-T/RemoteInput
+*)
+{$DEFINE WL_FAKE_INPUT_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+{.$DEFINE WL_DISABLE_FAKE_INPUT}
+
+{$IFNDEF WL_DISABLE_FAKE_INPUT}
+{$loadlib ../plugins/libremoteinput/libremoteinput}
+{$loadlib ../plugins/waspinput/waspinput}
+
+type
+(*
+## TRemoteInput
+Main record used to interact with the remote input plugin.
+*)
+  TRemoteInput = record
+    Target: Pointer;
+    Canvas: TExternalCanvas;
+  end;
+
+(*
+## TRemoteInput.Setup
+```pascal
+procedure TRemoteInput.Setup();
+```
+Internal method used to setup {ref}`TRemoteInput`.
+This is automatically called for you on the {ref}`RemoteInput variable`.
+*)
+procedure TRemoteInput.Setup();
+const
+  TIMEOUT: UInt64 := GetTimeRunning() + 2000;
+begin
+  if Target.TargetWindow.GetClassName() <> 'SunAwtCanvas' then Exit;
+
+  RIInject(GetSimbaTargetPID());
+
+  repeat
+    Self.Target := EIOS_PairClient(GetSimbaTargetPID());
+    if Self.Target <> nil then Break;
+    Sleep(100);
+  until GetTimeRunning() > TIMEOUT;
+
+  if Self.Target = nil then
+  begin
+    WriteLn GetDebugLn('RemoteInput', 'Invalid target for RemoteInput, RemoteInput will not be used.', EErrorLevel.WARN);
+    Exit;
+  end;
+
+  Target.SetPlugin({$MACRO LOADEDLIB(libremoteinput)}, ToStr(GetSimbaTargetPID()), Self.Canvas);
+end;
+
+var
+(*
+## RemoteInput variable
+Global {ref}`TRemoteInput` variable.
+*)
+  RemoteInput: TRemoteInput;
+
+type
+(*
+## TWaspInput
+Main record used to interact with the wasp input plugin.
+*)
+  TWaspInput = record
+    Canvas: TExternalCanvas;
+    Target: Pointer;
+  end;
+
+(*
+## TWaspInput.Setup
+```pascal
+procedure TWaspInput.Setup();
+```
+Internal method used to setup {ref}`TWaspInput`.
+This is automatically called for you on the {ref}`WaspInput variable`.
+*)
+procedure TWaspInput.Setup();
+var
+  pid: TProcessID;
+begin
+  if Target.TargetWindow.GetClassName() <> 'JagRenderView' then Exit;
+
+  pid := GetSimbaTargetPID();
+  Inject({$MACRO LOADEDLIB(waspinput)}, pid);
+  Target.SetPlugin({$MACRO LOADEDLIB(waspinput)}, ToStr(pid), Self.Canvas);
+  Self.Target := @pid;
+end;
+
+var
+  WaspInput: TWaspInput;
+{$ENDIF}
+
+
+(*
+## RSClient.LoseFocus()
+```pascal
+procedure TRSClient.LoseFocus();
+procedure TRSClient.LoseFocus(delay: Int32);
+```
+Loses focus if available. Maybe useful for antiban.
+You can optionally delay losing focus by passing in a `delay`.
+*)
+procedure TRSClient.LoseFocus();
+var
+  space: TBoxArray;
+begin
+  {$IFNDEF WL_DISABLE_FAKE_INPUT}
+  case RSClient.Client of
+    ERSClient.OFFICIAL:
+      if WaspInput.Target <> nil then
+      begin
+        space := Target.Bounds.Expand(50).Invert(Target.Bounds.Expand(500));
+        if Length(space) = 0 then Exit;
+
+        WriteLn(GetDebugLn('RSClient', 'LoseFocus method is not implemented for WaspInput yet.', EErrorLevel.WARN));
+        Exit;
+      end;
+    ERSClient.LEGACY, ERSClient.RUNELITE:
+      if RemoteInput.Target <> nil then
+      begin
+        space := Target.Bounds.Expand(50).Invert(Target.Bounds.Expand(500));
+        if Length(space) = 0 then Exit;
+
+        Target.MouseMove(Space.Random());
+        Target.MouseClick(EMouseButton.LEFT);
+        Exit;
+      end;
+  end;
+  {$ENDIF}
+  WriteLn(GetDebugLn('RSClient', 'LoseFocus method is not implemented without a fake input tool.', EErrorLevel.WARN));
+end;
+
+procedure TRSClient.LoseFocus(delay: UInt32); overload;
+begin
+  Sleep(delay);
+  Self.LoseFocus();
+end;
+
+
+(*
+## TRSClient.IsInputEnabled
+```pascal
+function TRSClient.IsInputEnabled(): Boolean;
+```
+Returns True/False if the user **REAL** input is enabled/disabled,
+fully or partially, on the client.
+
+Example:
+```pascal
+WriteLm RSClient.IsInputEnabled();
+```
+*)
+function TRSClient.IsInputEnabled(): Boolean;
+begin
+  {$IFNDEF WL_DISABLE_FAKE_INPUT}
+  case RSClient.Client of
+    ERSClient.OFFICIAL:
+      if WaspInput.Target <> nil then
+        Exit(GetInputState());
+    ERSClient.LEGACY, ERSClient.RUNELITE:
+      if RemoteInput.Target <> nil then
+        Exit(EIOS_IsMouseInputEnabled(RemoteInput.Target) and EIOS_IsKeyboardInputEnabled(RemoteInput.Target));
+  end;
+  {$ENDIF}
+  WriteLn(GetDebugLn('RSClient', 'IsInputEnabled method is not implemented without a fake input tool.', EErrorLevel.WARN));
+end;
+
+
+(*
+## TRSClient.DisableRealInput
+```pascal
+procedure TRSClient.DisableRealInput();
+```
+Disables the user real input on the client for both the mouse and keyboard.
+
+Example:
+```pascal
+RSClient.DisableRealInput();
+```
+*)
+procedure TRSClient.DisableRealInput();
+begin
+  {$IFNDEF WL_DISABLE_FAKE_INPUT}
+  case RSClient.Client of
+    ERSClient.OFFICIAL:
+      if WaspInput.Target <> nil then
+      begin
+        SetInputState(False);
+        Exit;
+      end;
+    ERSClient.LEGACY, ERSClient.RUNELITE:
+      if RemoteInput.Target <> nil then
+      begin
+        EIOS_SetMouseInputEnabled(RemoteInput.Target, False);
+        EIOS_SetKeyboardInputEnabled(RemoteInput.Target, False);
+        Exit;
+      end;
+  end;
+  {$ENDIF}
+  WriteLn(GetDebugLn('RSClient', 'DisableRealInput method is not implemented without a fake input tool.', EErrorLevel.WARN));
+end;
+
+(*
+## TRSClient.EnableRealInput
+```pascal
+procedure TRSClient.EnableRealInput();
+```
+Enables the user real input on the client for both the mouse and keyboard.
+
+Example:
+```pascal
+RSClient.EnableRealInput();
+```
+*)
+procedure TRSClient.EnableRealInput();
+begin
+  {$IFNDEF WL_DISABLE_FAKE_INPUT}
+  case RSClient.Client of
+    ERSClient.OFFICIAL:
+      if WaspInput.Target <> nil then
+      begin
+        SetInputState(True);
+        Exit;
+      end;
+    ERSClient.LEGACY, ERSClient.RUNELITE:
+      if RemoteInput.Target <> nil then
+      begin
+        EIOS_SetMouseInputEnabled(RemoteInput.Target, True);
+        EIOS_SetKeyboardInputEnabled(RemoteInput.Target, True);
+        Exit;
+      end;
+  end;
+  {$ENDIF}
+  WriteLn(GetDebugLn('RSClient', 'EnableRealInput method is not implemented without a fake input tool.', EErrorLevel.WARN));
+end;
+
+(*
+## TRSClient.ClearCanvas
+```pascal
+procedure TRSClient.ClearCanvas(box: TBox);
+procedure TRSClient.ClearCanvas(); overload;
+```
+Clears the target external canvas.
+
+Example:
+```pascal
+RSClient.ClearCanvas();
+```
+*)
+procedure TRSClient.ClearCanvas(box: TBox);
+begin
+  {$IFNDEF WL_DISABLE_FAKE_INPUT}
+  case RSClient.Client of
+    ERSClient.OFFICIAL:
+      if WaspInput.Target <> nil then
+      begin
+        WaspInput.Canvas.Clear(box);
+        Exit;
+      end;
+    ERSClient.LEGACY, ERSClient.RUNELITE:
+      if RemoteInput.Target <> nil then
+      begin
+        RemoteInput.Canvas.Clear(box);
+        Exit;
+      end;
+  end;
+  {$ENDIF}
+  WriteLn(GetDebugLn('RSClient', 'ClearCanvas method is not implemented without a fake input tool.', EErrorLevel.WARN));
+end;
+
+procedure TRSClient.ClearCanvas(); overload;
+begin
+  Self.ClearCanvas(Target.Bounds);
+end;
+

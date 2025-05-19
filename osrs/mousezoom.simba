@@ -138,7 +138,7 @@ RSMouseZoom.Scroll(5, True);
 ```
 *)
 procedure TRSMouseZoom.Scroll(amount: Integer = 1; down: Boolean; forceMove: Boolean = True);
-{$IFNDEF WL_DISABLE_REMOTEINPUT}
+{$IFNDEF WL_DISABLE_FAKE_INPUT}
 var
   inputState: Boolean;
 {$ENDIF}
@@ -146,39 +146,33 @@ begin
   Self.ZoomLevel := Self.GetNext(Self.ZoomLevel, amount, down);
   Options.ZoomLevel := Self.Level2Slider(Self.ZoomLevel);
 
-  {$IFNDEF WL_DISABLE_REMOTEINPUT}
-  if RemoteInput.EIOS <> nil then
-  begin
-    inputState := RemoteInput.IsInputEnabled();
-    if inputState then RemoteInput.DisableRealInput();
-  end;
+  {$IFNDEF WL_DISABLE_FAKE_INPUT}
+  inputState := RSClient.IsInputEnabled();
+  if inputState then RSClient.DisableRealInput();
   {$ENDIF}
 
   Mouse.Scroll(MSInterface.Bounds, amount, down, forceMove);
 
-  {$IFNDEF WL_DISABLE_REMOTEINPUT}
-  if inputState then RemoteInput.EnableRealInput();
+  {$IFNDEF WL_DISABLE_FAKE_INPUT}
+  if inputState then RSClient.EnableRealInput();
   {$ENDIF}
 end;
 
 procedure TRSMouseZoom.Scroll(amount: Integer = 1; forceMove: Boolean = True); overload;
-{$IFNDEF WL_DISABLE_REMOTEINPUT}
+{$IFNDEF WL_DISABLE_FAKE_INPUT}
 var
   inputState: Boolean;
 {$ENDIF}
 begin
-  {$IFNDEF WL_DISABLE_REMOTEINPUT}
-  if RemoteInput.EIOS <> nil then
-  begin
-    inputState := RemoteInput.IsInputEnabled();
-    if inputState then RemoteInput.DisableRealInput();
-  end;
+  {$IFNDEF WL_DISABLE_FAKE_INPUT}
+  inputState := RSClient.IsInputEnabled();
+  if inputState then RSClient.DisableRealInput();
   {$ENDIF}
 
   Self.Scroll(Floor(Sqrt(Power(amount,2))), amount < 0, forceMove);
 
-  {$IFNDEF WL_DISABLE_REMOTEINPUT}
-  if inputState then RemoteInput.EnableRealInput();
+  {$IFNDEF WL_DISABLE_FAKE_INPUT}
+  if inputState then RSClient.EnableRealInput();
   {$ENDIF}
 end;
 

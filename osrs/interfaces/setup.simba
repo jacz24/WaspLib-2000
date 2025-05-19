@@ -3,7 +3,7 @@
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 procedure SetupInterfaces();
-{$IFDEF WaspLib_DEBUG_INTERFACES}var t: UInt64 := Time();{$ENDIF}
+{$IFDEF WL_DEBUG_INTERFACES}var t: UInt64 := Time();{$ENDIF}
 begin
   //interfaces that depend on other's bounds need to be in the right order
   //e.g., gametabs need to go after GameTab and GameTab after GameTabs.
@@ -44,7 +44,7 @@ begin
   GoldScreen.SetupInterface();
   SilverScreen.SetupInterface();
 
-  {$IFDEF WaspLib_DEBUG_INTERFACES}
+  {$IFDEF WL_DEBUG_INTERFACES}
   WriteLn GetDebugLn('RSClient', 'Interface setup took ' + ToStr(Time()-t) + ' ms to calculate.');
   {$ENDIF}
 end;
@@ -54,7 +54,9 @@ procedure TargetResized(var sender: TTarget; data: TTargetEventData);
 begin
   WriteLn(GetDebugLn('RSClient', 'Client was resized, updating coordinates.', EErrorLevel.SUCCESS));
 
-  if RemoteInput.EIOS <> nil then RemoteInput.Canvas.Clear();
+  {$IFNDEF WL_DISABLE_FAKE_INPUT}
+  RSClient.ClearCanvas();
+  {$ENDIF}
   LoginWorldSwitcher.Setup();
   Lobby.Setup();
   Login.Setup();
@@ -87,7 +89,7 @@ end;
 
 
 {$IF FILEEXISTS(Configs/credentials.simba)}
-{$INCLUDE_ONCE Configs/credentials.simba}
+  {$INCLUDE_ONCE Configs/credentials.simba}
 {$ENDIF}
 
 
@@ -100,9 +102,12 @@ begin
   Logger.Setup();
 
   RSClient.Client := RSClient.GetClient();
-  {$IFNDEF WL_DISABLE_REMOTEINPUT}
-  if RSClient.Client <> ERSClient.OFFICIAL then
-    RemoteInput.Setup();
+
+  {$IFNDEF WL_DISABLE_FAKE_INPUT}
+  case RSClient.Client of
+    ERSClient.LEGACY, ERSClient.RUNELITE: RemoteInput.Setup();
+    ERSClient.OFFICIAL: WaspInput.Setup();
+  end;
   {$ENDIF}
 
   RSCacheParser.Setup();

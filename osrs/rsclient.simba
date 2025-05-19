@@ -150,26 +150,6 @@ begin
   Result := SleepUntil(Self.IsLoggedIn(), interval, time);
 end;
 
-(*
-## RSClient.LoseFocus()
-```pascal
-procedure TRSClient.LoseFocus();
-procedure TRSClient.LoseFocus(delay: Int32);
-```
-Loses focus if available. Maybe useful for antiban.
-You can optionally delay losing focus by passing in a `delay`.
-*)
-procedure TRSClient.LoseFocus();
-begin
-  WriteLn(GetDebugLn('RSClient', 'LoseFocus method is not implemented.', EErrorLevel.WARN));
-end;
-
-procedure TRSClient.LoseFocus(delay: UInt32); overload;
-begin
-  Sleep(delay);
-  Self.LoseFocus();
-end;
-
 var
 (*
 ## RSClient variable
