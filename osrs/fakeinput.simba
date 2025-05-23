@@ -34,7 +34,6 @@ Main record used to interact with the remote input plugin.
 *)
   TRemoteInput = record
     Target: Pointer;
-    Canvas: TExternalCanvas;
   end;
 
 (*
@@ -65,7 +64,7 @@ begin
     Exit;
   end;
 
-  Target.SetPlugin({$MACRO LOADEDLIB(libremoteinput)}, ToStr(GetSimbaTargetPID()), Self.Canvas);
+  Target.SetPlugin({$MACRO LOADEDLIB(libremoteinput)}, ToStr(GetSimbaTargetPID()), RSClient.Canvas);
 end;
 
 var
@@ -81,7 +80,6 @@ type
 Main record used to interact with the wasp input plugin.
 *)
   TWaspInput = record
-    Canvas: TExternalCanvas;
     Target: Pointer;
   end;
 
@@ -101,7 +99,7 @@ begin
 
   pid := GetSimbaTargetPID();
   Inject({$MACRO LOADEDLIB(waspinput)}, pid);
-  Target.SetPlugin({$MACRO LOADEDLIB(waspinput)}, ToStr(pid), Self.Canvas);
+  Target.SetPlugin({$MACRO LOADEDLIB(waspinput)}, ToStr(pid), RSClient.Canvas);
   Self.Target := @pid;
 end;
 
@@ -253,42 +251,4 @@ begin
   WriteLn(GetDebugLn('RSClient', 'EnableRealInput method is not implemented without a fake input tool.', EErrorLevel.WARN));
 end;
 
-(*
-## TRSClient.ClearCanvas
-```pascal
-procedure TRSClient.ClearCanvas(box: TBox);
-procedure TRSClient.ClearCanvas(); overload;
-```
-Clears the target external canvas.
-
-Example:
-```pascal
-RSClient.ClearCanvas();
-```
-*)
-procedure TRSClient.ClearCanvas(box: TBox);
-begin
-  {$IFNDEF WL_DISABLE_FAKE_INPUT}
-  case RSClient.Client of
-    ERSClient.OFFICIAL:
-      if WaspInput.Target <> nil then
-      begin
-        WaspInput.Canvas.Clear(box);
-        Exit;
-      end;
-    ERSClient.LEGACY, ERSClient.RUNELITE:
-      if RemoteInput.Target <> nil then
-      begin
-        RemoteInput.Canvas.Clear(box);
-        Exit;
-      end;
-  end;
-  {$ENDIF}
-  WriteLn(GetDebugLn('RSClient', 'ClearCanvas method is not implemented without a fake input tool.', EErrorLevel.WARN));
-end;
-
-procedure TRSClient.ClearCanvas(); overload;
-begin
-  Self.ClearCanvas(Target.Bounds);
-end;
 

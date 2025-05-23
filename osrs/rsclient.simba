@@ -32,6 +32,7 @@ Record representing the RuneScape client ({ref}`RSClient`.
   TRSClient = record
     Client: ERSClient;
     Mode: ERSMode;
+    Canvas: TExternalCanvas;
   end;
 
 (*
