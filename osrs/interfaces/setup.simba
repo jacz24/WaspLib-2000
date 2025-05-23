@@ -55,7 +55,7 @@ begin
   WriteLn(GetDebugLn('RSClient', 'Client was resized, updating coordinates.', EErrorLevel.SUCCESS));
 
   {$IFNDEF WL_DISABLE_FAKE_INPUT}
-  RSClient.ClearCanvas();
+  RSClient.Canvas.Clear();
   {$ENDIF}
   LoginWorldSwitcher.Setup();
   Lobby.Setup();
