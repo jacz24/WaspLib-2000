@@ -116,9 +116,7 @@ end;
 ```pascal
 procedure TRSMap.SetupEx(boxes: TBoxArray; planes: TIntegerArray = [0]; downscale: Integer = 8);
 procedure TRSMap.Setup(chunks: TRSMapChunkArray; downscale: Integer = 8);
-procedure TRSMap.Setup(chunk: TRSMapChunk; downscale: Integer = 8); overload;
 procedure TRSMap.Setup(echunks: set of ERSChunk; downscale: UInt32 = 8); overload;
-procedure TRSMap.Setup(echunk: ERSChunk; downscale: UInt32 = 8); overload;
 ```
 Sets up a {ref}`TRSMap`.
 *)
@@ -146,11 +144,6 @@ begin
   Self.InternalSetup();
 end;
 
-procedure TRSMap.Setup(chunk: TRSMapChunk; downscale: Integer = 8); overload;
-begin
-  Self.SetupEx([chunk.Chunk], chunk.Planes, downscale);
-end;
-
 procedure TRSMap.Setup(echunks: set of ERSChunk; downscale: UInt32 = 8); overload;
 var
   chunks: array of TRSMapChunk;
@@ -159,14 +152,6 @@ begin
   for echunk in echunks do
     chunks += echunk.Get();
   Self.Setup(chunks, downscale);
-end;
-
-procedure TRSMap.Setup(echunk: ERSChunk; downscale: UInt32 = 8); overload;
-var
-  chunk: TRSMapChunk;
-begin
-  chunk := echunk.Get();
-  Self.Setup(chunk, downscale);
 end;
 
 (*
