@@ -22,3 +22,22 @@ begin
     ERandomDir.RIGHT: Sleep(RandomRight(min, max));
   end;
 end;
+
+function TPoint.RandomBetween(other: TPoint): TPoint;
+var
+  r: Double;
+begin
+  r := System.Random();
+  Result.X := Self.X + Round(r * (other.X - Self.X));
+  Result.Y := Self.Y + Round(r * (other.Y - Self.Y));
+end;
+
+
+function TPointArray.RandomMean(): TPoint;
+var
+  sorted: TPointArray;
+begin
+  if Length(Self) = 0 then Exit;
+  Result := Self.SortFrom(Self.Mean())[Round(GaussRand(0, High(Self)))];
+end;
+

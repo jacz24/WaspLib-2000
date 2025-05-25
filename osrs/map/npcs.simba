@@ -253,7 +253,7 @@ begin
       else
         tpa := atpa.Random();
 
-      Mouse.Move(tpa.Random());
+      Mouse.Move(tpa.RandomMean());
 
       if Self.UpText = [] then Exit(True);
     end;
@@ -299,7 +299,7 @@ begin
       else
         tpa := atpa.Random();
 
-      Mouse.Move(tpa.Random());
+      Mouse.Move(tpa.RandomMean());
 
       if Self.UpText = [] then Exit(True);
     end;
