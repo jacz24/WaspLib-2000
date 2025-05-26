@@ -52,13 +52,20 @@ begin
   Self.BottomRight := Self.Bounds.BottomRight;
   Self.BottomLeft  := Self.Bounds.BottomLeft;
 
-  Self.UptextBounds.X1 := Self.Bounds.X1 + 3;
-  Self.UptextBounds.Y1 := Self.Bounds.Y1 + 3;
-  Self.UptextBounds.X2 := Self.Bounds.X1 + 500;
-  Self.UptextBounds.Y2 := Self.Bounds.Y1 + 21;
-
   if RSClient.Client = ERSClient.OFFICIAL then
-    Self.UptextBounds := Self.UptextBounds.Offset([-3, -2]);
+  begin
+    Self.UptextBounds.X1 := Self.Bounds.X1;
+    Self.UptextBounds.Y1 := Self.Bounds.Y1 + 1;
+    Self.UptextBounds.X2 := Self.Bounds.X1 + 497;
+    Self.UptextBounds.Y2 := Self.Bounds.Y1 + 19;
+  end
+  else
+  begin
+    Self.UptextBounds.X1 := Self.Bounds.X1 + 3;
+    Self.UptextBounds.Y1 := Self.Bounds.Y1 + 3;
+    Self.UptextBounds.X2 := Self.Bounds.X1 + 500;
+    Self.UptextBounds.Y2 := Self.Bounds.Y1 + 21;
+  end;
 
   Self.ServerMsgBounds.X1 := Self.Bounds.X1 + 2;
   Self.ServerMsgBounds.Y1 := Self.Bounds.Y1 + 2;
