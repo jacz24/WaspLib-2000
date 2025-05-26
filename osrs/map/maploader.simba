@@ -454,6 +454,60 @@ begin
   Result.UseCollisionData := Self.Graph.UseCollisionData;
 end;
 
+procedure TRSMapLoader.Add(chunks: array of TRSMapChunk; downscale: UInt32 = 8; padding: UInt32 = 40);
+var
+  i, j: Int32;
+  current: TRSMapChunk;
+  loaded, final: array of TRSMapChunk;
+begin
+  for i := 0 to High(Self.Regions) do
+  begin
+    current := Chunk(RSTranslator.Global2Chunk(Self.Regions[i].Original), [Self.Regions[i].Plane]);
+    for j := 0 to High(Self.Regions) do
+    begin
+      if i = j then Continue;
+      if Self.Regions[i].Original <> Self.Regions[j].Original then Continue;
+      if current.Planes.Contains(Self.Regions[j].Plane) then Continue;
+      current.Planes += Self.Regions[j].Plane;
+    end;
+
+    current.Planes := current.Planes.Sorted();
+    loaded += current;
+    current := [];
+  end;
+
+  for i := 0 to High(loaded) do
+  begin
+    current := loaded[i];
+
+    for j := High(chunks) downto 0 do
+    begin
+      if current = chunks[j] then
+      begin
+        Delete(chunks, j, 1);
+        Continue;
+      end;
+
+      if current.Chunk = chunks[j].Chunk then
+      begin
+        current.Planes += current.Planes.Difference(chunks[j].Planes);
+        Delete(chunks, j, 1);
+        Continue;
+      end;
+    end;
+
+    final += current;
+  end;
+
+  for i := 0 to High(chunks) do
+    final += chunks[i];
+
+  Self.Free();
+  Self.Regions := [];
+
+  Self.Load(final, downscale, padding);
+end;
+
 procedure TRSMapLoader.Load(chunks: TRSMapChunkArray; downscale: Integer = 8; padding: Integer = 40);
 var
   chunk: TRSMapChunk;

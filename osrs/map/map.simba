@@ -115,10 +115,8 @@ end;
 ## Map.Setup
 ```pascal
 procedure TRSMap.SetupEx(boxes: TBoxArray; planes: TIntegerArray = [0]; downscale: Integer = 8);
-procedure TRSMap.Setup(chunks: array of TRSMapChunk; downscale: Integer = 8);
-procedure TRSMap.Setup(chunk: TRSMapChunk; downscale: Integer = 8); overload;
+procedure TRSMap.Setup(chunks: TRSMapChunkArray; downscale: Integer = 8);
 procedure TRSMap.Setup(echunks: set of ERSChunk; downscale: UInt32 = 8); overload;
-procedure TRSMap.Setup(echunk: ERSChunk; downscale: UInt32 = 8); overload;
 ```
 Sets up a {ref}`TRSMap`.
 *)
@@ -140,15 +138,10 @@ begin
   Self.InternalSetup();
 end;
 
-procedure TRSMap.Setup(chunks: array of TRSMapChunk; downscale: Integer = 8);
+procedure TRSMap.Setup(chunks: TRSMapChunkArray; downscale: Integer = 8);
 begin
   Self.Loader.Load(chunks, downscale);
   Self.InternalSetup();
-end;
-
-procedure TRSMap.Setup(chunk: TRSMapChunk; downscale: Integer = 8); overload;
-begin
-  Self.SetupEx([chunk.Chunk], chunk.Planes, downscale);
 end;
 
 procedure TRSMap.Setup(echunks: set of ERSChunk; downscale: UInt32 = 8); overload;
@@ -161,12 +154,49 @@ begin
   Self.Setup(chunks, downscale);
 end;
 
-procedure TRSMap.Setup(echunk: ERSChunk; downscale: UInt32 = 8); overload;
+(*
+## Map.Add
+```pascal
+procedure TRSMap.AddEx(boxes: TBoxArray; planes: TIntegerArray = [0]; downscale: Integer = 8);
+procedure TRSMap.Add(chunks: TRSMapChunkArray; downscale: Integer = 8);
+procedure TRSMap.Add(echunks: set of ERSChunk; downscale: UInt32 = 8); overload;
+```
+TRSMap to add maps to an already setup TRSMap.
+*)
+procedure TRSMap.AddEx(boxes: TBoxArray; planes: TIntegerArray = [0]; downscale: Integer = 8);
+var
+  i: Int32;
+  chunk: TRSMapChunk;
+  chunks: array of TRSMapChunk;
+begin
+  chunk.Planes := planes;
+
+  for i := 0 to High(boxes) do
+  begin
+    chunk.Chunk := boxes[i];
+    chunks += chunk;
+  end;
+
+  Self.Loader.Add(chunks);
+  Self.InternalSetup();
+end;
+
+procedure TRSMap.Add(chunks: TRSMapChunkArray; downscale: Integer = 8);
 var
   chunk: TRSMapChunk;
 begin
-  chunk := echunk.Get();
-  Self.Setup(chunk, downscale);
+  for chunk in chunks do
+    Self.AddEx([chunk.Chunk], chunk.Planes, downscale);
+end;
+
+procedure TRSMap.Add(echunks: set of ERSChunk; downscale: UInt32 = 8); overload;
+var
+  chunks: array of TRSMapChunk;
+  echunk: ERSChunk;
+begin
+  for echunk in echunks do
+    chunks += echunk.Get();
+  Self.Add(chunks, downscale);
 end;
 
 

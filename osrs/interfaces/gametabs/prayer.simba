@@ -108,12 +108,14 @@ ShowOnClient(Prayer.GetInfoBox());
 ```
 *)
 function TRSPrayer.GetInfoBox(): TBox;
+const
+  INFO_BOX_COLOR: TColor = $A0FFFF;
 var
   tpa: TPointArray;
 begin
   if not Self.IsOpen() then Exit;
 
-  tpa := Target.FindColor($A0FFFF, 0, GameTab.Bounds);
+  tpa := Target.FindColor(INFO_BOX_COLOR, 0, GameTab.Bounds);
   if tpa.Length > 1000 then
     Result := tpa.Bounds();
 end;
@@ -281,13 +283,15 @@ else
   WriteLn('One or more prayers are not active');
 ```
 *)
-function TRSPrayer.IsActive(prayers: TRSPrayerSet): Boolean; overload;
+function TRSPrayer.IsActive(prayers: TRSPrayerSet): Boolean;
+const
+  ACTIVE_COLOR: TColorTolerance = [$6CAAC2, 0.777, EColorSpace.HSL, [1.967, 0.232, 0.803]];
 var
   prayer: ERSPrayer;
   b: TBox;
 begin
   for prayer in prayers do
-    if not (Self.Find(prayer, b) and Target.HasColor(7315120, 27, 10, b)) then
+    if not (Self.Find(prayer, b) and Target.HasColor(ACTIVE_COLOR, 10, b)) then
       Exit;
 
   Result := True;
