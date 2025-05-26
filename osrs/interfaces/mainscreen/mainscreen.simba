@@ -57,6 +57,9 @@ begin
   Self.UptextBounds.X2 := Self.Bounds.X1 + 500;
   Self.UptextBounds.Y2 := Self.Bounds.Y1 + 21;
 
+  if RSClient.Client = ERSClient.OFFICIAL then
+    Self.UptextBounds := Self.UptextBounds.Offset([-3, -2]);
+
   Self.ServerMsgBounds.X1 := Self.Bounds.X1 + 2;
   Self.ServerMsgBounds.Y1 := Self.Bounds.Y1 + 2;
   Self.ServerMsgBounds.X2 := Self.ServerMsgBounds.X1 + 129;

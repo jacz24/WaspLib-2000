@@ -120,13 +120,16 @@ begin
   b.X1 := Self.Bounds.X1;
   b.X2 := Self.Bounds.X2;
 
-  for i := 0 to High(Result) do
+  for i := 0 to Result.High do
   begin
     b.Y1 := Self.Bounds.Y1 + (i * 15);
+    if RSClient.Client = ERSClient.OFFICIAL then
+      Inc(b.Y1, 2);
     b.Y2 := b.Y1 + 15;
+    if (RSClient.Client = ERSClient.OFFICIAL) and (i = Result.High) then
+      Dec(b.Y2);
     if b.Y2 > Self.Bounds.Y2 then Exit;
-
-    Result[i].Text := OCR.RecognizeStatic(b, RSFonts.BOLD_SHADOW, [$47545D, $0], 0);
+    Result[i].Text := OCR.RecognizeShadow(b, RSFonts.BOLD_SHADOW, 0);
     Result[i].Bounds := b;
   end;
 end;
@@ -166,42 +169,47 @@ end;
 (*
 ## ChooseOption.HasOption
 ```pascal
-function TRSChooseOption.HasOption(text: TStringArray; out option: TRSChooseOption_Option; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean;
-function TRSChooseOption.HasOption(text: TStringArray; out index: Int32; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
-function TRSChooseOption.HasOption(text: TStringArray; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
-function TRSChooseOption.HasOption(text: String; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
+function TRSChooseOption.Find(text: TStringArray; out option: TRSChooseOption_Option; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean;
+function TRSChooseOption.Find(text: TStringArray; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
 ```
 Methods to check if an option is available in the {ref}`ChooseOption` context menu.
 Returns true if the option specified is available.
 
 Example:
 ```pascal
-WriteLn ChooseOption.HasOption('Take');
+WriteLn ChooseOption.Find('Take');
 ```
 *)
 function TRSChooseOption.Find(text: TStringArray; out option: TRSOption; caseSensitive: Boolean = True; closeOnFalse: Boolean = True): Boolean;
 var
   i: Int32;
-  boxes: TBoxArray;
+  b: TBox;
+  s: String;
 begin
   if not Self.Open() then Exit;
   if Self.Bounds.Height < 15 then Exit;
 
-  SetLength(boxes, Self.Bounds.Height div 15);
+  b.X1 := Self.Bounds.X1;
+  b.X2 := Self.Bounds.X2;
 
-  option.Bounds.X1 := Self.Bounds.X1;
-  option.Bounds.X2 := Self.Bounds.X2;
-
-  for i := 0 to High(boxes) do
+  for i := 0 to Self.Bounds.Height div 15 do
   begin
-    option.Bounds.Y1 := Self.Bounds.Y1 + i*15;
-    option.Bounds.Y2 := option.Bounds.Y1 + 15;
-    if option.Bounds.Y2 > Self.Bounds.Y2 then Exit;
-
-    option.Text := OCR.RecognizeShadow(option.Bounds, RSFonts.BOLD_SHADOW, 0);
-
-    if option.Text.ContainsAny(text, caseSensitive) then
+    b.Y1 := Self.Bounds.Y1 + (i * 15);
+    if RSClient.Client = ERSClient.OFFICIAL then
+      Inc(b.Y1, 2);
+    b.Y2 := b.Y1 + 15;
+    if (RSClient.Client = ERSClient.OFFICIAL) and (i = (Self.Bounds.Height div 15) - 1) then
+      Dec(b.Y2);
+    if b.Y2 > Self.Bounds.Y2 then Exit;
+    s := OCR.RecognizeShadow(b, RSFonts.BOLD_SHADOW, 0);
+    writeln s;
+    if s.ContainsAny(text, caseSensitive) then
+    begin
+      option.Text := s;
+      option.Bounds := b;
+      option.StringIndex := i;
       Exit(True);
+    end;
   end;
 
   if closeOnFalse then
@@ -217,12 +225,6 @@ var
 begin
   Result := Self.Find(text, option, caseSensitive, closeOnFalse);
 end;
-
-function TRSChooseOption.Find(text: String; caseSensitive, closeOnFalse: Boolean = True): Boolean; overload;
-begin
-  Result := Self.Find([text], caseSensitive, closeOnFalse);
-end;
-
 
 (*
 ## ChooseOption.Hover
