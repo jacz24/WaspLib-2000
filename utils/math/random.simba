@@ -38,6 +38,6 @@ var
   sorted: TPointArray;
 begin
   if Length(Self) = 0 then Exit;
-  Result := Self.SortFrom(Self.Mean())[Round(GaussRand(0, High(Self)))];
+  Result := Self.SortFrom(Self.Mean())[RandomLeft(0, High(Self))];
 end;
 
