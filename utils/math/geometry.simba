@@ -8,6 +8,9 @@ Methods and functions related to geometry.
 
 {$loadlib ../../plugins/libtpaex/libtpaex}
 
+const
+  TAU: Double = 2 * PI;
+
 function TBox.ContainsBox(other: TBox): Boolean;
 begin
   Result := InRange(other.X1, Self.X1, Self.X2) and
