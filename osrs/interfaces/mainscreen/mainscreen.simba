@@ -40,9 +40,11 @@ var
   y, x: Integer;
 begin
   case RSClient.Mode of
-    ERSMode.FIXED: Self.Bounds := TBox.Create(4,4,515,337);
+    ERSMode.FIXED:
+      with RSClient.Bounds() do
+        Self.Bounds := TBox.Create(X1+4,4,X1+515,337);
     ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
-      Self.Bounds := Target.Bounds;
+      Self.Bounds := RSClient.Bounds();
   end;
 
   Self.Center := Self.Bounds.Center;

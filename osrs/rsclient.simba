@@ -26,6 +26,15 @@ Enum that represent the client mode.
   ERSMode = enum(UNKNOWN, FIXED, RESIZABLE_CLASSIC, RESIZABLE_MODERN);
 
 (*
+## ERSPopoutPanel
+```pascal
+ERSPopoutPanel = enum(UNKNOWN, DISABLED, ENABLED);
+```
+Enum that represent the state of the popout panel on the official client.
+*)
+  ERSPopoutPanel = enum(DISABLED, CLOSED, OPEN);
+
+(*
 ## TRSClient
 Record representing the RuneScape client ({ref}`RSClient`.
 *)
@@ -62,6 +71,110 @@ begin
   end;
 end;
 
+{%codetools off}
+function TRSClient._Bounds(img: TImage): TBox;
+var
+  x1, x2: Integer;
+begin
+  if img.Pixel[0, img.Height-1] <> $0 then
+    Exit(Target.Bounds);
+
+  for x1 := 1 to img.Width-1 do
+    if img.Pixel[x1, 150] <> $0 then
+      Break;
+
+  for x2 := img.Width-1 downto x1 do
+    if img.Pixel[x2, 150] <> $0 then
+      Break;
+
+  Result := [x1, 0, x2, Min(503, img.Height-1)];
+end;
+
+function TRSClient._Bounds(): TBox; overload;
+var
+  img: TImage;
+begin
+  try
+    img := TImage.CreateFromTarget();
+    Result := Self._Bounds(img);
+  finally
+    img.Free();
+  end;
+end;
+
+function TRSClient.GetPopoutPanelState(clientImg: TImage): ERSPopoutPanel;
+var
+  img: TImage;
+  x: Integer;
+begin
+  try
+    img := clientImg.Copy([clientImg.Width - 331, clientImg.Height-2, clientImg.Width-1, clientImg.Height-1]);
+    for x := img.Width-1 downto 0 do
+      if img.Pixel[x, 0] = $010000 then
+        Break;
+  finally
+    img.Free();
+  end;
+
+  case x of
+    0, 3, 16: Result := ERSPopoutPanel.OPEN;
+    270, 273, 286: Result := ERSPopoutPanel.CLOSED;
+    else Result := ERSPopoutPanel.DISABLED;
+  end;
+end;
+{%codetools on}
+
+function TRSClient.GetPopoutPanelState(): ERSPopoutPanel; overload;
+var
+  img: TImage;
+  b: TBox;
+begin
+  try
+    img := TImage.CreateFromTarget();
+    b := Self._Bounds(img);
+    img.Crop(b);
+    Result := Self.GetPopoutPanelState(img);
+  finally
+    img.Free();
+  end;
+end;
+
+
+(*
+## RSClient.Bounds
+```pascal
+function TRSClient.Bounds(): TBox;
+```
+Dynamic client bounds to handle different client quirks.
+
+Example:
+```pascal
+ShowOnClient(RSClient.Bounds());
+```
+*)
+function TRSClient.Bounds(): TBox;
+var
+  img: TImage;
+  b: TBox;
+begin
+  if Self.Client <> ERSClient.OFFICIAL then
+    Exit(Target.Bounds);
+
+  try
+    img := TImage.CreateFromTarget();
+    b := Self._Bounds(img);
+
+    img.Crop(b);
+
+    case Self.GetPopoutPanelState(img) of
+      ERSPopoutPanel.DISABLED: Result := b;
+      ERSPopoutPanel.CLOSED: Result := [b.X1, b.Y1, b.X2 - 42, b.Y2];
+      ERSPopoutPanel.OPEN: Result := [b.X1, b.Y1, b.X2 - 312, b.Y2];
+    end;
+  finally
+    img.Free();
+  end;
+end;
 
 (*
 ## RSClient.GetMode
@@ -76,10 +189,14 @@ WriteLn RSClient.GetMode();
 ```
 *)
 function TRSClient.GetMode(): ERSMode;
+var
+  bounds: TBox;
 begin
+  bounds := Self.Bounds();
+
   // Music tab in each mode there are different colors at W-4, H-21
   // Two colors each because tab can be active(red) or not(grey)
-  case Target.GetColor([Target.Width-4, Target.Height-21]) of
+  case Target.GetColor([bounds.Width-4, bounds.Height-21]) of
     2435372, 658467: Result := ERSMode.FIXED;
     3555653, 922425: Result := ERSMode.RESIZABLE_MODERN;
     2896180, 790059: Result := ERSMode.RESIZABLE_CLASSIC;

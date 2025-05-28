@@ -62,7 +62,7 @@ begin
   speed := Target.MouseOptions.Speed;
   Target.MouseOptions.Speed += Biometrics.RandomModeInteger(2, 1, 5);
 
-  b := Target.Bounds.Expand(150);
+  b := RSClient.Bounds().Expand(150);
 
   for i := 1 to Trunc(GaussRand(1, 6)) do
   begin
@@ -279,7 +279,7 @@ procedure TAntiban.RandomRightClick();
 begin
   WriteLn GetDebugLn('Antiban', 'Random Right Click');
 
-  Mouse.Move(Target.Bounds.Expand(-15), True, EMouseDistribution.RANDOM);
+  Mouse.Move(RSClient.Bounds().Expand(-15), True, EMouseDistribution.RANDOM);
 
   if ChooseOption.Open() then
   begin

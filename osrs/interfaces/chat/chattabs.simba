@@ -65,10 +65,13 @@ procedure TRSChatTabs.SetupInterface();
 var
   i: Int32;
 begin
-  Self.Bounds.X1 := Target.Bounds.X1;
-  Self.Bounds.X2 := Target.Bounds.X1 + 518;
-  Self.Bounds.Y1 := Target.Bounds.Y2 - 22;
-  Self.Bounds.Y2 := Target.Bounds.Y2;
+  with RSClient.Bounds() do
+  begin
+    Self.Bounds.X1 := X1;
+    Self.Bounds.X2 := X1 + 518;
+    Self.Bounds.Y1 := Y2 - 22;
+    Self.Bounds.Y2 := Y2;
+  end;
 
   with Self.Bounds do
     for i := 0 to 6 do

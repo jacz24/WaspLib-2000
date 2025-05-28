@@ -53,7 +53,8 @@ begin
   p.X += 1;
   p.Y += Self.TitleImg.Height;
 
-  tpa := Target.FindColor(Colors.BLACK, 0, [P.X, P.Y, Target.Width - 1, Target.Height - 1]);
+  with RSClient._Bounds() do
+    tpa := Target.FindColor(Colors.BLACK, 0, [P.X, P.Y, Width - 1, Height - 1]);
 
   Result := tpa <> [];
   if Result then
@@ -155,7 +156,7 @@ begin
   if not Self.IsOpen() then Exit(True);
 
   space := Self.Bounds.Expand(100);
-  space.Clip(Target.Bounds);
+  space.Clip(RSClient.Bounds());
 
   boxes := Self.Bounds.Expand(50).Invert(space);
   if boxes = [] then

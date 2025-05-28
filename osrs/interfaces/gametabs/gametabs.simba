@@ -59,40 +59,41 @@ This is automatically called for you on the {ref}`GameTabs variable`.
 *)
 procedure TRSGameTabs.SetupInterface();
 var
-  b: TBox;
+  bounds, b: TBox;
   tab: ERSGameTab;
 begin
-  Self.Bounds.Y2 := Target.Bounds.Y2;
+  bounds := RSClient.Bounds();
+  Self.Bounds.Y2 := bounds.Y2;
 
   case RSClient.Mode of
     ERSMode.FIXED:
     begin
-      Self.Bounds.X1 := Target.Bounds.X2 - 242;
-      Self.Bounds.X2 := Target.Bounds.X2 - 2;
-      Self.Bounds.Y1 := Target.Bounds.Y2 - 334;
+      Self.Bounds.X1 := bounds.X2 - 242;
+      Self.Bounds.X2 := bounds.X2 - 2;
+      Self.Bounds.Y1 := bounds.Y2 - 334;
     end;
 
     ERSMode.RESIZABLE_CLASSIC:
     begin
-      Self.Bounds.X1 := Target.Bounds.X2 - 240;
-      Self.Bounds.X2 := Target.Bounds.X2;
-      Self.Bounds.Y1 := Target.Bounds.Y2 - 334;
+      Self.Bounds.X1 := bounds.X2 - 240;
+      Self.Bounds.X2 := bounds.X2;
+      Self.Bounds.Y1 := bounds.Y2 - 334;
     end;
 
     ERSMode.RESIZABLE_MODERN:
     begin
-      Self.Bounds.X2 := Target.Bounds.X2;
+      Self.Bounds.X2 := bounds.X2;
 
       //Needed because depending on the client width the tabs stack into row(s)
-      if Target.Width >= 948 then
+      if bounds.Width >= 948 then
       begin
-        Self.Bounds.X1 := Target.Bounds.X2 - 428;
-        Self.Bounds.Y1 := Target.Bounds.Y2 - 35;
+        Self.Bounds.X1 := bounds.X2 - 428;
+        Self.Bounds.Y1 := bounds.Y2 - 35;
       end
       else
       begin
-        Self.Bounds.X1 := Target.Bounds.X2 - 230;
-        Self.Bounds.Y1 := Target.Bounds.Y2 - 71;
+        Self.Bounds.X1 := bounds.X2 - 230;
+        Self.Bounds.Y1 := bounds.Y2 - 71;
       end;
     end;
   end;
@@ -104,7 +105,7 @@ begin
     ERSMode.RESIZABLE_MODERN:
       begin
         // One row
-        if Target.Width >= 948 then
+        if bounds.Width >= 948 then
         begin
           Self.Tabs := TBoxArray.Create(Self.Bounds.BottomLeft.Offset(0,-35), 14, 1, 30, 33, [3, 0]);
           for tab := ERSGameTab.MUSIC downto ERSGameTab.FRIENDS do
@@ -115,10 +116,10 @@ begin
 
         // Logout button is moved to top right corner
         Self.Tabs[7] := Self.Tabs[10];
-        Self.Tabs[10].X1 := Target.Bounds.X2 - 19;
-        Self.Tabs[10].Y1 := Target.Bounds.Y1 + 9;
-        Self.Tabs[10].X2 := Target.Bounds.X2 - 10;
-        Self.Tabs[10].Y2 := Target.Bounds.Y1 + 18;
+        Self.Tabs[10].X1 := bounds.X2 - 19;
+        Self.Tabs[10].Y1 := bounds.Y1 + 9;
+        Self.Tabs[10].X2 := bounds.X2 - 10;
+        Self.Tabs[10].Y2 := bounds.Y1 + 18;
       end;
   end;
 end;
@@ -316,28 +317,31 @@ procedure TRSGameTab.SetupInterface();
 begin
   case RSClient.Mode of
     ERSMode.FIXED:
-    begin
-      Self.Bounds.X1 := Target.Bounds.X2 - 214;
-      Self.Bounds.X2 := Target.Bounds.X2 - 31;
-      Self.Bounds.Y1 := Target.Bounds.Y2 - 298;
-      Self.Bounds.Y2 := Target.Bounds.Y2 - 37;
-    end;
+      with RSClient.Bounds() do
+      begin
+        Self.Bounds.X1 := X2 - 214;
+        Self.Bounds.X2 := X2 - 31;
+        Self.Bounds.Y1 := Y2 - 298;
+        Self.Bounds.Y2 := Y2 - 37;
+      end;
 
     ERSMode.RESIZABLE_CLASSIC:
-    begin
-      Self.Bounds.X1 := Target.Bounds.X2 - 212;
-      Self.Bounds.X2 := Target.Bounds.X2 - 29;
-      Self.Bounds.Y1 := Target.Bounds.Y2 - 298;
-      Self.Bounds.Y2 := Target.Bounds.Y2 - 37;
-    end;
+      with RSClient.Bounds() do
+      begin
+        Self.Bounds.X1 := X2 - 212;
+        Self.Bounds.X2 := X2 - 29;
+        Self.Bounds.Y1 := Y2 - 298;
+        Self.Bounds.Y2 := Y2 - 37;
+      end;
 
     ERSMode.RESIZABLE_MODERN:
-    begin
-      Self.Bounds.X1 := Target.Bounds.X2 - 193;
-      Self.Bounds.X2 := Target.Bounds.X2 - 10;
-      Self.Bounds.Y1 := GameTabs.Bounds.Y1 - 269;
-      Self.Bounds.Y2 := GameTabs.Bounds.Y1 - 7;
-    end;
+      with RSClient.Bounds() do
+      begin
+        Self.Bounds.X1 := X2 - 193;
+        Self.Bounds.X2 := X2 - 10;
+        Self.Bounds.Y1 := GameTabs.Bounds.Y1 - 269;
+        Self.Bounds.Y2 := GameTabs.Bounds.Y1 - 7;
+      end;
   end;
 
   Self.Width  := Self.Bounds.Width;

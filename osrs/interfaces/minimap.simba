@@ -80,20 +80,22 @@ var
 begin
   case RSClient.Mode of
     ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
-    begin
-      Self.Bounds.X1 := Target.Bounds.X2 - 157;
-      Self.Bounds.X2 := Target.Bounds.X2 - 6;
-      Self.Bounds.Y1 := Target.Bounds.Y1 + 8;
-      Self.Bounds.Y2 := Target.Bounds.Y1 + 159;
-    end;
+      with RSClient.Bounds() do
+      begin
+        Self.Bounds.X1 := X2 - 157;
+        Self.Bounds.X2 := X2 - 6;
+        Self.Bounds.Y1 := Y1 + 8;
+        Self.Bounds.Y2 := Y1 + 159;
+      end;
 
     ERSMode.FIXED:
-    begin
-      Self.Bounds.X1 := Target.Bounds.X2 - 194;
-      Self.Bounds.X2 := Target.Bounds.X2 - 50;
-      Self.Bounds.Y1 := Target.Bounds.Y1 + 9;
-      Self.Bounds.Y2 := Target.Bounds.Y1 + 159;
-    end;
+      with RSClient.Bounds() do
+      begin
+        Self.Bounds.X1 := X2 - 194;
+        Self.Bounds.X2 := X2 - 50;
+        Self.Bounds.Y1 := Y1 + 9;
+        Self.Bounds.Y2 := Y1 + 159;
+      end;
   end;
 
   SetLength(Self.Orbs, Ord(High(ERSMinimapOrb))+1);
@@ -296,7 +298,7 @@ var
   pixels: Integer;
   timeout: UInt64;
 begin
-  available := Target.Bounds.Expand(-10);
+  available := RSClient.Bounds().Expand(-10);
   degrees := DegNormalize(degrees);
   timeout := Time() + RandomMean(6000, 8000);
 

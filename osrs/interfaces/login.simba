@@ -39,8 +39,8 @@ This is automatically called for you on the {ref}`Lobby variable`.
 *)
 procedure TRSLobbyScreen.Setup();
 begin
-  Self.Bounds.X1 := Target.Bounds.Width div 2 - 382;
-  Self.Bounds.X2 := Target.Bounds.Width div 2 + 382;
+  Self.Bounds.X1 := Target.Width div 2 - 382;
+  Self.Bounds.X2 := Target.Width div 2 + 382;
   Self.Bounds.Y1 := Target.Bounds.Y1;
   Self.Bounds.Y2 := Self.Bounds.Y1 + 502;
 
@@ -174,8 +174,8 @@ This is automatically called for you on the {ref}`LoginWorldSwitcher variable`.
 *)
 procedure TRSLoginWorldSwitcher.Setup();
 begin
-  Self.Bounds.X1 := Target.Bounds.Width div 2 - 382;
-  Self.Bounds.X2 := Target.Bounds.Width div 2 + 382;
+  Self.Bounds.X1 := Target.Width div 2 - 382;
+  Self.Bounds.X2 := Target.Width div 2 + 382;
   Self.Bounds.Y1 := Target.Bounds.Y1;
   Self.Bounds.Y2 := Self.Bounds.Y1 + 502;
 
@@ -573,9 +573,9 @@ This is automatically called for you on the {ref}`Login variable`.
 *)
 procedure TRSLogin.Setup();
 begin
-  Self.Bounds.X1 := Target.Bounds.Width div 2 - 176;
+  Self.Bounds.X1 := Target.Width div 2 - 176;
   Self.Bounds.Y1 := Target.Bounds.Y1 + 172;
-  Self.Bounds.X2 := Target.Bounds.Width div 2 + 176;
+  Self.Bounds.X2 := Target.Width div 2 + 176;
   Self.Bounds.Y2 := Self.Bounds.Y1 + 194;
 
   with Self.Inputs[ERSLoginInput.USERNAME] do
