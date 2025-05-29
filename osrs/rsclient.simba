@@ -192,6 +192,9 @@ function TRSClient.GetMode(): ERSMode;
 var
   bounds: TBox;
 begin
+  if Self.Client = ERSClient.UNKNOWN then
+    Exit;
+
   bounds := Self.Bounds();
 
   // Music tab in each mode there are different colors at W-4, H-21

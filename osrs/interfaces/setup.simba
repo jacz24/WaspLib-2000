@@ -5,6 +5,9 @@
 procedure SetupInterfaces();
 {$IFDEF WL_DEBUG_INTERFACES}var t: UInt64 := Time();{$ENDIF}
 begin
+  if RSClient.Client = ERSClient.UNKNOWN then
+    Exit;
+
   //interfaces that depend on other's bounds need to be in the right order
   //e.g., gametabs need to go after GameTab and GameTab after GameTabs.
   MainScreen.SetupInterface();
