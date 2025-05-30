@@ -237,8 +237,9 @@ var
 begin
   center := Self.Compass.Circle.Center;
   bounds := Self.Compass.Circle.Bounds;
-  dials := Target.FindColor($0E0C9F,  1, bounds);
-  Nclr  := Target.FindColor($1D2931, 1, bounds);
+
+  dials := Target.FindColor($26259C,  12, bounds);
+  Nclr  := Target.FindColor($1D2931, 0.6, bounds);
 
   dials := dials.ExtractDist(center, 10, $FF);
   north := Nclr.ExtractDist(center, 0,20).Mean();

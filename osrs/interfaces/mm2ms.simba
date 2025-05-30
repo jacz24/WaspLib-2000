@@ -662,7 +662,7 @@ begin
       vector := p.ToVec3().Rotate(angle, Self.Center);
       if not Self.PointOnZoomQuad(vector.ToPoint()) then Continue;
       quad := Self.Vector2MSQuad(vector, angle, [1,1]);
-      tpa := MainScreen.Filter(quad.Corners.Connect());
+      tpa := quad.Corners.Connect().ExtractBox(MainScreen.Bounds);
       img.DrawTPA(tpa);
     end;
 
@@ -674,7 +674,7 @@ begin
       vector := p.ToVec3();
       if not Self.PointOnZoomQuad(vector.ToPoint()) then Continue;
       quad := Self.Vector2MSQuad(vector, angle, [1,1]);
-      tpa := MainScreen.Filter(quad.Corners.Connect().Grow(1));
+      tpa := quad.Corners.Connect().ExtractBox(MainScreen.Bounds);
       img.DrawTPA(tpa);
     end;
   end;
@@ -703,7 +703,6 @@ Example:
 WriteLn(MainScreen.GetPlayerBox());
 ```
 *)
-
 function TRSMainScreen.GetPlayerBox(): TBox;
 var
   compassAngle: Double;
