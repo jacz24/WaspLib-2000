@@ -49,7 +49,12 @@ Record responsible for positioning.
     Walker: TRSWalker;
 
     Similarity: Single;
-    Cache: TMatchTemplateCache;
+    Cache: record
+      LocalPosition: TPoint;
+      Position: TPoint;
+      FullPosition: TRSPosition;
+      MatchTemplate: TMatchTemplateCache;
+    end;
     Loader: TRSMapLoader;
 
     Sample: TRSMapSample;
@@ -88,8 +93,8 @@ begin
   sample := Minimap.ScaleMinimap(img, Self.Loader.Downscale, Self.Sample.Radius);
   img.Free();
 
-  Self.Cache := TMatchTemplateCache.Create(Self.Loader.DownscaledMap, sample, ETMFormula.TM_CCOEFF_NORMED);
-  Self.Cache.FreeOnTerminate := True;
+  Self.Cache.MatchTemplate := TMatchTemplateCache.Create(Self.Loader.DownscaledMap, sample, ETMFormula.TM_CCOEFF_NORMED);
+  Self.Cache.MatchTemplate.FreeOnTerminate := True;
   sample.Free();
 
   Self.Filters := [];
@@ -221,7 +226,7 @@ var
 begin
   try
     sample := Minimap.ScaleMinimap(img, Self.Loader.Downscale, Self.Sample.Radius);
-    matrix := MatchTemplateMask(Self.Cache, sample.ToMatrix(), ETMFormula.TM_CCOEFF_NORMED);
+    matrix := MatchTemplateMask(Self.Cache.MatchTemplate, sample.ToMatrix(), ETMFormula.TM_CCOEFF_NORMED);
     w := sample.Width div 2;
     h := sample.Height div 2;
   finally
@@ -350,13 +355,15 @@ begin
     clean.Free();
   end;
 
+  Self.Cache.LocalPosition := Result;
+
   Self.RegionIndex := Self.Loader.LocalIndex(Result);
   if Self.RegionIndex < 0 then
     Exit([0,0]);
 
   Self.Region := Self.Loader.Regions[Self.RegionIndex];
-  Result := Self.Loader.GetGlobal(Self.RegionIndex, Result);
-  Exit(RSTranslator.Normalize(Result));
+  Result := RSTranslator.Normalize(Self.Loader.GetGlobal(Self.RegionIndex, Result));
+  Self.Cache.Position := Result;
 end;
 
 function TRSMap.FullPosition(): TRSPosition;
@@ -368,6 +375,8 @@ begin
     Result.Plane := Self.Region.Plane;
     Result.Z := Self.Height([X,Y]);
   end;
+
+  Self.Cache.FullPosition := Result;
 end;
 
 function TRSMap.GetRegionIndex(): Int32;
@@ -392,7 +401,7 @@ Example:
 WriteLn rsw.GetHeight();
 ```
 *)
-function TRSMap.HeightEx(p: TPoint = [0,0]; global: Boolean): Single; overload;
+function TRSMap.HeightEx(p: TPoint; global: Boolean): Single; overload;
 begin
   if Self.DisableHeightmap or not Assigned(Self.Loader.Heightmap) then
     Exit(0);
@@ -400,7 +409,11 @@ begin
   if p = [0, 0] then
   begin
     global := True;
-    p := Self.Position();
+    Self.Position();
+    p := Self.Cache.LocalPosition;
+    if Self.Loader.Heightmap.InImage(p.X, p.Y) then
+      Result := RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X, p.Y]);
+    Exit;
   end;
 
   if global then
@@ -413,6 +426,42 @@ end;
 function TRSMap.Height(p: TPoint = [0,0]): Single;
 begin
   Result := Self.HeightEx(p, True);
+end;
+
+function TRSMap.HeightMatrix(me: TPoint = [0,0]; global: Boolean = True): TSingleMatrix;
+var
+  img: TImage;
+  offset, p: TPoint;
+  bounds: TBox;
+begin
+  if Self.DisableHeightmap or not Assigned(Self.Loader.Heightmap) then
+    Exit;
+
+  if me = [0,0] then
+  begin
+    Self.Position();
+    me := Self.Cache.LocalPosition;
+  end
+  else if global then
+    me := Self.Loader.GetLocal(me) + [Self.Loader.Padding, Self.Loader.Padding];
+
+  offset := [
+    me.X - (Minimap.Center.X - Minimap.Bounds.X1),
+    me.Y - (Minimap.Center.Y - Minimap.Bounds.Y1)
+  ];
+
+  bounds := [
+    offset.X,
+    offset.Y,
+    offset.X + Minimap.Bounds.Width-1,
+    offset.Y + Minimap.Bounds.Height-1
+  ];
+
+  SetLength(Result, bounds.Height, bounds.Width);
+
+  for p.Y := bounds.Y1 to bounds.Y2 do
+    for p.X := bounds.X1 to bounds.X2 do
+      Result[p.Y-bounds.Y1, p.X-bounds.X1] := RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X, p.Y]);
 end;
 
 function TRSMap.HeightDifference(p, q: TPoint; global: Boolean = True): Single;
