@@ -105,7 +105,7 @@ end;
 ```pascal
 function TRSChooseOption.GetOptions(): TRSChooseOption_OptionArray;
 ```
-Returns a `TRSChooseOption_OptionArray` of all available options in the {ref}`ChooseOption` context menu.
+Returns a `TRSOptionArray` of all available options in the {ref}`ChooseOption` context menu.
 This is a internal method, you probably don't need to call it.
 *)
 function TRSChooseOption.GetOptions(): TRSOptionArray;
@@ -136,6 +136,27 @@ begin
 end;
 
 (*
+## ChooseOption.FindSubmenu
+```pascal
+function TRSChooseOption.FindSubmenu(): TBox;
+```
+Returns the bounds of the submenu if it exists, otherwise returns an empty TBox.
+*)
+function TRSChooseOption.FindSubmenu(): TBox;
+var
+  atpa: T2DPointArray;
+  tpa: TPointArray;
+begin
+  if not Self.IsOpen then Exit;
+  tpa := Target.FindColor($47545D, 0, RSClient.Bounds()).ExcludeBox(Self.Bounds.Expand(2, 20));
+  atpa := tpa.Cluster(2).ExcludeSize(100, __LT__).SortFrom(Mouse.Position);
+
+  for tpa in atpa do
+    if tpa.Bounds.Corners.Intersection(tpa).Length = 4 then
+      Exit(tpa.Bounds.Expand(-2));
+end;
+
+(*
 ## ChooseOption.Close
 ```pascal
 function TRSChooseOption.Close(): Boolean;
@@ -151,18 +172,21 @@ WriteLn ChooseOption.Close();
 function TRSChooseOption.Close(): Boolean;
 var
   boxes: TBoxArray;
-  space: TBox;
+  space, sub: TBox;
 begin
   if not Self.IsOpen() then Exit(True);
 
-  space := Self.Bounds.Expand(100);
-  space.Clip(RSClient.Bounds());
+  sub := Self.FindSubMenu();
+  if sub <> [] then
+    space := Self.Bounds.Combine(sub)
+  else
+    space := Self.Bounds;
 
-  boxes := Self.Bounds.Expand(50).Invert(space);
+  boxes := space.Expand(50).Invert(Target.Bounds);
   if boxes = [] then
     raise GetDebugLn('ChooseOption', 'No space found to move mouse');
 
-  Target.MouseMove(boxes.Random(), False);
+  Mouse.Move(boxes.Random(), True);
   Result := SleepUntil(not Self.IsOpen(), 50, 600);
 end;
 
@@ -170,7 +194,7 @@ end;
 (*
 ## ChooseOption.HasOption
 ```pascal
-function TRSChooseOption.Find(text: TStringArray; out option: TRSChooseOption_Option; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean;
+function TRSChooseOption.Find(text: TStringArray; out option: TRSOption; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean;
 function TRSChooseOption.Find(text: TStringArray; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
 ```
 Methods to check if an option is available in the {ref}`ChooseOption` context menu.
@@ -203,7 +227,7 @@ begin
       Dec(b.Y2);
     if b.Y2 > Self.Bounds.Y2 then Exit;
     s := OCR.RecognizeShadow(b, RSFonts.BOLD_SHADOW, 0);
-    writeln s;
+
     if s.ContainsAny(text, caseSensitive) then
     begin
       option.Text := s;
@@ -264,7 +288,7 @@ end;
 (*
 ## ChooseOption.Select
 ```pascal
-procedure TRSChooseOption.Select(option: TRSChooseOption_Option; mouseAction: Int32 = MOUSE_LEFT);
+procedure TRSChooseOption.Select(option: TRSOption; mouseAction: Int32 = MOUSE_LEFT);
 function TRSChooseOption.Select(text: TStringArray; mouseAction: Int32 = MOUSE_LEFT; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
 function TRSChooseOption.Select(text: String; mouseAction: Int32 = MOUSE_LEFT; caseSensitive: Boolean = True; closeIfNotFound: Boolean = True): Boolean; overload;
 ```
@@ -290,6 +314,172 @@ end;
 function TRSChooseOption.Select(text: String; caseSensitive, closeOnFalse: Boolean = True): Boolean; overload;
 begin
   Result := Self.Select([text], caseSensitive, closeOnFalse);
+end;
+
+(*
+## ChooseOption.HasSubmenu
+```pascal
+function TRSChooseOption.HasSubmenu(): Boolean;
+```
+Returns True if the {ref}`ChooseOption` context menu has a submenu (indicated by ' >' in the option text).
+*)
+function TRSChooseOption.HasSubmenu(): Boolean;
+begin
+  Result := Self.IsOpen() and Self.Find([' >']);
+end;
+
+(*
+## ChooseOption.IsSubmenuOpen
+```pascal
+function TRSChooseOption.IsSubmenuOpen(): Boolean;
+```
+Returns True if a submenu is currently open and visible.
+*)
+function TRSChooseOption.IsSubmenuOpen(): Boolean;
+begin
+  Result := Self.FindSubmenu() <> [];
+end;
+
+(*
+## ChooseOption.OpenSubmenu
+```pascal
+function TRSChooseOption.OpenSubmenu(closeIfNotFound: Boolean = True): Boolean;
+```
+Opens a submenu if it exists. Returns True if successful.
+If closeIfNotFound is True, closes the context menu if no submenu is found.
+*)
+function TRSChooseOption.OpenSubmenu(closeIfNotFound: Boolean = True): Boolean;
+var
+  t: TCountdown;
+begin
+  Result := Self.IsSubmenuOpen() or (Self.Open() and Self.Hover([' >'], False, closeIfNotFound) and SleepUntil(Self.IsSubmenuOpen(), 5, 250));
+  if closeIfNotFound and not Result then
+    Self.Close();
+end;
+
+(*
+## ChooseOption.GetSubmenuOptions
+```pascal
+function TRSChooseOption.GetSubmenuOptions(): TRSOptionArray;
+```
+Returns a `TRSOptionArray` of all available options in the submenu.
+This is a internal method, you probably don't need to call it.
+*)
+function TRSChooseOption.GetSubmenuOptions(): TRSOptionArray;
+var
+  bounds, b: TBox;
+  i, h: Integer;
+begin
+  if not Self.OpenSubmenu() then Exit;
+  bounds := Self.FindSubmenu();
+  if (bounds.Height < 15) then Exit;
+  SetLength(Result, bounds.Height div 15);
+
+  b.X1 := bounds.X1;
+  b.X2 := bounds.X2;
+
+  for i := 0 to Result.High do
+  begin
+    b.Y1 := bounds.Y1 + (i * 15);
+    if RSClient.Client = ERSClient.OFFICIAL then
+      b.Y1 += 2;
+    b.Y2 := b.Y1 + 15;
+
+    Result[i].Text := OCR.RecognizeShadow(b, RSFonts.BOLD_SHADOW, 0);
+    Result[i].Bounds := b;
+  end;
+end;
+
+(*
+## ChooseOption.FindSubmenuOption
+```pascal
+function TRSChooseOption.FindSubmenuOption(text: TStringArray; out option: TRSOption; caseSensitive, closeIfNotFound: Boolean = True): Boolean;
+```
+Searches for a specific option in the submenu. Returns True if found.
+The found option is returned through the 'option' parameter.
+*)
+function TRSChooseOption.FindSubmenuOption(text: TStringArray; out option: TRSOption; caseSensitive, closeIfNotFound: Boolean = True): Boolean;
+var
+  o: TRSOption;
+begin
+  for o in Self.GetSubmenuOptions() do
+    if o.Text.ContainsAny(text, caseSensitive) then
+    begin
+      Result := True;
+      option := o;
+      Break;
+    end;
+
+  if closeIfNotFound and (not Result) then
+    Self.Close;
+end;
+
+(*
+## ChooseOption.HoverSubmenuOption
+```pascal
+function TRSChooseOption.HoverSubmenuOption(option: TRSOption): Boolean;
+function TRSChooseOption.HoverSubmenuOption(text: TStringArray; caseSensitive, closeIfNotFound: Boolean = True): Boolean; overload;
+```
+Hovers over a specific option in the submenu. Returns True if successful.
+*)
+function TRSChooseOption.HoverSubmenuOption(option: TRSOption): Boolean;
+var
+  targ: TTarget;
+begin
+  targ := Target;
+  targ.MouseOptions.Wind := 1;
+  targ.MouseOptions.Gravity := 10;
+  targ.MouseOptions.Speed -= Random(5, 10);
+  targ.MouseOptions.Speed := Max(targ.MouseOptions.Speed, 8);
+  targ.MouseMove(option.Bounds);
+  Sleep(50);
+  Result := Self.IsSubmenuOpen();
+end;
+
+function TRSChooseOption.HoverSubmenuOption(text: TStringArray; caseSensitive, closeIfNotFound: Boolean = True): Boolean; overload;
+var
+  option: TRSOption;
+begin
+  Result := Self.Open()
+    and Self.OpenSubmenu(closeIfNotFound)
+    and Self.FindSubmenuOption(text, option, caseSensitive, closeIfNotFound)
+    and Self.HoverSubmenuOption(option);
+end;
+
+(*
+## ChooseOption.SelectSubmenuOption
+```pascal
+function TRSChooseOption.SelectSubmenuOption(option: TRSOption): Boolean;
+function TRSChooseOption.SelectSubmenuOption(text: TStringArray; caseSensitive, closeIfNotFound: Boolean = True): Boolean;
+```
+Selects a specific option in the submenu by clicking on it. Returns True if successful.
+*)
+function TRSChooseOption.SelectSubmenuOption(option: TRSOption): Boolean;
+var
+  targ: TTarget;
+begin
+  targ := Target;
+  targ.MouseOptions.Wind := 1;
+  targ.MouseOptions.Gravity := 10;
+  targ.MouseOptions.Speed -= Random(5, 10);
+  targ.MouseOptions.Speed := Max(targ.MouseOptions.Speed, 8);
+  targ.MouseMove(option.Bounds);
+  Sleep(50);
+  if Self.IsSubmenuOpen then
+  begin
+    targ.MouseClick(EMouseButton.LEFT);
+    Result := True;
+  end;
+end;
+
+function TRSChooseOption.SelectSubmenuOption(text: TStringArray; caseSensitive, closeIfNotFound: Boolean = True): Boolean; overload;
+var
+  option: TRSOption;
+begin
+  Result := Self.Open()
+    and Self.OpenSubmenu(closeIfNotFound)
+    and Self.FindSubmenuOption(text, option, caseSensitive, closeIfNotFound)
+    and Self.SelectSubmenuOption(option);
 end;
 
 var
