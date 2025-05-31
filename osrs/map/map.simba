@@ -410,57 +410,6 @@ begin
   Result := Self.HeightEx(p, True);
 end;
 
-function TRSMap.GetHeightMap(me: TPoint = [0,0]; global: Boolean = True; angle: Single = $FFFF): TImage;
-var
-  offset, p: TPoint;
-  bounds: TBox;
-begin
-  if me = [0,0] then
-  begin
-    Self.Position();
-    me := Self.Cache.LocalPosition;
-  end
-  else if global then
-    me := Self.Loader.GetLocal(me) + [Self.Loader.Padding, Self.Loader.Padding];
-
-  if angle = $FFFF then
-    angle := Minimap.GetCompassAngle(False);
-
-  offset := [
-    me.X - (Minimap.Center.X - Minimap.Bounds.X1),
-    me.Y - (Minimap.Center.Y - Minimap.Bounds.Y1)
-  ];
-
-  bounds := [
-    offset.X-50,
-    offset.Y-50,
-    offset.X + Minimap.Bounds.Width+50,
-    offset.Y + Minimap.Bounds.Height+50
-  ]; //50 padding
-
-  bounds.Corners().Rotate(angle, bounds.Center).Bounds();
-
-  Result := Self.Loader.Heightmap.Copy(bounds.Corners().Rotate(angle, bounds.Center).Bounds().Expand(5));
-  Result := Result.Rotate(EImageRotateAlgo.BILINEAR, -angle, False);
-end;
-
-function TRSMap.HeightMatrix(me: TPoint = [0,0]; global: Boolean = True; angle: Single = $FFFF): TSingleMatrix;
-var
-  img: TImage;
-  pt: TPoint;
-  bounds: TBox;
-begin
-  if Self.DisableHeightmap or not Assigned(Self.Loader.Heightmap) then
-    Exit;
-
-  img := Self.GetHeightMap(me, global, angle);
-  SetLength(Result, img.Height, img.Width);
-
-  for pt.Y := 0 to img.Height-1 do
-    for pt.X := 0 to img.Width-1 do
-      Result[pt.Y, pt.X] := RSTranslator.Color2Height(img.Pixel[pt.X, pt.Y]);
-end;
-
 function TRSMap.HeightDifference(p, q: TPoint; global: Boolean = True): Single;
 var
   c1, c2: TColor;
@@ -598,26 +547,32 @@ while True do
   Map.DebugPosition();
 ```
 *)
+function TRSMap.GetMeanHeightAroundPixel(p: TPoint): Single;
+begin
+  Result := RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X,p.Y]) + RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X,p.Y + 1]) + RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X + 1,p.Y]) + RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X + 1,p.Y + 1]);
+  Result := Result/4;
+end;
+
 procedure TRSMap.DebugHeight();
 var
   matrix: TSingleMatrix;
   quad: TQuad;
   arr, tpa: TPointArray;
-  pt: TPoint;
+  pt, loc, currLoc: TPoint;
   x,y: Integer;
   vector, corner0, corner1, corner2, corner3: TVector3;
   angle, h: Single;
   img: TImage;
 begin
-  matrix := Self.HeightMatrix();
   angle := Minimap.GetCompassAngle(False);
 
   img := Target.GetImage();
   img.DrawColor := $00FF00;
   img.DrawAlpha := $77;
 
-  //base height + 3 just because it looked good!
-  h := 3 - matrix[matrix.Height div 2, matrix.Width div 2];
+  loc := Self.Loader.GetLocal(Self.Position);
+  h := Self.GetMeanHeightAroundPixel(loc - [1,3]) + Self.GetMeanHeightAroundPixel(loc + [3,-3]) + Self.GetMeanHeightAroundPixel(loc + [3,1]) + Self.GetMeanHeightAroundPixel(loc - [1,1]);
+  h := h/4;
 
   for x := Minimap.Center.X - 100 to Minimap.Center.X + 100 with 4 do
     for y := Minimap.Center.Y - 100 to Minimap.Center.Y + 100 with 4 do
@@ -627,20 +582,18 @@ begin
 
       if not Minimap.PointOnZoomQuad(pt) then Continue;
 
-      pt := pt.Offset(-Minimap.Bounds.X1 + 50, -Minimap.Bounds.Y1 + 50);
-
       with Minimap.NormalizeEx([vector.X, vector.Y], angle) do
       begin
         vector.X := X;
         vector.Y := Y;
       end;
 
-      vector.Z := matrix[pt.Y, pt.X];
+      currLoc := loc + Point(x,y) - Minimap.Center;
 
-      corner0 := [vector.X-2, vector.Y-2, h + (matrix[pt.Y-5, pt.X-5] + vector.Z) / 2];
-      corner1 := [vector.X+2, vector.Y-2, h + (matrix[pt.Y-5, pt.X+5] + vector.Z) / 2];
-      corner2 := [vector.X+2, vector.Y+2, h + (matrix[pt.Y+5, pt.X+5] + vector.Z) / 2];
-      corner3 := [vector.X-2, vector.Y+2, h + (matrix[pt.Y-5, pt.X-5] + vector.Z) / 2];
+      corner0 := [vector.X-2, vector.Y-2, Self.GetMeanHeightAroundPixel(currLoc - [1,3]) - h];
+      corner1 := [vector.X+2, vector.Y-2, Self.GetMeanHeightAroundPixel(currLoc + [3,-3]) - h];
+      corner2 := [vector.X+2, vector.Y+2, Self.GetMeanHeightAroundPixel(currLoc + [3,1]) - h];
+      corner3 := [vector.X-2, vector.Y+2, Self.GetMeanHeightAroundPixel(currLoc - [1,1]) - h];
 
       arr := MM2MS.Run([corner0, corner1, corner2, corner3], angle);
       quad := [arr[0], arr[1], arr[2], arr[3]];
@@ -650,7 +603,6 @@ begin
 
   img.Show();
 end;
-
 var
 (*
 ## Map variable

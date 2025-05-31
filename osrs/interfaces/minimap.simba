@@ -241,10 +241,10 @@ begin
   dials := Target.FindColor($26259C,  12, bounds);
   Nclr  := Target.FindColor($1D2931, 0.6, bounds);
 
-  dials := dials.ExtractDist(center, 10, $FF);
+  dials := dials.ExtractDist(center, 10, 20);
   north := Nclr.ExtractDist(center, 0,20).Mean();
 
-  southArr := dials.ExtractDist(north, 21, $FF);
+  southArr := dials.ExtractDist(north, 21, 50);
   south    := southArr.FurthestPoint(center);
 
   dials  := dials.Difference(southArr);
