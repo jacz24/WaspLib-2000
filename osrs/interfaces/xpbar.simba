@@ -210,6 +210,26 @@ begin
   Result := Self.WaitOpen();
 end;
 
+(*
+## XPBar.Close
+```pascal
+function TRSXPBar.Close(): Boolean;
+```
+Closes the XPBar by clicking the XPBar circle.
+
+Example:
+```pascal
+if XPBar.IsOpen() then
+  WriteLn XPBar.Close();
+```
+*)
+function TRSXPBar.Close(): Boolean;
+begin
+  if not Self.IsOpen() then Exit(True);
+  Mouse.Click(Self.Button, EMouseButton.LEFT);
+  Result := SleepUntil(Self.IsOpen(), RandomMode(100, 50, 1500), 600);
+end;
+
 
 (*
 ## XPBar.Setup

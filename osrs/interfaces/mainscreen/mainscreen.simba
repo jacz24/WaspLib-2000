@@ -212,18 +212,18 @@ simply attempt to switch worlds.
 *)
 
 (*
-### MainScreen.GetServerMessage
+### MainScreen.ServerMessage
 ```pascal
-function TRSMainScreen.GetServerMessage(): String;
+property TRSMainScreen.ServerMessage: String;
 ```
 Returns the {ref}`server message` if it's visible.
 
 Example:
 ```pascal
-WriteLn MainScreen.GetServerMessage();
+WriteLn MainScreen.GetServerMessage;
 ```
 *)
-function TRSMainScreen.GetServerMessage(): String;
+property TRSMainScreen.ServerMessage: String;
 var
   black: TPointArray;
 begin
@@ -251,11 +251,11 @@ var
   msg: String;
 begin
   if caseSensitive then
-    msg := Self.GetServerMessage()
+    msg := Self.ServerMessage
   else
   begin
     text := LowerCase(text);
-    msg := LowerCase(Self.GetServerMessage());
+    msg := LowerCase(Self.ServerMessage);
   end;
 
   if msg = '' then Exit;

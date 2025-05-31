@@ -71,7 +71,6 @@ function TRSMap.Position(): TPoint; forward;
 function TRSMap.Height(pt: TPoint = [0,0]): Single; forward;
 
 
-
 (*
 ## Map.InternalSetup
 ```pascal
@@ -411,15 +410,11 @@ begin
   Result := Self.HeightEx(p, True);
 end;
 
-function TRSMap.HeightMatrix(me: TPoint = [0,0]; global: Boolean = True): TSingleMatrix;
+function TRSMap.GetHeightMap(me: TPoint = [0,0]; global: Boolean = True; angle: Single = $FFFF): TImage;
 var
-  img: TImage;
   offset, p: TPoint;
   bounds: TBox;
 begin
-  if Self.DisableHeightmap or not Assigned(Self.Loader.Heightmap) then
-    Exit;
-
   if me = [0,0] then
   begin
     Self.Position();
@@ -428,23 +423,42 @@ begin
   else if global then
     me := Self.Loader.GetLocal(me) + [Self.Loader.Padding, Self.Loader.Padding];
 
+  if angle = $FFFF then
+    angle := Minimap.GetCompassAngle(False);
+
   offset := [
     me.X - (Minimap.Center.X - Minimap.Bounds.X1),
     me.Y - (Minimap.Center.Y - Minimap.Bounds.Y1)
   ];
 
   bounds := [
-    offset.X,
-    offset.Y,
-    offset.X + Minimap.Bounds.Width-1,
-    offset.Y + Minimap.Bounds.Height-1
-  ];
+    offset.X-50,
+    offset.Y-50,
+    offset.X + Minimap.Bounds.Width+50,
+    offset.Y + Minimap.Bounds.Height+50
+  ]; //50 padding
 
-  SetLength(Result, bounds.Height, bounds.Width);
+  bounds.Corners().Rotate(angle, bounds.Center).Bounds();
 
-  for p.Y := bounds.Y1 to bounds.Y2 do
-    for p.X := bounds.X1 to bounds.X2 do
-      Result[p.Y-bounds.Y1, p.X-bounds.X1] := RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X, p.Y]);
+  Result := Self.Loader.Heightmap.Copy(bounds.Corners().Rotate(angle, bounds.Center).Bounds().Expand(5));
+  Result := Result.Rotate(EImageRotateAlgo.BILINEAR, -angle, False);
+end;
+
+function TRSMap.HeightMatrix(me: TPoint = [0,0]; global: Boolean = True; angle: Single = $FFFF): TSingleMatrix;
+var
+  img: TImage;
+  pt: TPoint;
+  bounds: TBox;
+begin
+  if Self.DisableHeightmap or not Assigned(Self.Loader.Heightmap) then
+    Exit;
+
+  img := Self.GetHeightMap(me, global, angle);
+  SetLength(Result, img.Height, img.Width);
+
+  for pt.Y := 0 to img.Height-1 do
+    for pt.X := 0 to img.Width-1 do
+      Result[pt.Y, pt.X] := RSTranslator.Color2Height(img.Pixel[pt.X, pt.Y]);
 end;
 
 function TRSMap.HeightDifference(p, q: TPoint; global: Boolean = True): Single;
@@ -477,7 +491,7 @@ Debugs the player position in the currently loaded map.
 
 Example:
 ```pascal
-Map.Setup();
+Map.Setup(...);
 while True do
   Map.DebugPosition();
 ```
@@ -568,6 +582,73 @@ begin
   img.Show();
 
   Target.UnFreezeImage();
+end;
+
+(*
+## Map.DebugHeight
+```pascal
+procedure TRSMap.DebugHeight();
+```
+Debugs the heightmap.
+
+Example:
+```pascal
+Map.Setup(...);
+while True do
+  Map.DebugPosition();
+```
+*)
+procedure TRSMap.DebugHeight();
+var
+  matrix: TSingleMatrix;
+  quad: TQuad;
+  arr, tpa: TPointArray;
+  pt: TPoint;
+  x,y: Integer;
+  vector, corner0, corner1, corner2, corner3: TVector3;
+  angle, h: Single;
+  img: TImage;
+begin
+  matrix := Self.HeightMatrix();
+  angle := Minimap.GetCompassAngle(False);
+
+  img := Target.GetImage();
+  img.DrawColor := $00FF00;
+  img.DrawAlpha := $77;
+
+  //base height + 3 just because it looked good!
+  h := 3 - matrix[matrix.Height div 2, matrix.Width div 2];
+
+  for x := Minimap.Center.X - 100 to Minimap.Center.X + 100 with 4 do
+    for y := Minimap.Center.Y - 100 to Minimap.Center.Y + 100 with 4 do
+    begin
+      vector := Point(x,y).ToVec3().Rotate(angle, Minimap.Center);
+      pt := vector.ToPoint();
+
+      if not Minimap.PointOnZoomQuad(pt) then Continue;
+
+      pt := pt.Offset(-Minimap.Bounds.X1 + 50, -Minimap.Bounds.Y1 + 50);
+
+      with Minimap.NormalizeEx([vector.X, vector.Y], angle) do
+      begin
+        vector.X := X;
+        vector.Y := Y;
+      end;
+
+      vector.Z := matrix[pt.Y, pt.X];
+
+      corner0 := [vector.X-2, vector.Y-2, h + (matrix[pt.Y-5, pt.X-5] + vector.Z) / 2];
+      corner1 := [vector.X+2, vector.Y-2, h + (matrix[pt.Y-5, pt.X+5] + vector.Z) / 2];
+      corner2 := [vector.X+2, vector.Y+2, h + (matrix[pt.Y+5, pt.X+5] + vector.Z) / 2];
+      corner3 := [vector.X-2, vector.Y+2, h + (matrix[pt.Y-5, pt.X-5] + vector.Z) / 2];
+
+      arr := MM2MS.Run([corner0, corner1, corner2, corner3], angle);
+      quad := [arr[0], arr[1], arr[2], arr[3]];
+      tpa := quad.Corners.Connect().ExtractBox(MainScreen.Bounds);
+      img.DrawTPA(tpa);
+    end;
+
+  img.Show();
 end;
 
 var

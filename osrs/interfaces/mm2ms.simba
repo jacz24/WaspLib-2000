@@ -22,8 +22,10 @@ type
 Main record responsible for minimap to mainscreen ({ref}`MM2MS`) conversion.
 *)
   TRSMM2MS = record
+    {%codetools off}
     ZoomQuads: array [0..100] of TQuad;
     PlayerBoxes: array [0..100] of TBox;
+    {%codetools on}
     Projector: TMM2MSProjector;
     Normalizer: TMM2MSProjector;
   end;
@@ -394,7 +396,6 @@ begin
 end;
 
 
-
 (*
 ## Minimap.FacePoint
 ```pascal
@@ -655,8 +656,8 @@ begin
   img := Target.GetImage();
   img.DrawColor := $00FF00;
 
-  for p.X := Self.Center.X - 25 * 4 to Self.Center.X + 25 * 4 with 4 do
-    for p.Y := Self.Center.Y - 25 * 4 to Self.Center.Y + 25 * 4 with 4 do
+  for p.X := Self.Center.X - 100 to Self.Center.X + 100 with 4 do
+    for p.Y := Self.Center.Y - 100 to Self.Center.Y + 100 with 4 do
     begin
       vector := p.ToVec3().Rotate(angle, Self.Center);
       if not Self.PointOnZoomQuad(vector.ToPoint()) then Continue;
