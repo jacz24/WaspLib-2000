@@ -65,7 +65,7 @@ procedure TRSChatTabs.SetupInterface();
 var
   i: Int32;
 begin
-  with RSClient.Bounds() do
+  with RSClient.Bounds do
   begin
     Self.Bounds.X1 := X1;
     Self.Bounds.X2 := X1 + 518;

@@ -62,7 +62,7 @@ var
   bounds, b: TBox;
   tab: ERSGameTab;
 begin
-  bounds := RSClient.Bounds();
+  bounds := RSClient.Bounds;
   Self.Bounds.Y2 := bounds.Y2;
 
   case RSClient.Mode of
@@ -133,7 +133,7 @@ Get the currently active ERSGameTab.
 
 Example:
 ```pascal
-ShowOnClient(GameTabs.Tabs[GameTabs.GetCurrent()]);
+ShowOnTarget(GameTabs.Tabs[GameTabs.GetCurrent()]);
 ```
 ```{figure} ../../images/gametabs_selected.png
 ```
@@ -317,7 +317,7 @@ procedure TRSGameTab.SetupInterface();
 begin
   case RSClient.Mode of
     ERSMode.FIXED:
-      with RSClient.Bounds() do
+      with RSClient.Bounds do
       begin
         Self.Bounds.X1 := X2 - 214;
         Self.Bounds.X2 := X2 - 31;
@@ -326,7 +326,7 @@ begin
       end;
 
     ERSMode.RESIZABLE_CLASSIC:
-      with RSClient.Bounds() do
+      with RSClient.Bounds do
       begin
         Self.Bounds.X1 := X2 - 212;
         Self.Bounds.X2 := X2 - 29;
@@ -335,7 +335,7 @@ begin
       end;
 
     ERSMode.RESIZABLE_MODERN:
-      with RSClient.Bounds() do
+      with RSClient.Bounds do
       begin
         Self.Bounds.X1 := X2 - 193;
         Self.Bounds.X2 := X2 - 10;

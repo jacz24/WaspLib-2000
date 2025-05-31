@@ -32,12 +32,12 @@ Helper type for {ref}`TRSworldSwitcher`.
 *)
   TRSWorldArray = array of TRSWorld;
 
-procedure ShowOnClient(worlds: TRSWorldArray); overload;
+procedure ShowOnTarget(worlds: TRSWorldArray); overload;
 var
   img: TImage;
   i: Integer;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
 
   img.DrawColor := $FFFFFF;
   for i := 0 to High(worlds) do
@@ -47,7 +47,6 @@ begin
   end;
 
   img.Show();
-  img.Free();
 end;
 
 type
@@ -276,7 +275,7 @@ Returns the currently visible {ref}`TRSWorldArray`.
 
 Example:
 ```pascal
-ShowOnClient(WorldSwitcher.GetWorlds());
+ShowOnTarget(WorldSwitcher.GetWorlds());
 ```
 *)
 function TRSWorldSwitcher.GetWorlds(): TRSWorldArray;
@@ -318,7 +317,7 @@ The world data is returned through the `world` variable.
 Example:
 ```pascal
 if WorldSwitcher.FindWorld(311, world) then
-  ShowOnClient([world]);
+  ShowOnTarget([world]);
 ```
 *)
 function TRSWorldSwitcher.FindWorld(number: Integer; out world: TRSWorld): Boolean;

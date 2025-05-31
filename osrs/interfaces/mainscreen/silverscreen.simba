@@ -1,35 +1,33 @@
-
 (*
 # SilverScreen
 Methods to interact with the silver‑smelting **Silver Screen** interface.
+
+```{note}
+Credits to Flight and Skunkworks
+```
 *)
 
-{$DEFINE AEROSKUNK_SLVRSCREEN_INCLUDED}
+{$DEFINE WL_SILVERSCREEN_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*
-## ERSSilverScreenButton
+## ERSSilverItem
 ```pascal
-ERSSilverScreenButton = enum(QUANT_1, QUANT_5, QUANT_10, QUANT_CUSTOM, QUANT_ALL);
+ERSSilverItem = enum(OPAL_RING..TOPAZ_BRACELET);
 ```
-Enum representing the quantity‑selection buttons.
+Enum representing the silver jewelry that can be crafted.
 *)
-  ERSSilverScreenButton = enum(QUANT_1, QUANT_5, QUANT_10, QUANT_CUSTOM, QUANT_ALL);
-
   ERSSilverItem = enum(
-    // Rings
     OPAL_RING, JADE_RING, TOPAZ_RING,
-    // Necklaces
     OPAL_NECKLACE, JADE_NECKLACE, TOPAZ_NECKLACE,
-    // Amulets
     OPAL_AMULET, JADE_AMULET, TOPAZ_AMULET,
-    // Bracelets
     OPAL_BRACELET, JADE_BRACELET, TOPAZ_BRACELET
   );
+
 (*
 ## TRSSilverScreen
-Main record to interact with the *Silver Screen* interface.
+Main record to interact with the {ref}`SilverScreen` interface.
 *)
   TRSSilverScreen = record
     {── static GUI description ──}
@@ -40,7 +38,7 @@ Main record to interact with the *Silver Screen* interface.
     ClickBoxes: TBoxArray;
     Bounds    : TBox;
     SlotBoxes : TBoxArray;
-    Buttons   : array[ERSSilverScreenButton] of TRSButton;
+    Buttons   : array[ERSItemQuantity] of TRSButton;
 
     {── internal helpers ──}
     //procedure SetupInterface;
@@ -67,7 +65,7 @@ Main record to interact with the *Silver Screen* interface.
 =====================================================================}
 
 {―― internal helpers ―――――――――――――――――――――――――――――――――――――――――――}
-function TRSSilverScreen.GetButtons : TRSButtonArray;
+function TRSSilverScreen.GetButtons(): TRSButtonArray;
 var
   buttonGrid : TBoxArray;
 begin
@@ -85,12 +83,12 @@ begin
   Result := Self.Buttons;
 end;
 
-function TRSSilverScreen.GetButton(B : ERSSilverScreenButton) : TRSButton;
+function TRSSilverScreen.GetButton(b: ERSItemQuantity) : TRSButton;
 begin
-  Result := Self.Buttons[B];
+  Result := Self.Buttons[b];
 end;
 
-procedure TRSSilverScreen.SetupInterface;
+procedure TRSSilverScreen.SetupInterface();
 var
   leftSlots, rightSlots : TBoxArray;
   leftClickBoxes, rightClickBoxes : TBoxArray;
@@ -137,9 +135,9 @@ begin
   Self.Items.Setup('SilverScreen.Items', @Self.Slots, [0,10,3,0]);
 
   btns := Self.GetButtons();
-  if Length(btns) = Length(ERSSilverScreenButton) then
+  if Length(btns) = Length(ERSItemQuantity) then
     for i := 0 to High(btns) do
-      Self.Buttons[ERSSilverScreenButton(i)] := btns[i];
+      Self.Buttons[ERSItemQuantity(i)] := btns[i];
 end;
 
 {―― public API ―――――――――――――――――――――――――――――――――――――――――――――――}
@@ -273,9 +271,8 @@ begin
   for btn in Self.GetButtons do
     allBoxes += btn.Bounds;
 
-  ShowOnClient(allBoxes);
+  ShowOnTarget(allBoxes);
 end;
 
 var
   SilverScreen: TRSSilverScreen;
-

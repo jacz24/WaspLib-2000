@@ -32,7 +32,7 @@ Slot boxes of the prayers. You are unlikely to need to use these directly.
 
 Example:
 ```pascal
-ShowOnClient(Prayer.Slots);
+ShowOnTarget(Prayer.Slots);
 ```
 ```{figure} ../../images/prayer_slots.png
 ```
@@ -102,7 +102,7 @@ Attempts to locate and return the bounding box of the yellow prayer info box (th
 
 Example:
 ```pascal
-ShowOnClient(Prayer.GetInfoBox());
+ShowOnTarget(Prayer.GetInfoBox());
 ```
 ```{figure} ../../images/prayer_tooltip.png
 ```
@@ -218,15 +218,15 @@ function TRSPrayer.Hover(prayer: ERSPrayer; checkUpText: Boolean = False): Boole
 var
   b: TBox;
 begin
-  if not (Self.IsOpen and Self.Find(prayer, b)) then
+  if not (Self.IsOpen() and Self.Find(prayer, b)) then
     Exit;
 
   Mouse.Move(b);
   Result := True;
 
   if checkUpText then
-    Result := MainScreen.GetUpText.After('ctivate').Trim
-      = ToStr(prayer).ToLower.Replace('_', ' ').CapitalizeWords;
+    Result := MainScreen.UpText.After('ctivate').Trim()
+      = ToStr(prayer).ToLower().Replace('_', ' ').CapitalizeWords();
 end;
 
 (*

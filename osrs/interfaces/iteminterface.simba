@@ -158,16 +158,12 @@ begin
   if (b.Width <> 36) or (b.Height <> 32) then
     raise GetDebugLn(Self.Name, 'Discover box has to be 36x32. You passed w: ' + ToStr(b.Width) + ' h: ' + ToStr(b.Height));
 
-  img := TImage.CreateFromTarget(b);
-  try
-    img.SetSize(img.Width + 1, img.Height + 1);
-    img.Offset(1,1);
-    ItemFinder.CleanItemBackground(img);
-    img.Crop([1, 10, 36, 32]);
-    Result := ItemFinder.GetHashItems(ItemFinder.GetHash(img));
-  finally
-    img.Free();
-  end;
+  img := Target.GetImage(b);
+  img.SetSize(img.Width + 1, img.Height + 1);
+  img.Offset(1,1);
+  ItemFinder.CleanItemBackground(img);
+  img.Crop([1, 10, 36, 32]);
+  Result := ItemFinder.GetHashItems(ItemFinder.GetHash(img));
 end;
 {%CODETOOLS ON}
 

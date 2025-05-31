@@ -4,25 +4,20 @@ Methods to interact with the gold‑crafting **Gold Screen** interface.
 
 ```{figure} ../../images/GoldScreen_interface.png
 ```
+
+```{note}
+Credits to Flight and Skunkworks
+```
 *)
 
-{$DEFINE AEROSKUNK_GOLDSCREEN_INCLUDED}
+{$DEFINE WL_GOLDSCREEN_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*
-## ERSGoldScreenButton
-```pascal
-ERSGoldScreenButton = enum(AMOUNT_1, AMOUNT_5, AMOUNT_10, AMOUNT_CUSTOM, AMOUNT_ALL);
-```
-Enum representing the {ref}`GoldScreen` quantity‑selection buttons.
-*)
-  ERSGoldScreenButton = enum(AMOUNT_1, AMOUNT_5, AMOUNT_10, AMOUNT_CUSTOM, AMOUNT_ALL);
-
-(*
 ## ERSGoldItem
 ```pascal
-ERSGoldItem = enum(GOLD_RING, …, ZENYTE_BRACELET);
+ERSGoldItem = enum(GOLD_RING..ZENYTE_BRACELET);
 ```
 Enum of all jewellery items that can be crafted on the {ref}`GoldScreen`.
 *)
@@ -89,7 +84,7 @@ type
 
     Bounds    : TBox;
     ItemBoxes : TBoxArray;
-    Buttons   : array[ERSGoldScreenButton] of TRSButton;
+    Buttons   : array[ERSItemQuantity] of TRSButton;
 
   //  {── internal helpers ──}
   //  SetupInterface: procedure of Object;
@@ -146,9 +141,9 @@ begin
   Self.Title.Setup(Self.Bounds);
   {─ quantity buttons ─}
   btns := Self.GetButtons();
-  if Length(btns) = Length(ERSGoldScreenButton) then
+  if Length(btns) = Length(ERSItemQuantity) then
     for i := 0 to High(btns) do
-      Self.Buttons[ERSGoldScreenButton(i)] := btns[i];
+      Self.Buttons[ERSItemQuantity(i)] := btns[i];
 end;
 
 (*
@@ -179,7 +174,7 @@ function TRSGoldScreen.GetButton(B: ERSGoldScreenButton): TRSButton;
 ```
 Returns the specific quantity button requested.
 *)
-function TRSGoldScreen.GetButton(B: ERSGoldScreenButton): TRSButton;
+function TRSGoldScreen.GetButton(b: ERSItemQuantity): TRSButton;
 begin
   Result := Self.Buttons[B];
 end;
@@ -356,7 +351,7 @@ begin
   for btn in Self.GetButtons() do
     allBoxes += btn.Bounds;
 
-  ShowOnClient(allBoxes);
+  ShowOnTarget(allBoxes);
 end;
 
 (*
@@ -365,4 +360,3 @@ Global {ref}`TRSGoldScreen` variable.
 *)
 var
   GoldScreen: TRSGoldScreen;
-

@@ -59,10 +59,10 @@ var
 begin
   WriteLn GetDebugLn('Antiban', 'Random Mouse');
 
-  speed := Target.MouseOptions.Speed;
-  Target.MouseOptions.Speed += Biometrics.RandomModeInteger(2, 1, 5);
+  speed := Target.Options.MouseSpeed;
+  Target.Options.MouseSpeed := Target.Options.MouseSpeed + Biometrics.RandomModeInteger(2, 1, 5);
 
-  b := RSClient.Bounds().Expand(150);
+  b := RSClient.Bounds.Expand(150);
 
   for i := 1 to Trunc(GaussRand(1, 6)) do
   begin
@@ -75,7 +75,7 @@ begin
       Biometrics.Sleep(0, 1000, ERandomDir.LEFT);
   end;
 
-  Target.MouseOptions.Speed := speed;
+  Target.Options.MouseSpeed := speed;
 end;
 
 
@@ -279,7 +279,7 @@ procedure TAntiban.RandomRightClick();
 begin
   WriteLn GetDebugLn('Antiban', 'Random Right Click');
 
-  Mouse.Move(RSClient.Bounds().Expand(-15), True, EMouseDistribution.RANDOM);
+  Mouse.Move(RSClient.Bounds.Expand(-15), True, EMouseDistribution.RANDOM);
 
   if ChooseOption.Open() then
   begin
@@ -416,9 +416,9 @@ var
   iddle: Boolean;
 begin
   iddle := Mouse.CanIdle;
-  mouseSpeed := Target.MouseOptions.Speed;
+  mouseSpeed := Target.Options.MouseSpeed;
 
-  Target.MouseOptions.Speed := Random(15,20);
+  Target.Options.MouseSpeed := Random(15,20);
   Mouse.CanIdle := False;
 
   q := Point(-1,-1);
@@ -446,7 +446,7 @@ begin
     Inc(i, Round(speed));
   end;
 
-  Target.MouseOptions.Speed := mouseSpeed;
+  Target.Options.MouseSpeed := mouseSpeed;
   Mouse.CanIdle := iddle;
 end;
 

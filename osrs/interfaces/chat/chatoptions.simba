@@ -32,7 +32,7 @@ Returns every chat option visible with the specified `colors`.
 
 Example:
 ```pascal
-img := TImage.CreateFromTarget();
+img := Target.GetImage();
 for option in Chat.GetOptions() do
   img.DrawBox(option.Bounds);
 img.Show();
@@ -106,7 +106,7 @@ If `colors` is empty like it is by default, `$0`, `$FFFFFF` and `$FF0000` (black
 Example:
 ```pascal
 option := Chat.FindOption('access my bank');
-ShowOnClient(option.Bounds);
+ShowOnTarget(option.Bounds);
 ```
 ```{figure} ../../images/chat_findoption.png
 Highlighting Chat.FindOption()

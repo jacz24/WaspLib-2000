@@ -331,7 +331,7 @@ begin
   if (Self.SpellCache[spell].UpText <> '') and
      Self.SpellCache[spell].Box.Contains(Mouse.Position()) then
   begin
-    upText := MainScreen.GetUpText().After('Cast').Before('/').Trim();
+    upText := MainScreen.UpText.After('Cast').Before('/').Trim();
     if (upText = Self.SpellCache[spell].UpText) then
       Exit(True);
   end;
@@ -344,7 +344,7 @@ begin
 
     if Self.SpellCache[spell].UpText = '' then
     begin
-      upText := MainScreen.GetUpText().After('Cast').Before('/').Trim();
+      upText := MainScreen.UpText.After('Cast').Before('/').Trim();
       Self.SpellCache[spell].UpText := upText;
     end;
   end;

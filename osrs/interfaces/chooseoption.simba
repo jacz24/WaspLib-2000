@@ -147,8 +147,8 @@ var
   atpa: T2DPointArray;
   tpa: TPointArray;
 begin
-  if not Self.IsOpen then Exit;
-  tpa := Target.FindColor($47545D, 0, RSClient.Bounds()).ExcludeBox(Self.Bounds.Expand(2, 20));
+  if not Self.IsOpen() then Exit;
+  tpa := Target.FindColor($47545D, 0, RSClient.Bounds).ExcludeBox(Self.Bounds.Expand(2, 20));
   atpa := tpa.Cluster(2).ExcludeSize(100, __LT__).SortFrom(Mouse.Position);
 
   for tpa in atpa do
@@ -427,10 +427,9 @@ var
   targ: TTarget;
 begin
   targ := Target;
-  targ.MouseOptions.Wind := 1;
-  targ.MouseOptions.Gravity := 10;
-  targ.MouseOptions.Speed -= Random(5, 10);
-  targ.MouseOptions.Speed := Max(targ.MouseOptions.Speed, 8);
+  targ.Options.MouseWind := 1;
+  targ.Options.MouseGravity := 10;
+  targ.Options.MouseSpeed := Max(targ.Options.MouseSpeed - Random(5, 10), 8);
   targ.MouseMove(option.Bounds);
   Sleep(50);
   Result := Self.IsSubmenuOpen();
@@ -459,13 +458,12 @@ var
   targ: TTarget;
 begin
   targ := Target;
-  targ.MouseOptions.Wind := 1;
-  targ.MouseOptions.Gravity := 10;
-  targ.MouseOptions.Speed -= Random(5, 10);
-  targ.MouseOptions.Speed := Max(targ.MouseOptions.Speed, 8);
+  targ.Options.MouseWind := 1;
+  targ.Options.MouseGravity := 10;
+  targ.Options.MouseSpeed := Max(targ.Options.MouseSpeed - Random(5, 10), 8);
   targ.MouseMove(option.Bounds);
   Sleep(50);
-  if Self.IsSubmenuOpen then
+  if Self.IsSubmenuOpen() then
   begin
     targ.MouseClick(EMouseButton.LEFT);
     Result := True;

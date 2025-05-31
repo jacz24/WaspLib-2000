@@ -53,7 +53,7 @@ begin
 end;
 
 {$H-}
-procedure TargetResized(var sender: TTarget; data: TTargetEventData);
+procedure TargetResized(sender: TTarget; data: TTargetEventData);
 begin
   WriteLn(GetDebugLn('RSClient', 'Client was resized, updating coordinates.', EErrorLevel.SUCCESS));
 
@@ -74,20 +74,16 @@ procedure SaveAnonymousScreenshot(filename: String);
 var
   img: TImage;
 begin
-  try
-    img := TImage.CreateFromTarget();
-    img.DrawColor := $FFFFFF;
+  img := Target.GetImage();
+  img.DrawColor := $FFFFFF;
 
-    if Chat.IsOpen() then
-      img.DrawBoxFilled(Chat.GetDisplayNameBox());
+  if Chat.IsOpen() then
+    img.DrawBoxFilled(Chat.GetDisplayNameBox());
 
-    if XPBar.IsOpen() and XPBar.Setup() then
-      img.DrawBoxFilled(XPBar.Bounds);
+  if XPBar.IsOpen() and XPBar.Setup() then
+    img.DrawBoxFilled(XPBar.Bounds);
 
-    img.Save(filename);
-  finally
-    img.Free();
-  end;
+  img.Save(filename);
 end;
 
 

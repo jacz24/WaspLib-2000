@@ -262,14 +262,13 @@ begin
   img.DrawBoxArray(Self.Buttons, False);
 end;
 
-procedure ShowOnClient(bankPin: TRSBankPin); overload;
+procedure ShowOnTarget(bankPin: TRSBankPin); overload;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   bankPin.Draw(img);
   img.Show();
-  img.Free();
 end;
 
 var

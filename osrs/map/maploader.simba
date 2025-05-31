@@ -17,7 +17,6 @@ Credits: Torwent
 
 {.$DEFINE WL_GENERATE_GRAPH_ALWAYS}
 
-
 type
 (*
 ## TRSMapRegion
@@ -34,7 +33,14 @@ This is an internal type. Don't use it if you don't know what you are doing.
     Offset: TPoint;
   end;
 
-function TRSMapRegion.GetName(): String;
+(*
+## TRSMapRegion.Name
+```pascal
+property TRSMapRegion.Name: String;
+```
+Returns a unique string representing this map region.
+*)
+property TRSMapRegion.Name: String;
 begin
   with Self.Chunks.Bounds do
     Result := ToStr(X1) + '-' + ToStr(Y1) + '_' + ToStr(X2) + '-' + ToStr(Y2);
@@ -70,7 +76,47 @@ This is an internal type. Don't use it if you don't know what you are doing.
     _UnzipQueue: Integer;
   end;
 
+(*
+## Points Translation
+This might be the only thing you need to use from time to time from the
+{ref}`MapLoader`.
 
+It's important to understand the difference between local and global points to
+use these effectively.
+
+### Global Points
+Global points and points on the real runescape map. This is the "Global map".
+
+E.G., if you visit [Wasp Map](https://map.waspscripts.com/),
+all coordinates on that map are **Global** coordinates.
+
+These are usually the ones you use when telling your scripts
+to walk or click a certain tile and/or object.
+
+### Local Points
+When you build a map, the region or regions you load are taken from the map and
+joined into a small, efficient map that only contains what you choose.
+
+This is your "Local map".
+
+This is important because the bigger the map is the slower it is to use.
+
+Because the regions are joined into a small map, it means that their "coordinates"
+don't line up with their original ones anymore.
+
+If you pick for example, pixel [100, 100] on your local map, that pixel won't be
+matching the pixel [100, 100] on the global map. Instead it matches the pixel
+[100,100] from the top left corner of one of your regions to put it simply.
+*)
+
+(*
+### TRSMapRegion.LocalIndex
+```pascal
+function TRSMapLoader.LocalIndex(pt: TPoint): Integer;
+```
+Returns the index of the TRSMapRegion a {ref}`Local point` is at.
+Returns `-1` if none is found.
+*)
 function TRSMapLoader.LocalIndex(pt: TPoint): Integer;
 begin
   for Result := 0 to High(Self.Regions) do
@@ -79,6 +125,14 @@ begin
   Result := -1;
 end;
 
+(*
+### TRSMapRegion.GlobalIndex
+```pascal
+function TRSMapLoader.GlobalIndex(pt: TPoint): Integer;
+```
+Returns the index of the TRSMapRegion a {ref}`Global Point` is at.
+Returns `-1` if none is found.
+*)
 function TRSMapLoader.GlobalIndex(pt: TPoint): Integer;
 begin
   for Result := 0 to High(Self.Regions) do
@@ -90,11 +144,9 @@ end;
 function TRSMapLoader.GetOriginal(pt: TPoint): Integer;
 begin
   for Result := 0 to High(Self.Regions) do
-  begin
     with Self.Regions[Result] do
       with Region.Offset(Offset) do
         if Contains(pt) then Exit;
-  end;
   Result := -1;
 end;
 
@@ -134,30 +186,6 @@ end;
 
 procedure TRSMapLoader.Free();
 begin
-  if Assigned(Self.Map) then
-  begin
-    Self.Map.Free();
-    Self.Map := nil;
-  end;
-
-  if Assigned(Self.Heightmap) then
-  begin
-    Self.Heightmap.Free();
-    Self.Heightmap := nil;
-  end;
-
-  if Assigned(Self.DownscaledMap) then
-  begin
-    Self.DownscaledMap.Free();
-    Self.DownscaledMap := nil;
-  end;
-
-  if Assigned(Self.Collision) then
-  begin
-    Self.Collision.Free();
-    Self.Collision := nil;
-  end;
-
   Self.Graph := [];
 end;
 
@@ -237,15 +265,13 @@ begin
       raise GetDebugLn('MapLoader', 'Unzipping files timed out.');
 
   filename := ToStr(chunk.X) + '-' + ToStr(chunk.Y);
-  Result := TImage.Create();
+  Result := new TImage();
 
   case map of
     ERSMap.NORMAL: cachename := Self.CacheDir + 'map' + PATH_SEP + ToStr(plane) + PATH_SEP + filename;
     ERSMap.HEIGHT: cachename := Self.CacheDir + 'heightmap' + PATH_SEP + filename;
     ERSMap.COLLISION: cachename := Self.CacheDir + 'collision' + PATH_SEP + ToStr(plane) + PATH_SEP + filename;
   end;
-
-  Result.Name := cachename;
 
   if not FileExists(cachename + '.bmp') then
   begin
@@ -299,7 +325,7 @@ begin
 
   n := RSTranslator.Map.ChunkSide;
 
-  Result := TImage.Create((hi.X-lo.X) * n + 1 + n, (hi.Y-lo.Y) * n + 1 + n);
+  Result := new TImage((hi.X-lo.X) * n + 1 + n, (hi.Y-lo.Y) * n + 1 + n);
 
   for i := 0 to High(chunkMaps) do
   begin
@@ -307,7 +333,6 @@ begin
     y := (chunkMaps[i].Point.Y - lo.Y) * n;
 
     Result.DrawImage(chunkMaps[i].Image, Point(x, y));
-    chunkMaps[i].Image.Free();
   end;
 end;
 
@@ -401,7 +426,7 @@ var
 begin
   offset := region.Offset - region.Region.TopLeft + [padding, padding];
 
-  Result := Self.GetGraph(region.GetName(), region.Plane, collision);
+  Result := Self.GetGraph(region.Name, region.Plane, collision);
 
   Result.Nodes := Result.Nodes.Offset(offset);
   Result.WalkableSpace := Result.WalkableSpace.Offset(offset);
@@ -424,12 +449,9 @@ function TRSMapLoader._InternalLoad(imgs: TImageArray): TImage;
 var
   i: Integer;
 begin
-  Result := TImage.Create(Self.MapBox.Width, Self.MapBox.Height);
+  Result := new TImage(Self.MapBox.Width, Self.MapBox.Height);
   for i := 0 to High(imgs) do
-  begin
     Result.DrawImage(imgs[i], Self.Regions[i].Region.TopLeft);
-    imgs[i].Free();
-  end;
 end;
 
 function TRSMapLoader.InternalLoad(imgs: TImageArray): TImage;

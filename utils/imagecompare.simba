@@ -23,41 +23,36 @@ var
   match: Single;
   tmp: TImage;
 begin
-  try
-    tmp := image.Copy();
+  tmp := image.Copy();
 
-    if @Self.Align <> nil then
-      if not Self.Align(tmp, template) then Exit;
+  if @Self.Align <> nil then
+    if not Self.Align(tmp, template) then Exit;
 
-    if (template.Width < tmp.Width) or (template.Height < tmp.Height) then
-    begin
-      similarity := 0;
-      Exit;
-    end;
-
-    template.SetSize(tmp.Width, tmp.Height);
-
-    if @Self.Clean <> nil then Self.Clean(tmp, template);
-    if @Self.Filter <> nil then Self.Filter(tmp, template);
-
-    if similarity = 1 then
-      Exit(tmp.Equals(template));
-
-    match := tmp.Compare(template);
-    Result := match >= similarity;
-    similarity := match;
-  finally
-    tmp.Free();
+  if (template.Width < tmp.Width) or (template.Height < tmp.Height) then
+  begin
+    similarity := 0;
+    Exit;
   end;
+
+  template.SetSize(tmp.Width, tmp.Height);
+
+  if @Self.Clean <> nil then Self.Clean(tmp, template);
+  if @Self.Filter <> nil then Self.Filter(tmp, template);
+
+  if similarity = 1 then
+    Exit(tmp.Equals(template));
+
+  match := tmp.Compare(template);
+  Result := match >= similarity;
+  similarity := match;
 end;
 
 function TImageCompareUtils.Compare(image: TImage; slot: TBox; out similarity: Single): Boolean; overload;
 var
   template: TImage;
 begin
-  template := TImage.CreateFromTarget([slot.X1, slot.Y1, slot.X1 + 36, slot.Y2]);
+  template := Target.GetImage([slot.X1, slot.Y1, slot.X1 + 36, slot.Y2]);
   Result := Self.Compare(image, template, similarity);
-  template.Free();
 end;
 
 
@@ -67,9 +62,8 @@ var
   matrix: TSingleMatrix;
   similarity: Single;
 begin
-  container := TImage.CreateFromTarget(bounds);
+  container := Target.GetImage(bounds);
   matrix := MatchTemplate(container, image, ETMFormula.TM_CCOEFF_NORMED);
-  container.Free();
 
   with matrix.ArgMax() do
   begin

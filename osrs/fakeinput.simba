@@ -48,7 +48,7 @@ procedure TRemoteInput.Setup();
 const
   TIMEOUT: UInt64 := GetTimeRunning() + 2000;
 begin
-  if Target.TargetWindow.GetClassName() <> 'SunAwtCanvas' then Exit;
+  if GetSimbaTargetWindow().GetClassName() <> 'SunAwtCanvas' then Exit;
 
   RIInject(GetSimbaTargetPID());
 
@@ -95,7 +95,7 @@ procedure TWaspInput.Setup();
 var
   pid: TProcessID;
 begin
-  if Target.TargetWindow.GetClassName() <> 'JagRenderView' then Exit;
+  if GetSimbaTargetWindow().GetClassName() <> 'JagRenderView' then Exit;
 
   pid := GetSimbaTargetPID();
   Inject({$MACRO LOADEDLIB(waspinput)}, pid);

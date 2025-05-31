@@ -124,7 +124,7 @@ Buttons: array [ERSOptionsButton] of TRSButton;
 
 Example:
 ```pascal
-ShowOnClient(Options.Buttons);
+ShowOnTarget(Options.Buttons);
 ```
 ```{figure} ../../images/options_buttons.png
 ```
@@ -134,7 +134,7 @@ You can also access each button with an index or, more conveniently, with a
 
 Example:
 ```pascal
-ShowOnClient(Options.Buttons[ERSOptionsButton.HOUSE]);
+ShowOnTarget(Options.Buttons[ERSOptionsButton.HOUSE]);
 ```
 ```{figure} ../../images/options_button.png
 ```

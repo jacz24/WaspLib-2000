@@ -89,7 +89,7 @@ They should be self-explanatory.
 {$IFNDEF WL_ANTIBAN_INCLUDED}             {$INCLUDE_ONCE osrs/antiban/antiban.simba}
 
 {$IFNDEF WL_WALKER_INCLUDED}              {$INCLUDE_ONCE osrs/walker.simba}
-{$IFNDEF WL_COLORFINDER_INCLUDED}         {$INCLUDE_ONCE osrs/mainscreen/colorfinder.simba}
+{$IFNDEF WL_COLORFINDER_INCLUDED}         {$INCLUDE_ONCE osrs/interfaces/mainscreen/finders/colorfinder.simba}
 
 {$IFNDEF WL_MAPLOADER_INCLUDED}           {$INCLUDE_ONCE osrs/map/maploader.simba}
 {$IFNDEF WL_MAP_INCLUDED}                 {$INCLUDE_ONCE osrs/map/map.simba}
@@ -102,10 +102,10 @@ They should be self-explanatory.
 {$IFNDEF WL_BANK_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/mainscreen/bank.simba}
 {$IFNDEF WL_COLLECTIONBOX_INCLUDED}       {$INCLUDE_ONCE osrs/interfaces/mainscreen/collectionbox.simba}
 {$IFNDEF WL_ANVIL_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/mainscreen/anvil.simba}
-{$IFNDEF AEROSKUNK_GOLDSCREEN_INCLUDED}   {$INCLUDE_ONCE osrs/interfaces/mainscreen/goldscreen.simba}
-{$IFNDEF AEROSKUNK_SLVRSCREEN_INCLUDED}   {$INCLUDE_ONCE osrs/interfaces/mainscreen/silverscreen.simba}
-{$IFNDEF WL_HITSPLATS_INCLUDED}           {$INCLUDE_ONCE osrs/mainscreen/hitsplats.simba}
-{$IFNDEF WL_HPBARS_INCLUDED}              {$INCLUDE_ONCE osrs/mainscreen/hpbars.simba}
+{$IFNDEF WL_GOLDSCREEN_INCLUDED}          {$INCLUDE_ONCE osrs/interfaces/mainscreen/goldscreen.simba}
+{$IFNDEF WL_SILVERSCREEN_INCLUDED}        {$INCLUDE_ONCE osrs/interfaces/mainscreen/silverscreen.simba}
+{$IFNDEF WL_HITSPLATS_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/mainscreen/finders/hitsplats.simba}
+{$IFNDEF WL_HPBARS_INCLUDED}              {$INCLUDE_ONCE osrs/interfaces/mainscreen/finders/hpbars.simba}
 
 {$IFNDEF WL_ANTIBAN_TASKS_INCLUDED}       {$INCLUDE_ONCE osrs/antiban/antibantasks.simba}
 

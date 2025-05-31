@@ -41,10 +41,10 @@ var
 begin
   case RSClient.Mode of
     ERSMode.FIXED:
-      with RSClient.Bounds() do
+      with RSClient.Bounds do
         Self.Bounds := TBox.Create(X1+4,4,X1+515,337);
     ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
-      Self.Bounds := RSClient.Bounds();
+      Self.Bounds := RSClient.Bounds;
   end;
 
   Self.Center := Self.Bounds.Center;
@@ -130,24 +130,23 @@ to your script **before** you include WaspLib:
 *)
 
 (*
-### MainScreen.GetUpText
+### MainScreen.UpText
 ```pascal
-function TRSMainScreen.GetUpText(): String;
+property TRSMainScreen.UpText: String;
 ```
 Returns the {ref}`uptext` on the mainscreen.
 
 Example:
 ```pascal
-WriteLn MainScreen.GetUpText();
+WriteLn MainScreen.UpText;
 ```
 *)
-function TRSMainScreen.GetUpText(): String;
+property TRSMainScreen.UpText: String;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget(Self.UptextBounds);
+  img := Target.GetImage(Self.UptextBounds);
   Result := Self.UptextOCR.Recognize(img, RSFonts.BOLD_SHADOW, [0,0]);
-  img.Free();
   {$IFDEF WaspLib_DEBUG_UPTEXT}
   WriteLn GetDebugLn('MainScreen', 'UpText: ' + Result);
   {$ENDIF}
@@ -173,11 +172,11 @@ var
   upText: String;
 begin
   if caseSensitive then
-    upText := Self.GetUpText()
+    upText := Self.UpText
   else
   begin
     text := LowerCase(text);
-    upText := LowerCase(Self.GetUpText());
+    upText := LowerCase(Self.UpText);
   end;
 
   upText := Copy(upText, 1, Length(text));
@@ -189,9 +188,9 @@ var
   upText, str, tmp: String;
 begin
   if caseSensitive then
-    upText := Self.GetUpText()
+    upText := Self.UpText
   else
-    upText := LowerCase(Self.GetUpText());
+    upText := LowerCase(Self.UpText);
 
   for str in strings do
   begin
@@ -287,7 +286,7 @@ begin
 
   area := Self.Bounds.Area * 100;
   for i := 1 to 10 do // 2500ms timeout
-    if (Target.GetPixelDifference(250, Self.Bounds) / area) < 10 then // less than 10% of the screen changed in 250ms
+    if (Target.GetPixelDifference(250, Self.Bounds).Length / area) < 10 then // less than 10% of the screen changed in 250ms
       Break;
 
   Keyboard.KeyUp(EKeyCode.UP);

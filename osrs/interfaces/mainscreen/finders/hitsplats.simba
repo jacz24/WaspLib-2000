@@ -210,14 +210,11 @@ begin
   for splat in Self do splat.Draw(img);
 end;
 
-procedure ShowOnClient(splats: TRSHitSplatArray); overload;
+procedure ShowOnTarget(splats: TRSHitSplatArray); overload;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget();
-
+  img := Target.GetImage();
   splats.Draw(img);
-
   img.Show();
-  img.Free();
 end;

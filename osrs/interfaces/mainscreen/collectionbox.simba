@@ -373,14 +373,13 @@ begin
   end;
 end;
 
-procedure ShowOnClient(collectionBox: TRSCollectionBox); overload;
+procedure ShowOnTarget(collectionBox: TRSCollectionBox); overload;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   CollectionBox.Draw(img);
   img.Show();
-  img.Free();
 end;
 
 

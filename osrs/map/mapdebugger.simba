@@ -23,7 +23,7 @@ type
 
 procedure TMapDebugger.OnChange(sender: TObject);
 begin
-  Self.ImageBox.SetImage(Self.Images[TLazComboBox(sender).ItemIndex], False);
+  Self.ImageBox.SetImage(Self.Images[TLazComboBox(sender).ItemIndex]);
 end;
 
 {$H-}
@@ -48,7 +48,7 @@ begin
   if Self.ShowGraph then
     Self.Graph.Draw(canvas);
 
-  with sender.MousePoint() do
+  with sender.MousePoint do
     p := [X div 4 * 4, Y div 4 * 4];
 
   tpa := TBox.Create(p.X-1, p.Y-1, p.X + 4, p.Y + 4).Corners();
@@ -190,7 +190,7 @@ begin
   Self.ImageBox := TImageBox.Create(form);
   Self.ImageBox.Parent := form;
   Self.ImageBox.Align := ELazAlign.Client;
-  Self.ImageBox.SetImage(Self.Images[0], False);
+  Self.ImageBox.SetImage(Self.Images[0]);
   Self.ImageBox.OnImgPaint := @Self.ImgBoxPaint;
   Self.ImageBox.OnImgMouseMove := @Self.ImgBoxMouseMove; 
   Self.ImageBox.OnImgMouseDown := @Self.ImgBoxMouseDown;
@@ -205,13 +205,8 @@ var
   x, y, i: Integer;
 begin
   map := loader^.Map.Copy();
-  map.FreeOnTerminate := True;
-
   heightmap := loader^.Heightmap.Copy();
-  heightmap.FreeOnTerminate := True;
-
   collision := loader^.Collision.Copy();
-  collision.FreeOnTerminate := True;
 
   for p in collision.FindColor($FFFFFF, 0) do
   begin
@@ -232,7 +227,7 @@ begin
   Self.Graph.Doors    := Copy(loader^.Graph.Doors);
   Self.Graph.Blocking := Copy(loader^.Graph.Blocking);
 
-  Self.Graph.WalkableSpace    := Self.GetLocal(loader^.Graph.WalkableSpace);
+  Self.Graph.WalkableSpace := Self.GetLocal(loader^.Graph.WalkableSpace);
 
 
   for i := 0 to High(Self.Graph.Doors) do

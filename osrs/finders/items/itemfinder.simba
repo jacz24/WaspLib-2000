@@ -141,8 +141,7 @@ begin
     if not FileExists(path) then
       ZipExtractEntry(Self.ZIP, id + '.png', Self.CacheDir);
 
-    Self.ItemImages.Value[id] := TImage.Create(path);
-    Self.ItemImages.Value[id].FreeOnTerminate := True;
+    Self.ItemImages.Value[id] := new TImage(path);
   end;
 
   Result := Self.ItemImages.Value[id];
@@ -282,22 +281,18 @@ var
   display, img: TImage;
   i, h, w, x: Integer;
 begin
-  try
-    display := TImage.Create();
+  display := new TImage();
 
-    for img in Self.GetImages(item) do
-    begin
-      if img.Height > h then h:= img.Height;
-      w := img.Width;
-      x := display.Width;
-      display.SetSize(x+w, h);
-      display.DrawImage(img,[x,0]);
-    end;
-
-    display.Show();
-  finally
-    display.Free();
+  for img in Self.GetImages(item) do
+  begin
+    if img.Height > h then h:= img.Height;
+    w := img.Width;
+    x := display.Width;
+    display.SetSize(x+w, h);
+    display.DrawImage(img,[x,0]);
   end;
+
+  display.Show();
 end;
 
 function TRSItemFinder.GetHash(img: TImage): String;

@@ -209,7 +209,7 @@ begin
   if Self.UpText <> [] then
     Self.Walker^.TargetUpText := Copy(Self.UpText);
 
-  text := MainScreen.GetUpText();
+  text := MainScreen.UpText;
 
   if text.Contains('>') and not Self.Walker^.ActionUpText.Contains(['>']) then
   begin
@@ -665,14 +665,13 @@ begin
     Self.DrawTPA(cuboids[i].Edges());
 end;
 
-procedure ShowOnClient(npc: TRSNPC); overload;
+procedure ShowOnTarget(npc: TRSNPC); overload;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   img.DrawNPC(npc);
   img.Show();
-  img.Free();
 end;
 
 

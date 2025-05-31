@@ -126,14 +126,13 @@ begin
   img.DrawBox(Self.Button);
 end;
 
-procedure ShowOnClient(lobby: TRSLobbyScreen); overload;
+procedure ShowOnTarget(lobby: TRSLobbyScreen); overload;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   lobby.Draw(img);
   img.Show();
-  img.Free();
 end;
 
 var
@@ -442,14 +441,13 @@ begin
   img.DrawBox(Self.RightButton);
 end;
 
-procedure ShowOnClient(loginWorldSwitcher: TRSLoginWorldSwitcher); overload;
+procedure ShowOnTarget(loginWorldSwitcher: TRSLoginWorldSwitcher); overload;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   loginWorldSwitcher.Draw(img);
   img.Show();
-  img.Free();
 end;
 
 
@@ -1094,14 +1092,13 @@ begin
   img.DrawBox(LoginWorldSwitcher.OpenButton);
 end;
 
-procedure ShowOnClient(login: TRSLogin); overload;
+procedure ShowOnTarget(login: TRSLogin); overload;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   login.Draw(img);
   img.Show();
-  img.Free();
 end;
 
 

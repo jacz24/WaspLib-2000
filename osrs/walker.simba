@@ -161,7 +161,7 @@ Example:
 ```pascal
 //assuming walker is already setup...
 me := Walker.Position();
-ShowOnClient(Walker.GetQuadMS(me, me + [4,0])); //should show you the tile to your right.
+ShowOnTarget(Walker.GetQuadMS(me, me + [4,0])); //should show you the tile to your right.
 ```
 *)
 function TRSWalker.Point2MM(playerPoint, pt: TPoint; radians: Double): TPoint;
@@ -365,13 +365,13 @@ var
       mmPos := Minimap.Vector2MSQuad(mmPos.ToVec3(h), angle, [1,1], [0,0,-diff]).Mean;
     end;
 
-    speed := Target.MouseOptions.Speed;
-    Target.MouseOptions.Speed := Random(6,10);
+    speed := Target.Options.MouseSpeed;
+    Target.Options.MouseSpeed := Random(6,10);
     if not Self.ScreenWalk then
       Mouse.Move(Box(mmPos, Random(5,16), Random(5,16)))
     else
       Mouse.Move(Box(mmPos, Random(15,36), Random(15,36)));
-    Target.MouseOptions.Speed := speed;
+    Target.Options.MouseSpeed := speed;
   end;
 begin
   if (not forced) then
@@ -536,7 +536,7 @@ begin
   begin
     p := Minimap.RandomPointOnZoomQuad(minimapPoint, randomness);
     Mouse.Move(Minimap.Vector2MSQuad(p.ToVec3(height), Minimap.GetCompassAngle(False)).Mean);
-    upText := MainScreen.GetUpText();
+    upText := MainScreen.UpText;
 
     hoveringTarget := upText.ContainsAny(Self.TargetUpText);
     if hoveringTarget and (Self.ActionUpText <> []) then
@@ -795,10 +795,9 @@ procedure TRSWalker.DebugPath(index: Integer; playerPoint: TPoint);
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   Self.DrawPath(img, index, playerPoint);
   img.Show();
-  img.Free();
 end;
 
 {%codetools on}
@@ -1351,7 +1350,6 @@ function TRSWalker.WebWalkEx(me: TPoint; destination: TPoint; waitUntilDistance:
           img.DrawCross(destination, 4);
 
         img.Show();
-        img.Free();
       end;
       raise GetDebugLn(Self.Name, GetExceptionMessage());
     end;

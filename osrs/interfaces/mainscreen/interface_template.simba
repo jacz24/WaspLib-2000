@@ -89,11 +89,11 @@ begin
   img.DrawBoxArray(Self.Buttons, False);
 end;
 
-procedure ShowOnClient(CollectBox: TRSCollectBox); overload;
+procedure ShowOnTarget(CollectBox: TRSCollectBox); overload;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   CollectBox.Draw(img);
   img.Show();
   img.Free();

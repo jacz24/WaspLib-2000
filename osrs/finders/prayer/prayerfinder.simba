@@ -156,8 +156,7 @@ begin
   if not FileExists(path) then
     ZipExtractEntry(Self.ZIP, name, Self.CacheDir);
 
-  Self.PrayerImages[prayer] := TImage.Create(path);
-  Self.PrayerImages[prayer].FreeOnTerminate := True;
+  Self.PrayerImages[prayer] := new TImage(path);
 
   Result := Self.PrayerImages[prayer];
 end;
@@ -174,7 +173,7 @@ Example:
 ```pascal
 if PrayerFinder.FindAll(prayers, boxes, matches) then
   for match in matches do
-    ShowOnClient(matches.Box);
+    ShowOnTarget(matches.Box);
 ```
 *)
 function TRSPrayerFinder.FindAll(prayers: array of ERSPrayer; boxes: TBoxArray; maxToFind: Integer = 0): TImageMatchArray;
@@ -254,7 +253,7 @@ Finds the first match for specified `prayers` within given `boxes`.
 Example:
 ```pascal
 if PrayerFinder.Find([ERSPrayer.PIETY], boxes, match) then
-  ShowOnClient(match.Box);
+  ShowOnTarget(match.Box);
 ```
 *)
 function TRSPrayerFinder.Find(prayers: array of ERSPrayer; boxes: TBoxArray; out match: TImageMatch): Boolean;

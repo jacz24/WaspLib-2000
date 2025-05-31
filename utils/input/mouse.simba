@@ -84,7 +84,7 @@ var
 begin
   self.DebugLn('Generating a heatmap from clicks and movements...');
 
-  ClientBitmap := TImage.CreateFromTarget();
+  ClientBitmap := Target.GetImage();
   DebugBitmap := ClientBitmap.Copy();
   wid := DebugBitmap.GetWidth();
   hei := DebugBitmap.GetHeight();
@@ -151,9 +151,9 @@ This is automatically called on the {ref}`Mouse variable`.
 *)
 procedure TMouse.Setup();
 begin
-  Target.MouseOptions.Speed := 12;
-  Target.MouseOptions.Gravity := 9;
-  Target.MouseOptions.Wind := 5;
+  Target.Options.MouseSpeed := 12;
+  Target.Options.MouseGravity := 9;
+  Target.Options.MouseWind := 5;
 
 
   Self.Distribution := EMouseDistribution.ROWP;

@@ -106,7 +106,7 @@ Returns the available item buttons as a TBoxArray.
 
 Example:
 ```pascal
-ShowOnClient(Make.GetItemBoxes());
+ShowOnTarget(Make.GetItemBoxes());
 ```
 
 ```{figure} ../../images/make_items.png
@@ -137,7 +137,7 @@ Returns true if a hint tooltip is visible.
 Example:
 ```pascal
 if Make.HasHint() then
-  ShowOnClient(Make.GetHintBox());
+  ShowOnTarget(Make.GetHintBox());
 ```
 *)
 function TRSMake.HasHint(): Boolean;
@@ -155,7 +155,7 @@ Returns true if a hint tooltip is visible within `time` milliseconds.
 Example:
 ```pascal
 if Make.WaitHint() then
-  ShowOnClient(Make.GetHintBox());
+  ShowOnTarget(Make.GetHintBox());
 ```
 *)
 function TRSMake.WaitHint(time: Integer = 600; interval: Integer = -1): Boolean;
@@ -173,7 +173,7 @@ Returns the hint tooltip bounds.
 
 Example:
 ```pascal
-ShowOnClient(Make.GetHintBox());
+ShowOnTarget(Make.GetHintBox());
 ```
 ```{figure} ../../images/make_hint.png
 ```
@@ -236,7 +236,7 @@ The quantity buttons are dynamic there can be anywhere from 1 to 6 available.
 You have their coordinates available at anytime through the
 `TRSMake.QuantityButtons` variable:
 ```pascal
-ShowOnClient(Make.QuantityButtons);
+ShowOnTarget(Make.QuantityButtons);
 ```
 
 ```{figure} ../../images/make_quantities.png
@@ -455,14 +455,13 @@ begin
   img.DrawBox(Self.GetHintBox());
 end;
 
-procedure ShowOnClient(make: TRSMake); overload;
+procedure ShowOnTarget(make: TRSMake); overload;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   make.Draw(img);
   img.Show();
-  img.Free();
 end;
 
 var

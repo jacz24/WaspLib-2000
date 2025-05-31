@@ -115,7 +115,7 @@ Finds item boundaries and returns them as a TBoxArray.
 
 You have 2 ways of getting the bank slots, a static one:
 ```pascal
-ShowOnClient(Bank.SlotBoxes);
+ShowOnTarget(Bank.SlotBoxes);
 ```
 ```{figure} ../../images/bank_static_slots.png
 The bank static slots.
@@ -123,7 +123,7 @@ The bank static slots.
 
 And a dynamic one:
 ```pascal
-ShowOnClient(Self.FindItemBoundaries());
+ShowOnTarget(Self.FindItemBoundaries());
 ```
 ```{figure} ../../images/bank_item_boundaries.png
 The bank "dynamic" slots.
@@ -417,7 +417,7 @@ You can access the bank tabs coordinates via the `TRSBank.Tabs` variable.
 
 Example:
 ```pascal
-ShowOnClient(Bank.Tabs);
+ShowOnTarget(Bank.Tabs);
 ```
 ```{figure} ../../images/bank_tabs.png
 The bank interface.
@@ -456,7 +456,7 @@ Example:
 ```pascal
 tab := Bank.GetCurrentTab();
 WritLn tab;
-ShowOnClient(Bank.Tabs[tab]);
+ShowOnTarget(Bank.Tabs[tab]);
 ```
 *)
 function TRSBank.GetCurrentTab(): Integer;
@@ -691,7 +691,7 @@ Returns true if the bank screen has the incenerator visible.
 Example:
 ```pascal
 if Bank.HasIncenerator() then
-  ShowOnClient(Self.Incenerator);
+  ShowOnTarget(Self.Incenerator);
 ```
 *)
 function TRSBank.HasIncinerator(): Boolean;
@@ -796,7 +796,7 @@ Example:
 ```pascal
 if Bank.Search('logs') then
   if Bank._FindTabText(Target.FindColor(RSColors.TEXT_LIGHT_YELLOW, 0, bounds), bounds) then
-    ShowOnClient(bounds);
+    ShowOnTarget(bounds);
 ```
 *)
 function TRSBank._FindTabText(tpa: TPointArray; out bounds: TBox): Boolean;
@@ -1243,14 +1243,13 @@ begin
     Self.DynamicButtons[i].Draw(img);
 end;
 
-procedure TRSBank.ShowOnClient();
+procedure TRSBank.ShowOnTarget();
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   Self.Draw(img);
   img.Show();
-  img.Free();
 end;
 
 

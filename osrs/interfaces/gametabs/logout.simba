@@ -75,7 +75,7 @@ Ratings: array [ERSRating] of TRSButton;
 
 Example:
 ```pascal
-ShowOnClient(Logout.Ratings);
+ShowOnTarget(Logout.Ratings);
 ```
 ```{figure} ../../images/logout_ratings.png
 ```
@@ -85,7 +85,7 @@ You can also access each button with an index or, more conveniently, with a
 
 Example:
 ```pascal
-ShowOnClient(Logout.Ratings[ERSRating.THREE]);
+ShowOnTarget(Logout.Ratings[ERSRating.THREE]);
 ```
 ```{figure} ../../images/logout_rating.png
 ```
@@ -100,7 +100,7 @@ Buttons: array [ERSLogoutButton] of TRSButton;
 
 Example:
 ```pascal
-ShowOnClient(Logout.Buttons);
+ShowOnTarget(Logout.Buttons);
 ```
 ```{figure} ../../images/logout_buttons.png
 ```
@@ -110,7 +110,7 @@ You can also access each button with an index or, more conveniently, with a
 
 Example:
 ```pascal
-ShowOnClient(Logout.Buttons[ERSLogoutButton.WORLD_SWITCHER]);
+ShowOnTarget(Logout.Buttons[ERSLogoutButton.WORLD_SWITCHER]);
 ```
 ```{figure} ../../images/logout_button.png
 ```

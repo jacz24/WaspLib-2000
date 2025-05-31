@@ -158,7 +158,7 @@ Example:
 while True do
 begin
   quad := Minimap.Point2MSQuad(Minimap.Center);
-  ShowOnClient(quad);
+  ShowOnTarget(quad);
 end;
 ```
 *)
@@ -211,7 +211,7 @@ Example:
 while True do
 begin
   cuboid := Minimap.Point2MSCuboid(Minimap.Center, [2,2,6]);
-  ShowOnClient(cuboid);
+  ShowOnTarget(cuboid);
 end;
 ```
 *)
@@ -313,9 +313,9 @@ end;
 
 
 (*
-## Minimap.GetZoomQuad
+## Minimap.ZoomQuad
 ```pascal
-function TRSMinimap.GetZoomQuad(): TQuad;
+property TRSMinimap.ZoomQuad: TQuad;
 ```
 Returns a `TQuad` on the minimap of what's visible on the mainscreen at the current zoom level.
 
@@ -324,11 +324,11 @@ Example:
 while True do
 begin
   Options.GetZoomLevel(False);
-  ShowOnClient(Minimap.GetZoomQuad());
+  ShowOnTarget(Minimap.ZoomQuad);
 end;
 ```
 *)
-function TRSMinimap.GetZoomQuad(): TQuad;
+property TRSMinimap.ZoomQuad: TQuad;
 var
   angle: Single;
 begin
@@ -352,7 +352,7 @@ end;
 function TRSMinimap.PointOnZoomQuad(pt: TPoint): Boolean;
 ```
 Returns True/False if a point `pt` is within our "zoom quad".
-Read `Minimap.GetZoomQuad()` for more information.
+Read `Minimap.ZoomQuad` for more information.
 
 Example:
 ```pascal
@@ -361,7 +361,7 @@ WriteLn Minimap.PointOnZoomQuad(pt);
 *)
 function TRSMinimap.PointOnZoomQuad(pt: TPoint): Boolean;
 begin
-  Result := Self.GetZoomQuad().Contains(pt);
+  Result := Self.ZoomQuad.Contains(pt);
 end;
 
 (*
@@ -376,16 +376,15 @@ var
   quad: TQuad;
   img: TImage;
 begin
-  quad := Self.GetZoomQuad();
+  quad := Self.ZoomQuad;
   if not quad.Contains(pt) then
   begin
-    img := TImage.CreateFromTarget();
+    img := Target.GetImage();
     img.DrawColor := $FFFFFF;
     img.DrawQuad(quad);
     img.DrawColor := $0000FF;
     img.DrawCross(pt, 4);
     img.Show();
-    img.Free();
     raise GetDebugLn('MM2MS', ToStr(pt) + ' is not a valid point to generate a random point on the zoom quad: ' + ToStr(quad) + '.');
   end;
 
@@ -417,7 +416,7 @@ var
 begin
   if not Self.Contains(pt) then Exit;
 
-  quad := Self.GetZoomQuad();
+  quad := Self.ZoomQuad;
   if quad.Contains(pt) then Exit(True);
 
   tpa := quad.Corners.SortFrom(pt);
@@ -526,7 +525,7 @@ function TRSMinimap.InZoomRange(pt: TPoint): Boolean;
 function TRSMinimap.AnyInZoomRange(tpa: TPointArray): Boolean; overload;
 ```
 Method used to know if a point `pt`is within reach of the Zoom rectangle without adjusting the zoom level.
-Check `TRSMinimap.GetZoomQuad()` for information on the zoom quad.
+Check `TRSMinimap.ZoomQuad` for information on the zoom quad.
 
 Example:
 ```pascal
@@ -539,7 +538,7 @@ var
 begin
   if not Self.Contains(pt) then Exit;
 
-  quad := Self.GetZoomQuad().Corners.SortFrom(Self.Center);
+  quad := Self.ZoomQuad.Corners.SortFrom(Self.Center);
   corner := quad[High(quad)];
 
   Result := Self.Center.DistanceTo(pt) <= Self.Center.DistanceTo(corner);
@@ -558,7 +557,7 @@ var
   pt, corner: TPoint;
   dist: Double;
 begin
-  quad := Self.GetZoomQuad().Corners.SortFrom(Self.Center);
+  quad := Self.ZoomQuad.Corners.SortFrom(Self.Center);
   corner := quad[High(quad)];
   dist := Self.Center.DistanceTo(corner);
 
@@ -653,7 +652,7 @@ var
 begin
   angle := Self.GetCompassAngle(False);
 
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   img.DrawColor := $00FF00;
 
   for p.X := Self.Center.X - 25 * 4 to Self.Center.X + 25 * 4 with 4 do
@@ -686,13 +685,12 @@ begin
   img.DrawTPA(tpa);
 
   img.Show();
-  img.Free();
 end;
 
 (*
-## MainScreen.GetPlayerBox
+## MainScreen.PlayerBox
 ```pascal
-function TRSMainScreen.GetPlayerBox(): TBox;
+property TRSMainScreen.PlayerBox: TBox;
 ```
 Returns a `TBox` on the mainscreen that tightly bounds the player.
 
@@ -700,10 +698,10 @@ Results are cached per zoom level to avoid unnecessary recomputation.
 
 Example:
 ```pascal
-WriteLn(MainScreen.GetPlayerBox());
+ShowOnTarget(MainScreen.PlayerBox);
 ```
 *)
-function TRSMainScreen.GetPlayerBox(): TBox;
+property TRSMainScreen.PlayerBox: TBox;
 var
   compassAngle: Double;
   vectors: TVector3Array;
