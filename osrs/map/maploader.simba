@@ -83,6 +83,8 @@ This might be the only thing you need to use from time to time from the
 
 It's important to understand the difference between local and global points to
 use these effectively.
+Understanding them and making conversions of this coordinates is needed for
+proper coordinate debugging.
 
 ### Global Points
 Global points and points on the real runescape map. This is the "Global map".
@@ -110,7 +112,7 @@ matching the pixel [100, 100] on the global map. Instead it matches the pixel
 *)
 
 (*
-### TRSMapRegion.LocalIndex
+### TRSMapLoader.LocalIndex
 ```pascal
 function TRSMapLoader.LocalIndex(pt: TPoint): Integer;
 ```
@@ -126,11 +128,11 @@ begin
 end;
 
 (*
-### TRSMapRegion.GlobalIndex
+### TRSMapLoader.GlobalIndex
 ```pascal
 function TRSMapLoader.GlobalIndex(pt: TPoint): Integer;
 ```
-Returns the index of the TRSMapRegion a {ref}`Global Point` is at.
+Returns the index of the TRSMapRegion a {ref}`Global point` is at.
 Returns `-1` if none is found.
 *)
 function TRSMapLoader.GlobalIndex(pt: TPoint): Integer;
@@ -141,38 +143,61 @@ begin
   Result := -1;
 end;
 
-function TRSMapLoader.GetOriginal(pt: TPoint): Integer;
+
+(*
+### TRSMapLoader.GetGlobal
+```pascal
+function TRSMapLoader.GetGlobal(regionIndex: Integer; pt: TPoint; offset: TPoint = [0,0]): TPoint;
+function TRSMapLoader.GetGlobal(pt: TPoint; offset: TPoint = [0,0]): TPoint; overload;
+```
+Converts a {ref}`Local point` to a {ref}`Global point`.
+
+You can optionally specify the `regionIndex` you want your `pt` to be converted to or let Simba figure it out.
+For points in bulk from the same region specifying it is better as you save Simba from doing more math.
+
+The specified `pt` is returned unmodified if not region index matching the point is found.
+*)
+function TRSMapLoader.GetGlobal(regionIndex: Integer; pt: TPoint; offset: TPoint = [0,0]): TPoint;
 begin
-  for Result := 0 to High(Self.Regions) do
-    with Self.Regions[Result] do
-      with Region.Offset(Offset) do
-        if Contains(pt) then Exit;
-  Result := -1;
+  Result := pt + Self.Regions[regionIndex].Offset - [Self.Regions[regionIndex].Region.X1, Self.Regions[regionIndex].Region.Y1] + offset;
+end;
+
+function TRSMapLoader.GetGlobal(pt: TPoint; offset: TPoint = [0,0]): TPoint; overload;
+var
+  regionIndex: Integer;
+begin
+  regionIndex := Self.LocalIndex(pt);
+  if regionIndex = -1 then Exit(pt);
+  Result := Self.GetGlobal(regionIndex, pt, offset);
 end;
 
 
-function TRSMapLoader.GetGlobal(regionIndex: Integer; p: TPoint; offset: TPoint = [0,0]): TPoint;
-begin
-  if regionIndex = -1 then
-    Exit(p);
-  Result := p + Self.Regions[regionIndex].Offset - [Self.Regions[regionIndex].Region.X1, Self.Regions[regionIndex].Region.Y1] + offset;
-end;
+(*
+### TRSMapLoader.GetLocal
+```pascal
+function TRSMapLoader.GetLocal(regionIndex: Integer; pt: TPoint; offset: TPoint = [0,0]): TPoint;
+function TRSMapLoader.GetLocal(pt: TPoint; offset: TPoint = [0,0]): TPoint; overload;
+function TRSMapLoader.GetLocal(tpa: TPointArray; offset: TPoint = [0,0]): TPointArray; overload;
+```
+Converts a {ref}`Global point` to a {ref}`Local point`.
 
-function TRSMapLoader.GetGlobal(p: TPoint; offset: TPoint = [0,0]): TPoint; overload;
-begin
-  Result := Self.GetGlobal(Self.LocalIndex(p), p, offset);
-end;
+You can optionally specify the `regionIndex` you want your `pt` to be converted to or let Simba figure it out.
+You can also optionally specify points in bulk as a `tpa`.
 
-
+The specified `pt` is returned unmodified if not region index matching the point is found.
+*)
 function TRSMapLoader.GetLocal(regionIndex: Integer; pt: TPoint; offset: TPoint = [0,0]): TPoint;
 begin
-  if regionIndex = -1 then Exit(pt);
   Result := pt - Self.Regions[regionIndex].Offset + Self.Regions[regionIndex].Region.TopLeft + offset;
 end;
 
 function TRSMapLoader.GetLocal(pt: TPoint; offset: TPoint = [0,0]): TPoint; overload;
+var
+  regionIndex: Integer;
 begin
-  Result := Self.GetLocal(Self.GlobalIndex(pt), pt, offset);
+  regionIndex := Self.GlobalIndex(pt);
+  if regionIndex = -1 then Exit(pt);
+  Result := Self.GetLocal(regionIndex, pt, offset);
 end;
 
 function TRSMapLoader.GetLocal(tpa: TPointArray; offset: TPoint = [0,0]): TPointArray; overload;
@@ -180,7 +205,7 @@ var
   pt: TPoint;
 begin
   for pt in tpa do
-    Result += Self.GetLocal(Self.GlobalIndex(pt), pt, offset);
+    Result += Self.GetLocal(pt, offset);
 end;
 
 
@@ -340,10 +365,13 @@ end;
 (*
 ## MapLoader.GetGraph
 ```pascal
-function TRSMapLoader.GetGraph(name: String; plane: Integer; map: TMufasaBitmap): TWebGraphV2;
+function TRSMapLoader.GetGraph(name: String; plane: Integer; map: TImage): TWebGraph;
 ```
 Returns a TWebGraph for the given `map`.
-If the graph is already cached we load it from cache, otherwise we build it and save it into cache.
+
+If the graph is already cached we load it from cache, otherwise we build it
+with {ref}`WebGraph Generator` and save it into cache.
+
 ```{note}
 This is an internal method. Don't use it if you don't know what you are doing.
 ```
@@ -352,7 +380,7 @@ function TRSMapLoader.GetGraph(name: String; plane: Integer; map: TImage): TWebG
 var
   path: String;
 begin
-  {$IFDEF WaspLib_GENERATE_GRAPH_ALWAYS}
+  {$IFDEF WL_GENERATE_GRAPH_ALWAYS}
   Exit(WebGraphGenerator.BuildGraph(name, map));
   {$ENDIF}
   path := Self.CacheDir + 'graphs' + PATH_SEP + ToStr(plane) + PATH_SEP + name + '-' + WebGraphGenerator.Hash() + PATH_SEP;
@@ -476,60 +504,41 @@ begin
   Result.UseCollisionData := Self.Graph.UseCollisionData;
 end;
 
-procedure TRSMapLoader.Add(chunks: array of TRSMapChunk; downscale: UInt32 = 8; padding: UInt32 = 40);
-var
-  i, j: Int32;
-  current: TRSMapChunk;
-  loaded, final: array of TRSMapChunk;
+
+(*
+## MapLoader.Load
+```pascal
+procedure TRSMapLoader.Load(chunks: TRSMapChunkArray; downscale: Integer = 8; padding: Integer = 40);
+```
+Loads a map and sets the {ref}`TRSMapLoader` internal values, the most important
+ones being:
+- `TRSMapLoader.Map`, which will hold the image of your map.
+- `TRSMapLoader.Heightmap` which will hold your heightmap.
+- `TRSMapLoader.Collision` which will hold your collision map
+- `TRSMapLoader.DownscaledMap` which is an exact copy of `TRSMapLoader.Map` downscaled by the specified `downscale`.
+- `TRSMapLoader.Graph` which holds your {ref}`TWebGraph` which is used for walking.
+- `TRSMapLoader.Regions` an array of the available {ref}`TRSMapRegion` that were loaded.
+
+The best way to visualize most of these is to use the {ref}`Map Debugger`:
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+
 begin
-  for i := 0 to High(Self.Regions) do
-  begin
-    current := Chunk(RSTranslator.Global2Chunk(Self.Regions[i].Original), [Self.Regions[i].Plane]);
-    for j := 0 to High(Self.Regions) do
-    begin
-      if i = j then Continue;
-      if Self.Regions[i].Original <> Self.Regions[j].Original then Continue;
-      if current.Planes.Contains(Self.Regions[j].Plane) then Continue;
-      current.Planes += Self.Regions[j].Plane;
-    end;
+  Map.Setup([ERSChunk.VARROCK]);
+  MapDebugger.Setup(@Map.Loader);
+  MapDebugger.Show();
+end.
+```
 
-    current.Planes := current.Planes.Sorted();
-    loaded += current;
-    current := [];
-  end;
+```{figure} ../../images/map_debugger.gif
+```
 
-  for i := 0 to High(loaded) do
-  begin
-    current := loaded[i];
-
-    for j := High(chunks) downto 0 do
-    begin
-      if current = chunks[j] then
-      begin
-        Delete(chunks, j, 1);
-        Continue;
-      end;
-
-      if current.Chunk = chunks[j].Chunk then
-      begin
-        current.Planes += current.Planes.Difference(chunks[j].Planes);
-        Delete(chunks, j, 1);
-        Continue;
-      end;
-    end;
-
-    final += current;
-  end;
-
-  for i := 0 to High(chunks) do
-    final += chunks[i];
-
-  Self.Free();
-  Self.Regions := [];
-
-  Self.Load(final, downscale, padding);
-end;
-
+```{note}
+This is an internal method. Usually, {ref}`TRSMap` `Load` methods will call this for you.
+```
+*)
 procedure TRSMapLoader.Load(chunks: TRSMapChunkArray; downscale: Integer = 8; padding: Integer = 40);
 var
   chunk: TRSMapChunk;
@@ -598,3 +607,73 @@ begin
     Self.Graph := Self.InternalGraphLoad(graphs);
 end;
 
+
+(*
+## MapLoader.Add
+```pascal
+procedure TRSMapLoader.Add(chunks: array of TRSMapChunk; downscale: UInt32 = 8; padding: UInt32 = 40);
+```
+Adds one or more `TRSMapChunk` to your already, previously loaded `TRSMapLoader`.
+
+This is very similar to what {ref}`MapLoader.Load` does and should be used after it as it sets up some internal
+values that this doesn't.
+
+This basically updates some of the values it previously setup.
+
+```{note}
+This is an internal method. Usually, {ref}`TRSMap` `Add` methods will call this for you.
+```
+*)
+procedure TRSMapLoader.Add(chunks: array of TRSMapChunk; downscale: UInt32 = 8; padding: UInt32 = 40);
+var
+  i, j: Int32;
+  current: TRSMapChunk;
+  loaded, final: array of TRSMapChunk;
+begin
+  for i := 0 to High(Self.Regions) do
+  begin
+    current := Chunk(RSTranslator.Global2Chunk(Self.Regions[i].Original), [Self.Regions[i].Plane]);
+    for j := 0 to High(Self.Regions) do
+    begin
+      if i = j then Continue;
+      if Self.Regions[i].Original <> Self.Regions[j].Original then Continue;
+      if current.Planes.Contains(Self.Regions[j].Plane) then Continue;
+      current.Planes += Self.Regions[j].Plane;
+    end;
+
+    current.Planes := current.Planes.Sorted();
+    loaded += current;
+    current := [];
+  end;
+
+  for i := 0 to High(loaded) do
+  begin
+    current := loaded[i];
+
+    for j := High(chunks) downto 0 do
+    begin
+      if current = chunks[j] then
+      begin
+        Delete(chunks, j, 1);
+        Continue;
+      end;
+
+      if current.Chunk = chunks[j].Chunk then
+      begin
+        current.Planes += current.Planes.Difference(chunks[j].Planes);
+        Delete(chunks, j, 1);
+        Continue;
+      end;
+    end;
+
+    final += current;
+  end;
+
+  for i := 0 to High(chunks) do
+    final += chunks[i];
+
+  Self.Free();
+  Self.Regions := [];
+
+  Self.Load(final, downscale, padding);
+end;

@@ -5,7 +5,7 @@ It was made from scratch by Torwent but heavily inspired in the original
 TRSWalker by Slacky and it's future iterations made by Olly.
 Without them, this wouldn't be possible.
 
-For a online interactive map you can visit [](https://map.waspscripts.com/)
+For a online interactive map you can visit [WaspScripts map](https://map.waspscripts.com/)
 *)
 
 {$DEFINE WL_MAP_INCLUDED}
@@ -410,26 +410,6 @@ begin
   Result := Self.HeightEx(p, True);
 end;
 
-function TRSMap.HeightDifference(p, q: TPoint; global: Boolean = True): Single;
-var
-  c1, c2: TColor;
-begin
-  if Self.DisableHeightmap or not Assigned(Self.Loader.Heightmap) then
-    Exit;
-
-  if global then
-  begin
-    p := Self.Loader.GetLocal(Self.RegionIndex, p);
-    q := Self.Loader.GetLocal(Self.RegionIndex, q);
-  end;
-
-  c1 := Self.Loader.Heightmap.Pixel[p.X, p.Y];
-  c2 := Self.Loader.Heightmap.Pixel[q.X, q.Y];
-  if c1 = c2 then Exit(0);
-
-  Result := RSTranslator.Color2Height(c1) - RSTranslator.Color2Height(c2);
-end;
-
 
 (*
 ## Map.DebugPosition
@@ -549,7 +529,10 @@ while True do
 *)
 function TRSMap.GetMeanHeightAroundPixel(p: TPoint): Single;
 begin
-  Result := RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X,p.Y]) + RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X,p.Y + 1]) + RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X + 1,p.Y]) + RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X + 1,p.Y + 1]);
+  Result := RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X,p.Y]) +
+            RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X,p.Y + 1]) +
+            RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X + 1,p.Y]) +
+            RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X + 1,p.Y + 1]);
   Result := Result/4;
 end;
 
@@ -603,6 +586,7 @@ begin
 
   img.Show();
 end;
+
 var
 (*
 ## Map variable

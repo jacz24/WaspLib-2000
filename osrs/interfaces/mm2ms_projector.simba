@@ -2,17 +2,90 @@
 # MM2MS Projector
 Originally created by slacky.
 This is basically the same thing with some pre-calculated math
+
+The MM2MS Projector is usually used through {ref}`MM2MS`, but can be used by
+itself if you want and know what you are doing.
+
+By itself, the projector is basically a 3D engine, very similar to what the game
+uses:
+```{figure} ../../images/mm2ms_ape_rendered.png
+```
+
+It can be used to calculate the position of 3D coordinate and accurately display
+them in the right place in it's 3D space:
+```{figure} ../../images/mm2ms_ape.png
+```
+
+```{figure} ../../images/mm2ms_wireframes.gif
+```
+
+When playing with the projector it might be useful to image your head a 3D grid
+with infinity cross sections.
+
+Imagine a 2D grid like this:
+```{figure} ../../images/mm2ms.png
+```
+But imagine it with infinite crossings, so each pixel of the squares can have a
+X and Y crossing.
+
+Now imagine and infine amount of those grids stacked up on top of that one and
+below, with vertical lines creating Z axis intersections.
+
+That's what a 3D grid is.
 *)
 {$DEFINE WL_MM2MS_PROJECTOR_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
+(*
+## TMM2MSProjector
+Main record responsible for {ref}`MM2MS` projection.
+*)
   TMM2MSProjector = record
     RSZoom: Single;
     ScaleMin, ScaleMax: Single;
     ViewMatrix, ProjMatrix, WorldMatrix, TransMatrix: TMatrix4;
     Transformer: record X, Y, Z: Double; end;
+
+    ViewEye, ViewTarget, ViewUp: TVector3;
   end;
+
+(*
+If you want to play with this and understand it better, you may need to override
+some functions like `TMM2MSProjector.UpdateViewMatrix` and
+`TMM2MSProjector.SetupProjection`.
+
+A good strategy is to create overrides and/or link some of the fields availble
+to the keyboard so you can edit them and see how the projection is affected in
+real time, e.g.:
+```pascal
+{$DEFINE WL_DISABLE_FAKE_INPUT}
+{$I WaspLib/osrs.simba}
+
+begin
+  while True do
+  begin
+    Options.GetZoomLevel(False);
+
+    if Keyboard.IsKeyDown(EKeyCode.NUM_1) then
+      MM2MS.Projector.ViewEye.X += 1;
+
+    if Keyboard.IsKeyDown(EKeyCode.NUM_2) then
+      MM2MS.Projector.ViewEye.X -= 1;
+
+    //basically TMM2MSProjector.UpdateViewMatrix:
+    MM2MS.Projector.ViewMatrix := TMatrix4.LookAtRH(
+      MM2MS.Projector.ViewEye, MM2MS.Projector.ViewTarget, MM2MS.Projector.ViewUp
+    );
+
+    Minimap.DebugTiles();
+  end;
+end.
+```
+
+```{figure} ../../images/mm2ms_tweaking.gif
+```
+*)
 
 const
   ZOOM2RSZOOM: array [0..100] of Single = [
@@ -95,16 +168,16 @@ const
     73
   ];
 
-
-
 procedure TMM2MSProjector.UpdateViewMatrix(mode: ERSMode; zoom: Integer);
 begin
   case mode of
-    ERSMode.FIXED: Self.ViewMatrix := TMatrix4.LookAtRH([0,EYE_Y_FIXED[zoom], EYE_Z_FIXED[zoom]],[0,0,1.0], [0,1.0,0]);
+    ERSMode.FIXED: Self.ViewEye := [0, EYE_Y_FIXED[zoom], EYE_Z_FIXED[zoom]];
 
     ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
-      Self.ViewMatrix := TMatrix4.LookAtRH([0,EYE_Y_RESIZABLE[zoom], EYE_Z_RESIZABLE[zoom]],[0,0,1.0], [0,1.0,0]);
+      Self.ViewEye := [0, EYE_Y_RESIZABLE[zoom], EYE_Z_RESIZABLE[zoom]];
   end;
+
+  Self.ViewMatrix := TMatrix4.LookAtRH(Self.ViewEye, Self.ViewTarget, Self.ViewUp);
 end;
 
 
@@ -126,6 +199,8 @@ begin
 
   // fixed client width & height
   Self.ProjMatrix := TMatrix4.PerspectiveFovRH(Sqrt(2), 765 / 503 * 1.03, 0.01, 1.0);
+  Self.ViewTarget := [0.0, 0.0, 1.0];
+  Self.ViewUp     := [0.0, 1.0, 0.0];
 end;
 
 procedure TMM2MSProjector.UpdateZoom(zoom: Integer);

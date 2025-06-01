@@ -1,12 +1,30 @@
 (*
 # Map Debugger
-Tool to help debug TRSMap
+Tool to help debug {ref}`TRSMap` and {ref}`TRSMapLoader`.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+  MapDebugger.Setup(@Map.Loader);
+  MapDebugger.Show();
+end.
+```
+
+```{figure} ../../images/map_debugger.gif
+```
 *)
 
 {$DEFINE WL_MAPDEBUGGER_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
+(*
+## TMapDebugger
+Main record used to hold core values of the {ref}`Map Debugger`.
+*)
   TMapDebugger = record
     ImageBox: TImageBox;
     Images: TImageArray;
@@ -105,7 +123,19 @@ begin
   Self.ImageBox.Repaint();
 end;
 
+(*
+## MapDebugger.Show
+```pascal
+procedure TMapDebugger.Show();
+```
+Shows the `MapDebugger` form. You must first call {ref}`TMapDebugger.Setup`
+before calling this.
 
+Example:
+```pascal
+MapDebugger.Show();
+```
+*)
 procedure TMapDebugger.Show();
 var
   form: TLazForm;
@@ -116,8 +146,8 @@ var
 begin
   form := TLazForm.Create();
   form.Caption := 'TRSMap Debugger';
-  form.Width := 900;
-  form.Height := 700;
+  form.Width := 1280;
+  form.Height := 800;
   form.Position := ELazFormPosition.ScreenCenter;
   form.Color := $242322;
   form.BorderStyle := ELazFormBorderStyle.Sizeable;
@@ -128,38 +158,66 @@ begin
   panel.BevelOuter := ELazPanelBevel.None;
   panel.Align := ELazAlign.Top;
 
+  lbl := TLazLabel.Create(panel);
+  lbl.Parent := panel;
+  lbl.Caption := 'Show ObjectClusters';
+  lbl.Font.Color := $FFFFFF;
+  lbl.Align := ELazAlign.Left;
+  lbl.BorderSpacing.Around := 5;
+
   checkbox := TLazCheckBox.Create(panel);
   checkbox.Parent := panel;
-  checkbox.Caption := 'Show ObjectClusters';
   checkbox.Align := ELazAlign.Left;
   checkbox.BorderSpacing.Left  := 10;
-  checkbox.BorderSpacing.Right := 10;
+  checkbox.BorderSpacing.Right := 4;
   checkbox.OnChange := @Self.ObjectClustersOnChange;
 
+
+  lbl := TLazLabel.Create(panel);
+  lbl.Parent := panel;
+  lbl.Caption := 'Show WalkableClusters';
+  lbl.Font.Color := $FFFFFF;
+  lbl.Align := ELazAlign.Left;
+  lbl.BorderSpacing.Around := 5;
+
   checkbox := TLazCheckBox.Create(panel);
   checkbox.Parent := panel;
-  checkbox.Caption := 'Show WalkableClusters';
   checkbox.Align := ELazAlign.Left;
   checkbox.BorderSpacing.Left  := 10;
-  checkbox.BorderSpacing.Right := 10;
+  checkbox.BorderSpacing.Right := 4;
   checkbox.OnChange := @Self.WalkableClustersOnChange;
 
-  checkbox := TLazCheckBox.Create(panel);
-  checkbox.Parent := panel;
-  checkbox.Caption := 'Show WalkableSpace';
-  checkbox.Align := ELazAlign.Left;
-  checkbox.BorderSpacing.Left  := 10;
-  checkbox.BorderSpacing.Right := 10;
-  checkbox.OnChange := @Self.WalkableSpaceOnChange;
+
+  lbl := TLazLabel.Create(panel);
+  lbl.Parent := panel;
+  lbl.Caption := 'Show WalkableSpace';
+  lbl.Font.Color := $FFFFFF;
+  lbl.Align := ELazAlign.Left;
+  lbl.BorderSpacing.Around := 5;
 
   checkbox := TLazCheckBox.Create(panel);
   checkbox.Parent := panel;
-  checkbox.Caption := 'Show webgraph';
+  checkbox.Align := ELazAlign.Left;
+  checkbox.BorderSpacing.Left  := 10;
+  checkbox.BorderSpacing.Right := 4;
+  checkbox.OnChange := @Self.WalkableSpaceOnChange;
+
+
+  lbl := TLazLabel.Create(panel);
+  lbl.Parent := panel;
+  lbl.Caption := 'Show webgraph';
+  lbl.Font.Color := $FFFFFF;
+  lbl.Align := ELazAlign.Left;
+  lbl.BorderSpacing.Around := 5;
+
+  checkbox := TLazCheckBox.Create(panel);
+  checkbox.Parent := panel;
   checkbox.Align := ELazAlign.Left;
   checkbox.State := ELazCheckBoxState.cbChecked;
   checkbox.BorderSpacing.Left  := 10;
-  checkbox.BorderSpacing.Right := 10;
+  checkbox.BorderSpacing.Right := 4;
   checkbox.OnChange := @Self.GraphOnChange;
+
 
   combobox := TLazComboBox.Create(panel);
   combobox.Parent := panel;
@@ -198,6 +256,19 @@ begin
   Form.ShowModal();
 end;
 
+(*
+## MapDebugger.Setup
+```pascal
+procedure TMapDebugger.Setup(loader: ^TRSMapLoader);
+```
+Setup method for the `MapDebugger` form.
+A pointer to a {ref}`TRSMapLoader` must be passed into this as `loader`.
+
+Example:
+```pascal
+MapDebugger.Setup(@Map.Loader);
+```
+*)
 procedure TMapDebugger.Setup(loader: ^TRSMapLoader);
 var
   map, heightmap, collision: TImage;
@@ -251,6 +322,10 @@ begin
 end;
 
 var
+(*
+## MapDebugger variable
+Global {ref}`TMapDebugger` variable.
+*)
   MapDebugger: TMapDebugger;
 
 procedure TRSMap.Debug();

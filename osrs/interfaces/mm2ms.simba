@@ -11,6 +11,44 @@ Original work done by slacky.
 It's thanks to {ref}`MM2MS` that we can have the following grid:
 ```{figure} ../../images/mm2ms.png
 ```
+
+MM2MS by itself is just a 3D grid with infinite cross sections in all axis
+(read {ref}`MM2MS Projector` for more information).
+
+It's up to you to give it coordinates you want to be converted, for example:
+```pascal
+{$I WaspLib/osrs.simba}
+
+begin
+  while True do
+  begin
+    Options.GetZoomLevel(False);
+    Minimap.DebugTiles([]);
+  end;
+end.
+```
+
+```{figure} ../../images/mm2ms_flat.gif
+```
+
+But you can for example, use it with a {ref}`TRSMap` heightmap data for more
+advanced projections:
+```pascal
+{$I WaspLib/osrs.simba}
+
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+
+  while True do
+  begin
+    Options.GetZoomLevel(False);
+    Map.DebugHeight();
+  end;
+end.
+```
+
+```{figure} ../../images/mm2ms_height.gif
+```
 *)
 
 {$DEFINE WL_MM2MS_INCLUDED}
@@ -699,7 +737,18 @@ Results are cached per zoom level to avoid unnecessary recomputation.
 
 Example:
 ```pascal
-ShowOnTarget(MainScreen.PlayerBox);
+{$I WaspLib/osrs.simba}
+
+begin
+  while True do
+  begin
+    Options.GetZoomLevel(False);
+    ShowOnTarget(MainScreen.PlayerBox);
+  end;
+end.
+```
+
+```{figure} ../../images/mm2ms_playerbox.gif
 ```
 *)
 property TRSMainScreen.PlayerBox: TBox;
