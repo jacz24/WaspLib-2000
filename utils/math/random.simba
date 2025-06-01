@@ -42,6 +42,66 @@ begin
 end;
 
 
+function TCircle.RandomPointInSectorWithRadialBias(AngleMin, AngleMax: Double; Bias: Double): TPoint;
+var
+  Angle: Double;
+  RndRadiusNormalized: Double; // Random radius in [0, 1]
+  RndRadius: Double;
+  P: TPoint;
+begin
+  // Generate a random angle within the specified sector
+  Angle := AngleMin + Random * (AngleMax - AngleMin);
+
+  // Generate a random normalized radius [0, 1]
+  // This is the core of the radial bias for the crescent shape
+  //
+  // Bias = 0: behaves like Sqrt(Random) for area uniform distribution
+  // RndRadiusNormalized := Sqrt(Random);
+  //
+  // Bias = 1: RndRadiusNormalized will always be 1 (points on edge)
+  // RndRadiusNormalized := 1.0;
+  //
+  // Intermediate Bias: Blend between uniform area and edge.
+  // The expression `1 - Sqrt(1 - Random)` biases towards 1.
+  // The expression `Sqrt(Random)` biases towards 0.
+  // We'll blend these based on `Bias`.
+
+  // A simple blend for radial bias:
+  // (1-Bias) * Sqrt(Random) + Bias * (1 - Sqrt(1 - Random))  // This biases towards larger radii
+  // or a simpler `Power(Random, Bias)` where Bias < 1 for outer bias.
+  // Let's use an interpolated version to control the "thickness" of the crescent.
+
+  // Linear interpolation between interior distribution and edge-biased distribution
+  // The `Random` here produces a uniform [0,1] value.
+  // `Power(Random, (1-Bias)*4 + 0.1)` : If Bias is 1, Power is 0.1 (strong outer bias). If Bias is 0, Power is 4.1 (strong inner bias)
+  // This can be tricky. Let's use a simpler, more direct approach:
+
+  // Option 1: Blend between area distribution and edge distribution
+  RndRadiusNormalized := (1 - Bias) * Sqrt(Random) + Bias * (1 - Sqrt(1 - Random));
+  // The `1 - Sqrt(1 - Random)` part generates values biased towards 1.0
+
+  // Option 2: Using `Power(Random, Exponent)`
+  // Exponent > 1 (e.g., 2, 3) biases towards 0 (center)
+  // Exponent < 1 (e.g., 0.5, 0.2) biases towards 1 (edge)
+  // We want the bias to increase with the `Bias` parameter.
+  // A higher `Bias` should mean a smaller exponent to push points outwards.
+  // Let's map Bias [0,1] to Exponent [2, 0.1] (adjust 2 and 0.1 for desired range)
+  // var Exponent: Double;
+  // Exponent := 2 - Bias * 1.9; // 2 when Bias=0, 0.1 when Bias=1
+  // RndRadiusNormalized := Power(Random, Exponent);
+
+
+  // Apply the normalized radius to the actual circle radius
+  RndRadius := Self.Radius * RndRadiusNormalized;
+
+  // Calculate the coordinates relative to the circle's center
+  P.X := Self.X + Round(RndRadius * Cos(Angle));
+  P.Y := Self.Y + Round(RndRadius * Sin(Angle));
+
+  Result := P;
+end;
+
+
 (*
 ## TQuad.RandomWeightedPoint
 ```pascal
@@ -61,32 +121,19 @@ var
   t, dist, cutoff: Double;
 begin
   cutoff := RandCutoff;
-  RandCutoff := 4.0 / 1.5;
+  RandCutoff := 5.0 / 1.5;
   pt := Self.RandomPointCenter();
   edge := Self.NearestEdge(pt);
 
   dist := Hypot(pt.X - edge.X, pt.Y - edge.Y);
   t := ArcTan2(pt.Y-from.Y, pt.X-from.X) + (Random()-0.5) * smoothness;
 
-  RandCutoff := 4.0;
+  RandCutoff := 5.0;
   Result.X := Round(pt.x + Cos(t) * RandomMode(dist * force, 0, dist));
   Result.Y := Round(pt.y + Sin(t) * RandomMode(dist * force, 0, dist));
 
   RandCutoff := cutoff;
 end;
-
-(*
-## TBox.RandomWeightedPoint
-```pascal
-function TBox.RandomWeightedPoint(from: TPoint; force: Double=-0.9; smoothness: Single = PI / 12): TPoint;
-```
-Same as {ref}`TQuad.RandomWeightedPoint` but for `TBox`.
-*)
-function TBox.RandomWeightedPoint(from: TPoint; force: Double = -0.9; smoothness: Double = PI / 12): TPoint;
-begin
-  Result := TQuad.CreateFromBox(Self).RandomWeightedPoint(from, force, smoothness);
-end;
-
 
 (*
 ## TQuad.RandomSkewedPoint
@@ -126,6 +173,19 @@ begin
   Result.Y := Round(RandomMode(skewed.Y, bounds.Y1, bounds.Y2));
 
   RandCutoff := cutoff;
+end;
+
+
+(*
+## TBox.RandomWeightedPoint
+```pascal
+function TBox.RandomWeightedPoint(from: TPoint; force: Double=-0.9; smoothness: Single = PI / 12): TPoint;
+```
+Same as {ref}`TQuad.RandomWeightedPoint` but for `TBox`.
+*)
+function TBox.RandomWeightedPoint(from: TPoint; force: Double = -0.9; smoothness: Double = PI / 12): TPoint;
+begin
+  Result := TQuad.CreateFromBox(Self).RandomWeightedPoint(from, force, smoothness);
 end;
 
 (*
