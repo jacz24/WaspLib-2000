@@ -34,7 +34,7 @@ end;
 *)
   TRSWalkerEvent            = procedure(walker: PRSWalker; position, destination: TPoint) of object;
   TRSWalkerPositionFunction = function (): TPoint of object;
-  TRSWalkerHeightFunction   = function (pt: TPoint = [0,0]): Single of object;
+  TRSWalkerHeightFunction   = function (pt: TPoint = [0,0]; global: Boolean = True): Single of object;
   TRWalkerGetLocalFunction  = function (pt: TPoint; offset: TPoint = [0,0]): TPoint of object;
 
 (*
@@ -110,7 +110,7 @@ Walker.Setup(@MyCustomPositionSystem, nil, nil, nil, nil);
 *)
 
 {%codetools off}
-function TRSWalker.DummyHeight(pt: TPoint = [0,0]): Single; begin Result := pt.X; end;
+function TRSWalker.DummyHeight(pt: TPoint = [0,0]; global: Boolean = True): Single; begin Result := pt.X; end;
 function TRSWalker.DummyGetLocal(pt: TPoint; offset: TPoint = [0,0]): TPoint; begin Result := pt+offset; end;
 {%codetools on}
 
@@ -224,18 +224,70 @@ begin
 end;
 
 
-function TRSWalker.GetQuadMS(playerPoint, mapPoint: TPoint; height: Double = 0; offset: TVector3 = [0,0,0]; radians: Single = $FFFF): TQuad;
+function TRSWalker.GetQuadMS(playerPoint, mapPoint: TPoint; radians: Single = $FFFF): TQuad;
 var
   vector: TVector2;
+  corner0, corner1, corner2, corner3: TVector3;
+  h: Single;
+  pt, currLoc: TPoint;
+  arr: TPointArray;
 begin
-  if radians = $FFFF then
-    radians := Minimap.GetCompassAngle(False);
+  if radians = $FFFF then radians := Minimap.GetCompassAngle(False);
+  vector := Self.Point2MMVec(playerPoint, mapPoint, radians);
+  pt := vector.ToPoint();
 
-  with Minimap.Center + (mapPoint - playerPoint) do
-    vector := ToVec2().Rotate(radians, Minimap.Center);
+  if not Minimap.PointOnZoomQuad(pt) then Exit;
 
-  Result := Minimap.Vector2MSQuad(vector.ToVec3(height), radians, [1,1], offset);
+  vector := Minimap.NormalizeEx(vector, radians);
+  playerPoint := Self.GetLocal(playerPoint);
+
+  h := Self.Height(playerPoint - [1,3], False) + Self.Height(playerPoint + [3,-3], False) +
+       Self.Height(playerPoint + [3,1], False) + Self.Height(playerPoint - [1,1], False);
+  h := h/4;
+
+  currLoc := playerPoint + vector.ToPoint() - Minimap.Center;
+
+  corner0 := [vector.X-2, vector.Y-2, Self.Height(currLoc - [1,3], False) - h];
+  corner1 := [vector.X+2, vector.Y-2, Self.Height(currLoc + [3,-3], False) - h];
+  corner2 := [vector.X+2, vector.Y+2, Self.Height(currLoc + [3,1], False) - h];
+  corner3 := [vector.X-2, vector.Y+2, Self.Height(currLoc - [1,1], False) - h];
+
+  arr := MM2MS.Run([corner0, corner1, corner2, corner3], radians);
+  Result := [arr[0], arr[1], arr[2], arr[3]];
 end;
+
+function TRSWalker.GetQuadMSEx(localPlayerPoint, localPoint: TPoint; radians: Single = $FFFF): TQuad;
+var
+  vector: TVector2;
+  corner0, corner1, corner2, corner3: TVector3;
+  h: Single;
+  diff, currLoc: TPoint;
+  arr: TPointArray;
+begin
+  if not Minimap.PointOnZoomQuad(localPoint) then Exit;
+  if radians = $FFFF then radians := Minimap.GetCompassAngle(False);
+
+  diff := [localPoint.X-localPlayerPoint.X, localPoint.Y-localPlayerPoint.Y];
+  localPlayerPoint := localPoint + diff;
+
+  vector := localPoint.ToVec2();
+  vector := Minimap.NormalizeEx(vector, radians);
+
+  h := Self.Height(localPlayerPoint - [1,3], False) + Self.Height(localPlayerPoint + [3,-3], False) +
+       Self.Height(localPlayerPoint + [3,1], False) + Self.Height(localPlayerPoint - [1,1], False);
+  h := h/4;
+
+  currLoc := localPlayerPoint + vector.ToPoint() - Minimap.Center;
+
+  corner0 := [vector.X-2, vector.Y-2, Self.Height(currLoc - [1,3], False) - h];
+  corner1 := [vector.X+2, vector.Y-2, Self.Height(currLoc + [3,-3], False) - h];
+  corner2 := [vector.X+2, vector.Y+2, Self.Height(currLoc + [3,1], False) - h];
+  corner3 := [vector.X-2, vector.Y+2, Self.Height(currLoc - [1,1], False) - h];
+
+  arr := MM2MS.Run([corner0, corner1, corner2, corner3], radians);
+  Result := [arr[0], arr[1], arr[2], arr[3]];
+end;
+
 
 function TRSWalker.MM2Map(playerPoint, minimapPoint: TPoint; radians: Single = $FFFF): TPoint;
 begin
@@ -518,9 +570,10 @@ If you wish to modify certain walker behaviors, it can be a good approach to ove
 *)
 function TRSWalker.Click(minimapPoint: TPoint; randomness: Integer; height: Single = 0): Boolean;
 var
-  p: TPoint;
+  pt: TPoint;
   upText: String;
   hoveringTarget: Boolean;
+  quad: TQuad;
 begin
   Self.RedClicked := False;
   if MainScreen.IsUpText('>') and not Self.ActionUpText.AnyContains('>') then
@@ -534,8 +587,10 @@ begin
 
   if Self.ScreenWalk then
   begin
-    p := Minimap.RandomPointOnZoomQuad(minimapPoint, randomness);
-    Mouse.Move(Minimap.Vector2MSQuad(p.ToVec3(height), Minimap.GetCompassAngle(False)).Mean);
+    pt := Minimap.RandomPointOnZoomQuad(minimapPoint, randomness);
+
+    quad := Self.GetQuadMSEx(Minimap.Center, minimapPoint, Minimap.GetCompassAngle(False));
+    Mouse.Move(quad);
     upText := MainScreen.UpText;
 
     hoveringTarget := upText.ContainsAny(Self.TargetUpText);
@@ -691,7 +746,7 @@ begin
   if not Self.WalkStepHelper(playerPoint, walkerPoint, minimapPoint) then
     Exit(not Self.Walking);
 
-  if (Minimap.Center.DistanceTo(minimapPoint) < 4) then
+  if Minimap.Center.InRange(minimapPoint, 4) then
     Exit(True);
 
   Result := Self.Click(minimapPoint, Self.ClickRandomness);
@@ -1058,7 +1113,7 @@ begin
     if not Self._DoorHandler.Handling then
     begin
       cAngle := RadToDeg(compass);
-      quad := Self.GetQuadMS(playerPoint, Self._DoorHandler.Door.After, 0, [0,0], compass);
+      quad := Self.GetQuadMS(playerPoint, Self._DoorHandler.Door.After, compass);
 
       if Mainscreen.IsVisible(quad.Mean) then
       begin
@@ -1070,7 +1125,7 @@ begin
           Self._DoorHandler.SettingUp := True;
 
           compass := Minimap.GetCompassAngle(False);
-          quad := Self.GetQuadMS(playerPoint, Self._DoorHandler.Door.After, 0, [0,0], compass);
+          quad := Self.GetQuadMS(playerPoint, Self._DoorHandler.Door.After, compass);
 
           if not Mainscreen.IsVisible(quad.Mean) then
             Continue;
@@ -1241,7 +1296,7 @@ begin
   SleepUntil(not minimap.IsPlayerMoving, 50,5000);
 
   me := Self.Position();
-  quad := Self.GetQuadMS(me, door.After, 0, [0,0], Minimap.GetCompassAngle(False));
+  quad := Self.GetQuadMS(me, door.After, Minimap.GetCompassAngle(False));
   if not Mainscreen.IsVisible(quad.Mean) then Exit(False);
 
   //move mouse slightly below the mean of the rectangle

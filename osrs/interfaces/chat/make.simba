@@ -224,7 +224,7 @@ begin
   for b in Self.GetItemBoxes() do
     tpa := tpa.ExcludeBox(b.Expand(1));
 
-  tpa := tpa.SortFrom(Mouse.Position());
+  tpa := tpa.SortFrom(Mouse.Position);
   Mouse.Move(tpa[RandomLeft(0, High(tpa))]);
   Result := SleepUntil(not Self.HasHint(), RandomMode(100, 50, 1500), 600);
 end;

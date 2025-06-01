@@ -41,3 +41,124 @@ begin
   Result := Self.SortFrom(Self.Mean())[RandomLeft(0, High(Self))];
 end;
 
+
+(*
+## TQuad.RandomWeightedPoint
+```pascal
+function TQuad.RandomWeightedPoint(from: TPoint; force: Double=-0.9; smoothness: Single = PI / 12): TPoint;
+```
+Originally known as "ROWP", short for `Random Olly Weighted Point`.
+Generates a random point based on a rough formula that Olly came up with for
+weighting points towards `from` point.
+
+Final implementation and math done by slacky.
+
+Force ranges from -1 (close to) to 1 (away from), where 0 is mean, but with a bit of a skewiness...
+*)
+function TQuad.RandomWeightedPoint(from: TPoint; force: Double = -0.9; smoothness: Single = PI / 12): TPoint;
+var
+  pt, edge: TPoint;
+  t, dist, cutoff: Double;
+begin
+  cutoff := RandCutoff;
+  RandCutoff := 4.0 / 1.5;
+  pt := Self.RandomPointCenter();
+  edge := Self.NearestEdge(pt);
+
+  dist := Hypot(pt.X - edge.X, pt.Y - edge.Y);
+  t := ArcTan2(pt.Y-from.Y, pt.X-from.X) + (Random()-0.5) * smoothness;
+
+  RandCutoff := 4.0;
+  Result.X := Round(pt.x + Cos(t) * RandomMode(dist * force, 0, dist));
+  Result.Y := Round(pt.y + Sin(t) * RandomMode(dist * force, 0, dist));
+
+  RandCutoff := cutoff;
+end;
+
+(*
+## TBox.RandomWeightedPoint
+```pascal
+function TBox.RandomWeightedPoint(from: TPoint; force: Double=-0.9; smoothness: Single = PI / 12): TPoint;
+```
+Same as {ref}`TQuad.RandomWeightedPoint` but for `TBox`.
+*)
+function TBox.RandomWeightedPoint(from: TPoint; force: Double = -0.9; smoothness: Double = PI / 12): TPoint;
+begin
+  Result := TQuad.CreateFromBox(Self).RandomWeightedPoint(from, force, smoothness);
+end;
+
+
+(*
+## TQuad.RandomSkewedPoint
+```pascal
+function TQuad.RandomSkewedPoint(from: TPoint; force: Double = 0.35): TPoint;
+```
+Generates a random point within the bounds of the TQuad, the point generated is skewed towards towards the `from`-point.
+The last parameter `force` defines how much the generated point is to be skewed towards or away from `from` - Expects value in the range 0..2
+
+- force = 0: Result weighs heavily towrads the edge closest to `From`
+- force = 1: Result in the middle of box is most common
+- force = 2: Result weighs heavily towrads the edge furthest away from `From`
+*)
+function TQuad.RandomSkewedPoint(from: TPoint; force: Double = 0.35): TPoint;
+var
+  bounds: TBox;
+  center, skewed: TPoint;
+  r, angle, cutoff: Double;
+begin
+  bounds := Self.Bounds;
+
+  if from.X < bounds.X1 then from.X := bounds.X1 else if from.X > bounds.X2 then from.X := bounds.X2;
+  if from.Y < bounds.Y1 then from.Y := bounds.Y1 else if from.Y > bounds.Y2 then from.Y := bounds.Y2;
+
+  center := Self.Mean;
+
+  r := Hypot(from.X - center.X, from.Y - center.Y) * force;
+  angle := ArcTan2(center.Y - from.Y, center.X - from.X);
+
+  skewed.X := from.X + Round(Cos(angle) * r);
+  skewed.Y := from.Y + Round(Sin(angle) * r);
+
+  cutoff := RandCutoff;
+  RandCutoff := 4.0;
+
+  Result.X := Round(RandomMode(skewed.X, bounds.X1, bounds.X2));
+  Result.Y := Round(RandomMode(skewed.Y, bounds.Y1, bounds.Y2));
+
+  RandCutoff := cutoff;
+end;
+
+(*
+## TBox.RandomSkewedPoint
+```pascal
+function TBox.RandomSkewedPoint(from: TPoint; force: Double = 0.35): TPoint;
+```
+Generates a random point within the bounds of the TBox, the point generated is skewed towards towards the `from`-point.
+The last parameter `force` defines how much the generated point is to be skewed towards or away from `from` - Expects value in the range 0..2
+
+- force = 0: Result weighs heavily towrads the edge closest to `From`
+- force = 1: Result in the middle of box is most common
+- force = 2: Result weighs heavily towrads the edge furthest away from `From`
+*)
+function TBox.RandomSkewedPoint(from: TPoint; force: Double = 0.35): TPoint;
+var
+  c: TPoint;
+  cutoff, x, r: Double;
+begin
+  if from.x < Self.x1 then from.x := Self.x1 else if from.x > Self.x2 then from.x := Self.x2;
+  if from.y < Self.y1 then from.y := Self.y1 else if from.y > Self.y2 then from.y := Self.y2;
+
+  c :=  Point((Self.X2 + Self.X1) div 2, (Self.Y2 + Self.Y1) div 2);
+  r := Hypot(from.x-c.x, from.y-c.y) * force;
+  x := ArcTan2(c.y-from.y, c.x-from.x);
+
+  from.x += Round(Cos(x) * r);
+  from.y += Round(Sin(x) * r);
+
+  cutoff := RandCutoff;
+  RandCutoff := 4.0;
+  Result.x := Round(RandomMode(from.x, Self.X1, Self.X2));
+  Result.y := Round(RandomMode(from.y, Self.Y1, Self.Y2));
+  RandCutoff := cutoff;
+end;
+

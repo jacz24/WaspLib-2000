@@ -132,7 +132,7 @@ var
 begin
   for i := 0 to High(Self.Buttons) do
   begin
-    if Self.Buttons[i].Contains(Mouse.Position()) then
+    if Self.Buttons[i].Contains(Mouse.Position) then
     begin
       hovering := i;
       Continue;

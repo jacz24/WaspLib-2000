@@ -45,8 +45,8 @@ begin
   WriteLn GetDebugLn('Antiban', 'Random Mouse (Small)');
 
   repeat
-    pt := Mouse.Position().Random(-350, 350);
-  until Mouse.Position().DistanceTo(pt) > 50;
+    pt := Mouse.Position.Random(-350, 350);
+  until Mouse.Position.DistanceTo(pt) > 50;
 
   Async.MouseMove(pt);
 end;
@@ -468,7 +468,7 @@ var
 begin
   for i := 1 to Round(GaussRand(1,4)) do
   begin
-    Self.SwivelNear(Mouse.Position(), 1/2, Round(GaussRand(1,4)), Random(25,40), GaussRand(0.0,1.25) > 0.5, Random(12,22), 9, 14);
+    Self.SwivelNear(Mouse.Position, 1/2, Round(GaussRand(1,4)), Random(25,40), GaussRand(0.0,1.25) > 0.5, Random(12,22), 9, 14);
     if Random() < 0.5 then
       Biometrics.Sleep(0, 300, ERandomDir.LEFT);
   end;

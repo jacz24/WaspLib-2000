@@ -468,7 +468,7 @@ begin
 
   for i := 1 to Self.RandomModeInteger(clicks div 2, 1, clicks) do
   begin
-    Mouse.Click(Mouse.Position().Random(5), button);
+    Mouse.Click(Mouse.Position.Random(5), button);
     Sleep(0, 100, ERandomDir.LEFT);
   end;
 
@@ -499,7 +499,7 @@ begin
 
   for i := 1 to Self.RandomModeInteger(clicks div 2, 1, clicks) do
   begin
-    Mouse.Click(Mouse.Position().Random(5), button);
+    Mouse.Click(Mouse.Position.Random(5), button);
     Sleep(0, 100, ERandomDir.LEFT);
   end;
 
