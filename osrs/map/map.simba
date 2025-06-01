@@ -371,43 +371,44 @@ end;
 (*
 ## Map.Height
 ```pascal
-function TRSMap.Height(p: TPoint = [-1,-1]; global: Boolean): Single;
-function TRSMap.Height(p: TPoint = [-1,-1]): Single; overload;
+function TRSMap.HeightEx(pt: TPoint; global: Boolean): Single;
+function TRSMap.Height(pt: TPoint = [0,0]): Single;
 ```
 Returns the height of the player at the specified coordinate if there's a heightmap loaded.
-If p is [-1,-1], which is the default then we will use our current position.
-global decides wether the coordinate is converted to global coordinates or internal walker coordinates (read about walker regions for more info).
+If `pt` is `[0,0]`, which is the default then we will use our current position.
+`global` decides wether the coordinate is converted to {ref}`global points` or if it's meant to be used
+as internal {ref}`local points`.
 
 Example:
 ```pascal
-WriteLn rsw.GetHeight();
+WriteLn Map.Height();
 ```
 *)
-function TRSMap.HeightEx(p: TPoint; global: Boolean): Single; overload;
+function TRSMap.HeightEx(pt: TPoint = [0,0]; global: Boolean = True): Single;
 begin
   if Self.DisableHeightmap or not Assigned(Self.Loader.Heightmap) then
-    Exit(0);
+    Exit(0.0);
 
-  if p = [0, 0] then
+  if pt = [0,0] then
   begin
-    global := True;
+    global := False;
     Self.Position();
-    p := Self.Cache.LocalPosition;
-    if Self.Loader.Heightmap.InImage(p.X, p.Y) then
-      Result := RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X, p.Y]);
-    Exit;
+    pt := Self.Cache.LocalPosition;
   end;
 
   if global then
-    p := Self.Loader.GetLocal(Self.RegionIndex, p);
+    pt := Self.Loader.GetLocal(Self.RegionIndex, pt);
 
-  if Self.Loader.Heightmap.InImage(p.X, p.Y) then
-    Result := RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X, p.Y]);
+  Result := RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[pt.X,pt.Y]) +
+            RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[pt.X,pt.Y + 1]) +
+            RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[pt.X + 1,pt.Y]) +
+            RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[pt.X + 1,pt.Y + 1]);
+  Result := Result/4;
 end;
 
-function TRSMap.Height(p: TPoint = [0,0]): Single;
+function TRSMap.Height(pt: TPoint = [0,0]): Single;
 begin
-  Result := Self.HeightEx(p, True);
+  Result := Self.HeightEx(pt, True);
 end;
 
 
@@ -518,24 +519,24 @@ end;
 ```pascal
 procedure TRSMap.DebugHeight();
 ```
-Debugs the heightmap.
+Debugs the heightmap with {ref}`MM2MS`.
 
 Example:
 ```pascal
-Map.Setup(...);
-while True do
-  Map.DebugPosition();
+{$I WaspLib/osrs.simba}
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+  while True do
+  begin
+    Options.GetZoomLevel(False);
+    Map.DebugHeight();
+  end;
+end.
+```
+
+```{figure} ../../images/mm2ms_height.gif
 ```
 *)
-function TRSMap.GetMeanHeightAroundPixel(p: TPoint): Single;
-begin
-  Result := RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X,p.Y]) +
-            RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X,p.Y + 1]) +
-            RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X + 1,p.Y]) +
-            RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X + 1,p.Y + 1]);
-  Result := Result/4;
-end;
-
 procedure TRSMap.DebugHeight();
 var
   matrix: TSingleMatrix;
@@ -553,8 +554,10 @@ begin
   img.DrawColor := $00FF00;
   img.DrawAlpha := $77;
 
-  loc := Self.Loader.GetLocal(Self.Position);
-  h := Self.GetMeanHeightAroundPixel(loc - [1,3]) + Self.GetMeanHeightAroundPixel(loc + [3,-3]) + Self.GetMeanHeightAroundPixel(loc + [3,1]) + Self.GetMeanHeightAroundPixel(loc - [1,1]);
+  Self.Position();
+  loc := Self.Cache.LocalPosition;
+  h := Self.HeightEx(loc - [1,3], False) + Self.HeightEx(loc + [3,-3], False) +
+       Self.HeightEx(loc + [3,1], False) + Self.HeightEx(loc - [1,1], False);
   h := h/4;
 
   for x := Minimap.Center.X - 100 to Minimap.Center.X + 100 with 4 do
@@ -573,10 +576,10 @@ begin
 
       currLoc := loc + Point(x,y) - Minimap.Center;
 
-      corner0 := [vector.X-2, vector.Y-2, Self.GetMeanHeightAroundPixel(currLoc - [1,3]) - h];
-      corner1 := [vector.X+2, vector.Y-2, Self.GetMeanHeightAroundPixel(currLoc + [3,-3]) - h];
-      corner2 := [vector.X+2, vector.Y+2, Self.GetMeanHeightAroundPixel(currLoc + [3,1]) - h];
-      corner3 := [vector.X-2, vector.Y+2, Self.GetMeanHeightAroundPixel(currLoc - [1,1]) - h];
+      corner0 := [vector.X-2, vector.Y-2, Self.HeightEx(currLoc - [1,3], False) - h];
+      corner1 := [vector.X+2, vector.Y-2, Self.HeightEx(currLoc + [3,-3], False) - h];
+      corner2 := [vector.X+2, vector.Y+2, Self.HeightEx(currLoc + [3,1], False) - h];
+      corner3 := [vector.X-2, vector.Y+2, Self.HeightEx(currLoc - [1,1], False) - h];
 
       arr := MM2MS.Run([corner0, corner1, corner2, corner3], angle);
       quad := [arr[0], arr[1], arr[2], arr[3]];
