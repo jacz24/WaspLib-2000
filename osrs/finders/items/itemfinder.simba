@@ -23,30 +23,31 @@ type
 
 function TRSItemFinder.Align(image, template: TImage): Boolean;
 var
-  borderA, borderB: TPointArray;
+  borderA, borderB, tmp1, tmp2: TPointArray;
   bounds: TBox;
   align, p: TPoint;
 begin
-  borderA  := image.FindColor(RSColors.ITEM_BORDER, 0);
-  borderB := template.FindColor(RSColors.ITEM_BORDER, 0) + template.FindColor(RSColors.ITEM_BORDER_WHITE, 0);
+  borderA := image.FindColor(RSColors.ITEM_BORDER, 0);
+  tmp1    := borderA.ExcludeBox([0,0,image.Width,8]);
+  borderA := tmp1;
+  borderB := template.FindColor($000000, 1) + template.FindColor(RSColors.ITEM_BORDER_WHITE, 0);
+  tmp2    := borderB.ExcludeBox([0,0,template.Width,8]);
+  borderB := tmp2;
 
-  if (borderA.Length = 0) or (borderB.Length = 0) then
-  begin
-    Exit;
-  end;
+  if (borderA.Length = 0) or (borderB.Length = 0) then Exit;
+
   align := borderA[High(borderA)] - borderB[High(borderB)];
-
   borderB := borderB.Offset(align);
+
   for p in borderB do
   begin
     if p.Y <= 8 then Continue;//stack number... Don't compare.
 
-    //borders don't match.
     if not image.InImage(p.X, p.Y) then Exit;
-    if image.Pixel[p.X, p.Y] <> RSColors.ITEM_BORDER then Exit;
+    if (image.Pixel[p.X, p.Y] <> RSColors.ITEM_BORDER) then Exit;
   end;
 
-  bounds := borderA.Bounds();
+  bounds := borderA.Bounds;
   image.Crop(bounds);
   template.Crop(bounds.Offset([-align.X, -align.Y]));
   Result := True;

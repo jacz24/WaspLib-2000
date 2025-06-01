@@ -138,7 +138,7 @@ var
   b: TBox;
   color: Integer;
 begin
-  final := Target.FindColor(RSColors.ITEM_BORDER, 0, Self.SlotsArea);
+  final := Target.FindColor(RSColors.ITEM_BORDER, 1, Self.SlotsArea);
   if final = [] then Exit;
 
   for color in RSColors.STACK_COLORS do
