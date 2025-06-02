@@ -42,40 +42,6 @@ begin
 end;
 
 
-function TPolygon.RandomPoint(): TPoint;
-var
-  tris: TTriangleArray;
-  areas: TIntegerArray;
-  polyArea, rArea, accum: Double;
-  i: Integer;
-begin
-  polyArea := Self.Area();
-  tris := Self.Triangulate(0.02 * polyArea, 8);
-
-  for i := 0 to High(tris) do
-    areas += tris[i].Area;
-
-  rArea := Random() * polyArea;
-  accum := 0.0;
-
-  for i := 0 to High(tris) do
-  begin
-    accum += areas[i];
-    if rArea <= accum then
-      Exit(tris[i].RandomPoint());
-  end;
-
-  WriteLn 'FALLING BACK!';
-  Result := tris[0].a;
-end;
-
-function TPolygon.RandomPointCenter(): TPoint;
-begin
-  //WriteLn('TPolygon.RandomSkewedPoint() is not implemented yet. Using TPolygon.RandomPointCenter() instead.');
-  Result := Self.RandomPointCenter();
-end;
-
-
 
 function TCircle.RandomSkewedPoint(from: TPoint): TPoint;
 begin
@@ -83,10 +49,148 @@ begin
   Result := Self.RandomPointCenter();
 end;
 
+//by slacky
+function TCircle.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single = 1): TPoint;
+var
+  angle, dist, r1, r2, sum, u, t: Single;
+  randX, randY: Single;
+begin
+  if (bias > 0) and (weight <> 0) then
+  begin
+    from.X += Round(GaussRand(0, Self.Radius * bias / 2) / weight);
+    from.Y += Round(GaussRand(0, Self.Radius * bias / 2) / weight);
+  end;
+
+  if not Self.Contains(from) then
+    from := Self.PointAtDegrees(from.AngleBetween([Self.x, Self.y]));
+
+  angle := Random() * 2 * Pi;
+  dist := sqrt(Random()) * Self.Radius;
+  randX := Self.X + cos(angle) * dist;
+  randY := Self.Y + sin(angle) * dist;
+
+  r1 := 1;
+  r2 := weight * Random();
+  sum := r1 + r2 + 0.0000001;
+
+  u := r1 / sum;
+  t := r2 / sum;
+
+  Result.X := Round(u * randX + t * from.X);
+  Result.Y := Round(u * randY + t * from.Y);
+end;
+
+
 function TTriangle.RandomSkewedPoint(from: TPoint): TPoint;
 begin
   //WriteLn('TTriangle.RandomSkewedPoint() is not implemented yet. Using TTriangle.RandomPointCenter() instead.');
   Result := Self.RandomPointCenter();
+end;
+
+(*
+## RandomWeightedPoint
+```pascal
+function TTriangle.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single=1): TPoint;
+function TPolygon.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single=1): TPoint;
+function TQuad.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single=1): TPoint;
+function TBox.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single=1): TPoint;
+```
+Generates a random point within the TTriangle, drawn towards a `from` point.
+
+Parameters:
+- from: The point towards which the distribution is drawn.
+- weight: Controls the strength of attraction towards the `from` (higher values = stronger attraction).
+  - weight = 0 gives a uniform distribution.
+- bias: Introduces a Gaussian spread around the `from` (higher values = wider spread).
+  - bias = 0 gives a purely weighted distribution towards the `from`.
+
+Should expose weight and bias to the user if used as mouse distribution method. weight of 10 might be a little high.
+
+Credits: slacky
+*)
+function TTriangle.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single = 1): TPoint;
+var
+  r1, r2, r3, u, v, w, t, sum: Single;
+  stdev,xr,yr: Single;
+const
+  eps := 0.0000001;
+begin
+  if (bias > 0) and (weight <> 0) then
+  begin
+    xr := Abs(Self.A.x - from.x) + Abs(Self.B.x - from.x) + Abs(Self.C.x - from.x);
+    yr := Abs(Self.A.y - from.y) + Abs(Self.B.y - from.y) + Abs(Self.C.y - from.y);
+
+    from.X += Round(GaussRand(0, xr/3 * bias) / weight);
+    from.Y += Round(GaussRand(0, yr/3 * bias) / weight);
+  end;
+
+  if not (from in Self) then
+    from := Self.NearestEdge(from);
+
+  r1 := Random();
+  r2 := Random();
+  if r1 + r2 > 1 then
+  begin
+    r1 := 1 - r1;
+    r2 := 1 - r2;
+  end;
+
+  r3 := Random();
+  sum := 1 + weight * r3 + eps;
+  u := r1 / sum;
+  v := r2 / sum;
+  w := (1 - r1 - r2) / sum;
+  t := (weight * r3) / sum;
+
+  with Self do
+  begin
+    Result.X := Round(u * A.X + v * B.X + w * C.X + t * from.X);
+    Result.Y := Round(u * A.Y + v * B.Y + w * C.Y + t * from.Y);
+  end;
+end;
+
+
+//by torwent
+function TPolygon.RandomPoint(): TPoint;
+var
+  tris: TTriangleArray;
+  areas: TIntegerArray;
+  polyArea, rArea, accum: Double;
+  i: Integer;
+begin
+  tris := Self.Triangulate(0, 10);
+  if tris = [] then
+    tris := Self.Reversed().Triangulate(0, 10);
+
+  for i := 0 to High(tris) do
+  begin
+    areas += tris[i].Area;
+    polyArea += areas[i];
+  end;
+
+  rArea := Random() * polyArea;
+
+  for i := 0 to High(tris) do
+  begin
+    accum += areas[i];
+    if rArea <= accum then
+      Exit(tris[i].RandomPoint());
+  end;
+end;
+
+//by bootie
+function TPolygon.RandomPointCenter(): TPoint;
+var
+  mean: TPoint;
+  s: Double;
+begin
+  mean := Self.Mean();
+  s := Sqrt(Self.Area())/8.0;
+
+  repeat
+    Result.X := Round(GaussRand(mean.X, s));
+    Result.Y := Round(GaussRand(mean.Y, s));
+  until Self.Contains(Result);
 end;
 
 function TPolygon.RandomSkewedPoint(from: TPoint): TPoint;
@@ -94,6 +198,43 @@ begin
   //WriteLn('TPolygon.RandomSkewedPoint() is not implemented yet. Using TPolygon.RandomPointCenter() instead.');
   Result := Self.RandomPointCenter();
 end;
+
+function TPolygon.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single = 1): TPoint;
+var
+  i: Integer;
+  tri: TTriangleArray;
+  xr,yr,b,sum, r, stdev, area: Single;
+begin
+  area := Self.Area();
+
+  if bias > 0 then
+  begin
+    for i := 0 to High(Self) do xr += abs(Self[i].x - from.x);
+    xr /= Length(self);
+
+    for i := 0 to High(Self) do yr += abs(Self[i].y - from.y);
+    yr /= Length(self);
+
+    from.X += Round(GaussRand(0, xr * bias) / weight);
+    from.Y += Round(GaussRand(0, yr * bias) / weight);
+  end;
+
+  if not Self.Contains(from) then
+    from := Self.NearestEdge(from);
+
+  for i := 0 to High(Self) do
+    tri += TTriangle.Create(from, Self[i], Self[(i+1) mod Length(Self)]);
+
+  r := Random() * area;
+  sum := 0;
+  for i := 0 to High(tri) do
+  begin
+    sum += tri[i].Area;
+    if r < sum then
+      Exit(tri[i].RandomWeightedPoint(from, weight, 0));
+  end;
+end;
+
 
 (*
 ## TQuad.RandomSkewedPoint
@@ -135,6 +276,12 @@ begin
   RandCutoff := cutoff;
 end;
 
+function TQuad.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single=1): TPoint;
+begin
+  Result := TPolygon(Self.Corners).RandomWeightedPoint(from, weight, bias);
+end;
+
+
 (*
 ## TBox.RandomSkewedPoint
 ```pascal
@@ -167,116 +314,6 @@ begin
   Result.x := Round(RandomMode(from.x, Self.X1, Self.X2));
   Result.y := Round(RandomMode(from.y, Self.Y1, Self.Y2));
   RandCutoff := cutoff;
-end;
-
-
-function TCircle.RandomWeightedPoint(from: TPoint): TPoint;
-begin
-  //WriteLn('TCircle.RandomWeightedPoint() is not implemented yet. Using TCircle.RandomPointCenter() instead.');
-  Result := Self.RandomPointCenter();
-end;
-
-(*
-## RandomWeightedPoint
-```pascal
-function TTriangle.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single=1): TPoint;
-function TPolygon.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single=1): TPoint;
-function TQuad.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single=1): TPoint;
-function TBox.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single=1): TPoint;
-```
-Generates a random point within the TTriangle, drawn towards a `from` point.
-
-Parameters:
-- from: The point towards which the distribution is drawn.
-- weight: Controls the strength of attraction towards the `from` (higher values = stronger attraction).
-  - weight = 0 gives a uniform distribution.
-- bias: Introduces a Gaussian spread around the `from` (higher values = wider spread).
-  - bias = 0 gives a purely weighted distribution towards the `from`.
-
-Should expose weight and bias to the user if used as mouse distribution method. weight of 10 might be a little high.
-
-Credits: slacky
-*)
-function TTriangle.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single=1): TPoint;
-var
-  r1, r2, r3, u, v, w, t, sum: Single;
-  stdev,xr,yr: Single;
-const
-  eps := 0.0000001;
-begin
-  if (bias > 0) and (weight <> 0) then
-  begin
-    xr := Abs(Self.A.x - from.x) + Abs(Self.B.x - from.x) + Abs(Self.C.x - from.x);
-    yr := Abs(Self.A.y - from.y) + Abs(Self.B.y - from.y) + Abs(Self.C.y - from.y);
-
-    from.X += Round(GaussRand(0, xr/3 * bias) / weight);
-    from.Y += Round(GaussRand(0, yr/3 * bias) / weight);
-  end;
-
-  if not (from in Self) then
-    from := Self.NearestEdge(from);
-
-  r1 := Random();
-  r2 := Random();
-  if r1 + r2 > 1 then
-  begin
-    r1 := 1 - r1;
-    r2 := 1 - r2;
-  end;
-
-  r3 := Random();
-  sum := 1 + weight * r3 + eps;
-  u := r1 / sum;
-  v := r2 / sum;
-  w := (1 - r1 - r2) / sum;
-  t := (weight * r3) / sum;
-
-  with Self do
-  begin
-    Result.X := Round(u * A.X + v * B.X + w * C.X + t * from.X);
-    Result.Y := Round(u * A.Y + v * B.Y + w * C.Y + t * from.Y);
-  end;
-end;
-
-function TPolygon.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single = 1): TPoint;
-var
-  i: Integer;
-  tri: TTriangleArray;
-  xr,yr,b,sum, r, stdev, area: Single;
-begin
-  area := Self.Area();
-
-  if bias > 0 then
-  begin
-    for i := 0 to High(Self) do xr += abs(Self[i].x - from.x);
-    xr /= Length(self);
-
-    for i := 0 to High(Self) do yr += abs(Self[i].y - from.y);
-    yr /= Length(self);
-
-    from.X += Round(GaussRand(0, xr * bias) / weight);
-    from.Y += Round(GaussRand(0, yr * bias) / weight);
-  end;
-
-  if not Self.Contains(from) then
-    from := Self.NearestEdge(from);
-
-  for i := 0 to High(Self) do
-    tri += TTriangle.Create(from, Self[i], Self[(i+1) mod Length(Self)]);
-
-  r := Random() * area;
-  sum := 0;
-  for i := 0 to High(tri) do
-  begin
-    sum += tri[i].Area;
-    if r < sum then
-      Exit(tri[i].RandomWeightedPoint(from, weight, 0));
-  end;
-end;
-
-function TQuad.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single=1): TPoint;
-begin
-  Result := TPolygon(Self.Corners).RandomWeightedPoint(from, weight, bias);
 end;
 
 function TBox.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single=1): TPoint;

@@ -1,5 +1,10 @@
 {$I WaspLib/osrs.simba}
 
+const DEFAULT_SHAPE: Integer = 0;
+const DEFAULT_DISTR: Integer = 3;
+const PT_AMOUNT: Integer = 3000;
+const PT_WEIGHT: Single = 0.2;
+
 type
 (*
 ## TMapDebugger
@@ -22,14 +27,12 @@ Main record used to hold core values of the {ref}`Map Debugger`.
     Shape, Distribution: TLazComboBox;
   end;
 
-const PT_WEIGHT: Single = 0.5;
-
-function RandomTriangle(circle: TCircle): TTriangle;
+function TTriangle.Create(center: TPoint; size: Integer): TTriangle; static; overload;
 var
   tpa: TPointArray;
   a, b, c: TPoint;
 begin
-  tpa := TPointArray.CreateFromCircle(circle.Center, circle.Radius, False);
+  tpa := TPointArray.CreateFromCircle(center, size, False);
   a := tpa[Random(0, High(tpa))];
 
   repeat
@@ -43,6 +46,31 @@ begin
   Result := TTriangle.Create(a, b, c);
 end;
 
+function TPolygon.Create(center: TPoint; sides: Integer; size: Integer): TPolygon; static; overload;
+var
+  i: Integer;
+  dx,dy,ptx,pty,SinR,CosR: Double;
+  pt : TPoint;
+begin
+  ptx := center.X + size;
+  pty := center.Y + size;
+  SinR := Sin(DegToRad(360.0 / sides));
+  CosR := Cos(DegToRad(360.0 / sides));
+
+  Result := [Point(Round(ptx),Round(pty))];
+  for i:=1 to sides-1 do
+  begin
+    dx := ptx - center.x;
+    dy := pty - center.y;
+    ptx := (dy * SinR) + (dx * CosR) + center.x;
+    pty := (dy * CosR) - (dx * SinR) + center.y;
+    pt := Point(Round(ptx),Round(pty));
+
+    Result += [pt];
+  end;
+end;
+
+
 procedure TDistributionViewer.CreateShape(sender: TObject);
 var
   center: TPoint;
@@ -51,8 +79,8 @@ begin
   center := [Self.Width div 2 + Random(-100, 100), Self.Height div 2 + Random(-30, 30)];
   case Self.Shape.ItemIndex of
     0: Self.Circle := TCircle.Create(center.X, center.Y, Random(90, 200));
-    1: Self.Triangle := RandomTriangle(TCircle.Create(center.X, center.Y, Random(100, 200)));
-    2: Self.Polygon := TPointArray.CreateFromSimplePolygon(center, Random(5, 12), Random(80, 150), False).RotateEx(Random(-TAU, TAU)).ConvexHull();
+    1: Self.Triangle := TTriangle.Create(center, Random(100, 200));
+    2: Self.Polygon := TPolygon.Create(center, Random(5, 8), Random(80, 150));
     3: Self.Quad := TQuad.CreateFromPoints(TPointArray.CreateFromSimplePolygon(center, 4, Random(80, 150), False)).Rotate(Random(-TAU, TAU));
     4: Self.Box := TQuad.CreateFromPoints(TPointArray.CreateFromSimplePolygon(center, 4, Random(80, 150), False)).Bounds;
   end;
@@ -77,7 +105,6 @@ begin
         matrix[pt.y,pt.x-1] += PT_WEIGHT;
         matrix[pt.y,pt.x] += PT_WEIGHT;
       end;
-
       1:
       for 0 to iterations do
       begin
@@ -169,7 +196,7 @@ begin
       1:
       for 0 to iterations do
       begin
-        pt := Self.Polygon.Random();
+        pt := Self.Polygon.RandomPointCenter();
         matrix[pt.y+1,pt.x] += PT_WEIGHT;
         matrix[pt.y-1,pt.x] += PT_WEIGHT;
         matrix[pt.y,pt.x+1] += PT_WEIGHT;
@@ -179,7 +206,7 @@ begin
       2:
       for 0 to iterations do
       begin
-        pt := Self.Polygon.Random();
+        pt := Self.Polygon.RandomSkewedPoint(Self.From);
         matrix[pt.y+1,pt.x] += PT_WEIGHT;
         matrix[pt.y-1,pt.x] += PT_WEIGHT;
         matrix[pt.y,pt.x+1] += PT_WEIGHT;
@@ -299,7 +326,7 @@ var
   pt: TPoint;
 begin
   matrix.SetSize(Self.Width,Self.Height);
-  Self.CalculatePoints(matrix, 5000);
+  Self.CalculatePoints(matrix, PT_AMOUNT);
   canvas.DrawHeatmap(matrix);
 
   case Self.Shape.ItemIndex of
@@ -375,7 +402,7 @@ begin
   Self.Distribution.Style := ELazComboBoxStyle.csDropDownList;
   Self.Distribution.Align := ELazAlign.Left;
   Self.Distribution.BorderSpacing.Around := 10;
-  Self.Distribution.ItemIndex := 3;
+  Self.Distribution.ItemIndex := DEFAULT_DISTR;
 
   lbl := TLazLabel.Create(panel);
   lbl.Parent := panel;
@@ -442,6 +469,8 @@ begin
 
   Self.Shape.ItemIndex := 4;
   Self.CreateShape(nil);
+
+  Self.Shape.ItemIndex := DEFAULT_SHAPE;
 
   Self.Tracking := True;
   form.ShowModal();
