@@ -113,6 +113,7 @@ end;
 
 procedure TRSCollectionBox.Setup();
 begin
+  if Async.Schedules.Contains('CollectionBox.Timer') then Exit;
   Async.ScheduleEvery('CollectionBox.Timer', @Self.AsyncTask, 10 * ONE_MINUTE);
   AddOnTerminate(@Self.Free);
 end;

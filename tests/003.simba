@@ -1,7 +1,8 @@
 (*
-### Bank Tests
+## Bank Tests
 Tests the integrety of several bankpin and bank methods.
 *)
+{$DEFINE WL_TEST}
 {$I WaspLib/osrs.simba}
 {$ASSERTIONS ON}
 
@@ -22,9 +23,11 @@ var
 begin
   for mode in modes do
   begin
-    img := TImage.Create(PATH + mode + FILENAME + '-0.png');
+    img := new TImage(PATH + mode + FILENAME + '-0.png');
     Target.SetImage(img);
+    WaspLibSetup();
 
+    RSClient.Client := ERSClient.RUNELITE;
     RSClient.Mode := RSClient.GetMode();
     SetupInterfaces();
 
@@ -33,10 +36,9 @@ begin
     Assert(BankPin.FindDigit('5') = digits[0]);
     Delete(digits, 0, 1);
 
-    img.Free();
-
-    img := TImage.Create(PATH + mode + FILENAME + '-1.png');
+    img := new TImage(PATH + mode + FILENAME + '-1.png');
     Target.SetImage(img);
+    WaspLibSetup();
 
     Assert(BankPin.IsOpen() = False);
     Assert(Bank.IsOpen());
@@ -55,7 +57,5 @@ begin
     Assert(Bank.Items.Contains('Rune defender'));
     Assert(Bank.Items.Contains('Spiked boots'));
     Assert(Bank.Items.IndexOf(['Spiked boots']) = 30);
-
-    img.Free();
   end;
 end;

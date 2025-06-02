@@ -93,20 +93,23 @@ end;
 
 
 //Setup process, for some things the order matters.
+procedure WaspLibSetup();
 begin
   Async.HTTPGet('https://api.waspscripts.com/', @WaspClient.Setup, nil);
   Target.AddEvent(ETargetEvent.TARGET_RESIZE, @TargetResized);
   RSFonts.Setup();
-
   Logger.Setup();
 
+  {$IFDEF WL_TEST}
+  RSClient.Client := ERSClient.RUNELITE;
+  {$ELSE}
   RSClient.Client := RSClient.GetClient();
-
   {$IFNDEF WL_DISABLE_FAKE_INPUT}
   case RSClient.Client of
     ERSClient.LEGACY, ERSClient.RUNELITE: RemoteInput.Setup();
     ERSClient.OFFICIAL: WaspInput.Setup();
   end;
+  {$ENDIF}
   {$ENDIF}
 
   RSCacheParser.Setup();
@@ -120,6 +123,7 @@ begin
     EKeyCode.F5, EKeyCode.F6, EKeyCode.F7, EKeyCode.F8, EKeyCode.F9,
     EKeyCode.F10, EKeyCode.F11, EKeyCode.F12
   ];
+
   MainScreen.UptextOCR.Tolerance := 25;
   MainScreen.UptextOCR.ShadowTolerance := 65;
   MainScreen.UptextOCR.Whitelist := ['a'..'z', 'A'..'Z', '0'..'9', '-', '>', '(', ')', '/'];
@@ -144,3 +148,9 @@ begin
     RSClient.Mode := ERSMode.FIXED;
   SetupInterfaces();
 end;
+
+{$IFNDEF WL_TEST}
+begin
+  WaspLibSetup();
+end;
+{$ENDIF}

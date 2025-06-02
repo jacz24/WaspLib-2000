@@ -6,6 +6,8 @@ Methods relating to targeting the RS client and detecting client states.
 {$DEFINE WL_RSCLIENT_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
+{$IFDEF WL_TEST}{$DEFINE WL_DISABLE_FAKE_INPUT}{$ENDIF}
+
 type
 (*
 ## ERSClient

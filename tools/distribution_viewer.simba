@@ -1,3 +1,7 @@
+(*
+# Distribution Viewer
+Tool to visually see random distributions available in the library in multiple shapes.
+*)
 {$I WaspLib/osrs.simba}
 
 const DEFAULT_SHAPE: Integer = 0;
@@ -6,10 +10,6 @@ const PT_AMOUNT: Integer = 3000;
 const PT_WEIGHT: Single = 0.2;
 
 type
-(*
-## TMapDebugger
-Main record used to hold core values of the {ref}`Map Debugger`.
-*)
   TDistributionViewer = record
     ImageBox: TImageBox;
 

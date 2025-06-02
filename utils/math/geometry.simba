@@ -19,6 +19,7 @@ begin
             InRange(other.Y2, Self.Y1, Self.Y2);
 end;
 
+
 function TBox.ContainsQuad(other: TQuad): Boolean;
 begin
   Result := Self.Contains(other.Top) and Self.Contains(other.Left) and Self.Contains(other.Bottom) and Self.Contains(other.Right);

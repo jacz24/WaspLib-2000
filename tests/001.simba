@@ -1,7 +1,8 @@
 (*
-### Inventory Tests
+## Inventory Tests
 Tests the integrety of several inventory methods.
 *)
+{$DEFINE WL_TEST}
 {$I WaspLib/osrs.simba}
 {$ASSERTIONS ON}
 
@@ -16,11 +17,10 @@ begin
   for mode in modes do
   begin
     if not FileExists(PATH + mode + FILENAME) then continue;
-    img := TImage.Create(PATH + mode + FILENAME);
+    img := new TImage(PATH + mode + FILENAME);
     Target.SetImage(img);
 
-    RSClient.Mode := RSClient.GetMode();
-    SetupInterfaces();
+    WaspLibSetup();
 
     Assert(Inventory.IsOpen());
     Assert(Inventory.Slots.Count() = 11);
@@ -30,7 +30,5 @@ begin
     Assert(Inventory.Items.Contains('Super attack(4)'));
     Assert(Inventory.Slots.ReadStack(2) = 1);
     Assert(Inventory.Slots.ReadStack(4) = 2);
-
-    img.Free();
   end;
 end;

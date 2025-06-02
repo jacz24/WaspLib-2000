@@ -362,8 +362,8 @@ begin
   case distribution of
     EMouseDistribution.RANDOM: Self.Move(circle.RandomPoint());
     EMouseDistribution.GAUSS:  Self.Move(circle.RandomPointCenter());
-    EMouseDistribution.SKEWED: Self.Move(circle.RandomPointCenter()); //TODO
-    EMouseDistribution.ROWP:   Self.Move(circle.RandomPointCenter()); //TODO
+    EMouseDistribution.SKEWED: Self.Move(circle.RandomSkewedPoint(Self.Position));
+    EMouseDistribution.ROWP:   Self.Position := circle.RandomWeightedPoint(Self.Position);
   end;
 end;
 

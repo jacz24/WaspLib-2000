@@ -43,10 +43,29 @@ end;
 
 
 
-function TCircle.RandomSkewedPoint(from: TPoint): TPoint;
+function TCircle.RandomSkewedPoint(from: TPoint; force: Double = 0.35): TPoint;
+var
+  skewed, rand: TPoint;
+  r, angle, cutoff: Double;
 begin
-  //WriteLn('TCircle.RandomSkewedPoint() is not implemented yet. Using TCircle.RandomPointCenter() instead.');
-  Result := Self.RandomPointCenter();
+  if not Self.Contains(from) then
+  begin
+    r := Hypot(from.X - Self.X, from.Y - Self.Y) * force;
+    angle := ArcTan2(from.Y - Self.Y, from.X - Self.X);
+    from.X := Round(Self.X + Self.Radius * Cos(angle) * r);
+    from.Y := Round(Self.Y + Self.Radius * Sin(angle) * r);
+  end;
+
+  angle := ArcTan2(Self.Y - from.Y, Self.X - from.X);
+
+  cutoff := RandCutoff;
+  RandCutoff := 4.0;
+
+  rand := Self.RandomPoint();
+  Result.X := Round(RandomMode(from.X, from.X, rand.X));
+  Result.Y := Round(RandomMode(from.Y, from.Y, rand.Y));
+
+  RandCutoff := cutoff;
 end;
 
 //by slacky
@@ -81,11 +100,30 @@ begin
 end;
 
 
-function TTriangle.RandomSkewedPoint(from: TPoint): TPoint;
+function TTriangle.RandomSkewedPoint(from: TPoint; force: Double = 0.35): TPoint;
+var
+  c, skewed: TPoint;
+  cutoff, x, r: Double;
 begin
-  //WriteLn('TTriangle.RandomSkewedPoint() is not implemented yet. Using TTriangle.RandomPointCenter() instead.');
-  Result := Self.RandomPointCenter();
+  if not Self.Contains(from) then
+    from := Self.NearestEdge(from);
+
+  c :=  Self.Mean;
+  r := Hypot(from.x-c.x, from.y-c.y) * force;
+  x := ArcTan2(c.y-from.y, c.x-from.x);
+
+  skewed.X := from.X + Round(Cos(x) * r);
+  skewed.Y := from.Y + Round(Sin(x) * r);
+
+  cutoff := RandCutoff;
+  RandCutoff := 4.0;
+
+  c := Self.Corners.Random;
+  Result.X := Round(RandomMode(skewed.X, from.X, c.X));
+  Result.Y := Round(RandomMode(skewed.Y, from.Y, c.Y));
+  RandCutoff := cutoff;
 end;
+
 
 (*
 ## RandomWeightedPoint
@@ -250,29 +288,25 @@ The last parameter `force` defines how much the generated point is to be skewed 
 *)
 function TQuad.RandomSkewedPoint(from: TPoint; force: Double = 0.35): TPoint;
 var
-  bounds: TBox;
-  center, skewed: TPoint;
-  r, angle, cutoff: Double;
+  c, skewed: TPoint;
+  cutoff, x, r: Double;
 begin
-  bounds := Self.Bounds;
+  if not Self.Contains(from) then
+    from := Self.NearestEdge(from);
 
-  if from.X < bounds.X1 then from.X := bounds.X1 else if from.X > bounds.X2 then from.X := bounds.X2;
-  if from.Y < bounds.Y1 then from.Y := bounds.Y1 else if from.Y > bounds.Y2 then from.Y := bounds.Y2;
+  c :=  Self.Mean;
+  r := Hypot(from.x-c.x, from.y-c.y) * force;
+  x := ArcTan2(c.y-from.y, c.x-from.x);
 
-  center := Self.Mean;
-
-  r := Hypot(from.X - center.X, from.Y - center.Y) * force;
-  angle := ArcTan2(center.Y - from.Y, center.X - from.X);
-
-  skewed.X := from.X + Round(Cos(angle) * r);
-  skewed.Y := from.Y + Round(Sin(angle) * r);
+  skewed.X := from.X + Round(Cos(x) * r);
+  skewed.Y := from.Y + Round(Sin(x) * r);
 
   cutoff := RandCutoff;
   RandCutoff := 4.0;
 
-  Result.X := Round(RandomMode(skewed.X, bounds.X1, bounds.X2));
-  Result.Y := Round(RandomMode(skewed.Y, bounds.Y1, bounds.Y2));
-
+  c := Self.Corners.Random;
+  Result.X := Round(RandomMode(skewed.X, from.X, c.X));
+  Result.Y := Round(RandomMode(skewed.Y, from.Y, c.Y));
   RandCutoff := cutoff;
 end;
 
@@ -299,8 +333,8 @@ var
   c: TPoint;
   cutoff, x, r: Double;
 begin
-  if from.x < Self.x1 then from.x := Self.x1 else if from.x > Self.x2 then from.x := Self.x2;
-  if from.y < Self.y1 then from.y := Self.y1 else if from.y > Self.y2 then from.y := Self.y2;
+  if from.x < Self.x1 then from.x := Self.x1 else if from.x > Self.X2 then from.X := Self.X2;
+  if from.y < Self.y1 then from.y := Self.y1 else if from.y > Self.Y2 then from.Y := Self.Y2;
 
   c :=  Point((Self.X2 + Self.X1) div 2, (Self.Y2 + Self.Y1) div 2);
   r := Hypot(from.x-c.x, from.y-c.y) * force;
