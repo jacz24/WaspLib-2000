@@ -302,18 +302,20 @@ Example:
 WriteLn XPBar.Read();
 ```
 *)
-function TRSXPBar.Read(): UInt64;
+function TRSXPBar.Read: UInt64;
 var
   str: String;
+  count: Integer;
 begin
-  if not Self.Setup() then Exit;
+  if not Self.Setup then Exit;
 
   str := OCR.Recognize(Self.Bounds, Self.Font, [$FFFFFF], 0);
 
   Result := str.ExtractInteger(0);
   if Result = 0 then Exit;
+  count := Target.CountColor($010000, 0, Self.Bounds);
 
-  if Target.CountColor($010000, 0, Self.Bounds) <> 45 then
+  if ((count <> 45) and (not InRange(count, 141, 150))) then
   begin
     WriteLn GetDebugLn('XPBar', 'Your XPBar doesn''t seem to be set to count "Total Experience"', EErrorLevel.WARN);
     WriteLn GetDebugLn('XPBar', 'XP Tracking won''t be used and this can cause issues.', EErrorLevel.WARN);
