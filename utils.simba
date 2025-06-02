@@ -1,9 +1,9 @@
 {$SCOPEDENUMS ON}
 
+{$IFNDEF WL_GEOMETRY_INCLUDED}     {$INCLUDE_ONCE utils/math/geometry.simba}
 {$IFNDEF WL_RANDOM_INCLUDED}       {$INCLUDE_ONCE utils/math/random.simba}
 {$IFNDEF WL_CONVERSIONS_INCLUDED}  {$INCLUDE_ONCE utils/math/conversions.simba}
 {$IFNDEF WL_VECTOR_INCLUDED}       {$INCLUDE_ONCE utils/math/vector.simba}
-{$IFNDEF WL_GEOMETRY_INCLUDED}     {$INCLUDE_ONCE utils/math/geometry.simba}
 {$IFNDEF WL_TIME_INCLUDED}         {$INCLUDE_ONCE utils/time.simba}
 {$IFNDEF WL_BASE_INCLUDED}         {$INCLUDE_ONCE utils/base.simba}
 {$IFNDEF WL_MISC_INCLUDED}         {$INCLUDE_ONCE utils/misc.simba}
