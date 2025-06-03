@@ -115,7 +115,7 @@ end;
 
 (*
 ## UpText
-{ref}`UpText` refers to the text that shows up on the top left corner of the
+`UpText` refers to the text that shows up on the top left corner of the
 mainscreen describing what action you will perform if you click.
 
 The game uptext is one of the few texts that has a lot of randomization to
