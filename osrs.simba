@@ -91,13 +91,13 @@ They should be self-explanatory.
 {$IFNDEF WL_WALKER_INCLUDED}              {$INCLUDE_ONCE osrs/walker.simba}
 {$IFNDEF WL_COLORFINDER_INCLUDED}         {$INCLUDE_ONCE osrs/interfaces/mainscreen/finders/colorfinder.simba}
 
-{$IFNDEF WL_MAPLOADER_INCLUDED}           {$INCLUDE_ONCE osrs/map/maploader.simba}
-{$IFNDEF WL_MAP_INCLUDED}                 {$INCLUDE_ONCE osrs/map/map.simba}
-{$IFNDEF WL_IMAGEMAP_INCLUDED}            {$INCLUDE_ONCE osrs/map/imagemap.simba}
-{$IFNDEF WL_RSOBJECTS_INCLUDED}           {$INCLUDE_ONCE osrs/map/objects.simba}
-{$IFNDEF WL_RSNPCS_INCLUDED}              {$INCLUDE_ONCE osrs/map/npcs.simba}
-{$IFNDEF WL_MAPDEBUGGER_INCLUDED}         {$INCLUDE_ONCE osrs/map/mapdebugger.simba}
-{$IFNDEF WL_MAPJSON_INCLUDED}             {$INCLUDE_ONCE osrs/map/mapjson.simba}
+{$IFNDEF WL_MAPLOADER_INCLUDED}           {$INCLUDE_ONCE osrs/position/map/maploader.simba}
+{$IFNDEF WL_MAP_INCLUDED}                 {$INCLUDE_ONCE osrs/position/map/map.simba}
+{$IFNDEF WL_RSOBJECTS_INCLUDED}           {$INCLUDE_ONCE osrs/position/map/objects.simba}
+{$IFNDEF WL_RSNPCS_INCLUDED}              {$INCLUDE_ONCE osrs/position/map/npcs.simba}
+{$IFNDEF WL_MAPDEBUGGER_INCLUDED}         {$INCLUDE_ONCE osrs/position/map/mapdebugger.simba}
+{$IFNDEF WL_MAPJSON_INCLUDED}             {$INCLUDE_ONCE osrs/position/map/mapjson.simba}
+{$IFNDEF WL_IMAGEMAP_INCLUDED}            {$INCLUDE_ONCE osrs/position/imagemap.simba}
 
 {$IFNDEF WL_BANKPIN_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/mainscreen/bankpin.simba}
 {$IFNDEF WL_BANK_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/mainscreen/bank.simba}

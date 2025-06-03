@@ -245,7 +245,9 @@ begin
   cleanMinimap.DrawColor := $FFFFFF;
   cleanMinimap.DrawBoxFilled([p.X - 1, p.Y - 1, p.X + 1, p.Y + 1]);
 
+  {$IFDEF WINDOWS}
   img.FontName := 'Consolas';
+  {$ENDIF}
   img.FontSize := 18;
   img.FontAntialiasing := True;
 

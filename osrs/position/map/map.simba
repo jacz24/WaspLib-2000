@@ -2,10 +2,15 @@
 # Map
 This file is responsible for the TRSMap positioning system.
 It was made from scratch by Torwent but heavily inspired in the original
-TRSWalker by [slacky](https://slacky.one/) and it's future iterations made by Olly.
+TRSWalker by [slacky](https://slacky.one/) and it's future iterations made by
+Olly.
 Without them, this wouldn't be possible.
 
-For a online interactive map you can visit [WaspScripts map](https://map.waspscripts.com/)
+For a online interactive map you can visit
+[WaspScripts map](https://map.waspscripts.com/)
+
+For something simpler and much closer to the original
+[slacky](https://slacky.one/) walker check out {ref}`Image Map`.
 *)
 
 {$DEFINE WL_MAP_INCLUDED}
@@ -258,7 +263,7 @@ end;
 (*
 ## Map.FullSearch
 ```pascal
-function TRSMap.FullSearch(template, world: TImage; position: TPoint; out match: Single): TPoint;
+function TRSMap.FullSearch(template, map: TImage; position: TPoint; out match: Single): TPoint;
 ```
 Internal TRSMap method used to get the player position.
 This is used by TRSMap.Position() to determine how likely is the **Position** passed in, our actual position.
@@ -491,7 +496,9 @@ begin
   cleanMinimap.DrawColor := $FFFFFF;
   cleanMinimap.DrawBoxFilled([p.X - 1, p.Y - 1, p.X + 1, p.Y + 1]);
 
+  {$IFDEF WINDOWS}
   img.FontName := 'Consolas';
+  {$ENDIF}
   img.FontSize := 18;
   img.FontAntialiasing := True;
 
