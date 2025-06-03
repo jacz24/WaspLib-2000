@@ -99,7 +99,7 @@ They should be self-explanatory.
 {$IFNDEF WL_MAPJSON_INCLUDED}             {$INCLUDE_ONCE osrs/position/map/mapjson.simba}
 {$IFNDEF WL_IMAGEMAP_INCLUDED}            {$INCLUDE_ONCE osrs/position/imagemap.simba}
 {$IFNDEF WL_HOUSEUTILS_INCLUDED}          {$INCLUDE_ONCE osrs/position/house/houseutils.simba}
-{$IFNDEF WL_HOSUELOADER_INCLUDED}         {.$INCLUDE_ONCE osrs/position/house/houseloader.simba}
+{$IFNDEF WL_HOSUELOADER_INCLUDED}         {$INCLUDE_ONCE osrs/position/house/houseloader.simba}
 {$IFNDEF WL_HOUSE_INCLUDED}               {.$INCLUDE_ONCE osrs/position/house/house.simba}
 
 {$IFNDEF WL_BANKPIN_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/mainscreen/bankpin.simba}

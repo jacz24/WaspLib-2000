@@ -232,3 +232,22 @@ begin
   img.Show();
 end;
 
+
+function TImage.RotateClockWise(times: Integer = 1): TImage;
+var
+  i: Integer;
+begin
+  Result := Self.Copy();
+  for i := 1 to times do
+    Result := Result.Mirror(EImageMirrorStyle.LINE).Mirror(EImageMirrorStyle.WIDTH);
+end;
+
+function TImage.RotateCounterClockWise(times: Integer = 1): TImage;
+var
+  i: Integer;
+begin
+  Result := Self.Copy();
+  for i := 1 to times do
+    Result := Result.Mirror(EImageMirrorStyle.LINE).Mirror(EImageMirrorStyle.HEIGHT);
+end;
+
