@@ -565,10 +565,10 @@ begin
       if plane := 0 then
         region.Original := RSTranslator.Chunk2Coordinate(chunk.Chunk)
       else
-        region.Original := RSTranslator.Chunk2Coordinate(chunk.Chunk).Offset([RSTranslator.MapWidth() * plane, 0]);
+        region.Original := RSTranslator.Chunk2Coordinate(chunk.Chunk).Offset([RSTranslator.MapWidth * plane, 0]);
 
       with RSTranslator.Chunk2Coordinate(topLeft) do
-        region.Offset := [X + RSTranslator.MapWidth() * plane - padding, Y - padding];
+        region.Offset := [X + RSTranslator.MapWidth * plane - padding, Y - padding];
 
       maps += Self.GetMap(region.Chunks, plane, ERSMap.NORMAL);
       maps.Last.Pad(padding);

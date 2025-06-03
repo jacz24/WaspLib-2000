@@ -33,124 +33,37 @@ that can be used by Simba and back.
   end;
 
 (*
-## RSTranslator.RSWidth
-```pascal
-function TRSTranslator.RSWidth(): Integer;
-```
-Returns the full width in "chunks" of the OldSchool RuneScape map.
-
-Example:
-```pascal
-WriteLn RSTranslator.RSWidth();
-```
-*)
-function TRSTranslator.RSWidth(): Integer;
-begin
-  Result := Self.RSMap.Scope.Width;
-end;
-
-(*
-## RSTranslator.RSHeight
-```pascal
-function TRSTranslator.RSHeight(): Integer;
-```
-Returns the full height in "chunks" of the OldSchool RuneScape map.
-
-Example:
-```pascal
-WriteLn RSTranslator.RSWidth();
-```
-*)
-function TRSTranslator.RSHeight(): Integer;
-begin
-  Result := Self.RSMap.Scope.Height;
-end;
-
-(*
 ## RSTranslator.MapWidth
 ```pascal
-function TRSTranslator.MapWidth(): UInteger;
+property TRSTranslator.MapWidth: UInteger;
 ```
 Returns the full width in pixels of the OldSchool RuneScape map.
 
 Example:
 ```pascal
-WriteLn RSTranslator.MapWidth();
+WriteLn RSTranslator.MapWidth;
 ```
 *)
-function TRSTranslator.MapWidth(): Integer;
+property TRSTranslator.MapWidth: Integer;
 begin
-  Result := Self.RSWidth() * Self.Map.ChunkSide;
+  Result := Self.RSMap.Scope.Width * Self.Map.ChunkSide;
 end;
 
 (*
 ## RSTranslator.MapHeight
 ```pascal
-function TRSTranslator.MapHeight(): Integer;
+property TRSTranslator.MapHeight: Integer;
 ```
 Returns the full height in pixels of the OldSchool RuneScape map.
 
 Example:
 ```pascal
-WriteLn RSTranslator.MapHeight();
+WriteLn RSTranslator.MapHeight;
 ```
 *)
-function TRSTranslator.MapHeight(): Integer;
+property TRSTranslator.MapHeight: Integer;
 begin
-  Result := Self.RSHeight() * Self.Map.ChunkSide;
-end;
-
-
-(*
-## RSTranslator.RSArea
-```pascal
-function TRSTranslator.RSArea(): UInteger;
-```
-Returns the area of the OldSchool RuneScape map measured in chunks.
-
-Example:
-```pascal
-WriteLn RSTranslator.RSArea();
-```
-*)
-function TRSTranslator.RSArea(): Integer;
-begin
-  Result := Self.RSWidth() * Self.RSHeight();
-end;
-
-(*
-## RSTranslator.MapArea
-```pascal
-function TRSTranslator.MapArea(): UInteger;
-```
-Returns the area of the OldSchool RuneScape map measured in pixels.
-
-Example:
-```pascal
-WriteLn RSTranslator.MapArea();
-```
-*)
-function TRSTranslator.MapArea(): Integer;
-begin
-  Result := Self.MapWidth() * Self.MapHeight();
-end;
-
-
-(*
-## RSTranslator.RSCoordinate2Chunk
-```pascal
-function TRSTranslator.RSCoordinate2Chunk(p: TPoint): TPoint;
-```
-Returns the chunk number or a RuneScape coordinate as a TPoint.
-
-Example:
-```pascal
-WriteLn RSTranslator.RSCoordinate2Chunk(Point(2000, 2000));
-```
-*)
-function TRSTranslator.RSCoordinate2Chunk(p: TPoint): TPoint;
-begin
-  Result := [p.X div Self.RSMap.ChunkSide, p.Y div Self.RSMap.ChunkSide];
+  Result := Self.RSMap.Scope.Height * Self.Map.ChunkSide;
 end;
 
 
@@ -169,7 +82,7 @@ WriteLn RSTranslator.Global2Chunk(Point(2000, 2000));
 *)
 function TRSTranslator.Global2Chunk(p: TPoint): TPoint;
 begin
-  while p.X > Self.MapWidth() do p.X -= Self.MapWidth();
+  while p.X > Self.MapWidth do p.X -= Self.MapWidth;
   Result.X := Self.RSMap.Scope.X1 + Floor(p.X / Self.Map.ChunkSide);
   Result.Y := Self.RSMap.Scope.Y2 - Floor(p.Y / Self.Map.ChunkSide);
 end;
@@ -181,24 +94,6 @@ begin
   s := Self.Global2Chunk([b.X1, b.Y1]);
   f := Self.Global2Chunk([b.X2, b.Y2]);
   Result := [s.X, s.Y, f.X, f.Y];
-end;
-
-
-(*
-## RSTranslator.Chunk2RSCoordinate
-```pascal
-function TRSTranslator.Chunk2RSCoordinate(p: TPoint): TPoint;
-```
-Converts a "Chunk" number to the top left RS coordinate of that chunk.
-
-Example:
-```pascal
-WriteLn RSTranslator.Chunk2RSCoordinate(Point(53, 50));
-```
-*)
-function TRSTranslator.Chunk2RSCoordinate(p: TPoint): TPoint;
-begin
-  Result := [p.X * Self.RSMap.ChunkSide, p.Y * Self.RSMap.ChunkSide];
 end;
 
 
@@ -228,43 +123,6 @@ begin
   s := Self.Chunk2Coordinate([b.X1, b.Y1]);
   f := Self.Chunk2Coordinate([b.X2+1, b.Y2-1]);
   Result := [s.X, s.Y, f.X-1, f.Y-1];
-end;
-
-
-(*
-## RSTranslator.Coordinate2RSCoordinate
-```pascal
-function TRSTranslator.Coordinate2RSCoordinate(p: TPoint): TPoint;
-```
-Converts a "Global" coordinate into a "RuneScape" coordinate.
-
-Example:
-```pascal
-WriteLn RSTranslator.Coordinate2RSCoordinate(Point(4000, 35000));
-```
-*)
-function TRSTranslator.Coordinate2RSCoordinate(p: TPoint): TPoint;
-begin
-  while p.X > Self.MapWidth() do p.X -= Self.MapWidth();
-  Result := [p.X div Self.TileSize, p.Y div Self.TileSize];
-end;
-
-(*
-## RSTranslator.RSCoordinate2Coordinate
-```pascal
-function TRSTranslator.RSCoordinate2Coordinate(p: TPoint): TPoint;
-```
-Converts a "RuneScape" coordinate into a "Global" coordinate.
-
-Example:
-```pascal
-WriteLn RSTranslator.RSCoordinate2Coordinate(Point(2000, 2000));
-```
-*)
-function TRSTranslator.RSCoordinate2Coordinate(p: TPoint): TPoint;
-begin
-  Result.X := p.X * Self.TileSize - Self.Map.Scope.X1;
-  Result.Y := Self.Map.ChunkSide - (p.Y * Self.TileSize - Self.Map.Scope.Y2) - Self.TileSize;
 end;
 
 
@@ -336,4 +194,3 @@ var
 Global {ref}`TRSTranslator` variable.
 *)
   RSTranslator: TRSTranslator;
-
