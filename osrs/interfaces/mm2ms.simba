@@ -6,7 +6,7 @@ Supports rotation, and zoom, and resizable client.
 MM2MS extends the Minimap interface as well as the mainscreen interface with
 functionality to convert coordinates to & from the minimap to the mainscreen (mm2ms).
 
-Original work done by slacky.
+Original work done by [slacky](https://slacky.one/).
 
 It's thanks to {ref}`MM2MS` that we can have the following grid:
 ```{figure} ../../images/mm2ms.png

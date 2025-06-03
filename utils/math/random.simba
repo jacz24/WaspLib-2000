@@ -52,23 +52,29 @@ begin
   begin
     r := Hypot(from.X - Self.X, from.Y - Self.Y) * force;
     angle := ArcTan2(from.Y - Self.Y, from.X - Self.X);
-    from.X := Round(Self.X + Self.Radius * Cos(angle) * r);
-    from.Y := Round(Self.Y + Self.Radius * Sin(angle) * r);
+    from.X := Round(Self.X + Self.Radius * Cos(angle));
+    from.Y := Round(Self.Y + Self.Radius * Sin(angle));
   end;
 
   angle := ArcTan2(Self.Y - from.Y, Self.X - from.X);
 
+  skewed.X := from.X + Round(Cos(angle) * r);
+  skewed.Y := from.Y + Round(Sin(angle) * r) ;
+
   cutoff := RandCutoff;
-  RandCutoff := 4.0;
+  RandCutoff := 2.0;
 
   rand := Self.RandomPoint();
-  Result.X := Round(RandomMode(from.X, from.X, rand.X));
-  Result.Y := Round(RandomMode(from.Y, from.Y, rand.Y));
+  Result.X := Round(RandomMode(skewed.X, from.X, Self.X));
+  Result.Y := Round(RandomMode(skewed.Y, from.Y, Self.Y));
+
+  angle := from.AngleBetween(Self.Center);
+  Result := Result.Rotate(Result.AngleBetween(Self.Center) + angle, Self.Center);
 
   RandCutoff := cutoff;
 end;
 
-//by slacky
+//by [slacky](https://slacky.one/)
 function TCircle.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single = 1): TPoint;
 var
   angle, dist, r1, r2, sum, u, t: Single;
@@ -144,7 +150,7 @@ Parameters:
 
 Should expose weight and bias to the user if used as mouse distribution method. weight of 10 might be a little high.
 
-Credits: slacky
+Credits: [slacky](https://slacky.one/)
 *)
 function TTriangle.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single = 1): TPoint;
 var

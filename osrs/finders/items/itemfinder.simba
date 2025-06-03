@@ -315,7 +315,7 @@ begin
   Result := str.CopyRange(Length(str)-8, Length(str));
 end;
 
-//Author: Slacky
+//Author: [slacky](https://slacky.one/)
 procedure TRSItemFinder.CleanItemBackground(img: TImage);
 var
   border, shadow, tpa: TPointArray;

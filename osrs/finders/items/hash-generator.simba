@@ -53,7 +53,7 @@ begin
   AddHash(Result, Result);
 end;
 
-//Author: Slacky
+//Author: [slacky](https://slacky.one/)
 procedure ClearItemBackground(img: TImage);
 var
   border, shadow, tpa: TPointArray;

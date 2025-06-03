@@ -220,7 +220,7 @@ function TRSMinimap.GetCompassAngle(asDegrees: Boolean = True): Single;
 Returns the minimap compass angle either in radians or degrees.
 By default, degrees are used.
 
-Credits: slacky
+Credits: [slacky](https://slacky.one/)
 
 Example:
 ```pascal

@@ -2,7 +2,7 @@
 # MapLoader
 This file is responsible for loading chunk maps for TRSMap.
 It was made from scratch but heavily inspired in the original
-TRSWalker by Slacky and it's future iterations made by Olly.
+TRSWalker by [slacky](https://slacky.one/) and it's future iterations made by Olly.
 
 ```{note}
 Most things in this file are for internal use only and you shouldn't use them directly

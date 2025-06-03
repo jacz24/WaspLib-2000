@@ -2,7 +2,7 @@
 # Map
 This file is responsible for the TRSMap positioning system.
 It was made from scratch by Torwent but heavily inspired in the original
-TRSWalker by Slacky and it's future iterations made by Olly.
+TRSWalker by [slacky](https://slacky.one/) and it's future iterations made by Olly.
 Without them, this wouldn't be possible.
 
 For a online interactive map you can visit [WaspScripts map](https://map.waspscripts.com/)

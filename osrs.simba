@@ -93,6 +93,7 @@ They should be self-explanatory.
 
 {$IFNDEF WL_MAPLOADER_INCLUDED}           {$INCLUDE_ONCE osrs/map/maploader.simba}
 {$IFNDEF WL_MAP_INCLUDED}                 {$INCLUDE_ONCE osrs/map/map.simba}
+{$IFNDEF WL_IMAGEMAP_INCLUDED}            {$INCLUDE_ONCE osrs/map/imagemap.simba}
 {$IFNDEF WL_RSOBJECTS_INCLUDED}           {$INCLUDE_ONCE osrs/map/objects.simba}
 {$IFNDEF WL_RSNPCS_INCLUDED}              {$INCLUDE_ONCE osrs/map/npcs.simba}
 {$IFNDEF WL_MAPDEBUGGER_INCLUDED}         {$INCLUDE_ONCE osrs/map/mapdebugger.simba}
@@ -112,6 +113,7 @@ They should be self-explanatory.
 {$IFNDEF WL_SETUP_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/setup.simba}
 {$IFNDEF WL_OVERRIDES_INCLUDED}           {$INCLUDE_ONCE osrs/overrides.simba}
 
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}

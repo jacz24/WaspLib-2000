@@ -1,7 +1,7 @@
 (*
 # Walker
 This file is responsible for our walking system.
-It is heavily inspired in the original TRSWalker by Slacky and it's future
+It is heavily inspired in the original TRSWalker by [slacky](https://slacky.one/) and it's future
 iterations made by Olly.
 *)
 
