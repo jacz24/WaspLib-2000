@@ -506,8 +506,6 @@ begin
   Result := Self.GetBrightness() = 100;
 end;
 
-
-
 var
 (*
 ## Options variable

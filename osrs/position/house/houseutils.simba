@@ -34,8 +34,9 @@ begin
 end;
 
 
-function EHouseLocation.GetEntranceRotation(): Single;
-const ROTATIONS: TSingleArray = [0,0,90,0,90,90,0,90,90];
+function EHouseLocation.GetEntranceRotation(): Integer;
+const
+  ROTATIONS: INTEGER = [0,0,90,0,90,90,0,90,90];
 begin
   Result := ROTATIONS[Ord(Self)];
 end;
@@ -661,6 +662,7 @@ begin
   *)
 end;
 
+
 type
 (*
 ## THouseRoom
@@ -674,8 +676,19 @@ it holds as a `set of `{ref}`EHouseObject`.
     Objects: EHouseObjectSet;
   end;
 
+(*
+### THouseRoomMatrix
+2D array of {ref}`THouseRoom`.
+*)
   THouseRoomMatrix = array of array of THouseRoom;
 
+(*
+### THouseRoomMatrix.ToBytes
+```pascal
+function THouseRoomMatrix.ToBytes(): TByteArray;
+```
+Encode a `THouseRoomMatrix` into bytes. Useful for storing them.
+*)
 function THouseRoomMatrix.ToBytes(): TByteArray;
 const
   INT_SIZE: Integer = SizeOf(Int32);
@@ -722,6 +735,13 @@ begin
   Result := bytes;
 end;
 
+(*
+### THouseRoomMatrix.ToBytes
+```pascal
+function THouseRoomMatrix.ToBytes(): TByteArray;
+```
+Decode a `THouseRoomMatrix` from bytes. Useful to load them from storage.
+*)
 function THouseRoomMatrix.CreateFromBytes(bytes: TByteArray): THouseRoomMatrix; static;
 const
   INT_SIZE: Integer = SizeOf(Int32);
@@ -771,8 +791,19 @@ Type helper to represent a house teleport room.
     Left, Middle, Right: EHouseTeleport;
   end;
 
+(*
+### TTeleportRoomMatrix
+2D array of {ref}`TTeleportRoom`.
+*)
   TTeleportRoomMatrix = array of array of TTeleportRoom;
 
+(*
+### TTeleportRoomMatrix.ToBytes
+```pascal
+function TTeleportRoomMatrix.ToBytes(): TByteArray;
+```
+Encode a `TTeleportRoomMatrix` into bytes. Useful for storing them.
+*)
 function TTeleportRoomMatrix.ToBytes(): TByteArray;
 const
   INT_SIZE: Integer = SizeOf(Int32);
@@ -814,6 +845,13 @@ begin
   Result := bytes;
 end;
 
+(*
+### TTeleportRoomMatrix.ToBytes
+```pascal
+function TTeleportRoomMatrix.ToBytes(): TByteArray;
+```
+Decode a `TTeleportRoomMatrix` from bytes. Useful to load them from storage.
+*)
 function TTeleportRoomMatrix.CreateFromBytes(bytes: TByteArray): TTeleportRoomMatrix; static;
 const
   INT_SIZE: Integer = SizeOf(Int32);

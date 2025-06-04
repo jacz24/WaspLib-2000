@@ -15,6 +15,14 @@ retrive your position on that image by finding the most similar place to your
 
 type
 (*
+## TRSMapSample
+Record used to customize the sample retrieved from the minimap for TRSMap.
+*)
+  TRSMapSample = record
+    Amount, Radius: Int32;
+  end;
+
+(*
 ## TRSImageMap
 Record responsible for positioning.
 *)
@@ -110,7 +118,7 @@ This likelyhood is returned with `match` which ranges from `0.0` to `1.0`.
 
 You probably won't ever need to call this directly.
 *)
-function TRSImageMap.FullSearch(template, map: TImage; position: TPoint; out match: Single): TPoint;
+function TRSImageMap.FullSearch(template, map: TImage; position: TPoint; out match: Single): TPoint; static;
 const
   TEMPL_SIZE = 25;
   SLICE_SIZE = TEMPL_SIZE + 45;

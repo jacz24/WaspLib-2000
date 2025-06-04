@@ -29,14 +29,6 @@ Record holding a player's full position:
     Z: Single;
   end;
 
-(*
-## TRSMapSample
-Record used to customize the sample retrieved from the minimap for TRSMap.
-*)
-  TRSMapSample = record
-    Amount, Radius: Int32;
-  end;
-
 function TRSPosition.ToPoint(): TPoint;
 begin
   Result := [Self.X, Self.Y];
@@ -260,46 +252,6 @@ begin
   end;
 end;
 
-(*
-## Map.FullSearch
-```pascal
-function TRSMap.FullSearch(template, map: TImage; position: TPoint; out match: Single): TPoint;
-```
-Internal TRSMap method used to get the player position.
-This is used by TRSMap.Position() to determine how likely is the **Position** passed in, our actual position.
-This likelyhood is returned with **Match** which ranges from 0 to 1.
-You probably won't ever need to call this directly.
-*)
-function TRSMap.FullSearch(template, map: TImage; position: TPoint; out match: Single): TPoint;
-const
-  TEMPL_SIZE = 25;
-  SLICE_SIZE = TEMPL_SIZE + 45;
-  SCALING = 2;
-var
-  slice, downscaledSlice, downscaledTemplate: TImage;
-  matrix: TSingleMatrix;
-  area: TBox;
-begin
-  area := [
-    Max(0, position.X - SLICE_SIZE),
-    Max(0, position.Y - SLICE_SIZE),
-    Min(map.Width  - 1, position.X + SLICE_SIZE),
-    Min(map.Height - 1, position.Y + SLICE_SIZE)
-  ];
-
-  slice := map.Copy(area);
-  downscaledSlice := slice.Downsample(SCALING);
-  downscaledTemplate := template.Downsample(SCALING);
-  downscaledTemplate.Crop(TBox.Create(downscaledTemplate.Center, TEMPL_SIZE, TEMPL_SIZE));
-
-  matrix := MatchTemplate(downscaledSlice, downscaledTemplate, ETMFormula.TM_CCOEFF_NORMED);
-  with matrix.ArgMax() do
-  begin
-    match := matrix[Y, X];
-    Result.X := area.X1 + (X + TEMPL_SIZE) * SCALING;
-    Result.Y := area.Y1 + (Y + TEMPL_SIZE) * SCALING;
-  end;
-end;
 
 (*
 ## Map.Position
@@ -333,7 +285,7 @@ begin
 
   for i := 0 to High(tpa) do
   begin
-    hit := Self.FullSearch(clean, Self.Loader.Map, tpa[i], match);
+    hit := TRSImageMap.FullSearch(clean, Self.Loader.Map, tpa[i], match);
 
     if match > Self.Similarity then
     begin
