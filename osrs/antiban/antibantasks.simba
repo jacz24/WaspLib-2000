@@ -119,7 +119,7 @@ procedure TAntiban.HoverSkills();
 begin
   if Self.Skills = [] then
   begin
-    WriteLn GetDebugLn('Antiban', 'HoverSkills: No skills declared.', EErrorLevel.ERROR);
+    WriteLn GetDebugLn('Antiban', 'HoverSkills: No skills declared.', ELogLevel.ERROR);
     Exit;
   end;
 
@@ -152,7 +152,7 @@ procedure TAntiban.OpenSkills();
 begin
   if Self.Skills = [] then
   begin
-    WriteLn GetDebugLn('Antiban', 'OpenSkills: No skills declared.', EErrorLevel.ERROR);
+    WriteLn GetDebugLn('Antiban', 'OpenSkills: No skills declared.', ELogLevel.ERROR);
     Exit;
   end;
 
@@ -302,7 +302,7 @@ var
 begin
   if Abs(Self.Zoom.Max - Self.Zoom.Min) <= 15 then
   begin
-    WriteLn GetDebugLn('Antiban', 'AdjustZoom: The current Zoom.Min and Zoom.Max are too close to each other for this method.', EErrorLevel.ERROR);
+    WriteLn GetDebugLn('Antiban', 'AdjustZoom: The current Zoom.Min and Zoom.Max are too close to each other for this method.', ELogLevel.ERROR);
     Exit;
   end;
 

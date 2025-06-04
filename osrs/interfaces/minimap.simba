@@ -334,7 +334,7 @@ begin
     Sleep(100, 1000, ERandomDir.LEFT);
   until Time() > timeout;
 
-  WriteLn GetDebugLn('Minimap', 'SetCompassAngle timed out.', EErrorLevel.WARN);
+  WriteLn GetDebugLn('Minimap', 'SetCompassAngle timed out.', ELogLevel.WARN);
   //TODO:
   //if not RSClient.IsLoggedIn() then
   //  Login.LoginPlayer()

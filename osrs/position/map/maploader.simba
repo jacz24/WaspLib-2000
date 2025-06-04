@@ -221,7 +221,7 @@ begin
   if not result.Success then
     raise GetDebugLn('MapLoader', result.Exception);
   msg := 'Finished async unzip of ' +  PathExtractName(result.ZipFile) + ' in ' + ToStr(Round(result.TimeUsed, 2)) + 'ms.';
-  WriteLn GetDebugLn('MapLoader', msg, EErrorLevel.SUCCESS);
+  WriteLn GetDebugLn('MapLoader', msg, ELogLevel.SUCCESS);
   Self._UnzipQueue -= 1;
 end;
 

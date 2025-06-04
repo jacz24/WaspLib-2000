@@ -60,7 +60,7 @@ begin
 
   if Self.Target = nil then
   begin
-    WriteLn GetDebugLn('RemoteInput', 'Invalid target for RemoteInput, RemoteInput will not be used.', EErrorLevel.WARN);
+    WriteLn GetDebugLn('RemoteInput', 'Invalid target for RemoteInput, RemoteInput will not be used.', ELogLevel.WARN);
     Exit;
   end;
 
@@ -129,7 +129,7 @@ begin
         space := Target.Bounds.Expand(50).Invert(Target.Bounds.Expand(500));
         if Length(space) = 0 then Exit;
 
-        WriteLn(GetDebugLn('RSClient', 'LoseFocus method is not implemented for WaspInput yet.', EErrorLevel.WARN));
+        WriteLn(GetDebugLn('RSClient', 'LoseFocus method is not implemented for WaspInput yet.', ELogLevel.WARN));
         Exit;
       end;
     ERSClient.LEGACY, ERSClient.RUNELITE:
@@ -144,7 +144,7 @@ begin
       end;
   end;
   {$ENDIF}
-  WriteLn(GetDebugLn('RSClient', 'LoseFocus method is not implemented without a fake input tool.', EErrorLevel.WARN));
+  WriteLn(GetDebugLn('RSClient', 'LoseFocus method is not implemented without a fake input tool.', ELogLevel.WARN));
 end;
 
 procedure TRSClient.LoseFocus(delay: UInt32); overload;
@@ -179,7 +179,7 @@ begin
         Exit(EIOS_IsMouseInputEnabled(RemoteInput.Target) and EIOS_IsKeyboardInputEnabled(RemoteInput.Target));
   end;
   {$ENDIF}
-  WriteLn(GetDebugLn('RSClient', 'IsInputEnabled method is not implemented without a fake input tool.', EErrorLevel.WARN));
+  WriteLn(GetDebugLn('RSClient', 'IsInputEnabled method is not implemented without a fake input tool.', ELogLevel.WARN));
 end;
 
 
@@ -214,7 +214,7 @@ begin
       end;
   end;
   {$ENDIF}
-  WriteLn(GetDebugLn('RSClient', 'DisableRealInput method is not implemented without a fake input tool.', EErrorLevel.WARN));
+  WriteLn(GetDebugLn('RSClient', 'DisableRealInput method is not implemented without a fake input tool.', ELogLevel.WARN));
 end;
 
 (*
@@ -248,7 +248,7 @@ begin
       end;
   end;
   {$ENDIF}
-  WriteLn(GetDebugLn('RSClient', 'EnableRealInput method is not implemented without a fake input tool.', EErrorLevel.WARN));
+  WriteLn(GetDebugLn('RSClient', 'EnableRealInput method is not implemented without a fake input tool.', ELogLevel.WARN));
 end;
 
 

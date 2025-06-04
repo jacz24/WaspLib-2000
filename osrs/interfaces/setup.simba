@@ -55,7 +55,7 @@ end;
 {$H-}
 procedure TargetResized(sender: TTarget; data: TTargetEventData);
 begin
-  WriteLn(GetDebugLn('RSClient', 'Client was resized, updating coordinates.', EErrorLevel.SUCCESS));
+  WriteLn(GetDebugLn('RSClient', 'Client was resized, updating coordinates.', ELogLevel.SUCCESS));
 
   {$IFNDEF WL_DISABLE_FAKE_INPUT}
   RSClient.Canvas.Clear();
@@ -95,6 +95,13 @@ end;
 //Setup process, for some things the order matters.
 procedure WaspLibSetup();
 begin
+  if not DirCreate(WLEnv.ConfigsDir) then
+    raise GetDebugLn('WaspLib', 'Failed to create path: ' + WLEnv.ConfigsDir);
+  if not DirCreate(WLEnv.CacheDir) then
+    raise GetDebugLn('WaspLib', 'Failed to create path: ' + WLEnv.CacheDir);
+  if not DirCreate(WLEnv.LogsDir) then
+    raise GetDebugLn('WaspLib', 'Failed to create path: ' + WLEnv.LogsDir);
+
   Async.HTTPGet('https://api.waspscripts.com/', @WaspClient.Setup, nil);
   Target.AddEvent(ETargetEvent.TARGET_RESIZE, @TargetResized);
   RSFonts.Setup();

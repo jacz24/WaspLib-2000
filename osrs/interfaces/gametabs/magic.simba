@@ -560,7 +560,7 @@ begin
 
     if not Self.Deselect(selected) then
     begin
-      WriteLn GetDebugLn('Magic', 'Failed to deactivate the currently active spell.', EErrorLevel.WARN);
+      WriteLn GetDebugLn('Magic', 'Failed to deactivate the currently active spell.', ELogLevel.WARN);
       Exit;
     end;
   end;

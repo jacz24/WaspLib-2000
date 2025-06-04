@@ -6,8 +6,7 @@ WaspLib to be able to interact with it.
 All {ref}`THouseLoader` methods are helper methods for the {ref}`TRSHouse` and
 you shouldn't have to call them for anything.
 *)
-
-{$DEFINE WL_HOSUELOADER_INCLUDED}
+{$DEFINE WL_HOUSELOADER_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
@@ -19,10 +18,10 @@ Helper record used by the {ref}`TRSHouse` to load and/or map a POH.
     Downscale, LayoutIndex: Integer;
     Map, Collision, DownscaledMap: TImage;
 
-    Rooms: array of array of THouseRoom;
+    Rooms: THouseRoomMatrix;
 
     //helpers:
-    TeleportRooms: array of array of TTeleportRoom;
+    TeleportRooms: TTeleportRoomMatrix;
 
     RoomsImage, IconBitmap: TImage;
     RoomImages, IconBitmaps: array [EHouseRoom] of TImage;
@@ -35,7 +34,7 @@ Helper record used by the {ref}`TRSHouse` to load and/or map a POH.
     Location: EHouseLocation;
     Decoration: EHouseDecoration;
     Colors: THouseColor;
-    Config: TJSONItem;
+    Config: TConfigJSON;
 
     IsSetup: Boolean;
 
@@ -53,16 +52,11 @@ You do not have to call it yourself.
 *)
 procedure THouseLoader.Free();
 begin
-  Self.Config.Free();
-
   Self.Rooms := [];
   Self.TeleportRooms := [];
-
   Self.IsSetup := False;
 end;
 
-//function THouseLoader.ToEncodedString(): String; forward;
-//procedure THouseLoader.LoadFromString(s: String); forward;
 procedure THouseLoader.DrawMap(room: THouseRoom; p: TPoint); forward;
 
 procedure THouseLoader.SetColors(decoration: EHouseDecoration);
@@ -73,28 +67,48 @@ end;
 
 procedure THouseLoader.SetupConfig();
 begin
-  //if Self.Config.IsSetup and (Self.LayoutIndex = Login.PlayerIndex) then Exit;
+  if (Self.Config.Data <> nil) and (Self.LayoutIndex = PlayerIndex) then
+    Exit;
   Self.LayoutIndex := PlayerIndex;
-  //todo setup config
+  Self.Config.Setup('house' + PATH_SEP + ToStr(PlayerIndex));
+
+  if Self.Config.Data = nil then
+  begin
+    Self.Location := EHouseLocation.RIMMINGTON;
+    Self.SetColors(EHouseDecoration.WOOD);
+    SetLength(Self.Rooms, Self.AMOUNT, Self.AMOUNT);
+    SetLength(Self.TeleportRooms, Self.AMOUNT, Self.AMOUNT);
+    Self.DrawMap([EHouseRoom.GARDEN, 0, [EHouseObject.EXIT]], [Self.AMOUNT div 2, Self.AMOUNT div 2]);
+
+    Self.Config.Item['EHouseObject'].AsInt     := Ord(High(EHouseObject));
+    Self.Config.Item['EHouseTeleport'].AsInt   := Ord(High(EHouseTeleport));
+    Self.Config.Item['Location'].AsInt         := Ord(Self.Location);
+    Self.Config.Item['Decoration'].AsInt       := Ord(Self.Decoration);
+    Self.Config.Item['Rooms'].AsString         := String.CreateFromBytes(CompressBytes(Self.Rooms.ToBytes()));
+    Self.Config.Item['TeleportRooms'].AsString := String.CreateFromBytes(CompressBytes(Self.TeleportRooms.ToBytes()));
+    Self.Config.SaveConfig();
+  end;
+
+  Self.Config.Lock.Enter();
+  Self.Location := EHouseLocation(Self.Config.Item['Location'].AsInt);
+  Self.SetColors(EHouseDecoration(Self.Config.Item['Decoration'].AsInt));
+
+  Self.Rooms := THouseRoomMatrix.CreateFromBytes(DecompressBytes(Self.Config.Item['Rooms'].AsString.ToBytes()));
+  Self.TeleportRooms := TTeleportRoomMatrix.CreateFromBytes(DecompressBytes(Self.Config.Item['TeleportRooms'].AsString.ToBytes()));
+  Self.Config.Lock.Leave();
 end;
 
 (*
 ## THouseLoader.Init()
 ```pascal
-procedure THouseLoader.Init(size, amount: Int32);
+procedure THouseLoader.Init();
 ```
 Internal method automatically called for your when you use `TScriptForm.CreateHouseBuilder()`.
 You don't usually have to call it yourself.
 *)
-procedure THouseLoader.Init(size, amount: Int32);
+procedure THouseLoader.Init();
 begin
   Self.SetupConfig();
-
-  //if not Self.Config.Has('size') then Self.Config.Put('size', size);
-  //if not Self.Config.Has('amount') then Self.Config.Put('amount', amount);
-
-  //Self.SIZE := Self.Config.GetInt('size');
-  //Self.AMOUNT := Self.Config.GetInt('amount');
 
   Self.Selected.Map := [Self.AMOUNT div 2 * Self.SIZE, Self.AMOUNT div 2 * Self.SIZE];
   Self.Selected.Matrix := [Self.AMOUNT div 2, Self.AMOUNT div 2];
@@ -107,23 +121,10 @@ begin
   Self.IconBitmap := new TImage({$MACRO DIR} + 'houseicons.png');
 
   AddOnTerminate(@Self.Free);
-
-  SetLength(Self.Rooms, Self.AMOUNT, Self.AMOUNT);
-  SetLength(Self.TeleportRooms, Self.AMOUNT, Self.AMOUNT);
-
-  //if Self.Config.Has('layout') then
-  //  Self.LoadFromString(Self.Config.GetString('layout'))
-  //else
-  begin
-    Self.Location := EHouseLocation.RIMMINGTON;
-    Self.SetColors(EHouseDecoration.WOOD);
-    Self.DrawMap([EHouseRoom.GARDEN, 0, []], [Self.AMOUNT div 2, Self.AMOUNT div 2]);
-  end;
-
   Self.IsSetup := True;
 end;
 
-procedure THouseLoader.Setup(downscale: Int32);
+procedure THouseLoader.Setup(downscale: Integer);
 var
   empty, walls, windows: TPointArray;
   tmp: T2DPointArray;
@@ -146,7 +147,7 @@ begin
 end;
 
 
-function THouseLoader.GetColor(room: EHouseRoom): Int32;
+function THouseLoader.GetColor(room: EHouseRoom): Integer;
 begin
   if room.IsOutdoors() then Exit(Self.Colors.Outdoors);
   Result := Self.Colors.Indoors;
@@ -173,7 +174,7 @@ end;
 *)
 function THouseLoader.GetRoomBitmapBox(room: EHouseRoom): TBox;
 var
-  i: Int32;
+  i: Integer;
 begin
   i := Ord(room);
   Result := [i * Self.SIZE, 0, i * Self.SIZE + Self.SIZE - 1, Self.SIZE-1];
@@ -182,7 +183,7 @@ end;
 (*
 ## THouseLoader.GetRoomBitmap()
 ```pascal
-function THouseLoader.GetRoomBitmap(room: EHouseRoom; color: Int32 = -1): TImage;
+function THouseLoader.GetRoomBitmap(room: EHouseRoom; color: Integer = -1): TImage;
 ```
 Internal method used to retrieve a bitmap of the {ref}`EHouseRoom` you pass in.
 
@@ -239,7 +240,10 @@ begin
     EHouseRoom.PORTAL_CHAMBER, EHouseRoom.SUPERIOR_GARDEN, EHouseRoom.PORTAL_NEXUS:;
     else Self.TeleportRooms[index.Y,index.X] := [];
   end;
-  //Self.Config.Put('layout', Self.ToEncodedString());
+
+  Self.Config.Item['Rooms'].AsString := String.CreateFromBytes(CompressBytes(Self.Rooms.ToBytes()));
+  Self.Config.Item['TeleportRooms'].AsString := String.CreateFromBytes(CompressBytes(Self.TeleportRooms.ToBytes()));
+  Self.Config.SaveConfig();
 end;
 
 (*
@@ -286,7 +290,7 @@ POH.Map.PrintRooms();
 procedure THouseLoader.PrintRooms();
 var
   str: String;
-  i, j: Int32;
+  i, j: Integer;
 begin
   str := '[' + LINE_SEP;
   for i := 0 to High(Self.Rooms) do
@@ -312,7 +316,7 @@ end;
 ## THouseLoader.DrawMap()
 ```pascal
 procedure THouseLoader.DrawMap(bmp: TImage; room: EHouseRoom; p: TPoint);
-procedure THouseLoader.DrawMap(room: EHouseRoom; color: Int32; p: TPoint); overload;
+procedure THouseLoader.DrawMap(room: EHouseRoom; color: Integer; p: TPoint); overload;
 ```
 Methods used to draw the POH map and cache the rooms drawn in `THouseLoader.Rooms`.
 
@@ -371,134 +375,3 @@ begin
       Self.Map.DrawImage(img, [Self.SIZE * index.X, Self.SIZE * index.Y]);
     end;
 end;
-
-(*
-function THouseLoader.ToEncodedString(): String;
-var
-  idx: TPoint;
-  room: THouseRoom;
-  str, teleports: String;
-  o: EHouseObject;
-  troom: TTeleportRoom;
-begin
-  Result := '[';
-  Result += '5 ';
-  Result += ToStr(Ord(High(EHouseObject))) + ' ';
-  Result += ToStr(Ord(High(EHouseTeleport))) + ' ';
-  Result += ToStr(Ord(Self.Location)) + ' ' + ToStr(Ord(Self.Decoration));
-  Result += ']';
-
-  for idx.Y := 0 to Self.AMOUNT-1 do
-    for idx.X := 0 to Self.AMOUNT-1 do
-    begin
-      room := Self.ReadRoom(idx);
-
-      for o in room.Objects do str += ToStr(Ord(o)) + ' ';
-      str := str.Trim();
-
-      case room.Room of
-        EHouseRoom.PORTAL_CHAMBER, EHouseRoom.SUPERIOR_GARDEN, EHouseRoom.PORTAL_NEXUS:
-        begin
-          troom := Self.TeleportRooms[idx.Y, idx.X];
-          teleports := '(' + ToStr(Ord(troom.Left)) + ' ' +
-                           ToStr(Ord(troom.Middle)) + ' ' +
-                           ToStr(Ord(troom.Right)) +
-                     ')';
-        end;
-      end;
-
-      Result += '[' + ToStr(idx.X) + ' ' + ToStr(idx.Y) + ' ' + ToStr(Ord(room.Room)) + ' ' +  ToStr(room.Rotation);
-      if str <> '' then Result += ' ' + str;
-      if teleports <> '' then Result += ' ' + teleports;
-      Result += ']';
-
-      str := '';
-      teleports := '';
-    end;
-
-  Result := BaseEncode(EBaseEncoding.b64, CompressString(Result));
-end;
-
-procedure THouseLoader.LoadFromString(s: String);
-var
-  idx: TPoint;
-  elements, values: TStringArray;
-  i, j: Int32;
-  room: THouseRoom;
-  main, portals: String;
-  skipObjects: Boolean;
-begin
-  elements := MultiBetween(DecompressString(BaseDecode(EBaseEncoding.b64, s)), '[', ']');
-  if elements = [] then Exit;
-
-  values := Explode(' ', elements[0]);
-
-  //validate something didn't change that made the config unparseable
-  if (Length(values) < 5) or (StrToInt(values[0]) <> Length(values)) then
-  begin
-    MessageDlg('House Loader', 'Error loading old house layout.' + LINE_SEP + 'This could be because it was updated and the old version is not compatible anymore.' + LINE_SEP + LINE_SEP + 'Your house layout has been reset!', TMsgDlgType.mtError, [mbOk]);
-    CopyFile(Self.Config.Path, Self.Config.Path + '.old', True);
-    Self.Location := EHouseLocation.RIMMINGTON;
-    Self.SetColors(EHouseDecoration.WOOD);
-    Self.DrawMap([EHouseRoom.GARDEN, 0, [EHouseObject.EXIT]], [Self.AMOUNT div 2, Self.AMOUNT div 2]);
-    Exit;
-  end;
-
-  //validate EHouseObjects and EHouseTeleport didn't change
-  skipObjects := StrToInt(values[1]) <> Ord(High(EHouseObject));
-  skipObjects := skipObjects or (StrToInt(values[2]) <> Ord(High(EHouseTeleport)));
-
-  if skipObjects then
-    MessageDlg('House Loader', 'Error loading old house layout.' + LINE_SEP + 'This could be because it was updated and the old version is not compatible anymore.' + LINE_SEP + LINE_SEP + 'Your house layout remains but your will need to reconfigure your objects!', TMsgDlgType.mtError, [mbOk]);
-
-  Self.Location := EHouseLocation(StrToInt(values[3]));
-  Self.SetColors(EHouseDecoration(StrToInt(values[4])));
-
-  for i := 2 to High(elements) do
-  begin
-    if elements[i].Contains(' (') then
-    begin
-      main := elements[i].Before(' (');
-      portals := elements[i].Between('(', ')');
-    end
-    else
-    begin
-      main := elements[i];
-      portals := '';
-    end;
-
-    values := Explode(' ', main);
-    idx := [StrToInt(values[0]), StrToInt(values[1])];
-
-    room.Room := EHouseRoom(StrToInt(values[2]));
-    room.Rotation := StrToInt(values[3]);
-
-    if not skipObjects then
-    begin
-      room.Objects := [];
-      for j := 4 to High(values) do
-        room.Objects += EHouseObject(StrToInt(values[j]));
-    end;
-
-    case room.Room of
-      EHouseRoom.UNKNOWN: ;
-      EHouseRoom.PORTAL_CHAMBER, EHouseRoom.SUPERIOR_GARDEN, EHouseRoom.PORTAL_NEXUS:
-      begin
-        if not skipObjects then
-        begin
-          values := Explode(' ', portals);
-
-          Self.TeleportRooms[idx.Y, idx.X] := [
-            EHouseTeleport(StrToInt(values[0])),
-            EHouseTeleport(StrToInt(values[1])),
-            EHouseTeleport(StrToInt(values[2]))
-          ];
-        end;
-
-        Self.DrawMap(room, idx);
-      end;
-      else Self.DrawMap(room, idx);
-    end;
-  end;
-end;
-*)

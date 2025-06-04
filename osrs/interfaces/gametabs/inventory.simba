@@ -396,7 +396,7 @@ begin
   if Keyboard.IsKeyDown(EKeyCode.SHIFT) then
       Keyboard.KeyUp(EKeyCode.SHIFT);
 
-  WriteLn GetDebugLn('Inventory', 'Shift drop is not enabled, consider enabling it for better performance.' , EErrorLevel.WARN);
+  WriteLn GetDebugLn('Inventory', 'Shift drop is not enabled, consider enabling it for better performance.' , ELogLevel.WARN);
   Self.ShiftEnabled := False;
 end;
 

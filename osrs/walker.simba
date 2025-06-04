@@ -1012,7 +1012,7 @@ begin
   end;
 
   if fails = 10 then
-    WriteLn GetDebugLn(Self.Name, 'Failed to advance path', EErrorLevel.WARN);
+    WriteLn GetDebugLn(Self.Name, 'Failed to advance path', ELogLevel.WARN);
 end;
 
 
@@ -1194,7 +1194,7 @@ begin
   end;
 
   if fails = 10 then
-    WriteLn GetDebugLn('Walker', 'Failed to advance path', EErrorLevel.ERROR);
+    WriteLn GetDebugLn('Walker', 'Failed to advance path', ELogLevel.ERROR);
 end;
 
 
@@ -1454,7 +1454,7 @@ begin
     Self._DoorHandler.Handling := False;
 
     if tries <= 2 then Continue;
-    WriteLn GetDebugLn('Walker', 'Hard solving door.', EErrorLevel.WARN);
+    WriteLn GetDebugLn('Walker', 'Hard solving door.', ELogLevel.WARN);
     if Self.WalkStep(Self.Position(), Self._DoorHandler.Door.Before) then
       if Self._HardSolveDoor(Self._DoorHandler.Door) then tries := 0;
   end;

@@ -27,6 +27,20 @@ Enum representing the {ref}`House`  locations in game.
     YANILLE, PRIFDDINAS
   );
 
+function EHouseLocation.GetEntranceCoordinate(): TPoint;
+const COORDINATES: TPointArray = [[7710,37534],[7470,36570],[9264,38424],[2866,36362],[6584,35912],[1592,38582],[6926,37718],[6080,38040],[8860,26120]];
+begin
+  Result := COORDINATES[Ord(Self)];
+end;
+
+
+function EHouseLocation.GetEntranceRotation(): Single;
+const ROTATIONS: TSingleArray = [0,0,90,0,90,90,0,90,90];
+begin
+  Result := ROTATIONS[Ord(Self)];
+end;
+
+type
 (*
 ## EHouseDecoration
 ```pascal
@@ -38,7 +52,33 @@ Enum representing the {ref}`House`
     WOOD, STONE, WHITE, FREMENNIK, TROPICAL, FANCY, DEATHLY, TWISTED,
     HOSIDIUS, WINTER
   );
+(*
+## EHouseDecoration.GetColors
+```pascal
+function EHouseDecoration.GetColors(): THouseColor;
+```
+Returns the color palette of the current {ref}`EHouseDecoration` as a {ref}`THouseColor`.
 
+Example:
+```pascal
+WriteLn EHouseDecoration.FREMENNIK.GetColors();
+```
+*)
+function EHouseDecoration.GetColors(): THouseColor;
+begin
+  case Self of
+    EHouseDecoration.WOOD, EHouseDecoration.TROPICAL: Result := [$2D9167, $59808F, 0];
+    EHouseDecoration.STONE: Result := [$2D9167, $42617E, 0];
+    EHouseDecoration.WHITE: Result := [$82C4D1, $70969B, 0];
+    EHouseDecoration.FREMENNIK: Result := [$4C707B, $457083, 0];
+    EHouseDecoration.FANCY: Result := [$2D9167, $789EA6, 0];
+    EHouseDecoration.DEATHLY, EHouseDecoration.HOSIDIUS: Result := [$2D9167, $5786A7, 0];
+    EHouseDecoration.TWISTED: Result := [$1B1B20, $545459, 0];
+    EHouseDecoration.WINTER: Result := [$D2D2D7, $5786A7, 0];
+   end;
+end;
+
+type
 (*
 ## EHouseRoom
 ```pascal
@@ -53,6 +93,27 @@ Enum representing the {ref}`House` rooms available.
     THRONE, SUPERIOR_GARDEN, PORTAL_NEXUS, ACHIEVEMENT_GALLERY
   );
 
+(*
+## EHouseRoom.IsOutdoors
+```pascal
+function EHouseRoom.IsOutdoors(): Boolean;
+```
+Returns True/False whether a EHouseRoom is an outdoors room or not.
+
+Example:
+```pascal
+WriteLn EHouseRoom.GARDEN.IsOutdoors();
+```
+*)
+function EHouseRoom.IsOutdoors(): Boolean;
+begin
+  case Self of
+    EHouseRoom.UNKNOWN, EHouseRoom.GARDEN, EHouseRoom.FORMAL_GARDEN,
+    EHouseRoom.SUPERIOR_GARDEN, EHouseRoom.MENAGERIE_OUTDOORS: Result := True;
+  end;
+end;
+
+type
 (*
 ## EHouseObject
 ```pascal
@@ -88,103 +149,32 @@ is of interest for a script.
     CAPE_HANGER
   );
 
+  EHouseObjectSet = set of EHouseObject;
+
+const
 (*
-## EHouseTeleport
+## Constants
 ```pascal
-EHouseTeleport = enum(EMPTY, ARCEUUS_LIBRARY..XERIC);
+KITCHEN_LARDERS
+STUDY_LECTERNS
+CHAPEL_BURNERS
+CHAPEL_ALTARS
+SUPERIOR_GARDEN_POOLS
+SUPERIOR_GARDEN_TELEPORTS
+JEWELLERY_BOXES
+ACHIEVEMENT_GALLERY_ALTARS
 ```
-Enum represinting all the available teleports in a {ref}`House`.
+Several constants represeting multiple tiers of house objects that functional
+virtually the same way.
 *)
-  EHouseTeleport = enum(
-    EMPTY, ARCEUUS_LIBRARY, DRAYNOR_MANOR, BATTLEFRONT, VARROCK,
-    MIND_ALTAR, LUMBRIDGE, FALADOR, SALVE_GRAVEYARD, CAMELOT,
-    FENKENSTRAINS_CASTLE, KOUREND_CASTLE, EAST_ARDOUGNE, CIVITAS_ILLA_FORTIS,
-    WATCHTOWER, SENNTISTEN, WEST_ARDOUGNE, MARIM, HARMONY_ISLAND,
-    KHARYRLL, MOONCLAN, CEMETERY, WATERBIRTH_ISLAND, BARROWS, CARRALLANGER,
-    FISHING_GUILD, CATHERBY, ANNAKARL, APE_ATOLL_DUNGEON, GHORROCK,
-    TROLL_STRONGHOLD, WEISS,
-    DIGSITE, XERIC
-  );
-
-(*
-## THouseRoom
-Type helper to represent a house room. This type will hold the `Room`
-{ref}`EHouseRoom` type, information about it's `Rotation` and the `Objects`
-it holds as a `set of `{ref}`EHouseObject`.
-*)
-  THouseRoom = record
-    Room: EHouseRoom;
-    Rotation: Integer;
-    Objects: set of EHouseObject;
-  end;
-
-(*
-## TTeleportRoom
-Type helper to represent a house teleport room.
-*)
-  TTeleportRoom = record
-    Left, Middle, Right: EHouseTeleport;
-  end;
-
-function EHouseLocation.GetEntranceCoordinate(): TPoint;
-const COORDINATES: TPointArray = [[7710,37534],[7470,36570],[9264,38424],[2866,36362],[6584,35912],[1592,38582],[6926,37718],[6080,38040],[8860,26120]];
-begin
-  Result := COORDINATES[Ord(Self)];
-end;
-
-
-function EHouseLocation.GetEntranceRotation(): Single;
-const ROTATIONS: TSingleArray = [0,0,90,0,90,90,0,90,90];
-begin
-  Result := ROTATIONS[Ord(Self)];
-end;
-
-(*
-## EHouseDecoration.GetColors
-```pascal
-function EHouseDecoration.GetColors(): THouseColor;
-```
-Returns the color palette of the current {ref}`EHouseDecoration` as a {ref}`THouseColor`.
-
-Example:
-```pascal
-WriteLn EHouseDecoration.FREMENNIK.GetColors();
-```
-*)
-function EHouseDecoration.GetColors(): THouseColor;
-begin
-  case Self of
-    EHouseDecoration.WOOD, EHouseDecoration.TROPICAL: Result := [$2D9167, $59808F, 0];
-    EHouseDecoration.STONE: Result := [$2D9167, $42617E, 0];
-    EHouseDecoration.WHITE: Result := [$82C4D1, $70969B, 0];
-    EHouseDecoration.FREMENNIK: Result := [$4C707B, $457083, 0];
-    EHouseDecoration.FANCY: Result := [$2D9167, $789EA6, 0];
-    EHouseDecoration.DEATHLY, EHouseDecoration.HOSIDIUS: Result := [$2D9167, $5786A7, 0];
-    EHouseDecoration.TWISTED: Result := [$1B1B20, $545459, 0];
-    EHouseDecoration.WINTER: Result := [$D2D2D7, $5786A7, 0];
-   end;
-end;
-
-
-(*
-## EHouseRoom.IsOutdoors
-```pascal
-function EHouseRoom.IsOutdoors(): Boolean;
-```
-Returns True/False whether a EHouseRoom is an outdoors room or not.
-
-Example:
-```pascal
-WriteLn EHouseRoom.GARDEN.IsOutdoors();
-```
-*)
-function EHouseRoom.IsOutdoors(): Boolean;
-begin
-  case Self of
-    EHouseRoom.UNKNOWN, EHouseRoom.GARDEN, EHouseRoom.FORMAL_GARDEN,
-    EHouseRoom.SUPERIOR_GARDEN, EHouseRoom.MENAGERIE_OUTDOORS: Result := True;
-  end;
-end;
+  KITCHEN_LARDERS:            EHouseObjectSet = [EHouseObject.LARDER..EHouseObject.TEAK_LARDER];
+  STUDY_LECTERNS:             EHouseObjectSet = [EHouseObject.OAK_LECTERN..EHouseObject.MARBLE_LECTERN];
+  CHAPEL_BURNERS:             EHouseObjectSet = [EHouseObject.LEFT_BURNER, EHouseObject.RIGHT_BURNER];
+  CHAPEL_ALTARS:              EHouseObjectSet = [EHouseObject.OAK_ALTAR..EHouseObject.GILDED_ALTAR];
+  SUPERIOR_GARDEN_POOLS:      EHouseObjectSet = [EHouseObject.RESTORATION_POOL..EHouseObject.ORNATE_POOL];
+  SUPERIOR_GARDEN_TELEPORTS:  EHouseObjectSet = [EHouseObject.SPIRIT_TREE..EHouseObject.SPIRITUAL_FAIRY_TREE];
+  JEWELLERY_BOXES:            EHouseObjectSet = [EHouseObject.BASIC_JEWELLERY_BOX..EHouseObject.ORNATE_JEWELLERY_BOX];
+  ACHIEVEMENT_GALLERY_ALTARS: EHouseObjectSet = [EHouseObject.ANCIENT_ALTAR..EHouseObject.OCCULT_ALTAR];
 
 (*
 ## EHouseObject.GetSize
@@ -537,6 +527,24 @@ begin
   *)
 end;
 
+type
+(*
+## EHouseTeleport
+```pascal
+EHouseTeleport = enum(EMPTY, ARCEUUS_LIBRARY..XERIC);
+```
+Enum represinting all the available teleports in a {ref}`House`.
+*)
+  EHouseTeleport = enum(
+    EMPTY, ARCEUUS_LIBRARY, DRAYNOR_MANOR, BATTLEFRONT, VARROCK,
+    MIND_ALTAR, LUMBRIDGE, FALADOR, SALVE_GRAVEYARD, CAMELOT,
+    FENKENSTRAINS_CASTLE, KOUREND_CASTLE, EAST_ARDOUGNE, CIVITAS_ILLA_FORTIS,
+    WATCHTOWER, SENNTISTEN, WEST_ARDOUGNE, MARIM, HARMONY_ISLAND,
+    KHARYRLL, MOONCLAN, CEMETERY, WATERBIRTH_ISLAND, BARROWS, CARRALLANGER,
+    FISHING_GUILD, CATHERBY, ANNAKARL, APE_ATOLL_DUNGEON, GHORROCK,
+    TROLL_STRONGHOLD, WEISS,
+    DIGSITE, XERIC
+  );
 
 (*
 ## EHouseTeleport.GetUpText
@@ -653,27 +661,193 @@ begin
   *)
 end;
 
-const
+type
 (*
-## Constants
-```pascal
-KITCHEN_LARDERS
-STUDY_LECTERNS
-CHAPEL_BURNERS
-CHAPEL_ALTARS
-SUPERIOR_GARDEN_POOLS
-SUPERIOR_GARDEN_TELEPORTS
-JEWELLERY_BOXES
-ACHIEVEMENT_GALLERY_ALTARS
-```
-Several constants represeting multiple tiers of house objects that functional
-virtually the same way.
+## THouseRoom
+Type helper to represent a house room. This type will hold the `Room`
+{ref}`EHouseRoom` type, information about it's `Rotation` and the `Objects`
+it holds as a `set of `{ref}`EHouseObject`.
 *)
-  KITCHEN_LARDERS:            set of EHouseObject = [EHouseObject.LARDER..EHouseObject.TEAK_LARDER];
-  STUDY_LECTERNS:             set of EHouseObject = [EHouseObject.OAK_LECTERN..EHouseObject.MARBLE_LECTERN];
-  CHAPEL_BURNERS:             set of EHouseObject = [EHouseObject.LEFT_BURNER, EHouseObject.RIGHT_BURNER];
-  CHAPEL_ALTARS:              set of EHouseObject = [EHouseObject.OAK_ALTAR..EHouseObject.GILDED_ALTAR];
-  SUPERIOR_GARDEN_POOLS:      set of EHouseObject = [EHouseObject.RESTORATION_POOL..EHouseObject.ORNATE_POOL];
-  SUPERIOR_GARDEN_TELEPORTS:  set of EHouseObject = [EHouseObject.SPIRIT_TREE..EHouseObject.SPIRITUAL_FAIRY_TREE];
-  JEWELLERY_BOXES:            set of EHouseObject = [EHouseObject.BASIC_JEWELLERY_BOX..EHouseObject.ORNATE_JEWELLERY_BOX];
-  ACHIEVEMENT_GALLERY_ALTARS: set of EHouseObject = [EHouseObject.ANCIENT_ALTAR..EHouseObject.OCCULT_ALTAR];
+  THouseRoom = record
+    Room: EHouseRoom;
+    Rotation: Integer;
+    Objects: EHouseObjectSet;
+  end;
+
+  THouseRoomMatrix = array of array of THouseRoom;
+
+function THouseRoomMatrix.ToBytes(): TByteArray;
+const
+  INT_SIZE: Integer = SizeOf(Int32);
+  SET_SIZE: Integer = SizeOf(EHouseObjectSet);
+var
+  i, j, len, offset: Integer;
+  room: THouseRoom;
+  bytes: TByteArray;
+begin
+  len := INT_SIZE;
+
+  for i := 0 to High(Self) do
+    Inc(len, INT_SIZE + Length(Self[i]) * (INT_SIZE * 2 + SET_SIZE)); // room, rotation, set
+
+  SetLength(bytes, len);
+  Move(Length(Self), bytes[0], INT_SIZE);
+  offset := INT_SIZE;
+
+  for i := 0 to High(Self) do
+  begin
+    len := Length(Self[i]);
+    Move(len, bytes[offset], INT_SIZE);
+    Inc(offset, INT_SIZE);
+
+    for j := 0 to High(Self[i]) do
+    begin
+      room := Self[i][j];
+
+      // Room
+      len := Ord(room.Room);
+      Move(len, bytes[offset], INT_SIZE);
+      Inc(offset, INT_SIZE);
+
+      // Rotation
+      Move(room.Rotation, bytes[offset], INT_SIZE);
+      Inc(offset, INT_SIZE);
+
+      // Objects (set of EHouseObject)
+      Move(room.Objects, bytes[offset], SET_SIZE);
+      Inc(offset, SET_SIZE);
+    end;
+  end;
+
+  Result := bytes;
+end;
+
+function THouseRoomMatrix.CreateFromBytes(bytes: TByteArray): THouseRoomMatrix; static;
+const
+  INT_SIZE: Integer = SizeOf(Int32);
+  SET_SIZE: Integer = SizeOf(EHouseObjectSet);
+var
+  i, j, len, row, offset, val: Integer;
+  room: THouseRoom;
+begin
+  if Length(bytes) = 0 then Exit;
+
+  Move(bytes[0], len, INT_SIZE);
+  SetLength(Result, len);
+  offset := INT_SIZE;
+
+  for i := 0 to High(Result) do
+  begin
+    Move(bytes[offset], row, INT_SIZE);
+    SetLength(Result[i], row);
+    Inc(offset, INT_SIZE);
+
+    for j := 0 to row - 1 do
+    begin
+      // Room
+      Move(bytes[offset], val, INT_SIZE);
+      room.Room := EHouseRoom(val);
+      Inc(offset, INT_SIZE);
+
+      // Rotation
+      Move(bytes[offset], room.Rotation, INT_SIZE);
+      Inc(offset, INT_SIZE);
+
+      // Objects
+      Move(bytes[offset], room.Objects, SET_SIZE);
+      Inc(offset, SET_SIZE);
+
+      Result[i][j] := room;
+    end;
+  end;
+end;
+
+type
+(*
+## TTeleportRoom
+Type helper to represent a house teleport room.
+*)
+  TTeleportRoom = record
+    Left, Middle, Right: EHouseTeleport;
+  end;
+
+  TTeleportRoomMatrix = array of array of TTeleportRoom;
+
+function TTeleportRoomMatrix.ToBytes(): TByteArray;
+const
+  INT_SIZE: Integer = SizeOf(Int32);
+var
+  i, j, len, offset: Integer;
+  room: TTeleportRoom;
+  bytes: TByteArray;
+begin
+  len := INT_SIZE;
+
+  for i := 0 to High(Self) do
+    Inc(len, INT_SIZE + Length(Self[i]) * INT_SIZE * 3);
+
+  SetLength(bytes, len);
+  Move(Length(Self), bytes[0], INT_SIZE);
+  offset := INT_SIZE;
+
+  for i := 0 to High(Self) do
+  begin
+    len := Length(Self[i]);
+    Move(len, bytes[offset], INT_SIZE);
+    Inc(offset, INT_SIZE);
+
+    for j := 0 to High(Self[i]) do
+    begin
+      room := Self[i][j];
+
+      Move(Ord(room.Left), bytes[offset], INT_SIZE);
+      Inc(offset, INT_SIZE);
+
+      Move(Ord(room.Middle), bytes[offset], INT_SIZE);
+      Inc(offset, INT_SIZE);
+
+      Move(Ord(room.Right), bytes[offset], INT_SIZE);
+      Inc(offset, INT_SIZE);
+    end;
+  end;
+
+  Result := bytes;
+end;
+
+function TTeleportRoomMatrix.CreateFromBytes(bytes: TByteArray): TTeleportRoomMatrix; static;
+const
+  INT_SIZE: Integer = SizeOf(Int32);
+var
+  i, j, len, row, offset, val: Integer;
+  room: TTeleportRoom;
+begin
+  if Length(bytes) = 0 then Exit;
+
+  Move(bytes[0], len, INT_SIZE);
+  SetLength(Result, len);
+  offset := INT_SIZE;
+
+  for i := 0 to High(Result) do
+  begin
+    Move(bytes[offset], row, INT_SIZE);
+    SetLength(Result[i], row);
+    Inc(offset, INT_SIZE);
+
+    for j := 0 to row - 1 do
+    begin
+      Move(bytes[offset], val, INT_SIZE);
+      room.Left := EHouseTeleport(val);
+      Inc(offset, INT_SIZE);
+
+      Move(bytes[offset], val, INT_SIZE);
+      room.Middle := EHouseTeleport(val);
+      Inc(offset, INT_SIZE);
+
+      Move(bytes[offset], val, INT_SIZE);
+      room.Right := EHouseTeleport(val);
+      Inc(offset, INT_SIZE);
+
+      Result[i][j] := room;
+    end;
+  end;
+end;

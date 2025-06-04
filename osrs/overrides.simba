@@ -38,7 +38,7 @@ begin
   if (mode <> ERSMode.UNKNOWN) and (mode <> Self.Mode) then
   begin
     Self.Mode := mode;
-    WriteLn(GetDebugLn('RSClient', 'Client mode changed: ' + ToStr(Self.Mode), EErrorLevel.SUCCESS));
+    WriteLn(GetDebugLn('RSClient', 'Client mode changed: ' + ToStr(Self.Mode), ELogLevel.SUCCESS));
     SetupInterfaces();
   end;
 

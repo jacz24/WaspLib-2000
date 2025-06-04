@@ -1,0 +1,182 @@
+(*
+# Config
+Configuration related types and methods. These can be used to save script and
+library configurations in either JSON or INI formats.
+*)
+{$DEFINE WL_CONFIG_INCLUDED}
+{$INCLUDE_ONCE WaspLib/utils.simba}
+
+type
+  PConfigJSON = ^TConfigJSON;
+
+  TThreadedJSON = record
+    Item: TJSONItem;
+    Parent: PConfigJSON;
+  end;
+
+(*
+## TConfigJSON
+Type responsible for dealing with JSON configuration files.
+*)
+  TConfigJSON = record
+    Path: String;
+    Data: TJSONItem;
+    Thread: TThread;
+    Lock: TLock;
+  end;
+
+(*
+## TConfigJSON.Setup
+```pascal
+procedure TConfigJSON.Setup(jsonFile: String);
+```
+Main method to setup your `TConfigJSON`
+*)
+procedure TConfigJSON.Setup(filename: String = SCRIPT_FILE);
+begin
+  Self.Path := WLEnv.ConfigsDir;
+
+  if filename.Contains(PATH_SEP) then
+  begin
+    //if filename already had the configs path make to not duplicate it.
+    Self.Path += PathExtractDir(filename).After(Self.Path);
+    filename := PathExtractNameWithoutExt(filename) + '.json';
+  end;
+
+  if not DirCreate(Self.Path) then
+    TerminateScript('Can''t create configs directory.');
+
+  Self.Path += filename;
+  Self.Data := LoadJSON(Self.Path);
+
+  Self.Lock := TLock.Create();
+
+  AddOnTerminate(@Self.Lock.Free);
+  AddOnTerminate(@Self.Thread.Free);
+  AddOnTerminate(@Self.Data.Free);
+end;
+
+procedure TConfigJSON._FileSave();
+var
+  path, json: String;
+begin
+  Self.Lock.Enter();
+  path := Self.Path;
+  json := Self.Data.ToJSON();
+  Self.Lock.Leave();
+
+  if Self.Data = nil then
+    raise GetDebugLn('TConfigJSON.' + PathExtractNameWithoutExt(path), 'You need to use TConfigJSON.Setup() before trying to save it into a config file.');
+  if not FileWrite(path, json) then
+    raise GetDebugLn('TConfigJSON.' + PathExtractNameWithoutExt(path), 'Failed to save config.');
+  CurrentThread().Terminate();
+end;
+
+(*
+## TConfigJSON.SaveConfig
+```pascal
+procedure TConfigJSON.SaveConfig();
+```
+Used to save your `TConfigJSON`.
+This spawns a separate thread to deal with the I/O as that's slow.
+*)
+procedure TConfigJSON.SaveConfig();
+begin
+  Self.Thread.Free();
+  Self.Thread := TThread.Create(@Self._FileSave);
+end;
+
+
+property TConfigJSON.Item(index: Integer): TThreadedJSON;
+begin
+  Self.Lock.Enter();
+  Result := [Self.Data.Item[index], @Self];
+  Self.Lock.Leave();
+end;
+
+property TConfigJSON.Item(key: String): TThreadedJSON;
+begin
+  Self.Lock.Enter();
+  Result := [Self.Data.Item[key], @Self];
+  Self.Lock.Leave();
+end;
+
+
+property TThreadedJSON.AsInt: Int64;
+begin
+  Self.Parent^.Lock.Enter();
+  Result := Self.Item.AsInt;
+  Self.Parent^.Lock.Leave();
+end;
+
+property TThreadedJSON.AsInt(value: Int64);
+begin
+  Self.Parent^.Lock.Enter();
+  Self.Item.AsInt := value;
+  Self.Parent^.Lock.Leave();
+end;
+
+
+property TThreadedJSON.AsBool: Boolean;
+begin
+  Self.Parent^.Lock.Enter();
+  Result := Self.Item.AsBool;
+  Self.Parent^.Lock.Leave();
+end;
+
+property TThreadedJSON.AsBool(value: Boolean);
+begin
+  Self.Parent^.Lock.Enter();
+  Self.Item.AsBool := value;
+  Self.Parent^.Lock.Leave();
+end;
+
+
+property TThreadedJSON.AsFloat: Double;
+begin
+  Self.Parent^.Lock.Enter();
+  Result := Self.Item.AsFloat;
+  Self.Parent^.Lock.Leave();
+end;
+
+property TThreadedJSON.AsFloat(value: Double);
+begin
+  Self.Parent^.Lock.Enter();
+  Self.Item.AsFloat := value;
+  Self.Parent^.Lock.Leave();
+end;
+
+
+property TThreadedJSON.AsString: String;
+begin
+  Self.Parent^.Lock.Enter();
+  Result := Self.Item.AsString;
+  Self.Parent^.Lock.Leave();
+end;
+
+property TThreadedJSON.AsString(value: String);
+begin
+  Self.Parent^.Lock.Enter();
+  Self.Item.AsString := value;
+  Self.Parent^.Lock.Leave();
+end;
+
+
+property TThreadedJSON.AsUnicodeString: UnicodeString;
+begin
+  Self.Parent^.Lock.Enter();
+  Result := Self.Item.AsUnicodeString;
+  Self.Parent^.Lock.Leave();
+end;
+
+property TThreadedJSON.AsUnicodeString(value: UnicodeString);
+begin
+  Self.Parent^.Lock.Enter();
+  Self.Item.AsUnicodeString := value;
+  Self.Parent^.Lock.Leave();
+end;
+
+type
+  TConfigINI  = record
+    Path: String;
+  end;

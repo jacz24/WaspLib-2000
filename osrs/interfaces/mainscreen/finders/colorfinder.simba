@@ -297,7 +297,7 @@ begin
     begin
       if Self.ColorClusters[i].Distance <= 0 then
       begin
-        WriteLn GetDebugLn('TColorFinder', 'Skipping cluster with 0 distance, make it higher than 0!', EErrorLevel.WARN);
+        WriteLn GetDebugLn('TColorFinder', 'Skipping cluster with 0 distance, make it higher than 0!', ELogLevel.WARN);
         Continue;
       end;
 
@@ -334,7 +334,7 @@ begin
     begin
       if Self.ColorClusters[i].Distance <= 0 then
       begin
-        WriteLn GetDebugLn('TColorFinder', 'Skipping cluster with 0 distance, make it higher than 0!', EErrorLevel.WARN);
+        WriteLn GetDebugLn('TColorFinder', 'Skipping cluster with 0 distance, make it higher than 0!', ELogLevel.WARN);
         Continue;
       end;
 
@@ -374,7 +374,7 @@ begin
     begin
       if Self.ColorClusters[i].Distance <= 0 then
       begin
-        WriteLn GetDebugLn('TColorFinder', 'Skipping cluster with 0 distance, make it higher than 0!', EErrorLevel.WARN);
+        WriteLn GetDebugLn('TColorFinder', 'Skipping cluster with 0 distance, make it higher than 0!', ELogLevel.WARN);
         Continue;
       end;
 
