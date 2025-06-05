@@ -6,26 +6,14 @@ Methods to find and compare spell images
 {$DEFINE WL_PRAYERFINDER_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
+type
 (*
 ## ERSPrayer
 ```pascal
-ERSPrayer = enum(
-  UNKNOWN,
-  THICK_SKIN,           BURST_OF_STRENGTH,  CLARITY_OF_THOUGHT,
-  SHARP_EYE,            MYSTIC_WILL,        ROCK_SKIN,
-  SUPERHUMAN_STRENGTH,  IMPROVED_REFLEXES,  RAPID_RESTORE,
-  RAPID_HEAL,           PROTECT_ITEM,       HAWK_EYE,
-  MYSTIC_LORE,          STEEL_SKIN,         ULTIMATE_STRENGTH,
-  INCREDIBLE_REFLEXES,  PROTECT_FROM_MAGIC, PROTECT_FROM_MISSILES,
-  PROTECT_FROM_MELEE,   EAGLE_EYE,          MYSTIC_MIGHT,
-  RETRIBUTION,          REDEMPTION,         SMITE,
-  PRESERVE,             CHIVALRY,           PIETY,
-  RIGOUR,               AUGURY
-);
+ERSPrayer = enum(UNKNOWN, THICK_SKIN..PIETY, RIGOUR, AUGURY);
 ```
 An enumeration representing different prayers in RuneScape.
 *)
-type
   ERSPrayer = enum(
     THICK_SKIN,           BURST_OF_STRENGTH,  CLARITY_OF_THOUGHT,
     SHARP_EYE,            MYSTIC_WILL,        ROCK_SKIN,
@@ -41,16 +29,6 @@ type
 
 (*
 ## TRSPrayerFinder
-```pascal
-type TRSPrayerFinder = record
-  PrayerImages: array [ERSPrayer] of TImage;
-  Version: String;
-  Similarity: Single;
-  ImageCompare: TImageCompareUtils;
-  CacheDir: String;
-  const ZIP: String = {$MACRO DIR} + 'images.zip';
-end;
-```
 A record for finding and managing prayer images.
 
 ## Fields:
@@ -140,7 +118,6 @@ Example:
 ```pascal
 img := PrayerFinder.GetImage(ERSPrayer.PIETY);
 img.Show();
-img.Free();
 ```
 *)
 function TRSPrayerFinder.GetImage(prayer: ERSPrayer): TImage;

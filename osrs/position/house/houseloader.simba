@@ -1,6 +1,6 @@
 (*
-# HouseMap
-{ref}`HouseMap` is what's responsible for mapping a user's {ref}`House` for
+# HouseLoader
+{ref}`HouseLoader` is what's responsible for mapping a user's {ref}`House` for
 WaspLib to be able to interact with it.
 
 All {ref}`THouseLoader` methods are helper methods for the {ref}`TRSHouse` and

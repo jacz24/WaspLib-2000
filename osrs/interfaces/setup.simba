@@ -40,6 +40,8 @@ begin
   MSInterface.SetupInterface();
   XPBar.SetupInterface();
 
+  HouseViewer.SetupInterface();
+
   BankPin.SetupInterface();
   Bank.SetupInterface();
   CollectionBox.SetupInterface();
@@ -124,6 +126,8 @@ begin
   ItemFinder.Setup();
   SpellFinder.Setup();
   PrayerFinder.Setup();
+  HouseLayoutFinder.Setup();
+
   GameTabs.KeybindsEnabled := True;
   GameTabs.AvailableKeys := [
     EKeyCode.ESCAPE, EKeyCode.F1, EKeyCode.F2, EKeyCode.F3, EKeyCode.F4,

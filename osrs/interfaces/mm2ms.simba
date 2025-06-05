@@ -66,6 +66,7 @@ Main record responsible for minimap to mainscreen ({ref}`MM2MS`) conversion.
     {%codetools on}
     Projector: TMM2MSProjector;
     Normalizer: TMM2MSProjector;
+    const MAX_RENDER_DISTANCE: Integer = 80; //roughly 20 tiles
   end;
 
 procedure TRSMM2MS.Setup();

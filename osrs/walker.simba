@@ -232,11 +232,10 @@ var
   pt, currLoc: TPoint;
   arr: TPointArray;
 begin
+  if not playerPoint.InRange(mapPoint, MM2MS.MAX_RENDER_DISTANCE) then Exit;
   if radians = $FFFF then radians := Minimap.GetCompassAngle(False);
   vector := Self.Point2MMVec(playerPoint, mapPoint, radians);
   pt := vector.ToPoint();
-
-  if not Minimap.PointOnZoomQuad(pt) then Exit;
 
   vector := Minimap.NormalizeEx(vector, radians);
   playerPoint := Self.GetLocal(playerPoint);
@@ -264,7 +263,7 @@ var
   diff, currLoc: TPoint;
   arr: TPointArray;
 begin
-  if not Minimap.PointOnZoomQuad(localPoint) then Exit;
+  if not localPlayerPoint.InRange(localPoint, MM2MS.MAX_RENDER_DISTANCE) then Exit;
   if radians = $FFFF then radians := Minimap.GetCompassAngle(False);
 
   diff := [localPoint.X-localPlayerPoint.X, localPoint.Y-localPlayerPoint.Y];
@@ -394,7 +393,7 @@ var
 
   procedure MouseToNextPoint(myPos: TPoint);
   var
-    mmPos: TPoint;
+    mmPos, tmp: TPoint;
     idx: Integer;
     speed: Double;
     angle, h, diff: Single;
@@ -402,7 +401,7 @@ var
     angle := Minimap.GetCompassAngle(False);
     idx := Self._PathIndex;
 
-    while (idx < High(Self._Path)) and Self.IsWalkable(Self._Path[idx+1], myPos, angle) do
+    while (idx < High(Self._Path)) and Self.IsWalkable(Self._Path[idx+1], myPos, tmp, angle) do
       Inc(idx);
 
     if (idx = High(Self._Path)) and (Random(10) > 2) then Exit();
@@ -568,7 +567,7 @@ You will probably never need to call this directly.
 
 If you wish to modify certain walker behaviors, it can be a good approach to override this function.
 *)
-function TRSWalker.Click(minimapPoint: TPoint; randomness: Integer; height: Single = 0): Boolean;
+function TRSWalker.Click(minimapPoint: TPoint; randomness: Integer): Boolean;
 var
   pt: TPoint;
   upText: String;
@@ -587,9 +586,10 @@ begin
 
   if Self.ScreenWalk then
   begin
-    pt := Minimap.RandomPointOnZoomQuad(minimapPoint, randomness);
+    pt := minimapPoint.Random(-8, 8);
+    if not Minimap.Center.InRange(pt, MM2MS.MAX_RENDER_DISTANCE) then Exit;
 
-    quad := Self.GetQuadMSEx(Minimap.Center, minimapPoint, Minimap.GetCompassAngle(False));
+    quad := Self.GetQuadMSEx(Minimap.Center, pt, Minimap.GetCompassAngle(False));
     Mouse.Move(quad);
     upText := MainScreen.UpText;
 
@@ -634,6 +634,25 @@ begin
 end;
 
 (*
+## Walker.IsWalkable
+```pascal
+function TRSWalker.IsWalkable(walkerPoint: TPoint; playerPoint: TPoint; out mmPoint: TPoint; angle: Double): Boolean;
+```
+Internal method used by walker to decide if the destination point is within 1 click reach.
+You will probably never need to call this directly.
+*)
+function TRSWalker.IsWalkable(walkerPoint, playerPoint: TPoint; out mmPoint: TPoint; angle: Double): Boolean;
+var
+  b: TBox;
+begin
+  mmPoint := Self.Point2MM(playerPoint, walkerPoint, angle);
+  if not Self.ScreenWalk then
+    Exit(Minimap.Polygon.Expand(-1).Contains(mmPoint));
+
+  Result := Minimap.Center.InRange(mmPoint, MM2MS.MAX_RENDER_DISTANCE);
+end;
+
+(*
 ## Walker.WalkStepHelper()
 ```pascal
 function TRSWalker.WalkStepHelper(playerPoint, walkerPoint: TPoint; out minimapPoint: TPoint): Boolean;
@@ -643,27 +662,14 @@ You will probably never need to call this directly.
 *)
 function TRSWalker.WalkStepHelper(playerPoint, walkerPoint: TPoint; out minimapPoint: TPoint): Boolean;
 var
-  event_time: UInt64;
+  t: UInt64;
 begin
-  event_time := Time();
+  t := Time();
+  if @Self.OnWalkEvent <> nil then Self.OnWalkEvent(@Self, playerPoint, walkerPoint);
+  if Time() - t > 100 then playerPoint := Self.Position(); //Check if event took too long and update position.
 
-  // run events
-  if @Self.OnWalkEvent <> nil then
-    Self.OnWalkEvent(@Self, playerPoint, walkerPoint);
-
-  // in case the events used a bit of time, while our character was moving towards a point, we have to update the current position.
-  if Time() - event_time > 100 then
-    playerPoint := Self.Position();
-
-  if not Self.Walking then
-    Exit;
-
-  minimapPoint := Self.Point2MM(playerPoint, walkerPoint, Minimap.GetCompassAngle(False));
-
-  if Self.ScreenWalk then
-    Exit(Minimap.PointOnZoomQuad(minimapPoint));
-
-  Result := Minimap.Contains(minimapPoint);
+  if not Self.Walking then Exit;
+  Result := Self.IsWalkable(walkerPoint, playerPoint, minimapPoint, Minimap.GetCompassAngle(False));
 end;
 
 (*
@@ -677,7 +683,6 @@ You will probably never need to call this directly but it can be used to take a 
 function TRSWalker.WalkFinalStep(playerPoint, walkerPoint: TPoint; waitUntilDistance: Integer): Boolean;
 var
   minimapPoint, flag: TPoint;
-  h, diff: Single;
   wasHandlingDoor: Boolean;
 begin
   if not Self.WalkStepHelper(playerPoint, walkerPoint, minimapPoint) then
@@ -686,10 +691,7 @@ begin
   if (Minimap.Center.DistanceTo(minimapPoint) < 4) then
     Exit(True);
 
-  h := Self.Height(playerPoint);
-  diff := -(h-Self.Height(walkerPoint));
-
-  Result := Self.Click(minimapPoint, 0, diff);
+  Result := Self.Click(minimapPoint, 0);
   if not Result then Exit;
 
 
@@ -791,32 +793,6 @@ begin
   end;
 end;
 
-(*
-## Walker.IsWalkable
-```pascal
-function TRSWalker.IsWalkable(walkerPoint: TPoint; playerPoint: TPoint; Angle: Double): Boolean;
-```
-Internal method used by walker to decide if the destination point is within 1 click reach.
-You will probably never need to call this directly.
-*)
-function TRSWalker.IsWalkable(walkerPoint: TPoint; playerPoint: TPoint; angle: Double): Boolean;
-var
-  mmPoint: TPoint;
-  h, diff: Single;
-  b: TBox;
-begin
-  mmPoint := Self.Point2MM(playerPoint, walkerPoint, angle);
-  if not Self.ScreenWalk then
-    Exit(Minimap.Polygon.Expand(-1).Contains(mmPoint));
-
-  h := Self.Height(playerPoint);
-  diff := Self.Height(walkerPoint);
-  b := Minimap.Vector2MSQuad(mmPoint.ToVec3(h), angle, [1,1], [0,0, -diff]).Bounds;
-
-  if MainScreen.IsVisible(b.Center) then
-    Result := not Target.HasColor($0, 0, 1, b.Expand(4, MainScreen.Bounds)); //Client doesn't always render everything when zoomed out
-end;
-
 
 procedure TRSWalker.DrawPath(img: TImage; index: Integer; playerPoint: TPoint);
 var
@@ -882,6 +858,7 @@ end;
 
 function TRSWalker._AdvancePath(out index: Integer; playerPoint: TPoint; angle: Double): Boolean;
 var
+  tmp: TPoint;
   previous: Integer;
   nearest, furthest: Integer;
 begin
@@ -890,11 +867,11 @@ begin
   //nearest := Self._Path.Find(Self._Path.Sorted(playerPoint)[0]);
   Self._Pathindex := nearest;
 
-  while (nearest < High(Self._Path)) and (not Self.IsWalkable(Self._Path[nearest+1], playerPoint, angle)) do
+  while (nearest < High(Self._Path)) and (not Self.IsWalkable(Self._Path[nearest+1], playerPoint, tmp, angle)) do
     Inc(nearest);
 
   furthest := nearest;
-  while (furthest < High(Self._Path)) and Self.IsWalkable(Self._Path[furthest+1], playerPoint, angle) do
+  while (furthest < High(Self._Path)) and Self.IsWalkable(Self._Path[furthest+1], playerPoint, tmp, angle) do
     Inc(furthest);
 
   index := furthest;

@@ -356,25 +356,24 @@ begin
     'Time: '         + ToStr(Round(time)) + ' ms'
   ];
 
-  img := new TImage(700 + cleanMinimap.GetWidth(), 440);
-  img.DrawClear($403027);
+  img := new TImage(700 + cleanMinimap.Width, 440);
+  //img.DrawTraClear($403027);
 
-  img.SetFontName('Consolas');
-  img.SetFontSize(18);
-  img.SetFontAntialiasing(True);
+  img.FontName := 'Consolas';
+  img.FontSize := 18;
+  img.FontAntialiasing := True;
 
+  img.DrawColor := $FFFFFF;
   for i := 0 to High(lines) do
   begin
     if print then WriteLn(lines[i]);
-    img.DrawText(lines[i], [430, cleanMinimap.GetHeight() + 20 + 20 * i], $FFFFFF);
+    img.DrawText(lines[i], [430, cleanMinimap.Height + 20 + 20 * i]);
   end;
 
-  map.DrawTransparent(10, 20, img);
-  map.Free();
+  //map.DrawTransparent(10, 20, img);
 
-  cleanMinimap.SetTransparentColor($0);
-  cleanMinimap.DrawTransparent(520, 10, img);
-  cleanMinimap.Free();
+  //cleanMinimap.SetTransparentColor($0);
+  //cleanMinimap.DrawTransparent(520, 10, img);
 
   img.Show();
   Target.UnFreezeImage();

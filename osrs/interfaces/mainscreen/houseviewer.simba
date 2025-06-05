@@ -1,0 +1,70 @@
+(*
+# House Viewer
+Methods to interact with the house viewer interface:
+
+```{figure} ../../images/houseviewer_interface.png
+```
+
+The house viewer allows your to see your house layout at a glance and
+move/rotate rooms.
+
+The functionality provided by the following functions was done from scratch but
+heavily inspired in Skunkworks original "layout_finder.simba".
+In other words, it provides you the ability to load the house layout from the
+viewer into {ref}`House` and it's {ref}`HouseLoader`.
+*)
+{$DEFINE HOUSE_VIEWER_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+(*
+## TRSHouseViewer
+Main record used to interact with the {ref}`House Viewer`.
+*)
+  TRSHouseViewer = record
+    Bounds, LayoutPanel: TBox;
+  end;
+
+(*
+## HouseViewer.SetupInterface
+```pascal
+procedure TRSHouseViewer.SetupInterface();
+```
+Internal method used to setup the {ref}`TRSHouseViewer` coordinates.
+This is automatically called for you on the {ref}`HouseViewer variable`.
+*)
+procedure TRSHouseViewer.SetupInterface();
+begin
+  case RSClient.Mode of
+    ERSMode.FIXED:
+      Self.Bounds := MSInterface.CreateBounds([-1, 0, 0, 0], 498, 304);
+    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
+      Self.Bounds := MSInterface.CreateBounds([0, 1, 0, -3], 498, 304);
+  end;
+
+  with Self.Bounds do
+    Self.LayoutPanel := [X1+35, Y1+35, X1+269, Y2-35];
+end;
+
+property TRSHouseViewer.LayoutBounds: TBox;
+begin
+  Result := Target.FindColor(
+    [$3C3CB3, 0.795, EColorSpace.HSL, [2.816, 0.057, 0.129]],
+    Self.LayoutPanel
+  ).Bounds();
+end;
+
+property TRSHouseViewer.RoomBoxes: TBoxArray;
+begin
+  Result := Self.LayoutBounds.Partition(7,7);
+end;
+
+
+
+
+var
+(*
+## HouseViewer variable
+Global {ref}`TRSHouseViewer` variable.
+*)
+  HouseViewer: TRSHouseViewer;
