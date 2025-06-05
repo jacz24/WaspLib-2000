@@ -233,6 +233,13 @@ begin
 end;
 
 
+(*
+## TImage.RotateClockWise
+```pascal
+function TImage.RotateClockWise(times: Integer = 1): TImage;
+```
+Rotate a TImage clockwise `times` amoutn of times.
+*)
 function TImage.RotateClockWise(times: Integer = 1): TImage;
 var
   i: Integer;
@@ -242,6 +249,13 @@ begin
     Result := Result.Mirror(EImageMirrorStyle.LINE).Mirror(EImageMirrorStyle.WIDTH);
 end;
 
+(*
+## TImage.RotateCounterClockWise
+```pascal
+function TImage.RotateCounterClockWise(times: Integer = 1): TImage;
+```
+Rotate a TImage counter clockwise `times` amoutn of times.
+*)
 function TImage.RotateCounterClockWise(times: Integer = 1): TImage;
 var
   i: Integer;

@@ -55,7 +55,7 @@ begin
 
   //only set similarity if the user didn't set it already
   if Self.Similarity = 0 then
-    Self.Similarity := 0.97;
+    Self.Similarity := 0.85;
 end;
 
 (*
@@ -72,10 +72,9 @@ img := HouseLayoutFinder.GetImage(EHouseRoom.ACHIEVEMENT_GALLERY)[0];
 img.Show();
 ```
 *)
-function TRSHouseLayoutFinder.GetImages(room: EHouseRoom): TImageArray;
+property TRSHouseLayoutFinder.Images(room: EHouseRoom): TImageArray;
 var
   name, path: String;
-  img: TImage;
   i: Integer;
 begin
   if Self.RoomImages[room] <> [] then
@@ -87,11 +86,13 @@ begin
   if not FileExists(path) then
     ZipExtractEntry(Self.ZIP, name, Self.CacheDir);
 
-  SetLength(Self.RoomImages[room], 4);
+  Self.RoomImages[room] += new TImage(path);
 
-  Self.RoomImages[room][0] := new TImage(path);
+  if room = EHouseRoom.UNKNOWN then
+    Exit(Self.RoomImages[room]);
+
   for i := 1 to 3 do
-    Self.RoomImages[room][i] := Self.RoomImages[room][i-1].RotateClockWise(1);
+    Self.RoomImages[room] += Self.RoomImages[room][i-1].RotateClockWise(1);
 
   Result := Self.RoomImages[room];
 end;
@@ -101,20 +102,22 @@ var
   room: EHouseRoom;
   sample: TImage;
   templates: TImageArray;
-  i: Integer;
   match: Single;
 begin
   if Target.HasColor($3F4A53, 0.4, 1, bounds) then
+  begin
+    rotation := 0;
     Exit(EHouseRoom.UNKNOWN);
+  end;
 
   sample := Target.GetImage(bounds);
   for room := EHouseRoom.PARLOUR to High(EHouseRoom) do
   begin
-    templates := Self.GetImages(room);
-    for rotation := 0 to 3 do
+    templates := Self.Images[room];
+    for rotation := 0 to High(templates) do
     begin
-      match := Self.Similarity;
-      if Self.ImageCompare.Compare(sample, templates[i], match) then
+      match := templates[rotation].Compare(sample);
+      if match >= Self.Similarity then
         Exit(room);
     end;
   end;

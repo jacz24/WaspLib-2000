@@ -60,7 +60,24 @@ begin
 end;
 
 
+procedure TRSHouseViewer.LoadHouse();
+var
+  boxes: TBoxArray;
+  i, rotation, offset: Integer;
+  room: THouseRoom;
+begin
+  House.Loader.Init();
 
+  boxes := Self.RoomBoxes;
+
+  offset := House.Loader.AMOUNT div 2 - 4;
+  for i := 0 to High(boxes) do
+  begin
+    room.Room := HouseLayoutFinder.Compare(boxes[i], rotation);
+    room.Rotation := rotation;
+    House.Loader.DrawMap(room, [offset + (i mod 7), offset + (i div 7)]);
+  end;
+end;
 
 var
 (*

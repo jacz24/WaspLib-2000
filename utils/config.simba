@@ -10,6 +10,7 @@ type
   PConfigJSON = ^TConfigJSON;
 
   TThreadedJSON = record
+    Key: String;
     Item: TJSONItem;
     Parent: PConfigJSON;
   end;
@@ -33,21 +34,31 @@ procedure TConfigJSON.Setup(jsonFile: String);
 Main method to setup your `TConfigJSON`
 *)
 procedure TConfigJSON.Setup(filename: String = SCRIPT_FILE);
+var
+  tmp: String;
 begin
   Self.Path := WLEnv.ConfigsDir;
 
   if filename.Contains(PATH_SEP) then
   begin
-    //if filename already had the configs path make to not duplicate it.
-    Self.Path += PathExtractDir(filename).After(Self.Path);
-    filename := PathExtractNameWithoutExt(filename) + '.json';
+    //if filename already had the configs path makes sure to not duplicate it.
+    if filename.Contains(Self.Path) then
+      filename := filename.After(Self.Path);
+
+    tmp := PathExtractNameWithoutExt(filename);
+    Self.Path += filename.Before(tmp);
+    filename :=  tmp + '.json';
   end;
 
   if not DirCreate(Self.Path) then
     TerminateScript('Can''t create configs directory.');
 
   Self.Path += filename;
-  Self.Data := LoadJSON(Self.Path);
+
+  if FileExists(Self.Path) then
+    Self.Data := LoadJSON(Self.Path)
+  else
+    Self.Data := NewJSONObject();
 
   Self.Lock := TLock.Create();
 
@@ -55,6 +66,7 @@ begin
   AddOnTerminate(@Self.Thread.Free);
   AddOnTerminate(@Self.Data.Free);
 end;
+
 
 procedure TConfigJSON._FileSave();
 var
@@ -90,14 +102,14 @@ end;
 property TConfigJSON.Item(index: Integer): TThreadedJSON;
 begin
   Self.Lock.Enter();
-  Result := [Self.Data.Item[index], @Self];
+  Result := [Self.Data.Key[index], Self.Data.Item[index], @Self];
   Self.Lock.Leave();
 end;
 
 property TConfigJSON.Item(key: String): TThreadedJSON;
 begin
   Self.Lock.Enter();
-  Result := [Self.Data.Item[key], @Self];
+  Result := [key, Self.Data.Item[key], @Self];
   Self.Lock.Leave();
 end;
 
@@ -105,14 +117,20 @@ end;
 property TThreadedJSON.AsInt: Int64;
 begin
   Self.Parent^.Lock.Enter();
-  Result := Self.Item.AsInt;
+  if Self.Item = nil then
+    Result := 0
+  else
+    Result := Self.Item.AsInt;
   Self.Parent^.Lock.Leave();
 end;
 
 property TThreadedJSON.AsInt(value: Int64);
 begin
   Self.Parent^.Lock.Enter();
-  Self.Item.AsInt := value;
+  if Self.Item = nil then
+    Self.Parent^.Data.AddInt(Self.Key, value)
+  else
+    Self.Item.AsInt := value;
   Self.Parent^.Lock.Leave();
 end;
 
@@ -120,14 +138,20 @@ end;
 property TThreadedJSON.AsBool: Boolean;
 begin
   Self.Parent^.Lock.Enter();
-  Result := Self.Item.AsBool;
+  if Self.Item = nil then
+    Result := False
+  else
+    Result := Self.Item.AsBool;
   Self.Parent^.Lock.Leave();
 end;
 
 property TThreadedJSON.AsBool(value: Boolean);
 begin
   Self.Parent^.Lock.Enter();
-  Self.Item.AsBool := value;
+  if Self.Item = nil then
+    Self.Parent^.Data.AddBool(Self.Key, value)
+  else
+    Self.Item.AsBool := value;
   Self.Parent^.Lock.Leave();
 end;
 
@@ -135,14 +159,20 @@ end;
 property TThreadedJSON.AsFloat: Double;
 begin
   Self.Parent^.Lock.Enter();
-  Result := Self.Item.AsFloat;
+  if Self.Item = nil then
+    Result := 0.0
+  else
+    Result := Self.Item.AsFloat;
   Self.Parent^.Lock.Leave();
 end;
 
 property TThreadedJSON.AsFloat(value: Double);
 begin
   Self.Parent^.Lock.Enter();
-  Self.Item.AsFloat := value;
+  if Self.Item = nil then
+    Self.Parent^.Data.AddFloat(Self.Key, value)
+  else
+    Self.Item.AsFloat := value;
   Self.Parent^.Lock.Leave();
 end;
 
@@ -150,14 +180,20 @@ end;
 property TThreadedJSON.AsString: String;
 begin
   Self.Parent^.Lock.Enter();
-  Result := Self.Item.AsString;
+  if Self.Item = nil then
+    Result := ''
+  else
+    Result := Self.Item.AsString;
   Self.Parent^.Lock.Leave();
 end;
 
 property TThreadedJSON.AsString(value: String);
 begin
   Self.Parent^.Lock.Enter();
-  Self.Item.AsString := value;
+  if Self.Item = nil then
+    Self.Parent^.Data.AddString(Self.Key, value)
+  else
+    Self.Item.AsString := value;
   Self.Parent^.Lock.Leave();
 end;
 
@@ -165,14 +201,20 @@ end;
 property TThreadedJSON.AsUnicodeString: UnicodeString;
 begin
   Self.Parent^.Lock.Enter();
-  Result := Self.Item.AsUnicodeString;
+  if Self.Item = nil then
+    Result := ''
+  else
+    Result := Self.Item.AsUnicodeString;
   Self.Parent^.Lock.Leave();
 end;
 
 property TThreadedJSON.AsUnicodeString(value: UnicodeString);
 begin
   Self.Parent^.Lock.Enter();
-  Self.Item.AsUnicodeString := value;
+  if Self.Item = nil then
+    Self.Parent^.Data.AddString(Self.Key, value)
+  else
+    Self.Item.AsUnicodeString := value;
   Self.Parent^.Lock.Leave();
 end;
 
