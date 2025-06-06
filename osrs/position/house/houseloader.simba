@@ -51,7 +51,7 @@ end;
 
 procedure THouseLoader.SetupConfig();
 var
-  bytes: TByteArray;
+  str: String;
 begin
   if (Self.Config.Data <> nil) and (Self.LayoutIndex = PlayerIndex) then
     Exit;
@@ -70,8 +70,6 @@ begin
     Self.Config.Item['EHouseTeleport'].AsInt   := Ord(High(EHouseTeleport));
     Self.Config.Item['Location'].AsInt         := Ord(Self.Location);
     Self.Config.Item['Decoration'].AsInt       := Ord(Self.Decoration);
-    Self.Config.Item['Rooms'].AsString         := String.CreateFromBytes(CompressBytes(Self.Rooms.ToBytes()));
-    Self.Config.Item['TeleportRooms'].AsString := String.CreateFromBytes(CompressBytes(Self.TeleportRooms.ToBytes()));
     Self.Config.SaveConfig();
     Exit;
   end;
@@ -80,13 +78,11 @@ begin
   Self.Location := EHouseLocation(Self.Config.Item['Location'].AsInt);
   Self.SetColors(EHouseDecoration(Self.Config.Item['Decoration'].AsInt));
 
-  bytes := Self.Config.Item['Rooms'].AsString.ToBytes();
-  bytes := DecompressBytes(bytes);
-  Self.Rooms := THouseRoomMatrix.CreateFromBytes(bytes);
+  str := DecompressString(Self.Config.Item['Rooms'].AsString);
+  Self.Rooms := THouseRoomMatrix.CreateFromBytes(str.ToBytes());
 
-  bytes := Self.Config.Item['TeleportRooms'].AsString.ToBytes();
-  bytes := DecompressBytes(bytes);
-  Self.TeleportRooms := TTeleportRoomMatrix.CreateFromBytes(bytes);
+  str := DecompressString(Self.Config.Item['TeleportRooms'].AsString);
+  Self.TeleportRooms := TTeleportRoomMatrix.CreateFromBytes(str.ToBytes());
 
   Self.Config.Lock.Leave();
 end;
@@ -227,8 +223,8 @@ begin
     else Self.TeleportRooms[index.Y,index.X] := [];
   end;
 
-  Self.Config.Item['Rooms'].AsString := String.CreateFromBytes(CompressBytes(Self.Rooms.ToBytes()));
-  Self.Config.Item['TeleportRooms'].AsString := String.CreateFromBytes(CompressBytes(Self.TeleportRooms.ToBytes()));
+  Self.Config.Item['Rooms'].AsString := CompressString(String.CreateFromBytes(Self.Rooms.ToBytes()));
+  Self.Config.Item['TeleportRooms'].AsString := CompressString(String.CreateFromBytes(Self.TeleportRooms.ToBytes()));
   Self.Config.SaveConfig();
 end;
 
