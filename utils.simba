@@ -19,6 +19,7 @@
 {$IFNDEF WL_RSCHUNKS_INCLUDED}     {$INCLUDE_ONCE utils/rschunks.simba}
 {$IFNDEF WL_CONFIG_INCLUDED}       {$INCLUDE_ONCE utils/config.simba}
 {$IFNDEF WL_WASPCLIENT_INCLUDED}   {$INCLUDE_ONCE utils/waspclient.simba}
+{$IFNDEF WL_FORMUTILS_INCLUDED}    {$INCLUDE_ONCE utils/forms/formutils.simba}
 
 {$ENDIF}
 {$ENDIF}

@@ -1,0 +1,2356 @@
+(*
+# Form Utilities
+Forms and components extensions.
+
+This files contains custom components and methods to be used in forms.
+*)
+{$DEFINE WL_FORMUTILS_INCLUDED}
+{$IFNDEF WL_UTILS}
+  {$I WaspLib/utils.simba}
+{$ENDIF}
+
+function tLazControl.GetScreenDPI(): Int32;
+var
+  tmp: TLazFont;
+begin
+  tmp.Init();
+  Result := tmp.PixelsPerInch;
+  tmp.Free();
+end;
+
+function tLazControl.AdjustToDPI(n: Int32): Int32;
+begin
+  Result := Round(n * tLazControl.GetScreenDPI() / 96);
+end;
+
+(*
+## tLazControl.IsInitiated
+```pascal
+function tLazControl.IsInitiated(): Boolean;
+```
+Checks if the control has already been initiated.
+*)
+function tLazControl.IsInitiated(): Boolean;
+begin
+  Result := Self <> nil;
+end;
+
+(*
+## tLazControl.Set
+```pascal
+procedure tLazControl.SetTooltip(value: String);
+procedure tLazControl.SetFontColor(value: Int32);
+procedure tLazControl.SetChildsFontColor(value: Int32);
+```
+tLazControl.Set methods. Their names are self explanatory.
+
+For some reason tLazControl.SetHint cannot be overriden, so a custom method for this was made.
+*)
+procedure tLazControl.SetTooltip(value: String);
+begin
+  Self.Hint := value;
+  Self.ShowHint := (value <> '');
+end;
+
+procedure tLazControl.SetFontColor(value: Int32);
+var
+  name: String;
+  font: tLazFont;
+begin
+  font := Self.getFont();
+  if font.getColor() <> 536870912 then
+    Exit;
+
+  name := Self.getName();
+  if name.ContainsAny(['_edit', '_memo', '_listbox', '_checklistbox']) then
+    font.setColor(0)
+  else
+    font.setColor(value);
+end;
+
+procedure tLazControl.SetFontColorEx(color: TColor);
+begin
+  Self.GetFont().setColor(color);
+end;
+
+procedure tLazControl.SetFontSize(size: Int32);
+begin
+  Self.GetFont().setSize(size);
+end;
+
+procedure tLazControl.SetChildsFontColor(value: Int32);
+var
+  i: Int32;
+  child: tLazControl;
+begin
+  for i := 0 to Self.getLazComponentCount() - 1 do
+  begin
+    child := Self.GetLazComponent(i);
+    child.SetChildsFontColor(value);
+  end;
+
+  Self.SetFontColor(value);
+end;
+
+procedure tLazControl.SetAllChildsFontColor(value: Int32);
+var
+  i: Int32;
+  child: tLazControl;
+begin
+  for i := 0 to Self.getLazComponentCount() - 1 do
+  begin
+    child := Self.GetLazComponent(i);
+    if child.getFont().getColor() = 536870912 then
+      child.SetChildsFontColor(value);
+  end;
+
+  if Self.getFont().getColor() = 536870912 then
+    Self.SetFontColor(value);
+end;
+
+
+(*
+## tLazControl.Get
+```pascal
+function tLazControl.GetRight(): Int32;
+function tLazControl.GetBottom(): Int32;
+```
+tLazControl.Get methods. Their names are self explanatory.
+*)
+function tLazControl.GetRight(): Int32;
+begin
+  Result := Self.getBoundsRect().Right;
+end;
+
+function tLazControl.GetBottom(): Int32;
+begin
+  Result := Self.getBoundsRect().Bottom;
+end;
+
+
+function tLazComponent.NameMatch(name: String): Boolean;
+begin
+  Result := (Self <> nil) and (Self.GetName() = name);
+end;
+
+(*
+## tLazComponent.GetChild
+```pascal
+function tLazComponent.GetChild(name: String): tLazComponent;
+```
+Recursively search for a children with the specified name.
+*)
+function tLazComponent.GetChild(name: String): tLazComponent;
+var
+  i: Int32;
+  child: tLazComponent;
+begin
+  if Self = nil then Exit;
+
+  if Self.GetName() = name then Exit(Self);
+
+  for i := 0 to Self.getLazComponentCount() - 1 do
+  begin
+    child := Self.GetLazComponent(i);
+    Result := child.GetChild(name);
+    if Result <> nil then Exit;
+  end;
+
+  Result := nil;
+end;
+
+(*
+## tLazComponent.RemoveChildren
+```pascal
+procedure tLazComponent.RemoveChildren(release: Boolean = False);
+```
+Recursively remove children from a parent. To also free the parent set **release** to true.
+All children are freed when using this.
+*)
+procedure tLazComponent.RemoveChildren(release: Boolean = False);
+var
+  child: tLazComponent;
+begin
+  if Self.getLazComponentCount() = 0 then
+  begin
+    if release then Self.Free();
+    Exit;
+  end;
+
+  child := Self.GetLazComponent(0);
+  Self.RemoveComponent(child);
+  child.RemoveChildren(True);
+  Self.RemoveChildren(release);
+end;
+
+
+(*
+## Component.NumberField
+```pascal
+procedure tLazComponent.NumberField(sender: TObject; var key: char);
+```
+Callback method to limit user input to numbers only and backspace.
+This numbers can be Ints or Doubles.
+*)
+procedure tLazComponent.NumberField({$H-}sender: TObject;{$H+} var key: char);
+begin
+  if not (key in ['0'..'9', #8]) then key := #0;
+end;
+
+procedure tLazComponent.FloatField(sender: TObject; var key: char);
+begin
+  case key of
+    '0'..'9', #8: ;
+    '.': if TLazCustomEdit(sender).getText().Contains('.') then key := #0;
+    else key := #0;
+  end;
+end;
+
+
+procedure tLazComponent.MailField({$H-}sender: TObject;{$H+} var key: char);
+begin
+  if key = ' ' then key := #0;
+end;
+
+(*
+## Component.TimeField
+```pascal
+procedure tLazComponent.TimeField(sender: TObject; var key: char);
+```
+Callback method to limit user input to numbers only, backspace and a few characters used in time.
+*)
+procedure tLazComponent.TimeField({$H-}sender: TObject;{$H+} var key: char);
+begin
+  if not (key in ['0'..'9', #8, '.', ':', '-', '_', ',', ' ']) then
+    key := #0;
+end;
+
+(*
+## Component.NumberArrayField
+```pascal
+procedure tLazComponent.NumberArrayField(sender: TObject; var key: char);
+```
+Callback method to limit user input to a TIntegerArray.
+*)
+procedure tLazComponent.NumberArrayField({$H-}sender: TObject;{$H+} var key: char);
+begin
+  if not (key in ['0'..'9', ',', ' ' , #8]) then
+    key := #0;
+end;
+
+(*
+## Control.OpenLink
+```pascal
+procedure tLazControl.OpenLink(sender: TObject);
+```
+
+Open the link in the control caption.
+*)
+procedure tLazControl.OpenLink(sender: TObject);
+var
+  tmp: tLazControl;
+  url: String;
+begin
+  tmp := sender;
+  url := Trim(tmp.getCaption());
+  if url.IsURL() then
+    URLOpenInBrowser(url);
+end;
+
+
+(*
+## CustomEdit.IsEmpty
+```pascal
+function TCustomEdit.IsEmpty(): Boolean;
+```
+
+Returns true or false if the TCustomEdit (tLazEdit and tLazMemo) are empty.
+*)
+function TLazCustomEdit.IsEmpty(): Boolean;
+begin
+  Result := Trim(Self.getText()) = '';
+end;
+
+(*
+## CustomEdit.GetIntegerArray
+```pascal
+function TCustomEdit.GetIntegerArray(): TIntegerArray;
+```
+Returns the TIntegerArray in the TCustomEdit (tLazEdit and tLazMemo).
+It's probably a good idea to limit the TCustomEdit input with **tLazComponent.IntArrayField()**.
+*)
+function TLazCustomEdit.GetIntegerArray(min, max: Int32 = 0): TIntegerArray;
+var
+  str, s: String;
+  w: Int32;
+begin
+  str := Self.GetText();
+
+  for s in str.Split(',') do
+  begin
+    w := s.Strip().ExtractNumber();
+
+    if min = max then
+      Result += w
+    else if InRange(w, min, max) then
+      Result += w;
+  end;
+
+  Result := Result.Unique();
+  Result := Result.Sorted();
+end;
+
+
+(*
+## tLazControl.Create
+```pascal
+procedure tLazPanel.Create(owner: tLazControl);
+procedure tLazPageControl.Create(owner: tLazControl);
+procedure tLazTabSheet.Create(owner: tLazControl);
+procedure tLazImage.Create(owner: tLazControl);
+procedure tLazLabel.Create(owner: tLazControl);
+procedure tLazEdit.Create(owner: tLazControl);
+procedure tLazButton.Create(owner: tLazControl);
+procedure tLazCheckBox.Create(owner: tLazControl);
+procedure tLazRadioButton.Create(owner: tLazControl);
+procedure tLazComboBox.Create(owner: tLazControl);
+procedure tLazListBox.Create(owner: tLazControl);
+procedure tLazMemo.Create(owner: tLazControl);
+procedure tLazTrackBar.Create(owner: tLazControl);
+```
+`tLazControl.Init()` and `tLazControl.SetParent()` in a single method.
+Since this is something that has to be done almost always this wrapper was made.
+*)
+
+function tLazPanel.Create(owner: tLazControl; topleft, dimensions: TPoint): tLazPanel; static; overload;
+begin
+  result := tLazPanel.Create(owner);
+  if topleft.X > 0 then result.Left:= topLeft.X;
+  if topleft.Y > 0 then result.Top := topleft.Y;
+  if dimensions.X > 0 then result.Width := dimensions.X;
+  if dimensions.Y > 0 then result.Height := dimensions.Y;
+end;
+
+function tLazPanel.Create(owner: tLazControl; topleft, dimensions: TPoint; adjustDPI: Boolean): tLazPanel; static; overload;
+begin
+  if adjustDPI then
+  begin
+    topleft := [tLazControl.AdjustToDPI(topleft.X), tLazControl.AdjustToDPI(topleft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  result := tLazPanel.Create(owner, topleft, dimensions);
+end;
+
+function tLazPanel.Create(owner: tLazControl; topleft, dimensions, offset: TPoint; adjustDPI: Boolean): tLazPanel; static; overload;
+begin
+  if adjustDPI then
+  begin
+    topleft := [tLazControl.AdjustToDPI(topleft.X), tLazControl.AdjustToDPI(topleft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  result := tLazPanel.Creat(owner, topleft + offset, dimensions, False);
+end;
+
+function tLazLabel.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint): tLazLabel; static; overload;
+begin
+  result := tLazPanel.Create(owner);
+  if topleft.X > 0 then result.Left:= topLeft.X;
+  if topleft.Y > 0 then result.Top := topleft.Y;
+  if dimensions.X > 0 then result.Width := dimensions.X;
+  if dimensions.Y > 0 then result.Height := dimensions.Y;
+  result.Caption := caption;
+  result.Hint := hint;
+end;
+
+function tLazLabel.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint; adjustDPI: Boolean): tLazLabel; static; overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  result := tLazLabel.Create(owner, caption, hint, topLeft, dimensions);
+end;
+
+function tLazLabel.Create(owner: tLazControl; caption, hint: String; topleft, dimensions, offset: TPoint; adjustDPI: Boolean): tLazLabel; static; overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  result := tLazLabel.Create(owner, caption, hint, topleft + offset, dimensions, False);
+end;
+
+function tLazEdit.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint): tLazEdit; static; overload;
+begin
+  result := tLazEdit.Create(owner);
+  if topleft.X > 0 then result.Left:= topLeft.X;
+  if topleft.Y > 0 then result.Top := topleft.Y;
+  if dimensions.X > 0 then result.Width := dimensions.X;
+  if dimensions.Y > 0 then result.Height := dimensions.Y;
+  result.Caption := caption;
+  result.Hint := hint;
+end;
+
+function tLazEdit.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint; adjustDPI: Boolean): tLazEdit; static; overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  result := tLazEdit.Create(owner, caption, hint, topLeft, dimensions);
+end;
+
+function tLazEdit.Create(owner: tLazControl; caption, hint: String; topleft, dimensions, offset: TPoint; adjustDPI: Boolean): tLazEdit; static; overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  result := tLazEdit.Create(owner, caption, hint, topleft + offset, dimensions, False);
+end;
+
+function tLazMemo.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint): tLazMemo; static; overload;
+begin
+  result := tLazMemo.Create(owner);
+  if topleft.X > 0 then Self.SetLeft(topleft.X);
+  if topleft.Y > 0 then Self.SetTop(topleft.Y);
+  if dimensions.X > 0 then Self.SetWidth(dimensions.X);
+  if dimensions.Y > 0 then Self.SetHeight(dimensions.Y);
+  Result.Caption := caption;
+  Result.Hint := hint;
+end;
+
+function tLazMemo.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint; adjustDPI: Boolean): tLazMemo; static; overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  result := tLazMemo.Create(owner, caption, hint, topLeft, dimensions);
+end;
+
+function tLazMemo.Create(owner: tLazControl; caption, hint: String; topleft, dimensions, offset: TPoint; adjustDPI: Boolean): tLazMemo; static; overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  result := tLazMemo.Create(owner, caption, hint, topleft + offset, dimensions, False);
+end;
+
+{
+
+procedure tLazButton.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint); overload;
+begin
+  Self.Create(owner);
+  if topleft.X > 0 then Self.SetLeft(topleft.X);
+  if topleft.Y > 0 then Self.SetTop(topleft.Y);
+  if dimensions.X > 0 then Self.SetWidth(dimensions.X);
+  if dimensions.Y > 0 then Self.SetHeight(dimensions.Y);
+  Self.SetCaption(caption);
+  Self.SetHint(hint);
+end;
+
+procedure tLazButton.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topLeft, dimensions);
+end;
+
+procedure tLazButton.Create(owner: tLazControl; caption, hint: String; topleft, dimensions, offset: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft + offset, dimensions, False);
+end;
+
+procedure tLazCheckBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint); overload;
+begin
+  Self.Create(owner);
+  if topleft.X > 0 then Self.SetLeft(topleft.X);
+  if topleft.Y > 0 then Self.SetTop(topleft.Y);
+  if dimensions.X > 0 then Self.SetWidth(dimensions.X);
+  if dimensions.Y > 0 then Self.SetHeight(dimensions.Y);
+  Self.SetCaption(caption);
+  Self.SetHint(hint);
+end;
+
+procedure tLazCheckBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topLeft, dimensions);
+end;
+
+procedure tLazCheckBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions, offset: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft + offset, dimensions, False);
+end;
+
+procedure tLazRadioButton.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint); overload;
+begin
+  Self.Create(owner);
+  if topleft.X > 0 then Self.SetLeft(topleft.X);
+  if topleft.Y > 0 then Self.SetTop(topleft.Y);
+  if dimensions.X > 0 then Self.SetWidth(dimensions.X);
+  if dimensions.Y > 0 then Self.SetHeight(dimensions.Y);
+  Self.SetCaption(caption);
+  Self.SetHint(hint);
+end;
+
+procedure tLazRadioButton.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topLeft, dimensions);
+end;
+
+procedure tLazRadioButton.Create(owner: tLazControl; caption, hint: String; topleft, dimensions, offset: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft + offset, dimensions, False);
+end;
+
+
+procedure tLazComboBox.Create(owner: tLazControl);
+begin
+  Self.Init(owner);
+  Self.SetParent(owner);
+  Self.setStyle(tLazComboBoxStyle.csDropDownList);
+end;
+
+procedure tLazComboBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint); overload;
+begin
+  Self.Create(owner);
+  if topleft.X > 0 then Self.SetLeft(topleft.X);
+  if topleft.Y > 0 then Self.SetTop(topleft.Y);
+  if dimensions.X > 0 then Self.SetWidth(dimensions.X);
+  if dimensions.Y > 0 then Self.SetHeight(dimensions.Y);
+  Self.SetCaption(caption);
+  Self.SetHint(hint);
+end;
+
+procedure tLazComboBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topLeft, dimensions);
+end;
+
+procedure tLazComboBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions, offset: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft + offset, dimensions, False);
+end;
+
+
+procedure tLazListBox.Create(owner: tLazControl);
+begin
+  Self.Init(owner);
+  Self.SetParent(owner);
+end;
+
+procedure tLazListBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint); overload;
+begin
+  Self.Create(owner);
+  if topleft.X > 0 then Self.SetLeft(topleft.X);
+  if topleft.Y > 0 then Self.SetTop(topleft.Y);
+  if dimensions.X > 0 then Self.SetWidth(dimensions.X);
+  if dimensions.Y > 0 then Self.SetHeight(dimensions.Y);
+  Self.SetCaption(caption);
+  Self.SetHint(hint);
+end;
+
+procedure tLazListBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topLeft, dimensions);
+end;
+
+procedure tLazListBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions, offset: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft + offset, dimensions, False);
+end;
+
+
+procedure tLazTrackBar.Create(owner: tLazControl);
+begin
+  Self.Init(owner);
+  Self.SetParent(owner);
+end;
+
+procedure tLazTrackBar.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint); overload;
+begin
+  Self.Create(owner);
+  if topleft.X > 0 then Self.SetLeft(topleft.X);
+  if topleft.Y > 0 then Self.SetTop(topleft.Y);
+  if dimensions.X > 0 then Self.SetWidth(dimensions.X);
+  if dimensions.Y > 0 then Self.SetHeight(dimensions.Y);
+  Self.SetCaption(caption);
+  Self.SetHint(hint);
+end;
+
+procedure tLazTrackBar.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topLeft, dimensions);
+end;
+
+procedure tLazTrackBar.Create(owner: tLazControl; caption, hint: String; topleft, dimensions, offset: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft + offset, dimensions, False);
+end;
+
+
+procedure TSimbaImageBox.Create(owner: tLazControl);
+begin
+  Self.Init(owner);
+  Self.SetParent(owner);
+  Self.SetAlign(TAlign.alClient);
+end;
+
+procedure TSimbaImageBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint); overload;
+begin
+  Self.Create(owner);
+  if topleft.X > 0 then Self.SetLeft(topleft.X);
+  if topleft.Y > 0 then Self.SetTop(topleft.Y);
+  if dimensions.X > 0 then Self.SetWidth(dimensions.X);
+  if dimensions.Y > 0 then Self.SetHeight(dimensions.Y);
+  Self.SetCaption(caption);
+  Self.SetHint(hint);
+end;
+
+procedure TSimbaImageBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topLeft, dimensions);
+end;
+
+procedure TSimbaImageBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions, offset: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topLeft := [tLazControl.AdjustToDPI(topLeft.X), tLazControl.AdjustToDPI(topLeft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft + offset, dimensions, False);
+end;
+
+
+(*
+## tLazImage.LoadFromFile
+```pascal
+procedure tLazImage.LoadFromFile(path: String);
+```
+Load a image file to a tLazImage directly.
+*)
+procedure tLazImage.LoadFromFile(path: String);
+var
+  name, extension: String;
+begin
+  if Pos(APPPATH, path) = 0 then
+    path := APPPATH + path;
+
+  Self.getPicture().LoadFromFile(path);
+
+  name := ExtractFileName(path);
+  extension := ExtractFileExt(name);
+
+  name := 'image_' + StringReplace(LowerCase(name), extension, '', [rfReplaceAll]);
+  Self.SetName(name);
+end;
+
+(*
+## tLazControl.LoadFromFile
+```pascal
+procedure tLazControl.LoadFromFile(path: String);
+```
+Load a image file and set it as the background for a tLazControl.
+This can be used to set images for tLazPanels, tLazPageControls, tLazTabSheet, tLazButtons, etc.
+*)
+procedure tLazControl.LoadFromFile(path: String);
+var
+  img: tLazImage;
+begin
+  img.Create(Self);
+  img.LoadFromFile(path);
+
+  img.SetBounds(0, 0, Self.getWidth(), Self.getHeight());
+  img.SetStretch(True);
+  img.SetProportional(True);
+
+  img.setAlign(alClient);
+
+  Self.SetName(Self.getName() + '_' + img.getName());
+end;
+
+(*
+## tLazControl.SwapImage
+```pascal
+procedure tLazControl.SwapImage(path: String);
+```
+Load a new image file and set it as the new background for a tLazControl.
+This can be used to swap images for tLazPanels, tLazPageControls, tLazTabSheet, tLazButtons, etc.
+If the tLazControl doesn't have an image yet, this will also set it up.
+*)
+procedure tLazControl.SwapImage(path: String);
+var
+  hi, i: Int32;
+  child: tLazControl;
+begin
+  hi := Self.getLazComponentCount()-1;
+
+  if hi < 0 then
+  begin
+    Self.LoadFromFile(path);
+    Exit;
+  end;
+
+  for i := 0 to hi do
+  begin
+    child := Self.GetLazComponent(i);
+    if 'image_' in child.getName() then
+      Break;
+    if i = hi then
+    begin
+      Self.LoadFromFile(path);
+      Exit;
+    end;
+  end;
+
+  tLazImage(child).LoadFromFile(path);
+end;
+
+
+(*
+## tLazControl.GetTrueWidth
+```pascal
+function tLazControl.GetTrueWidth(): Int32;
+```
+Get the true width of the tLazControl caption.
+*)
+function tLazControl.GetTrueWidth(): Int32;
+var
+  bmp: TBitmap;
+  canvas: TCanvas;
+  font: TFont;
+begin
+  if Self = nil then
+    Exit;
+
+  bmp.Init();
+  try
+    canvas := bmp.getCanvas();
+    font := Self.getFont();
+    if font <> nil then
+    begin
+      canvas.setFont(font);
+      Result := canvas.TextWidth(Self.getCaption());
+    end;
+  finally
+    bmp.Free();
+  end;
+end;
+
+(*
+## tLazControl.GetTrueHeight
+```pascal
+function tLazControl.GetTrueHeight(): Int32;
+```
+Get the true height of the tLazControl caption.
+*)
+function tLazControl.GetTrueHeight(): Int32;
+var
+  bmp: TBitmap;
+  canvas: TCanvas;
+  font: TFont;
+begin
+  if Self = nil then
+    Exit;
+
+  bmp.Init();
+  try
+    canvas := bmp.getCanvas();
+    font := Self.getFont();
+    if font <> nil then
+    begin
+      canvas.setFont(font);
+      Result := canvas.TextHeight(Self.getCaption());
+    end;
+  finally
+    bmp.Free();
+  end;
+end;
+
+(*
+## CheckBox.SetChecked
+```pascal
+procedure tLazCheckBox.SetChecked(value: Boolean);
+```
+Sets the checkbox checked or unchecked with a boolean.
+*)
+procedure tLazCheckBox.SetChecked(value: Boolean);
+begin
+  if value then
+    Self.setState(cbChecked)
+  else
+    Self.setState(cbUnchecked);
+end;
+
+(*
+## CheckBox.IsChecked
+```pascal
+function tLazCheckBox.IsChecked(): Boolean;
+```
+Gets the checkbox state, checked or unchecked with a boolean.
+*)
+function tLazCheckBox.IsChecked(): Boolean;
+begin
+  Result := Self.getState() = cbChecked;
+end;
+
+(*
+## CheckBox.Toggle
+```pascal
+procedure tLazCheckBox.Toggle();
+```
+Inverts the checkbox.
+*)
+procedure tLazCheckBox.Toggle();
+begin
+  case Self.getState() of
+    cbChecked: Self.setState(cbUnchecked);
+    else Self.setState(cbChecked)
+  end;
+end;
+
+
+function TStrings.Search(value: String; lo: Int32 = 0): Int32;
+begin
+  for Result := lo to Self.getCount() - 1 do
+    if value in Self.getStrings(Result) then
+      Exit;
+
+  Result := -1;
+end;
+
+function tLazListBox.Search(value: String): Int32;
+var
+  lo: Int32;
+  strings: TStrings;
+begin
+  if Length(value) > 1 then
+    lo := Self.getItemIndex()
+  else
+    lo := 0;
+
+  strings := Self.GetItems();
+  Result := strings.Search(value, lo);
+  if Result > -1 then
+    Self.SetItemIndex(Result);
+end;
+
+function tLazComboBox.Search(value: String): Int32;
+var
+  lo: Int32;
+  strings: TStrings;
+begin
+  if Length(value) > 1 then
+    lo := Self.getItemIndex()
+  else
+    lo := 0;
+
+  strings := Self.GetItems();
+  Result := strings.Search(value, lo);
+  if Result > -1 then
+    Self.SetItemIndex(Result);
+end;
+
+
+
+type
+(*
+## LabeledControl
+```pascal
+type
+  tLazLabeledControl = record
+    Panel: tLazPanel;
+    Caption: tLazLabel;
+  end;
+```
+tLazLabeledControl is the base type for custom tLazLabeledControls.
+It's not really meant to be used directly.
+If for some reason you need to see the control bounds, it's recommended to set the panel bevel width to 1.
+
+Changing tLazLabeledControl subcomponents align value can mess the position of everything.
+*)
+  tLazLabeledControl = record
+    Panel: tLazPanel;
+    Caption: tLazLabel;
+  end;
+
+(*
+## tLazLabeledPanel
+```pascal
+tLazLabeledPanel = type tLazLabeledControl;
+```
+Same exact thing as a tLazLabeledControl but with the purpose of being a panel for other components.
+*)
+  tLazLabeledPanel = type tLazLabeledControl;
+
+(*
+## LabeledEdit
+```pascal
+type
+  tLazLabeledEdit = record(tLazLabeledControl)
+    Edit: tLazEdit;
+  end;
+```
+tLazLabeledEdit is, as the name implies a tLazEdit with a tLazLabel on top.
+Both components are contained in the tLazPanel inherited from tLazLabeledControl.
+*)
+  tLazLabeledEdit = record(tLazLabeledControl)
+    Edit: tLazEdit;
+  end;
+
+(*
+## LabeledCheckBox
+```pascal
+type tLazLabeledCheckBox = record(tLazLabeledControl)
+CheckBox: tLazEdit;
+end;
+```
+tLazLabeledCheckBox is, as the name implies a tLazCheckBox with a tLazLabel to it's right.
+Both components are contained in the tLazPanel inherited from tLazLabeledControl.
+```{note}
+The standard tLazCheckBox already has a label by it but it's hard to customize it.
+```
+*)
+  tLazLabeledCheckBox = record(tLazLabeledControl)
+    CheckBox: tLazCheckBox;
+  end;
+
+(*
+## LabeledComboBox
+```pascal
+type
+  tLazLabeledComboBox = record(tLazLabeledControl)
+    ComboBox: tLazComboBox;
+  end;
+```
+tLazLabeledComboBox is, as the name implies a tLazComboBox with a tLazLabel on top.
+Both components are contained in the tLazPanel inherited from tLazLabeledControl.
+*)
+  tLazLabeledComboBox = record(tLazLabeledControl)
+    ComboBox: tLazComboBox;
+  end;
+
+(*
+## LabeledListBox
+```pascal
+type
+  tLazLabeledListBox = record(tLazLabeledControl)
+    ListBox: tLazListBox;
+  end;
+```
+tLazLabeledListBox is, as the name implies a tLazListBox with a tLazLabel on top.
+Both components are contained in the tLazPanel inherited from tLazLabeledControl.
+*)
+  tLazLabeledListBox = record(tLazLabeledControl)
+    ListBox: tLazListBox;
+  end;
+
+(*
+## LabeledMemo
+```pascal
+type
+  tLazLabeledMemo = record(tLazLabeledControl)
+    Memo: tLazMemo;
+  end;
+```
+tLazLabeledMemo is, as the name implies a tLazMemo with a tLazLabel on top.
+Both components are contained in the tLazPanel inherited from tLazLabeledControl.
+*)
+  tLazLabeledMemo = record(tLazLabeledControl)
+    Memo: tLazMemo;
+  end;
+
+(*
+## LabeledTrackBar
+```pascal
+type
+  tLazLabeledTrackBar = record(tLazLabeledControl)
+    TrackBar: tLazTrackBar;
+  end;
+```
+tLazLabeledTrackBar is, as the name implies a tLazTrackBar with a tLazLabel on top.
+Both components are contained in the tLazPanel inherited from tLazLabeledControl.
+*)
+  tLazLabeledTrackBar = record(tLazLabeledControl)
+    TrackBar: tLazTrackBar;
+  end;
+
+(*
+## CheckCheckGroup
+```pascal
+type
+  TCheckCheckGroup = record(tLazLabeledCheckBox)
+    CaptionPanel, GroupPanel: tLazPanel;
+    Group: array of tLazLabeledCheckBox;
+  end;
+```
+TCheckCheckGroup is, a custom component.
+The best way to describe it is a tLazLabeledCheckBox group that the caption itself is a checkbox to enable/disable the whole group.
+*)
+  TCheckCheckGroup = record(tLazLabeledCheckBox)
+    CaptionPanel, GroupPanel: tLazPanel;
+    Group: array of tLazLabeledCheckBox;
+  end;
+
+
+(*
+## LabeledControl.IsInitiated
+```pascal
+function tLazLabeledControl.IsInitiated(): Boolean;
+```
+Checks if the custom labeled control has already been initiated.
+*)
+function tLazLabeledControl.IsInitiated(): Boolean;
+begin
+  Result := Self.Panel <> nil;
+end;
+
+(*
+## tLazLabeledControl.Create
+```pascal
+procedure tLazLabeledControl.Create(owner: tLazControl);
+procedure tLazLabeledPanel.Create(owner: tLazControl); override;
+procedure tLazLabeledEdit.Create(owner: tLazControl); override;
+procedure tLazLabeledCheckBox.Create(owner: tLazControl); override;
+procedure tLazLabeledComboBox.Create(owner: tLazControl); override;
+procedure tLazLabeledListBox.Create(owner: tLazControl); override;
+procedure tLazLabeledMemo.Create(owner: tLazControl); override;
+procedure tLazLabeledTrackBar.Create(owner: tLazControl); override;
+```
+Custom components `tLazLabeledControl.Init()` and `tLazLabeledControl.SetParent()` in a single method.
+Since this is used very often a wrapper was made.
+*)
+procedure tLazLabeledControl.Create(owner: tLazControl);
+begin
+  Self.Panel.Create(owner);
+  Self.Panel.setBevelWidth(0);
+
+  Self.Caption.Create(Self.Panel);
+  Self.Caption.setAlign(alTop);
+end;
+
+procedure tLazLabeledPanel.Create(owner: tLazControl); override;
+begin
+  Self.Panel.Create(owner);
+
+  Self.Caption.Create(Self.Panel);
+  Self.Caption.setAlign(alTop);
+end;
+
+procedure tLazLabeledEdit.Create(owner: tLazControl); override;
+var
+  h: Int32;
+begin
+  inherited;
+
+  Self.Edit.Create(Self.Panel);
+  Self.Edit.setAlign(alClient);
+
+  h += tLazControl.AdjustToDPI(Self.Caption.getHeight());
+  h += tLazControl.AdjustToDPI(Self.Edit.getHeight());
+
+  Self.Panel.setHeight(h);
+end;
+
+procedure tLazLabeledCheckBox.Create(owner: tLazControl); override;
+  type tLazLabeledCheckBox = tLazLabeledCheckBox;
+
+  procedure tLazLabeledCheckBox._PanelToggle(sender: TObject);
+  var
+    check: tLazCheckBox;
+    event: TNotifyEvent;
+  begin
+    check := tLazPanel(sender).GetLazComponent(1);
+    check.Toggle();
+    event := check.GetOnChange();
+    if event <> nil then
+      Lapify(event)(check);
+  end;
+
+  procedure tLazLabeledCheckBox._LabelToggle(sender: TObject);
+  begin
+    Self._PanelToggle(tLazControl(sender).getParent());
+  end;
+
+begin
+  Self.Panel.Create(owner);
+  Self.Panel.setBevelWidth(0);
+  Self.Panel.setOnClick(@Self._PanelToggle);
+
+  Self.Caption.Create(Self.Panel);
+  Self.Caption.setAlign(alLeft);
+  Self.Caption.setOnClick(@Self._LabelToggle);
+
+  Self.CheckBox.Create(Self.Panel);
+  Self.CheckBox.setAlign(alLeft);
+
+  Self.Panel.setHeight(Self.Caption.GetTrueHeight());
+  Self.Panel.setWidth(tLazControl.AdjustToDPI(22) + Self.Caption.GetTrueWidth());
+end;
+
+procedure tLazLabeledComboBox.Create(owner: tLazControl); override;
+var
+  h: Int32;
+begin
+  inherited;
+
+  Self.ComboBox.Create(Self.Panel);
+  Self.ComboBox.setAlign(alClient);
+
+  h += tLazControl.AdjustToDPI(Self.Caption.getHeight());
+  h += tLazControl.AdjustToDPI(Self.ComboBox.getHeight());
+
+  Self.Panel.setHeight(h);
+end;
+
+procedure tLazLabeledListBox.Create(owner: tLazControl); override;
+begin
+  inherited;
+
+  Self.ListBox.Create(Self.Panel);
+  Self.ListBox.setAlign(alClient);
+
+  Self.Panel.setHeight(Self.Caption.getHeight() + Self.ListBox.getHeight());
+end;
+
+procedure tLazLabeledMemo.Create(owner: tLazControl); override;
+begin
+  inherited;
+
+  Self.Memo.Create(Self.Panel);
+  Self.Memo.setAlign(alClient);
+
+  Self.Panel.setHeight(Self.Caption.getHeight() + Self.Memo.getHeight());
+end;
+
+procedure tLazLabeledTrackBar.Create(owner: tLazControl); override;
+begin
+  inherited;
+
+  Self.TrackBar.Create(Self.Panel);
+  Self.TrackBar.setAlign(alClient);
+  Self.TrackBar.setBorderWidth(0);
+
+  Self.Panel.setHeight(Self.Caption.getHeight() + Self.TrackBar.getHeight());
+end;
+
+procedure TCheckCheckGroup.Create(owner: tLazControl); override;
+  type TCheckCheckGroup = TCheckCheckGroup;
+
+  procedure TCheckCheckGroup._MainCheckBoxOnChange(sender: TObject);
+  var
+    check: tLazCheckBox;
+    isChecked: Boolean;
+
+    panel, subPanel: tLazPanel;
+    i: Int32;
+    action: TNotifyEvent;
+  begin
+    check := sender;
+    isChecked := check.IsChecked();
+
+    panel := check.getParent().getParent().GetLazComponent(1);
+
+    for i := 0 to panel.getLazComponentCount()-1 do
+    begin
+      subPanel := panel.GetLazComponent(i);
+      subPanel.setEnabled(isChecked);
+
+      check := subPanel.GetLazComponent(1);
+      action := check.getOnChange();
+      action;
+    end;
+  end;
+
+  procedure TCheckCheckGroup._PanelToggle(sender: TObject); override;
+  var
+    check: tLazCheckBox;
+  begin
+    check := tLazPanel(sender).GetLazComponent(1);
+    check.Toggle();
+    Lapify(check.GetOnChange())(check);
+  end;
+
+  procedure TCheckCheckGroup._LabelToggle(sender: TObject); override;
+  begin
+    Self._PanelToggle(tLazControl(sender).getParent());
+  end;
+
+begin
+  Self.Panel.Create(owner);
+  Self.Panel.SetBevelWidth(0);
+
+  Self.CaptionPanel.Create(Panel);
+  Self.CaptionPanel.SetBevelWidth(0);
+  Self.CaptionPanel.setHeight(tLazControl.AdjustToDPI(25));
+  Self.CaptionPanel.setOnClick(@Self._PanelToggle);
+
+  Self.Caption.Create(Self.CaptionPanel);
+  Self.Caption.setLeft(tLazControl.AdjustToDPI(20));
+  Self.Caption.SetTop(tLazControl.AdjustToDPI(2));
+  Self.Caption.setOnClick(@Self._LabelToggle);
+  Self.CheckBox.Create(Self.CaptionPanel);
+  Self.CheckBox.setOnChange(@Self._MainCheckBoxOnChange);
+
+  Self.GroupPanel.Create(Panel);
+  Self.GroupPanel.SetBevelWidth(0);
+  Self.GroupPanel.SetTop(Self.CaptionPanel.GetBottom());
+  Self.GroupPanel.SetLeft(tLazControl.AdjustToDPI(10));
+end;
+
+
+procedure TCheckCheckGroup.AdjustSize();
+var
+  i, tmp, w, h: Int32;
+begin
+  w := Self.Caption.GetTrueWidth();
+  h := Self.Caption.GetTrueHeight();
+
+  if Self.Group <> [] then
+    for i := 0 to High(Self.Group) do
+    begin
+      tmp := Self.Group[i].Caption.GetTrueWidth();
+      if tmp > w then
+        w := tmp;
+      h += Self.Group[i].Caption.GetTrueHeight();
+    end;
+
+  Self.GroupPanel.setHeight(h);
+  Self.Panel.setHeight(tLazControl.AdjustToDPI(22) + h);
+  Self.Panel.setWidth(tLazControl.AdjustToDPI(30) + w);
+end;
+
+
+(*
+## LabeledControl.SetCaption
+```pascal
+procedure tLazLabeledControl.SetCaption(value: String);
+```
+Set the labeled control caption.
+*)
+procedure tLazLabeledControl.SetCaption(value: String);
+begin
+  Self.Caption.setCaption(value);
+end;
+
+procedure tLazLabeledCheckBox.SetCaption(value: String); override;
+begin
+  Self.Caption.setCaption(value);
+  Self.Panel.setHeight(Self.Caption.GetTrueHeight());
+  Self.Panel.setWidth(tLazControl.AdjustToDPI(22) + Self.Caption.GetTrueWidth());
+end;
+
+procedure TCheckCheckGroup.SetCaption(value: String); override;
+begin
+  Self.Caption.setCaption(value);
+  Self.AdjustSize();
+end;
+
+
+
+
+(*
+## LabeledControl.SetHint
+```pascal
+procedure tLazLabeledControl.SetHint(value: String);
+```
+Set the labeled control hint (tooltip).
+*)
+procedure tLazLabeledControl.SetHint(value: String);
+begin
+  Self.Panel.setHint(value);
+end;
+
+(*
+## LabeledControl.ShowHint
+```pascal
+procedure tLazLabeledControl.ShowHint();
+```
+Sets show hint (tooltip) to true.
+*)
+procedure tLazLabeledControl.ShowHint();
+begin
+  Self.Panel.ShowHint();
+end;
+
+(*
+## LabeledControl.SetShowHint
+```pascal
+procedure tLazLabeledControl.SetShowHint(value: Boolean);
+```
+Sets show hint (tooltip) to true or false.
+*)
+procedure tLazLabeledControl.SetShowHint(value: Boolean);
+begin
+  Self.Panel.SetShowHint(value);
+end;
+
+(*
+## LabeledControl.SetTooltip
+```pascal
+procedure tLazLabeledControl.SetTooltip(value: String);
+```
+Same as the previous one but makes sure that .ShowHint() is enabled if **value** was not empty.
+For more info read about tLazControl.SetTooltip().
+*)
+procedure tLazLabeledControl.SetTooltip(value: String);
+begin
+  Self.Panel.SetTooltip(value);
+end;
+
+(*
+## LabeledControl.SetName
+```pascal
+procedure tLazLabeledEdit.SetName(value: String);
+procedure tLazLabeledCheckBox.SetName(value: String);
+procedure tLazLabeledComboBox.SetName(value: String)
+procedure tLazLabeledListBox.SetName(value: String);
+procedure tLazLabeledMemo.SetName(value: String);
+procedure tLazLabeledTrackBar.SetName(value: String);
+```
+Sets names to the subcomponents of the tLazLabeledControl.
+Caption is named with **value** + '_caption' while the other component is appended with it's name.
+*)
+procedure tLazLabeledEdit.SetName(value: String);
+var
+  old: String;
+begin
+  value := LowerCase(StringReplace(LowerCase(value), ' ', '_', [rfReplaceAll]));
+
+  old := Self.Panel.getCaption();
+  Self.Panel.setName(value + '_panel');
+  Self.Panel.setCaption(old);
+
+  old := Self.Caption.getCaption();
+  Self.Caption.setName(value + '_caption');
+  Self.Caption.setCaption(old);
+
+  old := Self.Edit.getCaption();
+  Self.Edit.setName(value + '_edit');
+  Self.Edit.setCaption(old);
+end;
+
+procedure tLazLabeledCheckBox.SetName(value: String);
+var
+  old: String;
+begin
+  value := StringReplace(LowerCase(value), ' ', '_', [rfReplaceAll]);
+
+  old := Self.Panel.getCaption();
+  Self.Panel.setName(value + '_panel');
+  Self.Panel.setCaption(old);
+
+  old := Self.Caption.getCaption();
+  Self.Caption.setName(value + '_caption');
+  Self.Caption.setCaption(old);
+
+  old := Self.CheckBox.getCaption();
+  Self.CheckBox.setName(value + '_checkbox');
+  Self.CheckBox.setCaption(old);
+end;
+
+procedure tLazLabeledComboBox.SetName(value: String);
+var
+  old: String;
+begin
+  value := StringReplace(LowerCase(value), ' ', '_', [rfReplaceAll]);
+
+  old := Self.Panel.getCaption();
+  Self.Panel.setName(value + '_panel');
+  Self.Panel.setCaption(old);
+
+  old := Self.Caption.getCaption();
+  Self.Caption.setName(value + '_caption');
+  Self.Caption.setCaption(old);
+
+  old := Self.ComboBox.getCaption();
+  Self.ComboBox.setName(value + '_combobox');
+  Self.ComboBox.setCaption(old);
+end;
+
+procedure tLazLabeledListBox.SetName(value: String);
+var
+  old: String;
+begin
+  value := StringReplace(LowerCase(value), ' ', '_', [rfReplaceAll]);
+
+  old := Self.Panel.getCaption();
+  Self.Panel.setName(value + '_panel');
+  Self.Panel.setCaption(old);
+
+  old := Self.Caption.getCaption();
+  Self.Caption.setName(value + '_caption');
+  Self.Caption.setCaption(old);
+
+  old := Self.ListBox.getCaption();
+  Self.ListBox.setName(value + '_listbox');
+  Self.ListBox.setCaption(old);
+end;
+
+procedure tLazLabeledMemo.SetName(value: String);
+var
+  old: String;
+begin
+  value := StringReplace(LowerCase(value), ' ', '_', [rfReplaceAll]);
+
+  old := Self.Panel.getCaption();
+  Self.Panel.setName(value + '_panel');
+  Self.Panel.setCaption(old);
+
+  old := Self.Caption.getCaption();
+  Self.Caption.setName(value + '_caption');
+  Self.Caption.setCaption(old);
+
+  old := Self.Memo.getCaption();
+  Self.Memo.setName(value + '_memo');
+  Self.Memo.setCaption(old);
+end;
+
+procedure tLazLabeledTrackBar.SetName(value: String);
+var
+  old: String;
+begin
+  value := StringReplace(LowerCase(value), ' ', '_', [rfReplaceAll]);
+
+  old := Self.Panel.getCaption();
+  Self.Panel.setName(value + '_panel');
+  Self.Panel.setCaption(old);
+
+  old := Self.Caption.getCaption();
+  Self.Caption.setName(value + '_caption');
+  Self.Caption.setCaption(old);
+
+  old := Self.TrackBar.getCaption();
+  Self.TrackBar.setName(value + '_trackbar');
+  Self.TrackBar.setCaption(old);
+end;
+
+
+(*
+## LabeledControl.Set
+```pascal
+procedure tLazLabeledControl.SetLeft(value: Int32);
+procedure tLazLabeledControl.SetTop(value: Int32);
+procedure tLazLabeledControl.SetWidth(value: Int32);
+procedure tLazLabeledControl.SetHeight(value: Int32);
+procedure tLazLabeledControl.SetAlign(value: TAlign);
+procedure tLazLabeledControl.SetColor(value: Int32);
+procedure tLazLabeledControl.SetFontColor(color: TColor);
+procedure tLazLabeledControl.SetFontSize(size: Int32);
+procedure tLazLabeledControl.SetVisible(value: Boolean);
+```
+tLazLabeledControl Set methods.
+The methods are self explanatory.
+The only thing that should be kept in mind is that they only interactwith the tLazLabeledControl.Panel.
+*)
+procedure tLazLabeledControl.SetLeft(value: Int32);
+begin
+  Self.Panel.setLeft(value);
+end;
+
+procedure tLazLabeledControl.SetTop(value: Int32);
+begin
+  Self.Panel.SetTop(value);
+end;
+
+procedure tLazLabeledControl.SetWidth(value: Int32);
+begin
+  Self.Panel.setWidth(value);
+end;
+
+procedure tLazLabeledControl.SetHeight(value: Int32);
+begin
+  Self.Panel.setHeight(value);
+end;
+
+procedure tLazLabeledControl.SetAlign(value: TAlign);
+begin
+  Self.Panel.setAlign(value);
+end;
+
+procedure tLazLabeledCheckBox.SetAlign(value: TAlign); override;
+begin
+  Self.Panel.setAlign(value);
+end;
+
+procedure tLazLabeledControl.SetColor(value: Int32);
+begin
+  Self.Panel.setColor(value);
+end;
+
+procedure tLazLabeledControl.SetFontColor(color: TColor);
+begin
+  Self.Caption.SetFontColor(color);
+end;
+
+procedure tLazLabeledControl.SetFontSize(size: Int32);
+begin
+  Self.Caption.SetFontSize(size);
+end;
+
+procedure tLazLabeledControl.SetVisible(value: Boolean);
+begin
+  Self.Panel.setVisible(value);
+end;
+
+(*
+## LabeledControl.BringToFront
+```pascal
+procedure tLazLabeledControl.BringToFront();
+```
+Brings the control to front.
+*)
+procedure tLazLabeledControl.BringToFront();
+begin
+  Self.Panel.BringToFront();
+end;
+
+
+(*
+## LabeledControl.Get
+```pascal
+function tLazLabeledControl.GetLeft(): Int32;
+function tLazLabeledControl.GetTop(): Int32;
+function tLazLabeledControl.GetRight(): Int32;
+function tLazLabeledControl.GetBottom(): Int32;
+function tLazLabeledControl.GetHeight(): Int32;
+function tLazLabeledControl.GetVisible(): Boolean;
+```
+tLazLabeledControl Get methods.
+The methods are self explanatory.
+*)
+function tLazLabeledControl.GetLeft(): Int32;
+begin
+  Result := Self.Panel.getLeft();
+end;
+
+function tLazLabeledControl.GetTop(): Int32;
+begin
+  Result := Self.Panel.getTop();
+end;
+
+function tLazLabeledControl.GetRight(): Int32;
+begin
+  Result := Self.Panel.getBoundsRect().Right;
+end;
+
+function tLazLabeledControl.GetBottom(): Int32;
+begin
+  Result := Self.Panel.getBoundsRect().Bottom;
+end;
+
+function tLazLabeledControl.GetWidth(): Int32;
+begin
+  Result := Self.Panel.getWidth();
+end;
+
+function tLazLabeledControl.GetHeight(): Int32;
+begin
+  Result := Self.Panel.getHeight();
+end;
+
+function tLazLabeledControl.GetVisible(): Boolean;
+begin
+  Result := Self.Panel.GetVisible();
+end;
+
+
+(*
+## LabeledControl.SetText
+```pascal
+procedure tLazLabeledEdit.SetText(value: String);
+procedure tLazLabeledComboBox.SetText(value: String);
+procedure tLazLabeledMemo.SetText(value: String);
+```
+Sets the visible text in the tLazLabeledControl to **value**.
+*)
+procedure tLazLabeledEdit.SetText(value: String);
+begin
+  Self.Edit.setText(value);
+end;
+
+procedure tLazLabeledComboBox.SetText(value: String);
+begin
+  Self.ComboBox.setText(value);
+end;
+
+procedure tLazLabeledMemo.SetText(value: String);
+begin
+  Self.Memo.setText(value);
+end;
+
+
+(*
+## LabeledControl.GetText
+```pascal
+function tLazLabeledEdit.GetText(): String;
+function tLazLabeledComboBox.GetText(): String;
+function tLazLabeledListBox.GetText(): String;
+function tLazLabeledMemo.GetText(): String;
+```
+Gets the visible or selected text in the tLazLabeledControl.
+
+Example:
+```pascal
+WriteLn myEdit.GetText();
+```
+*)
+function tLazLabeledEdit.GetText(): String;
+begin
+  Result := Self.Edit.GetText();
+end;
+
+function tLazLabeledComboBox.GetText(): String;
+begin
+  Result := Self.ComboBox.GetText();
+end;
+
+function tLazLabeledListBox.GetText(): String;
+begin
+  Result := Self.ListBox.GetSelectedText();
+end;
+
+function tLazLabeledMemo.GetText(): String;
+begin
+  Result := Self.Memo.GetText();
+end;
+
+(*
+## LabeledControl.GetName
+```pascal
+function tLazLabeledControl.GetName(): String;
+```
+Gets the tLazLabeledControl name.
+*)
+function tLazLabeledControl.GetName(): String;
+begin
+  Result := Self.Panel.getName();
+  Result := Result.Before('_panel');
+end;
+
+
+
+(*
+## LabeledControl.Clear
+```pascal
+procedure tLazLabeledEdit.Clear();
+procedure tLazLabeledComboBox.Clear();
+procedure tLazLabeledListBox.Clear();
+procedure tLazLabeledMemo.Clear();
+```
+Clears the tLazLabeledControl.
+*)
+procedure tLazLabeledEdit.Clear();
+begin
+  Self.Edit.Clear();
+end;
+
+procedure tLazLabeledComboBox.Clear();
+begin
+  Self.ComboBox.Clear();
+end;
+
+procedure tLazLabeledListBox.Clear();
+begin
+  Self.ListBox.Clear();
+end;
+
+procedure tLazLabeledMemo.Clear();
+begin
+  Self.Memo.Clear();
+end;
+
+
+(*
+## LabeledCheckBox.SetChecked
+```pascal
+procedure tLazLabeledCheckBox.SetChecked(value: Boolean);
+```
+Sets the checkbox or not depending on **value**.
+*)
+procedure tLazLabeledCheckBox.SetChecked(value: Boolean);
+begin
+  Self.CheckBox.SetChecked(value);
+end;
+
+(*
+## LabeledCheckBox.IsChecked
+```pascal
+function tLazLabeledCheckBox.IsChecked(): Boolean;
+```
+Gets the checkbox state true or false.
+*)
+function tLazLabeledCheckBox.IsChecked(): Boolean;
+begin
+  Result := Self.CheckBox.IsChecked();
+end;
+
+(*
+## LabeledCheckBox.GetState
+```pascal
+function tLazLabeledCheckBox.GetState(): tLazCheckBoxState;
+```
+Gets the checkbox state.
+*)
+function tLazLabeledCheckBox.GetState(): tLazCheckBoxState;
+begin
+  Result := Self.CheckBox.getState();
+end;
+
+(*
+## LabeledControl.SetEnabled
+```pascal
+procedure tLazLabeledEdit.SetEnabled(value: Boolean);
+procedure tLazLabeledCheckBox.SetChecked(value: Boolean);
+procedure tLazLabeledComboBox.SetEnabled(value: Boolean);
+procedure tLazLabeledListBox.SetEnabled(value: Boolean);
+procedure tLazLabeledMemo.SetEnabled(value: Boolean);
+```
+Sets the checkbox or not depending on **value**.
+*)
+procedure tLazLabeledEdit.SetEnabled(value: Boolean);
+begin
+  Self.Edit.setEnabled(value);
+end;
+
+procedure tLazLabeledCheckBox.SetEnabled(value: Boolean);
+begin
+  Self.Panel.setEnabled(value);
+  Self.Caption.setEnabled(value);
+  Self.CheckBox.setEnabled(value);
+end;
+
+procedure tLazLabeledComboBox.SetEnabled(value: Boolean);
+begin
+  Self.ComboBox.setEnabled(value);
+end;
+
+procedure tLazLabeledListBox.SetEnabled(value: Boolean);
+begin
+  Self.ListBox.setEnabled(value);
+end;
+
+procedure tLazLabeledMemo.SetEnabled(value: Boolean);
+begin
+  Self.Memo.setEnabled(value);
+end;
+
+
+(*
+## LabeledControl.SetPasswordChar
+```pascal
+procedure tLazLabeledEdit.SetPasswordChar(value: Char = '*');
+procedure tLazLabeledMemo.SetPasswordChar(value: Char = '*');
+```
+Sets the tLazLabeledControl to hide the displayed text with **value** characters.
+Mostly used to hide passwords.
+*)
+procedure tLazLabeledEdit.SetPasswordChar(value: Char = '*');
+begin
+  Self.Edit.setPasswordChar(value);
+end;
+
+procedure tLazLabeledMemo.SetPasswordChar(value: Char = '*');
+begin
+  Self.Memo.setPasswordChar(value);
+end;
+
+
+(*
+## LabeledControl.SetMaxLength
+```pascal
+procedure tLazLabeledEdit.SetMaxLength(value: Int32);
+procedure tLazLabeledMemo.SetMaxLength(value: Int32);
+```
+Sets the maximum length of characters accepted by the tLazLabeledControl.
+*)
+procedure tLazLabeledEdit.SetMaxLength(value: Int32);
+begin
+  Self.Edit.setMaxLength(value);
+end;
+
+procedure tLazLabeledMemo.SetMaxLength(value: Int32);
+begin
+  Self.Memo.setMaxLength(value);
+end;
+
+(*
+## LabeledControl.GetMaxLength
+```pascal
+function tLazLabeledEdit.GetMaxLength(): Int32;
+function tLazLabeledMemo.GetMaxLength(): Int32;
+```
+Returns the maximum length of characters accepted by the tLazLabeledControl.
+*)
+function tLazLabeledEdit.GetMaxLength(): Int32;
+begin
+  Result := Self.Edit.GetMaxLength();
+end;
+
+function tLazLabeledMemo.GetMaxLength(): Int32;
+begin
+  Result := Self.Memo.GetMaxLength();
+end;
+
+
+(*
+## LabeledControl.SetStyle
+```pascal
+procedure tLazLabeledComboBox.SetStyle(value: tLazComboBoxStyle);
+procedure tLazLabeledListBox.SetStyle(value: tLazListBoxStyle);
+```
+Sets the tLazLabeledControl style.
+*)
+procedure tLazLabeledComboBox.SetStyle(value: tLazComboBoxStyle);
+begin
+  Self.ComboBox.setStyle(value);
+end;
+
+procedure tLazLabeledListBox.SetStyle(value: tLazListBoxStyle);
+begin
+  Self.ListBox.setStyle(value);
+end;
+
+
+
+(*
+## LabeledControl.AddItem
+```pascal
+procedure tLazLabeledCombobox.AddItem(value: String);
+procedure tLazLabeledListBox.AddItem(value: String);
+```
+Adds an item to the tLazLabeledControl.
+*)
+procedure tLazLabeledCombobox.AddItem(value: String);
+begin
+  Self.ComboBox.getItems().Add(value);
+end;
+
+procedure tLazLabeledListBox.AddItem(value: String);
+begin
+  Self.ListBox.getItems().Add(value);
+end;
+
+procedure TCheckCheckGroup.AddItem(value: String);
+var
+  check: tLazLabeledCheckBox;
+begin
+  with check do
+  begin
+    Create(Self.GroupPanel);
+    SetCaption(value);
+    SetName(value + '_group');
+    Panel.setLazComponentIndex(High(Self.Group));
+    SetAlign(alTop);
+    SetTooltip('Enable/Disable ' + value + '.');
+  end;
+
+  Self.Group += check;
+end;
+
+
+
+function TCheckCheckGroup.GetChildIndex(name: String): Int32;
+var
+  i: Int32;
+begin
+  for i := 0 to High(Self.Group) do
+    if Self.Group[i].GetName() = LowerCase(name) then
+      Exit(i);
+  Result := -1;
+end;
+
+function TCheckCheckGroup.GetChildPanel(name: String): tLazPanel;
+var
+  i: Int32;
+begin
+  i := Self.GetChildIndex(name);
+  if i = -1 then
+    Exit;
+
+  Result := Self.Group[i].Panel;
+end;
+
+function TCheckCheckGroup.GetChildLabel(name: String): tLazLabel;
+var
+  i: Int32;
+begin
+  i := Self.GetChildIndex(name);
+  if i = -1 then
+    Exit;
+
+  Result := Self.Group[i].Caption;
+end;
+
+function TCheckCheckGroup.GetChildCheckBox(name: String): tLazCheckBox;
+var
+  i: Int32;
+begin
+  i := Self.GetChildIndex(name);
+  if i = -1 then
+    Exit;
+
+  Result := Self.Group[i].CheckBox;
+end;
+
+procedure TCheckCheckGroup.SetCheckedChild(value: Boolean; name: String);
+var
+  tmp: tLazCheckBox;
+begin
+  tmp := Self.GetChildCheckBox(name);
+  tmp.SetChecked(value);
+end;
+
+
+
+(*
+## LabeledControl.AddItemArray
+```pascal
+procedure tLazLabeledCombobox.AddItemArray(valueArray: TStringArray);
+procedure tLazLabeledListBox.AddItemArray(valueArray: TStringArray);
+procedure TCheckCheckGroup.AddItemArray(valueArray: TStringArray);
+```
+Adds an array of items to the tLazLabeledControl.
+*)
+procedure tLazLabeledCombobox.AddItemArray(valueArray: TStringArray);
+var
+  value: String;
+begin
+  for value in valueArray do
+    Self.AddItem(value);
+end;
+
+procedure tLazLabeledCombobox.AddItemArray(valueArray: TRSItemArray); overload;
+var
+  value: String;
+begin
+  for value in valueArray do
+    Self.AddItem(value);
+end;
+
+procedure tLazLabeledListBox.AddItemArray(valueArray: TStringArray);
+var
+  value: String;
+begin
+  for value in valueArray do
+    Self.AddItem(value);
+end;
+
+procedure TCheckCheckGroup.AddItemArray(valueArray: TStringArray);
+var
+  value: String;
+begin
+  for value in valueArray do
+    Self.AddItem(value);
+
+  Self.AdjustSize();
+end;
+
+
+
+(*
+## LabeledControl.SetItemIndex
+```pascal
+procedure tLazLabeledCombobox.SetItemIndex(value: Int32);
+procedure tLazLabeledListBox.SetItemIndex(value: Int32);
+```
+Sets the selected index for the tLazLabeledControl.
+*)
+procedure tLazLabeledCombobox.SetItemIndex(value: Int32);
+begin
+  Self.ComboBox.setItemIndex(value);
+end;
+
+procedure tLazLabeledListBox.SetItemIndex(value: Int32);
+begin
+  Self.ListBox.setItemIndex(value);
+end;
+
+
+(*
+## LabeledControl.GetItemIndex
+```pascal
+function tLazLabeledCombobox.GetItemIndex(): Int32;
+function tLazLabeledListBox.GetItemIndex(): Int32;
+```
+Gets the selected index of the tLazLabeledControl.
+*)
+function tLazLabeledCombobox.GetItemIndex(): Int32;
+begin
+  Result := Self.ComboBox.getItemIndex();
+end;
+
+function tLazLabeledListBox.GetItemIndex(): Int32;
+begin
+  Result := Self.ListBox.getItemIndex();
+end;
+
+
+
+procedure tLazLabeledPanel.Create(owner: tLazControl; topleft, dimensions: TPoint); overload;
+begin
+  Self.Create(owner);
+  if topleft.X > 0 then Self.SetLeft(topleft.X);
+  if topleft.Y > 0 then Self.SetTop(topleft.Y);
+  if dimensions.X > 0 then Self.SetWidth(dimensions.X);
+  if dimensions.Y > 0 then Self.SetHeight(dimensions.Y);
+end;
+
+procedure tLazLabeledPanel.Create(owner: tLazControl; topleft, dimensions: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topleft := [tLazControl.AdjustToDPI(topleft.X), tLazControl.AdjustToDPI(topleft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, topleft, dimensions);
+end;
+
+procedure tLazLabeledPanel.Create(owner: tLazControl; topleft, dimensions, offset: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topleft := [tLazControl.AdjustToDPI(topleft.X), tLazControl.AdjustToDPI(topleft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, topleft + offset, dimensions, False);
+end;
+
+
+procedure tLazLabeledEdit.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint); overload;
+begin
+  Self.Create(owner);
+  if topleft.X > 0 then Self.SetLeft(topleft.X);
+  if topleft.Y > 0 then Self.SetTop(topleft.Y);
+  if dimensions.X > 0 then Self.SetWidth(dimensions.X);
+  if dimensions.Y > 0 then Self.SetHeight(dimensions.Y);
+  Self.SetCaption(caption);
+  Self.SetHint(hint);
+end;
+
+procedure tLazLabeledEdit.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topleft := [tLazControl.AdjustToDPI(topleft.X), tLazControl.AdjustToDPI(topleft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft, dimensions);
+end;
+
+procedure tLazLabeledEdit.Create(owner: tLazControl; caption, hint: String; topleft, dimensions, offset: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topleft := [tLazControl.AdjustToDPI(topleft.X), tLazControl.AdjustToDPI(topleft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft + offset, dimensions, False);
+end;
+
+
+
+procedure tLazLabeledComboBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint); overload;
+begin
+  Self.Create(owner);
+  if topleft.X > 0 then Self.SetLeft(topleft.X);
+  if topleft.Y > 0 then Self.SetTop(topleft.Y);
+  if dimensions.X > 0 then Self.SetWidth(dimensions.X);
+  if dimensions.Y > 0 then Self.SetHeight(dimensions.Y);
+  Self.SetCaption(caption);
+  Self.SetHint(hint);
+end;
+
+procedure tLazLabeledComboBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topleft := [tLazControl.AdjustToDPI(topleft.X), tLazControl.AdjustToDPI(topleft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft, dimensions);
+end;
+
+procedure tLazLabeledComboBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions, offset: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topleft := [tLazControl.AdjustToDPI(topleft.X), tLazControl.AdjustToDPI(topleft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft + offset, dimensions, False);
+end;
+
+
+
+procedure tLazLabeledCheckBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint); overload;
+begin
+  Self.Create(owner);
+  if topleft.X > 0 then Self.SetLeft(topleft.X);
+  if topleft.Y > 0 then Self.SetTop(topleft.Y);
+  if dimensions.X > 0 then Self.SetWidth(dimensions.X);
+  if dimensions.Y > 0 then Self.SetHeight(dimensions.Y);
+  Self.SetCaption(caption);
+  Self.SetHint(hint);
+end;
+
+procedure tLazLabeledCheckBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topleft := [tLazControl.AdjustToDPI(topleft.X), tLazControl.AdjustToDPI(topleft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft, dimensions);
+end;
+
+procedure tLazLabeledCheckBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions, offset: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topleft := [tLazControl.AdjustToDPI(topleft.X), tLazControl.AdjustToDPI(topleft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft + offset, dimensions, False);
+end;
+
+
+procedure tLazLabeledListBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint); overload;
+begin
+  Self.Create(owner);
+  if topleft.X > 0 then Self.SetLeft(topleft.X);
+  if topleft.Y > 0 then Self.SetTop(topleft.Y);
+  if dimensions.X > 0 then Self.SetWidth(dimensions.X);
+  if dimensions.Y > 0 then Self.SetHeight(dimensions.Y);
+  Self.SetCaption(caption);
+  Self.SetHint(hint);
+end;
+
+procedure tLazLabeledListBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topleft := [tLazControl.AdjustToDPI(topleft.X), tLazControl.AdjustToDPI(topleft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft, dimensions);
+end;
+
+procedure tLazLabeledListBox.Create(owner: tLazControl; caption, hint: String; topleft, dimensions, offset: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topleft := [tLazControl.AdjustToDPI(topleft.X), tLazControl.AdjustToDPI(topleft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft + offset, dimensions, False);
+end;
+
+
+procedure tLazLabeledMemo.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint); overload;
+begin
+  Self.Create(owner);
+  if topleft.X > 0 then Self.SetLeft(topleft.X);
+  if topleft.Y > 0 then Self.SetTop(topleft.Y);
+  if dimensions.X > 0 then Self.SetWidth(dimensions.X);
+  if dimensions.Y > 0 then Self.SetHeight(dimensions.Y);
+  Self.SetCaption(caption);
+  Self.SetHint(hint);
+end;
+
+procedure tLazLabeledMemo.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topleft := [tLazControl.AdjustToDPI(topleft.X), tLazControl.AdjustToDPI(topleft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft, dimensions);
+end;
+
+procedure tLazLabeledMemo.Create(owner: tLazControl; caption, hint: String; topleft, dimensions, offset: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topleft := [tLazControl.AdjustToDPI(topleft.X), tLazControl.AdjustToDPI(topleft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft + offset, dimensions, False);
+end;
+
+
+procedure tLazLabeledTrackBar.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint); overload;
+begin
+  Self.Create(owner);
+  if topleft.X > 0 then Self.SetLeft(topleft.X);
+  if topleft.Y > 0 then Self.SetTop(topleft.Y);
+  if dimensions.X > 0 then Self.SetWidth(dimensions.X);
+  if dimensions.Y > 0 then Self.SetHeight(dimensions.Y);
+  Self.SetCaption(caption);
+  Self.SetHint(hint);
+end;
+
+procedure tLazLabeledTrackBar.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topleft := [tLazControl.AdjustToDPI(topleft.X), tLazControl.AdjustToDPI(topleft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft, dimensions);
+end;
+
+procedure tLazLabeledTrackBar.Create(owner: tLazControl; caption, hint: String; topleft, dimensions, offset: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topleft := [tLazControl.AdjustToDPI(topleft.X), tLazControl.AdjustToDPI(topleft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft + offset, dimensions, False);
+end;
+
+
+procedure TCheckCheckGroup.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint); overload;
+begin
+  Self.Create(owner);
+  if topleft.X > 0 then Self.SetLeft(topleft.X);
+  if topleft.Y > 0 then Self.SetTop(topleft.Y);
+  if dimensions.X > 0 then Self.SetWidth(dimensions.X);
+  if dimensions.Y > 0 then Self.SetHeight(dimensions.Y);
+  Self.SetCaption(caption);
+  Self.SetHint(hint);
+end;
+
+procedure TCheckCheckGroup.Create(owner: tLazControl; caption, hint: String; topleft, dimensions: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topleft := [tLazControl.AdjustToDPI(topleft.X), tLazControl.AdjustToDPI(topleft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft, dimensions);
+end;
+
+procedure TCheckCheckGroup.Create(owner: tLazControl; caption, hint: String; topleft, dimensions, offset: TPoint; adjustDPI: Boolean); overload;
+begin
+  if adjustDPI then
+  begin
+    topleft := [tLazControl.AdjustToDPI(topleft.X), tLazControl.AdjustToDPI(topleft.Y)];
+    dimensions := [tLazControl.AdjustToDPI(dimensions.X), tLazControl.AdjustToDPI(dimensions.Y)];
+  end;
+
+  Self.Create(owner, caption, hint, topleft + offset, dimensions, False);
+end;
+
+}
+
