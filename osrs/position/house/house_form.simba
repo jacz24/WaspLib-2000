@@ -1,0 +1,12 @@
+(*
+# House Form
+This file is about {ref}`TRSHouse` dedicated `TLazForm` utilities.
+
+```{figure} ../../images/house_form.png
+```
+*)
+
+{$DEFINE WL_HOUSE_FORM_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+

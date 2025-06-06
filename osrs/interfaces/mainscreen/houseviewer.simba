@@ -13,7 +13,7 @@ heavily inspired in Skunkworks original "layout_finder.simba".
 In other words, it provides you the ability to load the house layout from the
 viewer into {ref}`House` and it's {ref}`HouseLoader`.
 *)
-{$DEFINE HOUSE_VIEWER_INCLUDED}
+{$DEFINE WL_HOUSE_VIEWER_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type

@@ -28,8 +28,13 @@ They should be self-explanatory.
 
 {$INCLUDE_ONCE utils.simba}
 
-// The following allows individual include files to compile on their own with just having {$INCLUDE_ONCE WaspLib/osr.simba}
-// Summary: It includes this file until the current file is reached.
+{
+The following allows individual include files to compile on their own with
+just having {$INCLUDE_ONCE WaspLib/osr.simba}
+
+Summary: It includes this file until the current file is reached.
+}
+
 {$IFNDEF WL_PLAYER_INCLUDED}              {$INCLUDE_ONCE osrs/player.simba}
 {$IFNDEF WL_BIOMETRICS_INCLUDED}          {$INCLUDE_ONCE osrs/antiban/biometrics.simba}
 
@@ -102,8 +107,9 @@ They should be self-explanatory.
 {$IFNDEF WL_HOUSEUTILS_INCLUDED}          {$INCLUDE_ONCE osrs/position/house/houseutils.simba}
 {$IFNDEF WL_HOUSELOADER_INCLUDED}         {$INCLUDE_ONCE osrs/position/house/houseloader.simba}
 {$IFNDEF WL_HOUSE_INCLUDED}               {$INCLUDE_ONCE osrs/position/house/house.simba}
-{$IFNDEF HOUSE_LAYOUT_FINDER_INCLUDED}    {$INCLUDE_ONCE osrs/finders/house/houselayoutfinder.simba}
-{$IFNDEF HOUSE_VIEWER_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/mainscreen/houseviewer.simba}
+{$IFNDEF WL_HOUSE_LAYOUT_FINDER_INCLUDED} {$INCLUDE_ONCE osrs/finders/house/house_layout_finder.simba}
+{$IFNDEF WL_HOUSE_VIEWER_INCLUDED}        {$INCLUDE_ONCE osrs/interfaces/mainscreen/houseviewer.simba}
+{$IFNDEF WL_HOUSE_FORM_INCLUDED}          {$INCLUDE_ONCE osrs/position/house/house_form.simba}
 
 
 {$IFNDEF WL_BANKPIN_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/mainscreen/bankpin.simba}
@@ -120,73 +126,12 @@ They should be self-explanatory.
 {$IFNDEF WL_SETUP_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/setup.simba}
 {$IFNDEF WL_OVERRIDES_INCLUDED}           {$INCLUDE_ONCE osrs/overrides.simba}
 
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
+
+{$ENDIF}
+{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
+{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
+{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
+{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
+{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
+{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
+{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}

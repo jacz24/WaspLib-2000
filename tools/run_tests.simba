@@ -1,3 +1,7 @@
+(*
+# Tool: Run tests
+Tool to run the library tests located in the tests folder.
+*)
 var
   path, name, output: String;
   files: TStringArray;

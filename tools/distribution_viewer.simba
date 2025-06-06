@@ -1,5 +1,5 @@
 (*
-# Distribution Viewer
+# Tool: Distribution Viewer
 Tool to visually see random distributions available in the library in multiple shapes.
 *)
 {$I WaspLib/osrs.simba}

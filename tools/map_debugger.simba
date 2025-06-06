@@ -1,4 +1,7 @@
-{$I WaspLib/osrs.simba}
+(*
+# Tool: Map Debugger
+Tool to visually debug {ref}`TRSMap` with the {ref}`Map Debugger` tool.
+*)
 
 begin
   Map.Setup([ERSChunk.VARROCK]);

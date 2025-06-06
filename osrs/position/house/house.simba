@@ -293,10 +293,14 @@ while True do
 ```
 *)
 function TRSHouse.DebugPosition(print: Boolean = True): TPoint;
+  function _BoxStr(b: TBox): String;
+  begin
+    Result := Format('[%d, %d, %d, %d]', [b.X1, b.Y1, b.X2, b.Y2]);
+  end;
 var
-  x1, y1, x2, y2, x, y, i: Integer;
-  p: TPoint;
-  iconMap, img, map, cleanMinimap: TImage;
+  x1, y1, x2, y2, x, y, i: Int32;
+  p, local: TPoint;
+  img, map, cleanMinimap: TImage;
   time: Double;
   lines: TStringArray;
 begin
@@ -304,21 +308,26 @@ begin
 
   time   := PerformanceTime();
   Result := Self.Position();
+
   time   := PerformanceTime() - time;
 
-  x1 := Max(0, Result.X - 200);
-  y1 := Max(0, Result.Y - 200);
+  x1 := Max(0, local.X - 200);
+  y1 := Max(0, local.Y - 200);
   x2 := Min(x1 + 400, Self.Loader.Map.Width  - 1);
   y2 := Min(y1 + 400, Self.Loader.Map.Height - 1);
 
-  x := Result.X - x1;
-  y := Result.Y - y1;
+  x := local.X - x1;
+  y := local.Y - y1;
 
-  iconMap := Self.Loader.Map.Copy();
-  //todo
-  //iconMap._DrawPOHIcons();
+  lines := [
+    'Position:',
+    ' - Position: ' + Format('[%d, %d]', [Result.X, Result.Y]),
+    '',
+    'Certainty: '    + ToStr(Round(Self.Similarity, 3)),
+    'Time: '         + ToStr(Round(time)) + ' ms'
+  ];
 
-  map := iconMap.Copy([x1, y1, x2, y2]);
+  map := Self.Loader.Map.Copy([x1, y1, x2, y2]);
   map.DrawColor := $00FF00;
   map.DrawLine(Point(0, y), Point(x2 - x1, y));
   map.DrawLine(Point(x, 0), Point(x, y2 - y1));
@@ -326,24 +335,18 @@ begin
   map.DrawBox([x - 2, y - 2, x + 2, y + 2]);
 
   cleanMinimap := Minimap.ScaleMinimap(Minimap.GetCleanImage(), 1);
-
-  p := cleanMinimap.Center;
-  if RSClient.Mode = ERSMode.FIXED then
-    p := p.Offset(0, 8).Rotate(-Minimap.GetCompassAngle(False), p);
+  img := new TImage(700 + cleanMinimap.Width, 440);
+  img.DrawImage(map, [10, 20]);
+  with cleanMinimap.Center do
+    if RSClient.Mode = ERSMode.FIXED then
+      p := Point(X, Y).Offset(0, 8).Rotate(-Minimap.GetCompassAngle(False), [X,Y]);
 
   cleanMinimap.DrawColor := $FFFFFF;
   cleanMinimap.DrawBoxFilled([p.X - 1, p.Y - 1, p.X + 1, p.Y + 1]);
 
-  lines := [
-    'Position:'  + Format('[%d, %d]', [Result.X, Result.Y]),
-    'Certainty: '    + ToStr(Round(Self.Similarity, 3)),
-    'Time: '         + ToStr(Round(time)) + ' ms'
-  ];
-
-  img := new TImage(700 + cleanMinimap.Width, 440);
-  //img.DrawTraClear($403027);
-
+  {$IFDEF WINDOWS}
   img.FontName := 'Consolas';
+  {$ENDIF}
   img.FontSize := 18;
   img.FontAntialiasing := True;
 
@@ -354,12 +357,9 @@ begin
     img.DrawText(lines[i], [430, cleanMinimap.Height + 20 + 20 * i]);
   end;
 
-  //map.DrawTransparent(10, 20, img);
-
-  //cleanMinimap.SetTransparentColor($0);
-  //cleanMinimap.DrawTransparent(520, 10, img);
-
+  img.DrawImage(cleanMinimap, [520, 10]);
   img.Show();
+
   Target.UnFreezeImage();
 end;
 

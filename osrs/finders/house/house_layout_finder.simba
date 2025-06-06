@@ -2,7 +2,7 @@
 # House Layout Finder
 Provides and compares images for {ref}`House Viewer`.
 *)
-{$DEFINE HOUSE_LAYOUT_FINDER_INCLUDED}
+{$DEFINE WL_HOUSE_LAYOUT_FINDER_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type

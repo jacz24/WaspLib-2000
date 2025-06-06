@@ -370,7 +370,7 @@ ShowOnTarget(atpa);
 function EHouseObject.GetFinder(): TColorFinder;
 begin
   Result := [];
-  (*
+  {
   case Self of
     EHouseObject.EXIT:
       begin
@@ -525,7 +525,7 @@ begin
         Result.Colors += CTS2(8885604, 35, 0.19, 0.40);
       end;
   end;
-  *)
+  }
 end;
 
 type
@@ -617,7 +617,7 @@ ShowOnTarget(atpa);
 function EHouseTeleport.GetFinder(): TColorFinder;
 begin
   Result := [];
-  (*
+  {
   Result.Colors += CTS2(7375010, 11, 0.29, 0.65); //teak frame
   Result.Colors += CTS2(5598857, 7, 0.04, 0.12); //mahogany frame
   Result.Colors += CTS2(11782863, 23, 0.63, 0.94); //marble frame
@@ -659,7 +659,7 @@ begin
 
     EHouseTeleport.DIGSITE, EHouseTeleport.XERIC: Result.Colors := [CTS2(5861759, 8, 0.12, 0.59)];
   end;
-  *)
+  }
 end;
 
 
