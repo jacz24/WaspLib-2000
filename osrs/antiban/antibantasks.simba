@@ -45,8 +45,8 @@ begin
   WriteLn GetDebugLn('Antiban', 'Random Mouse (Small)');
 
   repeat
-    pt := Mouse.Position().Random(-350, 350);
-  until Mouse.Position().DistanceTo(pt) > 50;
+    pt := Mouse.Position.Random(-350, 350);
+  until Mouse.Position.DistanceTo(pt) > 50;
 
   Async.MouseMove(pt);
 end;
@@ -59,10 +59,10 @@ var
 begin
   WriteLn GetDebugLn('Antiban', 'Random Mouse');
 
-  speed := Target.MouseOptions.Speed;
-  Target.MouseOptions.Speed += Biometrics.RandomModeInteger(2, 1, 5);
+  speed := Target.Options.MouseSpeed;
+  Target.Options.MouseSpeed := Target.Options.MouseSpeed + Biometrics.RandomModeInteger(2, 1, 5);
 
-  b := Target.Bounds.Expand(150);
+  b := RSClient.Bounds.Expand(150);
 
   for i := 1 to Trunc(GaussRand(1, 6)) do
   begin
@@ -75,7 +75,7 @@ begin
       Biometrics.Sleep(0, 1000, ERandomDir.LEFT);
   end;
 
-  Target.MouseOptions.Speed := speed;
+  Target.Options.MouseSpeed := speed;
 end;
 
 
@@ -119,7 +119,7 @@ procedure TAntiban.HoverSkills();
 begin
   if Self.Skills = [] then
   begin
-    WriteLn GetDebugLn('Antiban', 'HoverSkills: No skills declared.', EErrorLevel.ERROR);
+    WriteLn GetDebugLn('Antiban', 'HoverSkills: No skills declared.', ELogLevel.ERROR);
     Exit;
   end;
 
@@ -152,7 +152,7 @@ procedure TAntiban.OpenSkills();
 begin
   if Self.Skills = [] then
   begin
-    WriteLn GetDebugLn('Antiban', 'OpenSkills: No skills declared.', EErrorLevel.ERROR);
+    WriteLn GetDebugLn('Antiban', 'OpenSkills: No skills declared.', ELogLevel.ERROR);
     Exit;
   end;
 
@@ -279,7 +279,7 @@ procedure TAntiban.RandomRightClick();
 begin
   WriteLn GetDebugLn('Antiban', 'Random Right Click');
 
-  Mouse.Move(Target.Bounds.Expand(-15), True, EMouseDistribution.RANDOM);
+  Mouse.Move(RSClient.Bounds.Expand(-15), True, EMouseDistribution.RANDOM);
 
   if ChooseOption.Open() then
   begin
@@ -302,7 +302,7 @@ var
 begin
   if Abs(Self.Zoom.Max - Self.Zoom.Min) <= 15 then
   begin
-    WriteLn GetDebugLn('Antiban', 'AdjustZoom: The current Zoom.Min and Zoom.Max are too close to each other for this method.', EErrorLevel.ERROR);
+    WriteLn GetDebugLn('Antiban', 'AdjustZoom: The current Zoom.Min and Zoom.Max are too close to each other for this method.', ELogLevel.ERROR);
     Exit;
   end;
 
@@ -416,9 +416,9 @@ var
   iddle: Boolean;
 begin
   iddle := Mouse.CanIdle;
-  mouseSpeed := Target.MouseOptions.Speed;
+  mouseSpeed := Target.Options.MouseSpeed;
 
-  Target.MouseOptions.Speed := Random(15,20);
+  Target.Options.MouseSpeed := Random(15,20);
   Mouse.CanIdle := False;
 
   q := Point(-1,-1);
@@ -446,7 +446,7 @@ begin
     Inc(i, Round(speed));
   end;
 
-  Target.MouseOptions.Speed := mouseSpeed;
+  Target.Options.MouseSpeed := mouseSpeed;
   Mouse.CanIdle := iddle;
 end;
 
@@ -468,7 +468,7 @@ var
 begin
   for i := 1 to Round(GaussRand(1,4)) do
   begin
-    Self.SwivelNear(Mouse.Position(), 1/2, Round(GaussRand(1,4)), Random(25,40), GaussRand(0.0,1.25) > 0.5, Random(12,22), 9, 14);
+    Self.SwivelNear(Mouse.Position, 1/2, Round(GaussRand(1,4)), Random(25,40), GaussRand(0.0,1.25) > 0.5, Random(12,22), 9, 14);
     if Random() < 0.5 then
       Biometrics.Sleep(0, 300, ERandomDir.LEFT);
   end;

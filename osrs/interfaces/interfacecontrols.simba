@@ -141,14 +141,13 @@ begin
   img.DrawColor := oldColor;
 end;
 
-procedure ShowOnClient(button: TRSButton); overload;
+procedure ShowOnTarget(button: TRSButton); overload;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   button.Draw(img);
   img.Show();
-  img.Free();
 end;
 
 procedure TRSButtonArray.Draw(img: TImage; color: Integer = $00FFFF);
@@ -173,14 +172,13 @@ begin
     Result += [enabledColors, b];
 end;
 
-procedure ShowOnClient(buttons: TRSButtonArray); overload;
+procedure ShowOnTarget(buttons: TRSButtonArray); overload;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   buttons.Draw(img);
   img.Show();
-  img.Free();
 end;
 
 
@@ -341,7 +339,7 @@ Returns a `TBox` of the scrollbar slider.
 
 Example:
 ```pascal
-ShowOnClient(Bank.Scroll.GetSlider());
+ShowOnTarget(Bank.Scroll.GetSlider());
 ```
 ```{figure} ../../images/scrollbar_slider.png
 ```
@@ -409,7 +407,7 @@ Returns a area where you can scroll the mouse, using {ref}`TBiometrics` between
 
 Example:
 ```pascal
-ShowOnClient(Chat.Scroll.GetScrollArea());
+ShowOnTarget(Chat.Scroll.GetScrollArea());
 ```
 *)
 function TRSScrollBar.GetScrollArea(): TBox;
@@ -522,17 +520,16 @@ begin
   img.DrawBoxArray([Self.Up, Self.Down], False);
 end;
 
-procedure ShowOnClient(scroll: TRSScrollBar); overload;
+procedure ShowOnTarget(scroll: TRSScrollBar); overload;
 var
   img: TImage;
   bounds: TBox;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
 
   scroll.Draw(img);
 
   img.Show();
-  img.Free();
 end;
 
 
@@ -784,16 +781,15 @@ begin
   end;
 end;
 
-procedure ShowOnClient(dropdown: TRSDropDown); overload;
+procedure ShowOnTarget(dropdown: TRSDropDown); overload;
 var
   img: TImage;
   bounds: TBox;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
 
   dropdown.Draw(img);
 
   img.Show();
-  img.Free();
 end;
 

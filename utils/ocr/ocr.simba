@@ -14,57 +14,52 @@ function TOCR.RecognizeStatic(bounds: TBox; font: TPixelFont; colors: TColorArra
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget(bounds);
+  img := Target.GetImage(bounds);
   img.ReplaceColorBinary(False, colors, tolerance);
   Result := Self.Engine.Recognize(img, font, [0,0]);
-  img.Free();
 end;
 
 function TOCR.RecognizeStaticInvert(bounds: TBox; font: TPixelFont; colors: TColorArray): String;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget(bounds);
+  img := Target.GetImage(bounds);
   img.ReplaceColorBinary(True, colors);
   Result := Self.Engine.Recognize(img, font, [0,0]);
-  img.Free();
 end;
 
 function TOCR.Recognize(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): String;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget(bounds);
+  img := Target.GetImage(bounds);
   img.ReplaceColorBinary(False, colors, tolerance);
   Result := Self.Engine.Recognize(img, Font);
-  img.Free();
 end;
 
 function TOCR.RecognizeLines(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): TStringArray;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget(bounds);
+  img := Target.GetImage(bounds);
   img.ReplaceColorBinary(False, colors, tolerance);
   Result := Self.Engine.RecognizeLines(img, font);
-  img.Free();
 end;
 
 function TOCR.RecognizeShadow(bounds: TBox; font: TPixelFont; tolerance: Single): String;
 var
-  image: TImage;
+  img: TImage;
   shadows: TPointArray;
   colors: TColorArray;
 begin
-  image := TImage.CreateFromTarget(bounds);
-  shadows := image.FindColor(0, 2.5, [1, 1, image.Width - 1, image.Height - 1]);
+  img := Target.GetImage(bounds);
+  shadows := img.FindColor(0, 2.5, [1, 1, img.Width - 1, img.Height - 1]);
   shadows := Shadows.Offset([-1,-1]).ExcludePoints(shadows);
 
-  colors := image.GetColors(shadows).Unique();
-  image.ReplaceColorBinary(False, colors, tolerance);
+  colors := img.GetColors(shadows).Unique();
+  img.ReplaceColorBinary(False, colors, tolerance);
 
-  Result := Self.Engine.Recognize(image, font);
-  image.Free();
+  Result := Self.Engine.Recognize(img, font);
 end;
 
 function TOCR.RecognizeNumber(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): Integer;
@@ -76,20 +71,18 @@ function TOCR.Locate(bounds: TBox; Text: String; colors: TColorArray; tolerance:
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget(bounds);
+  img := Target.GetImage(bounds);
   img.ReplaceColorBinary(False, colors, tolerance);
   Result := Self.Engine.Locate(img, Font, Text);
-  img.Free();
 end;
 
 function TOCR.LocateInvert(bounds: TBox; Text: String; colors: TColorArray; tolerance: Single; font: TPixelFont): Single;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget(bounds);
+  img := Target.GetImage(bounds);
   img.ReplaceColorBinary(True, colors, tolerance);
   Result := Self.Engine.Locate(img, Font, Text);
-  img.Free();
 end;
 
 var

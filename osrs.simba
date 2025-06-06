@@ -12,7 +12,8 @@ less confusing way.
 ## Compile Directives
 ```pascal
 {$DEFINE WL_DEBUG_MOUSE}
-{$DEFINE WL_DISABLE_REMOTEINPUT}
+{$DEFINE WL_DISABLE_FAKE_INPUT}
+{$DEFINE WL_DISABLE_WASPINPUT}
 {$DEFINE WL_KEYBINDS_DEBUG}
 {$DEFINE WL_DEBUG_UPTEXT}
 {$DEFINE WL_DEBUG_INTERFACES}
@@ -33,7 +34,7 @@ They should be self-explanatory.
 {$IFNDEF WL_BIOMETRICS_INCLUDED}          {$INCLUDE_ONCE osrs/antiban/biometrics.simba}
 
 {$IFNDEF WL_RSCLIENT_INCLUDED}            {$INCLUDE_ONCE osrs/rsclient.simba}
-{$IFNDEF WL_REMOTEINPUT_INCLUDED}         {$INCLUDE_ONCE osrs/remoteinput.simba}
+{$IFNDEF WL_FAKE_INPUT_INCLUDED}          {$INCLUDE_ONCE osrs/fakeinput.simba}
 {$IFNDEF WL_CACHEPARSER_INCLUDED}         {$INCLUDE_ONCE osrs/cacheparser.simba}
 
 {$IFNDEF WL_ITEMFINDER_INCLUDED}          {$INCLUDE_ONCE osrs/finders/items/itemfinder.simba}
@@ -88,29 +89,43 @@ They should be self-explanatory.
 {$IFNDEF WL_ANTIBAN_INCLUDED}             {$INCLUDE_ONCE osrs/antiban/antiban.simba}
 
 {$IFNDEF WL_WALKER_INCLUDED}              {$INCLUDE_ONCE osrs/walker.simba}
-{$IFNDEF WL_COLORFINDER_INCLUDED}         {$INCLUDE_ONCE osrs/mainscreen/colorfinder.simba}
+{$IFNDEF WL_COLORFINDER_INCLUDED}         {$INCLUDE_ONCE osrs/interfaces/mainscreen/finders/colorfinder.simba}
 
-{$IFNDEF WL_MAPLOADER_INCLUDED}           {$INCLUDE_ONCE osrs/map/maploader.simba}
-{$IFNDEF WL_MAP_INCLUDED}                 {$INCLUDE_ONCE osrs/map/map.simba}
-{$IFNDEF WL_RSOBJECTS_INCLUDED}           {$INCLUDE_ONCE osrs/map/objects.simba}
-{$IFNDEF WL_RSNPCS_INCLUDED}              {$INCLUDE_ONCE osrs/map/npcs.simba}
-{$IFNDEF WL_MAPDEBUGGER_INCLUDED}         {$INCLUDE_ONCE osrs/map/mapdebugger.simba}
-{$IFNDEF WL_MAPJSON_INCLUDED}             {$INCLUDE_ONCE osrs/map/mapjson.simba}
+{$IFNDEF WL_IMAGEMAP_INCLUDED}            {$INCLUDE_ONCE osrs/position/imagemap.simba}
+{$IFNDEF WL_MAPLOADER_INCLUDED}           {$INCLUDE_ONCE osrs/position/map/maploader.simba}
+{$IFNDEF WL_MAP_INCLUDED}                 {$INCLUDE_ONCE osrs/position/map/map.simba}
+{$IFNDEF WL_RSOBJECTS_INCLUDED}           {$INCLUDE_ONCE osrs/position/map/objects.simba}
+{$IFNDEF WL_RSNPCS_INCLUDED}              {$INCLUDE_ONCE osrs/position/map/npcs.simba}
+{$IFNDEF WL_MAPDEBUGGER_INCLUDED}         {$INCLUDE_ONCE osrs/position/map/mapdebugger.simba}
+{$IFNDEF WL_MAPJSON_INCLUDED}             {$INCLUDE_ONCE osrs/position/map/mapjson.simba}
+
+{$IFNDEF WL_HOUSEUTILS_INCLUDED}          {$INCLUDE_ONCE osrs/position/house/houseutils.simba}
+{$IFNDEF WL_HOUSELOADER_INCLUDED}         {$INCLUDE_ONCE osrs/position/house/houseloader.simba}
+{$IFNDEF WL_HOUSE_INCLUDED}               {$INCLUDE_ONCE osrs/position/house/house.simba}
+{$IFNDEF HOUSE_LAYOUT_FINDER_INCLUDED}    {$INCLUDE_ONCE osrs/finders/house/houselayoutfinder.simba}
+{$IFNDEF HOUSE_VIEWER_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/mainscreen/houseviewer.simba}
+
 
 {$IFNDEF WL_BANKPIN_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/mainscreen/bankpin.simba}
 {$IFNDEF WL_BANK_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/mainscreen/bank.simba}
 {$IFNDEF WL_COLLECTIONBOX_INCLUDED}       {$INCLUDE_ONCE osrs/interfaces/mainscreen/collectionbox.simba}
 {$IFNDEF WL_ANVIL_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/mainscreen/anvil.simba}
-{$IFNDEF AEROSKUNK_GOLDSCREEN_INCLUDED}   {$INCLUDE_ONCE osrs/interfaces/mainscreen/goldscreen.simba}
-{$IFNDEF AEROSKUNK_SLVRSCREEN_INCLUDED}   {$INCLUDE_ONCE osrs/interfaces/mainscreen/silverscreen.simba}
-{$IFNDEF WL_HITSPLATS_INCLUDED}           {$INCLUDE_ONCE osrs/mainscreen/hitsplats.simba}
-{$IFNDEF WL_HPBARS_INCLUDED}              {$INCLUDE_ONCE osrs/mainscreen/hpbars.simba}
+{$IFNDEF WL_GOLDSCREEN_INCLUDED}          {$INCLUDE_ONCE osrs/interfaces/mainscreen/goldscreen.simba}
+{$IFNDEF WL_SILVERSCREEN_INCLUDED}        {$INCLUDE_ONCE osrs/interfaces/mainscreen/silverscreen.simba}
+{$IFNDEF WL_HITSPLATS_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/mainscreen/finders/hitsplats.simba}
+{$IFNDEF WL_HPBARS_INCLUDED}              {$INCLUDE_ONCE osrs/interfaces/mainscreen/finders/hpbars.simba}
 
 {$IFNDEF WL_ANTIBAN_TASKS_INCLUDED}       {$INCLUDE_ONCE osrs/antiban/antibantasks.simba}
 
 {$IFNDEF WL_SETUP_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/setup.simba}
 {$IFNDEF WL_OVERRIDES_INCLUDED}           {$INCLUDE_ONCE osrs/overrides.simba}
 
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}

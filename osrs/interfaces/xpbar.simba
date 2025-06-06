@@ -210,6 +210,26 @@ begin
   Result := Self.WaitOpen();
 end;
 
+(*
+## XPBar.Close
+```pascal
+function TRSXPBar.Close(): Boolean;
+```
+Closes the XPBar by clicking the XPBar circle.
+
+Example:
+```pascal
+if XPBar.IsOpen() then
+  WriteLn XPBar.Close();
+```
+*)
+function TRSXPBar.Close(): Boolean;
+begin
+  if not Self.IsOpen() then Exit(True);
+  Mouse.Click(Self.Button, EMouseButton.LEFT);
+  Result := SleepUntil(Self.IsOpen(), RandomMode(100, 50, 1500), 600);
+end;
+
 
 (*
 ## XPBar.Setup
@@ -265,8 +285,8 @@ begin
   end;
 
   if Self.SetupAttempts < 3 then Exit;
-  WriteLn GetDebugLn('XPBar', 'Something seems to be wrong with your XPBar.', EErrorLevel.WARN);
-  WriteLn GetDebugLn('XPBar', 'If you keep seeing this message fix your XPBar settings!', EErrorLevel.WARN);
+  WriteLn GetDebugLn('XPBar', 'Something seems to be wrong with your XPBar.', ELogLevel.WARN);
+  WriteLn GetDebugLn('XPBar', 'If you keep seeing this message fix your XPBar settings!', ELogLevel.WARN);
 end;
 
 
@@ -282,21 +302,23 @@ Example:
 WriteLn XPBar.Read();
 ```
 *)
-function TRSXPBar.Read(): UInt64;
+function TRSXPBar.Read: UInt64;
 var
   str: String;
+  count: Integer;
 begin
-  if not Self.Setup() then Exit;
+  if not Self.Setup then Exit;
 
   str := OCR.Recognize(Self.Bounds, Self.Font, [$FFFFFF], 0);
 
   Result := str.ExtractInteger(0);
   if Result = 0 then Exit;
+  count := Target.CountColor($010000, 0, Self.Bounds);
 
-  if Target.CountColor($010000, 0, Self.Bounds) <> 45 then
+  if ((count <> 45) and (not InRange(count, 141, 150))) then
   begin
-    WriteLn GetDebugLn('XPBar', 'Your XPBar doesn''t seem to be set to count "Total Experience"', EErrorLevel.WARN);
-    WriteLn GetDebugLn('XPBar', 'XP Tracking won''t be used and this can cause issues.', EErrorLevel.WARN);
+    WriteLn GetDebugLn('XPBar', 'Your XPBar doesn''t seem to be set to count "Total Experience"', ELogLevel.WARN);
+    WriteLn GetDebugLn('XPBar', 'XP Tracking won''t be used and this can cause issues.', ELogLevel.WARN);
   end;
 
   if Self.Tracker.Start = 0 then Self.Tracker.Start := Result;

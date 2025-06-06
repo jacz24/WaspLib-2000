@@ -39,8 +39,8 @@ This is automatically called for you on the {ref}`Lobby variable`.
 *)
 procedure TRSLobbyScreen.Setup();
 begin
-  Self.Bounds.X1 := Target.Bounds.Width div 2 - 382;
-  Self.Bounds.X2 := Target.Bounds.Width div 2 + 382;
+  Self.Bounds.X1 := Target.Width div 2 - 382;
+  Self.Bounds.X2 := Target.Width div 2 + 382;
   Self.Bounds.Y1 := Target.Bounds.Y1;
   Self.Bounds.Y2 := Self.Bounds.Y1 + 502;
 
@@ -126,14 +126,13 @@ begin
   img.DrawBox(Self.Button);
 end;
 
-procedure ShowOnClient(lobby: TRSLobbyScreen); overload;
+procedure ShowOnTarget(lobby: TRSLobbyScreen); overload;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   lobby.Draw(img);
   img.Show();
-  img.Free();
 end;
 
 var
@@ -174,8 +173,8 @@ This is automatically called for you on the {ref}`LoginWorldSwitcher variable`.
 *)
 procedure TRSLoginWorldSwitcher.Setup();
 begin
-  Self.Bounds.X1 := Target.Bounds.Width div 2 - 382;
-  Self.Bounds.X2 := Target.Bounds.Width div 2 + 382;
+  Self.Bounds.X1 := Target.Width div 2 - 382;
+  Self.Bounds.X2 := Target.Width div 2 + 382;
   Self.Bounds.Y1 := Target.Bounds.Y1;
   Self.Bounds.Y2 := Self.Bounds.Y1 + 502;
 
@@ -442,14 +441,13 @@ begin
   img.DrawBox(Self.RightButton);
 end;
 
-procedure ShowOnClient(loginWorldSwitcher: TRSLoginWorldSwitcher); overload;
+procedure ShowOnTarget(loginWorldSwitcher: TRSLoginWorldSwitcher); overload;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   loginWorldSwitcher.Draw(img);
   img.Show();
-  img.Free();
 end;
 
 
@@ -573,9 +571,9 @@ This is automatically called for you on the {ref}`Login variable`.
 *)
 procedure TRSLogin.Setup();
 begin
-  Self.Bounds.X1 := Target.Bounds.Width div 2 - 176;
+  Self.Bounds.X1 := Target.Width div 2 - 176;
   Self.Bounds.Y1 := Target.Bounds.Y1 + 172;
-  Self.Bounds.X2 := Target.Bounds.Width div 2 + 176;
+  Self.Bounds.X2 := Target.Width div 2 + 176;
   Self.Bounds.Y2 := Self.Bounds.Y1 + 194;
 
   with Self.Inputs[ERSLoginInput.USERNAME] do
@@ -826,18 +824,18 @@ begin
   begin
     if Self.FindButton(ERSLoginButton.EXISTING_USER) then
     begin
-      WriteLn GetDebugLn('Login', 'Legacy client mode detected.', EErrorLevel.SUCCESS);
+      WriteLn GetDebugLn('Login', 'Legacy client mode detected.', ELogLevel.SUCCESS);
       Exit(ERSLoginMode.LEGACY);
     end;
 
     if Self.FindButton(ERSLoginButton.LAUNCHER) then
     begin
-      WriteLn GetDebugLn('Login', 'Launcher client mode detected.', EErrorLevel.SUCCESS);
+      WriteLn GetDebugLn('Login', 'Launcher client mode detected.', ELogLevel.SUCCESS);
       Exit(ERSLoginMode.LAUNCHER);
     end;
   end;
 
-  WriteLn GetDebugLn('Login', 'Failed to detect login mode.', EErrorLevel.WARN);
+  WriteLn GetDebugLn('Login', 'Failed to detect login mode.', ELogLevel.WARN);
 end;
 
 
@@ -961,17 +959,17 @@ begin
 
   if (msg = ERSLoginMessage.WORLD_FULL) or (Self.Attempts < 4) then
   begin
-    WriteLn GetDebugLn('Login', 'Failed to login ' + ToStr(Self.Attempts) + ' times.', EErrorLevel.WARN);
-    WriteLn GetDebugLn('Login', 'Waiting ' + ToStr(time) + ' seconds before trying again.', EErrorLevel.WARN);
+    WriteLn GetDebugLn('Login', 'Failed to login ' + ToStr(Self.Attempts) + ' times.', ELogLevel.WARN);
+    WriteLn GetDebugLn('Login', 'Waiting ' + ToStr(time) + ' seconds before trying again.', ELogLevel.WARN);
     Sleep(time);
     Exit(True);
   end;
 
   if Self.Attempts = 4 then
   begin
-    WriteLn GetDebugLn('Login', 'Failed to login ' + ToStr(Self.Attempts) + ' times.', EErrorLevel.ERROR);
-    WriteLn GetDebugLn('Login', 'Script will shutdown if we fail one more time.', EErrorLevel.ERROR);
-    WriteLn GetDebugLn('Login', 'Waiting ' + ToStr(time) + ' seconds before trying again.', EErrorLevel.ERROR);
+    WriteLn GetDebugLn('Login', 'Failed to login ' + ToStr(Self.Attempts) + ' times.', ELogLevel.ERROR);
+    WriteLn GetDebugLn('Login', 'Script will shutdown if we fail one more time.', ELogLevel.ERROR);
+    WriteLn GetDebugLn('Login', 'Waiting ' + ToStr(time) + ' seconds before trying again.', ELogLevel.ERROR);
     Sleep(time);
     Exit(True);
   end;
@@ -1046,7 +1044,7 @@ begin
   begin
     if Time() > timeout then
     begin
-      WriteLn GetDebugLn('Login', 'Timed out trying to login.', EErrorLevel.ERROR);
+      WriteLn GetDebugLn('Login', 'Timed out trying to login.', ELogLevel.ERROR);
       Exit;
     end;
 
@@ -1061,7 +1059,7 @@ begin
   begin
     if Time() > timeout then
     begin
-      WriteLn GetDebugLn('Login', 'Timed out trying to handle the lobbyscreen.', EErrorLevel.ERROR);
+      WriteLn GetDebugLn('Login', 'Timed out trying to handle the lobbyscreen.', ELogLevel.ERROR);
       Exit;
     end;
 
@@ -1094,14 +1092,13 @@ begin
   img.DrawBox(LoginWorldSwitcher.OpenButton);
 end;
 
-procedure ShowOnClient(login: TRSLogin); overload;
+procedure ShowOnTarget(login: TRSLogin); overload;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   login.Draw(img);
   img.Show();
-  img.Free();
 end;
 
 

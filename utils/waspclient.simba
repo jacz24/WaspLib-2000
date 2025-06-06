@@ -31,7 +31,7 @@ var
 begin
   if result.Response <> EHTTPStatus.OK then
   begin
-    WriteLn GetDebugLn('WaspClient', 'Failed to connect to https://api.waspscripts.com/ to get the database connection info.', EErrorLevel.WARN);
+    WriteLn GetDebugLn('WaspClient', 'Failed to connect to https://api.waspscripts.com/ to get the database connection info.', ELogLevel.WARN);
     Exit;
   end;
 

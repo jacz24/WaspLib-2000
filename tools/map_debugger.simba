@@ -1,0 +1,7 @@
+{$I WaspLib/osrs.simba}
+
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+  MapDebugger.Setup(@Map.Loader);
+  MapDebugger.Show();
+end.

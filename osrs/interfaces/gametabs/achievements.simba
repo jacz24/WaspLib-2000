@@ -170,7 +170,7 @@ Returns the slots available in the diary tab as an array of {ref}`TRSDiarySlot`.
 
 Example:
 ```pascal
-img := TImage.CreateFromTarget();
+img := Target.GetImage();
 for slot in Achievements.Diaries.GetSlots() do
 begin
   img.DrawColor := $FFFFFF;
@@ -227,7 +227,7 @@ Returns the slot of the specified `diary` as a {ref}`TRSDiarySlot`.
 
 Example:
 ```pascal
-img := TImage.CreateFromTarget();
+img := Target.GetImage();
 slot := Achievements.Diaries.GetSlot(ERSAchievementDiary.FREMENNIK);
 
 img.DrawColor := $FFFFFF;

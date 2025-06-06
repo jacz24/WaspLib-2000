@@ -79,14 +79,14 @@ begin
       Self.Hash += Random(256);
 
     hash := String.CreateFromBytes(Self.Hash);
-    WriteLn GetDebugLn('Biometrics', 'Random hash created: ' + hash, EErrorLevel.WARN);
-    WriteLn GetDebugLn('Biometrics', 'Add an account for a permanent one.', EErrorLevel.WARN);
+    WriteLn GetDebugLn('Biometrics', 'Random hash created: ' + hash, ELogLevel.WARN);
+    WriteLn GetDebugLn('Biometrics', 'Add an account for a permanent one.', ELogLevel.WARN);
 
     Exit(Self.Hash);
   end;
 
   hash := HashString(EHashAlgo.SHA1, Players[PlayerIndex].Username);
-  WriteLn GetDebugLn('Players', 'Current account seed: ' + hash, EErrorLevel.SUCCESS);
+  WriteLn GetDebugLn('Players', 'Current account seed: ' + hash, ELogLevel.SUCCESS);
 
   Self.Hash := hash.ToBytes();
   Result := Self.Hash;

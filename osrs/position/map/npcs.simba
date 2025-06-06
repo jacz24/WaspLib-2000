@@ -1,0 +1,686 @@
+(*
+# RSObjects
+This file is responsible for interacting with map objects.
+*)
+
+{$DEFINE WL_RSOBJECTS_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+  TRSNPC = record
+    UpText: TStringArray;
+    Size: TVector3;
+    Coordinates: TPointArray;
+    Filter: TRSDotFilter;
+    Finder: TColorFinder;
+    UseDot, Track: Boolean;
+    Walker: PRSWalker;
+  end;
+
+  TRSNPCArray = array of TRSNPC;
+
+procedure TRSNPC.Setup(size: TVector3; coordinates: TPointArray);
+begin
+  Self.Coordinates := coordinates;
+  Self.Size := size;
+end;
+
+procedure TRSNPC.Setup(json: TJSONItem); overload;
+var
+  i: Integer;
+  colors: TColorArray;
+  best: TBestColor;
+begin
+  if json.Typ <> EJSONType.OBJ then
+    raise GetDebugLn('TRSNPC', 'JSON Object expected, got ' + ToStr(json.Typ) + '.');
+
+  Self.UpText := [json.Item[1].AsString]; //1 is name key in trsmap jsons
+  Self.UseDot := json.Item[4].AsBool; //4 is minimapdot key in trsmap jsons
+
+  //6 is size key in trsmap jsons
+  Self.Size.X := json.Item[6].Item[0].AsInt * 0.8;
+  Self.Size.Y := json.Item[6].Item[1].AsInt * 0.8;
+  Self.Size.Z := json.Item[6].Item[2].AsInt / 40;
+
+  //7 is coordinates key in trsmap jsons
+  for i := 0 to json.Item[7].Count-1 do
+    Self.Coordinates += [json.Item[7].Item[i].Item[0].AsInt, json.Item[7].Item[i].Item[1].AsInt];
+
+  //8 is colors key in trsmap jsons
+  for i := 0 to json.Item[8].Count-1 do
+    colors += json.Item[8].Item[i].AsInt;
+
+  best := GetBestColor(EColorSpace.HSV, colors);
+  Self.Finder.Colors += [best.Color, best.Tolerance, EColorSpace.HSV, best.Mods];
+  Self.Walker := @Map.Walker;
+end;
+
+procedure TRSNPCArray.Setup(json: TJSONItem); overload;
+var
+  i: Integer;
+begin
+  if json.Typ <> EJSONType.ARR then
+    raise GetDebugLn('TRSNPC', 'JSON Array expected, got ' + ToStr(json.Typ) + '.');
+
+  SetLength(Self, json.Count);
+  for i := 0 to High(Self) do
+    Self[i].Setup(json.Item[i]);
+end;
+
+
+function TRSNPC.GetCuboidArray(me: TPoint; angle: Single = $FFFF): TCuboidArray;
+  //gets the points on the rotated minimap which correspond the closest to actual tile coordinates
+  function _GetMinimapGrid(angle: Single): TVector3Array;
+  var x,y: Integer;
+  begin
+    for x := Minimap.Center.X - 10 * 4 to Minimap.Center.X + 10 * 4 with 4 do
+      for y := Minimap.Center.Y - 10 * 4 to Minimap.Center.Y + 10 * 4 with 4 do
+        Result += point(x,y).ToVec3().Rotate(angle, Minimap.Center);
+  end;
+var
+  weights: TDoubleArray;
+  pt: TPoint;
+  h, diff: Single;
+  i: Integer;
+  dist: Double;
+  vec2: TVector2;
+  vec3: TVector3;
+  dots: TPointArray;
+begin
+  if angle = $FFFF then angle := Minimap.GetCompassAngle(False);
+
+  h := Self.Walker^.Height(me);
+
+  if Self.Filter <> [] then
+  begin
+    dots := Minimap.GetFilteredDotArray(ERSMinimapDot.NPC, Self.Walker^.FiltersToMM(me, [Self.Filter], angle));
+    if dots = [] then Exit;
+
+    dots := dots.SortFrom(Minimap.Center);
+    for i := 0 to High(dots) do
+    begin
+      pt := Self.Walker^.MM2Map(me, dots[i], angle); // transfer back from minimap grid to map grid
+      pt := RSTranslator.NormalizeNearestTile(pt) + [2,2]*(Ceil(Max(Self.Size.X, Self.Size.Y))-1); //Go from topleft corner of npc to center
+      diff := -(h-Self.Walker^.Height(pt))/4;
+      vec2 := Self.Walker^.Point2MMVec(me, pt, angle); //translate back to MM space, use vectors to avoid rounding errors
+      vec3 := vec2.ToVec3(diff);
+      Result += Minimap.Vector2MSCuboid(vec3, Self.Size, angle, [0,0,diff]);
+    end;
+  end else
+    for i := 0 to High(Self.Coordinates) do
+    begin
+      pt := Self.Coordinates[i];
+      dist := me.DistanceTo(pt);
+      if dist <= 85 then
+      begin
+        weights += dist;
+        diff := -(h-Self.Walker^.Height(pt));
+        with Self.Walker^.Point2MMVec(me, pt, angle) do
+          Result += Minimap.Vector2MSCuboid([X + 0.15*diff, Y + 0.11*diff, 0], Self.Size, angle,  [0,0,diff]);
+      end;
+    end;
+end;
+
+(*
+## TRSNPC.Find
+```pascal
+function TRSNPC.Find(cuboidArray: TCuboidArray): T2DPointArray;
+```
+Internal TRSNPC method responsible for filtering a TCuboidArray by what's visible in the mainscren.
+This is meant to filter TRSNPC.GetCuboidArray() so targets that are outside of the mainscreen are filtered out.
+You will probably never need to use this directly.
+*)
+function TRSNPC.FindOnMainScreen(cuboidArray: TCuboidArray): T2DPointArray;
+var
+  i: Integer;
+  tpa: TPointArray;
+begin
+  if Self.Finder <> Default(TColorFinder) then
+  begin
+    Self.Finder.Find(Result, cuboidArray);
+    Exit;
+  end;
+
+  for i := 0 to High(cuboidArray) do
+  begin
+    tpa := cuboidArray[i].ShapeFill();
+    if tpa <> [] then
+      Result += tpa;
+  end;
+end;
+
+(*
+## TRSNPCV2.Find
+```pascal
+function TRSNPCV2.FindEx(out cuboids: TCuboidArray; out atpa: T2DPointArray): Boolean;
+function TRSNPCV2.Find(out atpa: T2DPointArray): Boolean;
+function TRSNPCV2.FindFromPosition(me: TPoint; out atpa: T2DPointArray): Boolean;
+```
+TRSNPCV2 method used to find a {ref}`TRSNPCV2`. If found returns true, if not returns false.
+The "extended" method in particular is mostly meant for debugging and is the one used when you call `Debug(TRSNPC)`.
+
+Example:
+```pascal
+WriteLn RSObjects.GEBank.Find(atpa); //Be in ge and with a walker setup there.
+Debug(atpa);
+```
+*)
+function TRSNPC.FindEx(me: TPoint; out cuboids: TCuboidArray; out atpa: T2DPointArray): Boolean;
+begin
+  cuboids := Self.GetCuboidArray(me);
+  if cuboids = [] then Exit;
+  atpa := Self.FindOnMainScreen(cuboids);
+
+  Result := atpa <> [];
+end;
+
+
+function TRSNPC.Find(out atpa: T2DPointArray): Boolean;
+var
+  cuboids: TCuboidArray;
+begin
+  Result := Self.FindEx(Self.Walker^.Position(), cuboids, atpa);
+end;
+
+function TRSNPC.FindFrom(position: TPoint; out atpa: T2DPointArray): Boolean;
+var
+  cuboids: TCuboidArray;
+begin
+  Result := Self.FindEx(position, cuboids, atpa);
+end;
+
+(*
+## TRSNPC._UpTextCheck
+```pascal
+function TRSNPC._UpTextCheck(out shouldExit: Boolean): Boolean;
+```
+Internal TRSNPC helper method that is used by all hovering methods.
+You probably don't need to use this directly.
+*)
+function TRSNPC._UpTextCheck(out shouldExit: Boolean): Boolean;
+var
+  text: String;
+begin
+  shouldExit := True;
+
+  if (RSClient.Mode = ERSMode.FIXED) and MSInterface.IsOpen() then
+    Exit;
+
+  if Self.UpText <> [] then
+    Self.Walker^.TargetUpText := Copy(Self.UpText);
+
+  text := MainScreen.UpText;
+
+  if text.Contains('>') and not Self.Walker^.ActionUpText.Contains(['>']) then
+  begin
+    ChooseOption.Close();
+    Exit;
+  end;
+
+  if (Self.UpText <> []) and text.ContainsAny(Self.UpText) then
+    Exit(True);
+
+  shouldExit := False;
+end;
+
+(*
+## TRSNPC._HoverHelper
+```pascal
+function TRSNPC._HoverHelper(attempts: Integer; trackTarget: Boolean): Boolean;
+```
+Internal helper method used to hover a TRSNPC target.
+You should not use this directly.
+*)
+function TRSNPC._HoverHelper(attempts: Integer): Boolean;
+var
+  shouldExit: Boolean;
+  attempt: Integer;
+  atpa: T2DPointArray;
+  tpa: TPointArray;
+  angle: Double;
+begin
+  Result := Self._UpTextCheck(shouldExit);
+  if shouldExit then Exit;
+
+  for attempt := 0 to attempts do
+  begin
+    if Self.Find(atpa) then
+    begin
+      if attempt < 2 then
+        tpa := atpa[0] // 0 for the closest one.
+      else if Length(atpa) > (attempt - 2) then
+        tpa := atpa[attempt - 2]
+      else
+        tpa := atpa.Random();
+
+      Mouse.Move(tpa.RandomMean());
+
+      if Self.UpText = [] then Exit(True);
+    end;
+
+    if MainScreen.IsUpText(Self.UpText) then Exit(True);
+
+    if attempt <> (attempts - 1) then Continue;
+
+    angle := Minimap.GetCompassAngle();
+    Minimap.SetCompassAngle(angle-50, angle+50);
+  end;
+end;
+
+(*
+## TRSNPC._WalkHoverHelper
+```pascal
+function TRSNPC._WalkHoverHelper(attempts: Integer; trackTarget: Boolean): Boolean;
+```
+Internal helper method used to walk and hover a TRSNPC target.
+You should not use this directly.
+
+This is responsible for deciding wether we should walk to a TRSNPC target or not before attempting to hover it.
+*)
+function TRSNPC._WalkHoverHelper(attempts: Integer): Boolean;
+var
+  shouldExit: Boolean;
+  attempt: Integer;
+  atpa: T2DPointArray;
+  tpa, path: TPointArray;
+  me, closest: TPoint;
+begin
+  Result := Self._UpTextCheck(shouldExit) or Self.Walker^.RedClicked;
+  if shouldExit then Exit;
+
+  for attempt := 0 to attempts do
+  begin
+    if Self.Find(atpa) then
+    begin
+      if attempt < 2 then
+        tpa := atpa[0]
+      else if Length(atpa) > (attempt - 2) then
+        tpa := atpa[attempt - 2]
+      else
+        tpa := atpa.Random();
+
+      Mouse.Move(tpa.RandomMean());
+
+      if Self.UpText = [] then Exit(True);
+    end;
+
+    if MainScreen.IsUpText(Self.UpText) then Exit(True);
+
+    me := Self.Walker^.Position();
+    closest := Self.Walker^.GetClosestPointEx(me, Self.Coordinates, path);
+
+    if path = [] then
+    begin
+      path := Self.Walker^.WebGraph^.FindObjectPath(me, closest);
+      if path = [] then
+        raise GetDebugLn('TRSNPC', 'Can''t path to object.');
+    end;
+
+    if me.DistanceTo(closest) > 50 then
+    begin
+      Self.Walker^.WebWalkEx(me, closest, 30, 0.15);
+      Continue;
+    end;
+
+    if attempt <> (attempts - 1) then Continue;
+
+    if me.DistanceTo(closest) > 25 then
+    begin
+      Self.Walker^.WebWalkEx(me, closest, 25, 0.15);
+      Continue;
+    end;
+
+    Minimap.SetCompassAngle(Minimap.GetCompassAngle(), 50);
+  end;
+end;
+
+(*
+## TRSNPC._PreHoverHelper
+```pascal
+function TRSNPC.PreHoverHelper(attempts: Integer): Boolean;
+```
+Internal helper method used to pre-hover a TRSNPC target.
+You should not use this directly.
+*)
+function TRSNPC._PreHoverHelper(me: TPoint; attempts: Integer = 2): Boolean;
+var
+  attempt: Integer;
+  atpa: T2DPointArray;
+begin
+  for attempt := 0 to attempts do
+  begin
+    if not Self.FindFrom(me, atpa) then Continue;
+    ASync.MouseMove(atpa.Random().Random());
+    Exit(True);
+  end;
+end;
+
+
+(*
+## TRSNPC._ClickHelper
+```pascal
+function TRSNPC._ClickHelper(leftClick: Boolean): Boolean;
+```
+Internal TRSNPC helper method that is used by other clicking methods.
+You probably don't need to use this directly.
+
+This is what's responsible for deciding if we click a target we are hovering or not.
+*)
+function TRSNPC._ClickHelper(leftClick: Boolean): Boolean;
+begin
+  Self.Walker^.TargetUpText := [];
+  Self.Walker^.ActionUpText := [];
+
+  if Self.Walker^.RedClicked then
+  begin
+    Self.Walker^.RedClicked := False;
+    Exit(True);
+  end;
+
+  if ChooseOption.IsOpen() then
+  begin
+    if (Self.UpText <> []) and ChooseOption.Select(Self.UpText) then
+      Exit(True);
+    ChooseOption.Close();
+    Exit;
+  end;
+
+  if leftClick and Biometrics.RedClick(EMouseButton.LEFT, 2) then
+    Exit(True);
+
+  Result := not leftClick and (Self.UpText <> []) and ChooseOption.Select(Self.UpText);
+end;
+
+(*
+## TRSNPC._SelectHelper
+```pascal
+function TRSNPC._SelectHelper(action: TStringArray): Boolean;
+```
+Internal TRSNPC helper method that is used by other select methods.
+You probably don't need to use this directly.
+
+This is what is responsible for deciding if we just left click a target we are hovering or right click it and choose an option.
+*)
+function TRSNPC._SelectHelper(action: TStringArray): Boolean;
+begin
+  Self.Walker^.TargetUpText := [];
+  Self.Walker^.ActionUpText := [];
+
+  if Self.Walker^.RedClicked then
+  begin
+    Self.Walker^.RedClicked := False;
+    Exit(True);
+  end;
+
+  if ChooseOption.IsOpen() and ChooseOption.Select(action) then
+    Exit(True);
+
+  if MainScreen.IsUpText(action) then
+    Exit(Biometrics.RedClick(EMouseButton.LEFT, 2));
+
+  Result := ChooseOption.Select(action);
+end;
+
+
+(*
+## TRSNPC.Hover
+```pascal
+function TRSNPC.Hover(attempts: Integer = 2; trackTarget: Boolean = TRSNPC.TrackTarget): Boolean;
+```
+Method used to hover a TRSNPC target if it's found on the mainscreen.
+It can update the target position while the mouse moves with **trackTarget**.
+
+Example:
+```pascal
+RSW.WebWalk(WaspWeb.LOCATION_VARROCK);
+RSObjects.GEBank.Hover(); //Be in GE with a walker setup there.
+```
+*)
+function TRSNPC.Hover(attempts: Integer = 2): Boolean;
+begin
+  if ChooseOption.IsOpen() then
+  begin
+    if (Self.UpText <> []) and ChooseOption.Find(Self.UpText) then
+      Exit(True);
+    ChooseOption.Close();
+  end;
+
+  if Self.Walker = nil then
+    raise GetDebugLn('TRSNPC', 'Missing the walker pointer.');
+  if Self.Coordinates = [] then
+    raise GetDebugLn('TRSNPC', 'FindFrom requires the object to have coordinates.');
+
+  //TODO:
+  //if not Self.Walker^.MakePointVisible(Self.Coordinates) then Exit;
+
+  Result := Self._HoverHelper(attempts);
+end;
+
+(*
+## TRSNPC.WalkHover
+```pascal
+function TRSNPC.WalkHover(attempts: Integer = 2; trackTarget: Boolean = TRSNPC.TrackTarget): Boolean;
+```
+Method used to walk and hover a TRSNPC target if it's found on the mainscreen after walking.
+It can update the target position while the mouse moves with **trackTarget**.
+
+Example:
+```pascal
+//Be in varrock with a varrock map loaded.
+RSW.WebWalk(WaspWeb.LOCATION_VARROCK);
+RSObjects.GEBank.WalkHover();
+```
+*)
+function TRSNPC.WalkHover(attempts: Integer = 2): Boolean;
+var
+  me, closest: TPoint;
+  path: TPointArray;
+  hasPath: Boolean;
+begin
+  if ChooseOption.IsOpen() then
+  begin
+    if (Self.UpText <> []) and ChooseOption.Find(Self.UpText) then
+      Exit(True);
+    ChooseOption.Close();
+  end;
+
+  if Self.UpText <> [] then
+    Self.Walker^.TargetUpText := Copy(Self.UpText);
+
+  me :=  Self.Walker^.Position();
+  closest := Self.Walker^.GetClosestPointEx(me, Self.Coordinates, path);
+
+  //if the point is not reachable with the webgraph (like a banker behind a booth) then pick nearest node as target
+  if path = [] then
+  begin
+    path := Self.Walker^.WebGraph^.FindObjectPath(me, closest);
+    if path = [] then
+      raise GetDebugLn('TRSNPC', 'Can''t path to object.');
+    hasPath := True;
+  end;
+
+  // check if doors need to be passed to reach target
+  if hasPath or Self.Walker^.WebGraph^.WalkableClusters.InSameTPA(me, closest) then
+  begin
+    if not Self.Walker^.MakePointVisible(closest) and not Self.Walker^.WebWalkEx(me, closest, 30, 0.15) then
+      Exit;
+  end
+  else
+  if not Self.Walker^.WebWalk(closest, 30, 0.15) then
+    Exit;
+
+  Result := Self._WalkHoverHelper(attempts);
+end;
+
+
+(*
+## TRSNPC.Click
+```pascal
+function TRSNPC.Click(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
+```
+Method used to click a TRSNPC target if it's found on the mainscreen.
+
+Example:
+```pascal
+//Be in ge with a ge map loaded.
+WriteLn RSObjects.GEBank.Click();
+```
+*)
+function TRSNPC.Click(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
+begin
+  Result := Self.Hover(attempts) and Self._ClickHelper(leftClick);
+end;
+
+(*
+## TRSNPC.SelectOption
+```pascal
+function TRSNPC.SelectOption(action: TStringArray; attempts: Integer = 2): Boolean;
+```
+Method used to select an option on a TRSNPC target if it's found on the mainscreen.
+
+Example:
+```pascal
+//Be in ge with a ge map loaded.
+WriteLn RSObjects.GEBank.SelectOption(['Collect']);
+```
+*)
+function TRSNPC.Select(action: TStringArray; attempts: Integer = 2): Boolean;
+begin
+  Self.Walker^.ActionUpText := action;
+  Result := Self.Hover(attempts) and Self._SelectHelper(action);
+  Self.Walker^.ActionUpText := [];
+end;
+
+(*
+## TRSNPC.WalkClick
+```pascal
+function TRSNPC.WalkClick(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
+```
+Method used to walk and click a TRSNPC target if it's found on the mainscreen.
+
+Example:
+```pascal
+//Be in ge with a ge map loaded, preferably far away so it has to walk.
+WriteLn RSObjects.GEBank.WalkClick();
+```
+*)
+function TRSNPC.WalkClick(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
+begin
+  if Self.Walker = nil then
+    raise GetDebugLn('TRSNPC', 'Missing the walker pointer.');
+  if Self.Coordinates = [] then
+    raise GetDebugLn('TRSNPC', 'FindFrom requires the object to have coordinates.');
+
+  Result := Self.WalkHover(attempts) and Self._ClickHelper(leftClick);
+  Self.Walker^.TargetUpText := [];
+end;
+
+(*
+## TRSNPC.WalkSelectOption
+```pascal
+function TRSNPC.WalkSelectOption(action: TStringArray; attempts: Integer = 2): Boolean;
+```
+Method used to walk and select an option on a TRSNPC target if it's found on the mainscreen.
+
+Example:
+```pascal
+//Be in ge with a ge map loaded, preferably far away so it has to walk.
+WriteLn RSObjects.GEBank.WalkSelectOption(['Collect']);
+```
+*)
+function TRSNPC.WalkSelect(action: TStringArray; attempts: Integer = 2): Boolean;
+begin
+  if Self.Walker = nil then
+    raise GetDebugLn('TRSNPC', 'Missing the walker pointer.');
+  if Self.Coordinates = [] then
+    raise GetDebugLn('TRSNPC', 'FindFrom requires the object to have coordinates.');
+
+  Self.Walker^.ActionUpText := action;
+
+  Result := Self.WalkHover(attempts) and Self._SelectHelper(action);
+
+  Self.Walker^.TargetUpText := [];
+  Self.Walker^.ActionUpText := [];
+end;
+
+
+function TRSNPC.DistanceTo(pt: TPoint): Double;
+var
+  dist: Double;
+  i: Integer;
+begin
+  Result := $FFFFFF;
+  for i := 0 to High(Self.Coordinates) do
+  begin
+    dist := Self.Coordinates[i].DistanceTo(pt);
+    if dist < Result then
+      Result := dist;
+  end;
+end;
+
+function TRSNPCArray.ClosestIndex(pt: TPoint): Integer;
+var
+  closest, dist: Double;
+  i, j: Integer;
+begin
+  closest := $FFFFFF;
+  for i := 0 to High(Self) do
+    for j := 0 to High(Self[i].Coordinates) do
+    begin
+      dist := Self[i].Coordinates[j].DistanceTo(pt);
+      if dist >= closest then Continue;
+
+      closest := dist;
+      Result := i;
+    end;
+end;
+
+(*
+## TImage.DrawNPC
+```pascal
+procedure TImage.DrawNPC(npc: TRSNPC);
+```
+Helper method to debug TRSNPCs.
+*)
+procedure TImage.DrawNPC(npc: TRSNPC);
+var
+  atpa: T2DPointArray;
+  cuboids: TCuboidArray;
+  i: Integer;
+begin
+  if not npc.FindEx(npc.Walker^.Position(), cuboids, atpa) then Exit;
+
+  Self.DrawColor := $00FFFF;
+  for i := 0 to High(cuboids) do
+  begin
+    Self.DrawTPA(cuboids[i].Bottom.Corners.Connect().Grow(1));
+    Self.DrawTPA(cuboids[i].Top.Corners.Connect().Grow(1));
+  end;
+
+  Self.DrawColor := Colors.Random();
+  Self.DrawATPA(atpa);
+
+  Self.DrawColor := $FFFFFF;
+  for i := 0 to High(cuboids) do
+    Self.DrawTPA(cuboids[i].Edges());
+end;
+
+procedure ShowOnTarget(npc: TRSNPC); overload;
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  img.DrawNPC(npc);
+  img.Show();
+end;
+
+
+function ToString(constref npc: TRSNPC): String; override;
+begin
+  Result := '[' + ToString(npc.UpText) + ', ' +
+                  ToString(npc.Size) + ', ' +
+                  ToString(npc.Coordinates) + ', ' +
+                  ToString(npc.Finder) + ', ' +
+                  ToString(npc.UseDot) + ', ' +
+                  ToString(npc.Track) + ']';
+end;

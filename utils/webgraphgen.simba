@@ -341,7 +341,7 @@ begin
   Result.WalkableSpace    := white + gray;
   Result.ObjectClusters   := grayClusters;
 
-  WriteLn GetDebugLn('WebGraphGenerator', 'Generating webgraph took ' + ToStr(Round(((GetTimeRunning()-t)/1000), 2)) + ' seconds.', EErrorLevel.SUCCESS);
+  WriteLn GetDebugLn('WebGraphGenerator', 'Generating webgraph took ' + ToStr(Round(((GetTimeRunning()-t)/1000), 2)) + ' seconds.', ELogLevel.SUCCESS);
 end;
 
 var

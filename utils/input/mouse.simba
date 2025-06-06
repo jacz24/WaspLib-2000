@@ -84,7 +84,7 @@ var
 begin
   self.DebugLn('Generating a heatmap from clicks and movements...');
 
-  ClientBitmap := TImage.CreateFromTarget();
+  ClientBitmap := Target.GetImage();
   DebugBitmap := ClientBitmap.Copy();
   wid := DebugBitmap.GetWidth();
   hei := DebugBitmap.GetHeight();
@@ -151,9 +151,9 @@ This is automatically called on the {ref}`Mouse variable`.
 *)
 procedure TMouse.Setup();
 begin
-  Target.MouseOptions.Speed := 12;
-  Target.MouseOptions.Gravity := 9;
-  Target.MouseOptions.Wind := 5;
+  Target.Options.MouseSpeed := 12;
+  Target.Options.MouseGravity := 9;
+  Target.Options.MouseWind := 5;
 
 
   Self.Distribution := EMouseDistribution.ROWP;
@@ -184,22 +184,26 @@ end;
 (*
 ## Mouse.Position
 ```pascal
-function TMouse.Position(): TPoint;
+property TMouse.Position: TPoint;
+property TMouse.Position(value: TPoint);
 ```
-Returns the mouse current position as a `TPoint`.
+Used to return or set the mouse current position as a `TPoint`.
 
 Example:
 ```pascal
-var p: TPoint;
-begin
-  p := Mouse.Position();
-  WriteLn('X: ', p.X, ' Y: ', p.Y);
-end;
+WriteLn(Mouse.Position);
+Mouse.Position := [100, 100];
+WriteLn(Mouse.Position);
 ```
 *)
-function TMouse.Position(): TPoint;
+property TMouse.Position: TPoint;
 begin
   Result := Target.MouseXY;
+end;
+
+property TMouse.Position(value: TPoint);
+begin
+  Target.MouseMove(value);
 end;
 
 (*
@@ -274,10 +278,10 @@ begin
   Self.MissChance := 0; // prevent recursion
 
   try
-    range := Trunc(Power(Self.Position().DistanceTo(destination), 0.80)); // how much possible range to miss
+    range := Trunc(Power(Self.Position.DistanceTo(destination), 0.80)); // how much possible range to miss
     miss := RandomMode(0.9, 0.1, 1.5); // Where miss will happen. 1 = destination.
-    Result.X := Trunc((1-miss)*Self.Position().X + miss*destination.X);
-    Result.Y := Trunc((1-miss)*Self.Position().Y + miss*destination.Y);
+    Result.X := Trunc((1-miss)*Self.Position.X + miss*destination.X);
+    Result.Y := Trunc((1-miss)*Self.Position.Y + miss*destination.Y);
 
     Result := Result.Random(range);
   finally
@@ -358,8 +362,8 @@ begin
   case distribution of
     EMouseDistribution.RANDOM: Self.Move(circle.RandomPoint());
     EMouseDistribution.GAUSS:  Self.Move(circle.RandomPointCenter());
-    EMouseDistribution.SKEWED: Self.Move(circle.RandomPointCenter()); //TODO
-    EMouseDistribution.ROWP:   Self.Move(circle.RandomPointCenter()); //TODO
+    EMouseDistribution.SKEWED: Self.Move(circle.RandomSkewedPoint(Self.Position));
+    EMouseDistribution.ROWP:   Self.Position := circle.RandomWeightedPoint(Self.Position);
   end;
 end;
 
@@ -374,14 +378,14 @@ begin
   case distribution of
     EMouseDistribution.RANDOM: Self.Move(b.RandomPoint());
     EMouseDistribution.GAUSS:  Self.Move(b.RandomPointCenter());
-    EMouseDistribution.SKEWED: Self.Move(b.RandomPointCenter()); //TODO
-    EMouseDistribution.ROWP:   Self.Move(b.RandomPointCenter()); //TODO
+    EMouseDistribution.SKEWED: Self.Move(b.RandomSkewedPoint(Self.Position));
+    EMouseDistribution.ROWP:   Self.Move(b.RandomWeightedPoint(Self.Position));
   end;
 end;
 
-procedure TMouse.Move(quad: TQuad; ForcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
+procedure TMouse.Move(quad: TQuad; forcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
 begin
-  if not ForcedMove and quad.Contains(Target.MouseXY) then
+  if not forcedMove and quad.Contains(Target.MouseXY) then
     Exit;
 
   if distribution = EMouseDistribution.DEFAULT then
@@ -390,8 +394,8 @@ begin
   case distribution of
     EMouseDistribution.RANDOM: Self.Move(quad.RandomPoint());
     EMouseDistribution.GAUSS:  Self.Move(quad.RandomPointCenter());
-    EMouseDistribution.SKEWED: Self.Move(quad.RandomPointCenter()); //TODO
-    EMouseDistribution.ROWP:   Self.Move(quad.RandomPointCenter()); //TODO
+    EMouseDistribution.SKEWED: Self.Move(quad.RandomSkewedPoint(Self.Position));
+    EMouseDistribution.ROWP:   Self.Move(quad.RandomWeightedPoint(Self.Position));
   end;
 end;
 
@@ -440,7 +444,7 @@ begin
   Target.MouseClick(button);
 end;
 
-procedure TMouse.Click(quad: TQuad; button: EMouseButton; ForcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
+procedure TMouse.Click(quad: TQuad; button: EMouseButton; forcedMove: Boolean = False; distribution: EMouseDistribution = EMouseDistribution.DEFAULT); overload;
 begin
   Self.Move(quad, forcedMove, distribution);
   Target.MouseClick(button);

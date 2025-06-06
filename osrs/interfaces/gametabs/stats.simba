@@ -78,7 +78,7 @@ Skills: TBoxArray;
 
 Example:
 ```pascal
-ShowOnClient(Stats.Skills);
+ShowOnTarget(Stats.Skills);
 ```
 ```{figure} ../../images/stats_skills.png
 ```
@@ -88,7 +88,7 @@ You can also access each skill box with an index or, more conveniently, with a
 
 Example:
 ```pascal
-ShowOnClient(Stats.Skills[ERSSkill.HERBLORE]);
+ShowOnTarget(Stats.Skills[ERSSkill.HERBLORE]);
 ```
 ```{figure} ../../images/stats_skill.png
 ```

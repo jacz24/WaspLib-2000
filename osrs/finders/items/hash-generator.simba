@@ -53,7 +53,7 @@ begin
   AddHash(Result, Result);
 end;
 
-//Author: Slacky
+//Author: [slacky](https://slacky.one/)
 procedure ClearItemBackground(img: TImage);
 var
   border, shadow, tpa: TPointArray;
@@ -69,7 +69,7 @@ begin
   for i := High(atpa) downto 0 do
     if atpa[i].Intersection(shadow).Length <> 0 then
       atpa.Delete(i);
-  tpa := atpa.Merge + border;
+  tpa := atpa.Merge() + border;
   img.DrawColor := $0;
   img.DrawTPA(tpa.Invert([0,0,img.Width-1, img.Height-1]));
 end;

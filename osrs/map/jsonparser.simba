@@ -1,7 +1,0 @@
-{$DEFINE SRL_MAPJSONPARSER_INCLUDED}
-{$INCLUDE_ONCE WaspLib/osrs.simba}
-
-type
-  TRSObjectJSONParser = record
-    Data: TJSONParser;
-  end;

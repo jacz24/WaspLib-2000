@@ -113,6 +113,7 @@ end;
 
 procedure TRSCollectionBox.Setup();
 begin
+  if Async.Schedules.Contains('CollectionBox.Timer') then Exit;
   Async.ScheduleEvery('CollectionBox.Timer', @Self.AsyncTask, 10 * ONE_MINUTE);
   AddOnTerminate(@Self.Free);
 end;
@@ -373,14 +374,13 @@ begin
   end;
 end;
 
-procedure ShowOnClient(collectionBox: TRSCollectionBox); overload;
+procedure ShowOnTarget(collectionBox: TRSCollectionBox); overload;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   CollectionBox.Draw(img);
   img.Show();
-  img.Free();
 end;
 
 

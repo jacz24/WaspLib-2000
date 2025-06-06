@@ -90,7 +90,7 @@ Buttons: TBoxArray;
 
 Example:
 ```pascal
-ShowOnClient(HouseOptions.Buttons);
+ShowOnTarget(HouseOptions.Buttons);
 ```
 ```{figure} ../../images/houseoptions_buttons.png
 ```
@@ -100,7 +100,7 @@ You can also access each button with an index or, more conveniently, with a
 
 Example:
 ```pascal
-ShowOnClient(HouseOptions.Buttons[ERSHouseOptionsButton.VIEWER]);
+ShowOnTarget(HouseOptions.Buttons[ERSHouseOptionsButton.VIEWER]);
 ```
 ```{figure} ../../images/houseoptions_button.png
 ```

@@ -50,7 +50,7 @@ jobs:
           git push origin $TAG_NAME
 
       - name: Create release
-        run: |
-          gh release create $TAG_NAME --generate-notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create $TAG_NAME --generate-notes

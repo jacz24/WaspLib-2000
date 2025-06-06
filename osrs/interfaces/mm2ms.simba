@@ -6,10 +6,48 @@ Supports rotation, and zoom, and resizable client.
 MM2MS extends the Minimap interface as well as the mainscreen interface with
 functionality to convert coordinates to & from the minimap to the mainscreen (mm2ms).
 
-Original work done by slacky.
+Original work done by [slacky](https://slacky.one/).
 
 It's thanks to {ref}`MM2MS` that we can have the following grid:
 ```{figure} ../../images/mm2ms.png
+```
+
+MM2MS by itself is just a 3D grid with infinite cross sections in all axis
+(read {ref}`MM2MS Projector` for more information).
+
+It's up to you to give it coordinates you want to be converted, for example:
+```pascal
+{$I WaspLib/osrs.simba}
+
+begin
+  while True do
+  begin
+    Options.GetZoomLevel(False);
+    Minimap.DebugTiles([]);
+  end;
+end.
+```
+
+```{figure} ../../images/mm2ms_flat.gif
+```
+
+But you can for example, use it with a {ref}`TRSMap` heightmap data for more
+advanced projections:
+```pascal
+{$I WaspLib/osrs.simba}
+
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+
+  while True do
+  begin
+    Options.GetZoomLevel(False);
+    Map.DebugHeight();
+  end;
+end.
+```
+
+```{figure} ../../images/mm2ms_height.gif
 ```
 *)
 
@@ -22,10 +60,13 @@ type
 Main record responsible for minimap to mainscreen ({ref}`MM2MS`) conversion.
 *)
   TRSMM2MS = record
+    {%codetools off}
     ZoomQuads: array [0..100] of TQuad;
     PlayerBoxes: array [0..100] of TBox;
+    {%codetools on}
     Projector: TMM2MSProjector;
     Normalizer: TMM2MSProjector;
+    const MAX_RENDER_DISTANCE: Integer = 80; //roughly 20 tiles
   end;
 
 procedure TRSMM2MS.Setup();
@@ -55,7 +96,7 @@ begin
     for i := 0 to High(arr) do
       arr[i] := [arr[i].X - X, Y - arr[i].Y, arr[i].Z];
 
-  Result := Self.Projector.Run(arr, [0, 0, PI * 2 - roll]);
+  Result := Self.Projector.Run(arr, [0, 0, TAU - roll]);
 end;
 
 var
@@ -158,7 +199,7 @@ Example:
 while True do
 begin
   quad := Minimap.Point2MSQuad(Minimap.Center);
-  ShowOnClient(quad);
+  ShowOnTarget(quad);
 end;
 ```
 *)
@@ -211,7 +252,7 @@ Example:
 while True do
 begin
   cuboid := Minimap.Point2MSCuboid(Minimap.Center, [2,2,6]);
-  ShowOnClient(cuboid);
+  ShowOnTarget(cuboid);
 end;
 ```
 *)
@@ -313,9 +354,9 @@ end;
 
 
 (*
-## Minimap.GetZoomQuad
+## Minimap.ZoomQuad
 ```pascal
-function TRSMinimap.GetZoomQuad(): TQuad;
+property TRSMinimap.ZoomQuad: TQuad;
 ```
 Returns a `TQuad` on the minimap of what's visible on the mainscreen at the current zoom level.
 
@@ -324,11 +365,11 @@ Example:
 while True do
 begin
   Options.GetZoomLevel(False);
-  ShowOnClient(Minimap.GetZoomQuad());
+  ShowOnTarget(Minimap.ZoomQuad);
 end;
 ```
 *)
-function TRSMinimap.GetZoomQuad(): TQuad;
+property TRSMinimap.ZoomQuad: TQuad;
 var
   angle: Single;
 begin
@@ -352,7 +393,7 @@ end;
 function TRSMinimap.PointOnZoomQuad(pt: TPoint): Boolean;
 ```
 Returns True/False if a point `pt` is within our "zoom quad".
-Read `Minimap.GetZoomQuad()` for more information.
+Read `Minimap.ZoomQuad` for more information.
 
 Example:
 ```pascal
@@ -361,7 +402,7 @@ WriteLn Minimap.PointOnZoomQuad(pt);
 *)
 function TRSMinimap.PointOnZoomQuad(pt: TPoint): Boolean;
 begin
-  Result := Self.GetZoomQuad().Contains(pt);
+  Result := Self.ZoomQuad.Contains(pt);
 end;
 
 (*
@@ -376,16 +417,15 @@ var
   quad: TQuad;
   img: TImage;
 begin
-  quad := Self.GetZoomQuad();
+  quad := Self.ZoomQuad;
   if not quad.Contains(pt) then
   begin
-    img := TImage.CreateFromTarget();
+    img := Target.GetImage();
     img.DrawColor := $FFFFFF;
     img.DrawQuad(quad);
     img.DrawColor := $0000FF;
     img.DrawCross(pt, 4);
     img.Show();
-    img.Free();
     raise GetDebugLn('MM2MS', ToStr(pt) + ' is not a valid point to generate a random point on the zoom quad: ' + ToStr(quad) + '.');
   end;
 
@@ -393,7 +433,6 @@ begin
     Result := pt.Random(-randomness, randomness);
   until quad.Contains(Result);
 end;
-
 
 
 (*
@@ -417,7 +456,7 @@ var
 begin
   if not Self.Contains(pt) then Exit;
 
-  quad := Self.GetZoomQuad();
+  quad := Self.ZoomQuad;
   if quad.Contains(pt) then Exit(True);
 
   tpa := quad.Corners.SortFrom(pt);
@@ -464,8 +503,8 @@ WriteLn(MainScreen.TranslateDistance(20));
 ```
 *)
 function TRSMainScreen.NormalizeDistance(dist: Integer; accuracy: Single = 1.05): Integer;
-const
-  BASE: TPoint = [260,181];
+var
+  Base: TPoint;
 
   function _SearchUp(value: Single; target: Single; inc: Single): Single;
   var
@@ -501,12 +540,12 @@ var
 begin
   if dist = 0 then Exit;
 
+  Base := MM2MS.Normalizer.Run([0, 0, 0], [0, 0, 0]);
   hi := _SearchUp(0.1, dist, 1.50);
   lo := _SearchDown(hi, dist, 1.50);
 
   hi := _SearchUp(lo, dist, accuracy);
   lo := _SearchDown(hi, dist, accuracy);
-
   mean := lo + ((hi - lo) / 2);
 
   with Minimap.Center do
@@ -526,7 +565,7 @@ function TRSMinimap.InZoomRange(pt: TPoint): Boolean;
 function TRSMinimap.AnyInZoomRange(tpa: TPointArray): Boolean; overload;
 ```
 Method used to know if a point `pt`is within reach of the Zoom rectangle without adjusting the zoom level.
-Check `TRSMinimap.GetZoomQuad()` for information on the zoom quad.
+Check `TRSMinimap.ZoomQuad` for information on the zoom quad.
 
 Example:
 ```pascal
@@ -539,7 +578,7 @@ var
 begin
   if not Self.Contains(pt) then Exit;
 
-  quad := Self.GetZoomQuad().Corners.SortFrom(Self.Center);
+  quad := Self.ZoomQuad.Corners.SortFrom(Self.Center);
   corner := quad[High(quad)];
 
   Result := Self.Center.DistanceTo(pt) <= Self.Center.DistanceTo(corner);
@@ -558,7 +597,7 @@ var
   pt, corner: TPoint;
   dist: Double;
 begin
-  quad := Self.GetZoomQuad().Corners.SortFrom(Self.Center);
+  quad := Self.ZoomQuad.Corners.SortFrom(Self.Center);
   corner := quad[High(quad)];
   dist := Self.Center.DistanceTo(corner);
 
@@ -653,16 +692,16 @@ var
 begin
   angle := Self.GetCompassAngle(False);
 
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   img.DrawColor := $00FF00;
 
-  for p.X := Self.Center.X - 25 * 4 to Self.Center.X + 25 * 4 with 4 do
-    for p.Y := Self.Center.Y - 25 * 4 to Self.Center.Y + 25 * 4 with 4 do
+  for p.X := Self.Center.X - 100 to Self.Center.X + 100 with 4 do
+    for p.Y := Self.Center.Y - 100 to Self.Center.Y + 100 with 4 do
     begin
       vector := p.ToVec3().Rotate(angle, Self.Center);
       if not Self.PointOnZoomQuad(vector.ToPoint()) then Continue;
       quad := Self.Vector2MSQuad(vector, angle, [1,1]);
-      tpa := MainScreen.Filter(quad.Corners.Connect());
+      tpa := quad.Corners.Connect().ExtractBox(MainScreen.Bounds);
       img.DrawTPA(tpa);
     end;
 
@@ -674,7 +713,7 @@ begin
       vector := p.ToVec3();
       if not Self.PointOnZoomQuad(vector.ToPoint()) then Continue;
       quad := Self.Vector2MSQuad(vector, angle, [1,1]);
-      tpa := MainScreen.Filter(quad.Corners.Connect().Grow(1));
+      tpa := quad.Corners.Connect().ExtractBox(MainScreen.Bounds);
       img.DrawTPA(tpa);
     end;
   end;
@@ -686,13 +725,12 @@ begin
   img.DrawTPA(tpa);
 
   img.Show();
-  img.Free();
 end;
 
 (*
-## MainScreen.GetPlayerBox
+## MainScreen.PlayerBox
 ```pascal
-function TRSMainScreen.GetPlayerBox(): TBox;
+property TRSMainScreen.PlayerBox: TBox;
 ```
 Returns a `TBox` on the mainscreen that tightly bounds the player.
 
@@ -700,11 +738,21 @@ Results are cached per zoom level to avoid unnecessary recomputation.
 
 Example:
 ```pascal
-WriteLn(MainScreen.GetPlayerBox());
+{$I WaspLib/osrs.simba}
+
+begin
+  while True do
+  begin
+    Options.GetZoomLevel(False);
+    ShowOnTarget(MainScreen.PlayerBox);
+  end;
+end.
+```
+
+```{figure} ../../images/mm2ms_playerbox.gif
 ```
 *)
-
-function TRSMainScreen.GetPlayerBox(): TBox;
+property TRSMainScreen.PlayerBox: TBox;
 var
   compassAngle: Double;
   vectors: TVector3Array;

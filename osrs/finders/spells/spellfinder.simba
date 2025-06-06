@@ -75,8 +75,7 @@ begin
     if not FileExists(path) then
       ZipExtractEntry(Self.ZIP, name, Self.CacheDir);
 
-    Self.SpellImages[spell][i] := TImage.Create(path);
-    Self.SpellImages[spell][i].FreeOnTerminate := True;
+    Self.SpellImages[spell][i] := new TImage(path);
   end;
 
   Result := Self.SpellImages[spell];

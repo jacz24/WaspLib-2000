@@ -124,7 +124,7 @@ Buttons: array [ERSOptionsButton] of TRSButton;
 
 Example:
 ```pascal
-ShowOnClient(Options.Buttons);
+ShowOnTarget(Options.Buttons);
 ```
 ```{figure} ../../images/options_buttons.png
 ```
@@ -134,7 +134,7 @@ You can also access each button with an index or, more conveniently, with a
 
 Example:
 ```pascal
-ShowOnClient(Options.Buttons[ERSOptionsButton.HOUSE]);
+ShowOnTarget(Options.Buttons[ERSOptionsButton.HOUSE]);
 ```
 ```{figure} ../../images/options_button.png
 ```
@@ -244,9 +244,9 @@ begin
   if Self.OpenTab(ERSOptionsTab.DISPLAY) then
     Self.ZoomLevel := Self.Sliders[ERSOptionsSlider.ZOOM].GetLevel();
   if Self.ZoomLevel = -1 then
-    WriteLn GetDebugLn('Options', 'Failed to read zoom!', EErrorLevel.ERROR)
+    WriteLn GetDebugLn('Options', 'Failed to read zoom!', ELogLevel.ERROR)
   else
-    WriteLn GetDebugLn('Options', 'Current zoom level: ' + ToString(Self.ZoomLevel), EErrorLevel.SUCCESS);
+    WriteLn GetDebugLn('Options', 'Current zoom level: ' + ToString(Self.ZoomLevel), ELogLevel.SUCCESS);
 
   Result := Self.ZoomLevel;
 end;
@@ -409,7 +409,7 @@ begin
 
   if Self.GetRoofsState() then Exit(True);
 
-  WriteLn GetDebugLn('Options', 'TODO: Finish HideRoofs with All Settings menu...', EErrorLevel.ERROR);
+  WriteLn GetDebugLn('Options', 'TODO: Finish HideRoofs with All Settings menu...', ELogLevel.ERROR);
 
   Result := SleepUntil(Self.GetRoofsState(), 100, 1200);
 
@@ -435,7 +435,7 @@ begin
 
   if not Self.GetRoofsState() then Exit(True);
 
-  WriteLn GetDebugLn('Options', 'TODO: Finish ShowRoofs with All Settings menu...', EErrorLevel.ERROR);
+  WriteLn GetDebugLn('Options', 'TODO: Finish ShowRoofs with All Settings menu...', ELogLevel.ERROR);
 
   Result := SleepUntil(not Self.GetRoofsState(), 100, 1200);
 
@@ -505,8 +505,6 @@ begin
 
   Result := Self.GetBrightness() = 100;
 end;
-
-
 
 var
 (*

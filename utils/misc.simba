@@ -236,11 +236,7 @@ begin
 
   path += TDateTime.CreateFromSystem().ToString(FILE_TIME_FORMAT);
 
-  try
-    img := TImage.CreateFromTarget(bounds);
-    if img.Save(path, True) then
-      Result := path;
-  finally
-    img.Free();
-  end;
+  img := Target.GetImage(bounds);
+  if img.Save(path, True) then
+    Result := path;
 end;

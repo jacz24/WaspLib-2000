@@ -1,0 +1,42 @@
+name: Update WaspInput
+
+on:
+  repository_dispatch:
+    types: [release-published]
+
+jobs:
+  update-waspinput:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Download WaspInput
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Fetching latest release info..."
+          curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            https://api.github.com/repos/Torwent/wasp-input/releases/latest > release.json
+
+          TAG_NAME=$(jq -r '.tag_name' release.json)
+
+          DLL1_URL=$(jq -r '.assets[] | select(.name == "waspinput32.dll") | .browser_download_url' release.json)
+          DLL2_URL=$(jq -r '.assets[] | select(.name == "waspinput64.dll") | .browser_download_url' release.json)
+
+          echo "Downloading DLLs for tag $TAG_NAME..."
+          mkdir -p plugins/waspinput
+          curl -L -o plugins/waspinput/waspinput32.dll "$DLL1_URL"
+          curl -L -o plugins/waspinput/waspinput64.dll "$DLL2_URL"
+
+          echo "$TAG_NAME" > tag.txt  # Save it for the next step
+
+      - name: Commit changes
+        run: |
+          TAG_NAME=$(cat tag.txt)
+
+          git config --global user.name "Wasp Bot"
+          git config --global user.email "waspbot@waspcripts.com"
+          git add plugins/waspinput/waspinput32.dll plugins/waspinput/waspinput64.dll
+          git commit -m "Automatic WaspInput update to version: $TAG_NAME" || echo "No changes to commit"
+          git push

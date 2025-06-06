@@ -38,10 +38,11 @@ begin
   if (mode <> ERSMode.UNKNOWN) and (mode <> Self.Mode) then
   begin
     Self.Mode := mode;
-    WriteLn(GetDebugLn('RSClient', 'Client mode changed: ' + ToStr(Self.Mode), EErrorLevel.SUCCESS));
+    WriteLn(GetDebugLn('RSClient', 'Client mode changed: ' + ToStr(Self.Mode), ELogLevel.SUCCESS));
     SetupInterfaces();
   end;
 
+  {$IFNDEF WL_TEST}
   if Result then
   begin
     if not MainScreen.HighestPitch then
@@ -61,6 +62,7 @@ begin
     if XPBar.Tracker.Current = 0 then
       XPBar.Read();
   end;
+  {$ENDIF}
 end;
 
 procedure TRSClient.LoseFocus(); override;

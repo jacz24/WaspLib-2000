@@ -1,0 +1,131 @@
+(*
+# House Layout Finder
+Provides and compares images for {ref}`House Viewer`.
+*)
+{$DEFINE HOUSE_LAYOUT_FINDER_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+(*
+## TRSHouseLayoutFinder
+Main record used to interact with the {ref}`House Viewer`.
+*)
+  TRSHouseLayoutFinder = record
+    RoomImages: array [EHouseRoom] of TImageArray;
+    Version: String;
+    Similarity: Single;
+    ImageCompare: TImageCompareUtils;
+    CacheDir: String;
+    const ZIP: String = {$MACRO DIR} + 'images.zip';
+  end;
+
+(*
+## HouseLayoutFinder.Setup
+```pascal
+procedure TRSHouseLayoutFinder.Setup();
+```
+Sets up the {ref}`TRSHouseLayoutFinder`, including cache management and similarity settings.
+
+Example:
+```pascal
+HouseLayoutFinder.Setup();
+```
+*)
+procedure TRSHouseLayoutFinder.Setup();
+var
+  dir, tmp: String;
+begin
+  Self.Version := HashFile(EHashAlgo.MD5, Self.ZIP);
+  SetLength(Self.Version, 6);
+
+  Self.CacheDir := WLEnv.CacheDir + 'houselayoutfinder' + PATH_SEP;
+
+  //Delete old cache files if they exist
+  for dir in DirList(Self.CacheDir) do
+  begin
+    tmp := Copy(dir, 1, Length(dir)-Length(Self.Version));
+    if tmp = Self.Version then Continue;
+    DirDelete(dir, False);
+  end;
+
+  Self.CacheDir += Self.Version + PATH_SEP;
+
+  if not DirCreate(Self.CacheDir) then
+    raise GetDebugLn('HouseLayoutFinder', 'Failed to create cache directory: ' + Self.CacheDir);
+
+  //only set similarity if the user didn't set it already
+  if Self.Similarity = 0 then
+    Self.Similarity := 0.85;
+end;
+
+(*
+## HouseLayoutFinder.GetImages
+```pascal
+function TRSHouseLayoutFinder.GetImages(room: EHouseRoom): TImageArray;
+```
+Retrieves the images for a specific `room`, loading it from cache or extracting from ZIP if needed.
+This returns a `TImageArray` with 4 images, one for each possible rotation.
+
+Example:
+```pascal
+img := HouseLayoutFinder.GetImage(EHouseRoom.ACHIEVEMENT_GALLERY)[0];
+img.Show();
+```
+*)
+property TRSHouseLayoutFinder.Images(room: EHouseRoom): TImageArray;
+var
+  name, path: String;
+  i: Integer;
+begin
+  if Self.RoomImages[room] <> [] then
+    Exit(Self.RoomImages[room]);
+
+  name := LowerCase(ToStr(room).After('.')) + '.png';
+  path := Self.CacheDir + name;
+
+  if not FileExists(path) then
+    ZipExtractEntry(Self.ZIP, name, Self.CacheDir);
+
+  Self.RoomImages[room] += new TImage(path);
+
+  if room = EHouseRoom.UNKNOWN then
+    Exit(Self.RoomImages[room]);
+
+  for i := 1 to 3 do
+    Self.RoomImages[room] += Self.RoomImages[room][i-1].RotateClockWise(1);
+
+  Result := Self.RoomImages[room];
+end;
+
+function TRSHouseLayoutFinder.Compare(bounds: TBox; out rotation: Integer): EHouseRoom;
+var
+  room: EHouseRoom;
+  sample: TImage;
+  templates: TImageArray;
+  match: Single;
+begin
+  if Target.HasColor($3F4A53, 0.4, 1, bounds) then
+  begin
+    rotation := 0;
+    Exit(EHouseRoom.UNKNOWN);
+  end;
+
+  sample := Target.GetImage(bounds);
+  for room := EHouseRoom.PARLOUR to High(EHouseRoom) do
+  begin
+    templates := Self.Images[room];
+    for rotation := 0 to High(templates) do
+    begin
+      match := templates[rotation].Compare(sample);
+      if match >= Self.Similarity then
+        Exit(room);
+    end;
+  end;
+end;
+
+var
+(*
+## HouseLayoutFinder variable
+Global {ref}`TRSHouseLayoutFinder` variable.
+*)
+  HouseLayoutFinder: TRSHouseLayoutFinder;

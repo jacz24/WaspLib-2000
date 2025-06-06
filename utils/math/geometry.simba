@@ -8,6 +8,9 @@ Methods and functions related to geometry.
 
 {$loadlib ../../plugins/libtpaex/libtpaex}
 
+const
+  TAU: Double = 2 * PI;
+
 function TBox.ContainsBox(other: TBox): Boolean;
 begin
   Result := InRange(other.X1, Self.X1, Self.X2) and
@@ -15,6 +18,7 @@ begin
             InRange(other.Y1, Self.Y1, Self.Y2) and
             InRange(other.Y2, Self.Y1, Self.Y2);
 end;
+
 
 function TBox.ContainsQuad(other: TQuad): Boolean;
 begin
@@ -158,14 +162,13 @@ begin
   Self.DrawTPA(cuboid.Edges());
 end;
 
-procedure ShowOnClient(cuboid: TCuboid); overload;
+procedure ShowOnTarget(cuboid: TCuboid); overload;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   img.DrawCuboid(cuboid);
   img.Show();
-  img.Free();
 end;
 
 
@@ -185,14 +188,13 @@ begin
     Self.DrawTPA(cuboids[i].Edges());
 end;
 
-procedure ShowOnClient(cuboids: TCuboidArray); overload;
+procedure ShowOnTarget(cuboids: TCuboidArray); overload;
 var
   img: TImage;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
   img.DrawCuboidArray(cuboids);
   img.Show();
-  img.Free();
 end;
 
 
@@ -215,12 +217,12 @@ begin
 end;
 
 
-procedure ShowOnClient(data: TIntegerMatrix; transparent: TColor = $0); overload;
+procedure ShowOnTarget(data: TIntegerMatrix; transparent: TColor = $0); overload;
 var
   img: TImage;
   y,x: Integer;
 begin
-  img := TImage.CreateFromTarget();
+  img := Target.GetImage();
 
   for y := 0 to High(data) do
     for x := 0 to High(data[y]) do
@@ -228,6 +230,38 @@ begin
         img.Pixel[x, y] := data[y,x];
 
   img.Show();
-  img.Free();
+end;
+
+
+(*
+## TImage.RotateClockWise
+```pascal
+function TImage.RotateClockWise(times: Integer = 1): TImage;
+```
+Rotate a TImage clockwise `times` amoutn of times.
+*)
+function TImage.RotateClockWise(times: Integer = 1): TImage;
+var
+  i: Integer;
+begin
+  Result := Self.Copy();
+  for i := 1 to times do
+    Result := Result.Mirror(EImageMirrorStyle.LINE).Mirror(EImageMirrorStyle.WIDTH);
+end;
+
+(*
+## TImage.RotateCounterClockWise
+```pascal
+function TImage.RotateCounterClockWise(times: Integer = 1): TImage;
+```
+Rotate a TImage counter clockwise `times` amoutn of times.
+*)
+function TImage.RotateCounterClockWise(times: Integer = 1): TImage;
+var
+  i: Integer;
+begin
+  Result := Self.Copy();
+  for i := 1 to times do
+    Result := Result.Mirror(EImageMirrorStyle.LINE).Mirror(EImageMirrorStyle.HEIGHT);
 end;
 

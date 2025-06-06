@@ -31,8 +31,8 @@ Enum representing the 4 available minimap orbs.
   ERSMinimapOrb = enum(HITPOINTS, PRAYER, ENERGY, SPECIAL);
 
   TRSMinimapOrb = record
-    Bounds: TBox;
-    Circle: TCircle;
+    Bounds : TBox;
+    Circle : TCircle;
   end;
 
 (*
@@ -80,20 +80,22 @@ var
 begin
   case RSClient.Mode of
     ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
-    begin
-      Self.Bounds.X1 := Target.Bounds.X2 - 157;
-      Self.Bounds.X2 := Target.Bounds.X2 - 6;
-      Self.Bounds.Y1 := Target.Bounds.Y1 + 8;
-      Self.Bounds.Y2 := Target.Bounds.Y1 + 159;
-    end;
+      with RSClient.Bounds do
+      begin
+        Self.Bounds.X1 := X2 - 157;
+        Self.Bounds.X2 := X2 - 6;
+        Self.Bounds.Y1 := Y1 + 8;
+        Self.Bounds.Y2 := Y1 + 159;
+      end;
 
     ERSMode.FIXED:
-    begin
-      Self.Bounds.X1 := Target.Bounds.X2 - 194;
-      Self.Bounds.X2 := Target.Bounds.X2 - 50;
-      Self.Bounds.Y1 := Target.Bounds.Y1 + 9;
-      Self.Bounds.Y2 := Target.Bounds.Y1 + 159;
-    end;
+      with RSClient.Bounds do
+      begin
+        Self.Bounds.X1 := X2 - 194;
+        Self.Bounds.X2 := X2 - 50;
+        Self.Bounds.Y1 := Y1 + 9;
+        Self.Bounds.Y2 := Y1 + 159;
+      end;
   end;
 
   SetLength(Self.Orbs, Ord(High(ERSMinimapOrb))+1);
@@ -103,9 +105,9 @@ begin
       ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
       begin
         Self.Compass.Circle := [X1 - 2,  Y1 + 14,  17];
-        Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle := [X1 - 13, Y1 + 55,  12];
-        Self.Orbs[ERSMinimapOrb.PRAYER].Circle    := [X1 - 13, Y1 + 90,  12];
-        Self.Orbs[ERSMinimapOrb.ENERGY].Circle    := [X1 - 3,  Y1 + 121, 12];
+        Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle := [X1 - 13, Y1 + 56,  12];
+        Self.Orbs[ERSMinimapOrb.PRAYER].Circle    := [X1 - 14, Y1 + 89,  12];
+        Self.Orbs[ERSMinimapOrb.ENERGY].Circle    := [X1 - 3,  Y1 + 122, 12];
         Self.Orbs[ERSMinimapOrb.SPECIAL].Circle   := [X1 + 18, Y1 + 147, 12];
         tpa := [[0, -76], [21, -73], [40, -64], [56, -51], [68, -33], [75, -1], [67, 34], [52, 43], [40, 62], [21, 72], [0, 75], [-21, 72], [-40, 62], [-56, 49], [-68, 31], [-75, -1], [-68, -33], [-56, -51], [-40, -64], [-21, -73]];
       end;
@@ -113,14 +115,13 @@ begin
       ERSMode.FIXED:
       begin
         Self.Compass.Circle := [X1 - 9,  Y1 + 11,  16];
-        Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle := [X1 - 13, Y1 + 49,  12];
-        Self.Orbs[ERSMinimapOrb.PRAYER].Circle    := [X1 - 13, Y1 + 84,  12];
-        Self.Orbs[ERSMinimapOrb.ENERGY].Circle    := [X1 - 3,  Y1 + 116, 12];
-        Self.Orbs[ERSMinimapOrb.SPECIAL].Circle   := [X1 + 19, Y1 + 142, 12];
+        Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle := [X1 - 15, Y1 + 48,  12];
+        Self.Orbs[ERSMinimapOrb.PRAYER].Circle    := [X1 - 15, Y1 + 82,  12];
+        Self.Orbs[ERSMinimapOrb.ENERGY].Circle    := [X1 - 4,  Y1 + 115, 12];
+        Self.Orbs[ERSMinimapOrb.SPECIAL].Circle   := [X1 + 17, Y1 + 140, 12];
         tpa := [[21, -71], [39, -62], [55, -49], [67, -32], [70, 0], [66, 19], [57, 32], [41, 43], [20, 58], [12, 71], [0, 74], [-11, 72], [-24, 55], [-47, 39], [-60, 31], [-66, 22], [-71, 0], [-72, -14], [-67, -32], [-55, -49], [-39, -62], [-21, -71], [0, -74]];
       end;
     end;
-
 
   MainScreen.AddMask(Self.Compass.Circle.Expand(4));
   MainScreen.AddMask(TPointArray.CreateFromCircle(Self.Center, 82, True));
@@ -175,7 +176,7 @@ Returns a TPA of the points from `tpa` that are within the minimap.
 Example:
 ```pascal
 tpa := TPointArray.CreateFromBox(Minimap.Bounds);
-ShowOnClient(Minimap.Filter(tpa));
+ShowOnTarget(Minimap.Filter(tpa));
 ```
 *)
 function TRSMinimap.Filter(tpa: TPointArray): TPointArray;
@@ -196,7 +197,7 @@ from `pt`.
 Example:
 ```pascal
 while True do
-  ShowOnClient(Minimap.RandomPoint(Minimap.Center, 30));
+  ShowOnTarget(Minimap.RandomPoint(Minimap.Center, 30));
 ```
 *)
 function TRSMinimap.RandomPoint(pt: TPoint; randomness: Integer): TPoint;
@@ -219,7 +220,7 @@ function TRSMinimap.GetCompassAngle(asDegrees: Boolean = True): Single;
 Returns the minimap compass angle either in radians or degrees.
 By default, degrees are used.
 
-Credits: slacky
+Credits: [slacky](https://slacky.one/)
 
 Example:
 ```pascal
@@ -236,13 +237,14 @@ var
 begin
   center := Self.Compass.Circle.Center;
   bounds := Self.Compass.Circle.Bounds;
-  dials := Target.FindColor($0E0C9F,  1, bounds);
-  Nclr  := Target.FindColor($1D2931, 1, bounds);
 
-  dials := dials.ExtractDist(center, 10, $FF);
+  dials := Target.FindColor($26259C,  12, bounds);
+  Nclr  := Target.FindColor($1D2931, 0.6, bounds);
+
+  dials := dials.ExtractDist(center, 10, 20);
   north := Nclr.ExtractDist(center, 0,20).Mean();
 
-  southArr := dials.ExtractDist(north, 21, $FF);
+  southArr := dials.ExtractDist(north, 21, 50);
   south    := southArr.FurthestPoint(center);
 
   dials  := dials.Difference(southArr);
@@ -297,7 +299,7 @@ var
   pixels: Integer;
   timeout: UInt64;
 begin
-  available := Target.Bounds.Expand(-10);
+  available := RSClient.Bounds.Expand(-10);
   degrees := DegNormalize(degrees);
   timeout := Time() + RandomMean(6000, 8000);
 
@@ -332,7 +334,7 @@ begin
     Sleep(100, 1000, ERandomDir.LEFT);
   until Time() > timeout;
 
-  WriteLn GetDebugLn('Minimap', 'SetCompassAngle timed out.', EErrorLevel.WARN);
+  WriteLn GetDebugLn('Minimap', 'SetCompassAngle timed out.', ELogLevel.WARN);
   //TODO:
   //if not RSClient.IsLoggedIn() then
   //  Login.LoginPlayer()
@@ -431,7 +433,7 @@ end;
 
 function TRSMinimap.Envenomed(): Boolean;
 begin
-  Result := Target.HasColor(1515790, 9, 1, Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle.Bounds);
+  Result := Target.HasColor(ColorTolerance($283818, 0.637, EColorSpace.HSL, [1.885, 0.891, 0.226]), 1, Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle.Bounds);
 end;
 
 function TRSMinimap.RunEnabled(): Boolean;
@@ -457,6 +459,45 @@ end;
 function TRSMinimap.HasSpecialWeapon(): Boolean;
 begin
   Result := Target.HasColor(ColorTolerance($A68F56, 5.999, EColorSpace.RGB, [0.270, 1.494, 1.237]), 1, Self.Orbs[ERSMinimapOrb.SPECIAL].Bounds);
+end;
+
+(*
+## Minimap.GetPercent
+```pascal
+function TRSMinimap.GetPercent(orb: ERSMinimapOrb): Integer;
+```
+Returns the percent remaining of the specified `orb`.
+
+Example:
+```pascal
+WriteLn Minimap.GetPercent(ERSMinimapOrb.HITPOINTS);
+```
+*)
+function TRSMinimap.GetPercent(orb: ERSMinimapOrb): Integer;
+var
+  tpa: TPointArray;
+  col: TColorTolerance;
+begin
+  case orb of
+    ERSMinimapOrb.HITPOINTS:
+    begin
+      col := ColorTolerance($030575, 1.242, EColorSpace.RGB, [0.064, 1.068, 1.869]);
+      if Self.Poisoned  then col := ColorTolerance($02851C, 1.688, EColorSpace.LCH, [0.201, 0.166, 2.635]);
+      if Self.Envenomed then col := ColorTolerance($27361A, 0.983, EColorSpace.LCH, [0.227, 0.346, 2.428]);
+    end;
+    ERSMinimapOrb.PRAYER:
+    begin
+      col := ColorTolerance($42232D, 2.354, EColorSpace.HSL, [1.309, 1.314, 0.378]);
+      if Self.PrayerEnabled then col := ColorTolerance($643940, 6.384, EColorSpace.HSV, [1.045, 1.532, 0.424]);
+    end;
+    ERSMinimapOrb.ENERGY:  Exit(Self.GetLevel(orb));
+    ERSMinimapOrb.SPECIAL: Exit(Self.GetLevel(orb));
+  end;
+
+  tpa := Target.FindColor(col, Self.Orbs[orb].Circle.Bounds.Expand(1));
+  if Length(tpa) < 1 then Exit;
+  tpa := tpa.SortByY(True);
+  Result := Round(((tpa[High(TPA)].Y-tpa[0].Y)/25)*100);
 end;
 
 
@@ -510,7 +551,7 @@ Returns True/False if the minimap walking flag is visible on the minimap.
 Example:
 ```pascal
 if Minimap.FindFlag(flagPt) then
-  ShowOnClient(TCircle.Create(flagPt.X, flagPt.Y, 6));
+  ShowOnTarget(TCircle.Create(flagPt.X, flagPt.Y, 6));
 ```
 *)
 function TRSMinimap.FindFlag(out pt: TPoint): Boolean;
@@ -577,7 +618,7 @@ Example:
 pt := Minimap.RandomPoint(Minimap.Center, 30);
 angle := Minimap.GetCompassAngle(False);
 pt := Minimap.Normalize(pt, angle);
-ShowOnClient(TCircle.Create(pt.X, pt.Y, 6));
+ShowOnTarget(TCircle.Create(pt.X, pt.Y, 6));
 ```
 *)
 function TRSMinimap.Normalize(pt: TPoint; angle: Single): TPoint;
@@ -616,7 +657,7 @@ Example:
 tpa := Minimap.GetDots(ERSMinimapDot.NPC);
 for pt in tpa do
   boxes += TBox.Create(pt, 6, 6);
-ShowOnClient(boxes);
+ShowOnTarget(boxes);
 ```
 *)
 function TRSMinimap.GetDots(dot: ERSMinimapDot; bounds: TBox): TPointArray;
@@ -629,13 +670,12 @@ var
   y,x: Integer;
 begin
   bounds := bounds.Clip(Self.Polygon.Bounds());
-  img := TImage.CreateFromTarget(bounds);
+  img := Target.GetImage(bounds);
 
   for y := 0 to img.Height-2 do
     for x := 0 to img.Width-2 do
       if (img.Pixel[x,y] = COLORS[dot][0]) and (img.Pixel[x+1,y] = COLORS[dot][1]) then
         Result += [x + bounds.X1+2, y + bounds.Y1-1];
-  img.Free();
 end;
 
 function TRSMinimap.GetDots(dot: ERSMinimapDot): TPointArray; overload;
@@ -670,7 +710,7 @@ blended in.
 
 Example:
 ```pascal
-rawIMG := TImage.CreateFromTarget(Minimap.Bounds);
+rawIMG := Target.GetImage(Minimap.Bounds);
 cleanIMG := Minimap.CleanImage(rawIMG);
 rawIMG.Free();
 
@@ -758,18 +798,13 @@ img.Free();
 *)
 function TRSMinimap.GetCleanImage(angle: Single = $FFFF): TImage;
 var
-  minimapImg, cleanImg: TImage;
+  img, clean: TImage;
 begin
   if angle = $FFFF then angle := Self.GetCompassAngle(False);
-  try
-    minimapImg := Target.GetImage(Self.Bounds);
-    minimapImg.ReplaceColor(0, 1);
-    cleanImg := Self.CleanImage(minimapImg);
-    Result := cleanImg.Rotate(EImageRotateAlgo.BILINEAR, angle, False);
-  finally
-    minimapImg.Free;
-    cleanImg.Free;
-  end;
+  img := Target.GetImage(Self.Bounds);
+  img.ReplaceColor(0, 1);
+  clean := Self.CleanImage(img);
+  Result := clean.Rotate(EImageRotateAlgo.BILINEAR, angle, False);
 end;
 
 (*
@@ -795,27 +830,22 @@ var
   tmp, blend: TImage;
   tpa: TPointArray;
 begin
-  try
-    tmp := img.Copy();
+  tmp := img.Copy();
 
-    center := tmp.Center;
-    if RSClient.Mode = ERSMode.FIXED then
-      center := center.Offset(0, -8).Rotate(-Self.GetCompassAngle(False), center);
+  center := tmp.Center;
+  if RSClient.Mode = ERSMode.FIXED then
+    center := center.Offset(0, -8).Rotate(-Self.GetCompassAngle(False), center);
 
-    radius += 6;
+  radius += 6;
 
-    tmp.Crop(TBox.Create(center, radius, radius));
-    tpa := tmp.FindColor($0, 0).SortFrom(tmp.Center);
+  tmp.Crop(TBox.Create(center, radius, radius));
+  tpa := tmp.FindColor($0, 0).SortFrom(tmp.Center);
 
-    blend := tmp.Blend(tpa, 30);
-    Result := blend.Downsample(scaling);
+  blend := tmp.Blend(tpa, 30);
+  Result := blend.Downsample(scaling);
 
-    Result.DrawColor := $0;
-    Result.DrawCircleInverted(Result.Center, radius div scaling);
-  finally
-    tmp.Free;
-    blend.Free;
-  end;
+  Result.DrawColor := $0;
+  Result.DrawCircleInverted(Result.Center, radius div scaling);
 end;
 
 
@@ -833,7 +863,7 @@ WriteLn Minimap.IsPlayerMoving();
 *)
 function TRSMinimap.IsPlayerMoving(minShift: Integer = 500): Boolean;
 begin
-  Result := Target.GetPixelDifference(300, TBox.Create(Self.Center, 40, 40)) >= minShift;
+  Result := Target.GetPixelDifference(300, TBox.Create(Self.Center, 40, 40)).Length >= minShift;
 end;
 
 procedure TRSMinimap.WaitMoving(time: Integer = 20000; minShift: Integer = 500);
@@ -849,7 +879,6 @@ begin
     if moving then countdown.Restart(0, 1000);
   until timeout.IsFinished or (not moving and countdown.IsFinished) or not Self.HasFlag();
 end;
-
 
 var
 (*

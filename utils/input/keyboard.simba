@@ -30,8 +30,8 @@ This is automatically called for you on the {ref}`Keyboard variable`.
 *)
 procedure TKeyboard.Setup();
 begin
-  Target.KeyOptions.MinPressTime := 30;
-  Target.KeyOptions.MaxPressTime := 60;
+  Target.Options.KeyPressMin := 30;
+  Target.Options.KeyPressMax := 60;
 end;
 
 (*
@@ -103,7 +103,7 @@ begin
   for i := 1 to Length(text) do
   begin
     Target.KeySend(text[i]);
-    Sleep(Random(Target.KeyOptions.MinPressTime+10, Target.KeyOptions.MaxPressTime+25));
+    Sleep(Random(Target.Options.KeyPressMin+10, Target.Options.KeyPressMax+25));
   end;
 
   Self.LastKey := Target.KeyCodeFromChar(text[Length(text)]);

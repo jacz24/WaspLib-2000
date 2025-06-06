@@ -6,6 +6,8 @@ Methods relating to targeting the RS client and detecting client states.
 {$DEFINE WL_RSCLIENT_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
+{$IFDEF WL_TEST}{$DEFINE WL_DISABLE_FAKE_INPUT}{$ENDIF}
+
 type
 (*
 ## ERSClient
@@ -26,12 +28,22 @@ Enum that represent the client mode.
   ERSMode = enum(UNKNOWN, FIXED, RESIZABLE_CLASSIC, RESIZABLE_MODERN);
 
 (*
+## ERSPopoutPanel
+```pascal
+ERSPopoutPanel = enum(UNKNOWN, DISABLED, ENABLED);
+```
+Enum that represent the state of the popout panel on the official client.
+*)
+  ERSPopoutPanel = enum(DISABLED, CLOSED, OPEN);
+
+(*
 ## TRSClient
 Record representing the RuneScape client ({ref}`RSClient`.
 *)
   TRSClient = record
     Client: ERSClient;
     Mode: ERSMode;
+    Canvas: TExternalCanvas;
   end;
 
 (*
@@ -48,7 +60,7 @@ WriteLn RSClient.GetClient();
 *)
 function TRSClient.GetClient(): ERSClient;
 begin
-  with Target.TargetWindow do
+  with GetSimbaTargetWindow() do
   begin
     case GetClassName() of
       'JagRenderView', 'JagWindow': Exit(ERSClient.OFFICIAL);
@@ -61,6 +73,91 @@ begin
   end;
 end;
 
+{%codetools off}
+function TRSClient._Bounds(img: TImage): TBox;
+var
+  x1, x2: Integer;
+begin
+  if img.Pixel[0, img.Height-1] <> $0 then
+    Exit(Target.Bounds);
+
+  for x1 := 1 to img.Width-1 do
+    if img.Pixel[x1, 150] <> $0 then
+      Break;
+
+  for x2 := img.Width-1 downto x1 do
+    if img.Pixel[x2, 150] <> $0 then
+      Break;
+
+  Result := [x1, 0, x2, Min(503, img.Height-1)];
+end;
+
+function TRSClient._Bounds(): TBox; overload;
+begin
+  Result := Self._Bounds(Target.GetImage());
+end;
+
+function TRSClient.GetPopoutPanelState(clientImg: TImage): ERSPopoutPanel;
+var
+  img: TImage;
+  x: Integer;
+begin
+  img := clientImg.Copy([clientImg.Width - 331, clientImg.Height-2, clientImg.Width-1, clientImg.Height-1]);
+  for x := img.Width-1 downto 0 do
+    if img.Pixel[x, 0] = $010000 then
+      Break;
+
+  case x of
+    0, 3, 16: Result := ERSPopoutPanel.OPEN;
+    270, 273, 286: Result := ERSPopoutPanel.CLOSED;
+    else Result := ERSPopoutPanel.DISABLED;
+  end;
+end;
+{%codetools on}
+
+function TRSClient.GetPopoutPanelState(): ERSPopoutPanel; overload;
+var
+  img: TImage;
+  b: TBox;
+begin
+  img := Target.GetImage();
+  b := Self._Bounds(img);
+  img.Crop(b);
+  Result := Self.GetPopoutPanelState(img);
+end;
+
+
+(*
+## RSClient.Bounds
+```pascal
+property TRSClient.Bounds: TBox;
+```
+Dynamic client bounds to handle different client quirks.
+
+Example:
+```pascal
+ShowOnTarget(RSClient.Bounds);
+```
+*)
+property TRSClient.Bounds: TBox;
+var
+  img: TImage;
+  b: TBox;
+begin
+  if Self.Client <> ERSClient.OFFICIAL then
+    Exit(Target.Bounds);
+
+  img := Target.GetImage();
+  b := Self._Bounds(img);
+
+  img.Crop(b);
+
+  case Self.GetPopoutPanelState(img) of
+    ERSPopoutPanel.DISABLED: Result := b;
+    ERSPopoutPanel.CLOSED: Result := [b.X1, b.Y1, b.X2 - 42, b.Y2];
+    ERSPopoutPanel.OPEN: Result := [b.X1, b.Y1, b.X2 - 312, b.Y2];
+  end;
+end;
 
 (*
 ## RSClient.GetMode
@@ -75,10 +172,17 @@ WriteLn RSClient.GetMode();
 ```
 *)
 function TRSClient.GetMode(): ERSMode;
+var
+  bounds: TBox;
 begin
+  if Self.Client = ERSClient.UNKNOWN then
+    Exit;
+
+  bounds := Self.Bounds;
+
   // Music tab in each mode there are different colors at W-4, H-21
   // Two colors each because tab can be active(red) or not(grey)
-  case Target.GetColor([Target.Width-4, Target.Height-21]) of
+  case Target.GetColor([bounds.Width-4, bounds.Height-21]) of
     2435372, 658467: Result := ERSMode.FIXED;
     3555653, 922425: Result := ERSMode.RESIZABLE_MODERN;
     2896180, 790059: Result := ERSMode.RESIZABLE_CLASSIC;
@@ -148,26 +252,6 @@ function TRSClient.WaitLoggedIn(time: Integer = 2000; interval: Integer = -1): B
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsLoggedIn(), interval, time);
-end;
-
-(*
-## RSClient.LoseFocus()
-```pascal
-procedure TRSClient.LoseFocus();
-procedure TRSClient.LoseFocus(delay: Int32);
-```
-Loses focus if available. Maybe useful for antiban.
-You can optionally delay losing focus by passing in a `delay`.
-*)
-procedure TRSClient.LoseFocus();
-begin
-  WriteLn(GetDebugLn('RSClient', 'LoseFocus method is not implemented.', EErrorLevel.WARN));
-end;
-
-procedure TRSClient.LoseFocus(delay: UInt32); overload;
-begin
-  Sleep(delay);
-  Self.LoseFocus();
 end;
 
 var
