@@ -22,7 +22,7 @@ them in the right place in it's 3D space:
 It's projection is so close to what the game uses that it can render it's models
 very accurately, for example, this is the model of the OSRS cow being rendered
 without colors:
-```{figure} ../../images/rscow.png
+```{figure} ../../images/rscow.gif
 ```
 
 When playing with the projector it might be useful to image your head a 3D grid
