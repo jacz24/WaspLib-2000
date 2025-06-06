@@ -1,30 +1,14 @@
 (*
 # House
-The POH Handler is a handler responsible for making sense of a player's POH (Player Owned House) without
-knowing any info about it's setup in advance.
+This file is about {ref}`TRSHouse` and the {ref}`House variable` and all of it's
+methods used to interact and navigate an account's POH:
 
-:::{note}
-:class: dropdown
-The House handler is optional and has to be explicitly included.
-You can include it by either including all optional files which is not recommended:
-  ```pascal
-  {$I WaspLib/optional.simba}
-  ```
-Or include just the HouseHandler file which is the recommended way to include it:
-  ```pascal
-  {$I WaspLib/optional/handlers/house.simba}
-  ```
-:::
-
-Several rooms in a POH are unique on the minimap, with windows and/or doors of several sizes and different places.
-By having this rooms saved in the following format:
-```{figure} ../../../osr/walker/poh.png
-Most relevant rooms for a POH stripped of their floor colors
+```{figure} ../../images/house.png
 ```
-We can attempt to match what we have on the minimap to those rooms and slowly build a map of the POH.
 
-Some rooms share the same room layout or are very similar to others and for those we use some mainscreen information to make up what the room is,
-e.g., Nexus room, Combat Hall and Quest Hall are all identical.
+For {ref}`House` to work properly you need to setup it's {ref}`HouseLoader`,
+which you can do either via the {ref}`HouseFormTab` or via the
+{ref}`HouseViewer`.
 *)
 
 {$DEFINE WL_HOUSE_INCLUDED}

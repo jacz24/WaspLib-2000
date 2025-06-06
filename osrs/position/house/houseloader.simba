@@ -5,6 +5,13 @@ WaspLib to be able to interact with it.
 
 All {ref}`THouseLoader` methods are helper methods for the {ref}`TRSHouse` and
 you shouldn't have to call them for anything.
+
+When loaded either by {ref}`HouseFormTab` or via the
+{ref}`HouseViewer`, it's map should look something like this:
+```{figure} ../../images/houseloadermap.png
+```
+And this map should look like whatever the account's POH looks like on the
+minimap as that's how we will be able to navigate it.
 *)
 {$DEFINE WL_HOUSELOADER_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
@@ -85,6 +92,8 @@ begin
   Self.TeleportRooms := TTeleportRoomMatrix.CreateFromBytes(str.ToBytes());
 
   Self.Config.Lock.Leave();
+
+  Self.Redraw();
 end;
 
 (*
@@ -346,8 +355,8 @@ var
   index: TPoint;
   room: THouseRoom;
 begin
-  for index.Y := Max(Self.HouseBounds.Y1, 0) to Min(Self.HouseBounds.Y2, Self.AMOUNT-1) do
-    for index.X := Max(Self.HouseBounds.X1, 0) to Min(Self.HouseBounds.X2, Self.AMOUNT-1) do
+  for index.Y := 0 to Self.AMOUNT-1 do
+    for index.X := 0 to Self.AMOUNT-1 do
     begin
       room := Self.ReadRoom(index);
       img := Self.GetRoomImage(room.Room).RotateClockWise(room.Rotation);

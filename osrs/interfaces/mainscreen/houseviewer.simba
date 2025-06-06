@@ -46,6 +46,14 @@ begin
     Self.LayoutPanel := [X1+35, Y1+35, X1+269, Y2-35];
 end;
 
+(*
+## HouseViewer.SetupInterface
+```pascal
+procedure TRSHouseViewer.SetupInterface();
+```
+Internal method used to setup the {ref}`TRSHouseViewer` coordinates.
+This is automatically called for you on the {ref}`HouseViewer variable`.
+*)
 property TRSHouseViewer.LayoutBounds: TBox;
 begin
   Result := Target.FindColor(
@@ -60,6 +68,14 @@ begin
 end;
 
 
+(*
+## HouseViewer.LoadHouse
+```pascal
+procedure TRSHouseViewer.LoadHouse();
+```
+Loads the current layout visible in the {ref}`HouseViewer` into
+{ref}`TRSHouse` {ref}`HouseLoader` (`TRSHouse.Loader`).
+*)
 procedure TRSHouseViewer.LoadHouse();
 var
   boxes: TBoxArray;
