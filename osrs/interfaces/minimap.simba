@@ -875,7 +875,7 @@ begin
   countdown.Start(500);
 
   repeat
-    moving := Self.IsPlayerMoving();
+    moving := Self.IsPlayerMoving(minShift);
     if moving then countdown.Restart(0, 1000);
   until timeout.IsFinished or (not moving and countdown.IsFinished) or not Self.HasFlag();
 end;

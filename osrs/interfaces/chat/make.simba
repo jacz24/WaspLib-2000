@@ -264,7 +264,7 @@ WriteLn Make.IndexOfQuantity(Make.QUANTITY_ALL);
 function TRSMake.IndexOfQuantity(amount: Integer): Integer;
 var
   hintPt: TPoint;
-  i, value: Integer;
+  i: Integer;
   quantity: ERSItemQuantity;
 begin
   if amount <= 0 then Exit(0);
@@ -440,8 +440,6 @@ end;
 
 
 procedure TRSMake.Draw(img: TImage);
-var
-  boxes: TBoxArray;
 begin
   if not Self.IsOpen() then Exit;
 

@@ -150,7 +150,7 @@ var
 begin
   b := Self.Box(slot);
   if not Self.IsFaded(b) then Exit;
-  Result := SleepUntil(RSColors.HasItem(b, False), 100, 1000);
+  Result := SleepUntil(RSColors.HasItem(b, False), 100, time);
 end;
 
 

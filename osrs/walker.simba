@@ -110,8 +110,10 @@ Walker.Setup(@MyCustomPositionSystem, nil, nil, nil, nil);
 *)
 
 {%codetools off}
+{$H-}
 function TRSWalker.DummyHeight(pt: TPoint = [0,0]; global: Boolean = True): Single; begin Result := pt.X; end;
 function TRSWalker.DummyGetLocal(pt: TPoint; offset: TPoint = [0,0]): TPoint; begin Result := pt+offset; end;
+{$H+}
 {%codetools on}
 
 (*
@@ -503,7 +505,7 @@ begin
   until timeout.IsFinished or countdown.IsFinished or position.Current.InRange(destination, waitUntilDistance);
 end;
 
-procedure TRSWalker.WaitMoving(time: Integer = 20000; minShift: Integer = 500; doAntiban: Boolean = True); overload;
+procedure TRSWalker.WaitMoving(time: Integer = 20000; doAntiban: Boolean = True); overload;
 var
   timeout, countdown: TCountDown;
   moving: Boolean;
@@ -642,8 +644,6 @@ Internal method used by walker to decide if the destination point is within 1 cl
 You will probably never need to call this directly.
 *)
 function TRSWalker.IsWalkable(walkerPoint, playerPoint: TPoint; out mmPoint: TPoint; angle: Double): Boolean;
-var
-  b: TBox;
 begin
   mmPoint := Self.Point2MM(playerPoint, walkerPoint, angle);
   if not Self.ScreenWalk then

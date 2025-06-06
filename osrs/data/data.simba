@@ -183,7 +183,6 @@ parser.Free();
 function TItemData.GetDefinition(itemID: String): TJSONItem;
 var
   path, filename: String;
-  item: TJSONItem;
 begin
   if Self.DefinitionsJSON.GetObject(itemID, Result) then Exit;
 

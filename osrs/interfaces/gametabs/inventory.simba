@@ -299,8 +299,7 @@ function TRSInventory.Drop(slots: TIntegerArray; attempts: Integer = 5): Boolean
 var
   boxes: TBoxArray;
   b: TBox;
-  i, j: Integer;
-  circle: TCircle;
+  i: Integer;
 begin
   if Length(slots) = 0 then Exit(True);
 
@@ -356,8 +355,7 @@ function TRSInventory.ShiftDrop(slots: TIntegerArray; attempts: Integer = 5): Bo
 var
   boxes: TBoxArray;
   b: TBox;
-  i, j: Integer;
-  circle: TCircle;
+  i: Integer;
 begin
   if Length(slots) = 0 then Exit(True);
 

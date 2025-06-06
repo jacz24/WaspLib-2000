@@ -60,8 +60,6 @@ Internal method used to setup the {ref}`TRSChat` coordinates.
 This is automatically called for you on the {ref}`Chat variable`.
 *)
 procedure TRSChat.SetupInterface();
-var
-  b: TBox;
 begin
   Self.Tabs.SetupInterface();
   Self.ReportButton.EnabledColors := [[1555,6], [5399922, 0], [795452, 0]];

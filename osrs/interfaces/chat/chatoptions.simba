@@ -353,7 +353,6 @@ Chat.HandleLevelUp();
 *)
 function TRSChat.HandleLevelUp(keyboardProbability: Single = -1): Boolean;
 var
-  useKeyboard: Boolean;
   timeout: UInt64;
 begin
   timeout := Time() + 8000;

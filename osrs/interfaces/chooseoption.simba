@@ -349,8 +349,6 @@ Opens a submenu if it exists. Returns True if successful.
 If closeIfNotFound is True, closes the context menu if no submenu is found.
 *)
 function TRSChooseOption.OpenSubmenu(closeIfNotFound: Boolean = True): Boolean;
-var
-  t: TCountdown;
 begin
   Result := Self.IsSubmenuOpen() or (Self.Open() and Self.Hover([' >'], False, closeIfNotFound) and SleepUntil(Self.IsSubmenuOpen(), 5, 250));
   if closeIfNotFound and not Result then
@@ -368,7 +366,7 @@ This is a internal method, you probably don't need to call it.
 function TRSChooseOption.GetSubmenuOptions(): TRSOptionArray;
 var
   bounds, b: TBox;
-  i, h: Integer;
+  i: Integer;
 begin
   if not Self.OpenSubmenu() then Exit;
   bounds := Self.FindSubmenu();

@@ -59,7 +59,7 @@ This is automatically called for you on the {ref}`GameTabs variable`.
 *)
 procedure TRSGameTabs.SetupInterface();
 var
-  bounds, b: TBox;
+  bounds: TBox;
   tab: ERSGameTab;
 begin
   bounds := RSClient.Bounds;

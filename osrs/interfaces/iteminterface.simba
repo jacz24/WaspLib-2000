@@ -168,9 +168,6 @@ end;
 {%CODETOOLS ON}
 
 function TRSItemInterface.Discover(slot: Integer): TRSItemArray;
-var
-  b: TBox;
-  img: TImage;
 begin
   if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
     Exit;

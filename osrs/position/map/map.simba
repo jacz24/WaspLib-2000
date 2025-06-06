@@ -176,7 +176,7 @@ begin
     chunks += chunk;
   end;
 
-  Self.Loader.Add(chunks);
+  Self.Loader.Add(chunks, downscale);
   Self.InternalSetup();
 end;
 
@@ -492,7 +492,6 @@ end.
 *)
 procedure TRSMap.DebugHeight();
 var
-  matrix: TSingleMatrix;
   quad: TQuad;
   arr, tpa: TPointArray;
   pt, loc, currLoc: TPoint;

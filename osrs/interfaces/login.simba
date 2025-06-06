@@ -114,8 +114,6 @@ end;
 
 
 procedure TRSLobbyScreen.Draw(img: TImage);
-var
-  i: Integer;
 begin
   if not Self.IsOpen() then Exit;
 
@@ -422,8 +420,6 @@ end;
 
 
 procedure TRSLoginWorldSwitcher.Draw(img: TImage);
-var
-  i: Integer;
 begin
   if not Self.IsOpen() then Exit;
 
@@ -901,8 +897,6 @@ WriteLn Login.EnterCredentials('username', 'password');
 ```
 *)
 function TRSLogin.EnterCredentials(username, password: String): Boolean;
-var
-  field: ERSLoginInput;
 begin
   if Self.ClearInputs then
   begin
@@ -1071,8 +1065,6 @@ end;
 
 
 procedure TRSLogin.Draw(img: TImage);
-var
-  i: Integer;
 begin
   if RSClient.IsLoggedIn() then Exit;
   if LoginWorldSwitcher.IsOpen() then Exit;

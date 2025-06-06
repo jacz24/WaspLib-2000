@@ -280,7 +280,7 @@ end;
 procedure TRSItemFinder.Show(item: TRSItem);
 var
   display, img: TImage;
-  i, h, w, x: Integer;
+  h, w, x: Integer;
 begin
   display := new TImage();
 

@@ -523,12 +523,9 @@ end;
 procedure ShowOnTarget(scroll: TRSScrollBar); overload;
 var
   img: TImage;
-  bounds: TBox;
 begin
   img := Target.GetImage();
-
   scroll.Draw(img);
-
   img.Show();
 end;
 
@@ -784,12 +781,9 @@ end;
 procedure ShowOnTarget(dropdown: TRSDropDown); overload;
 var
   img: TImage;
-  bounds: TBox;
 begin
   img := Target.GetImage();
-
   dropdown.Draw(img);
-
   img.Show();
 end;
 

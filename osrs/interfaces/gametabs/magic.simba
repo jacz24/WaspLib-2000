@@ -222,7 +222,7 @@ begin
   Result := not Self.InfoIsOpen();
 end;
 
-function TRSMagic.CloseInfo(spell: ERSSpell): Boolean; overload;
+function TRSMagic.CloseInfo({$H-}spell: ERSSpell): Boolean; overload; {$H+}
 var
   destination: TPoint;
   timeout: UInt64;

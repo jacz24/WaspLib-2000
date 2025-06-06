@@ -1,0 +1,156 @@
+(*
+# Script Form
+{ref}`Script Form` is a opinionated, `TLazForm` that you can setup and run in
+a just a few lines.
+*)
+{$DEFINE WL_SCRIPTFORM_INCLUDED}
+{$INCLUDE_ONCE WaspLib/utils.simba}
+
+type
+  TScriptForm = record
+    Form: TLazForm;
+    PageControl: TLazPageControl;
+    Tabs: array of TLazTabSheet;
+    Start: TLazButton;
+  end;
+
+
+(*
+## TScriptForm.OnStart
+```pascal
+procedure TScriptForm.OnStart(sender: TObject);
+```
+This exists so you can close and terminate your script by closing the form window, otherwise it would just run the script.
+Overriding this will require you to use **inherited** on your override.
+
+Overriding this is also my recommended way of setting up your script variables like the following example:
+
+Example:
+```pascal
+procedure TScriptForm.StartScript(sender: TObject); override;
+begin
+  CurrentTask := ETask(Self.TaskSelector.GetItemIndex());
+  inherited;
+end;
+```
+*)
+procedure TScriptForm.OnStart({$H-}sender: TObject);{$H+}
+begin
+  Self.Form.OnClose := nil;
+  Self.Form.Close();
+end;
+
+procedure TScriptForm.OnClose({$H-}sender: TObject; var closeAction: ELazFormCloseAction);{$H+}
+begin
+  TerminateScript();
+end;
+
+
+(*
+## TScriptForm.Setup
+```pascal
+procedure TScriptForm.Setup(caption: String = 'Script Form'; size: TPoint = [750, 500]; allowResize: Boolean = False);
+```
+Responsible for setting your TScriptForm up.
+This sets up the sekeleton of your TScriptForm ready to take in tabs.
+*)
+procedure TScriptForm.Setup(caption: String = SCRIPT_FILE + ' Form');
+begin
+  Self.Form := TLazForm.Create();
+  Self.Form.Caption := caption;
+  Self.Form.Width := 800;
+  Self.Form.Height := 600;
+
+  Self.Form.Constraints.MaxWidth := 800;
+  Self.Form.Constraints.MinWidth := 800;
+  Self.Form.Constraints.MaxHeight := 600;
+  Self.Form.Constraints.MinHeight := 600;
+
+  Self.Form.Position := ELazFormPosition.ScreenCenter;
+  Self.Form.OnClose := @Self.OnClose;
+
+  Self.PageControl := TLazPageControl.Create(Self.Form);
+  Self.PageControl.Parent := Self.Form;
+  Self.PageControl.Align := ELazAlign.Client;
+
+  Self.Start := TLazButton.Create(Self.Form);
+  Self.Start.Parent := Self.Form;
+  Self.Start.Caption := 'Start';
+  Self.Start.Align := ELazAlign.Bottom;
+  Self.Start.OnClick := @Self.OnStart;
+end;
+
+(*
+## TScriptForm.AddTab
+```pascal
+procedure TScriptForm.AddTab(caption: String);
+procedure TScriptForm.AddTab(tab: TTabSheet); overload;
+procedure TScriptForm.AddTabArray(captions: TStringArray);
+```
+Methods to add tabs to `TScriptForm`.
+
+When you a tab by **caption** be it a single one or an array of them, the caption you use can be used
+to reference the tab later.
+
+It's **caption** get sanitized with:
+```pascal
+LowerCase(StringReplace(caption, ' ', '_', [rfReplaceAll]))
+```
+
+Which means that if you "HelLo WOrLD" as your **caption**, it's name internally will become "hello_world_settings".
+This is only important if you need to retrieve the tab with the use of **Self.Form.GetChild()**.
+If you use the other tab methods you simply have to write the **caption** name the same way you did the first time.
+Your tab will also be added to **TScriptForm.Tabs** as the last element of the array and you can get it right after adding it with **MyForm.Tabs[High(MyForm.Tabs)]**.
+
+This example as a very simple setup of a TScriptForm with one tab:
+
+Example:
+```pascal
+procedure TMyScriptForm.Run(); override;
+var
+  tab: TTabSheet;
+begin
+  Self.Setup('HELLO WORLD SCRIPT');
+  Self.Start.setOnClick(@Self.StartScript);
+
+  Self.AddTab('Script Settings');
+  tab := Self.Tabs[High(Self.Tabs)];
+
+  inherited;
+end;
+```
+*)
+function TScriptForm.CreateTab(caption: String; hint: String = ''): TLazTabSheet;
+begin
+  Result := TLazTabSheet.Create(Self.PageControl);
+
+  Result.Parent := Self.PageControl;
+  Result.Caption := caption;
+  Result.Hint := hint;
+
+  Self.Tabs += Result;
+end;
+
+
+(*
+## TScriptForm.Show
+```pascal
+procedure TScriptForm.Show();
+```
+Shows your TScriptForm after it has been setup. To run this you have to use **Sync()**
+
+Example:
+```pascal
+Sync(@MyForm.Show);
+```
+*)
+procedure TScriptForm.Run();
+begin
+  try
+    Self.Form.ShowModal();
+  finally
+    Self.Form.Free();
+  end;
+end;
+
+
