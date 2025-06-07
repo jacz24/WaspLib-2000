@@ -152,66 +152,53 @@ begin
   form.Color := $242322;
   form.BorderStyle := ELazFormBorderStyle.Sizeable;
 
-  panel := TLazPanel.Create(form);
-  panel.Parent := form;
+  panel := TLazPanel.CreateEx(form);
   panel.SetBounds(0, 0, form.Width, 30);
   panel.BevelOuter := ELazPanelBevel.None;
   panel.Align := ELazAlign.Top;
 
-  lbl := TLazLabel.Create(panel);
-  lbl.Parent := panel;
-  lbl.Caption := 'Show ObjectClusters';
+  lbl := TLazLabel.CreateEx(panel, 'Show ObjectClusters');
   lbl.Font.Color := $FFFFFF;
   lbl.Align := ELazAlign.Left;
   lbl.BorderSpacing.Around := 5;
 
-  checkbox := TLazCheckBox.Create(panel);
-  checkbox.Parent := panel;
+  checkbox := TLazCheckBox.CreateEx(panel);
   checkbox.Align := ELazAlign.Left;
   checkbox.BorderSpacing.Left  := 10;
   checkbox.BorderSpacing.Right := 4;
   checkbox.OnChange := @Self.ObjectClustersOnChange;
 
 
-  lbl := TLazLabel.Create(panel);
-  lbl.Parent := panel;
-  lbl.Caption := 'Show WalkableClusters';
+  lbl := TLazLabel.CreateEx(panel, 'Show WalkableClusters');
   lbl.Font.Color := $FFFFFF;
   lbl.Align := ELazAlign.Left;
   lbl.BorderSpacing.Around := 5;
 
-  checkbox := TLazCheckBox.Create(panel);
-  checkbox.Parent := panel;
+  checkbox := TLazCheckBox.CreateEx(panel);
   checkbox.Align := ELazAlign.Left;
   checkbox.BorderSpacing.Left  := 10;
   checkbox.BorderSpacing.Right := 4;
   checkbox.OnChange := @Self.WalkableClustersOnChange;
 
 
-  lbl := TLazLabel.Create(panel);
-  lbl.Parent := panel;
-  lbl.Caption := 'Show WalkableSpace';
+  lbl := TLazLabel.CreateEx(panel, 'Show WalkableSpace');
   lbl.Font.Color := $FFFFFF;
   lbl.Align := ELazAlign.Left;
   lbl.BorderSpacing.Around := 5;
 
-  checkbox := TLazCheckBox.Create(panel);
-  checkbox.Parent := panel;
+  checkbox := TLazCheckBox.CreateEx(panel);
   checkbox.Align := ELazAlign.Left;
   checkbox.BorderSpacing.Left  := 10;
   checkbox.BorderSpacing.Right := 4;
   checkbox.OnChange := @Self.WalkableSpaceOnChange;
 
 
-  lbl := TLazLabel.Create(panel);
-  lbl.Parent := panel;
-  lbl.Caption := 'Show webgraph';
+  lbl := TLazLabel.CreateEx(panel, 'Show webgraph');
   lbl.Font.Color := $FFFFFF;
   lbl.Align := ELazAlign.Left;
   lbl.BorderSpacing.Around := 5;
 
-  checkbox := TLazCheckBox.Create(panel);
-  checkbox.Parent := panel;
+  checkbox := TLazCheckBox.CreateEx(panel);
   checkbox.Align := ELazAlign.Left;
   checkbox.State := ELazCheckBoxState.cbChecked;
   checkbox.BorderSpacing.Left  := 10;
@@ -219,8 +206,7 @@ begin
   checkbox.OnChange := @Self.GraphOnChange;
 
 
-  combobox := TLazComboBox.Create(panel);
-  combobox.Parent := panel;
+  combobox := TLazComboBox.CreateEx(panel);
   combobox.Items.Add('Map');
   combobox.Items.Add('Height');
   combobox.Items.Add('Collision');
@@ -231,22 +217,18 @@ begin
   combobox.BorderSpacing.Right := 10;
   combobox.OnChange := @Self.OnChange;
 
-  lbl := TLazLabel.Create(panel);
-  lbl.Parent := panel;
+  lbl := TLazLabel.CreateEx(panel);
   lbl.Caption := 'Map:';
   lbl.Font.Color := $FFFFFF;
   lbl.Align := ELazAlign.Left;
   lbl.BorderSpacing.Around := 5;
 
-  Self.Coordinate := TLazLabel.Create(panel);
-  Self.Coordinate.Parent := panel;
-  Self.Coordinate.Caption := 'Coordinate: 0 X 0 Y';
+  Self.Coordinate := TLazLabel.CreateEx(panel, 'Coordinate: 0 X 0 Y');
   Self.Coordinate.Align := ELazAlign.Right;
   Self.Coordinate.BorderSpacing.Around := 5;
   Self.Coordinate.Font.Color := $FFFFFF;
 
-  Self.ImageBox := TImageBox.Create(form);
-  Self.ImageBox.Parent := form;
+  Self.ImageBox := TImageBox.CreateEx(form);
   Self.ImageBox.Align := ELazAlign.Client;
   Self.ImageBox.SetImage(Self.Images[0]);
   Self.ImageBox.OnImgPaint := @Self.ImgBoxPaint;
