@@ -10,20 +10,50 @@ type
   TScriptForm = record
     Form: TLazForm;
     PageControl: TLazPageControl;
-    Tabs: array of TLazTabSheet;
     Start: TLazButton;
   end;
 
+(*
+## Built-in Callbacks
+{ref}`TScriptForm` has several built-in callbacks setup by default:
+*)
 
 (*
-## TScriptForm.OnStart
+### ScriptForm.OnClose
+```pascal
+procedure TScriptForm.OnClose(sender: TObject; var closeAction: ELazFormCloseAction);
+```
+Callback called when the `TScriptForm.Form.OnClose` procedure.
+This ensures the script is terminated when you close the form.
+
+Closing the form programatically with `ScriptForm.Form.Close()` will also
+terminate your script by default if you don't want this you will need to do
+something similar to what {ref}`ScriptForm.OnStart` which does the following
+when it runs:
+```pascal
+ScriptForm.Form.OnClose := nil;
+ScriptForm.Form.Close();
+```
+*)
+procedure TScriptForm.OnClose({$H-}sender: TObject;{$H+} var closeAction: ELazFormCloseAction);
+begin
+  case closeAction of
+    ELazFormCloseAction.Minimize :;
+    else TerminateScript();
+  end;
+end;
+
+(*
+### ScriptForm.OnStart
 ```pascal
 procedure TScriptForm.OnStart(sender: TObject);
 ```
-This exists so you can close and terminate your script by closing the form window, otherwise it would just run the script.
-Overriding this will require you to use **inherited** on your override.
+This callback is ran on the `TScriptForm.Start.OnClick` procedure.
+By default, it's only used to close/hide the form and ensure that
+{ref}`ScriptForm.OnClose` doesn't run.
 
-Overriding this is also my recommended way of setting up your script variables like the following example:
+The recommended usage for scripts would be to override this to setup your script
+variables when it runs before calling `inherited`, something like this:
 
 Example:
 ```pascal
@@ -40,11 +70,6 @@ begin
   Self.Form.Close();
 end;
 
-procedure TScriptForm.OnClose({$H-}sender: TObject; var closeAction: ELazFormCloseAction);{$H+}
-begin
-  TerminateScript();
-end;
-
 
 (*
 ## TScriptForm.Setup
@@ -55,6 +80,9 @@ Responsible for setting your TScriptForm up.
 This sets up the sekeleton of your TScriptForm ready to take in tabs.
 *)
 procedure TScriptForm.Setup(caption: String = SCRIPT_FILE + ' Form');
+var
+  panel: TLazPanel;
+  lbl: TLazLabel;
 begin
   Self.Form := TLazForm.Create();
   Self.Form.Caption := caption;
@@ -67,17 +95,32 @@ begin
   Self.Form.Constraints.MinHeight := 600;
 
   Self.Form.Position := ELazFormPosition.ScreenCenter;
-  Self.Form.OnClose := @Self.OnClose;
+  Self.Form.OnClose  := @Self.OnClose;
 
   Self.PageControl := TLazPageControl.Create(Self.Form);
   Self.PageControl.Parent := Self.Form;
   Self.PageControl.Align := ELazAlign.Client;
 
-  Self.Start := TLazButton.Create(Self.Form);
-  Self.Start.Parent := Self.Form;
+  panel := TLazPanel.Create(Self.Form);
+  panel.Parent := Self.Form;
+  panel.Align := ELazAlign.Bottom;
+  panel.Height := 30;
+
+  lbl := TLazLabel.Create(panel);
+  lbl.Parent := panel;
+  lbl.Caption := 'https://waspscripts.com';
+  lbl.Align := ELazAlign.Left;
+  lbl.BorderSpacing.Around := 4;
+  lbl.BorderSpacing.Left := 12;
+  lbl.SetURL();
+
+  Self.Start := TLazButton.Create(panel);
+  Self.Start.Parent := panel;
   Self.Start.Caption := 'Start';
-  Self.Start.Align := ELazAlign.Bottom;
+  Self.Start.Align := ELazAlign.Right;
   Self.Start.OnClick := @Self.OnStart;
+  Self.Start.BorderSpacing.Around := 2;
+  Self.Start.BorderSpacing.Right := 12;
 end;
 
 (*
@@ -120,15 +163,11 @@ begin
 end;
 ```
 *)
-function TScriptForm.CreateTab(caption: String; hint: String = ''): TLazTabSheet;
+function TScriptForm.CreateTab(caption: String): TLazTabSheet;
 begin
   Result := TLazTabSheet.Create(Self.PageControl);
-
   Result.Parent := Self.PageControl;
   Result.Caption := caption;
-  Result.Hint := hint;
-
-  Self.Tabs += Result;
 end;
 
 
@@ -152,5 +191,3 @@ begin
     Self.Form.Free();
   end;
 end;
-
-

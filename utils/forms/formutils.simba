@@ -178,6 +178,24 @@ begin
   if url.IsURL() then URLOpenInBrowser(url);
 end;
 
+procedure TLazControl.OnMouseEnterURL(sender: TObject);
+begin
+  TLazControl(sender).Font.Color := $FF0000;
+end;
+
+procedure TLazControl.OnMouseLeaveURL(sender: TObject);
+begin
+  TLazControl(sender).Font.Color := $20000000;
+end;
+
+procedure TLazLabel.SetURL();
+begin
+  Self.OnMouseEnter := @Self.OnMouseEnterURL;
+  Self.OnMouseLeave := @Self.OnMouseLeaveURL;
+  Self.OnClick := @Self.OpenURL;
+  Self.Cursor := ELazCursor.HandPoint;
+end;
+
 
 (*
 ## CustomEdit.IsEmpty
@@ -425,45 +443,39 @@ begin
   end;
 end;
 
-{
-function TStrings.Search(value: String; lo: Integer = 0): Integer;
-begin
-  for Result := lo to Self.getCount() - 1 do
-    if value in Self.getStrings(Result) then
-      Exit;
 
+function TLazStrings.Search(value: String; lo: Integer = 0): Integer;
+begin
+  for Result := lo to Self.Count - 1 do
+    if value in Self.Strings[Result] then
+      Exit;
   Result := -1;
 end;
 
 function TLazListBox.Search(value: String): Integer;
 var
   lo: Integer;
-  strings: TStrings;
 begin
   if Length(value) > 1 then
-    lo := Self.getItemIndex()
+    lo := Self.ItemIndex
   else
     lo := 0;
 
-  strings := Self.GetItems();
-  Result := strings.Search(value, lo);
+  Result := Self.Items.Search(value, lo);
   if Result > -1 then
-    Self.SetItemIndex(Result);
+    Self.ItemIndex := Result;
 end;
 
 function TLazComboBox.Search(value: String): Integer;
 var
   lo: Integer;
-  strings: TStrings;
 begin
   if Length(value) > 1 then
-    lo := Self.getItemIndex()
+    lo := Self.ItemIndex
   else
     lo := 0;
 
-  strings := Self.GetItems();
-  Result := strings.Search(value, lo);
+  Result := Self.Items.Search(value, lo);
   if Result > -1 then
-    Self.SetItemIndex(Result);
+    Self.ItemIndex := Result;
 end;
-}
