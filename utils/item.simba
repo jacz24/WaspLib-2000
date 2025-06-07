@@ -68,7 +68,6 @@ WriteLn item.SimplifyName();
 *)
 function TRSItem.SimplifyName(): String;
 var
-  str: String;
   short, long: Integer;
 begin
   Result := ToStr(Self).ToLower();

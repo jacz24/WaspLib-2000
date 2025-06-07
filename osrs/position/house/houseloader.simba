@@ -77,6 +77,7 @@ begin
     Self.Config.Item['EHouseTeleport'].AsInt   := Ord(High(EHouseTeleport));
     Self.Config.Item['Location'].AsInt         := Ord(Self.Location);
     Self.Config.Item['Decoration'].AsInt       := Ord(Self.Decoration);
+    Self.Config.Item['TeleportMode'].AsInt     := 0;
     Self.Config.SaveConfig();
     Exit;
   end;

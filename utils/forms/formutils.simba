@@ -243,25 +243,42 @@ begin
 end;
 
 
+procedure TLazControl.AnchorLabel(lbl: TLazLabel);
+begin
+  Self.AnchorSideLeft.Control := lbl;
+  Self.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
+  Self.AnchorSideTop.Control := lbl;
+  Self.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
+end;
+
+
 (*
 ## TLazControl.CreateEx
 ```pascal
-procedure TLazPanel.Create(owner: TLazControl);
-procedure TLazPageControl.Create(owner: TLazControl);
-procedure TLazTabSheet.Create(owner: TLazControl);
-procedure TLazImage.Create(owner: TLazControl);
-procedure TLazLabel.Create(owner: TLazControl);
-procedure TLazEdit.Create(owner: TLazControl);
-procedure TLazButton.Create(owner: TLazControl);
-procedure TLazCheckBox.Create(owner: TLazControl);
-procedure TLazRadioButton.Create(owner: TLazControl);
-procedure TLazComboBox.Create(owner: TLazControl);
-procedure TLazListBox.Create(owner: TLazControl);
-procedure TLazMemo.Create(owner: TLazControl);
-procedure TLazTrackBar.Create(owner: TLazControl);
+function TLazPanel.CreateEx(owner: Pointer): TLazPanel; static;
+function TLazPanel.CreateEx(owner: Pointer; width, height: Integer): TLazPanel; static; overload;
+function TLazLabel.CreateEx(owner: Pointer): TLazLabel; static;
+function TLazLabel.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazLabel; static; overload;
+function TLazEdit.CreateEx(owner: Pointer): TLazEdit; static;
+function TLazEdit.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazEdit; static; overload;
+function TLazMemo.CreateEx(owner: Pointer): TLazMemo; static;
+function TLazMemo.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazMemo; static; overload;
+function TLazButton.CreateEx(owner: Pointer): TLazButton; static;
+function TLazButton.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazButton; static; overload;
+function TLazCheckBox.CreateEx(owner: Pointer): TLazCheckBox; static;
+function TLazCheckBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazCheckBox; static; overload;
+function TLazRadioButton.CreateEx(owner: Pointer): TLazRadioButton; static;
+function TLazRadioButton.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazRadioButton; static; overload;
+function TLazComboBox.CreateEx(owner: Pointer): TLazComboBox; static;
+function TLazComboBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazComboBox; static; overload;
+function TLazListBox.CreateEx(owner: Pointer): TLazListBox; static;
+function TLazListBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazListBox; static; overload;
+function TLazTrackBar.CreateEx(owner: Pointer): TLazTrackBar; static;
+function TLazTrackBar.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazTrackBar; static; overload;
+function TImageBox.CreateEx(owner: Pointer): TImageBox; static;
+function TImageBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TImageBox; static; overload;
 ```
-`TLazControl.Init()` and `TLazControl.SetParent()` in a single method.
-Since this is something that has to be done almost always this wrapper was made.
+Constructor functions for most `TLazControls`.
 *)
 function TLazPanel.CreateEx(owner: Pointer): TLazPanel; static;
 begin
@@ -292,7 +309,11 @@ begin
   if height > 0 then Result.Height := height;
 
   Result.Caption := caption;
-  Result.Hint := hint;
+  if hint <> '' then
+  begin
+    Result.Hint := hint;
+    Result.ShowHint := True;
+  end;
 end;
 
 
@@ -310,7 +331,11 @@ begin
   if height > 0 then Result.Height := height;
 
   Result.Caption := caption;
-  Result.Hint := hint;
+  if hint <> '' then
+  begin
+    Result.Hint := hint;
+    Result.ShowHint := True;
+  end;
 end;
 
 
@@ -328,7 +353,11 @@ begin
   if height > 0 then Result.Height := height;
 
   Result.Caption := caption;
-  Result.Hint := hint;
+  if hint <> '' then
+  begin
+    Result.Hint := hint;
+    Result.ShowHint := True;
+  end;
 end;
 
 
@@ -346,7 +375,11 @@ begin
   if height > 0 then Result.Height := height;
 
   Result.Caption := caption;
-  Result.Hint := hint;
+  if hint <> '' then
+  begin
+    Result.Hint := hint;
+    Result.ShowHint := True;
+  end;
 end;
 
 
@@ -364,7 +397,11 @@ begin
   if height > 0 then Result.Height := height;
 
   Result.Caption := caption;
-  Result.Hint := hint;
+  if hint <> '' then
+  begin
+    Result.Hint := hint;
+    Result.ShowHint := True;
+  end;
 end;
 
 
@@ -382,7 +419,11 @@ begin
   if height > 0 then Result.Height := height;
 
   Result.Caption := caption;
-  Result.Hint := hint;
+  if hint <> '' then
+  begin
+    Result.Hint := hint;
+    Result.ShowHint := True;
+  end;
 end;
 
 
@@ -390,6 +431,7 @@ function TLazComboBox.CreateEx(owner: Pointer): TLazComboBox; static;
 begin
   Result := TLazComboBox.Create(TLazControl(owner));
   Result.Parent := TLazWinControl(owner);
+  Result.Style := ELazComboBoxStyle.csDropDownList;
 end;
 
 function TLazComboBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazComboBox; static; overload;
@@ -400,7 +442,11 @@ begin
   if height > 0 then Result.Height := height;
 
   Result.Caption := caption;
-  Result.Hint := hint;
+  if hint <> '' then
+  begin
+    Result.Hint := hint;
+    Result.ShowHint := True;
+  end;
 end;
 
 
@@ -418,7 +464,11 @@ begin
   if height > 0 then Result.Height := height;
 
   Result.Caption := caption;
-  Result.Hint := hint;
+  if hint <> '' then
+  begin
+    Result.Hint := hint;
+    Result.ShowHint := True;
+  end;
 end;
 
 
@@ -436,7 +486,11 @@ begin
   if height > 0 then Result.Height := height;
 
   Result.Caption := caption;
-  Result.Hint := hint;
+  if hint <> '' then
+  begin
+    Result.Hint := hint;
+    Result.ShowHint := True;
+  end;
 end;
 
 
@@ -454,7 +508,11 @@ begin
   if height > 0 then Result.Height := height;
 
   Result.Caption := caption;
-  Result.Hint := hint;
+  if hint <> '' then
+  begin
+    Result.Hint := hint;
+    Result.ShowHint := True;
+  end;
 end;
 
 

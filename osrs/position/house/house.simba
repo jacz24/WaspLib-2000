@@ -16,24 +16,6 @@ which you can do either via the {ref}`HouseFormTab` or via the
 
 type
 (*
-## EHouseTeleportMode
-```pascal
-EHouseTeleportMode = enum(SPELL, TABLET, CAPE);
-```
-Enum representing modes of teleporting the the POH.
-*)
-  EHouseTeleportMode = enum(SPELL, TABLET, CAPE);
-
-(*
-## EHouseTeleportPlace
-```pascal
-EHouseTeleportPlace = enum(UNKNOWN, INSIDE, OUTSIDE);
-```
-Enum representing modes of teleporting the the POH.
-*)
-  EHouseTeleportPlace = enum(UNKNOWN, INSIDE, OUTSIDE);
-
-(*
 ## TRSHouse
 The core record used to handle navigating a POH.
 *)
@@ -418,7 +400,8 @@ begin
     begin
       if Self.CapeTab <> ERSGameTab.NONE then
         GameTabs.Open(Self.CapeTab);
-      //TODO...
+      //TODO... GEARHANDLER;
+      WriteLn GetDebugLn('TRSHouse', '"Enter" method is missing gear handler to handle capes: ' + ToStr(CAPES), ELogLevel.WARN);
       //if not CAPES.Interact(Self.HouseTeleportItem, 'Tele to POH') then Exit;
       Self.CapeTab := GameTabs.GetCurrent();
     end;

@@ -310,7 +310,7 @@ WriteLn MainScreen.IsVisible([100,100]);
 *)
 function TRSMainScreen.IsVisible(pt: TPoint): Boolean;
 begin
-  Result := False;
+  Result := pt <> pt;
 end;
 
 function TRSMainScreen.IsVisible(tpa: TPointArray): Boolean; overload;
@@ -333,7 +333,7 @@ This also checks for open interfaces to check if the points are not behind them.
 *)
 function TRSMainScreen.Filter(tpa: TPointArray): TPointArray;
 begin
-  Result := [];
+  Result := tpa;
 end;
 
 

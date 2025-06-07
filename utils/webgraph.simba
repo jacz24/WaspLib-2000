@@ -314,7 +314,6 @@ end;
 
 function TWebGraph.NearestWalkablePoint(p: TPoint): TPoint;
 var
-  pCircle: TCircle;
   pArea, obj, tpa, bestObj: TPointArray;
   pAreaClusters: T2DPointArray;
   i, bestLength, tempLength: Integer;
@@ -656,7 +655,7 @@ end;
 
 procedure TWebGraph.Draw(img: TImage);
 var
-  i,j,color: Integer;
+  i,j: Integer;
 begin
   if Self.Nodes = [] then Exit;
 
@@ -676,7 +675,7 @@ end;
 
 procedure TWebGraph.Draw(canvas: TImageBoxCanvas); overload;
 var
-  i,j,color: Integer;
+  i,j: Integer;
 begin
   if Self.Nodes = [] then Exit;
 

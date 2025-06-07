@@ -2,11 +2,24 @@
 # Script Form
 {ref}`Script Form` is a opinionated, `TLazForm` that you can setup and run in
 a just a few lines.
+```{figure} ../../images/basic_scriptform.png
+A very basic `TScriptForm` with 3 tabs
+```
+This page is only about the very base of `TScriptForm`.
+
+For information about pre-built panels you can find them on these pages:
+- {ref}`House Form`
+-
+-
 *)
 {$DEFINE WL_SCRIPTFORM_INCLUDED}
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
 type
+(*
+## TScriptForm
+Main type for the {ref}`TScriptForm`.
+*)
   TScriptForm = record
     Form: TLazForm;
     PageControl: TLazPageControl;
@@ -72,20 +85,20 @@ end;
 
 
 (*
-## TScriptForm.Setup
+## ScriptForm.Setup
 ```pascal
 procedure TScriptForm.Setup(caption: String = 'Script Form'; size: TPoint = [750, 500]; allowResize: Boolean = False);
 ```
 Responsible for setting your TScriptForm up.
 This sets up the sekeleton of your TScriptForm ready to take in tabs.
 *)
-procedure TScriptForm.Setup(caption: String = SCRIPT_FILE + ' Form');
+procedure TScriptForm.Setup(caption: String = 'WaspLib');
 var
   panel: TLazPanel;
   lbl: TLazLabel;
 begin
   Self.Form := TLazForm.Create();
-  Self.Form.Caption := caption;
+  Self.Form.Caption := caption + ' Settings';
   Self.Form.Width := 800;
   Self.Form.Height := 600;
 
@@ -111,7 +124,7 @@ begin
   lbl.Caption := 'https://waspscripts.com';
   lbl.Align := ELazAlign.Left;
   lbl.BorderSpacing.Around := 4;
-  lbl.BorderSpacing.Left := 12;
+  lbl.BorderSpacing.Left := 6;
   lbl.SetURL();
 
   Self.Start := TLazButton.Create(panel);
@@ -120,47 +133,33 @@ begin
   Self.Start.Align := ELazAlign.Right;
   Self.Start.OnClick := @Self.OnStart;
   Self.Start.BorderSpacing.Around := 2;
-  Self.Start.BorderSpacing.Right := 12;
+  Self.Start.BorderSpacing.Right := 6;
 end;
 
 (*
-## TScriptForm.AddTab
+## ScriptForm.CreateTab
 ```pascal
-procedure TScriptForm.AddTab(caption: String);
-procedure TScriptForm.AddTab(tab: TTabSheet); overload;
-procedure TScriptForm.AddTabArray(captions: TStringArray);
+function TScriptForm.CreateTab(caption: String): TLazTabSheet;
 ```
-Methods to add tabs to `TScriptForm`.
+Methods to create and add tabs to `TScriptForm`.
 
-When you a tab by **caption** be it a single one or an array of them, the caption you use can be used
-to reference the tab later.
-
-It's **caption** get sanitized with:
-```pascal
-LowerCase(StringReplace(caption, ' ', '_', [rfReplaceAll]))
-```
-
-Which means that if you "HelLo WOrLD" as your **caption**, it's name internally will become "hello_world_settings".
-This is only important if you need to retrieve the tab with the use of **Self.Form.GetChild()**.
-If you use the other tab methods you simply have to write the **caption** name the same way you did the first time.
-Your tab will also be added to **TScriptForm.Tabs** as the last element of the array and you can get it right after adding it with **MyForm.Tabs[High(MyForm.Tabs)]**.
-
-This example as a very simple setup of a TScriptForm with one tab:
+This will create a new tab on the form and return it to you as the result so you
+add controls to it.
 
 Example:
 ```pascal
-procedure TMyScriptForm.Run(); override;
+{$I WaspLib/osrs.simba}
+
 var
-  tab: TTabSheet;
+  form: TScriptForm;
+  selector: TCombobox;
+  tab: TLazTabSheet;
 begin
-  Self.Setup('HELLO WORLD SCRIPT');
-  Self.Start.setOnClick(@Self.StartScript);
-
-  Self.AddTab('Script Settings');
-  tab := Self.Tabs[High(Self.Tabs)];
-
-  inherited;
-end;
+  form.Setup();
+  tab := form.CreateTab('House');
+  selector := TLazComboBox.CreateEx(tab);
+  form.Run();
+end.
 ```
 *)
 function TScriptForm.CreateTab(caption: String): TLazTabSheet;
@@ -170,18 +169,26 @@ begin
   Result.Caption := caption;
 end;
 
+(*
+## ScriptForm.AddTab
+```pascal
+procedure TScriptForm.AddTab(owner: Pointer);
+```
+Adds an already existing `TLazTabSheet` to the `TScriptForm`.
+*)
+procedure TScriptForm.AddTab(tab: TLazTabSheet);
+begin
+  tab.Parent := Self.PageControl;
+  Self.PageControl.InsertComponent(tab);
+end;
+
 
 (*
-## TScriptForm.Show
+## ScriptForm.Run
 ```pascal
-procedure TScriptForm.Show();
+procedure TScriptForm.Run();
 ```
-Shows your TScriptForm after it has been setup. To run this you have to use **Sync()**
-
-Example:
-```pascal
-Sync(@MyForm.Show);
-```
+Runs and shows your `TScriptForm` after it has been setup.
 *)
 procedure TScriptForm.Run();
 begin

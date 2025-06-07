@@ -889,3 +889,23 @@ begin
     end;
   end;
 end;
+
+
+type
+(*
+## EHouseTeleportMode
+```pascal
+EHouseTeleportMode = enum(SPELL, TABLET, CAPE);
+```
+Enum representing modes of teleporting the the POH.
+*)
+  EHouseTeleportMode = enum(SPELL, TABLET, CAPE);
+
+(*
+## EHouseTeleportPlace
+```pascal
+EHouseTeleportPlace = enum(UNKNOWN, INSIDE, OUTSIDE);
+```
+Enum representing modes of teleporting the the POH.
+*)
+  EHouseTeleportPlace = enum(UNKNOWN, INSIDE, OUTSIDE);

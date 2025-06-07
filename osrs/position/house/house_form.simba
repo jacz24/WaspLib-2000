@@ -10,3 +10,51 @@ This file is about {ref}`TRSHouse` dedicated `TLazForm` utilities.
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 
+procedure TRSHouse.OnTeleportChange(sender: TObject);
+begin
+  Self.TeleportMode := EHouseTeleportMode(TLazCombobox(sender).ItemIndex);
+  Self.Loader.Config.Item['TeleportMode'].AsInt := Ord(Self.TeleportMode);
+  Self.Loader.Config.SaveConfig();
+end;
+
+function TRSHouse.CreateTeleportCombobox(owner: Pointer): TLazComboBox;
+var
+  i: Integer;
+begin
+  Result := TLazComboBox.CreateEx(owner, '', 'Choose your method of house teleportation.', 170, 40);
+  Result.Items.AddStrings(['Spell', 'Tablet', 'Contruction/Max cape']);
+
+  Self.Loader.SetupConfig();
+  i := Self.Loader.Config.Item['TeleportMode'].AsInt;
+
+  Self.TeleportMode := EHouseTeleportMode(i);
+  Result.ItemIndex := i;
+  Result.OnChange := @Self.OnTeleportChange;
+end;
+
+function TScriptForm.CreateHouseTab(): TLazTabSheet;
+var
+  tab: TLazTabSheet;
+  panel: TLazPanel;
+  imgbox: TImageBox;
+  location, decoration, room: TLazComboBox;
+  rotateLeft, rotateRight, readHouse: TLazButton;
+  caption: TLazLabel;
+  lbl: TLazLabel;
+begin
+  tab := Self.CreateTab('House Settings');
+
+  panel := TLazPanel.CreateEx(tab);
+  panel.Align := ELazAlign.Left;
+
+  imgbox := TImageBox.CreateEx(tab);
+  imgbox.Align := ELazAlign.Client;
+
+  lbl := TLazLabel.CreateEx(panel, 'Location:', 'Change your house location.');
+  location := TLazComboBox.CreateEx(panel, '', 'Change your house location.');
+  location.Items.AddStrings(['Rimmington', 'Taverley', 'Pollnivneach', 'Hosidius', 'Rellekka', 'Aldarin', 'Brimhaven', 'Yanille', 'Prifddinas']);
+  location.Name := 'house_location_combobox';
+  //location.OnChange := @Self.POHLocationUpdate;
+
+  location.AnchorLabel(lbl);
+end;

@@ -34,8 +34,6 @@ end;
 
 
 function TPointArray.RandomMean(): TPoint;
-var
-  sorted: TPointArray;
 begin
   if Length(Self) = 0 then Exit;
   Result := Self.SortFrom(Self.Mean())[RandomLeft(0, High(Self))];
@@ -155,7 +153,7 @@ Credits: [slacky](https://slacky.one/)
 function TTriangle.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single = 1): TPoint;
 var
   r1, r2, r3, u, v, w, t, sum: Single;
-  stdev,xr,yr: Single;
+  xr,yr: Single;
 const
   eps := 0.0000001;
 begin
@@ -247,7 +245,7 @@ function TPolygon.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias:
 var
   i: Integer;
   tri: TTriangleArray;
-  xr,yr,b,sum, r, stdev, area: Single;
+  xr,yr,sum, r, area: Single;
 begin
   area := Self.Area();
 
