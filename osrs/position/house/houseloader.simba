@@ -31,10 +31,6 @@ Helper record used by the {ref}`TRSHouse` to load and/or map a POH.
     TeleportRooms: TTeleportRoomMatrix;
 
     RoomImages, IconImages: array [EHouseRoom] of TImage;
-
-    Selected: record
-      Matrix, Map: TPoint;
-    end;
     HouseBounds: TBox;
 
     Location: EHouseLocation;
@@ -110,8 +106,6 @@ begin
   Self.Map := new TImage(Self.SIZE * Self.AMOUNT, Self.SIZE * Self.AMOUNT);
   Self.SetupConfig();
 
-  Self.Selected.Map := [Self.AMOUNT div 2 * Self.SIZE, Self.AMOUNT div 2 * Self.SIZE];
-  Self.Selected.Matrix := [Self.AMOUNT div 2, Self.AMOUNT div 2];
   Self.HouseBounds := [Self.AMOUNT div 2, Self.AMOUNT div 2, Self.AMOUNT div 2, Self.AMOUNT div 2];
 
   Self.DownscaledMap := new TImage();

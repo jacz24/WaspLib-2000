@@ -39,6 +39,7 @@ Main record used to hold core values of the {ref}`Map Debugger`.
     ColorArray: TColorArray;
   end;
 
+{%codetools off}
 procedure TMapDebugger.OnChange(sender: TObject);
 begin
   Self.ImageBox.SetImage(Self.Images[TLazComboBox(sender).ItemIndex]);
@@ -122,6 +123,7 @@ begin
   Self.ShowObjectClusters := TLazCheckBox(sender).State = ELazCheckBoxState.cbChecked;
   Self.ImageBox.Repaint();
 end;
+{%codetools on}
 
 (*
 ## MapDebugger.Show

@@ -9,28 +9,136 @@ This file is about {ref}`TRSHouse` dedicated `TLazForm` utilities.
 {$DEFINE WL_HOUSE_FORM_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
+type
+  THouseFormHelper = record
+    Matrix, Selected: TPoint;
+    Grid: TBoxArray;
+    GridTPAs: T2DPointArray;
+  end;
 
-procedure TRSHouse.OnTeleportChange(sender: TObject);
+
+procedure THouseFormHelper.DrawGrid(img: TImage);
+var
+  i: Integer;
+  pt: TPoint;
+  color, pixel: TColor;
+  selected, inBounds: Boolean;
 begin
-  Self.TeleportMode := EHouseTeleportMode(TLazCombobox(sender).ItemIndex);
-  Self.Loader.Config.Item['TeleportMode'].AsInt := Ord(Self.TeleportMode);
-  Self.Loader.Config.SaveConfig();
+  img.ReplaceColor($0, $1A1A1A);
+
+  for i to High(Self.Grid) do
+  begin
+    selected := Self.Grid[i].Contains(Self.Selected);
+    inBounds := House.Loader.HouseBounds.Contains([Self.Grid[i].X1 div House.Loader.SIZE, Self.Grid[i].Y1 div House.Loader.SIZE]);
+
+    if selected then color := $00FFFF;
+
+    for pt in Self.GridTPAs[i] do
+    begin
+      pixel := img.Pixel[pt.X, pt.Y];
+      if pixel = $EE then Continue;
+      if not selected and inBounds and (pixel <> House.Loader.Colors.Outdoors) then Continue;
+      if not selected then
+        img.Alpha[pt.X, pt.Y] := $7D;
+      img.Pixel[pt.X, pt.Y] := $FFFFFF;
+    end;
+  end;
 end;
 
-function TRSHouse.CreateTeleportCombobox(owner: Pointer): TLazComboBox;
+procedure THouseFormHelper.DrawIcons(img: TImage);
+var
+  pt, idx: TPoint;
+  room: THouseRoom;
+  icon: TImage;
+begin
+  for idx.Y := Max(House.Loader.HouseBounds.Y1, 0) to Min(House.Loader.HouseBounds.Y2, House.Loader.AMOUNT-1) do
+    for idx.X := Max(House.Loader.HouseBounds.X1, 0) to Min(House.Loader.HouseBounds.X2, House.Loader.AMOUNT-1) do
+    begin
+      room := House.Loader.ReadRoom(idx);
+      if room.Room = EHouseRoom.UNKNOWN then Continue;
+
+      pt := [idx.X * House.Loader.SIZE, idx.Y * House.Loader.SIZE];
+      icon := House.Loader.GetIconImage(room.Room);
+      icon := icon.RotateClockWise(room.Rotation);
+      img.DrawImage(icon, pt);
+    end;
+end;
+
+
+procedure THouseFormHelper.OnTeleportChange(sender: TObject);
+begin
+  House.TeleportMode := EHouseTeleportMode(TLazCombobox(sender).ItemIndex);
+  House.Loader.Config.Item['TeleportMode'].AsInt := Ord(House.TeleportMode);
+  House.Loader.Config.SaveConfig();
+end;
+
+procedure THouseFormHelper.HouseLocationOnChange(sender: TObject);
+begin
+  House.Loader.Location := EHouseLocation(TLazComboBox(sender).ItemIndex);
+  House.Loader.Config.Item['Location'].AsInt := Ord(House.Loader.Location);
+  House.Loader.Config.SaveConfig();
+end;
+
+procedure THouseFormHelper.HouseDecorationOnChange(sender: TObject);
+begin
+  House.Loader.Decoration := EHouseDecoration(TLazComboBox(sender).ItemIndex);
+  House.Loader.Config.Item['Decoration'].AsInt := Ord(House.Loader.Decoration);
+  House.Loader.Config.SaveConfig();
+end;
+
+procedure THouseFormHelper.HouseOnPaint(sender: TImageBox; canvas: TImageBoxCanvas; r: TLazRect);
+var
+  limit, b: TBox;
+  tpa: TPointArray;
+  pt: TPoint;
+  pixel: Int32;
+begin
+  limit := [r.Left, r.Top, r.Right, r.Bottom];
+
+  pt := [Self.Matrix.X*House.Loader.SIZE, Self.Matrix.Y*House.Loader.SIZE];
+  b := [pt.X, pt.Y, pt.X+House.Loader.SIZE-1, pt.Y+House.Loader.SIZE-1];
+  if not limit.ContainsBox(b) and not limit.Overlap(b) then Exit;
+
+  tpa := b.Corners().Connect();
+  for pt in tpa do
+  begin
+    if not limit.Contains(pt) then Continue;
+    pixel := sender.Background.Canvas.GetPixel(pt.X, pt.Y);
+    if pixel = $0000EE then Continue;
+    canvas.DrawPoint(pt, $00FFFF);
+  end;
+
+  for pt in tpa.ShapeFill().Difference(tpa) do
+  begin
+    if not limit.Contains(pt) then Continue;
+    pixel := sender.Background.Canvas.GetPixel(pt.X, pt.Y);
+    if pixel = $0000EE then Continue;
+    //canvas.DrawPoint(pt, SRL.CalculateTransparency(pixel, $00FFFF, 0.5, False));
+  end;
+end;
+
+
+
+
+
+function THouseFormHelper.CreateTeleportCombobox(owner: Pointer): TLazComboBox;
 var
   i: Integer;
 begin
   Result := TLazComboBox.CreateEx(owner, '', 'Choose your method of house teleportation.', 170, 40);
   Result.Items.AddStrings(['Spell', 'Tablet', 'Contruction/Max cape']);
 
-  Self.Loader.SetupConfig();
-  i := Self.Loader.Config.Item['TeleportMode'].AsInt;
+  House.Loader.SetupConfig();
+  i := House.Loader.Config.Item['TeleportMode'].AsInt;
 
-  Self.TeleportMode := EHouseTeleportMode(i);
+  House.TeleportMode := EHouseTeleportMode(i);
   Result.ItemIndex := i;
   Result.OnChange := @Self.OnTeleportChange;
 end;
+
+var
+  HouseForm: THouseFormHelper;
+
 
 function TScriptForm.CreateHouseTab(): TLazTabSheet;
 var
@@ -38,23 +146,122 @@ var
   panel: TLazPanel;
   imgbox: TImageBox;
   location, decoration, room: TLazComboBox;
-  rotateLeft, rotateRight, readHouse: TLazButton;
-  caption: TLazLabel;
+  rotateLeft, rotateRight, loader: TLazButton;
   lbl: TLazLabel;
+  b: TBox;
+  img: TImage;
 begin
+  HouseForm.Grid := TBoxArray.Create([1,1], House.Loader.AMOUNT, House.Loader.AMOUNT, House.Loader.SIZE-1, House.Loader.SIZE-1, [0,0]);
+  for b in HouseForm.Grid do
+    HouseForm.GridTPAs += b.Corners().Connect();
+
   tab := Self.CreateTab('House Settings');
 
   panel := TLazPanel.CreateEx(tab);
   panel.Align := ELazAlign.Left;
 
   imgbox := TImageBox.CreateEx(tab);
+  imgbox.Name := 'house_builder';
   imgbox.Align := ELazAlign.Client;
+  imgbox.OnImgPaint := @HouseForm.HouseOnPaint;
+  //imgbox.OnImgClick := @Self.HouseClick;
+  //imgbox.OnImgMouseDown := @SelfHouseKeyDown;
 
   lbl := TLazLabel.CreateEx(panel, 'Location:', 'Change your house location.');
-  location := TLazComboBox.CreateEx(panel, '', 'Change your house location.');
-  location.Items.AddStrings(['Rimmington', 'Taverley', 'Pollnivneach', 'Hosidius', 'Rellekka', 'Aldarin', 'Brimhaven', 'Yanille', 'Prifddinas']);
-  location.Name := 'house_location_combobox';
-  //location.OnChange := @Self.POHLocationUpdate;
+  lbl.Align := ELazAlign.Top;
+  lbl.BorderSpacing.Top := 20;
 
+  location := TLazComboBox.CreateEx(panel, '', 'Change your house location.');
+  location.Items.AddStrings([
+    'Rimmington', 'Taverley', 'Pollnivneach', 'Hosidius', 'Rellekka', 'Aldarin',
+    'Brimhaven', 'Yanille', 'Prifddinas'
+  ]);
+  location.Name := 'house_location';
+  location.Width := 165;
   location.AnchorLabel(lbl);
+  location.OnChange := @HouseForm.HouseLocationOnChange;
+
+  lbl := TLazLabel.CreateEx(panel, 'Decoration:', 'Change your house decoration.');
+  lbl.AnchorSideTop.Control := location;
+  lbl.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
+  lbl.BorderSpacing.Top := 20;
+
+  decoration := TLazComboBox.CreateEx(panel, '', 'Change your house decoration.');
+  decoration.Items.AddStrings([
+    'Basic wood', 'Basic stone', 'Whitewashed stone', 'Fremennik-style wood',
+    'Tropical wood', 'Fancy stone', 'Deathly mansion', 'Twisted theme',
+    'Hosidius house', 'Cosy cabin'
+  ]);
+  decoration.Name := 'house_decoration';
+  decoration.Width := 165;
+  decoration.AnchorLabel(lbl);
+  decoration.OnChange := @HouseForm.HouseDecorationOnChange;
+
+  lbl := TLazLabel.CreateEx(panel, 'Room:', 'Change the selected room.');
+  lbl.AnchorSideTop.Control := decoration;
+  lbl.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
+  lbl.BorderSpacing.Top := 20;
+
+  room := TLazComboBox.CreateEx(panel, '', 'Change the selected room.');
+  room.Name := 'house_room';
+  room.Items.AddStrings([
+    'None', 'Parlour', 'Garden', 'Kitchen', 'Dining room', 'Workshop', 'Bedroom',
+    'Skill hall', 'League hall', 'Games room', 'Combat room', 'Quest hall',
+    'Menagerie (outdoors)', 'Menagerie (indoors)', 'Study', 'Costume room',
+    'Chapel', 'Portal chamber', 'Formal garden', 'Throne room',
+    'Superior garden', 'Portal nexus', 'Achievement gallery'
+  ]);
+  room.Width := 165;
+  room.AnchorLabel(lbl);
+  //room.OnChange := @HouseForm.RoomUpdate;
+
+  rotateLeft := TLazButton.CreateEx(panel, 'Rotate Left', 'Rotate the current room counter clockwise.');
+  rotateLeft.Name := 'house_rotate_left';
+  rotateLeft.Width := 80;
+  rotateLeft.AnchorSideTop.Control := room;
+  rotateLeft.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
+  rotateLeft.BorderSpacing.Top := 20;
+  //rotateLeft.OnClick := @HouseForm.OnRotateRoom;
+
+  rotateRight := TLazButton.CreateEx(panel, 'Rotate Right', 'Rotate the current room clockwise');
+  rotateRight.Name := 'house_rotate_right';
+  rotateRight.Width := 80;
+  rotateRight.AnchorSideLeft.Control := rotateLeft;
+  rotateRight.AnchorSideLeft.Side := ELazAnchorSideReference.asrBottom;
+  rotateRight.AnchorSideTop.Control := rotateLeft;
+  rotateRight.AnchorSideTop.Side := ELazAnchorSideReference.asrTop;
+  rotateRight.BorderSpacing.Left := 6;
+  //rotateRight.OnClick := @HouseForm.OnRotateRoom;
+
+  loader := TLazButton.CreateEx(panel, 'Read Layout', 'Reads the layout of the house automatically.');
+  loader.Name := 'house_read_layout';
+  loader.Width := 165;
+  loader.AnchorSideTop.Control := rotateLeft;
+  loader.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
+  loader.BorderSpacing.Top := 20;
+
+  loader.AnchorSideLeft.Control := room;
+  loader.AnchorSideLeft.Side := ELazAnchorSideReference.asrCenter;
+  //loader.OnClick := @HouseForm.FindLayout;
+
+  panel := TLazPanel.CreateEx(panel);
+  panel.Name := 'house_objects_panel';
+  panel.Height := 210;
+  panel.AnchorSideTop.Control := loader;
+  panel.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
+  panel.BorderSpacing.Top := 20;
+
+  if House.Loader.Map = nil then
+    House.Loader.Init();
+
+  location.ItemIndex := Ord(House.Loader.Location);
+  decoration.ItemIndex := Ord(House.Loader.Decoration);
+
+  HouseForm.Selected := [House.Loader.AMOUNT div 2 * House.Loader.SIZE, House.Loader.AMOUNT div 2 * House.Loader.SIZE];
+  HouseForm.Matrix   := [House.Loader.AMOUNT div 2, House.Loader.AMOUNT div 2];
+
+  img := House.Loader.Map.Copy();
+  HouseForm.DrawGrid(img);
+  HouseForm.DrawIcons(img);
+  imgbox.SetImage(img);
 end;
