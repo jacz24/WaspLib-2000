@@ -105,9 +105,6 @@ procedure THouseLoader.Init();
 begin
   Self.Map := new TImage(Self.SIZE * Self.AMOUNT, Self.SIZE * Self.AMOUNT);
   Self.SetupConfig();
-
-  Self.HouseBounds := [Self.AMOUNT div 2, Self.AMOUNT div 2, Self.AMOUNT div 2, Self.AMOUNT div 2];
-
   Self.DownscaledMap := new TImage();
 end;
 
@@ -356,10 +353,13 @@ begin
      (index.Y > Self.HouseBounds.Y1) and (index.Y < Self.HouseBounds.Y2) then
     Exit;
 
-  if index.X <= Self.HouseBounds.X1 then Self.HouseBounds.X1 := index.X-1;
-  if index.X >= Self.HouseBounds.X2 then Self.HouseBounds.X2 := index.X+1;
-  if index.Y <= Self.HouseBounds.Y1 then Self.HouseBounds.Y1 := index.Y-1;
-  if index.Y >= Self.HouseBounds.Y2 then Self.HouseBounds.Y2 := index.Y+1;
+  if room.Room <> EHouseRoom.UNKNOWN then
+  begin
+    if index.X < Self.HouseBounds.X1 then Self.HouseBounds.X1 := index.X;
+    if index.X > Self.HouseBounds.X2 then Self.HouseBounds.X2 := index.X;
+    if index.Y < Self.HouseBounds.Y1 then Self.HouseBounds.Y1 := index.Y;
+    if index.Y > Self.HouseBounds.Y2 then Self.HouseBounds.Y2 := index.Y;
+  end;
 
   img := Self.GetRoomImage(EHouseRoom.UNKNOWN);
   for index.Y := 0 to Self.AMOUNT-1 do
@@ -402,11 +402,21 @@ var
   index: TPoint;
   room: THouseRoom;
 begin
+  Self.HouseBounds := [$FFFFFF, $FFFFFF, 0, 0];
+
   for index.Y := 0 to Self.AMOUNT-1 do
     for index.X := 0 to Self.AMOUNT-1 do
     begin
       room := Self.ReadRoom(index);
       img := Self.GetRoomImage(room.Room).RotateClockWise(room.Rotation);
       Self.Map.DrawImage(img, [Self.SIZE * index.X, Self.SIZE * index.Y]);
+
+      if room.Room <> EHouseRoom.UNKNOWN then
+      begin
+        if index.X < Self.HouseBounds.X1 then Self.HouseBounds.X1 := index.X;
+        if index.X > Self.HouseBounds.X2 then Self.HouseBounds.X2 := index.X;
+        if index.Y < Self.HouseBounds.Y1 then Self.HouseBounds.Y1 := index.Y;
+        if index.Y > Self.HouseBounds.Y2 then Self.HouseBounds.Y2 := index.Y;
+      end;
     end;
 end;
