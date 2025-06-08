@@ -23,8 +23,7 @@ type
 procedure THouseFormHelper.DrawGrid(img: TImage);
 var
   i: Integer;
-  pt: TPoint;
-  selected, inBounds: Boolean;
+  selected: Boolean;
 begin
   img.ReplaceColor($0, $1A1A1A);
   img.DrawAlpha := $7D;
@@ -84,56 +83,57 @@ begin
   House.Loader.Config.SaveConfig();
 end;
 
-procedure THouseFormHelper.OnImgPaint(sender: TImageBox; canvas: TImageBoxCanvas; r: TLazRect);
-var
-  limit, b: TBox;
-  pt: TPoint;
-begin
-  limit := [r.Left, r.Top, r.Right, r.Bottom];
 
-  pt := [Self.Matrix.X*House.Loader.SIZE, Self.Matrix.Y*House.Loader.SIZE];
-  b := Self.Grid[Self.Matrix.Y * House.Loader.AMOUNT + Self.Matrix.X];
-  if not limit.ContainsBox(b) and not limit.Overlap(b) then Exit;
-  canvas.DrawBox(b, $00FFFF);
-end;
-
-procedure THouseFormHelper.OnRotateLeft(sender: TObject);
+procedure THouseFormHelper.Redraw();
 var
-  current: THouseRoom;
   img: TImage;
 begin
-  current := House.Loader.ReadRoom(Self.Matrix);
-  current.Rotation -= 1;
-
-  if current.Rotation = -1 then current.Rotation := 3;
-
-  House.Loader.DrawMap(current, Self.Matrix);
-
   img := House.Loader.Map.Copy();
   Self.DrawGrid(img);
   Self.DrawIcons(img);
   Self.ImageBox.SetImage(img);
   Self.ImageBox.Repaint();
+end;
+
+{$H-}
+procedure THouseFormHelper.OnRotateLeft(sender: TObject);
+var
+  current: THouseRoom;
+begin
+  current := House.Loader.ReadRoom(Self.Matrix);
+  current.Rotation := (current.Rotation - 1) mod 4;
+  House.Loader.DrawMap(current, Self.Matrix);
+  Self.Redraw();
 end;
 
 procedure THouseFormHelper.OnRotateRight(sender: TObject);
 var
   current: THouseRoom;
-  img: TImage;
 begin
   current := House.Loader.ReadRoom(Self.Matrix);
-  current.Rotation += 1;
-  if current.Rotation = 4 then current.Rotation := 0;
-
+  current.Rotation := (current.Rotation + 1) mod 4;
   House.Loader.DrawMap(current, Self.Matrix);
-
-  img := House.Loader.Map.Copy();
-  Self.DrawGrid(img);
-  Self.DrawIcons(img);
-  Self.ImageBox.SetImage(img);
-  Self.ImageBox.Repaint();
+  Self.Redraw();
 end;
 
+procedure THouseFormHelper.OnReadClick(sender: TObject);
+begin
+  HouseViewer.LoadHouse();
+  Self.Redraw();
+end;
+{$H+}
+
+procedure THouseFormHelper.OnImgPaint({$H-}sender: TImageBox;{$H+} canvas: TImageBoxCanvas; r: TLazRect);
+var
+  limit, b: TBox;
+  pt: TPoint;
+begin
+  limit := [r.Left, r.Top, r.Right, r.Bottom];
+  pt := [Self.Matrix.X*House.Loader.SIZE, Self.Matrix.Y*House.Loader.SIZE];
+  b := Self.Grid[Self.Matrix.Y * House.Loader.AMOUNT + Self.Matrix.X];
+  if not limit.ContainsBox(b) and not limit.Overlap(b) then Exit;
+  canvas.DrawBox(b, $00FFFF);
+end;
 
 procedure THouseFormHelper.OnImgMouseDown(sender: TImageBox; btn: ELazMouseButton; shift: ELazShiftStates; x,y: Integer);
 var
@@ -159,6 +159,9 @@ begin
 
   //Self.RefreshObjectsPanel(parent.GetChild('objects_panel'), House.Loader.ReadRoom(House.Loader.Selected.Matrix));
 end;
+
+
+
 
 
 function THouseFormHelper.CreateTeleportCombobox(owner: Pointer): TLazComboBox;
@@ -202,6 +205,7 @@ begin
   HouseForm.ImageBox.Align := ELazAlign.Client;
   HouseForm.ImageBox.OnImgPaint := @HouseForm.OnImgPaint;
   HouseForm.ImageBox.OnImgMouseDown := @HouseForm.OnImgMouseDown;
+
 
   lbl := TLazLabel.CreateEx(panel, 'Location:', 'Change your house location.');
   lbl.Align := ELazAlign.Top;
@@ -272,7 +276,7 @@ begin
 
   loader.AnchorSideLeft.Control := HouseForm.RoomCombobox;
   loader.AnchorSideLeft.Side := ELazAnchorSideReference.asrCenter;
-  //loader.OnClick := @HouseForm.FindLayout;
+  loader.OnClick := @HouseForm.OnReadClick;
 
   panel := TLazPanel.CreateEx(panel);
   panel.Name := 'house_objects_panel';
