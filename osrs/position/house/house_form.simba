@@ -11,7 +11,7 @@ This file is about {ref}`TRSHouse` dedicated `TLazForm` utilities.
 
 type
   THouseFormHelper = record
-    Matrix, Selected: TPoint;
+    MatrixIdx, SelectedIdx: TPoint;
     Grid: TBoxArray;
     GridTPAs: T2DPointArray;
 
@@ -30,7 +30,7 @@ begin
 
   for i := 0 to High(Self.Grid) do
   begin
-    selected := Self.Grid[i].Contains(Self.Selected);
+    selected := Self.Grid[i].Contains(Self.SelectedIdx);
     if selected then
     begin
       img.DrawColor := $00FFFF;
@@ -83,6 +83,21 @@ begin
   House.Loader.Config.SaveConfig();
 end;
 
+procedure THouseFormHelper.RoomOnChange(sender: TObject);
+var
+  old, new: THouseRoom;
+  room: EHouseRoom;
+begin
+  room := EHouseRoom(TLazComboBox(sender).ItemIndex);
+  old := House.Loader.ReadRoom(Self.MatrixIdx);
+
+  if old.Room = room then new := old
+  else new := [room, 0, []];
+  House.Loader.DrawMap(new, Self.MatrixIdx);
+
+  Self.Redraw();
+  //Self.RefreshObjectsPanel(parent.GetChild('objects_panel'), new);
+end;
 
 procedure THouseFormHelper.Redraw();
 var
@@ -100,9 +115,9 @@ procedure THouseFormHelper.OnRotateLeft(sender: TObject);
 var
   current: THouseRoom;
 begin
-  current := House.Loader.ReadRoom(Self.Matrix);
-  current.Rotation := (current.Rotation - 1) mod 4;
-  House.Loader.DrawMap(current, Self.Matrix);
+  current := House.Loader.ReadRoom(Self.MatrixIdx);
+  current.Rotation := (current.Rotation - 1) and 3;
+  House.Loader.DrawMap(current, Self.MatrixIdx);
   Self.Redraw();
 end;
 
@@ -110,9 +125,9 @@ procedure THouseFormHelper.OnRotateRight(sender: TObject);
 var
   current: THouseRoom;
 begin
-  current := House.Loader.ReadRoom(Self.Matrix);
-  current.Rotation := (current.Rotation + 1) mod 4;
-  House.Loader.DrawMap(current, Self.Matrix);
+  current := House.Loader.ReadRoom(Self.MatrixIdx);
+  current.Rotation := (current.Rotation + 1) and 3;
+  House.Loader.DrawMap(current, Self.MatrixIdx);
   Self.Redraw();
 end;
 
@@ -129,8 +144,8 @@ var
   pt: TPoint;
 begin
   limit := [r.Left, r.Top, r.Right, r.Bottom];
-  pt := [Self.Matrix.X*House.Loader.SIZE, Self.Matrix.Y*House.Loader.SIZE];
-  b := Self.Grid[Self.Matrix.Y * House.Loader.AMOUNT + Self.Matrix.X];
+  pt := [Self.MatrixIdx.X*House.Loader.SIZE, Self.MatrixIdx.Y*House.Loader.SIZE];
+  b := Self.Grid[Self.MatrixIdx.Y * House.Loader.AMOUNT + Self.MatrixIdx.X];
   if not limit.ContainsBox(b) and not limit.Overlap(b) then Exit;
   canvas.DrawBox(b, $00FFFF);
 end;
@@ -144,12 +159,12 @@ begin
   if shift <> [ELazShiftStates.Left] then Exit;
 
   pt := [x div House.Loader.SIZE, y div House.Loader.SIZE];
-  if pt = Self.Matrix then Exit;
+  if pt = Self.MatrixIdx then Exit;
 
-  Self.Selected := [x,y];
-  Self.Matrix := pt;
+  Self.SelectedIdx := [x,y];
+  Self.MatrixIdx := pt;
 
-  Self.RoomCombobox.ItemIndex := Ord(House.Loader.ReadRoom(Self.Matrix).Room);
+  Self.RoomCombobox.ItemIndex := Ord(House.Loader.ReadRoom(Self.MatrixIdx).Room);
 
   img := House.Loader.Map.Copy();
   Self.DrawGrid(img);
@@ -250,7 +265,7 @@ begin
   ]);
   HouseForm.RoomCombobox.Width := 165;
   HouseForm.RoomCombobox.AnchorLabel(lbl);
-  //HouseForm.RoomCombobox.OnChange := @HouseForm.RoomUpdate;
+  HouseForm.RoomCombobox.OnChange := @HouseForm.RoomOnChange;
 
   rotateLeft := TLazButton.CreateEx(panel, 'Rotate Left', 'Rotate the current room counter clockwise.');
   rotateLeft.Width := 80;
@@ -288,14 +303,16 @@ begin
   if House.Loader.Map = nil then
     House.Loader.Init();
 
-  location.ItemIndex := Ord(House.Loader.Location);
+  location.ItemIndex   := Ord(House.Loader.Location);
   decoration.ItemIndex := Ord(House.Loader.Decoration);
 
-  HouseForm.Selected := [House.Loader.AMOUNT div 2 * House.Loader.SIZE, House.Loader.AMOUNT div 2 * House.Loader.SIZE];
-  HouseForm.Matrix   := [House.Loader.AMOUNT div 2, House.Loader.AMOUNT div 2];
+  HouseForm.SelectedIdx := [House.Loader.AMOUNT div 2 * House.Loader.SIZE, House.Loader.AMOUNT div 2 * House.Loader.SIZE];
+  HouseForm.MatrixIdx   := [House.Loader.AMOUNT div 2, House.Loader.AMOUNT div 2];
 
   img := House.Loader.Map.Copy();
   HouseForm.DrawGrid(img);
   HouseForm.DrawIcons(img);
   HouseForm.ImageBox.SetImage(img);
+
+  HouseForm.RoomCombobox.ItemIndex := Ord(House.Loader.ReadRoom(HouseForm.MatrixIdx).Room);
 end;
