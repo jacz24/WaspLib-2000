@@ -61,6 +61,9 @@ begin
   //find border minus stack number space
   tpa := img.FindColor($010000, 0, [0, 9, 35, 31]);
 
+  img.DrawColor := $0;
+  img.DrawBoxFilled([0,0,35,8]);
+
   border := new TImage(36, 32);
   border.DrawColor := $FFFFFF;
   border.DrawTPA(tpa);
