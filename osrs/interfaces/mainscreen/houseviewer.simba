@@ -75,6 +75,9 @@ procedure TRSHouseViewer.LoadHouse();
 ```
 Loads the current layout visible in the {ref}`HouseViewer` into
 {ref}`TRSHouse` {ref}`HouseLoader` (`TRSHouse.Loader`).
+
+For a easy usage of this and instant visualization of the results, check out:
+{ref}`ScriptForm CreateHouseTab`.
 *)
 procedure TRSHouseViewer.LoadHouse();
 var

@@ -30,7 +30,7 @@ var
   pt: TPoint;
 begin
   img.ReplaceColor($0, $1A1A1A);
-  img.DrawAlpha := $7D;
+  img.DrawAlpha := $6D;
 
   for i := 0 to High(Self.Grid) do
   begin
@@ -627,9 +627,11 @@ end;
 
 procedure THouseFormHelper.DecorationOnChange(sender: TObject);
 begin
-  House.Loader.Decoration := EHouseDecoration(TLazComboBox(sender).ItemIndex);
+  House.Loader.SetColors(EHouseDecoration(TLazComboBox(sender).ItemIndex));
   House.Loader.Config.Item['Decoration'].AsInt := Ord(House.Loader.Decoration);
   House.Loader.Config.SaveConfig();
+  House.Loader.Redraw();
+  Self.Redraw();
 end;
 
 procedure THouseFormHelper.RoomOnChange(sender: TObject);
@@ -709,7 +711,10 @@ begin
   if shift <> [ELazShiftStates.Left] then Exit;
 
   pt := [x div House.Loader.SIZE, y div House.Loader.SIZE];
+
   if pt = Self.MatrixIdx then Exit;
+  if not InRange(pt.X, 0, House.Loader.AMOUNT-1) then Exit;
+  if not InRange(pt.Y, 0, House.Loader.AMOUNT-1) then Exit;
 
   Self.SelectedIdx := [x,y];
   Self.MatrixIdx := pt;
@@ -745,11 +750,25 @@ var
   HouseForm: THouseFormHelper;
 
 (*
-## House Form
+## ScriptForm CreateHouseTab
 ```pascal
 function TScriptForm.CreateHouseTab(): TLazTabSheet;
 ```
 Sets up a `TLazTabSheet` on your `TScriptForm` to configure your `TRSHouse`.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  form: TScriptForm;
+begin
+  form.Setup();
+  form.CreateHouseTab();
+  form.Run();
+end.
+```
+```{figure} ../../images/houseform.gif
+```
 *)
 function TScriptForm.CreateHouseTab(): TLazTabSheet;
 var
