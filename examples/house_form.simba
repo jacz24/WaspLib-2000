@@ -1,0 +1,16 @@
+{$I WaspLib/osrs.simba}
+var
+  form: TScriptForm;
+  tab: TLazTabSheet;
+  lbl: TLazLabel;
+  combobox: TLazComboBox;
+begin
+  form.Setup();
+  tab := form.CreateTab('My Settings');
+  form.CreateHouseTab();
+  lbl := TLazLabel.CreateEx(tab, 'House teleport mode:');
+  lbl.Top := 200;
+  lbl.Left := 200;
+  combobox := HouseForm.CreateTeleportCombobox(tab, lbl);
+  form.Run();
+end.

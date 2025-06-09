@@ -731,7 +731,7 @@ begin
 end;
 
 
-function THouseFormHelper.CreateTeleportCombobox(owner: Pointer): TLazComboBox;
+function THouseFormHelper.CreateTeleportCombobox(owner: Pointer; caption: TLazLabel = nil): TLazComboBox;
 var
   i: Integer;
 begin
@@ -744,6 +744,9 @@ begin
   House.TeleportMode := EHouseTeleportMode(i);
   Result.ItemIndex := i;
   Result.OnChange := @Self.OnTeleportChange;
+
+  if caption <> nil then
+    Result.AnchorLabel(caption);
 end;
 
 var

@@ -164,9 +164,9 @@ end.
 *)
 function TScriptForm.CreateTab(caption: String): TLazTabSheet;
 begin
-  Result := TLazTabSheet.Create(Self.PageControl);
-  Result.Parent := Self.PageControl;
+  Result := Self.PageControl.AddTab();
   Result.Caption := caption;
+  Self.PageControl.ActiveTabIndex := 0;
 end;
 
 (*
