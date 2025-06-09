@@ -143,7 +143,8 @@ begin
   Result := ItemFinder.FindAll(items, Self.Slots^.Boxes(), matches);
 end;
 
-{%CODETOOLS OFF}
+{%CODETOOLS ON}
+
 function TRSItemInterface._Discover(slot: Integer): TRSItemArray;
 var
   b: TBox;
@@ -159,10 +160,6 @@ begin
     raise GetDebugLn(Self.Name, 'Discover box has to be 36x32. You passed w: ' + ToStr(b.Width) + ' h: ' + ToStr(b.Height));
 
   img := Target.GetImage(b);
-  img.SetSize(img.Width + 1, img.Height + 1);
-  img.Offset(1,1);
-  ItemFinder.CleanItemBackground(img);
-  img.Crop([1, 10, 36, 32]);
   Result := ItemFinder.GetHashItems(ItemFinder.GetHash(img));
 end;
 {%CODETOOLS ON}

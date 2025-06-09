@@ -9,6 +9,7 @@ Methods to find and compare item images
 type
   TRSItemFinder = record
     ItemImages: TStringMap<TImage>;
+    MaskImages: TStringMap<TImage>;
     Filters: array of record
       Name: String;
       Filter: TImageCompareFilter;
@@ -18,7 +19,8 @@ type
     ImageCompare: TImageCompareUtils;
     Database: TDatabase;
     CacheDir: String;
-    const ZIP: String = {$MACRO DIR} + 'images.zip';
+    const IMAGES_ZIP: String = {$MACRO DIR} + 'images.zip';
+    const MASKS_ZIP: String = {$MACRO DIR} + 'masks.zip';
   end;
 
 function TRSItemFinder.Align(image, template: TImage): Boolean;
@@ -76,7 +78,7 @@ procedure TRSItemFinder.Setup();
 var
   path, tmp: String;
 begin
-  Self.Version := HashFile(EHashAlgo.MD5, Self.ZIP);
+  Self.Version := HashFile(EHashAlgo.MD5, Self.IMAGES_ZIP);
   SetLength(Self.Version, 6);
   Self.Database.Setup('ItemFinder', ['id', 'item', 'hash'], {$MACRO DIR} + 'data' + PATH_SEP, Self.Version);
 
@@ -137,16 +139,35 @@ begin
   if not Self.ItemImages.Exists(id) or
     (Self.ItemImages.Value[id] = nil) then
   begin
-    path := Self.CacheDir + id + '.png';
+    path := Self.CacheDir + 'items' + PATH_SEP + id + '.png';
 
     if not FileExists(path) then
-      ZipExtractEntry(Self.ZIP, id + '.png', Self.CacheDir);
+      ZipExtractEntry(Self.IMAGES_ZIP, id + '.png', Self.CacheDir + 'items' + PATH_SEP);
 
     Self.ItemImages.Value[id] := new TImage(path);
   end;
 
   Result := Self.ItemImages.Value[id];
 end;
+
+function TRSItemFinder.GetMask(id: String): TImage;
+var
+  path: String;
+begin
+  if not Self.MaskImages.Exists(id) or
+    (Self.MaskImages.Value[id] = nil) then
+  begin
+    path := Self.CacheDir + 'masks' + PATH_SEP + id + '.png';
+
+    if not FileExists(path) then
+      ZipExtractEntry(Self.MASKS_ZIP, id + '.png', Self.CacheDir + 'masks' + PATH_SEP);
+
+    Self.MaskImages.Value[id] := new TImage(path);
+  end;
+
+  Result := Self.MaskImages.Value[id];
+end;
+
 
 function TRSItemFinder.GetImages(item: String): TImageArray;
 var
@@ -296,45 +317,40 @@ begin
   display.Show();
 end;
 
+function TRSItemFinder.GetBorderHash(img: TImage): String;
+var
+  tpa: TPointArray;
+  border: TImage;
+begin
+  tpa := img.FindColor(RSColors.ITEM_BORDER, 0, [0, 9, 35, 31]);
+  border := new TImage(36, 32);
+  border.DrawColor := $FFFFFF;
+  border.DrawTPA(tpa);
+                                           //h*w*4=4608
+  Result := HashData(EHashAlgo.MD5, border.Data, 4608).CopyRange(0, 6);
+end;
+
 function TRSItemFinder.GetHash(img: TImage): String;
 var
-  pixels: TColorArray;
-  h, i: Int32;
-  str: String;
+  hash: String;
+  mask: TImage;
+  bg: TPointArray;
 begin
-  pixels := img.GetColors;
+  hash := Self.GetBorderHash(img);
+  WriteLn hash;
+  mask := Self.GetMask(hash);
+  bg := mask.FindColor($0, 0);
 
-  h := $811C9DC5;
-  for i:=0 to High(pixels) do
-  begin
-    if pixels[i] = $0 then Continue;
-    h := (h * $1000193) xor pixels[i];
-  end;
-
-  str := LowerCase(IntToHex(h, 16));
-  Result := str.CopyRange(Length(str)-8, Length(str));
-end;
-
-//Author: [slacky](https://slacky.one/)
-procedure TRSItemFinder.CleanItemBackground(img: TImage);
-var
-  border, shadow, tpa: TPointArray;
-  atpa: T2DPointArray;
-  i: Integer;
-begin
-  border := img.FindColor(RSColors.ITEM_BORDER , 0);
-  tpa := border;
-  for i := 0 to High(RSColors.STACK_COLORS) do
-    tpa += img.FindColor(RSColors.STACK_COLORS[i], 0);
-  shadow := img.FindColor(RSColors.ITEM_SHADOW_GRAY, 0) + img.FindColor(RSColors.ITEM_SHADOW, 0);
-  atpa := tpa.Invert([0,0,img.Width-1, img.Height-1]).Cluster(1);
-  for i := High(atpa) downto 0 do
-    if atpa[i].Intersection(shadow).Length <> 0 then
-      atpa.Delete(i);
-  tpa := atpa.Merge + border;
   img.DrawColor := $0;
-  img.DrawTPA(tpa.Invert([0,0,img.Width-1, img.Height-1]));
+  img.DrawTPA(bg);
+  img.FillWithAlpha($FF);
+  img.Show();
+
+  Result := HashData(EHashAlgo.MD5, img.Data, 4608).CopyRange(0, 6);
+  WriteLn Result;
 end;
+
+
 
 var
   ItemFinder: TRSItemFinder;

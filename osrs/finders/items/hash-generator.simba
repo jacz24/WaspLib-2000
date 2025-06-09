@@ -1,237 +1,124 @@
-{$I WaspLib/utils.simba}
-
 const
+  RESET = False;
   PATH = {$MACRO DIR};
-  RS_ITEM_BORDER = $010000;
-  RS_ITEM_SHADOW = $202030;
-  CLEANUP = True;
+  HASH_LENGTH = 6;
 
-var
-  fullHashes, shortHashes: TStringArray;
-  unique, collisions, shortCollisions: Int64;
-
-function FullHashCheck(str: String): Boolean;
-begin
-  if fullHashes.Contains(str) then
-  begin
-    Inc(collisions);
-    Exit(True);
+type
+  TItemData = record
+    ItemID: Int32;
+    BorderHash: String;
+    ItemHash: String;
   end;
 
-  fullHashes += str;
-  Inc(unique);
+  TItemDataArray = array of TItemData;
+
+function CompareItemData(constref a, b: TItemData): Integer;
+begin
+  Result := a.ItemID - b.ItemID;
 end;
 
-procedure AddHash(full, short: String);
+procedure PrepareResources(out files: TStringArray);
 begin
-  FullHashCheck(full);
-  if shortHashes.Contains(short) then
-    Inc(shortCollisions);
-
-  shortHashes += short;
-end;
-
-function TImage.GetHash(): String;
-var
-  pixels: TIntegerArray;
-  str: String;
-  h, i: Int32;
-begin
-  pixels := Self.GetColors();
-
-  h := $811C9DC5;
-  for i:=0 to High(pixels) do
+  if RESET and DirExists(PATH + 'images') then
   begin
-    if pixels[i] = $0 then
-      Continue;
-    h := (h * $1000193) xor pixels[i];
+    WriteLn('Resetting resources.');
+    DirDelete(PATH + 'images', False);
+    DirDelete(PATH + 'masks', False);
   end;
 
-  str := LowerCase(IntToHex(h, 16));
-  Result := str.CopyRange(str.Length-8, str.Length);
+  FileDelete(PATH + 'data' + PATH_SEP + 'hash');
+  FileDelete(PATH + 'masks.zip');
 
-  AddHash(Result, Result);
-end;
-
-//Author: [slacky](https://slacky.one/)
-procedure ClearItemBackground(img: TImage);
-var
-  border, shadow, tpa: TPointArray;
-  atpa: T2DPointArray;
-  i: Integer;
-begin
-  border := img.FindColor(RSColors.ITEM_BORDER , 0);
-  tpa := border;
-  for i := 0 to High(RSColors.STACK_COLORS) do
-    tpa += img.FindColor(RSColors.STACK_COLORS[i], 0);
-  shadow := img.FindColor(RSColors.ITEM_SHADOW_GRAY, 0) + img.FindColor(RSColors.ITEM_SHADOW, 0);
-  atpa := tpa.Invert([0,0,img.Width-1, img.Height-1]).Cluster(1);
-  for i := High(atpa) downto 0 do
-    if atpa[i].Intersection(shadow).Length <> 0 then
-      atpa.Delete(i);
-  tpa := atpa.Merge() + border;
-  img.DrawColor := $0;
-  img.DrawTPA(tpa.Invert([0,0,img.Width-1, img.Height-1]));
-end;
-
-function FileSort(constref l, r: String): Int32;
-begin
-  if Length(l) < Length(r) then Exit(-1);
-  if Length(l) > Length(r) then Exit(1);
-  if l < r then Exit(-1);
-  if l > r then Exit(1);
-end;
-
-(*
-CreateHashesFile
-----------------
-```
-procedure CreateHashesFile()
-```
-*)
-procedure CreateHashesFile();
-const
-  ZIP_FILE = PATH + 'images.zip';
-  TMP_PATH = PATH + 'images';
-  MODDED_PATH = PATH + 'modded' + PATH_SEP;
-var
-  current, hash, id: String;
-  img: TImage;
-  t: UInt64;
-begin
-  try
-    if not DirExists(TMP_PATH) then
-    begin
-      WriteLn 'unzipping... this will take a while.';
-      ZipExtract(ZIP_FILE, TMP_PATH);
-      WriteLn 'Done unzipping.';
-    end;
-
-    if DirExists(MODDED_PATH) then
-      DirDelete(MODDED_PATH, True);
-
-    DirCreate(MODDED_PATH);
-
-    if FileExists(PATH + 'hash') then
-      if not FileDelete(PATH + 'hash') then
-      begin
-        WriteLn 'Something went wrong deleting the old hashes file. No privilleges?';
-        TerminateScript();
-      end;
-
-    t := Time();
-    if not FileCreate(PATH + 'hash') then
-    begin
-      WriteLn 'Something went wrong creating a new hashes file.';
-      TerminateScript;
-    end;
-
-    for current in Sorted(DirList(TMP_PATH + '\'), @FileSort) do
-    begin
-      if not current.EndsWith('png', False) then
-        Continue;
-
-      img := TImage.Create(current);
-      if (img.Width <> 36) or (img.Height <> 32) then
-      begin
-        WriteLn(PathExtractName(current), ' has wrong dimensions.');
-        img.Free();
-        Continue;
-      end;
-
-      img.SetSize(img.Width + 1, img.Height + 1);
-      img.Offset(1,1);
-      ClearItemBackground(img);
-      img.Crop([1, 10, 36, 32]);
-
-      hash := img.GetHash();
-      if not FileAppend(PATH + 'hash', hash + LINE_SEP) then
-      begin
-        WriteLn 'Failed to write to hash';
-        TerminateScript();
-      end;
-
-      id := PathExtractName(current).Before('.png');
-      if not img.Save(MODDED_PATH + id + '.png') then
-      begin
-        WriteLn 'Failed to write to img file';
-        TerminateScript();
-      end;
-
-      img.Free();
-    end;
-
-    WriteLn('Hashing all files took: ', (Time()-t) div 1000, ' seconds.');
-  finally
-    if CLEANUP then
-    begin
-      DirDelete(TMP_PATH, False);
-      DirDelete(MODDED_PATH, False);
-    end;
-  end;
-end;
-
-procedure TestHash(itemID: String);
-const
-  ZIP_FILE = PATH + 'images.zip';
-  TMP_PATH = PATH + 'images';
-  MODDED_PATH = PATH + 'modded' + PATH_SEP;
-var
-  current, hash, id: String;
-  img: TImage;
-begin
-  if not DirExists(TMP_PATH) then
+  files := DirList(PATH + 'images', True);
+  if files = [] then
   begin
-    WriteLn 'unzipping... this will take a while.';
-    ZipExtract(ZIP_FILE, TMP_PATH);
-    WriteLn 'Done unzipping.';
+    WriteLn('Extracting item images.');
+    if not ZipExtract(PATH + 'images.zip', PATH + 'images') then
+      raise 'Failed to unzip files.';
+    files := DirList(PATH + 'images', True);
   end;
 
-  DirCreate(MODDED_PATH);
+  DirCreate(PATH + 'masks');
 
-  if FileExists(MODDED_PATH + id + '.png') then
-    if not FileDelete(MODDED_PATH + id + '.png') then
-    begin
-      WriteLn 'Couldn''t delete modded/ ' + id + '.png';
-      TerminateScript();
-    end;
+  WriteLn('Preparation done.');
+end;
 
-  img := TImage.Create(TMP_PATH + PATH_SEP + itemID + '.png');
-  img.ReplaceColor(0, $00FF00);
-  img.Crop([0, 0, 35, 31]);
+var
+  ITEM_DATA_ARRAY: TItemDataArray;
+  UNIQUE_ITEM_DATA_ARRAY: TStringArray;
+  UNIQUE_BORDER_DATA_ARRAY: TStringArray;
+  ZIP_LIST: TStringArray;
 
-  if (img.Width <> 36) or (img.Height <> 32) then
-  begin
-    WriteLn(PathExtractName(current), ' has wrong dimensions.');
-    img.Free();
+function ProcessItemImage(filename: String): TItemData;
+var
+  img, border, mask: TImage;
+  tpa: TPointArray;
+begin
+  img := new TImage(filename);
+  img.FillWithAlpha($FF);        //ensure there's no weird alphas.
+  img.ReplaceColor($202030, $0); //remove the item shadow
+
+  //find border minus stack number space
+  tpa := img.FindColor($010000, 0, [0, 9, 35, 31]);
+
+  border := new TImage(36, 32);
+  border.DrawColor := $FFFFFF;
+  border.DrawTPA(tpa);
+
+  Result.ItemID     := PathExtractNameWithoutExt(filename).ExtractInteger();
+  Result.BorderHash := HashData(EHashAlgo.MD5, border.Data, 4608).CopyRange(0, HASH_LENGTH); //h * w * 4 = 4608
+  Result.ItemHash   := HashData(EHashAlgo.MD5, img.Data, 4608).CopyRange(0, HASH_LENGTH);
+
+  ITEM_DATA_ARRAY += Result;
+
+  if not UNIQUE_ITEM_DATA_ARRAY.Contains(Result.ItemHash) then
+    UNIQUE_ITEM_DATA_ARRAY += Result.ItemHash;
+
+  if UNIQUE_BORDER_DATA_ARRAY.Contains(Result.BorderHash) then
     Exit;
-  end;
 
-  id := PathExtractName(current).Before('.png');
+  UNIQUE_BORDER_DATA_ARRAY += Result.BorderHash;
 
-  ClearItemBackground(img);
+  mask := new TImage(36, 32);
+  mask.DrawColor := $FFFFFF;
+  mask.DrawTPA(img.FindColor($0, 0, [0, 9, 35, 31]).Invert());
 
-  img.Show();
-
-  hash := img.GetHash();
-
-  if not img.Save(MODDED_PATH + id + '.png') then
-  begin
-    WriteLn 'Failed to write to img file';
-    TerminateScript();
-  end;
-
-  WriteLn hash;
-  img.Free();
+  ZIP_LIST += PATH + 'masks' + PATH_SEP + Result.BorderHash + '.png';
+  mask.Save(PATH + 'masks' + PATH_SEP + Result.BorderHash + '.png', True);
 end;
 
+procedure WriteFiles();
+var
+  itemData: TItemData;
 begin
-  CreateHashesFile();
-  WriteLn(
-    'Total Unique Items: ', unique, LINE_SEP,
-    'Total Full Hashes:', Length(fullHashes), LINE_SEP,
-    'Total Short Hashes:', Length(shortHashes), LINE_SEP,
-    'Total Collisions:', collisions, LINE_SEP,
-    'Total Short Collisions:', shortCollisions, LINE_SEP
-  );
+  for itemData in ITEM_DATA_ARRAY do
+    FileAppend(PATH + 'data' + PATH_SEP + 'hash', itemData.ItemHash + LINE_SEP);
+
+  ZipFiles(PATH + 'masks.zip', ZIP_LIST);
+
+  if RESET then
+  begin
+    DirDelete(PATH + 'images', False);
+    DirDelete(PATH + 'masks', False);
+  end;
+end;
+
+var
+  files: TStringArray;
+  filename: String;
+begin
+  PrepareResources(files);
+
+  for filename in files do
+    ProcessItemImage(filename);
+
+  WriteLn('Total items: ', Length(ITEM_DATA_ARRAY));
+  WriteLn('Total unique items: ', Length(UNIQUE_ITEM_DATA_ARRAY));
+  WriteLn('Total unique borders: ', Length(UNIQUE_BORDER_DATA_ARRAY));
+
+  WriteLn('Sorting data.');
+  ITEM_DATA_ARRAY.Sort(@CompareItemData);
+  WriteLn ITEM_DATA_ARRAY;
+  WriteLn('Saving files.');
+  WriteFiles();
 end.
