@@ -691,15 +691,14 @@ Encode a `THouseRoomMatrix` into bytes. Useful for storing them.
 *)
 function THouseRoomMatrix.ToBytes(): TByteArray;
 const
-  INT_SIZE: Integer = SizeOf(Int32);
-  SET_SIZE: Integer = SizeOf(EHouseObjectSet);
+  INT_SIZE: Integer = SizeOf(Int64);
+  SET_SIZE: Integer = ((Ord(High(EHouseObject)) - Ord(Low(EHouseObject)) + 1 + 7) div 8);
 var
   i, j, len, offset: Integer;
   room: THouseRoom;
   bytes: TByteArray;
 begin
   len := INT_SIZE;
-
   for i := 0 to High(Self) do
     Inc(len, INT_SIZE + Length(Self[i]) * (INT_SIZE * 2 + SET_SIZE)); // room, rotation, set
 
@@ -709,8 +708,8 @@ begin
 
   for i := 0 to High(Self) do
   begin
-    len := Length(Self[i]);
-    Move(len, bytes[offset], INT_SIZE);
+    Move(Length(Self[i]), bytes[offset], INT_SIZE);
+
     Inc(offset, INT_SIZE);
 
     for j := 0 to High(Self[i]) do
@@ -718,8 +717,7 @@ begin
       room := Self[i][j];
 
       // Room
-      len := Ord(room.Room);
-      Move(len, bytes[offset], INT_SIZE);
+      Move(Ord(room.Room), bytes[offset], INT_SIZE);
       Inc(offset, INT_SIZE);
 
       // Rotation
@@ -744,16 +742,17 @@ Decode a `THouseRoomMatrix` from bytes. Useful to load them from storage.
 *)
 function THouseRoomMatrix.CreateFromBytes(bytes: TByteArray): THouseRoomMatrix; static;
 const
-  INT_SIZE: Integer = SizeOf(Int32);
-  SET_SIZE: Integer = SizeOf(EHouseObjectSet);
+  INT_SIZE: Integer = SizeOf(Int64);
+  SET_SIZE: Integer = ((Ord(High(EHouseObject)) - Ord(Low(EHouseObject)) + 1 + 7) div 8);
 var
-  i, j, len, row, offset, val: Integer;
+  i, j, offset: Integer;
+  row, value: Int64;
   room: THouseRoom;
 begin
   if Length(bytes) = 0 then Exit;
 
-  Move(bytes[0], len, INT_SIZE);
-  SetLength(Result, len);
+  Move(bytes[0], value, INT_SIZE);
+  SetLength(Result, value);
   offset := INT_SIZE;
 
   for i := 0 to High(Result) do
@@ -765,8 +764,8 @@ begin
     for j := 0 to row - 1 do
     begin
       // Room
-      Move(bytes[offset], val, INT_SIZE);
-      room.Room := EHouseRoom(val);
+      Move(bytes[offset], value, INT_SIZE);
+      room.Room := EHouseRoom(value);
       Inc(offset, INT_SIZE);
 
       // Rotation

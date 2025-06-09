@@ -251,6 +251,7 @@ House.Loader.WriteRoom(EHouseRoom.SUPERIOR_GARDEN, [3,3]);
 procedure THouseLoader.WriteRoom(room: THouseRoom; index: TPoint);
 begin
   Self.Rooms[index.Y,index.X] := room;
+
   case room.Room of
     EHouseRoom.PORTAL_CHAMBER, EHouseRoom.SUPERIOR_GARDEN, EHouseRoom.PORTAL_NEXUS:;
     else Self.TeleportRooms[index.Y,index.X] := [];
