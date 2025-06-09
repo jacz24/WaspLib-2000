@@ -1,10 +1,14 @@
 (*
-# Threading Library
-This file provides a comprehensive threading library for managing concurrent and scheduled tasks.
-It includes a thread pool for executing asynchronous operations and a scheduler for recurring tasks.
+================================================================================
+Threading Library - Developed by TazE
+================================================================================
+Threading library for managing concurrent and scheduled tasks.
+Includes a thread pool for executing asynchronous operations and a scheduler for 
+recurring tasks with priority queuing and built-in error handling.
+================================================================================
 *)
 
-{$DEFINE THREADING_LIBRARY} 
+{$DEFINE THREADING} 
 
 type
 (*
