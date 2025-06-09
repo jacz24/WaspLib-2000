@@ -13,10 +13,10 @@ A pointer to a TThreadTask record.
 *)
   PThreadTask = ^TThreadTask;
 (*
-## type PWorker
+## type PThreadWorker
 A pointer to a TThreadWorker record.
 *)
-  PWorker = ^TThreadWorker;
+  PThreadWorker = ^TThreadWorker;
 (*
 ## type PThreadPool
 A pointer to a TThreadPool record.
