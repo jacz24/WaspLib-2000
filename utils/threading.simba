@@ -1,7 +1,7 @@
 (*
 # Threading
 Threading library for managing concurrent and scheduled tasks.
-Includes a thread pool for executing asynchronous operations and a scheduler for 
+Includes a thread pool for executing asynchronous operations and a scheduler for
 recurring tasks with priority queuing and built-in error handling.
 
 Credits: Developed by TazE
@@ -478,10 +478,19 @@ var
 begin
   Self.Name := PoolName;
   Self.DebugLevel := DebugLevel;
-  Self.MinWorkerCount := 2;
-  Self.MaxWorkerCount := 16;
-  Self.DefaultWorkerWaitMS := 1;      
-  Self.DefaultWorkerMaxWaitMS := 50; 
+
+  if Self.MinWorkerCount <= 0 then
+    Self.MinWorkerCount := 2;
+
+  if Self.MaxWorkerCount <= 0 then
+    Self.MaxWorkerCount := 16;
+
+  if Self.DefaultWorkerWaitMS <= 0 then
+    Self.DefaultWorkerWaitMS := 1;
+
+  if Self.DefaultWorkerMaxWaitMS <= 0 then
+    Self.DefaultWorkerMaxWaitMS := 50;
+
   Self.LogLock := TLock.Create();
 
   if ThreadCount <= 0 then
@@ -508,8 +517,8 @@ begin
     Self.Workers[i].Active := False;
     Self.Workers[i].Busy := False;
     Self.Workers[i].Processed := 0;
-    Self.Workers[i].WaitTimeMS := Self.DefaultWorkerWaitMS;      // Use property
-    Self.Workers[i].MaxWaitTimeMS := Self.DefaultWorkerMaxWaitMS;  // Use property
+    Self.Workers[i].WaitTimeMS := Self.DefaultWorkerWaitMS;
+    Self.Workers[i].MaxWaitTimeMS := Self.DefaultWorkerMaxWaitMS;
     Self.Workers[i].Thread := TThread.Create(@Self.Workers[i].Execute);
     Self.Workers[i].Thread.Name := Self.Workers[i].Name;
   end;
@@ -608,16 +617,52 @@ begin
 end;
 
 (*
+## TThreadPool.HasPendingTask
+```pascal
+function TThreadPool.HasPendingTask(const TaskID: String): Boolean;
+```
+Checks if a task with the given ID is already in the queue.
+
+### Parameters
+- `TaskID`: The task identifier to check for.
+
+### Returns
+- `Boolean`: `True` if a task with this ID exists in the queue, `False` otherwise.
+*)
+function TThreadPool.HasPendingTask(const TaskID: String): Boolean;
+var
+  Current: PThreadTask;
+begin
+  Result := False;
+  Self.Queue.Lock.Enter();
+  try
+    Current := Self.Queue.Head;
+    while Current <> nil do
+    begin
+      if Current^.ID = TaskID then
+      begin
+        Result := True;
+        Break;
+      end;
+      Current := Current^.Next;
+    end;
+  finally
+    Self.Queue.Lock.Leave();
+  end;
+end;
+
+(*
 ## TThreadPool.Submit
 ```pascal
-function TThreadPool.Submit(const TaskID: String; Method: procedure() of object; Priority: Integer = 0): Boolean;
+function TThreadPool.Submit(const TaskID: String; Method: procedure() of object; Priority: Integer = 0; AllowDuplicates: Boolean = False): Boolean;
 ```
-Submits a task to the pool's queue for execution. Returns `True` on successful submission.
+Submits a task to the pool's queue for execution. By default, prevents duplicate task IDs. Returns `True` on successful submission.
 
 ### Parameters
 - `TaskID`: A unique identifier for the task.
 - `Method`: The procedure to be executed.
 - `Priority`: The task's priority (higher values execute sooner). Default is 0.
+- `AllowDuplicates`: Whether to allow duplicate task IDs. Default is False.
 
 ### Returns
 - `Boolean`: `True` if task was successfully submitted, `False` otherwise.
@@ -628,7 +673,7 @@ if Pool.Submit('MyTask', @MyProcedure, 5) then
   WriteLn('Task submitted successfully');
 ```
 *)
-function TThreadPool.Submit(const TaskID: String; Method: procedure() of object; Priority: Integer = 0): Boolean;
+function TThreadPool.Submit(const TaskID: String; Method: procedure() of object; Priority: Integer = 0; AllowDuplicates: Boolean = False): Boolean;
 var
   NewTask: PThreadTask;
   ValidationError: String;
@@ -647,6 +692,13 @@ begin
   if Self.Terminating or not Self.Running or Self.ShuttingDown then
   begin
     Self.Log(EDebugLevel.INFO, Format('Cannot submit task "%s" - pool is shutting down', [TaskID]));
+    Exit;
+  end;
+
+  // Check for duplicates unless explicitly allowed
+  if not AllowDuplicates and Self.HasPendingTask(TaskID) then
+  begin
+    Self.Log(EDebugLevel.VERBOSE, Format('Task "%s" already pending - skipping duplicate', [TaskID]));
     Exit;
   end;
 
@@ -881,9 +933,17 @@ begin
          ((CurrentTime - Self.Tasks[i].LastRun) >= Self.Tasks[i].Interval) then
       begin
         TaskID := Format('%s-%d', [Self.Tasks[i].ID, CurrentTime]);
-        Self.Pool.Log(EDebugLevel.INFO, Format('Submitting recurring task "%s" (Interval: %dms)', [Self.Tasks[i].ID, Self.Tasks[i].Interval]));
-        Self.Pool.Submit(TaskID, @Self.Tasks[i].Method);
-        Self.Tasks[i].LastRun := CurrentTime;
+
+        // Check if previous execution is still running (optional overlap prevention)
+        if not Self.Pool.HasPendingTask(Self.Tasks[i].ID) then
+        begin
+          Self.Pool.Log(EDebugLevel.INFO, Format('Submitting recurring task "%s" (Interval: %dms)', [Self.Tasks[i].ID, Self.Tasks[i].Interval]));
+          // Use base task ID without timestamp for overlap detection
+          Self.Pool.Submit(Self.Tasks[i].ID, @Self.Tasks[i].Method);
+          Self.Tasks[i].LastRun := CurrentTime;
+        end
+        else
+          Self.Pool.Log(EDebugLevel.VERBOSE, Format('Skipping task "%s" - previous execution still running', [Self.Tasks[i].ID]));
       end;
 
     Sleep(Self.SleepIntervalMS);
@@ -1185,25 +1245,30 @@ end;
 (*
 ## TThreadManager.Submit
 ```pascal
-function TThreadManager.Submit(const TaskID: String; Method: procedure() of object; Priority: Integer = 0): Boolean;
+function TThreadManager.Submit(const TaskID: String; Method: procedure() of object; Priority: Integer = 0; AllowDuplicates: Boolean = False): Boolean;
 ```
-Submits a one-off task for asynchronous execution.
+Submits a one-off task for asynchronous execution. By default, prevents duplicate task IDs.
 
 ### Parameters
 - `TaskID`: A unique identifier for the task.
 - `Method`: The procedure to execute.
 - `Priority`: Task priority (higher values execute sooner). Default is 0.
+- `AllowDuplicates`: Whether to allow duplicate task IDs. Default is False.
 
 ### Returns
 - `Boolean`: `True` if task was successfully submitted, `False` otherwise.
 *)
-function TThreadManager.Submit(const TaskID: String; Method: procedure() of object; Priority: Integer = 0): Boolean;
+function TThreadManager.Submit(const TaskID: String; Method: procedure() of object; Priority: Integer = 0; AllowDuplicates: Boolean = False): Boolean;
 begin
   if not Self.IsSetup then
     Self.Init(0, Self.DebugLevel);
 
-  Result := Self.Pool.Submit(TaskID, @Method, Priority);
+  Result := Self.Pool.Submit(TaskID, @Method, Priority, AllowDuplicates);
 end;
+
+
+
+
 
 (*
 ## TThreadManager.Schedule
@@ -1314,7 +1379,7 @@ begin
     Exit(False);
 
   for i := 0 to High(TaskIDs) do
-    if not Self.Pool.Submit(TaskIDs[i], @Methods[i]) then
+    if not Self.Pool.Submit(TaskIDs[i], @Methods[i], 0, False) then
       Result := False;
 end;
 

@@ -22,8 +22,8 @@ Type responsible for dealing with JSON configuration files.
   TConfigJSON = record
     Path: String;
     Data: TJSONItem;
-    Thread: TThread;
     Lock: TLock;
+    ThreadManager: TThreadManager;
   end;
 
 (*
@@ -61,27 +61,49 @@ begin
     Self.Data := NewJSONObject();
 
   Self.Lock := TLock.Create();
-
-  AddOnTerminate(@Self.Lock.Free);
-  AddOnTerminate(@Self.Thread.Free);
-  AddOnTerminate(@Self.Data.Free);
+  Self.ThreadManager.Init(2, EDebugLevel.NONE);
 end;
 
+(*
+## TConfigJSON.Free
+```pascal
+procedure TConfigJSON.Free();
+```
+Properly cleans up all resources used by the TConfigJSON instance.
+Call this when you're done with a config to prevent memory leaks.
+*)
+procedure TConfigJSON.Free();
+begin
+  Self.ThreadManager.Free();
+  if Assigned(Self.Lock) then
+  begin
+    Self.Lock.Free();
+    Self.Lock := nil;
+  end;
+  if Assigned(Self.Data) then
+  begin
+    Self.Data.Free();
+    Self.Data := nil;
+  end;
+end;
 
 procedure TConfigJSON._FileSave();
 var
   path, json: String;
 begin
   Self.Lock.Enter();
-  path := Self.Path;
-  json := Self.Data.ToJSON();
-  Self.Lock.Leave();
+  try
+    if Self.Data = nil then
+      Exit;
 
-  if Self.Data = nil then
-    raise GetDebugLn('TConfigJSON.' + PathExtractNameWithoutExt(path), 'You need to use TConfigJSON.Setup() before trying to save it into a config file.');
+    path := Self.Path;
+    json := Self.Data.ToJSON();
+  finally
+    Self.Lock.Leave();
+  end;
+
   if not FileWrite(path, json) then
     raise GetDebugLn('TConfigJSON.' + PathExtractNameWithoutExt(path), 'Failed to save config.');
-  CurrentThread().Terminate();
 end;
 
 (*
@@ -90,12 +112,14 @@ end;
 procedure TConfigJSON.SaveConfig();
 ```
 Used to save your `TConfigJSON`.
-This spawns a separate thread to deal with the I/O as that's slow.
+This submits the save operation to the thread pool for asynchronous execution.
 *)
 procedure TConfigJSON.SaveConfig();
+var
+  TaskID: String;
 begin
-  Self.Thread.Free();
-  Self.Thread := TThread.Create(@Self._FileSave);
+  TaskID := 'ConfigSave_' + PathExtractNameWithoutExt(Self.Path);
+  Self.ThreadManager.Submit(TaskID, @Self._FileSave);
 end;
 
 
