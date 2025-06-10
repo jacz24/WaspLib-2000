@@ -1,15 +1,103 @@
 (*
-# Gear Handler
-The `Gear Handler` is a handler for OSRS gear.
-"Gear" is any equippable item.
+# Gear Layouts
+The `Gear Layouts` is a handler for OSRS gear.
+"Gear" refers to as any equippable item in the game.
 *)
 
 {$DEFINE WL_GEAR_HANDLER_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
-  TRSGearHandler = record
+(*
+## TRSGear
+Type that represents a gear layout.
+*)
+  TRSGear = record
     Name: String;
     Items: array [ERSEquipment] of TRSItem;
     SpecWeapon: TRSItem;
+    SpecLevel: Integer;
   end;
+
+(*
+## TRSGearLayouts
+Main type for the {ref}`Gear Layouts`.
+*)
+  TRSGearLayouts = record
+    Sets: array of TRSGear;
+    Config: TConfigJSON;
+
+    CurrentEquipment: array [ERSEquipment] of TRSItem;
+    _ValidGear: array [ERSEquipment] of TRSItemArray;
+
+    _FormGearIndex: Int32;
+    _FormFiltered: Boolean;
+    _FormComboBoxes: array of TLazComboBox;
+    _FormListBoxes: array of TLazListBox;
+
+    _UnfiltedWeapons: TStringArray;
+    _UnfilteredLists: array [ERSEquipment] of TLazStringList;
+
+    IsSetup: Boolean;
+  end;
+
+
+procedure TRSGearLayouts.Setup();
+var
+  keys: TLazStringList;
+  key, name: String;
+  i, gearIdx: Integer;
+  obj: TJSONItem;
+  slot: ERSEquipment;
+  json: TJSONItem;
+  arr: TStringArray;
+begin
+  if Self.IsSetup then Exit;
+
+  Self.Config.Setup('gearhandler' + PATH_SEP + ToStr(PlayerIndex));
+  SetLength(Self.Sets, Self.Config.Count);
+
+  //TODO: Load config...
+
+  for slot := Low(ERSEquipment) to High(ERSEquipment) do
+  begin
+    gearIdx := slot.GearIndex();
+    Self._ValidGear[slot] := GearData.GetItems(gearIdx);
+    Self._UnfilteredLists[slot] := TLazStringList.Create();
+    AddOnTerminate(@Self._UnfilteredLists[slot].Free);
+
+    name := ToStr(slot).ToLower().After('ERSEquipment.');
+
+    if slot <> ERSEquipment.WEAPON then
+    begin
+      Self._UnfilteredLists[slot].BeginUpdate();
+      Self._UnfilteredLists[slot].Add('None');
+      json := GearData.GetArray(name);
+      for i := 0 to json.Count-1 do
+        Self._UnfilteredLists[slot].Add(json.Item[i].AsString.Capitalize());
+      Self._UnfilteredLists[slot].EndUpdate();
+      Continue;
+    end;
+
+    Self._ValidGear[slot] += GearData.GetItems(gearIdx);
+
+    json := GearData.GetArray(name);
+    for i := 0 to json.Count-1 do
+      arr += json.Item[i].AsString;
+
+    json := GearData.GetArray('2h');
+    for i := 0 to json.Count-1 do
+      arr += json.Item[i].AsString;
+
+    Sort(arr);
+    Self._UnfilteredLists[slot].BeginUpdate();
+    Self._UnfilteredLists[slot].Add('None');
+    json := GearData.GetArray(name);
+    for i := 0 to High(arr) do
+      Self._UnfilteredLists[slot].Add(arr[i].Capitalize());
+    Self._UnfilteredLists[slot].EndUpdate();
+  end;
+
+  Self.IsSetup := True;
+end;
+

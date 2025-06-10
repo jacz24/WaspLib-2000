@@ -338,7 +338,7 @@ begin
   end;
 end;
 
-function TItemData.isStackable(item: TRSItem): Boolean;
+function TItemData.IsStackable(item: TRSItem): Boolean;
 var
   ids: TStringArray;
   id: String;
@@ -356,10 +356,96 @@ begin
   end;
 end;
 
-
 var
 (*
 ## ItemData variable
 Global {ref}`TItemData` variable.
 *)
   ItemData: TItemData;
+
+type
+(*
+## TGearData
+Type responsible for retrieving gear data.
+"Gear" refers to as any equippable item in the game.
+*)
+  TGearData = record
+    Data: TJSONItem;
+  end;
+
+(*
+## GearData.Setup
+```pascal
+procedure TGearData.Setup();
+```
+Internal method to setup TGearData.
+*)
+procedure TGearData.Setup();
+begin
+  if Self.Data <> nil then Exit;
+  Self.Data := LoadJSON({$macro DIR} + 'gear.json');
+  AddOnTerminate(@Self.Data.Free);
+end;
+
+(*
+## GearData.GetArray
+```pascal
+function TGearData.GetArray(index: Integer): TJSONItem;
+function TGearData.GetArray(key: String): TJSONItem; overload;
+```
+Method to fetch json arrays from gear.json.
+
+```{note}
+Using this requires knowledge of the structure of gear.json
+```
+*)
+function TGearData.GetArray(index: Integer): TJSONItem;
+begin
+  Self.Setup();
+  Result := Self.Data.Item[index];
+end;
+
+function TGearData.GetArray(key: String): TJSONItem; overload;
+begin
+  Self.Setup();
+  if key = 'secondary_ammo' then key := 'ammo';
+  Result := Self.Data.Item[key];
+end;
+
+(*
+## GearData.GetItems
+```pascal
+function TGearData.GetItems(key: Integer): TRSItemArray;
+function TGearData.GetItems(key: String): TRSItemArray; overload;
+```
+Method to fetch items under a key in gear.json.
+*)
+function TGearData.GetItems(key: Integer): TRSItemArray;
+var
+  i: Int32;
+begin
+  Self.Setup();
+  for i := 0 to Self.Data.Item[key].Count-1 do
+    Result += Self.Data.Item[key].Item[i].AsString;
+end;
+
+(*
+## GearData.GetItems
+```pascal
+function TGearData.GetItems(key: String): TRSItemArray;
+function TGearData.GetItems(slot: ERSEquipmentSlot): TRSItemArray; overload;
+```
+Method to fetch items under a key in gear.json.
+*)
+function TGearData.GetItems(key: String): TRSItemArray; overload;
+var
+  i: Int32;
+begin
+  Self.Setup();
+  if key = 'secondary_ammo' then key := 'ammo';
+  for i := 0 to Self.Data.Item[key].Count-1 do
+    Result += Self.Data.Item[key].Item[i].AsString;
+end;
+
+var
+  GearData: TGearData;

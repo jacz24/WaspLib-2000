@@ -137,6 +137,13 @@ begin
   Self.Lock.Leave();
 end;
 
+property TConfigJSON.Count: Integer;
+begin
+  Self.Lock.Enter();
+  Result := Self.Data.Count;
+  Self.Lock.Leave();
+end;
+
 
 property TThreadedJSON.AsInt: Int64;
 begin
@@ -241,6 +248,8 @@ begin
     Self.Item.AsUnicodeString := value;
   Self.Parent^.Lock.Leave();
 end;
+
+
 
 type
   TConfigINI  = record
