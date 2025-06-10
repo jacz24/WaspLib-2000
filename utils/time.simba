@@ -3,7 +3,6 @@
 Time related misc functions and variables
 *)
 {$DEFINE WL_TIME_INCLUDED}
-{$INCLUDE_ONCE WaspLib/utils.simba}
 
 const
   ONE_SECOND: Integer = 1000;

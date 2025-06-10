@@ -3,7 +3,6 @@
 Extensions to the `String` and `TStringArray` types.
 *)
 {$DEFINE WL_STRINGS_INCLUDED}
-{$INCLUDE_ONCE WaspLib/utils.simba}
 
 (*
 ## String.Is

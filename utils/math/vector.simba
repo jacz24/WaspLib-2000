@@ -1,5 +1,4 @@
 {$DEFINE WL_VECTOR_INCLUDED}
-{$INCLUDE_ONCE WaspLib/utils.simba}
 
 function TVector3Array.NearestVec(vec: TVector3 = [0,0,0]): TVector3;
 var

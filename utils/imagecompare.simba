@@ -1,5 +1,4 @@
 {$DEFINE WL_IMAGECOMPARE_INCLUDED}
-{$INCLUDE_ONCE WaspLib/utils.simba}
 
 type
   TImageMatch = record

@@ -1,5 +1,4 @@
 {$DEFINE WL_CONVERSIONS_INCLUDED}
-{$INCLUDE_ONCE WaspLib/utils.simba}
 
 function String.CreateFromBytes(bytes: TByteArray): String; static;
 var

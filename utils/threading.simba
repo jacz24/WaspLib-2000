@@ -1,14 +1,13 @@
 (*
-================================================================================
-Threading Library - Developed by TazE
-================================================================================
+# Threading
 Threading library for managing concurrent and scheduled tasks.
 Includes a thread pool for executing asynchronous operations and a scheduler for 
 recurring tasks with priority queuing and built-in error handling.
-================================================================================
+
+Credits: Developed by TazE
 *)
 
-{$DEFINE THREADING} 
+{$DEFINE WL_THREADING_INCLUDED}
 
 type
 (*
@@ -28,13 +27,13 @@ A pointer to a TThreadPool record.
   PThreadPool = ^TThreadPool;
 
 (*
-## type TDebugLevel
+## type EDebugLevel
 An enumeration defining the verbosity level for logging.
-- `dlNone`: No logs are printed.
-- `dlInfo`: Informational messages are printed.
-- `dlVerbose`: Detailed, verbose messages are printed.
+- `EDebugLevel.NONE`: No logs are printed.
+- `EDebugLevel.INFO`: Informational messages are printed.
+- `EDebugLevel.VERBOSE`: Detailed, verbose messages are printed.
 *)
-  TDebugLevel = (dlNone, dlInfo, dlVerbose);
+  EDebugLevel = enum(NONE, INFO, VERBOSE);
 
 (*
 ## type TOnException
@@ -137,7 +136,7 @@ Manages a collection of worker threads to execute tasks concurrently.
     Running: Boolean;
     Terminating: Boolean;
     ShuttingDown: Boolean;
-    DebugLevel: TDebugLevel;
+    DebugLevel: EDebugLevel;
     TasksQueued: Integer;
     TasksProcessed: Integer;
     TasksFailed: Integer;
@@ -199,7 +198,7 @@ A high-level manager providing a simple interface to both a general-purpose thre
     Pool: TThreadPool;
     Scheduler: TThreadScheduler;
     IsSetup: Boolean;
-    DebugLevel: TDebugLevel;
+    DebugLevel: EDebugLevel;
     ThreadCount: Integer;
     ExceptionHandler: TOnException;
     CompletionHandler: TOnComplete;
@@ -381,7 +380,7 @@ procedure TThreadWorker.Execute();
 var
   Task: PThreadTask;
 begin
-  Self.Pool^.Log(dlVerbose, Format('Worker %d (%s) started', [Self.ID, Self.Name]));
+  Self.Pool^.Log(EDebugLevel.VERBOSE, Format('Worker %d (%s) started', [Self.ID, Self.Name]));
   Self.Active := True;
   Self.LastActive := Time();
   Self.WaitTimeMS := 1;
@@ -394,7 +393,7 @@ begin
     begin
       Self.Busy := True;
       Self.WaitTimeMS := 1;
-      Self.Pool^.Log(dlVerbose, Format('Worker %d processing task: %s', [Self.ID, Task^.ID]));
+      Self.Pool^.Log(EDebugLevel.VERBOSE, Format('Worker %d processing task: %s', [Self.ID, Task^.ID]));
       Self.Pool^.ProcessTask(Task, Self.ID);
       Self.Busy := False;
       Inc(Self.Processed);
@@ -408,14 +407,14 @@ begin
     end;
   end;
 
-  Self.Pool^.Log(dlVerbose, Format('Worker %d (%s) stopped', [Self.ID, Self.Name]));
+  Self.Pool^.Log(EDebugLevel.VERBOSE, Format('Worker %d (%s) stopped', [Self.ID, Self.Name]));
   Self.Active := False;
 end;
 
 (*
 ## TThreadPool.Log
 ```pascal
-procedure TThreadPool.Log(Level: TDebugLevel; const Msg: String);
+procedure TThreadPool.Log(Level: EDebugLevel; const Msg: String);
 ```
 Logs a message to the console if the given `Level` is at or below the pool's `DebugLevel`. This operation is thread-safe.
 
@@ -423,7 +422,7 @@ Logs a message to the console if the given `Level` is at or below the pool's `De
 - `Level`: The debug level of this message.
 - `Msg`: The message to log.
 *)
-procedure TThreadPool.Log(Level: TDebugLevel; const Msg: String);
+procedure TThreadPool.Log(Level: EDebugLevel; const Msg: String);
 begin
   if Self.DebugLevel >= Level then
   begin
@@ -458,7 +457,7 @@ end;
 (*
 ## TThreadPool.Init
 ```pascal
-procedure TThreadPool.Init(const PoolName: String; ThreadCount: Integer = 0; DebugLevel: TDebugLevel = dlNone);
+procedure TThreadPool.Init(const PoolName: String; ThreadCount: Integer = 0; DebugLevel: EDebugLevel = EDebugLevel.NONE);
 ```
 Initializes the thread pool, creating and starting the specified number of worker threads.
 
@@ -470,10 +469,10 @@ Initializes the thread pool, creating and starting the specified number of worke
 Example:
 ```pascal
 var Pool: TThreadPool;
-Pool.Init('MyPool', 4, dlInfo);
+Pool.Init('MyPool', 4, EDebugLevel.INFO);
 ```
 *)
-procedure TThreadPool.Init(const PoolName: String; ThreadCount: Integer = 0; DebugLevel: TDebugLevel = dlNone);
+procedure TThreadPool.Init(const PoolName: String; ThreadCount: Integer = 0; DebugLevel: EDebugLevel = EDebugLevel.NONE);
 var
   i: Integer;
 begin
@@ -488,7 +487,7 @@ begin
   if ThreadCount <= 0 then
     ThreadCount := Self.GetDefaultThreadCount();
 
-  Self.Log(dlInfo, Format('Initializing with %d workers', [ThreadCount]));
+  Self.Log(EDebugLevel.INFO, Format('Initializing with %d workers', [ThreadCount]));
 
   Self.Queue.Init();
   SetLength(Self.Workers, ThreadCount);
@@ -534,7 +533,7 @@ begin
   if Self.Terminating then
     Exit;
 
-  Self.Log(dlInfo, Format('Starting shutdown (timeout: %dms)', [TimeoutMS]));
+  Self.Log(EDebugLevel.INFO, Format('Starting shutdown (timeout: %dms)', [TimeoutMS]));
   Self.ShuttingDown := True;
 
   StartTime := Time();
@@ -542,9 +541,9 @@ begin
     Sleep(100);
 
   if Self.BusyWorkers() > 0 then
-    Self.Log(dlInfo, Format('Timeout reached, forcing shutdown with %d busy workers', [Self.BusyWorkers()]));
+    Self.Log(EDebugLevel.INFO, Format('Timeout reached, forcing shutdown with %d busy workers', [Self.BusyWorkers()]));
 
-  Self.Log(dlInfo, 'Stopping workers');
+  Self.Log(EDebugLevel.INFO, 'Stopping workers');
   Self.Terminating := True;
   Self.Running := False;
 
@@ -556,7 +555,7 @@ begin
       Self.Workers[i].Thread := nil;
     end;
 
-  Self.Log(dlInfo, 'All workers terminated');
+  Self.Log(EDebugLevel.INFO, 'All workers terminated');
 end;
 
 (*
@@ -582,7 +581,7 @@ begin
     Self.LogLock := nil;
   end;
 
-  Self.Log(dlVerbose, 'Pool resources freed');
+  Self.Log(EDebugLevel.VERBOSE, 'Pool resources freed');
 end;
 
 (*
@@ -639,7 +638,7 @@ begin
   ValidationError := Self.ValidateTask(TaskID, @Method);
   if ValidationError <> '' then
   begin
-    Self.Log(dlInfo, Format('Task validation failed: %s', [ValidationError]));
+    Self.Log(EDebugLevel.INFO, Format('Task validation failed: %s', [ValidationError]));
     if Assigned(@Self.OnException) then
       Self.OnException(TaskID, 'Task validation failed: ' + ValidationError);
     Exit;
@@ -647,7 +646,7 @@ begin
 
   if Self.Terminating or not Self.Running or Self.ShuttingDown then
   begin
-    Self.Log(dlInfo, Format('Cannot submit task "%s" - pool is shutting down', [TaskID]));
+    Self.Log(EDebugLevel.INFO, Format('Cannot submit task "%s" - pool is shutting down', [TaskID]));
     Exit;
   end;
 
@@ -661,7 +660,7 @@ begin
   Self.Queue.Add(NewTask);
   Inc(Self.TasksQueued);
   Result := True;
-  Self.Log(dlInfo, Format('Task "%s" submitted with priority %d', [TaskID, Priority]));
+  Self.Log(EDebugLevel.INFO, Format('Task "%s" submitted with priority %d', [TaskID, Priority]));
 end;
 
 (*
@@ -718,10 +717,10 @@ begin
   ExecutionTime := Time() - StartTime;
 
   if Success then
-    Self.Log(dlVerbose, Format('Worker %d completed task "%s" in %dms', [WorkerID, Task^.ID, ExecutionTime]))
+    Self.Log(EDebugLevel.VERBOSE, Format('Worker %d completed task "%s" in %dms', [WorkerID, Task^.ID, ExecutionTime]))
   else
   begin
-    Self.Log(dlInfo, Format('Worker %d FAILED task "%s" in %dms: %s', [WorkerID, Task^.ID, ExecutionTime, Error]));
+    Self.Log(EDebugLevel.INFO, Format('Worker %d FAILED task "%s" in %dms: %s', [WorkerID, Task^.ID, ExecutionTime, Error]));
     Inc(Self.TasksFailed);
   end;
 
@@ -805,15 +804,15 @@ var
   StartTime: Int64;
 begin
   StartTime := Time();
-  Self.Log(dlInfo, 'Awaiting task completion');
+  Self.Log(EDebugLevel.INFO, 'Awaiting task completion');
 
   while ((Self.QueueSize() > 0) or (Self.BusyWorkers() > 0)) and ((Time() - StartTime) < TimeoutMS) do
     System.Sleep(10);
 
   if (Time() - StartTime) >= TimeoutMS then
-    Self.Log(dlInfo, 'Await timed out')
+    Self.Log(EDebugLevel.INFO, 'Await timed out')
   else
-    Self.Log(dlInfo, 'All tasks completed');
+    Self.Log(EDebugLevel.INFO, 'All tasks completed');
 end;
 
 (*
@@ -882,7 +881,7 @@ begin
          ((CurrentTime - Self.Tasks[i].LastRun) >= Self.Tasks[i].Interval) then
       begin
         TaskID := Format('%s-%d', [Self.Tasks[i].ID, CurrentTime]);
-        Self.Pool.Log(dlInfo, Format('Submitting recurring task "%s" (Interval: %dms)', [Self.Tasks[i].ID, Self.Tasks[i].Interval]));
+        Self.Pool.Log(EDebugLevel.INFO, Format('Submitting recurring task "%s" (Interval: %dms)', [Self.Tasks[i].ID, Self.Tasks[i].Interval]));
         Self.Pool.Submit(TaskID, @Self.Tasks[i].Method);
         Self.Tasks[i].LastRun := CurrentTime;
       end;
@@ -894,7 +893,7 @@ end;
 (*
 ## TThreadScheduler.Init
 ```pascal
-procedure TThreadScheduler.Init(const Name: String; ThreadCount: Integer = 0; DebugLevel: TDebugLevel = dlNone);
+procedure TThreadScheduler.Init(const Name: String; ThreadCount: Integer = 0; DebugLevel: EDebugLevel = EDebugLevel.NONE);
 ```
 Initializes the scheduler, its internal thread pool, and starts the scheduling loop.
 
@@ -903,7 +902,7 @@ Initializes the scheduler, its internal thread pool, and starts the scheduling l
 - `ThreadCount`: Number of worker threads for the scheduler's pool. If 0, uses default.
 - `DebugLevel`: The verbosity level for logging.
 *)
-procedure TThreadScheduler.Init(const Name: String; ThreadCount: Integer = 0; DebugLevel: TDebugLevel = dlNone);
+procedure TThreadScheduler.Init(const Name: String; ThreadCount: Integer = 0; DebugLevel: EDebugLevel = EDebugLevel.NONE);
 begin
   Self.Pool.Init(Name + '-Pool', ThreadCount, DebugLevel);
   SetLength(Self.Tasks, 0);
@@ -969,7 +968,7 @@ begin
   Self.Tasks[Index].Active := True;
 
   Result := True;
-  Self.Pool.Log(dlInfo, Format('Task "%s" scheduled to run every %dms', [TaskID, IntervalMS]));
+  Self.Pool.Log(EDebugLevel.INFO, Format('Task "%s" scheduled to run every %dms', [TaskID, IntervalMS]));
 end;
 
 (*
@@ -995,7 +994,7 @@ begin
     begin
       Self.Tasks[i].Active := False;
       Result := True;
-      Self.Pool.Log(dlInfo, Format('Paused task "%s"', [TaskID]));
+      Self.Pool.Log(EDebugLevel.INFO, Format('Paused task "%s"', [TaskID]));
       Break;
     end;
 end;
@@ -1042,7 +1041,7 @@ begin
     begin
       Found := True;
       Result := True;
-      Self.Pool.Log(dlInfo, Format('Canceled task "%s"', [TaskID]));
+      Self.Pool.Log(EDebugLevel.INFO, Format('Canceled task "%s"', [TaskID]));
       break;
     end;
 
@@ -1084,7 +1083,7 @@ begin
       Self.Tasks[i].Active := True;
       Self.Tasks[i].LastRun := 0;
       Result := True;
-      Self.Pool.Log(dlInfo, Format('Resumed task "%s"', [TaskID]));
+      Self.Pool.Log(EDebugLevel.INFO, Format('Resumed task "%s"', [TaskID]));
       Break;
     end;
 end;
@@ -1123,7 +1122,7 @@ end;
 (*
 ## TThreadManager.Init
 ```pascal
-procedure TThreadManager.Init(ThreadCount: Integer = 0; DebugLevel: TDebugLevel = dlNone);
+procedure TThreadManager.Init(ThreadCount: Integer = 0; DebugLevel: EDebugLevel = EDebugLevel.NONE);
 ```
 Initializes the thread manager, which in turn sets up the main thread pool and the scheduler. This is the main entry point for using the library.
 
@@ -1134,10 +1133,10 @@ Initializes the thread manager, which in turn sets up the main thread pool and t
 Example:
 ```pascal
 var Manager: TThreadManager;
-Manager.Init(8, dlInfo);
+Manager.Init(8, EDebugLevel.INFO);
 ```
 *)
-procedure TThreadManager.Init(ThreadCount: Integer = 0; DebugLevel: TDebugLevel = dlNone);
+procedure TThreadManager.Init(ThreadCount: Integer = 0; DebugLevel: EDebugLevel = EDebugLevel.NONE);
 begin
   if Self.IsSetup then
     Exit;
@@ -1398,21 +1397,21 @@ end;
 (*
 ## TThreadManager.SetDebugLevel
 ```pascal
-procedure TThreadManager.SetDebugLevel(Level: TDebugLevel);
+procedure TThreadManager.SetDebugLevel(Level: EDebugLevel);
 ```
 Sets the logging verbosity level for the entire thread manager and its components.
 
 ### Parameters
-- `Level`: The debug level to set (dlNone, dlInfo, or dlVerbose).
+- `Level`: The debug level to set (EDebugLevel.NONE, EDebugLevel.INFO, or EDebugLevel.VERBOSE).
 *)
-procedure TThreadManager.SetDebugLevel(Level: TDebugLevel);
+procedure TThreadManager.SetDebugLevel(Level: EDebugLevel);
 begin
   Self.DebugLevel := Level;
   if Self.IsSetup then
   begin
     Self.Pool.DebugLevel := Level;
     Self.Scheduler.Pool.DebugLevel := Level;
-    if Level > dlNone then
+    if Level > EDebugLevel.NONE then
       WriteLn(Format('Debug level set to %d', [Ord(Level)]));
   end;
 end;

@@ -1,5 +1,4 @@
 {$DEFINE WL_RANDOM_INCLUDED}
-{$INCLUDE_ONCE WaspLib/utils.simba}
 
 type
   ERandomDir = enum(LEFT, MEAN, RIGHT);

@@ -5,7 +5,6 @@ that can be used by Simba and back.
 *)
 
 {$DEFINE WL_RSTRANSLATOR_INCLUDED}
-{$INCLUDE_ONCE WaspLib/utils.simba}
 
 type
 (*

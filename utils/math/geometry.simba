@@ -4,8 +4,6 @@ Methods and functions related to geometry.
 *)
 
 {$DEFINE WL_GEOMETRY_INCLUDED}
-{$INCLUDE_ONCE WaspLib/utils.simba}
-
 {$loadlib ../../plugins/libtpaex/libtpaex}
 
 const
