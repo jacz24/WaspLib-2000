@@ -517,23 +517,38 @@ end;
 
 
 (*
-## TLazControl.LoadFromFile
+## TLazControl.LoadImage
 ```pascal
-procedure TLazControl.LoadFromFile(path: String);
+procedure TLazControl.LoadImage(path: String);
+procedure TLazControl.LoadImage(img: TImage); overload;
 ```
 Load a image file and set it as the background for a TLazControl.
 This can be used to set images for TLazPanels, TLazPageControls, TLazTabSheet, TLazButtons, etc.
 *)
-procedure TLazControl.LoadFromFile(path: String);
+procedure TLazControl.LoadImage(path: String);
 var
   img: TLazImage;
 begin
-  img.Create(Self);
-  img.LoadFromFile(path);
+  img := TLazImage.Create(Self);
+  img.Parent := Self;
+  img.Picture.LoadFromFile(path);
   img.SetBounds(0, 0, Self.Width, Self.Height);
   img.Stretch := True;
   img.Proportional := True;
   img.Align := ELazAlign.Client;
+end;
+
+procedure TLazControl.LoadImage(img: TImage); overload;
+var
+  limg: TLazImage;
+begin
+  limg := TLazImage.Create(Self);
+  limg.Parent := Self;
+  limg.Picture.Bitmap := img.ToLazBitmap();
+  limg.SetBounds(0, 0, Self.Width, Self.Height);
+  limg.Stretch := True;
+  limg.Proportional := True;
+  limg.Align := ELazAlign.Client;
 end;
 
 

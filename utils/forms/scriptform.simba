@@ -113,6 +113,8 @@ begin
   Self.PageControl := TLazPageControl.Create(Self.Form);
   Self.PageControl.Parent := Self.Form;
   Self.PageControl.Align := ELazAlign.Client;
+  Self.PageControl.Width := 800;
+  Self.PageControl.Height := 570;
 
   panel := TLazPanel.Create(Self.Form);
   panel.Parent := Self.Form;
@@ -163,9 +165,17 @@ end.
 ```
 *)
 function TScriptForm.CreateTab(caption: String): TLazTabSheet;
+var
+  w, h: Integer;
 begin
+  w := Self.PageControl.Width;
+  h := Self.PageControl.Height;
+
   Result := Self.PageControl.AddTab();
   Result.Caption := caption;
+  Result.Width := w;
+  Result.Height := h;
+
   Self.PageControl.ActiveTabIndex := 0;
 end;
 

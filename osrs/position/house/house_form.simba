@@ -1,6 +1,6 @@
 (*
 # House Form
-This file is about {ref}`TRSHouse` dedicated `TLazForm` utilities.
+This page is about {ref}`TRSHouse` dedicated `TLazForm` utilities.
 
 This is meant to be used with {ref}`TScriptForm` with
 {ref}`TScriptForm.CreateHouseTab` and will setup a a `TLazTabSheet` on it with

@@ -4,7 +4,7 @@ The `Gear Layouts` is a handler for OSRS gear.
 "Gear" refers to as any equippable item in the game.
 *)
 
-{$DEFINE WL_GEAR_HANDLER_INCLUDED}
+{$DEFINE WL_GEAR_LAYOUTS_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
@@ -41,20 +41,17 @@ Main type for the {ref}`Gear Layouts`.
     IsSetup: Boolean;
   end;
 
-
 procedure TRSGearLayouts.Setup();
 var
-  keys: TLazStringList;
-  key, name: String;
+  name: String;
   i, gearIdx: Integer;
-  obj: TJSONItem;
   slot: ERSEquipment;
   json: TJSONItem;
   arr: TStringArray;
 begin
   if Self.IsSetup then Exit;
 
-  Self.Config.Setup('gearhandler' + PATH_SEP + ToStr(PlayerIndex));
+  Self.Config.Setup('gearlayouts' + PATH_SEP + ToStr(PlayerIndex));
   SetLength(Self.Sets, Self.Config.Count);
 
   for i := 0 to Self.Config.Count-1 do
