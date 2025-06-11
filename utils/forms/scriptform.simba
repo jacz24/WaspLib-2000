@@ -34,7 +34,7 @@ Main type for the {ref}`TScriptForm`.
 (*
 ### ScriptForm.OnClose
 ```pascal
-procedure TScriptForm.OnClose(sender: TObject; var closeAction: ELazFormCloseAction);
+procedure TScriptForm.OnClose(sender: TLazObject; var closeAction: ELazFormCloseAction);
 ```
 Callback called when the `TScriptForm.Form.OnClose` procedure.
 This ensures the script is terminated when you close the form.
@@ -48,7 +48,7 @@ ScriptForm.Form.OnClose := nil;
 ScriptForm.Form.Close();
 ```
 *)
-procedure TScriptForm.OnClose({$H-}sender: TObject;{$H+} var closeAction: ELazFormCloseAction);
+procedure TScriptForm.OnClose({$H-}sender: TLazObject;{$H+} var closeAction: ELazFormCloseAction);
 begin
   case closeAction of
     ELazFormCloseAction.Minimize :;
@@ -59,7 +59,7 @@ end;
 (*
 ### ScriptForm.OnStart
 ```pascal
-procedure TScriptForm.OnStart(sender: TObject);
+procedure TScriptForm.OnStart(sender: TLazObject);
 ```
 This callback is ran on the `TScriptForm.Start.OnClick` procedure.
 By default, it's only used to close/hide the form and ensure that
@@ -70,14 +70,14 @@ variables when it runs before calling `inherited`, something like this:
 
 Example:
 ```pascal
-procedure TScriptForm.StartScript(sender: TObject); override;
+procedure TScriptForm.StartScript(sender: TLazObject); override;
 begin
   CurrentTask := ETask(Self.TaskSelector.GetItemIndex());
   inherited;
 end;
 ```
 *)
-procedure TScriptForm.OnStart({$H-}sender: TObject);{$H+}
+procedure TScriptForm.OnStart({$H-}sender: TLazObject);{$H+}
 begin
   Self.Form.OnClose := nil;
   Self.Form.Close();

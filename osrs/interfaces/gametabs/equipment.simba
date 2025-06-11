@@ -12,31 +12,14 @@ type
 (*
 ## ERSEquipment
 ```pascal
-ERSEquipment = (
-  HEAD, SECONDARY_AMMO, CAPE, NECK, AMMO, WEAPON, BODY, SHIELD, LEGS, HANDS, FEET, RING
-);
+ERSEquipment = enum(HEAD, SECONDARY_AMMO, CAPE, NECK, AMMO, WEAPON, BODY, SHIELD, LEGS, HANDS, FEET, RING);
 ```
 Enumerator of the equipment slots.
 *)
   ERSEquipment = enum(
-    HEAD, SECONDARY_AMMO, CAPE, NECK, AMMO, WEAPON, BODY, SHIELD, LEGS, HANDS, FEET, RING
+    HEAD, SECONDARY_AMMO, CAPE, NECK, AMMO, WEAPON, BODY, SHIELD, LEGS, HANDS,
+    FEET, RING
   );
-
-(*
-## ERSEquipment.GearIndex
-```pascal
-function ERSEquipment.GearIndex(): Integer;
-```
-Converts the current {ref}`ERSEquipment` into an index that can be used with {ref}`TGearData`.
-*)
-function ERSEquipment.GearIndex(): Integer;
-begin
-  case Self of
-    ERSEquipment.HEAD: Result := Ord(Self);
-    ERSEquipment.SECONDARY_AMMO: Result := 3;
-    else Result := Ord(Self)-1;
-  end;
-end;
 
 type
 (*

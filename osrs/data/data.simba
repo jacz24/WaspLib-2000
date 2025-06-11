@@ -429,14 +429,6 @@ begin
     Result += Self.Data.Item[key].Item[i].AsString;
 end;
 
-(*
-## GearData.GetItems
-```pascal
-function TGearData.GetItems(key: String): TRSItemArray;
-function TGearData.GetItems(slot: ERSEquipmentSlot): TRSItemArray; overload;
-```
-Method to fetch items under a key in gear.json.
-*)
 function TGearData.GetItems(key: String): TRSItemArray; overload;
 var
   i: Int32;
@@ -448,4 +440,8 @@ begin
 end;
 
 var
+(*
+## GearData variable
+Global {ref}`TGearData` variable.
+*)
   GearData: TGearData;

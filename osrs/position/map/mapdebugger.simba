@@ -40,7 +40,7 @@ Main record used to hold core values of the {ref}`Map Debugger`.
   end;
 
 {%codetools off}
-procedure TMapDebugger.OnChange(sender: TObject);
+procedure TMapDebugger.OnChange(sender: TLazObject);
 begin
   Self.ImageBox.SetImage(Self.Images[TLazComboBox(sender).ItemIndex]);
 end;
@@ -67,7 +67,7 @@ begin
   if Self.ShowGraph then
     Self.Graph.Draw(canvas);
 
-  with sender.MousePoint do
+  with sender.MouseXY do
     p := [X div 4 * 4, Y div 4 * 4];
 
   tpa := TBox.Create(p.X-1, p.Y-1, p.X + 4, p.Y + 4).Corners();
@@ -100,25 +100,25 @@ begin
 end;
 
 
-procedure TMapDebugger.GraphOnChange(sender: TObject);
+procedure TMapDebugger.GraphOnChange(sender: TLazObject);
 begin
   Self.ShowGraph := TLazCheckBox(sender).State = ELazCheckBoxState.cbChecked;
   Self.ImageBox.Repaint();
 end;
 
-procedure TMapDebugger.WalkableSpaceOnChange(sender: TObject);
+procedure TMapDebugger.WalkableSpaceOnChange(sender: TLazObject);
 begin
   Self.ShowWalkableSpace := TLazCheckBox(sender).State = ELazCheckBoxState.cbChecked;
   Self.ImageBox.Repaint();
 end;
 
-procedure TMapDebugger.WalkableClustersOnChange(sender: TObject);
+procedure TMapDebugger.WalkableClustersOnChange(sender: TLazObject);
 begin
   Self.ShowWalkableClusters := TLazCheckBox(sender).State = ELazCheckBoxState.cbChecked;
   Self.ImageBox.Repaint();
 end;
 
-procedure TMapDebugger.ObjectClustersOnChange(sender: TObject);
+procedure TMapDebugger.ObjectClustersOnChange(sender: TLazObject);
 begin
   Self.ShowObjectClusters := TLazCheckBox(sender).State = ELazCheckBoxState.cbChecked;
   Self.ImageBox.Repaint();

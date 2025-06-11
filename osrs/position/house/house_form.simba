@@ -71,7 +71,7 @@ begin
 end;
 
 
-procedure THouseFormHelper.ObjectUpdate(sender: TObject);
+procedure THouseFormHelper.ObjectUpdate(sender: TLazObject);
 var
   combobox: TLazComboBox;
   index: Integer;
@@ -611,21 +611,21 @@ begin
 end;
 
 
-procedure THouseFormHelper.OnTeleportChange(sender: TObject);
+procedure THouseFormHelper.OnTeleportChange(sender: TLazObject);
 begin
   House.TeleportMode := EHouseTeleportMode(TLazCombobox(sender).ItemIndex);
   House.Loader.Config.Item['TeleportMode'].AsInt := Ord(House.TeleportMode);
   House.Loader.Config.SaveConfig();
 end;
 
-procedure THouseFormHelper.LocationOnChange(sender: TObject);
+procedure THouseFormHelper.LocationOnChange(sender: TLazObject);
 begin
   House.Loader.Location := EHouseLocation(TLazComboBox(sender).ItemIndex);
   House.Loader.Config.Item['Location'].AsInt := Ord(House.Loader.Location);
   House.Loader.Config.SaveConfig();
 end;
 
-procedure THouseFormHelper.DecorationOnChange(sender: TObject);
+procedure THouseFormHelper.DecorationOnChange(sender: TLazObject);
 begin
   House.Loader.SetColors(EHouseDecoration(TLazComboBox(sender).ItemIndex));
   House.Loader.Config.Item['Decoration'].AsInt := Ord(House.Loader.Decoration);
@@ -634,7 +634,7 @@ begin
   Self.Redraw();
 end;
 
-procedure THouseFormHelper.RoomOnChange(sender: TObject);
+procedure THouseFormHelper.RoomOnChange(sender: TLazObject);
 var
   old, new: THouseRoom;
   room: EHouseRoom;
@@ -662,7 +662,7 @@ begin
 end;
 
 {$H-}
-procedure THouseFormHelper.OnRotateLeft(sender: TObject);
+procedure THouseFormHelper.OnRotateLeft(sender: TLazObject);
 var
   current: THouseRoom;
 begin
@@ -672,7 +672,7 @@ begin
   Self.Redraw();
 end;
 
-procedure THouseFormHelper.OnRotateRight(sender: TObject);
+procedure THouseFormHelper.OnRotateRight(sender: TLazObject);
 var
   current: THouseRoom;
 begin
@@ -682,7 +682,7 @@ begin
   Self.Redraw();
 end;
 
-procedure THouseFormHelper.OnReadClick(sender: TObject);
+procedure THouseFormHelper.OnReadClick(sender: TLazObject);
 begin
   HouseViewer.LoadHouse();
   Self.Redraw();
@@ -699,6 +699,12 @@ begin
   b := Self.Grid[Self.MatrixIdx.Y * House.Loader.AMOUNT + Self.MatrixIdx.X];
   if not limit.ContainsBox(b) and not limit.Overlap(b) then Exit;
   canvas.DrawBox(b, $00FFFF);
+end;
+
+procedure THouseFormHelper.OnShow(sender: TLazObject);
+begin
+  if Self.ImageBox.Zoom <= 100 then
+    Self.ImageBox.Zoom := 200;
 end;
 {$H+}
 
@@ -749,6 +755,8 @@ begin
     Result.AnchorLabel(caption);
 end;
 
+
+
 var
   HouseForm: THouseFormHelper;
 
@@ -788,6 +796,7 @@ begin
     HouseForm.GridTPAs += b.Corners().Connect();
 
   Result := Self.CreateTab('House Settings');
+  Result.OnShow := @HouseForm.OnShow;
 
   panel := TLazPanel.CreateEx(Result);
   panel.Align := ELazAlign.Left;

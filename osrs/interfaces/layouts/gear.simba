@@ -9,13 +9,25 @@ The `Gear Layouts` is a handler for OSRS gear.
 
 type
 (*
+## ERSGear
+```pascal
+ERSGear = enum(HEAD, CAPE, NECK, AMMO, WEAPON, BODY, SHIELD, LEGS, HANDS, FEET, RING, SECONDARY_AMMO, SPEC_WEAPON);
+```
+Internal enumerator of the gear slots. This is very similar to
+{ref}`ERSEquipment` but necessary for the gear handle to keep it simple.
+*)
+  ERSGear = enum(
+    HEAD, CAPE, NECK, AMMO, WEAPON, BODY, SHIELD, LEGS, HANDS, FEET, RING,
+    SECONDARY_AMMO
+  );
+
+(*
 ## TRSGear
 Type that represents a gear layout.
 *)
   TRSGear = record
     Name: String;
-    Items: array [ERSEquipment] of TRSItem;
-    SpecWeapon: TRSItem;
+    Items: array [ERSGear] of TRSItem;
     SpecLevel: Integer;
   end;
 
@@ -44,7 +56,7 @@ Main type for the {ref}`Gear Layouts`.
 procedure TRSGearLayouts.Setup();
 var
   name: String;
-  i, gearIdx: Integer;
+  i: Integer;
   slot: ERSEquipment;
   json: TJSONItem;
   arr: TStringArray;
@@ -59,14 +71,12 @@ begin
     Self.Sets[i].Name := Self.Config.Item[i].AsString;
     for slot := Low(ERSEquipment) to High(ERSEquipment) do
       Self.Sets[i].Items[slot] := Self.Config.Item[i].Item.Item[Ord(slot)].AsString;
-    Self.Sets[i].SpecWeapon := Self.Config.Item[i].Item.Item[Ord(High(ERSEquipment))+1].AsString;
     Self.Sets[i].SpecLevel := Self.Config.Item[i].Item.Item[Ord(High(ERSEquipment))+2].AsInt;
   end;
 
   for slot := Low(ERSEquipment) to High(ERSEquipment) do
   begin
-    gearIdx := slot.GearIndex();
-    Self._ValidGear[slot] := GearData.GetItems(gearIdx);
+    Self._ValidGear[slot] := GearData.GetItems(Ord(slot));
     Self._UnfilteredLists[slot] := TLazStringList.Create();
     AddOnTerminate(@Self._UnfilteredLists[slot].Free);
 
@@ -83,7 +93,7 @@ begin
       Continue;
     end;
 
-    Self._ValidGear[slot] += GearData.GetItems(gearIdx);
+    Self._ValidGear[slot] += GearData.GetItems(Ord(slot));
 
     json := GearData.GetArray(name);
     for i := 0 to json.Count-1 do

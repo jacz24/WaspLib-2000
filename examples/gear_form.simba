@@ -1,4 +1,5 @@
 {$I WaspLib/osrs.simba}
+
 var
   form: TScriptForm;
 begin

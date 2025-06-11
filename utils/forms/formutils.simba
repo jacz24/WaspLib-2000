@@ -88,13 +88,13 @@ end;
 (*
 ## TLazComponent.NumberField
 ```pascal
-procedure TLazComponent.NumberField(sender: TObject; var key: Char);
+procedure TLazComponent.NumberField(sender: TLazObject; var key: Char);
 ```
 Callback method to limit user input to numbers only and backspace.
 This numbers can be `Integers` only.
 For `Doubles` check {ref}`TLazComponent.FloatField`
 *)
-procedure TLazComponent.NumberField({$H-}sender: TObject;{$H+} var key: Char);
+procedure TLazComponent.NumberField({$H-}sender: TLazObject;{$H+} var key: Char);
 begin
   case key of
     '0'..'9', #8: ;
@@ -105,13 +105,13 @@ end;
 (*
 ## TLazComponent.FloatField
 ```pascal
-procedure TLazComponent.FloatField(sender: TObject; var key: Char);
+procedure TLazComponent.FloatField(sender: TLazObject; var key: Char);
 ```
 Callback method to limit user input to numbers only and backspace.
 This numbers can be `Integers` or `Doubles` only.
 For `Integers` only check {ref}`TLazComponent.FloatField`
 *)
-procedure TLazComponent.FloatField(sender: TObject; var key: Char);
+procedure TLazComponent.FloatField(sender: TLazObject; var key: Char);
 begin
   case key of
     '0'..'9', #8: ;
@@ -123,11 +123,11 @@ end;
 (*
 ## TLazComponent.MailField
 ```pascal
-procedure TLazComponent.MailField({$H-}sender: TObject;{$H+} var key: Char);
+procedure TLazComponent.MailField({$H-}sender: TLazObject;{$H+} var key: Char);
 ```
 Callback method to limit user input to characters used in email addresses.
 *)
-procedure TLazComponent.MailField({$H-}sender: TObject;{$H+} var key: Char);
+procedure TLazComponent.MailField({$H-}sender: TLazObject;{$H+} var key: Char);
 begin
   if key = ' ' then key := #0;
 end;
@@ -135,12 +135,12 @@ end;
 (*
 ## Component.TimeField
 ```pascal
-procedure TLazComponent.TimeField(sender: TObject; var key: Char);
+procedure TLazComponent.TimeField(sender: TLazObject; var key: Char);
 ```
 Callback method to limit user input to numbers only, backspace and a few
 characters used in time like ":", "-", "_", ",", etc.
 *)
-procedure TLazComponent.TimeField({$H-}sender: TObject;{$H+} var key: Char);
+procedure TLazComponent.TimeField({$H-}sender: TLazObject;{$H+} var key: Char);
 begin
   case key of
     '0'..'9', #8, '.', ':', '-', '_', ',', ' ': ;
@@ -151,11 +151,11 @@ end;
 (*
 ## Component.NumberArrayField
 ```pascal
-procedure TLazComponent.NumberArrayField(sender: TObject; var key: Char);
+procedure TLazComponent.NumberArrayField(sender: TLazObject; var key: Char);
 ```
 Callback method to limit user input to a TIntegerArray. Brackets not included.
 *)
-procedure TLazComponent.NumberArrayField({$H-}sender: TObject;{$H+} var key: Char);
+procedure TLazComponent.NumberArrayField({$H-}sender: TLazObject;{$H+} var key: Char);
 begin
   case key of
     '0'..'9', ',', ' ' , #8: ;
@@ -166,11 +166,11 @@ end;
 (*
 ## Control.OpenURL
 ```pascal
-procedure TLazControl.OpenURL(sender: TObject);
+procedure TLazControl.OpenURL(sender: TLazObject);
 ```
 Opens the URL in the control caption if there's any.
 *)
-procedure TLazControl.OpenURL(sender: TObject);
+procedure TLazControl.OpenURL(sender: TLazObject);
 var
   url: String;
 begin
@@ -178,12 +178,12 @@ begin
   if url.IsURL() then URLOpenInBrowser(url);
 end;
 
-procedure TLazControl.OnMouseEnterURL(sender: TObject);
+procedure TLazControl.OnMouseEnterURL(sender: TLazObject);
 begin
   TLazControl(sender).Font.Color := $FF0000;
 end;
 
-procedure TLazControl.OnMouseLeaveURL(sender: TObject);
+procedure TLazControl.OnMouseLeaveURL(sender: TLazObject);
 begin
   TLazControl(sender).Font.Color := $20000000;
 end;
