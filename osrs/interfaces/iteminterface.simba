@@ -148,6 +148,7 @@ function TRSItemInterface._Discover(slot: Integer): TRSItemArray;
 var
   b: TBox;
   img: TImage;
+  hash: String;
 begin
   b := Self.Slots^.Box(slot);
   b.X1 += Self.DiscoverOffset.X1;
@@ -159,7 +160,9 @@ begin
     raise GetDebugLn(Self.Name, 'Discover box has to be 36x32. You passed w: ' + ToStr(b.Width) + ' h: ' + ToStr(b.Height));
 
   img := Target.GetImage(b);
-  Result := ItemFinder.GetHashItems(ItemFinder.GetHash(img));
+  hash := ItemFinder.GetHash(img);
+  if hash = '' then Exit;
+  Result := ItemFinder.GetHashItems(hash);
 end;
 {%CODETOOLS ON}
 

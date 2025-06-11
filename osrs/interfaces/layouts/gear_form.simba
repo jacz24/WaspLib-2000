@@ -27,6 +27,7 @@ type
 
     LayoutName: TLazEdit;
     ListLabel: TLazLabel;
+    UnfilterButton: TLazButton;
     ItemList: TLazListBox;
     ImageBox: TImageBox;
 
@@ -47,14 +48,19 @@ begin
   Self.ItemList.Items.Add('Nothing');
   Self.ItemList.Items.Add('Anything');
 
-  if Self.ItemStrings[Self.SelectedSlot] = [] then
+  if Self.FilteredItemStrings[Self.SelectedSlot] <> [] then
+    Self.ItemList.Items.AddStrings(Self.FilteredItemStrings[Self.SelectedSlot])
+  else
   begin
-    idx := Ord(Self.SelectedSlot);
-    for i := 0 to GearData.Data.Item[idx].Count-1 do
-      Self.ItemStrings[Self.SelectedSlot] += GearData.Data.Item[idx].Item[i].AsString.Capitalize();
-  end;
+    if Self.ItemStrings[Self.SelectedSlot] = [] then
+    begin
+      idx := Ord(Self.SelectedSlot);
+      for i := 0 to GearData.Data.Item[idx].Count-1 do
+        Self.ItemStrings[Self.SelectedSlot] += GearData.Data.Item[idx].Item[i].AsString.Capitalize();
+    end;
 
-  Self.ItemList.Items.AddStrings(Self.ItemStrings[Self.SelectedSlot]);
+    Self.ItemList.Items.AddStrings(Self.ItemStrings[Self.SelectedSlot]);
+  end;
   Self.ItemList.Items.EndUpdate();
 end;
 
@@ -73,6 +79,8 @@ begin
       'Anything': ; //TODO....
       else
       begin
+        if slot = ERSEquipment.SECONDARY_AMMO then
+          WriteLn Self.Gear.Items[slot];
         img := Self.SLOT_IMG.Copy();
         item := ItemFinder.GetImage(ItemFinder.GetIDs(Self.Gear.Items[slot])[0]);
         img.DrawImage(item, [2,2]);
@@ -133,9 +141,10 @@ var
   slot: ERSEquipment;
 begin
   btn := TLazButton(sender);
-  btn.Enabled := False;
   btn.Caption := 'Loading...';
   btn.Font.Style := btn.Font.Style - [ELazFontStyles.fsBold];
+  btn.Enabled := False;
+  btn.Update();
 
   for slot := Low(ERSEquipment) to High(ERSEquipment) do
   begin
@@ -144,12 +153,23 @@ begin
       Self.Gear.Items[slot] := Self.FilteredItemStrings[slot][0];
   end;
 
+
+  Self.UnfilterButton.Enabled := True;
+  Self.UpdateListBox();
   Self.UpdateBackground();
   btn.Caption := 'Read From Client';
   btn.Font.Style := [ELazFontStyles.fsBold];
   btn.Enabled := True;
 end;
 
+procedure TGearFormHelper.OnUnfilterClick(sender: TLazObject);
+var
+  slot: ERSEquipment;
+begin
+  for slot := Low(ERSEquipment) to High(ERSEquipment) do
+    Self.FilteredItemStrings[slot] := [];
+  TLazButton(sender).Enabled := False;
+end;
 
 procedure TGearFormHelper.OnClose();
 var
@@ -192,6 +212,15 @@ begin
   GearForm.ItemList.AnchorLabel(GearForm.ListLabel);
   GearForm.ItemList.BorderSpacing.Top := 10;
   GearForm.ItemList.OnSelectionChange := @GearForm.OnSelectionChange;
+
+  GearForm.UnfilterButton := TLazButton.CreateEx(Result, 'Remove list filter', 'Remove the current filter.', width);
+  GearForm.UnfilterButton.AnchorSideTop.Control := GearForm.ItemList;
+  GearForm.UnfilterButton.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
+  GearForm.UnfilterButton.AnchorSideLeft.Control := GearForm.ItemList;
+  GearForm.UnfilterButton.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
+  GearForm.UnfilterButton.BorderSpacing.Top := 10;
+  GearForm.UnfilterButton.Enabled := False;
+  GearForm.UnfilterButton.OnClick := @GearForm.OnUnfilterClick;
 
   lbl := TLazLabel.CreateEx(Result, 'Layout:' , 'Select a gear layout.');
   lbl.Left := Integer(Result.Width) - width - 60;

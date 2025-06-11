@@ -323,6 +323,7 @@ var
   border: TImage;
 begin
   tpa := img.FindColor(RSColors.ITEM_BORDER, 0, [0, 9, 35, 31]);
+  if tpa = [] then Exit;
   border := new TImage(36, 32);
   border.DrawColor := $FFFFFF;
   border.DrawTPA(tpa);
@@ -337,6 +338,7 @@ var
   bg: TPointArray;
 begin
   hash := Self.GetBorderHash(img);
+  if hash = '' then Exit;
 
   mask := Self.GetMask(hash);
   bg := mask.FindColor($0, 0);
