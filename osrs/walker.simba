@@ -1463,7 +1463,12 @@ function TRSWalker.MakePointVisible(tpa: TPointArray): Boolean; overload;
 ```
 Wrapper function used to attempt to make a Point visible on the MainScreen.
 *)
-function TRSWalker.MakePointVisible(pt: TPoint): Boolean;
+function TRSWalker.MakePointVisible(me: TPoint; pt: TPoint): Boolean;
 begin
-  Result := Minimap.MakePointVisible(Self.Point2MM(Self.Position(), pt, Minimap.GetCompassAngle(False)));
+  Result := Minimap.MakePointVisible(Self.Point2MM(me, pt, Minimap.GetCompassAngle(False)));
+end;
+
+function TRSWalker.MakePointVisible(pt: TPoint): Boolean; overload;
+begin
+  Result := Self.MakePointVisible(Self.Position(), pt);
 end;

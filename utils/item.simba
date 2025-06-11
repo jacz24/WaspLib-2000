@@ -112,13 +112,11 @@ var
   i: Integer;
 begin
   slot := TRSItem.GetStackBox(slot);
-  for i := 0 to High(RSColors.STACK_COLORS) do
+  for i := 0 to RSColors.STACK_COLORS.High do
     if Target.HasColor(RSColors.STACK_COLORS[i], 1, 1, slot) then
       Exit(OCR.RecognizeNumber(slot, RSFonts.PLAIN_11, [RSColors.STACK_COLORS[i]], 1) * Round(10 ** (3 * i)));
   Result := -1;
 end;
-
-
 
 function TRSBankItem.ToItem(): TRSItem;
 begin

@@ -275,7 +275,7 @@ begin
   filename := PATH_SEP + ToStr(chunk.X) + '-' + ToStr(chunk.Y) + '.json';
   cachename := Map.Loader.CacheDir + 'npcs' + PATH_SEP + ToStr(plane) + filename;
 
-  if FileExists(cachename) then;
+  if FileExists(cachename) then
     Result := LoadJSON(cachename);
 end;
 

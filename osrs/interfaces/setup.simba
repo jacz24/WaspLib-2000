@@ -126,6 +126,7 @@ begin
   ItemFinder.Setup();
   SpellFinder.Setup();
   PrayerFinder.Setup();
+  OverheadFinder.Setup();
   HouseLayoutFinder.Setup();
 
   GameTabs.KeybindsEnabled := True;
