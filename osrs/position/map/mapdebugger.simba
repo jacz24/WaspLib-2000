@@ -67,7 +67,7 @@ begin
   if Self.ShowGraph then
     Self.Graph.Draw(canvas);
 
-  with sender.MousePoint do
+  with sender.MouseXY do
     p := [X div 4 * 4, Y div 4 * 4];
 
   tpa := TBox.Create(p.X-1, p.Y-1, p.X + 4, p.Y + 4).Corners();

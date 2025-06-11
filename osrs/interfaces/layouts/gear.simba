@@ -9,25 +9,12 @@ The `Gear Layouts` is a handler for OSRS gear.
 
 type
 (*
-## ERSGear
-```pascal
-ERSGear = enum(HEAD, CAPE, NECK, AMMO, WEAPON, BODY, SHIELD, LEGS, HANDS, FEET, RING, SECONDARY_AMMO, SPEC_WEAPON);
-```
-Internal enumerator of the gear slots. This is very similar to
-{ref}`ERSEquipment` but necessary for the gear handle to keep it simple.
-*)
-  ERSGear = enum(
-    HEAD, CAPE, NECK, AMMO, WEAPON, BODY, SHIELD, LEGS, HANDS, FEET, RING,
-    SECONDARY_AMMO
-  );
-
-(*
 ## TRSGear
 Type that represents a gear layout.
 *)
   TRSGear = record
     Name: String;
-    Items: array [ERSGear] of TRSItem;
+    Items: array [ERSEquipment] of TRSItem;
     SpecLevel: Integer;
   end;
 
@@ -38,80 +25,30 @@ Main type for the {ref}`Gear Layouts`.
   TRSGearLayouts = record
     Sets: array of TRSGear;
     Config: TConfigJSON;
-
-    CurrentEquipment: array [ERSEquipment] of TRSItem;
-    _ValidGear: array [ERSEquipment] of TRSItemArray;
-
-    _FormGearIndex: Int32;
-    _FormFiltered: Boolean;
-    _FormComboBoxes: array of TLazComboBox;
-    _FormListBoxes: array of TLazListBox;
-
-    _UnfiltedWeapons: TStringArray;
-    _UnfilteredLists: array [ERSEquipment] of TLazStringList;
-
-    IsSetup: Boolean;
   end;
 
 procedure TRSGearLayouts.Setup();
 var
-  name: String;
   i: Integer;
   slot: ERSEquipment;
-  json: TJSONItem;
-  arr: TStringArray;
 begin
-  if Self.IsSetup then Exit;
-
   Self.Config.Setup('gearlayouts' + PATH_SEP + ToStr(PlayerIndex));
   SetLength(Self.Sets, Self.Config.Count);
 
-  for i := 0 to Self.Config.Count-1 do
-  begin
-    Self.Sets[i].Name := Self.Config.Item[i].AsString;
-    for slot := Low(ERSEquipment) to High(ERSEquipment) do
-      Self.Sets[i].Items[slot] := Self.Config.Item[i].Item.Item[Ord(slot)].AsString;
-    Self.Sets[i].SpecLevel := Self.Config.Item[i].Item.Item[Ord(High(ERSEquipment))+2].AsInt;
-  end;
-
-  for slot := Low(ERSEquipment) to High(ERSEquipment) do
-  begin
-    Self._ValidGear[slot] := GearData.GetItems(Ord(slot));
-    Self._UnfilteredLists[slot] := TLazStringList.Create();
-    AddOnTerminate(@Self._UnfilteredLists[slot].Free);
-
-    name := ToStr(slot).ToLower().After('ERSEquipment.');
-
-    if slot <> ERSEquipment.WEAPON then
+  try
+    for i := 0 to Self.Config.Count-1 do
     begin
-      Self._UnfilteredLists[slot].BeginUpdate();
-      Self._UnfilteredLists[slot].Add('None');
-      json := GearData.GetArray(name);
-      for i := 0 to json.Count-1 do
-        Self._UnfilteredLists[slot].Add(json.Item[i].AsString.Capitalize());
-      Self._UnfilteredLists[slot].EndUpdate();
-      Continue;
+      Self.Sets[i].Name := Self.Config.Key[i];
+
+      for slot := Low(ERSEquipment) to High(ERSEquipment) do
+        Self.Sets[i].Items[slot] := Self.Config.Item[i].Item.Item[Ord(slot)].AsString;
+
+      Self.Sets[i].SpecLevel := Self.Config.Item[i].Item.Item[Ord(High(ERSEquipment))+1].AsInt;
     end;
-
-    Self._ValidGear[slot] += GearData.GetItems(Ord(slot));
-
-    json := GearData.GetArray(name);
-    for i := 0 to json.Count-1 do
-      arr += json.Item[i].AsString;
-
-    json := GearData.GetArray('2h');
-    for i := 0 to json.Count-1 do
-      arr += json.Item[i].AsString;
-
-    Sort(arr);
-    Self._UnfilteredLists[slot].BeginUpdate();
-    Self._UnfilteredLists[slot].Add('None');
-    json := GearData.GetArray(name);
-    for i := 0 to High(arr) do
-      Self._UnfilteredLists[slot].Add(arr[i].Capitalize());
-    Self._UnfilteredLists[slot].EndUpdate();
+  except
+    FileDelete(Self.Config.Path); //corrupted config.
   end;
-
-  Self.IsSetup := True;
 end;
 
+var
+  GearLayouts: TRSGearLayouts;

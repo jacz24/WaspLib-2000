@@ -144,7 +144,6 @@ begin
 end;
 
 {%CODETOOLS ON}
-
 function TRSItemInterface._Discover(slot: Integer): TRSItemArray;
 var
   b: TBox;

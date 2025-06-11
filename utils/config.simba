@@ -123,6 +123,14 @@ begin
 end;
 
 
+property TConfigJSON.Key(index: Integer): String;
+begin
+  Self.Lock.Enter();
+  Result := Self.Data.Key[index];
+  Self.Lock.Leave();
+end;
+
+
 property TConfigJSON.Item(index: Integer): TThreadedJSON;
 begin
   Self.Lock.Enter();
