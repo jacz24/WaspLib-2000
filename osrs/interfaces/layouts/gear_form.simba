@@ -153,13 +153,12 @@ begin
       Self.Gear.Items[slot] := Self.FilteredItemStrings[slot][0];
   end;
 
-
-  Self.UnfilterButton.Enabled := True;
   Self.UpdateListBox();
   Self.UpdateBackground();
   btn.Caption := 'Read From Client';
   btn.Font.Style := [ELazFontStyles.fsBold];
   btn.Enabled := True;
+  Self.UnfilterButton.Enabled := True;
 end;
 
 procedure TGearFormHelper.OnUnfilterClick(sender: TLazObject);
@@ -168,6 +167,7 @@ var
 begin
   for slot := Low(ERSEquipment) to High(ERSEquipment) do
     Self.FilteredItemStrings[slot] := [];
+  Self.UpdateListBox();
   TLazButton(sender).Enabled := False;
 end;
 

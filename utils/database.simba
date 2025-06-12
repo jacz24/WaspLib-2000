@@ -175,7 +175,7 @@ begin
     //use cached files that are already sorted if they exist
     if FileExists(Self.CacheDir + column) then
     begin
-      Self.Data.Value[column]    := FileReadLines(Self.CacheDir + column);
+      Self.Data.Value[column] := FileReadLines(Self.CacheDir + column);
       Self.Rows.Value[column] := FileReadLines(Self.CacheDir + column + '.rows');
       Continue;
     end;
