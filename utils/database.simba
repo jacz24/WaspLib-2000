@@ -156,7 +156,7 @@ begin
   //Delete old cache files if they exist
   for dir in DirList(Self.CacheDir) do
   begin
-    tmp := Copy(dir, 1, Length(dir)-Length(version));
+    tmp := Copy(dir, Length(dir)-Length(version)+1, Length(dir));
     if tmp = version then Continue;
     DirDelete(dir, False);
   end;
@@ -291,36 +291,36 @@ begin
 end;
 
 
-function TDatabase.Get(value, valueColumn, resultColumn: String): String;
+function TDatabase.Get(value, column_name, result_column: String): String;
 var
   idx: Integer;
   rows, data: TStringArray;
 begin
-  idx := Self.Data.Value[valueColumn].IndexOf(value);
+  idx := Self.Data.Value[column_name].IndexOf(value);
   if idx = -1 then Exit;
 
-  rows := Self.Rows.Value[valueColumn];
-  data := Self.Data.Value[resultColumn];
+  rows := Self.Rows.Value[column_name];
+  data := Self.Data.Value[result_column];
 
-  idx := Self.Rows.Value[resultColumn].IndexOf(rows[idx]);
+  idx := Self.Rows.Value[result_column].IndexOf(rows[idx]);
   Result := data[idx];
 end;
 
-function TDatabase.GetAll(value, valueColumn, resultColumn: String): TStringArray;
+function TDatabase.GetAll(value, column_name, result_column: String): TStringArray;
 var
   indices: TIntegerArray;
   idx: Integer;
   rows, data: TStringArray;
 begin
-  indices := Self.Data.Value[valueColumn].IndicesOf(value);
+  indices := Self.Data.Value[column_name].IndicesOf(value);
   if indices = [] then Exit;
 
-  rows := Self.Rows.Value[valueColumn];
-  data := Self.Data.Value[resultColumn];
+  rows := Self.Rows.Value[column_name];
+  data := Self.Data.Value[result_column];
 
   for idx in indices do
   begin
-    idx := Self.Rows.Value[resultColumn].IndexOf(rows[idx]);
+    idx := Self.Rows.Value[result_column].IndexOf(rows[idx]);
     Result += data[idx];
   end;
 end;

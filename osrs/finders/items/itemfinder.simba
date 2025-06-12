@@ -110,7 +110,7 @@ end;
 
 function TRSItemFinder.GetIDs(item: String): TStringArray;
 begin
-  Result := Self.Database.GetAll(item.ToLower, 'item', 'id');
+  Result := Self.Database.GetAll(item.ToLower(), 'item', 'id');
 end;
 
 function TRSItemFinder.GetHashItems(hash: String): TRSItemArray;
