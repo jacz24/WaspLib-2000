@@ -1,10 +1,19 @@
 (*
 # Database
-TDatabase is used to create a extremely basic but effective database.
-You can this when you have a large set of data and need to retrieve values very fast.
+`TDatabase` is used to create a extremely basic single table database.
 
-To use this you need to have your data prepared, split into database columns saved in different files.
-Let's use for example a little bit of what is used for the items database as an example:
+Despite being basic it's very effective and fast and you can this when you have
+a large set of data and need to retrieve values very fast.
+
+To make this possible `TDatabase` creates several maps between the data and
+their respective row placement, so to use this you need to have your data
+prepared, split into database columns saved in different files and each
+"row" should be in orderder between the files.
+
+Credits: Torwent
+
+Let's use for example a little bit of what is used for the items database
+as an example:
 
 ```
 +-------------------+-------+------------+
@@ -19,11 +28,15 @@ Let's use for example a little bit of what is used for the items database as an 
 | abyssal whip      | 4151  | 02f197ebf  |
 +-------------------+-------+------------+
 ```
-The data in this example should be saved to 3 tiles with the column name.
+
+The data in this example should be saved to 3 files with the column name
+(items, id, hash).
+
 The data order has to match each row of the table it belongs to.
+
 The order of the data is how the database knows which row the entry belongs to.
 
-When you use TDatabase to load this each of those columns, the data of each
+When you use `TDatabase` to load this each of those columns, the data of each
 column is saved as 2 array, one with the data and another each row number.
 Imagine it as an extra column added to our table for each column we had,
 something like this:
@@ -135,6 +148,7 @@ type
     DataDir, CacheDir: String;
   end;
 
+{%codetools off}
 function TDatabase._ValueWeight(str: String): Integer;
 var
   i: Integer;
@@ -142,7 +156,15 @@ begin
   for i := 1 to Length(str) do
     Result += Ord(str[i]);
 end;
+{%codetools on}
 
+(*
+## TDatabase.Setup
+```pascal
+procedure TDatabase.Setup(name: String; columns: TStringArray; path, version: String);
+```
+Sets up a new `TDatabase`
+*)
 procedure TDatabase.Setup(name: String; columns: TStringArray; path, version: String);
 var
   i: Integer;
@@ -228,69 +250,64 @@ begin
   end;
 end;
 
+(*
+## Querying Data
+A database is only useful if you can query data from it.
+Below in this page you will see several examples of how to use `TDatabase` and
+this examples will be accompanied with a `SQL` equivalent.
 
-function TDatabase.GetRow(value, column: String): Integer;
-var
-  idx: Integer;
-  rows: TStringArray;
-begin
-  idx := Self.Data.Value[column].IndexOf(value);
-  if idx = -1 then Exit(-1);
+One thing to note is that `TDatabase` is a "single table" datase.
+This is also not a thing in real databases so in the following SQL examples we
+will be using `TDatabaseTable` as our imaginary table.
+*)
 
-  rows := Self.Rows.Value[column];
-  Result := StrToInt(rows[idx]);
-end;
+(*
+## Database.Contains
+```pascal
+function TDatabase.Contains(value, column: String): Boolean;
+```
+Returns the true/dalse if the specified `value` exists on the specified
+`column`.
 
-function TDatabase.GetRows(value, column: String): TIntegerArray;
-var
-  indices: TIntegerArray;
-  idx: Integer;
-  rows: TStringArray;
-begin
-  indices := Self.Data.Value[column].IndicesOf(value);
-  if indices = [] then Exit;
-
-  rows := Self.Rows.Value[column];
-
-  for idx in indices do
-    Result += StrToInt(rows[idx]);
-end;
-
-
-function TDatabase.GetValue(idx: Integer; column: String): String;
-var
-  data: TStringArray;
-begin
-  idx := Self.Rows.Value[column].IndexOf(ToStr(idx));
-  if idx = -1 then Exit;
-  data := Self.Data.Value[column];
-  Result := data[idx];
-end;
-
-function TDatabase.GetValues(indices: TIntegerArray; column: String): TStringArray;
-var
-  idx: Integer;
-  data: TStringArray;
-begin
-  data := Self.Data.Value[column];
-
-  for idx in indices do
-  begin
-    idx := Self.Rows.Value[column].IndexOf(ToStr(idx));
-    if idx = -1 then
-      Result += ''
-    else
-      Result += data[idx];
-  end;
-end;
-
-
+Example:
+```pascal
+database.Contains('abyssal whip', 'item');
+```
+The SQL equivalent would be something like this:
+```sql
+SELECT EXISTS (
+  SELECT 1
+  FROM "TDatabaseTable"
+  WHERE item = 'abyssal whip'
+);
+```
+*)
 function TDatabase.Contains(value, column: String): Boolean;
 begin
   Result := Self.Data.Value[column].Contains(value);
 end;
 
 
+(*
+## Database.Get
+```pascal
+function TDatabase.Get(value, column_name, result_column: String): String;
+```
+Returns the data at `result_column` that where the `column_name` column has the
+specified `value`.
+
+Example:
+```pascal
+WriteLn database.Get('abyssal whip', 'item', 'id');
+```
+The SQL equivalent would be something like this:
+```sql
+SELECT id
+FROM "TDatabaseTable"
+WHERE item = 'abyssal whip'
+LIMIT 1;
+```
+*)
 function TDatabase.Get(value, column_name, result_column: String): String;
 var
   idx: Integer;
@@ -306,6 +323,25 @@ begin
   Result := data[idx];
 end;
 
+(*
+## Database.GetAll
+```pascal
+function TDatabase.GetAll(value, column_name, result_column: String): TStringArray;
+```
+Same as {ref}`Database.Get` but will return all existing values isntead of just one.
+
+Example:
+```pascal
+WriteLn database.GetAll('abyssal whip', 'item', 'id');
+```
+The SQL equivalent would be something like this:
+```sql
+SELECT id
+FROM "TDatabaseTable"
+WHERE item = 'abyssal whip';
+```
+Basically the same as {ref}`Database.Get` SQL example without the `LIMIT`.
+*)
 function TDatabase.GetAll(value, column_name, result_column: String): TStringArray;
 var
   indices: TIntegerArray;
@@ -325,50 +361,28 @@ begin
   end;
 end;
 
+(*
+## Database.Insert
+```pascal
+procedure TDatabase.Insert(values: TStringArray; saveCache: Boolean = False);
+```
+Inserts a row of data. `values` must has a value for each `TDatabase.Columns` if
+you want to insert data.
 
-function TDatabase.GetRowData(value, column: String): TStringArray;
-var
-  idx, row: Integer;
-  rows, data: TStringArray;
-begin
-  idx := Self.Data.Value[column].IndexOf(value);
-  if idx = -1 then Exit;
+By default, this data insertion only stays in memory, if you want to save it to
+disk, you need to set `saveCache` to `True`.
 
-  rows := Self.Rows.Value[column];
-
-  for column in Self.Columns do
-  begin
-    row := Self.Rows.Value[column].IndexOf(rows[idx]);
-    data := Self.Data.Value[column];
-    Result += data[row];
-  end;
-end;
-
-function TDatabase.GetRowsData(value, column: String): T2DStringArray;
-var
-  indices: TIntegerArray;
-  idx, row: Integer;
-  rows, data: TStringArray;
-begin
-  indices := Self.Data.Value[column].IndicesOf(value);
-  if indices = [] then Exit;
-
-  rows := Self.Rows.Value[column];
-
-  SetLength(Result, Length(indices));
-
-  for idx := 0 to High(indices) do
-    for column in Self.Columns do
-    begin
-      row := Self.Rows.Value[column].IndexOf(rows[indices[idx]]);
-      data := Self.Data.Value[column];
-      Result[idx] += data[row];
-    end;
-end;
-
-
-//didn't test this one, might be broken:
-procedure TDatabase.AddRow(values: TStringArray; saveCache: Boolean = False);
+Example:
+```pascal
+database.Insert(['Custom Item', '99999', 'abcdef']);
+```
+The SQL equivalent would be something like this:
+```sql
+INSERT INTO "TDatabaseTable" (item, id, hash)
+VALUES ('abyssal whip', '99999', 'abcdef');
+```
+*)
+procedure TDatabase.Insert(values: TStringArray; saveCache: Boolean = False);
 var
   i, idx: Integer;
   value, column: String;

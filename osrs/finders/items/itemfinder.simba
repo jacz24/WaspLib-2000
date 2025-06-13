@@ -120,7 +120,7 @@ end;
 
 procedure TRSItemFinder.MapItem(item, id: String);
 begin
-  Self.Database.AddRow([id, item, '']);
+  Self.Database.Insert([id, item, '']);
 end;
 
 function TRSItemFinder.GetFilter(item: String): TImageCompareFilter;
@@ -334,22 +334,18 @@ end;
 function TRSItemFinder.GetHash(img: TImage): String;
 var
   hash: String;
-  mask: TImage;
   bg: TPointArray;
 begin
   hash := Self.GetBorderHash(img);
   if hash = '' then Exit;
 
-  mask := Self.GetMask(hash);
-  bg := mask.FindColor($0, 0);
+  bg := Self.GetMask(hash).FindColor($0, 0);
 
   img.DrawColor := $0;
   img.DrawTPA(bg);
-  img.FillWithAlpha($FF);
 
   Result := HashData(EHashAlgo.MD5, img.Data, 4608).CopyRange(0, 6);
 end;
-
 
 
 var
