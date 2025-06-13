@@ -153,12 +153,15 @@ begin
 end;
 
 property TConfigJSON.Key(index: Integer; name: String);
+var
+  item: TJSONItem;
 begin
   Self.Lock.Enter();
   if name <> Self.Data.Key[index] then
   begin
-    Self.Data.Add(name, Self.Data.Item[index]);
+    item := Self.Data.Item[index].Clone();
     Self.Data.Delete(Self.Data.Item[index]);
+    Self.Data.Add(name, item);
   end;
   Self.Lock.Leave();
 end;

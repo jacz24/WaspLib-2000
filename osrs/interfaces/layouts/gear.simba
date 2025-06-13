@@ -73,9 +73,9 @@ begin
     Self.Config.Key[i] := Self.Sets[i].Name;
 
     for slot := Low(ERSEquipment) to High(ERSEquipment) do
-      Self.Config.Item[i].Item.Item[Ord(slot)].AsString := Self.Sets[i].Items[slot];
+      Self.Config.Item[Self.Sets[i].Name].Item.Item[Ord(slot)].AsString := Self.Sets[i].Items[slot];
 
-    Self.Config.Item[i].Item.Item[Ord(High(ERSEquipment))+1].AsInt := Self.Sets[i].SpecLevel;
+    Self.Config.Item[Self.Sets[i].Name].Item.Item[Ord(High(ERSEquipment))+1].AsInt := Self.Sets[i].SpecLevel;
   end;
 
   Self.Config.SaveConfig();

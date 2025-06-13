@@ -28,7 +28,7 @@ type
     LayoutCombobox: TLazComboBox;
     LayoutName: TLazEdit;
     ListLabel: TLazLabel;
-    UnfilterButton: TLazButton;
+    UnfilterButton, DuplicateButton, RemoveButton: TLazButton;
     ImageBox: TImageBox;
 
     const SLOT_NAMES: TStringArray = [
@@ -71,10 +71,6 @@ begin
   Self.FilteredLists[slot].Items.Add('Nothing');
   Self.FilteredLists[slot].Items.Add('Anything');
   Self.FilteredLists[slot].Items.AddStrings(items);
-  if items <> [] then
-    Self.FilteredLists[slot].ItemIndex := 2
-  else
-    Self.FilteredLists[slot].ItemIndex := 1;
   Self.FilteredLists[slot].Items.EndUpdate();
 end;
 
@@ -141,12 +137,13 @@ procedure TGearFormHelper.OnDuplicateClick(sender: TLazObject);
 var
   gear: TRSGear;
 begin
+  if Self.Index = (High(GearLayouts.Sets) + 1) then Exit;
   gear := GearLayouts.Sets[Self.Index];
   gear.Name += ' duplicate';
   GearLayouts.AddLayout(gear);
-  Self.LayoutCombobox.Items.Add(gear.Name);
+  Self.LayoutCombobox.Items.Insert(High(GearLayouts.Sets), gear.Name);
   Self.LayoutCombobox.ItemIndex := High(GearLayouts.Sets);
-  Self.LayoutOnChange(Self.LayoutCombobox);
+  Self.OnLayoutChange(Self.LayoutCombobox);
 end;
 
 procedure TGearFormHelper.OnRemoveClick(sender: TLazObject);
@@ -155,8 +152,9 @@ begin
 
   GearLayouts.RemoveLayout(Self.Index);
   Self.LayoutCombobox.Items.Delete(Self.Index);
+  Self.Index -= 1;
   Self.LayoutCombobox.ItemIndex := High(GearLayouts.Sets);
-  Self.LayoutOnChange(Self.LayoutCombobox);
+  Self.OnLayoutChange(Self.LayoutCombobox);
 end;
 {$H+}
 
@@ -192,7 +190,7 @@ begin
 end;
 
 
-procedure TGearFormHelper.LayoutOnChange(sender: TLazObject);
+procedure TGearFormHelper.OnLayoutChange(sender: TLazObject);
 var
   slot: ERSEquipment;
 begin
@@ -203,9 +201,18 @@ begin
     for slot := Low(ERSEquipment) to High(ERSEquipment) do
       Self.Gear.Items[slot] := 'Nothing';
     Self.Gear.SpecLevel := 0;
+
+    Self.DuplicateButton.Enabled := False;
+    Self.RemoveButton.Enabled := False;
   end
   else
+  begin
     Self.Gear := GearLayouts.Sets[Self.Index];
+    Self.DuplicateButton.Enabled := True;
+    Self.RemoveButton.Enabled := True;
+  end;
+
+  Self.ItemLists[Self.Selected].ItemIndex := Self.ItemLists[Self.Selected].Items.IndexOf(Self.Gear.Items[Self.Selected]);
   Self.LayoutName.Caption := TLazComboBox(sender).Text;
   Self.UpdateBackground();
 end;
@@ -275,7 +282,7 @@ var
 function TScriptForm.CreateGearTab(): TLazTabSheet;
 var
   lbl: TLazLabel;
-  save, duplicate, remove, read: TLazButton;
+  save, read: TLazButton;
   width: Integer;
   i: Integer;
   slot: ERSEquipment;
@@ -310,7 +317,7 @@ begin
     end;
 
     GearForm.FilteredLists[slot] := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.', width, 340);
-    GearForm.ItemLists[slot].AnchorVertically(search, 10);
+    GearForm.FilteredLists[slot].AnchorVertically(search, 10);
     GearForm.FilteredLists[slot].OnSelectionChange := @GearForm.OnSelectionChange;
     GearForm.FilteredLists[slot].Hide();
     GearForm.FilteredLists[slot].Enabled := False;
@@ -330,7 +337,7 @@ begin
     GearForm.LayoutCombobox.Items.Add(GearLayouts.Sets[i].Name);
   GearForm.LayoutCombobox.Items.Add('New Layout');
   GearForm.LayoutCombobox.ItemIndex := 0;
-  GearForm.LayoutCombobox.OnChange := @GearForm.LayoutOnChange;
+  GearForm.LayoutCombobox.OnChange := @GearForm.OnLayoutChange;
 
   lbl := TLazLabel.CreateEx(Result, 'Layout name:' , 'Select a gear layout.');
   lbl.AnchorVertically(GearForm.LayoutCombobox, 10);
@@ -343,13 +350,13 @@ begin
   save.BorderSpacing.Left := 18;
   save.OnClick := @GearForm.OnSaveClick;
 
-  duplicate := TLazButton.CreateEx(Result, 'Duplicate' , 'Duplicate the current gear layout.');
-  duplicate.AnchorHorizontally(save, 10);
-  duplicate.OnClick := @GearForm.OnDuplicateClick;
+  GearForm.DuplicateButton := TLazButton.CreateEx(Result, 'Duplicate' , 'Duplicate the current gear layout.');
+  GearForm.DuplicateButton.AnchorHorizontally(save, 10);
+  GearForm.DuplicateButton.OnClick := @GearForm.OnDuplicateClick;
 
-  remove := TLazButton.CreateEx(Result, 'Remove' , 'Remove the current gear layout.');
-  remove.AnchorHorizontally(duplicate, 10);
-  remove.OnClick := @GearForm.OnRemoveClick;
+  GearForm.RemoveButton := TLazButton.CreateEx(Result, 'Remove' , 'Remove the current gear layout.');
+  GearForm.RemoveButton.AnchorHorizontally(GearForm.DuplicateButton, 10);
+  GearForm.RemoveButton.OnClick := @GearForm.OnRemoveClick;
 
   GearForm.ImageBox := TImageBox.CreateEx(Result, '', '', 204, 275);
   GearForm.ImageBox.Left   := Integer(Result.Width) - width - 36;
@@ -370,5 +377,5 @@ begin
 
   GearForm.SlotBoxes := Equipment.GetSlots([10, 36]);
   GearForm.UpdateListBox();
-  GearForm.LayoutOnChange(GearForm.LayoutCombobox);
+  GearForm.OnLayoutChange(GearForm.LayoutCombobox);
 end;
