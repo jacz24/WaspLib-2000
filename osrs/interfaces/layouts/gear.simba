@@ -88,5 +88,12 @@ begin
   Self.UpdateConfig();
 end;
 
+procedure TRSGearLayouts.RemoveLayout(index: Integer);
+begin
+  Delete(Self.Sets, index, 1);
+  Self.Config.Delete(index);
+  Self.UpdateConfig();
+end;
+
 var
   GearLayouts: TRSGearLayouts;

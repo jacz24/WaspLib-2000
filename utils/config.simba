@@ -130,6 +130,20 @@ begin
   Self.Lock.Leave();
 end;
 
+procedure TConfigJSON.Delete(index: Integer);
+begin
+  Self.Lock.Enter();
+  Self.Data.Delete(Self.Data.Item[index]);
+  Self.Lock.Leave();
+end;
+
+procedure TConfigJSON.Delete(key: String); overload;
+begin
+  Self.Lock.Enter();
+  Self.Data.Delete(Self.Data.Item[key]);
+  Self.Lock.Leave();
+end;
+
 
 property TConfigJSON.Key(index: Integer): String;
 begin

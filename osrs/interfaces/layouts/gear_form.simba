@@ -127,7 +127,13 @@ end;
 
 procedure TGearFormHelper.OnSaveClick(sender: TLazObject);
 begin
-  GearLayouts.Sets[Self.Index] := Self.Gear;
+  Self.Gear.Name := Self.LayoutName.Text;
+  Self.LayoutCombobox.Items.Strings[Self.Index] := Self.LayoutName.Text;
+
+  if Self.Index = (High(GearLayouts.Sets) + 1) then
+    GearLayouts.AddLayout(Self.Gear)
+  else
+    GearLayouts.Sets[Self.Index] := Self.Gear;
   GearLayouts.UpdateConfig();
 end;
 
@@ -145,7 +151,12 @@ end;
 
 procedure TGearFormHelper.OnRemoveClick(sender: TLazObject);
 begin
+  if Self.Index = (High(GearLayouts.Sets) + 1) then Exit;
 
+  GearLayouts.RemoveLayout(Self.Index);
+  Self.LayoutCombobox.Items.Delete(Self.Index);
+  Self.LayoutCombobox.ItemIndex := High(GearLayouts.Sets);
+  Self.LayoutOnChange(Self.LayoutCombobox);
 end;
 {$H+}
 
@@ -182,10 +193,19 @@ end;
 
 
 procedure TGearFormHelper.LayoutOnChange(sender: TLazObject);
+var
+  slot: ERSEquipment;
 begin
-  WriteLn 'updating layout';
   Self.Index := TLazComboBox(sender).ItemIndex;
-  Self.Gear := GearLayouts.Sets[Self.Index];
+  if Self.Index > High(GearLayouts.Sets) then
+  begin
+    Self.Gear.Name := TLazComboBox(sender).Text;
+    for slot := Low(ERSEquipment) to High(ERSEquipment) do
+      Self.Gear.Items[slot] := 'Nothing';
+    Self.Gear.SpecLevel := 0;
+  end
+  else
+    Self.Gear := GearLayouts.Sets[Self.Index];
   Self.LayoutName.Caption := TLazComboBox(sender).Text;
   Self.UpdateBackground();
 end;
@@ -308,6 +328,7 @@ begin
   GearForm.LayoutCombobox.AnchorVertically(lbl);
   for i := 0 to High(GearLayouts.Sets) do
     GearForm.LayoutCombobox.Items.Add(GearLayouts.Sets[i].Name);
+  GearForm.LayoutCombobox.Items.Add('New Layout');
   GearForm.LayoutCombobox.ItemIndex := 0;
   GearForm.LayoutCombobox.OnChange := @GearForm.LayoutOnChange;
 
