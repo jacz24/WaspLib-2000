@@ -9,7 +9,7 @@ The following contains custom components and methods to be used in a `TLazForm`.
 
 procedure TLazForm.ScaleToDPI();
 begin
-  Self.ScaleBy(Self.PixelsPerInch, 96);
+  Self.ScaleBy(Self.Font.PixelsPerInch, 96);
 end;
 
 (*

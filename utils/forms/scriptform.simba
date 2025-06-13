@@ -24,6 +24,7 @@ Main type for the {ref}`TScriptForm`.
     Form: TLazForm;
     PageControl: TLazPageControl;
     Start: TLazButton;
+    DPI: Integer;
   end;
 
 (*
@@ -99,14 +100,17 @@ var
   lbl: TLazLabel;
 begin
   Self.Form := TLazForm.Create();
+  Self.DPI := Self.Form.Font.PixelsPerInch;
+
   Self.Form.Caption := caption + ' Settings';
   Self.Form.Width := 800;
   Self.Form.Height := 600;
+  Self.Form.ScaleBy(Self.DPI, 96);
 
-  Self.Form.Constraints.MaxWidth := 800;
-  Self.Form.Constraints.MinWidth := 800;
-  Self.Form.Constraints.MaxHeight := 600;
-  Self.Form.Constraints.MinHeight := 600;
+  Self.Form.Constraints.MaxWidth := Self.Form.Width;
+  Self.Form.Constraints.MinWidth := Self.Form.Width;
+  Self.Form.Constraints.MaxHeight := Self.Form.Height;
+  Self.Form.Constraints.MinHeight := Self.Form.Height;
 
   Self.Form.Position := ELazFormPosition.ScreenCenter;
   Self.Form.OnClose  := @Self.OnClose;
