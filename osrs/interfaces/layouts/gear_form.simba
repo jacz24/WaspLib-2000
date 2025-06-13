@@ -15,20 +15,20 @@ several controls to configure the {ref}`TGearLayout`:
 type
   TGearFormHelper = record
     Index: Integer;
-    SelectedSlot: ERSEquipment;
+    Selected: ERSEquipment;
     SlotBoxes: TBoxArray;
 
     Gear: TRSGear;
-
     Tab: TLazTabSheet;
 
-    FilteredItemStrings: array [ERSEquipment] of TStringArray;
-    ItemStrings: array [ERSEquipment] of TStringArray;
+    //this is a bit crazy, 12+12 TLazListBoxes, but it's so the UI feels snappy and responsive.
+    FilteredLists: array [ERSEquipment] of TLazListBox;
+    ItemLists: array [ERSEquipment] of TLazListBox;
 
+    LayoutCombobox: TLazComboBox;
     LayoutName: TLazEdit;
     ListLabel: TLazLabel;
     UnfilterButton: TLazButton;
-    ItemList: TLazListBox;
     ImageBox: TImageBox;
 
     const SLOT_NAMES: TStringArray = [
@@ -43,53 +43,69 @@ procedure TGearFormHelper.UpdateListBox();
 var
   idx, i: Integer;
 begin
-  Self.ItemList.Items.BeginUpdate();
-  Self.ItemList.Clear();
-  Self.ItemList.Items.Add('Nothing');
-  Self.ItemList.Items.Add('Anything');
-
-  if Self.FilteredItemStrings[Self.SelectedSlot] <> [] then
-    Self.ItemList.Items.AddStrings(Self.FilteredItemStrings[Self.SelectedSlot])
-  else
+  if Self.ItemLists[Self.Selected].Items.Count = 0 then
   begin
-    if Self.ItemStrings[Self.SelectedSlot] = [] then
-    begin
-      idx := Ord(Self.SelectedSlot);
-      for i := 0 to GearData.Data.Item[idx].Count-1 do
-        Self.ItemStrings[Self.SelectedSlot] += GearData.Data.Item[idx].Item[i].AsString.Capitalize();
-    end;
+    Self.ItemLists[Self.Selected].Items.BeginUpdate();
+    Self.ItemLists[Self.Selected].Items.Add('Nothing');
+    Self.ItemLists[Self.Selected].Items.Add('Anything');
 
-    Self.ItemList.Items.AddStrings(Self.ItemStrings[Self.SelectedSlot]);
+    idx := Ord(Self.Selected);
+    if idx = 11 then idx := 3;
+    for i := 0 to GearData.Data.Item[idx].Count-1 do
+      Self.ItemLists[Self.Selected].Items.Add(
+        GearData.Data.Item[idx].Item[i].AsString.Capitalize()
+      );
+
+    Self.ItemLists[Self.Selected].Items.EndUpdate();
   end;
-  Self.ItemList.Items.EndUpdate();
+
+  i := Self.ItemLists[Self.Selected].Items.IndexOf(Self.Gear.Items[Self.Selected]);
+  if i > 0 then
+    Self.ItemLists[Self.Selected].ItemIndex := i;
 end;
 
+procedure TGearFormHelper.UpdateFilters(slot: ERSEquipment; items: TStringArray = []);
+begin
+  Self.FilteredLists[slot].Items.BeginUpdate();
+  Self.FilteredLists[slot].Clear();
+  Self.FilteredLists[slot].Items.Add('Nothing');
+  Self.FilteredLists[slot].Items.Add('Anything');
+  Self.FilteredLists[slot].Items.AddStrings(items);
+  if items <> [] then
+    Self.FilteredLists[slot].ItemIndex := 2
+  else
+    Self.FilteredLists[slot].ItemIndex := 1;
+  Self.FilteredLists[slot].Items.EndUpdate();
+end;
+
+procedure TGearFormHelper.DrawItem(slot: ERSEquipment; background: TImage);
+var
+  id: String;
+  img, item: TImage;
+begin
+  id := ItemFinder.Database.Get(Self.Gear.Items[slot].ToLower(), 'item', 'id');
+  img := Self.SLOT_IMG.Copy();
+  item := ItemFinder.GetImage(id);
+
+  img.DrawImage(item, [2,2]);
+  background.DrawImage(img, Self.SlotBoxes[slot].TopLeft);
+end;
 
 procedure TGearFormHelper.UpdateBackground();
 var
   slot: ERSEquipment;
-  bg, item, img: TImage;
+  bg: TImage;
 begin
-  Self.ImageBox.Background.BeginUpdate(False);
   bg := Self.BACKGROUND_IMG.Copy();
 
   for slot := Low(ERSEquipment) to High(ERSEquipment) do
     case Self.Gear.Items[slot] of
       '', 'Nothing': ;
       'Anything': ; //TODO....
-      else
-      begin
-        if slot = ERSEquipment.SECONDARY_AMMO then
-          WriteLn Self.Gear.Items[slot];
-        img := Self.SLOT_IMG.Copy();
-        item := ItemFinder.GetImage(ItemFinder.GetIDs(Self.Gear.Items[slot])[0]);
-        img.DrawImage(item, [2,2]);
-        bg.DrawImage(img, Self.SlotBoxes[slot].TopLeft);
-      end;
+      else Self.DrawItem(slot, bg);
     end;
 
   Self.ImageBox.SetImage(bg);
-  Self.ImageBox.Background.EndUpdate(False);
 end;
 
 
@@ -99,14 +115,37 @@ var
   slot: ERSEquipment;
 begin
   for slot := Low(ERSEquipment) to High(ERSEquipment) do
-    if slot = Self.SelectedSlot then
+    if slot = Self.Selected then
       canvas.DrawBox(Self.SlotBoxes[slot], $00FF00);
 end;
 
 procedure TGearFormHelper.OnSelectionChange(sender: TLazObject; user: Boolean);
 begin
-  Self.Gear.Items[Self.SelectedSlot] := TLazListBox(sender).GetSelectedText();
+  Self.Gear.Items[Self.Selected] := TLazListBox(sender).GetSelectedText();
   Self.UpdateBackground();
+end;
+
+procedure TGearFormHelper.OnSaveClick(sender: TLazObject);
+begin
+  GearLayouts.Sets[Self.Index] := Self.Gear;
+  GearLayouts.UpdateConfig();
+end;
+
+procedure TGearFormHelper.OnDuplicateClick(sender: TLazObject);
+var
+  gear: TRSGear;
+begin
+  gear := GearLayouts.Sets[Self.Index];
+  gear.Name += ' duplicate';
+  GearLayouts.AddLayout(gear);
+  Self.LayoutCombobox.Items.Add(gear.Name);
+  Self.LayoutCombobox.ItemIndex := High(GearLayouts.Sets);
+  Self.LayoutOnChange(Self.LayoutCombobox);
+end;
+
+procedure TGearFormHelper.OnRemoveClick(sender: TLazObject);
+begin
+
 end;
 {$H+}
 
@@ -117,18 +156,34 @@ begin
   i := Self.SlotBoxes.ContainsPoint([x,y]);
   if i >= 0 then
   begin
-    Self.SelectedSlot := ERSEquipment(i);
-    Self.ListLabel.Caption := 'Selected slot: ' + Self.SLOT_NAMES[Self.SelectedSlot];
+    Self.ItemLists[Self.Selected].Hide();
+    Self.ItemLists[Self.Selected].Enabled := False;
+    Self.FilteredLists[Self.Selected].Hide();
+    Self.FilteredLists[Self.Selected].Enabled := False;
+
+    Self.Selected := ERSEquipment(i);
+    Self.ListLabel.Caption := 'Selected slot: ' + Self.SLOT_NAMES[Self.Selected];
     Self.UpdateListBox();
+
+    if Self.UnfilterButton.Enabled then
+    begin
+      Self.FilteredLists[Self.Selected].Show();
+      Self.FilteredLists[Self.Selected].Enabled := True;
+    end
+    else
+    begin
+      Self.ItemLists[Self.Selected].Show();
+      Self.ItemLists[Self.Selected].Enabled := True;
+    end;
   end;
 
   sender.Repaint();
 end;
 
 
-
 procedure TGearFormHelper.LayoutOnChange(sender: TLazObject);
 begin
+  WriteLn 'updating layout';
   Self.Index := TLazComboBox(sender).ItemIndex;
   Self.Gear := GearLayouts.Sets[Self.Index];
   Self.LayoutName.Caption := TLazComboBox(sender).Text;
@@ -139,6 +194,7 @@ procedure TGearFormHelper.OnReadClick(sender: TLazObject);
 var
   btn: TLazButton;
   slot: ERSEquipment;
+  items: TRSItemArray;
 begin
   btn := TLazButton(sender);
   btn.Caption := 'Loading...';
@@ -148,13 +204,23 @@ begin
 
   for slot := Low(ERSEquipment) to High(ERSEquipment) do
   begin
-    Self.FilteredItemStrings[slot] := Equipment.Items.Discover(Ord(slot));
-    if Self.FilteredItemStrings[slot] <> [] then
-      Self.Gear.Items[slot] := Self.FilteredItemStrings[slot][0];
+    items := Equipment.Items.Discover(Ord(slot));
+
+    if items <> [] then
+      Self.Gear.Items[slot] := items[0]
+    else
+      Self.Gear.Items[slot] := 'Nothing';
+
+    Self.UpdateFilters(slot, items);
   end;
 
-  Self.UpdateListBox();
   Self.UpdateBackground();
+
+  Self.ItemLists[Self.Selected].Hide();
+  Self.ItemLists[Self.Selected].Enabled := False;
+  Self.FilteredLists[Self.Selected].Show();
+  Self.FilteredLists[Self.Selected].Enabled := True;
+
   btn.Caption := 'Read From Client';
   btn.Font.Style := [ELazFontStyles.fsBold];
   btn.Enabled := True;
@@ -162,28 +228,26 @@ begin
 end;
 
 procedure TGearFormHelper.OnUnfilterClick(sender: TLazObject);
-var
-  slot: ERSEquipment;
 begin
-  for slot := Low(ERSEquipment) to High(ERSEquipment) do
-    Self.FilteredItemStrings[slot] := [];
-  Self.UpdateListBox();
+  Self.FilteredLists[Self.Selected].Hide();
+  Self.FilteredLists[Self.Selected].Enabled := False;
+
+  Self.ItemLists[Self.Selected].Show();
+  Self.ItemLists[Self.Selected].Enabled := True;
+
   TLazButton(sender).Enabled := False;
 end;
 
-procedure TGearFormHelper.OnClose();
+procedure TGearFormHelper.OnSearchChange(sender: TLazObject);
 var
-  slot: ERSEquipment;
+  i: Integer;
 begin
-  for slot := Low(ERSEquipment) to High(ERSEquipment) do
-  begin
-    Self.Gear := [];
-    Self.FilteredItemStrings[slot] := [];
-    Self.ItemStrings[slot] := [];
-  end;
-
-  Self.SlotBoxes := [];
+  if TLazEdit(sender).IsEmpty() then Exit;
+  i := Self.ItemLists[Self.Selected].Search(TLazEdit(sender).Text);
+  if i > 0 then
+    Self.ItemLists[Self.Selected].ItemIndex := i;
 end;
+
 
 var
   GearForm: TGearFormHelper;
@@ -191,10 +255,11 @@ var
 function TScriptForm.CreateGearTab(): TLazTabSheet;
 var
   lbl: TLazLabel;
-  layout: TLazComboBox;
   save, duplicate, remove, read: TLazButton;
   width: Integer;
   i: Integer;
+  slot: ERSEquipment;
+  search: TLazEdit;
 begin
   GearLayouts.Setup();
   GearData.Setup();
@@ -202,72 +267,72 @@ begin
   GearForm.Tab := Result := Self.CreateTab('Gear Layouts');
   width := 280;
 
-  GearForm.ListLabel := TLazLabel.CreateEx(Result, 'Selected slot: ' + GearForm.SLOT_NAMES[GearForm.SelectedSlot], 'Click a slot on the right side to update the list below.');
-  GearForm.ListLabel.Left := 20;
-  GearForm.ListLabel.Top := 40;
+  GearForm.ListLabel := TLazLabel.CreateEx(Result, 'Selected slot: ' + GearForm.SLOT_NAMES[GearForm.Selected], 'Click a slot on the right side to update the list below.');
+  GearForm.ListLabel.Left := 40;
+  GearForm.ListLabel.Top := 20;
 
-  GearForm.ItemList := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.');
-  GearForm.ItemList.Width := width;
-  GearForm.ItemList.Height := 400;
-  GearForm.ItemList.AnchorLabel(GearForm.ListLabel);
-  GearForm.ItemList.BorderSpacing.Top := 10;
-  GearForm.ItemList.OnSelectionChange := @GearForm.OnSelectionChange;
+  lbl := TLazLabel.CreateEx(Result, 'Search:' , 'Search the list below.');
+  lbl.AnchorVertically(GearForm.ListLabel, 20);
+
+  search := TLazEdit.CreateEx(Result, '', 'Search the list below.', width);
+  search.AnchorVertically(lbl);
+  search.OnChange := @GearForm.OnSearchChange;
+
+  for slot := Low(ERSEquipment) to High(ERSEquipment) do
+  begin
+    GearForm.ItemLists[slot] := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.', width, 340);
+    GearForm.ItemLists[slot].AnchorVertically(search, 10);
+    GearForm.ItemLists[slot].OnSelectionChange := @GearForm.OnSelectionChange;
+    if slot <> ERSEquipment.HEAD then
+    begin
+      GearForm.ItemLists[slot].Hide();
+      GearForm.ItemLists[slot].Enabled := False;
+    end;
+
+    GearForm.FilteredLists[slot] := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.', width, 340);
+    GearForm.ItemLists[slot].AnchorVertically(search, 10);
+    GearForm.FilteredLists[slot].OnSelectionChange := @GearForm.OnSelectionChange;
+    GearForm.FilteredLists[slot].Hide();
+    GearForm.FilteredLists[slot].Enabled := False;
+  end;
 
   GearForm.UnfilterButton := TLazButton.CreateEx(Result, 'Remove list filter', 'Remove the current filter.', width);
-  GearForm.UnfilterButton.AnchorSideTop.Control := GearForm.ItemList;
-  GearForm.UnfilterButton.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
-  GearForm.UnfilterButton.AnchorSideLeft.Control := GearForm.ItemList;
-  GearForm.UnfilterButton.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
-  GearForm.UnfilterButton.BorderSpacing.Top := 10;
+  GearForm.UnfilterButton.AnchorVertically(GearForm.ListLabel, 440);
   GearForm.UnfilterButton.Enabled := False;
   GearForm.UnfilterButton.OnClick := @GearForm.OnUnfilterClick;
 
   lbl := TLazLabel.CreateEx(Result, 'Layout:' , 'Select a gear layout.');
-  lbl.Left := Integer(Result.Width) - width - 60;
-  lbl.Top := 10;
-  layout := TLazComboBox.CreateEx(Result, '', 'Select a gear layout.', width);
-  layout.AnchorLabel(lbl);
+  lbl.Left := Integer(Result.Width) - width - 80;
+  lbl.Top := 20;
+  GearForm.LayoutCombobox := TLazComboBox.CreateEx(Result, '', 'Select a gear layout.', width);
+  GearForm.LayoutCombobox.AnchorVertically(lbl);
   for i := 0 to High(GearLayouts.Sets) do
-    layout.Items.Add(GearLayouts.Sets[i].Name);
-  layout.ItemIndex := 0;
-  layout.OnChange := @GearForm.LayoutOnChange;
+    GearForm.LayoutCombobox.Items.Add(GearLayouts.Sets[i].Name);
+  GearForm.LayoutCombobox.ItemIndex := 0;
+  GearForm.LayoutCombobox.OnChange := @GearForm.LayoutOnChange;
 
   lbl := TLazLabel.CreateEx(Result, 'Layout name:' , 'Select a gear layout.');
-  lbl.AnchorSideTop.Control := layout;
-  lbl.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
-  lbl.AnchorSideLeft.Control := layout;
-  lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
-  lbl.BorderSpacing.Top := 20;
+  lbl.AnchorVertically(GearForm.LayoutCombobox, 10);
 
   GearForm.LayoutName := TLazEdit.CreateEx(Result, '', 'Change the current layout name.', width);
-  GearForm.LayoutName.AnchorLabel(lbl);
+  GearForm.LayoutName.AnchorVertically(lbl);
 
   save := TLazButton.CreateEx(Result, 'Save' , 'Save the current gear layout.');
-  save.AnchorSideTop.Control := GearForm.LayoutName;
-  save.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
-  save.AnchorSideLeft.Control := GearForm.LayoutName;
-  save.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
-  save.BorderSpacing.Around := 10;
+  save.AnchorVertically(GearForm.LayoutName, 10);
+  save.BorderSpacing.Left := 18;
+  save.OnClick := @GearForm.OnSaveClick;
 
   duplicate := TLazButton.CreateEx(Result, 'Duplicate' , 'Duplicate the current gear layout.');
-  duplicate.AnchorSideTop.Control := GearForm.LayoutName;
-  duplicate.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
-  duplicate.AnchorSideLeft.Control := save;
-  duplicate.AnchorSideLeft.Side := ELazAnchorSideReference.asrBottom;
-  duplicate.BorderSpacing.Around := 10;
+  duplicate.AnchorHorizontally(save, 10);
+  duplicate.OnClick := @GearForm.OnDuplicateClick;
 
   remove := TLazButton.CreateEx(Result, 'Remove' , 'Remove the current gear layout.');
-  remove.AnchorSideTop.Control := GearForm.LayoutName;
-  remove.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
-  remove.AnchorSideLeft.Control := duplicate;
-  remove.AnchorSideLeft.Side := ELazAnchorSideReference.asrBottom;
-  remove.BorderSpacing.Around := 10;
+  remove.AnchorHorizontally(duplicate, 10);
+  remove.OnClick := @GearForm.OnRemoveClick;
 
-  GearForm.ImageBox := TImageBox.CreateEx(Result);
-  GearForm.ImageBox.Left   := Integer(Result.Width) - width - 18;
-  GearForm.ImageBox.Top    := 180;
-  GearForm.ImageBox.Width  := 204;
-  GearForm.ImageBox.Height := 275;
+  GearForm.ImageBox := TImageBox.CreateEx(Result, '', '', 204, 275);
+  GearForm.ImageBox.Left   := Integer(Result.Width) - width - 36;
+  GearForm.ImageBox.Top    := 170;
   GearForm.ImageBox.AllowZoom := True;
   GearForm.ImageBox.AllowMoving := False;
   GearForm.ImageBox.ShowScrollBars := False;
@@ -279,17 +344,10 @@ begin
   read := TLazButton.CreateEx(Result, 'Read From Client' , 'Read the layout from the client.');
   read.Width := 204;
   read.Font.Style := [ELazFontStyles.fsBold];
-  read.AnchorSideTop.Control := GearForm.ImageBox;
-  read.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
-  read.AnchorSideLeft.Control := GearForm.ImageBox;
-  read.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
-  read.BorderSpacing.Top := 10;
+  read.AnchorVertically(GearForm.ImageBox, 10);
   read.OnClick := @GearForm.OnReadClick;
 
   GearForm.SlotBoxes := Equipment.GetSlots([10, 36]);
-
   GearForm.UpdateListBox();
-  Self.OnCloseQueue += @GearForm.OnClose;
-
-  GearForm.LayoutOnChange(layout);
+  GearForm.LayoutOnChange(GearForm.LayoutCombobox);
 end;

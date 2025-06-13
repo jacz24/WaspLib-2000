@@ -2,7 +2,8 @@
 
 const
   ENDPOINT = 'https://oldschool.runescape.wiki/api.php?';
-  SILENT: Boolean = True;
+  SILENT: Boolean = False;
+  TEST_ITEM: String = '';
 
 function GetEndPoint(name: String): String;
 begin
@@ -15,8 +16,6 @@ type TSlotArray = array [0..12] of TStringArray;
 
 var
   Slots: TSlotArray;
-
-
 
 function TStringArray.GetStr(): String;
 var
@@ -41,8 +40,10 @@ begin
 end;
 
 procedure FillSlot(item, txt: String);
+var
+  str: String;
 begin
-  if not txt.Contains('equipable = Yes') then
+  if not txt.RegExprExists('equipable(?:[0-9])? = Yes') then
     Exit;
 
   if txt.Contains('slot = weapon') then
@@ -119,6 +120,35 @@ begin
     Slots[ERSEquipment.RING] += item;
 end;
 
+procedure TStringArray.Filter();
+var
+  i: Integer;
+  tmp: String;
+begin
+  for i := High(Self) downto 0 do
+  begin
+    if Self[i].StartsWith('noted ') or Self[i].EndsWith(' 100') or
+       Self[i].EndsWith(' 75') or Self[i].EndsWith(' 50') or
+       Self[i].EndsWith(' 25') or Self[i].EndsWith(' 0') then
+    begin
+      Delete(Self, i, 1);
+      Continue;
+    end;
+
+    //get rid of jewellery charges...
+    if not Self[i].EndsWith(')') then Continue;
+
+    tmp := Self[i].Between('(', ')');
+    if not tmp.IsInteger then Continue;
+
+    tmp := Self[i].Replace('(' + tmp + ')', '(' + ToStr(StrToInt(tmp) + 1) + ')');
+
+    if Self.Contains(tmp) then
+      Delete(Self, i, 1);
+  end;
+end;
+
+
 var
   items: TStringArray;
   i: Integer;
@@ -126,24 +156,33 @@ var
   json, tmp: TJSONItem;
   text: String;
 begin
-  items := FileReadLines(ItemFinder.Database.DataDir + 'item').Unique();
+  ClearSimbaOutput();
 
-  for i := High(items) downto 0 do
-    if items[i].StartsWith('noted ') then
-      Delete(items, i, 1);
+  items := FileReadLines(ItemFinder.Database.DataDir + 'item').Unique();
+  items.Filter();
 
   for i := 0 to High(items) do
   begin
-    if i mod 100 = 0 then
+    if (TEST_ITEM <> '') and (i > 0) then Break;
+    if i mod 300 = 0 then
       WriteLn('Reading information from the wiki ', i, '/', High(items), ' items done.');
 
-    url := GetEndPoint(items[i]);
+    if TEST_ITEM <> '' then
+      url := GetEndPoint(TEST_ITEM)
+    else
+      url := GetEndPoint(items[i]);
+
+    if TEST_ITEM <> '' then
+      WriteLn url;
 
     try
       json := HTTPClient.GetJson(url);
     except
       WriteLn('Failed to fetch: ', items[i]);
     end;
+
+    if TEST_ITEM <> '' then
+      WriteLn json.ToJSON();
 
     if json = nil then
     begin
@@ -168,11 +207,15 @@ begin
       Continue;
     end;
 
-    FillSlot(items[i], text);
+    if TEST_ITEM <> '' then
+      FillSlot(TEST_ITEM, text)
+    else
+      FillSlot(items[i], text);
     json.Free();
   end;
 
   text := '{' + LINE_SEP + Slots.GetStr() + LINE_SEP + '}';
   WriteLn text;
-  FileWrite(GearData.PATH, text);
+  if TEST_ITEM = '' then
+    FileWrite(GearData.PATH, text);
 end;

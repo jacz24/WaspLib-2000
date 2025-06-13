@@ -243,12 +243,24 @@ begin
 end;
 
 
-procedure TLazControl.AnchorLabel(lbl: TLazLabel);
+procedure TLazControl.AnchorVertically(lbl: Pointer; spacing: Integer = 0);
 begin
-  Self.AnchorSideLeft.Control := lbl;
+  Self.AnchorSideLeft.Control := TLazControl(lbl);
   Self.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
-  Self.AnchorSideTop.Control := lbl;
+  Self.AnchorSideTop.Control := TLazControl(lbl);
   Self.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
+  if spacing > 0 then
+    Self.BorderSpacing.Top := spacing;
+end;
+
+procedure TLazControl.AnchorHorizontally(lbl: Pointer; spacing: Integer = 0);
+begin
+  Self.AnchorSideTop.Control := TLazControl(lbl);
+  Self.AnchorSideTop.Side := ELazAnchorSideReference.asrTop;
+  Self.AnchorSideLeft.Control := TLazControl(lbl);
+  Self.AnchorSideLeft.Side := ELazAnchorSideReference.asrBottom;
+  if spacing > 0 then
+    Self.BorderSpacing.Left := 10;
 end;
 
 
@@ -597,8 +609,9 @@ end;
 
 function TLazStrings.Search(value: String; lo: Integer = 0): Integer;
 begin
+  value := value.ToLower();
   for Result := lo to Self.Count - 1 do
-    if value in Self.Strings[Result] then
+    if value in Self.Strings[Result].ToLower() then
       Exit;
   Result := -1;
 end;

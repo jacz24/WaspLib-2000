@@ -18,6 +18,19 @@ Type that represents a gear layout.
     SpecLevel: Integer;
   end;
 
+function TRSGear.ToJSON(): TJSONItem;
+var
+  slot: ERSEquipment;
+begin
+  Result := NewJSONObject();
+
+  for slot := Low(ERSEquipment) to High(ERSEquipment) do
+    Result.AddString(ToStr(slot).After('ERSEquipment.').ToLower(), Self.Items[slot]);
+
+  Result.AddInt('spec_level', Self.SpecLevel);
+end;
+
+type
 (*
 ## TRSGearLayouts
 Main type for the {ref}`Gear Layouts`.
@@ -48,6 +61,31 @@ begin
   except
     FileDelete(Self.Config.Path); //corrupted config.
   end;
+end;
+
+procedure TRSGearLayouts.UpdateConfig();
+var
+  i: Integer;
+  slot: ERSEquipment;
+begin
+  for i := 0 to High(Self.Sets) do
+  begin
+    Self.Config.Key[i] := Self.Sets[i].Name;
+
+    for slot := Low(ERSEquipment) to High(ERSEquipment) do
+      Self.Config.Item[i].Item.Item[Ord(slot)].AsString := Self.Sets[i].Items[slot];
+
+    Self.Config.Item[i].Item.Item[Ord(High(ERSEquipment))+1].AsInt := Self.Sets[i].SpecLevel;
+  end;
+
+  Self.Config.SaveConfig();
+end;
+
+procedure TRSGearLayouts.AddLayout(gear: TRSGear);
+begin
+  Self.Sets += gear;
+  Self.Config.Add(gear.Name, gear.ToJSON());
+  Self.UpdateConfig();
 end;
 
 var

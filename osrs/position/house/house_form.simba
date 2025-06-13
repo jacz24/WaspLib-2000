@@ -294,7 +294,7 @@ begin
       combobox.Name := 'garden_exit_portal';
       combobox.ItemIndex := SetCount(room.Objects);
       combobox.OnChange := @Self.ObjectUpdate;
-      combobox.AnchorLabel(lbl);
+      combobox.AnchorVertically(lbl);
     end;
 
     EHouseRoom.KITCHEN:
@@ -307,7 +307,7 @@ begin
       combobox.Name := 'larder';
       combobox.ItemIndex := SetCount(room.Objects);
       combobox.OnChange := @Self.ObjectUpdate;
-      combobox.AnchorLabel(lbl);
+      combobox.AnchorVertically(lbl);
     end;
 
     EHouseRoom.WORKSHOP:
@@ -320,7 +320,7 @@ begin
       combobox.Name := 'repair_stand';
       combobox.ItemIndex := SetCount(room.Objects);
       combobox.OnChange := @Self.ObjectUpdate;
-      combobox.AnchorLabel(lbl);
+      combobox.AnchorVertically(lbl);
     end;
 
     EHouseRoom.BEDROOM:
@@ -333,7 +333,7 @@ begin
       combobox.Name := 'servant_bag';
       combobox.ItemIndex := SetCount(room.Objects);
       combobox.OnChange := @Self.ObjectUpdate;
-      combobox.AnchorLabel(lbl);
+      combobox.AnchorVertically(lbl);
     end;
 
     EHouseRoom.QUEST_HALL:
@@ -348,7 +348,7 @@ begin
       else if EHouseObject.GLORY in room.Objects then combobox.ItemIndex := 1
       else combobox.ItemIndex := 2;
       combobox.OnChange := @Self.ObjectUpdate;
-      combobox.AnchorLabel(lbl);
+      combobox.AnchorVertically(lbl);
     end;
 
     EHouseRoom.STUDY:
@@ -368,7 +368,7 @@ begin
       else
         combobox.ItemIndex := SetFirst(room.Objects) - Ord(EHouseObject.OAK_LECTERN) + 1;
       combobox.OnChange := @Self.ObjectUpdate;
-      combobox.AnchorLabel(lbl);
+      combobox.AnchorVertically(lbl);
     end;
 
     EHouseRoom.CHAPEL:
@@ -386,7 +386,7 @@ begin
       else
         combobox.ItemIndex := SetFirst(tmp) - Ord(EHouseObject.OAK_ALTAR) + 1;
       combobox.OnChange := @Self.ObjectUpdate;
-      combobox.AnchorLabel(lbl);
+      combobox.AnchorVertically(lbl);
 
       lbl := TLazLabel.CreateEx(Self.ObjectsPanel, 'Incense burners:', 'Does this room have an incense burner?');
       lbl.AnchorSideTop.Control := combobox;
@@ -400,7 +400,7 @@ begin
       tmp := room.Objects - CHAPEL_ALTARS;
       combobox.ItemIndex := Min(1, SetCount(tmp));
       combobox.OnChange := @Self.ObjectUpdate;
-      combobox.AnchorLabel(lbl);
+      combobox.AnchorVertically(lbl);
     end;
 
     EHouseRoom.PORTAL_CHAMBER:
@@ -426,7 +426,7 @@ begin
       combobox.Name := 'left_portal';
       combobox.ItemIndex := Ord(House.Loader.TeleportRooms[index.Y, index.X].Left);
       combobox.OnChange := @Self.ObjectUpdate;
-      combobox.AnchorLabel(lbl);
+      combobox.AnchorVertically(lbl);
 
       lbl := TLazLabel.CreateEx(Self.ObjectsPanel, 'Middle portal:', 'Does this room have a portal in front of it''s entrance?');
       lbl.AnchorSideTop.Control := combobox;
@@ -440,7 +440,7 @@ begin
       combobox.Name := 'middle_portal';
       combobox.ItemIndex := Ord(House.Loader.TeleportRooms[index.Y, index.X].Middle);
       combobox.OnChange := @Self.ObjectUpdate;
-      combobox.AnchorLabel(lbl);
+      combobox.AnchorVertically(lbl);
 
       lbl := TLazLabel.CreateEx(Self.ObjectsPanel, 'Right portal:', 'Does this room have a portal to the right of it''s entrance?');
       lbl.AnchorSideTop.Control := combobox;
@@ -453,7 +453,7 @@ begin
       combobox.Name := 'right_portal';
       combobox.ItemIndex := Ord(House.Loader.TeleportRooms[index.Y, index.X].Right);
       combobox.OnChange := @Self.ObjectUpdate;
-      combobox.AnchorLabel(lbl);
+      combobox.AnchorVertically(lbl);
     end;
 
     EHouseRoom.PORTAL_NEXUS:
@@ -471,7 +471,7 @@ begin
         else combobox.ItemIndex := 0;
       end;
       combobox.OnChange := @Self.ObjectUpdate;
-      combobox.AnchorLabel(lbl);
+      combobox.AnchorVertically(lbl);
 
       lbl := TLazLabel.CreateEx(Self.ObjectsPanel, 'Right amulet:', 'Does this room have a  digsite pendant or a xeric''s talisman?');
       lbl.AnchorSideTop.Control := combobox;
@@ -489,7 +489,7 @@ begin
         else combobox.ItemIndex := 0;
       end;
       combobox.OnChange := @Self.ObjectUpdate;
-      combobox.AnchorLabel(lbl);
+      combobox.AnchorVertically(lbl);
 
       lbl := TLazLabel.CreateEx(Self.ObjectsPanel, 'Portal nexus:', 'Does this room have a portal nexus?');
       lbl.AnchorSideTop.Control := combobox;
@@ -503,7 +503,7 @@ begin
       combobox.Name := 'nexus';
       combobox.ItemIndex := Int32(Boolean(EHouseObject.NEXUS in room.Objects));
       combobox.OnChange := @Self.ObjectUpdate;
-      combobox.AnchorLabel(lbl);
+      combobox.AnchorVertically(lbl);
     end;
 
     EHouseRoom.SUPERIOR_GARDEN:
@@ -523,7 +523,7 @@ begin
         combobox.ItemIndex := SetFirst(tmp) - Ord(EHouseObject.RESTORATION_POOL) + 1;
 
       combobox.OnChange := @Self.ObjectUpdate;
-      combobox.AnchorLabel(lbl);
+      combobox.AnchorVertically(lbl);
 
       lbl := TLazLabel.CreateEx(Self.ObjectsPanel, 'Teleport:', 'Does this room have a teleport?');
       lbl.AnchorSideTop.Control := combobox;
@@ -543,7 +543,7 @@ begin
         combobox.ItemIndex := SetFirst(tmp) - Ord(EHouseObject.SPIRIT_TREE) + 1;
 
       combobox.OnChange := @Self.ObjectUpdate;
-      combobox.AnchorLabel(lbl);
+      combobox.AnchorVertically(lbl);
     end;
 
     EHouseRoom.ACHIEVEMENT_GALLERY:
@@ -565,7 +565,7 @@ begin
         combobox.ItemIndex := 0;
 
       combobox.OnChange := @Self.ObjectUpdate;
-      combobox.AnchorLabel(lbl);
+      combobox.AnchorVertically(lbl);
 
       lbl := TLazLabel.CreateEx(Self.ObjectsPanel, 'Altar:', 'Does this room have an altar?');
       lbl.AnchorSideTop.Control := combobox;
@@ -588,7 +588,7 @@ begin
       else
         combobox.ItemIndex := 0;
       combobox.OnChange := @Self.ObjectUpdate;
-      combobox.AnchorLabel(lbl);
+      combobox.AnchorVertically(lbl);
 
       lbl := TLazLabel.CreateEx(Self.ObjectsPanel, 'Cape hanger:', 'Does this room have a cape hanger?');
       lbl.AnchorSideTop.Control := combobox;
@@ -603,7 +603,7 @@ begin
 
       combobox.ItemIndex := Int32(Boolean(EHouseObject.CAPE_HANGER in room.Objects));
       combobox.OnChange := @Self.ObjectUpdate;
-      combobox.AnchorLabel(lbl);
+      combobox.AnchorVertically(lbl);
     end;
   end;
 
@@ -752,7 +752,7 @@ begin
   Result.OnChange := @Self.OnTeleportChange;
 
   if caption <> nil then
-    Result.AnchorLabel(caption);
+    Result.AnchorVertically(caption);
 end;
 
 
@@ -816,7 +816,7 @@ begin
     'Brimhaven', 'Yanille', 'Prifddinas'
   ]);
   location.Width := 165;
-  location.AnchorLabel(lbl);
+  location.AnchorVertically(lbl);
   location.OnChange := @HouseForm.LocationOnChange;
 
   lbl := TLazLabel.CreateEx(panel, 'Decoration:', 'Change your house decoration.');
@@ -831,7 +831,7 @@ begin
     'Hosidius house', 'Cosy cabin'
   ]);
   decoration.Width := 165;
-  decoration.AnchorLabel(lbl);
+  decoration.AnchorVertically(lbl);
   decoration.OnChange := @HouseForm.DecorationOnChange;
 
   lbl := TLazLabel.CreateEx(panel, 'Room:', 'Change the selected room.');
@@ -850,7 +850,7 @@ begin
   ]);
   HouseForm.RoomCombobox.Items.EndUpdate();
   HouseForm.RoomCombobox.Width := 165;
-  HouseForm.RoomCombobox.AnchorLabel(lbl);
+  HouseForm.RoomCombobox.AnchorVertically(lbl);
   HouseForm.RoomCombobox.OnChange := @HouseForm.RoomOnChange;
 
   rotateLeft := TLazButton.CreateEx(panel, 'Rotate Left', 'Rotate the current room counter clockwise.');

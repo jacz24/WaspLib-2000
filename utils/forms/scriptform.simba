@@ -24,9 +24,6 @@ Main type for the {ref}`TScriptForm`.
     Form: TLazForm;
     PageControl: TLazPageControl;
     Start: TLazButton;
-
-    RunOnClose: Boolean;
-    OnCloseQueue: array of procedure() of object;
   end;
 
 (*
@@ -56,9 +53,7 @@ procedure TScriptForm.OnClose(sender: TLazObject; var closeAction: ELazFormClose
 var
   i: Integer;
 begin
-  if not Self.RunOnClose then TerminateScript();
-  for i := 0 to High(Self.OnCloseQueue) do
-    Self.OnCloseQueue[i]();
+  TerminateScript();
 end;
 
 (*
@@ -84,7 +79,7 @@ end;
 *)
 procedure TScriptForm.OnStart(sender: TLazObject);
 begin
-  Self.RunOnClose := True;
+  Self.Form.OnClose := nil;
   Self.Form.Close();
 end;
 {$H+}

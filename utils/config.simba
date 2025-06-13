@@ -123,10 +123,29 @@ begin
 end;
 
 
+procedure TConfigJSON.Add(key: String; item: TJSONItem);
+begin
+  Self.Lock.Enter();
+  Self.Data.Add(key, item);
+  Self.Lock.Leave();
+end;
+
+
 property TConfigJSON.Key(index: Integer): String;
 begin
   Self.Lock.Enter();
   Result := Self.Data.Key[index];
+  Self.Lock.Leave();
+end;
+
+property TConfigJSON.Key(index: Integer; name: String);
+begin
+  Self.Lock.Enter();
+  if name <> Self.Data.Key[index] then
+  begin
+    Self.Data.Add(name, Self.Data.Item[index]);
+    Self.Data.Delete(Self.Data.Item[index]);
+  end;
   Self.Lock.Leave();
 end;
 
