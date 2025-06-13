@@ -75,7 +75,7 @@ Summary: It includes this file until the current file is reached.
 {$IFNDEF WL_MAGIC_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/gametabs/magic.simba}
 
 {$IFNDEF WL_GROUPING_INCLUDED}            {$INCLUDE_ONCE osrs/interfaces/gametabs/grouping.simba}
-{$IFNDEF WL_FRIENDS_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/gametabs/ffriends.simba}
+{$IFNDEF WL_FRIENDS_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/gametabs/friends.simba}
 {$IFNDEF WL_ACCOUNT_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/gametabs/account.simba}
 {$IFNDEF WL_WORLDSWITCHER_INCLUDED}       {$INCLUDE_ONCE osrs/interfaces/gametabs/worldswitcher.simba}
 {$IFNDEF WL_LOGOUT_INCLUDED}              {$INCLUDE_ONCE osrs/interfaces/gametabs/logout.simba}
