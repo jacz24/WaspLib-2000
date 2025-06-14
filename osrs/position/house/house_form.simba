@@ -13,7 +13,18 @@ several controls to configure your {ref}`TRSHouse`:
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
+(*
+## THouseFormHelper
+The `THouseFormHelper` type is, as it's name implies a helper type for the
+`House Form`.
+
+It has a lot of methods and callbacks that are hidden by default and won't be mentioned on
+this page because they are internal methods you shouldn't touch.
+
+Do feel free to read the source code though if you so desire.
+*)
   THouseFormHelper = record
+    {%codetools off}
     MatrixIdx, SelectedIdx: TPoint;
     Grid: TBoxArray;
     GridTPAs: T2DPointArray;
@@ -21,8 +32,10 @@ type
     RoomCombobox: TLazComboBox;
     ImageBox: TImageBox;
     ObjectsPanel: TLazPanel;
+    {%codetools on}
   end;
 
+{%codetools off}
 procedure THouseFormHelper.DrawGrid(img: TImage);
 var
   i: Integer;
@@ -735,7 +748,7 @@ begin
 
   Self.RefreshObjects(House.Loader.ReadRoom(Self.MatrixIdx));
 end;
-
+{%codetools on}
 
 function THouseFormHelper.CreateTeleportCombobox(owner: Pointer; caption: TLazLabel = nil): TLazComboBox;
 var
@@ -758,6 +771,10 @@ end;
 
 
 var
+(*
+## HouseForm variable
+Global {ref}`THouseFormHelper` variable.
+*)
   HouseForm: THouseFormHelper;
 
 (*
