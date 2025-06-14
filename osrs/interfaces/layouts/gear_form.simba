@@ -153,7 +153,12 @@ begin
     Self.LinkedComboboxes[i].Items.Strings[Self.Index] := Self.LayoutName.Text;
 
   if Self.Index = (High(GearLayouts.Sets) + 1) then
-    GearLayouts.AddLayout(Self.Gear)
+  begin
+    GearLayouts.AddLayout(Self.Gear);
+    Self.LayoutCombobox.Items.Add('New Layout');
+    Self.DuplicateButton.Enabled := True;
+    Self.RemoveButton.Enabled := True;
+  end
   else
     GearLayouts.Sets[Self.Index] := Self.Gear;
   GearLayouts.UpdateConfig();
@@ -188,8 +193,8 @@ begin
   for i := 0 to High(Self.LinkedComboboxes) do
     Self.LinkedComboboxes[i].Items.Delete(Self.Index);
 
-  Self.Index -= 1;
-  Self.LayoutCombobox.ItemIndex := High(GearLayouts.Sets);
+  Self.Index := Max(Self.Index-1, 0);
+  Self.LayoutCombobox.ItemIndex := Max(High(GearLayouts.Sets), 0);
   Self.OnLayoutChange(Self.LayoutCombobox);
 end;
 {$H+}
