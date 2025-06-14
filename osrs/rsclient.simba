@@ -68,7 +68,8 @@ begin
 
     case GetRootWindow().GetTitle() of
       'Old School RuneScape': Result := ERSClient.LEGACY;
-      'RuneLite': Result := ERSClient.RUNELITE;
+      else if GetRootWindow().GetTitle().Contains('RuneLite') then
+        Result := ERSClient.RUNELITE;
     end;
   end;
 end;
