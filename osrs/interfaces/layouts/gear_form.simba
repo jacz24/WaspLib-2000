@@ -24,7 +24,7 @@ this page because they are internal methods you shouldn't touch.
 Do feel free to read the source code though if you so desire.
 *)
   TGearFormHelper = record
-    {%codetools on}
+    {%codetools off}
     Index: Integer;
     Selected: ERSEquipment;
     Gear: TRSGear;
@@ -45,7 +45,7 @@ Do feel free to read the source code though if you so desire.
     {%codetools on}
   end;
 
-{%codetools on}
+{%codetools off}
 procedure TGearFormHelper.UpdateListBox();
 var
   idx, i: Integer;
