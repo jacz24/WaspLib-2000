@@ -167,7 +167,6 @@ WriteLn XPBar.IsEnabled();
 *)
 function TRSXPBar.IsOpen(): Boolean;
 begin
-  Exit(True);
   Result := Target.HasColor($B0E4EF, 0, 50, Self.Button.Bounds);
 end;
 

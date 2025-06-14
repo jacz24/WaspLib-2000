@@ -7,7 +7,7 @@ methods used to interact and navigate an account's POH:
 ```
 
 For {ref}`House` to work properly you need to setup it's {ref}`HouseLoader`,
-which you can do either via the {ref}`HouseFormTab` or via the
+which you can do either via the {ref}`House Form` or via the
 {ref}`HouseViewer`.
 *)
 

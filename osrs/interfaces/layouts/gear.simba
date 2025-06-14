@@ -2,6 +2,8 @@
 # Gear Layouts
 The `Gear Layouts` is a handler for OSRS gear.
 "Gear" refers to as any equippable item in the game.
+
+You can configure gear manually but the recommended way is to use {ref}`Gear Form`.
 *)
 
 {$DEFINE WL_GEAR_LAYOUTS_INCLUDED}
@@ -15,7 +17,6 @@ Type that represents a gear layout.
   TRSGear = record
     Name: String;
     Items: array [ERSEquipment] of TRSItem;
-    SpecLevel: Integer;
   end;
 
 function TRSGear.ToJSON(): TJSONItem;
@@ -26,8 +27,6 @@ begin
 
   for slot := Low(ERSEquipment) to High(ERSEquipment) do
     Result.AddString(ToStr(slot).After('ERSEquipment.').ToLower(), Self.Items[slot]);
-
-  Result.AddInt('spec_level', Self.SpecLevel);
 end;
 
 type
@@ -55,8 +54,6 @@ begin
 
       for slot := Low(ERSEquipment) to High(ERSEquipment) do
         Self.Sets[i].Items[slot] := Self.Config.Data.Item[i].Item[Ord(slot)].AsString;
-
-      Self.Sets[i].SpecLevel := Self.Config.Data.Item[i].Item[Ord(High(ERSEquipment))+1].AsInt;
     end;
   except
     FileDelete(Self.Config.Path); //corrupted config.
@@ -74,8 +71,6 @@ begin
 
     for slot := Low(ERSEquipment) to High(ERSEquipment) do
       Self.Config.Data.Item[Self.Sets[i].Name].Item[Ord(slot)].AsString := Self.Sets[i].Items[slot];
-
-    Self.Config.Data.Item[Self.Sets[i].Name].Item[Ord(High(ERSEquipment))+1].AsInt := Self.Sets[i].SpecLevel;
   end;
 
   Self.Config.SaveConfig();
