@@ -6,15 +6,19 @@ library configurations in either JSON or INI formats.
 {$DEFINE WL_CONFIG_INCLUDED}
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
-type
-  PConfigJSON = ^TConfigJSON;
-
-  TThreadedJSON = record
-    Key: String;
-    Item: TJSONItem;
-    Parent: PConfigJSON;
+property TJSONItem.Key(index: Integer; name: String);
+var
+  item: TJSONItem;
+begin
+  if name <> Self.Key[index] then
+  begin
+    item := Self.Item[index].Clone();
+    Self.Delete(Self.Item[index]);
+    Self.Add(name, item);
   end;
+end;
 
+type
 (*
 ## TConfigJSON
 Type responsible for dealing with JSON configuration files.
@@ -22,8 +26,6 @@ Type responsible for dealing with JSON configuration files.
   TConfigJSON = record
     Path: String;
     Data: TJSONItem;
-    Lock: TLock;
-    ThreadManager: TThreadManager;
   end;
 
 (*
@@ -60,50 +62,7 @@ begin
   else
     Self.Data := NewJSONObject();
 
-  Self.Lock := TLock.Create();
-  Self.ThreadManager.Init(2, EDebugLevel.NONE);
-end;
-
-(*
-## TConfigJSON.Free
-```pascal
-procedure TConfigJSON.Free();
-```
-Properly cleans up all resources used by the TConfigJSON instance.
-Call this when you're done with a config to prevent memory leaks.
-*)
-procedure TConfigJSON.Free();
-begin
-  Self.ThreadManager.Free();
-  if Assigned(Self.Lock) then
-  begin
-    Self.Lock.Free();
-    Self.Lock := nil;
-  end;
-  if Assigned(Self.Data) then
-  begin
-    Self.Data.Free();
-    Self.Data := nil;
-  end;
-end;
-
-procedure TConfigJSON._FileSave();
-var
-  path, json: String;
-begin
-  Self.Lock.Enter();
-  try
-    if Self.Data = nil then
-      Exit;
-
-    path := Self.Path;
-    json := Self.Data.ToJSON();
-  finally
-    Self.Lock.Leave();
-  end;
-
-  if not FileWrite(path, json) then
-    raise GetDebugLn('TConfigJSON.' + PathExtractNameWithoutExt(path), 'Failed to save config.');
+  AddOnTerminate(@Self.Data.Free);
 end;
 
 (*
@@ -112,188 +71,12 @@ end;
 procedure TConfigJSON.SaveConfig();
 ```
 Used to save your `TConfigJSON`.
-This submits the save operation to the thread pool for asynchronous execution.
 *)
 procedure TConfigJSON.SaveConfig();
-var
-  TaskID: String;
 begin
-  TaskID := 'ConfigSave_' + PathExtractNameWithoutExt(Self.Path);
-  Self.ThreadManager.Submit(TaskID, @Self._FileSave);
+  if not FileWrite(Self.Path, Self.Data.ToJSON()) then
+    raise GetDebugLn('TConfigJSON.' + PathExtractNameWithoutExt(Self.Path), 'Failed to save config.');
 end;
-
-
-procedure TConfigJSON.Add(key: String; item: TJSONItem);
-begin
-  Self.Lock.Enter();
-  Self.Data.Add(key, item);
-  Self.Lock.Leave();
-end;
-
-procedure TConfigJSON.Delete(index: Integer);
-begin
-  Self.Lock.Enter();
-  Self.Data.Delete(Self.Data.Item[index]);
-  Self.Lock.Leave();
-end;
-
-procedure TConfigJSON.Delete(key: String); overload;
-begin
-  Self.Lock.Enter();
-  Self.Data.Delete(Self.Data.Item[key]);
-  Self.Lock.Leave();
-end;
-
-
-property TConfigJSON.Key(index: Integer): String;
-begin
-  Self.Lock.Enter();
-  Result := Self.Data.Key[index];
-  Self.Lock.Leave();
-end;
-
-property TConfigJSON.Key(index: Integer; name: String);
-var
-  item: TJSONItem;
-begin
-  Self.Lock.Enter();
-  if name <> Self.Data.Key[index] then
-  begin
-    item := Self.Data.Item[index].Clone();
-    Self.Data.Delete(Self.Data.Item[index]);
-    Self.Data.Add(name, item);
-  end;
-  Self.Lock.Leave();
-end;
-
-
-property TConfigJSON.Item(index: Integer): TThreadedJSON;
-begin
-  Self.Lock.Enter();
-  Result := [Self.Data.Key[index], Self.Data.Item[index], @Self];
-  Self.Lock.Leave();
-end;
-
-property TConfigJSON.Item(key: String): TThreadedJSON;
-begin
-  Self.Lock.Enter();
-  Result := [key, Self.Data.Item[key], @Self];
-  Self.Lock.Leave();
-end;
-
-property TConfigJSON.Count: Integer;
-begin
-  Self.Lock.Enter();
-  Result := Self.Data.Count;
-  Self.Lock.Leave();
-end;
-
-
-property TThreadedJSON.AsInt: Int64;
-begin
-  Self.Parent^.Lock.Enter();
-  if Self.Item = nil then
-    Result := 0
-  else
-    Result := Self.Item.AsInt;
-  Self.Parent^.Lock.Leave();
-end;
-
-property TThreadedJSON.AsInt(value: Int64);
-begin
-  Self.Parent^.Lock.Enter();
-  if Self.Item = nil then
-    Self.Parent^.Data.AddInt(Self.Key, value)
-  else
-    Self.Item.AsInt := value;
-  Self.Parent^.Lock.Leave();
-end;
-
-
-property TThreadedJSON.AsBool: Boolean;
-begin
-  Self.Parent^.Lock.Enter();
-  if Self.Item = nil then
-    Result := False
-  else
-    Result := Self.Item.AsBool;
-  Self.Parent^.Lock.Leave();
-end;
-
-property TThreadedJSON.AsBool(value: Boolean);
-begin
-  Self.Parent^.Lock.Enter();
-  if Self.Item = nil then
-    Self.Parent^.Data.AddBool(Self.Key, value)
-  else
-    Self.Item.AsBool := value;
-  Self.Parent^.Lock.Leave();
-end;
-
-
-property TThreadedJSON.AsFloat: Double;
-begin
-  Self.Parent^.Lock.Enter();
-  if Self.Item = nil then
-    Result := 0.0
-  else
-    Result := Self.Item.AsFloat;
-  Self.Parent^.Lock.Leave();
-end;
-
-property TThreadedJSON.AsFloat(value: Double);
-begin
-  Self.Parent^.Lock.Enter();
-  if Self.Item = nil then
-    Self.Parent^.Data.AddFloat(Self.Key, value)
-  else
-    Self.Item.AsFloat := value;
-  Self.Parent^.Lock.Leave();
-end;
-
-
-property TThreadedJSON.AsString: String;
-begin
-  Self.Parent^.Lock.Enter();
-  if Self.Item = nil then
-    Result := ''
-  else
-    Result := Self.Item.AsString;
-  Self.Parent^.Lock.Leave();
-end;
-
-property TThreadedJSON.AsString(value: String);
-begin
-  Self.Parent^.Lock.Enter();
-  if Self.Item = nil then
-    Self.Parent^.Data.AddString(Self.Key, value)
-  else
-    Self.Item.AsString := value;
-  Self.Parent^.Lock.Leave();
-end;
-
-
-property TThreadedJSON.AsUnicodeString: UnicodeString;
-begin
-  Self.Parent^.Lock.Enter();
-  if Self.Item = nil then
-    Result := ''
-  else
-    Result := Self.Item.AsUnicodeString;
-  Self.Parent^.Lock.Leave();
-end;
-
-property TThreadedJSON.AsUnicodeString(value: UnicodeString);
-begin
-  Self.Parent^.Lock.Enter();
-  if Self.Item = nil then
-    Self.Parent^.Data.AddString(Self.Key, value)
-  else
-    Self.Item.AsUnicodeString := value;
-  Self.Parent^.Lock.Leave();
-end;
-
-
 
 type
   TConfigINI  = record

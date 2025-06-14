@@ -4,6 +4,7 @@ var
   form: TScriptForm;
 begin
   form.Setup();
+
   form.CreateGearTab();
   form.Run();
 end.

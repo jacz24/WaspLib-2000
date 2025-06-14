@@ -614,21 +614,21 @@ end;
 procedure THouseFormHelper.OnTeleportChange(sender: TLazObject);
 begin
   House.TeleportMode := EHouseTeleportMode(TLazCombobox(sender).ItemIndex);
-  House.Loader.Config.Item['TeleportMode'].AsInt := Ord(House.TeleportMode);
+  House.Loader.Config.Data.Item['TeleportMode'].AsInt := Ord(House.TeleportMode);
   House.Loader.Config.SaveConfig();
 end;
 
 procedure THouseFormHelper.LocationOnChange(sender: TLazObject);
 begin
   House.Loader.Location := EHouseLocation(TLazComboBox(sender).ItemIndex);
-  House.Loader.Config.Item['Location'].AsInt := Ord(House.Loader.Location);
+  House.Loader.Config.Data.Item['Location'].AsInt := Ord(House.Loader.Location);
   House.Loader.Config.SaveConfig();
 end;
 
 procedure THouseFormHelper.DecorationOnChange(sender: TLazObject);
 begin
   House.Loader.SetColors(EHouseDecoration(TLazComboBox(sender).ItemIndex));
-  House.Loader.Config.Item['Decoration'].AsInt := Ord(House.Loader.Decoration);
+  House.Loader.Config.Data.Item['Decoration'].AsInt := Ord(House.Loader.Decoration);
   House.Loader.Config.SaveConfig();
   House.Loader.Redraw();
   Self.Redraw();
@@ -745,7 +745,7 @@ begin
   Result.Items.AddStrings(['Spell', 'Tablet', 'Contruction/Max cape']);
 
   House.Loader.SetupConfig();
-  i := House.Loader.Config.Item['TeleportMode'].AsInt;
+  i := House.Loader.Config.Data.Item['TeleportMode'].AsInt;
 
   House.TeleportMode := EHouseTeleportMode(i);
   Result.ItemIndex := i;
@@ -799,6 +799,7 @@ begin
   Result.OnShow := @HouseForm.OnShow;
 
   panel := TLazPanel.CreateEx(Result);
+  panel.Width := 170;
   panel.Align := ELazAlign.Left;
 
   HouseForm.ImageBox := TImageBox.CreateEx(Result);
@@ -880,8 +881,7 @@ begin
   loader.AnchorSideLeft.Side := ELazAnchorSideReference.asrCenter;
   loader.OnClick := @HouseForm.OnReadClick;
 
-  HouseForm.ObjectsPanel := TLazPanel.CreateEx(panel);
-  HouseForm.ObjectsPanel.Height := 210;
+  HouseForm.ObjectsPanel := TLazPanel.CreateEx(panel, 170, 210);
   HouseForm.ObjectsPanel.AnchorSideTop.Control := loader;
   HouseForm.ObjectsPanel.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
   HouseForm.ObjectsPanel.BorderSpacing.Top := 50;

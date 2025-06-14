@@ -24,7 +24,6 @@ Main type for the {ref}`TScriptForm`.
     Form: TLazForm;
     PageControl: TLazPageControl;
     Start: TLazButton;
-    DPI: Integer;
   end;
 
 (*
@@ -98,14 +97,14 @@ procedure TScriptForm.Setup(caption: String = 'WaspLib');
 var
   panel: TLazPanel;
   lbl: TLazLabel;
+  dpi: Integer;
 begin
   Self.Form := TLazForm.Create();
-  Self.DPI := Self.Form.Font.PixelsPerInch;
+  dpi := Self.Form.Font.PixelsPerInch;
 
   Self.Form.Caption := caption + ' Settings';
   Self.Form.Width := 800;
   Self.Form.Height := 600;
-  Self.Form.ScaleBy(Self.DPI, 96);
 
   Self.Form.Constraints.MaxWidth := Self.Form.Width;
   Self.Form.Constraints.MinWidth := Self.Form.Width;
@@ -173,8 +172,8 @@ function TScriptForm.CreateTab(caption: String): TLazTabSheet;
 var
   w, h: Integer;
 begin
-  w := Self.PageControl.Width;
-  h := Self.PageControl.Height;
+  w := Round(Self.PageControl.Width / FormUtils.Scale);
+  h := Round(Self.PageControl.Height / FormUtils.Scale);
 
   Result := Self.PageControl.AddTab();
   Result.Caption := caption;

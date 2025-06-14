@@ -7,9 +7,211 @@ The following contains custom components and methods to be used in a `TLazForm`.
 {$DEFINE WL_FORMUTILS_INCLUDED}
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
+type
+(*
+## TFormUtils
+Type that olds several method utilities for `TLazForms`.
+*)
+  TFormUtils = record
+    DPI: Integer;
+    Scale: Single;
+    const BASE_DPI: Integer = 96;
+  end;
+
+procedure TFormUtils.Setup();
+var
+  font: TLazFont;
+begin
+  font := TLazFont.Create();
+  Self.DPI := font.PixelsPerInch;
+  font.Free();
+
+  Self.Scale := Self.DPI / Self.BASE_DPI;
+end;
+
+(*
+## FormUtils.NumberField
+```pascal
+procedure TFormUtils.NumberField(sender: TLazObject; var key: Char);
+```
+Callback method to limit user input to numbers only and backspace.
+This numbers can be `Integers` only.
+For `Doubles` check {ref}`FormUtils.FloatField`
+*)
+procedure TFormUtils.NumberField({$H-}sender: TLazObject;{$H+} var key: Char);
+begin
+  case key of
+    '0'..'9', #8: ;
+    else key := #0;
+  end;
+end;
+
+(*
+## FormUtils.FloatField
+```pascal
+procedure TFormUtils.FloatField(sender: TLazObject; var key: Char);
+```
+Callback method to limit user input to numbers only and backspace.
+This numbers can be `Integers` or `Doubles` only.
+For `Integers` only check {ref}`FormUtils.FloatField`
+*)
+procedure TFormUtils.FloatField(sender: TLazObject; var key: Char);
+begin
+  case key of
+    '0'..'9', #8: ;
+    '.': if TLazCustomEdit(sender).Text.Contains('.') then key := #0;
+    else key := #0;
+  end;
+end;
+
+(*
+## FormUtils.MailField
+```pascal
+procedure TFormUtils.MailField({$H-}sender: TLazObject;{$H+} var key: Char);
+```
+Callback method to limit user input to characters used in email addresses.
+*)
+procedure TFormUtils.MailField({$H-}sender: TLazObject;{$H+} var key: Char);
+begin
+  if key = ' ' then key := #0;
+end;
+
+(*
+## FormUtils.TimeField
+```pascal
+procedure TFormUtils.TimeField(sender: TLazObject; var key: Char);
+```
+Callback method to limit user input to numbers only, backspace and a few
+characters used in time like ":", "-", "_", ",", etc.
+*)
+procedure TFormUtils.TimeField({$H-}sender: TLazObject;{$H+} var key: Char);
+begin
+  case key of
+    '0'..'9', #8, '.', ':', '-', '_', ',', ' ': ;
+    else key := #0;
+  end;
+end;
+
+(*
+## FormUtils.NumberArrayField
+```pascal
+procedure TFormUtils.NumberArrayField(sender: TLazObject; var key: Char);
+```
+Callback method to limit user input to a `TIntegerArray`. Brackets not included.
+*)
+procedure TFormUtils.NumberArrayField({$H-}sender: TLazObject;{$H+} var key: Char);
+begin
+  case key of
+    '0'..'9', ',', ' ' , #8: ;
+    else key := #0;
+  end;
+end;
+
+(*
+## FormUtils.OpenURL
+```pascal
+procedure TLazControl.OpenURL(sender: TLazObject);
+```
+Opens the URL in the control caption if there's any.
+*)
+procedure TFormUtils.OpenURL(sender: TLazObject);
+var
+  url: String;
+begin
+  url := Trim(TLazControl(sender).Caption);
+  if url.IsURL() then URLOpenInBrowser(url);
+end;
+
+(*
+## FormUtils.OnMouseEnterURL
+```pascal
+procedure TFormUtils.OnMouseEnterURL(sender: TLazObject);
+```
+Mouse hover callback for URLs. Basically changes the control text color to blue.
+If you use this you should also use {ref}`FormUtils.OnMouseLeaveURL` to restore
+the color to the default when the mouse leaves the control.
+*)
+procedure TFormUtils.OnMouseEnterURL(sender: TLazObject);
+begin
+  TLazControl(sender).Font.Color := $FF0000;
+end;
+
+(*
+## FormUtils.OnMouseLeaveURL
+```pascal
+procedure TFormUtils.OnMouseLeaveURL(sender: TLazObject);
+```
+Mouse leave callback for URLs. Basically changes the control text color to
+the default.
+
+This should only be used if you are also using {ref}`FormUtils.OnMouseEnterURL`
+to change the control text color to blue.
+*)
+procedure TFormUtils.OnMouseLeaveURL(sender: TLazObject);
+begin
+  TLazControl(sender).Font.Color := $20000000;
+end;
+
+var
+  FormUtils: TFormUtils;
+
+
+property TLazControl.Left(value: Integer); override;
+begin
+  inherited(Round(value * FormUtils.Scale));
+end;
+
+property TLazControl.Top(value: Integer); override;
+begin
+  inherited(Round(value * FormUtils.Scale));
+end;
+
+property TLazControl.Width(value: Integer); override;
+begin
+  inherited(Round(value * FormUtils.Scale));
+end;
+
+property TLazControl.Height(value: Integer); override;
+begin
+  inherited(Round(value * FormUtils.Scale));
+end;
+
+
+property TLazControlBorderSpacing.Left(value: Integer); override;
+begin
+  inherited(Round(value * FormUtils.Scale));
+end;
+
+property TLazControlBorderSpacing.Top(value: Integer); override;
+begin
+  inherited(Round(value * FormUtils.Scale));
+end;
+
+property TLazControlBorderSpacing.Right(value: Integer); override;
+begin
+  inherited(Round(value * FormUtils.Scale));
+end;
+
+property TLazControlBorderSpacing.Bottom(value: Integer); override;
+begin
+  inherited(Round(value * FormUtils.Scale));
+end;
+
+property TLazControlBorderSpacing.Around(value: Integer); override;
+begin
+  inherited(Round(value * FormUtils.Scale));
+end;
+
+property TLazControlBorderSpacing.InnerBorder(value: Integer); override;
+begin
+  inherited(Round(value * FormUtils.Scale));
+end;
+
+
+
 procedure TLazForm.ScaleToDPI();
 begin
-  Self.ScaleBy(Self.Font.PixelsPerInch, 96);
+  Self.ScaleBy(Self.Font.PixelsPerInch, FormUtils.BASE_DPI);
 end;
 
 (*
@@ -85,114 +287,11 @@ begin
 end;
 
 
-(*
-## TLazComponent.NumberField
-```pascal
-procedure TLazComponent.NumberField(sender: TLazObject; var key: Char);
-```
-Callback method to limit user input to numbers only and backspace.
-This numbers can be `Integers` only.
-For `Doubles` check {ref}`TLazComponent.FloatField`
-*)
-procedure TLazComponent.NumberField({$H-}sender: TLazObject;{$H+} var key: Char);
-begin
-  case key of
-    '0'..'9', #8: ;
-    else key := #0;
-  end;
-end;
-
-(*
-## TLazComponent.FloatField
-```pascal
-procedure TLazComponent.FloatField(sender: TLazObject; var key: Char);
-```
-Callback method to limit user input to numbers only and backspace.
-This numbers can be `Integers` or `Doubles` only.
-For `Integers` only check {ref}`TLazComponent.FloatField`
-*)
-procedure TLazComponent.FloatField(sender: TLazObject; var key: Char);
-begin
-  case key of
-    '0'..'9', #8: ;
-    '.': if TLazCustomEdit(sender).Text.Contains('.') then key := #0;
-    else key := #0;
-  end;
-end;
-
-(*
-## TLazComponent.MailField
-```pascal
-procedure TLazComponent.MailField({$H-}sender: TLazObject;{$H+} var key: Char);
-```
-Callback method to limit user input to characters used in email addresses.
-*)
-procedure TLazComponent.MailField({$H-}sender: TLazObject;{$H+} var key: Char);
-begin
-  if key = ' ' then key := #0;
-end;
-
-(*
-## Component.TimeField
-```pascal
-procedure TLazComponent.TimeField(sender: TLazObject; var key: Char);
-```
-Callback method to limit user input to numbers only, backspace and a few
-characters used in time like ":", "-", "_", ",", etc.
-*)
-procedure TLazComponent.TimeField({$H-}sender: TLazObject;{$H+} var key: Char);
-begin
-  case key of
-    '0'..'9', #8, '.', ':', '-', '_', ',', ' ': ;
-    else key := #0;
-  end;
-end;
-
-(*
-## Component.NumberArrayField
-```pascal
-procedure TLazComponent.NumberArrayField(sender: TLazObject; var key: Char);
-```
-Callback method to limit user input to a TIntegerArray. Brackets not included.
-*)
-procedure TLazComponent.NumberArrayField({$H-}sender: TLazObject;{$H+} var key: Char);
-begin
-  case key of
-    '0'..'9', ',', ' ' , #8: ;
-    else key := #0;
-  end;
-end;
-
-(*
-## Control.OpenURL
-```pascal
-procedure TLazControl.OpenURL(sender: TLazObject);
-```
-Opens the URL in the control caption if there's any.
-*)
-procedure TLazControl.OpenURL(sender: TLazObject);
-var
-  url: String;
-begin
-  url := Trim(TLazControl(sender).Caption);
-  if url.IsURL() then URLOpenInBrowser(url);
-end;
-
-procedure TLazControl.OnMouseEnterURL(sender: TLazObject);
-begin
-  TLazControl(sender).Font.Color := $FF0000;
-end;
-
-procedure TLazControl.OnMouseLeaveURL(sender: TLazObject);
-begin
-  TLazControl(sender).Font.Color := $20000000;
-end;
-
 procedure TLazLabel.SetURL();
 begin
-  Self.OnMouseEnter := @Self.OnMouseEnterURL;
-  Self.OnMouseLeave := @Self.OnMouseLeaveURL;
-  Self.OnClick := @Self.OpenURL;
+  Self.OnMouseEnter := @FormUtils.OnMouseEnterURL;
+  Self.OnMouseLeave := @FormUtils.OnMouseLeaveURL;
+  Self.OnClick := @FormUtils.OpenURL;
   Self.Cursor := ELazCursor.HandPoint;
 end;
 

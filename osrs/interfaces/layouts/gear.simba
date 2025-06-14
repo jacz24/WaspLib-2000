@@ -46,17 +46,17 @@ var
   slot: ERSEquipment;
 begin
   Self.Config.Setup('gearlayouts' + PATH_SEP + ToStr(PlayerIndex));
-  SetLength(Self.Sets, Self.Config.Count);
+  SetLength(Self.Sets, Self.Config.Data.Count);
 
   try
-    for i := 0 to Self.Config.Count-1 do
+    for i := 0 to Self.Config.Data.Count-1 do
     begin
-      Self.Sets[i].Name := Self.Config.Key[i];
+      Self.Sets[i].Name := Self.Config.Data.Key[i];
 
       for slot := Low(ERSEquipment) to High(ERSEquipment) do
-        Self.Sets[i].Items[slot] := Self.Config.Item[i].Item.Item[Ord(slot)].AsString;
+        Self.Sets[i].Items[slot] := Self.Config.Data.Item[i].Item[Ord(slot)].AsString;
 
-      Self.Sets[i].SpecLevel := Self.Config.Item[i].Item.Item[Ord(High(ERSEquipment))+1].AsInt;
+      Self.Sets[i].SpecLevel := Self.Config.Data.Item[i].Item[Ord(High(ERSEquipment))+1].AsInt;
     end;
   except
     FileDelete(Self.Config.Path); //corrupted config.
@@ -70,12 +70,12 @@ var
 begin
   for i := 0 to High(Self.Sets) do
   begin
-    Self.Config.Key[i] := Self.Sets[i].Name;
+    Self.Config.Data.Key[i] := Self.Sets[i].Name;
 
     for slot := Low(ERSEquipment) to High(ERSEquipment) do
-      Self.Config.Item[Self.Sets[i].Name].Item.Item[Ord(slot)].AsString := Self.Sets[i].Items[slot];
+      Self.Config.Data.Item[Self.Sets[i].Name].Item[Ord(slot)].AsString := Self.Sets[i].Items[slot];
 
-    Self.Config.Item[Self.Sets[i].Name].Item.Item[Ord(High(ERSEquipment))+1].AsInt := Self.Sets[i].SpecLevel;
+    Self.Config.Data.Item[Self.Sets[i].Name].Item[Ord(High(ERSEquipment))+1].AsInt := Self.Sets[i].SpecLevel;
   end;
 
   Self.Config.SaveConfig();
@@ -84,14 +84,14 @@ end;
 procedure TRSGearLayouts.AddLayout(gear: TRSGear);
 begin
   Self.Sets += gear;
-  Self.Config.Add(gear.Name, gear.ToJSON());
+  Self.Config.Data.Add(gear.Name, gear.ToJSON());
   Self.UpdateConfig();
 end;
 
 procedure TRSGearLayouts.RemoveLayout(index: Integer);
 begin
   Delete(Self.Sets, index, 1);
-  Self.Config.Delete(index);
+  Self.Config.Data.Delete(Self.Config.Data.Item[index]);
   Self.UpdateConfig();
 end;
 

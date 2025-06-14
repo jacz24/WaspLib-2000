@@ -236,8 +236,7 @@ end;
 
 function TPolygon.RandomSkewedPoint(from: TPoint): TPoint;
 begin
-  //WriteLn('TPolygon.RandomSkewedPoint() is not implemented yet. Using TPolygon.RandomPointCenter() instead.');
-  Result := Self.RandomPointCenter();
+  Result := Self.RandomWeightedPoint(from);
 end;
 
 function TPolygon.RandomWeightedPoint(from: TPoint; weight: Single = 10.0; bias: Single = 1): TPoint;

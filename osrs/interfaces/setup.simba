@@ -106,6 +106,7 @@ begin
 
   Async.HTTPGet('https://api.waspscripts.com/', @WaspClient.Setup, nil);
   Target.AddEvent(ETargetEvent.TARGET_RESIZE, @TargetResized);
+  FormUtils.Setup();
   RSFonts.Setup();
   Logger.Setup();
 

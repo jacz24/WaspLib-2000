@@ -69,26 +69,23 @@ begin
     SetLength(Self.TeleportRooms, Self.AMOUNT, Self.AMOUNT);
     Self.DrawMap([EHouseRoom.GARDEN, 0, [EHouseObject.EXIT]], [Self.AMOUNT div 2, Self.AMOUNT div 2]);
 
-    Self.Config.Item['EHouseObject'].AsInt     := Ord(High(EHouseObject));
-    Self.Config.Item['EHouseTeleport'].AsInt   := Ord(High(EHouseTeleport));
-    Self.Config.Item['Location'].AsInt         := Ord(Self.Location);
-    Self.Config.Item['Decoration'].AsInt       := Ord(Self.Decoration);
-    Self.Config.Item['TeleportMode'].AsInt     := 0;
+    Self.Config.Data.Item['EHouseObject'].AsInt     := Ord(High(EHouseObject));
+    Self.Config.Data.Item['EHouseTeleport'].AsInt   := Ord(High(EHouseTeleport));
+    Self.Config.Data.Item['Location'].AsInt         := Ord(Self.Location);
+    Self.Config.Data.Item['Decoration'].AsInt       := Ord(Self.Decoration);
+    Self.Config.Data.Item['TeleportMode'].AsInt     := 0;
     Self.Config.SaveConfig();
     Exit;
   end;
 
-  Self.Config.Lock.Enter();
-  Self.Location := EHouseLocation(Self.Config.Item['Location'].AsInt);
-  Self.SetColors(EHouseDecoration(Self.Config.Item['Decoration'].AsInt));
+  Self.Location := EHouseLocation(Self.Config.Data.Item['Location'].AsInt);
+  Self.SetColors(EHouseDecoration(Self.Config.Data.Item['Decoration'].AsInt));
 
-  str := DecompressString(Self.Config.Item['Rooms'].AsString);
+  str := DecompressString(Self.Config.Data.Item['Rooms'].AsString);
   Self.Rooms := THouseRoomMatrix.CreateFromBytes(str.ToBytes());
 
-  str := DecompressString(Self.Config.Item['TeleportRooms'].AsString);
+  str := DecompressString(Self.Config.Data.Item['TeleportRooms'].AsString);
   Self.TeleportRooms := TTeleportRoomMatrix.CreateFromBytes(str.ToBytes());
-
-  Self.Config.Lock.Leave();
 
   Self.Redraw();
 end;
@@ -257,8 +254,8 @@ begin
     else Self.TeleportRooms[index.Y,index.X] := [];
   end;
 
-  Self.Config.Item['Rooms'].AsString := CompressString(String.CreateFromBytes(Self.Rooms.ToBytes()));
-  Self.Config.Item['TeleportRooms'].AsString := CompressString(String.CreateFromBytes(Self.TeleportRooms.ToBytes()));
+  Self.Config.Data.Item['Rooms'].AsString := CompressString(String.CreateFromBytes(Self.Rooms.ToBytes()));
+  Self.Config.Data.Item['TeleportRooms'].AsString := CompressString(String.CreateFromBytes(Self.TeleportRooms.ToBytes()));
   Self.Config.SaveConfig();
 end;
 

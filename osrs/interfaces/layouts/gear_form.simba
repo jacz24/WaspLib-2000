@@ -16,10 +16,9 @@ type
   TGearFormHelper = record
     Index: Integer;
     Selected: ERSEquipment;
-    SlotBoxes: TBoxArray;
+    SlotBoxes, DPISlots: TBoxArray;
 
     Gear: TRSGear;
-    Tab: TLazTabSheet;
 
     //this is a bit crazy, 12+12 TLazListBoxes, but it's so the UI feels snappy and responsive.
     FilteredLists: array [ERSEquipment] of TLazListBox;
@@ -74,6 +73,7 @@ begin
   Self.FilteredLists[slot].Items.EndUpdate();
 end;
 
+
 procedure TGearFormHelper.DrawItem(slot: ERSEquipment; background: TImage);
 var
   id: String;
@@ -101,7 +101,7 @@ begin
       else Self.DrawItem(slot, bg);
     end;
 
-  Self.ImageBox.SetImage(bg);
+  Self.ImageBox.SetImage(bg.Resize(EImageRotateAlgo.NEAREST_NEIGHBOUR, FormUtils.Scale));
 end;
 
 
@@ -112,7 +112,7 @@ var
 begin
   for slot := Low(ERSEquipment) to High(ERSEquipment) do
     if slot = Self.Selected then
-      canvas.DrawBox(Self.SlotBoxes[slot], $00FF00);
+      canvas.DrawBox(Self.DPISlots[slot], $00FF00);
 end;
 
 procedure TGearFormHelper.OnSelectionChange(sender: TLazObject; user: Boolean);
@@ -162,7 +162,7 @@ procedure TGearFormHelper.OnImgClick(sender: TImageBox; x, y: Integer);
 var
   i: Integer;
 begin
-  i := Self.SlotBoxes.ContainsPoint([x,y]);
+  i := Self.DPISlots.ContainsPoint([x,y]);
   if i >= 0 then
   begin
     Self.ItemLists[Self.Selected].Hide();
@@ -291,7 +291,7 @@ begin
   GearLayouts.Setup();
   GearData.Setup();
 
-  GearForm.Tab := Result := Self.CreateTab('Gear Layouts');
+  Result := Self.CreateTab('Gear Layouts');
   width := 280;
 
   GearForm.ListLabel := TLazLabel.CreateEx(Result, 'Selected slot: ' + GearForm.SLOT_NAMES[GearForm.Selected], 'Click a slot on the right side to update the list below.');
@@ -329,7 +329,7 @@ begin
   GearForm.UnfilterButton.OnClick := @GearForm.OnUnfilterClick;
 
   lbl := TLazLabel.CreateEx(Result, 'Layout:' , 'Select a gear layout.');
-  lbl.Left := Integer(Result.Width) - width - 80;
+  lbl.Left := Round(Result.Width / FormUtils.Scale) - width - 80;
   lbl.Top := 20;
   GearForm.LayoutCombobox := TLazComboBox.CreateEx(Result, '', 'Select a gear layout.', width);
   GearForm.LayoutCombobox.AnchorVertically(lbl);
@@ -359,9 +359,9 @@ begin
   GearForm.RemoveButton.OnClick := @GearForm.OnRemoveClick;
 
   GearForm.ImageBox := TImageBox.CreateEx(Result, '', '', 204, 275);
-  GearForm.ImageBox.Left   := Integer(Result.Width) - width - 36;
+  GearForm.ImageBox.Left   := Round(Result.Width / FormUtils.Scale) - width - 36;
   GearForm.ImageBox.Top    := 170;
-  GearForm.ImageBox.AllowZoom := True;
+  GearForm.ImageBox.AllowZoom := False;
   GearForm.ImageBox.AllowMoving := False;
   GearForm.ImageBox.ShowScrollBars := False;
   GearForm.ImageBox.ShowStatusBar := False;
@@ -376,6 +376,10 @@ begin
   read.OnClick := @GearForm.OnReadClick;
 
   GearForm.SlotBoxes := Equipment.GetSlots([10, 36]);
+  for i := 0 to High(GearForm.SlotBoxes) do
+    with GearForm.SlotBoxes[i] do
+      GearForm.DPISlots += [Round(FormUtils.Scale * X1), Round(FormUtils.Scale * Y1), Round(FormUtils.Scale * X2), Round(FormUtils.Scale * Y2)];
+
   GearForm.UpdateListBox();
   GearForm.OnLayoutChange(GearForm.LayoutCombobox);
 end;
