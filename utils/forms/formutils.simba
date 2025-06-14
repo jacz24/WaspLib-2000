@@ -369,25 +369,25 @@ end;
 function TLazPanel.CreateEx(owner: Pointer): TLazPanel; static;
 function TLazPanel.CreateEx(owner: Pointer; width, height: Integer): TLazPanel; static; overload;
 function TLazLabel.CreateEx(owner: Pointer): TLazLabel; static;
-function TLazLabel.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazLabel; static; overload;
+function TLazLabel.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazLabel; static; overload;
 function TLazEdit.CreateEx(owner: Pointer): TLazEdit; static;
-function TLazEdit.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazEdit; static; overload;
+function TLazEdit.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazEdit; static; overload;
 function TLazMemo.CreateEx(owner: Pointer): TLazMemo; static;
-function TLazMemo.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazMemo; static; overload;
+function TLazMemo.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazMemo; static; overload;
 function TLazButton.CreateEx(owner: Pointer): TLazButton; static;
-function TLazButton.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazButton; static; overload;
+function TLazButton.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazButton; static; overload;
 function TLazCheckBox.CreateEx(owner: Pointer): TLazCheckBox; static;
-function TLazCheckBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazCheckBox; static; overload;
+function TLazCheckBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazCheckBox; static; overload;
 function TLazRadioButton.CreateEx(owner: Pointer): TLazRadioButton; static;
-function TLazRadioButton.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazRadioButton; static; overload;
+function TLazRadioButton.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazRadioButton; static; overload;
 function TLazComboBox.CreateEx(owner: Pointer): TLazComboBox; static;
-function TLazComboBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazComboBox; static; overload;
+function TLazComboBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazComboBox; static; overload;
 function TLazListBox.CreateEx(owner: Pointer): TLazListBox; static;
-function TLazListBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazListBox; static; overload;
+function TLazListBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazListBox; static; overload;
 function TLazTrackBar.CreateEx(owner: Pointer): TLazTrackBar; static;
-function TLazTrackBar.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazTrackBar; static; overload;
+function TLazTrackBar.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazTrackBar; static; overload;
 function TImageBox.CreateEx(owner: Pointer): TImageBox; static;
-function TImageBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TImageBox; static; overload;
+function TImageBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TImageBox; static; overload;
 ```
 Constructor functions for most `TLazControls`.
 *)
@@ -397,10 +397,12 @@ begin
   Result.Parent := TLazWinControl(owner);
 end;
 
-function TLazPanel.CreateEx(owner: Pointer; width, height: Integer): TLazPanel; static; overload;
+function TLazPanel.CreateEx(owner: Pointer; top, left, width, height: Integer): TLazPanel; static; overload;
 begin
   Result := TLazPanel.CreateEx(owner);
 
+  if left > 0 then Result.Left := left;
+  if top > 0 then Result.Top := top;
   if width > 0 then Result.Width := width;
   if height > 0 then Result.Height := height;
 end;
@@ -412,10 +414,12 @@ begin
   Result.Parent := TLazWinControl(owner);
 end;
 
-function TLazLabel.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazLabel; static; overload;
+function TLazLabel.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazLabel; static; overload;
 begin
   Result := TLazLabel.CreateEx(owner);
 
+  if left > 0 then Result.Left := left;
+  if top > 0 then Result.Top := top;
   if width > 0 then Result.Width := width;
   if height > 0 then Result.Height := height;
 
@@ -434,14 +438,27 @@ begin
   Result.Parent := TLazWinControl(owner);
 end;
 
-function TLazEdit.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazEdit; static; overload;
+function TLazEdit.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazEdit; static; overload;
+var
+  lbl: TLazLabel;
 begin
   Result := TLazEdit.CreateEx(owner);
 
+  if left > 0 then Result.Left := left;
+  if top > 0 then Result.Top := top;
   if width > 0 then Result.Width := width;
   if height > 0 then Result.Height := height;
 
-  Result.Caption := caption;
+  if caption <> '' then
+  begin
+    lbl := TLazLabel.CreateEx(owner, caption, hint);
+    lbl.AnchorSideBottom.Control := Result;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.asrTop;
+    lbl.AnchorSideLeft.Control := Result;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
+    lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
+  end;
+
   if hint <> '' then
   begin
     Result.Hint := hint;
@@ -456,14 +473,27 @@ begin
   Result.Parent := TLazWinControl(owner);
 end;
 
-function TLazMemo.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazMemo; static; overload;
+function TLazMemo.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazMemo; static; overload;
+var
+  lbl: TLazLabel;
 begin
   Result := TLazMemo.CreateEx(owner);
 
+  if left > 0 then Result.Left := left;
+  if top > 0 then Result.Top := top;
   if width > 0 then Result.Width := width;
   if height > 0 then Result.Height := height;
 
-  Result.Caption := caption;
+  if caption <> '' then
+  begin
+    lbl := TLazLabel.CreateEx(owner, caption, hint);
+    lbl.AnchorSideBottom.Control := Result;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.asrTop;
+    lbl.AnchorSideLeft.Control := Result;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
+    lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
+  end;
+
   if hint <> '' then
   begin
     Result.Hint := hint;
@@ -478,10 +508,12 @@ begin
   Result.Parent := TLazWinControl(owner);
 end;
 
-function TLazButton.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazButton; static; overload;
+function TLazButton.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazButton; static; overload;
 begin
   Result := TLazButton.CreateEx(owner);
 
+  if left > 0 then Result.Left := left;
+  if top > 0 then Result.Top := top;
   if width > 0 then Result.Width := width;
   if height > 0 then Result.Height := height;
 
@@ -500,10 +532,12 @@ begin
   Result.Parent := TLazWinControl(owner);
 end;
 
-function TLazCheckBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazCheckBox; static; overload;
+function TLazCheckBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazCheckBox; static; overload;
 begin
   Result := TLazCheckBox.CreateEx(owner);
 
+  if left > 0 then Result.Left := left;
+  if top > 0 then Result.Top := top;
   if width > 0 then Result.Width := width;
   if height > 0 then Result.Height := height;
 
@@ -522,10 +556,12 @@ begin
   Result.Parent := TLazWinControl(owner);
 end;
 
-function TLazRadioButton.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazRadioButton; static; overload;
+function TLazRadioButton.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazRadioButton; static; overload;
 begin
   Result := TLazRadioButton.CreateEx(owner);
 
+  if left > 0 then Result.Left := left;
+  if top > 0 then Result.Top := top;
   if width > 0 then Result.Width := width;
   if height > 0 then Result.Height := height;
 
@@ -545,14 +581,27 @@ begin
   Result.Style := ELazComboBoxStyle.csDropDownList;
 end;
 
-function TLazComboBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazComboBox; static; overload;
+function TLazComboBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazComboBox; static; overload;
+var
+  lbl: TLazLabel;
 begin
   Result := TLazComboBox.CreateEx(owner);
 
+  if left > 0 then Result.Left := left;
+  if top > 0 then Result.Top := top;
   if width > 0 then Result.Width := width;
   if height > 0 then Result.Height := height;
 
-  Result.Caption := caption;
+  if caption <> '' then
+  begin
+    lbl := TLazLabel.CreateEx(owner, caption, hint);
+    lbl.AnchorSideBottom.Control := Result;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.asrTop;
+    lbl.AnchorSideLeft.Control := Result;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
+    lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
+  end;
+
   if hint <> '' then
   begin
     Result.Hint := hint;
@@ -567,14 +616,27 @@ begin
   Result.Parent := TLazWinControl(owner);
 end;
 
-function TLazListBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazListBox; static; overload;
+function TLazListBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazListBox; static; overload;
+var
+  lbl: TLazLabel;
 begin
   Result := TLazListBox.CreateEx(owner);
 
+  if left > 0 then Result.Left := left;
+  if top > 0 then Result.Top := top;
   if width > 0 then Result.Width := width;
   if height > 0 then Result.Height := height;
 
-  Result.Caption := caption;
+  if caption <> '' then
+  begin
+    lbl := TLazLabel.CreateEx(owner, caption, hint);
+    lbl.AnchorSideBottom.Control := Result;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.asrTop;
+    lbl.AnchorSideLeft.Control := Result;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
+    lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
+  end;
+
   if hint <> '' then
   begin
     Result.Hint := hint;
@@ -589,14 +651,27 @@ begin
   Result.Parent := TLazWinControl(owner);
 end;
 
-function TLazTrackBar.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TLazTrackBar; static; overload;
+function TLazTrackBar.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazTrackBar; static; overload;
+var
+  lbl: TLazLabel;
 begin
   Result := TLazTrackBar.CreateEx(owner);
 
+  if left > 0 then Result.Left := left;
+  if top > 0 then Result.Top := top;
   if width > 0 then Result.Width := width;
   if height > 0 then Result.Height := height;
 
-  Result.Caption := caption;
+  if caption <> '' then
+  begin
+    lbl := TLazLabel.CreateEx(owner, caption, hint);
+    lbl.AnchorSideBottom.Control := Result;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.asrTop;
+    lbl.AnchorSideLeft.Control := Result;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
+    lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
+  end;
+
   if hint <> '' then
   begin
     Result.Hint := hint;
@@ -611,14 +686,27 @@ begin
   Result.Parent := TLazWinControl(owner);
 end;
 
-function TImageBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; width, height: Integer = 0): TImageBox; static; overload;
+function TImageBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TImageBox; static; overload;
+var
+  lbl: TLazLabel;
 begin
   Result := TImageBox.CreateEx(owner);
 
+  if left > 0 then Result.Left := left;
+  if top > 0 then Result.Top := top;
   if width > 0 then Result.Width := width;
   if height > 0 then Result.Height := height;
 
-  Result.Caption := caption;
+  if caption <> '' then
+  begin
+    lbl := TLazLabel.CreateEx(owner, caption, hint);
+    lbl.AnchorSideBottom.Control := Result;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.asrTop;
+    lbl.AnchorSideLeft.Control := Result;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
+    lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
+  end;
+
   if hint <> '' then
   begin
     Result.Hint := hint;

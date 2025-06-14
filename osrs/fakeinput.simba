@@ -25,7 +25,6 @@ You can find remote input source code here: https://github.com/Brandon-T/RemoteI
 
 {$IFNDEF WL_DISABLE_FAKE_INPUT}
 
-type TObject = type TLazObject; //temp fix for RI on latest Simbas
 {$loadlib ../plugins/libremoteinput/libremoteinput}
 {$loadlib ../plugins/waspinput/waspinput}
 

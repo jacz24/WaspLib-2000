@@ -97,10 +97,8 @@ procedure TScriptForm.Setup(caption: String = 'WaspLib');
 var
   panel: TLazPanel;
   lbl: TLazLabel;
-  dpi: Integer;
 begin
   Self.Form := TLazForm.Create();
-  dpi := Self.Form.Font.PixelsPerInch;
 
   Self.Form.Caption := caption + ' Settings';
   Self.Form.Width := 800;

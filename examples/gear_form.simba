@@ -14,19 +14,13 @@ end;
 var
   form: TScriptForm;
   tab: TLazTabSheet;
-  lbl: TLazLabel;
 begin
   form.Setup();
   tab := form.CreateTab('My Settings');
   form.CreateGearTab();
-  lbl := TLazLabel.CreateEx(tab, 'Choose gear:');
-  lbl.Top := 200;
-  lbl.Left := 200;
-  mainGear := GearForm.CreateGearCombobox(tab, lbl);
 
-  lbl := TLazLabel.CreateEx(tab, 'Choose Special Attack gear:');
-  lbl.Top := 300;
-  lbl.Left := 200;
-  specAttack := GearForm.CreateGearCombobox(tab, lbl);
+  mainGear := GearForm.CreateGearCombobox(tab, 'Choose gear:', 200, 200);
+  specAttack := GearForm.CreateGearCombobox(tab, 'Choose Special Attack gear:', 300, 300);
+
   form.Run();
 end.

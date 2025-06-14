@@ -2,6 +2,9 @@
 $folder = Split-Path -Parent $MyInvocation.MyCommand.Definition
 Set-Location $folder
 
+# Base URL for downloads
+$baseUrl = "https://github.com/Brandon-T/Reflection/releases/download/autobuild/"
+
 # Define the rename mappings
 $renameMap = @{
     "libRemoteInput-i686.dll"        = "libremoteinput32.dll"
@@ -12,13 +15,25 @@ $renameMap = @{
     "libRemoteInput-aarch64.so"      = "libremoteinput64.so.aarch64"
 }
 
-# Perform the renaming
+# Download and rename each file
 foreach ($oldName in $renameMap.Keys) {
     $newName = $renameMap[$oldName]
-    if (Test-Path $oldName) {
-        Rename-Item -Path $oldName -NewName $newName
+    $url = "$baseUrl$oldName"
+    $downloadPath = Join-Path $folder $oldName
+    $targetPath = Join-Path $folder $newName
+
+    try {
+        Write-Host "Downloading '$oldName' from '$url'..."
+        Invoke-WebRequest -Uri $url -OutFile $downloadPath -UseBasicParsing
+
+        if (Test-Path $targetPath) {
+            Remove-Item -Path $targetPath -Force
+            Write-Host "Deleted existing file: $newName"
+        }
+
+        Rename-Item -Path $downloadPath -NewName $newName
         Write-Host "Renamed '$oldName' to '$newName'"
-    } else {
-        Write-Warning "File not found: $oldName"
+    } catch {
+        Write-Warning "Failed to process '$oldName': $_"
     }
 }

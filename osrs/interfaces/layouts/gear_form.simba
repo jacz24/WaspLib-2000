@@ -24,7 +24,7 @@ this page because they are internal methods you shouldn't touch.
 Do feel free to read the source code though if you so desire.
 *)
   TGearFormHelper = record
-    {%codetools off}
+    {%codetools on}
     Index: Integer;
     Selected: ERSEquipment;
     Gear: TRSGear;
@@ -45,7 +45,7 @@ Do feel free to read the source code though if you so desire.
     {%codetools on}
   end;
 
-{%codetools off}
+{%codetools on}
 procedure TGearFormHelper.UpdateListBox();
 var
   idx, i: Integer;
@@ -309,20 +309,17 @@ This is the only method from {ref}`Gear Form` you might need to use.
 This will create a combobox for you whose contents auto-update with changes made
 on the `Gear Form`.
 *)
-function TGearFormHelper.CreateGearCombobox(owner: Pointer; caption: TLazLabel = nil): TLazComboBox;
+function TGearFormHelper.CreateGearCombobox(owner: Pointer; caption: String = 'Gear:'; left, top: Integer = 0): TLazComboBox;
 var
   i: Integer;
 begin
-  Result := TLazComboBox.CreateEx(owner, '', 'Pick a gear layout.', 170, 40);
+  Result := TLazComboBox.CreateEx(owner, caption, 'Pick a gear layout.', left, top, 170, 40);
   Self.LinkedComboboxes += Result;
 
   for i := 0 to High(GearLayouts.Sets) do
     Result.Items.Add(GearLayouts.Sets[i].Name);
 
   Result.ItemIndex := Low(GearLayouts.Sets);
-
-  if caption <> nil then
-    Result.AnchorVertically(caption);
 end;
 
 
@@ -357,7 +354,6 @@ For a more complete example check out the file `Simba/Includes/WaspLib/examples/
 *)
 function TScriptForm.CreateGearTab(): TLazTabSheet;
 var
-  lbl: TLazLabel;
   save, read: TLazButton;
   width: Integer;
   i: Integer;
@@ -370,20 +366,14 @@ begin
   Result := Self.CreateTab('Gear Layouts');
   width := 280;
 
-  GearForm.ListLabel := TLazLabel.CreateEx(Result, 'Selected slot: ' + GearForm.SLOT_NAMES[GearForm.Selected], 'Click a slot on the right side to update the list below.');
-  GearForm.ListLabel.Left := 40;
-  GearForm.ListLabel.Top := 20;
+  GearForm.ListLabel := TLazLabel.CreateEx(Result, 'Selected slot: ' + GearForm.SLOT_NAMES[GearForm.Selected], 'Click a slot on the right side to update the list below.', 40, 20);
 
-  lbl := TLazLabel.CreateEx(Result, 'Search:' , 'Search the list below.');
-  lbl.AnchorVertically(GearForm.ListLabel, 20);
-
-  search := TLazEdit.CreateEx(Result, '', 'Search the list below.', width);
-  search.AnchorVertically(lbl);
+  search := TLazEdit.CreateEx(Result, 'Search:', 'Search the list below.', 40, 80, width);
   search.OnChange := @GearForm.OnSearchChange;
 
   for slot := Low(ERSEquipment) to High(ERSEquipment) do
   begin
-    GearForm.ItemLists[slot] := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.', width, 340);
+    GearForm.ItemLists[slot] := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.', 0,0, width, 340);
     GearForm.ItemLists[slot].AnchorVertically(search, 10);
     GearForm.ItemLists[slot].OnSelectionChange := @GearForm.OnSelectionChange;
     if slot <> ERSEquipment.HEAD then
@@ -392,34 +382,27 @@ begin
       GearForm.ItemLists[slot].Enabled := False;
     end;
 
-    GearForm.FilteredLists[slot] := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.', width, 340);
+    GearForm.FilteredLists[slot] := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.', 0,0, width, 340);
     GearForm.FilteredLists[slot].AnchorVertically(search, 10);
     GearForm.FilteredLists[slot].OnSelectionChange := @GearForm.OnSelectionChange;
     GearForm.FilteredLists[slot].Hide();
     GearForm.FilteredLists[slot].Enabled := False;
   end;
 
-  GearForm.UnfilterButton := TLazButton.CreateEx(Result, 'Remove list filter', 'Remove the current filter.', width);
-  GearForm.UnfilterButton.AnchorVertically(GearForm.ListLabel, 440);
+  GearForm.UnfilterButton := TLazButton.CreateEx(Result, 'Remove list filter', 'Remove the current filter.', 0,0, width);
+  GearForm.UnfilterButton.AnchorVertically(search, 360);
   GearForm.UnfilterButton.Enabled := False;
   GearForm.UnfilterButton.OnClick := @GearForm.OnUnfilterClick;
 
-  lbl := TLazLabel.CreateEx(Result, 'Layout:' , 'Select a gear layout.');
-  lbl.Left := Round(Result.Width / FormUtils.Scale) - width - 80;
-  lbl.Top := 20;
-  GearForm.LayoutCombobox := TLazComboBox.CreateEx(Result, '', 'Select a gear layout.', width);
-  GearForm.LayoutCombobox.AnchorVertically(lbl);
+  GearForm.LayoutCombobox := TLazComboBox.CreateEx(Result, 'Layout:', 'Select a gear layout.', Round(Result.Width / FormUtils.Scale) - width - 80, 30, width);
   for i := 0 to High(GearLayouts.Sets) do
     GearForm.LayoutCombobox.Items.Add(GearLayouts.Sets[i].Name);
   GearForm.LayoutCombobox.Items.Add('New Layout');
   GearForm.LayoutCombobox.ItemIndex := 0;
   GearForm.LayoutCombobox.OnChange := @GearForm.OnLayoutChange;
 
-  lbl := TLazLabel.CreateEx(Result, 'Layout name:' , 'Select a gear layout.');
-  lbl.AnchorVertically(GearForm.LayoutCombobox, 10);
-
-  GearForm.LayoutName := TLazEdit.CreateEx(Result, '', 'Change the current layout name.', width);
-  GearForm.LayoutName.AnchorVertically(lbl);
+  GearForm.LayoutName := TLazEdit.CreateEx(Result, 'Layout name:', 'Change the current layout name.', 0,0, width);
+  GearForm.LayoutName.AnchorVertically(GearForm.LayoutCombobox, 30);
 
   save := TLazButton.CreateEx(Result, 'Save' , 'Save the current gear layout.');
   save.AnchorVertically(GearForm.LayoutName, 10);
@@ -434,9 +417,7 @@ begin
   GearForm.RemoveButton.AnchorHorizontally(GearForm.DuplicateButton, 10);
   GearForm.RemoveButton.OnClick := @GearForm.OnRemoveClick;
 
-  GearForm.ImageBox := TImageBox.CreateEx(Result, '', '', 204, 275);
-  GearForm.ImageBox.Left   := Round(Result.Width / FormUtils.Scale) - width - 36;
-  GearForm.ImageBox.Top    := 170;
+  GearForm.ImageBox := TImageBox.CreateEx(Result, '', '', Round(Result.Width / FormUtils.Scale) - width - 36, 170, 204, 275);
   GearForm.ImageBox.AllowZoom := False;
   GearForm.ImageBox.AllowMoving := False;
   GearForm.ImageBox.ShowScrollBars := False;
@@ -445,7 +426,7 @@ begin
   GearForm.ImageBox.OnImgClick := @GearForm.OnImgClick;
   GearForm.UpdateBackground();
 
-  read := TLazButton.CreateEx(Result, 'Read From Client' , 'Read the layout from the client.', 204);
+  read := TLazButton.CreateEx(Result, 'Read From Client' , 'Read the layout from the client.', 0, 0, 204);
   read.Font.Style := [ELazFontStyles.fsBold];
   read.AnchorVertically(GearForm.ImageBox, 10);
   read.OnClick := @GearForm.OnReadClick;
