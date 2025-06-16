@@ -57,7 +57,7 @@ jobs:
       - name: Print Tree
         shell: bash
         run: |
-          find . | sed 's|[^/]*/|  |g'
+          find . \( -path "./.git" -o -path "./.github" \) -prune -o -print | sed 's|[^/]*/|  |g'
           
       - name: Run tests
         shell: bash
