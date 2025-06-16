@@ -108,10 +108,8 @@ begin
   if not DirCreate(WLEnv.AssetsDir) then
     raise GetDebugLn('WaspLib', 'Failed to create path: ' + WLEnv.AssetsDir);
 
-  {$IFNDEF WL_TEST}
   WLAssets.Setup();
   WLAssets.Update();
-  {$ENDIF}
 
   Async.HTTPGet('https://api.waspscripts.com/', @WaspClient.Setup, nil);
   Target.AddEvent(ETargetEvent.TARGET_RESIZE, @TargetResized);
