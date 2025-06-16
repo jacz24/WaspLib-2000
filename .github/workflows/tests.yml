@@ -57,7 +57,7 @@ jobs:
       - name: Print Tree
         shell: bash
         run: |
-          tree ./Data
+          find . | sed 's|[^/]*/|  |g'
           
       - name: Run tests
         shell: bash
