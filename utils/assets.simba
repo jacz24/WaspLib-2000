@@ -1,0 +1,30 @@
+(*
+# Assets
+Responsible for managing assets that WaspLib requires to run.
+*)
+{$DEFINE WL_ASSETS_INCLUDED}
+{$INCLUDE_ONCE WaspLib/utils.simba}
+
+type
+  TWLAssets = record
+    Fonts: record
+      Path, Hash, Latest: String;
+    end;
+  end;
+
+procedure TWLAssets.Setup();
+begin
+  Self.Fonts.Path   := WLEnv.AssetsDir + 'fonts.zip';
+  Self.Fonts.Hash   := HashFile(EHashAlgo.MD5, Self.Fonts.Path);
+  Self.Fonts.Latest := HTTPClient.Get('https://raw.githubusercontent.com/WaspScripts/wasp-data/refs/heads/main/fonts/fonts.zip.hash');
+  if Self.Fonts.Hash <> Self.Fonts.Latest then
+  begin
+    WriteLn GetDebugLn('WLAssets', 'Updating fonts.zip', ELogLevel.WARN);
+    FileDelete(Self.Fonts.Path);
+    //TODO:
+    //Async.HTTPGetFile('https://github.com/WaspScripts/wasp-data/raw/refs/heads/main/fonts/fonts.zip', Self.Fonts.Path,
+  end;
+end;
+
+var
+  WLAssets: TWLAssets;

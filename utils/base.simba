@@ -5,6 +5,7 @@ type
   WLEnv = record
     const ConfigsDir: String = SimbaEnv.SimbaPath + 'Configs' + PATH_SEP;
     const CacheDir:   String = SimbaEnv.DataPath + 'Cache' + PATH_SEP;
+    const AssetsDir:  String = SimbaEnv.DataPath + 'Assets' + PATH_SEP;
     const LogsDir:    String = SimbaEnv.DataPath + 'Logs' + PATH_SEP;
   end;
 

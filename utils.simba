@@ -7,6 +7,7 @@
 {$IFNDEF WL_VECTOR_INCLUDED}       {$INCLUDE_ONCE utils/math/vector.simba}
 {$IFNDEF WL_TIME_INCLUDED}         {$INCLUDE_ONCE utils/time.simba}
 {$IFNDEF WL_BASE_INCLUDED}         {$INCLUDE_ONCE utils/base.simba}
+{$IFNDEF WL_ASSETS_INCLUDED}       {$INCLUDE_ONCE utils/assets.simba}
 {$IFNDEF WL_MISC_INCLUDED}         {$INCLUDE_ONCE utils/misc.simba}
 {$IFNDEF WL_MOUSE_INCLUDED}        {$INCLUDE_ONCE utils/input/mouse.simba}
 {$IFNDEF WL_KEYBOARD_INCLUDED}     {$INCLUDE_ONCE utils/input/keyboard.simba}
@@ -24,6 +25,6 @@
 {$IFNDEF WL_FORMUTILS_INCLUDED}    {$INCLUDE_ONCE utils/forms/formutils.simba}
 {$IFNDEF WL_SCRIPTFORM_INCLUDED}    {$INCLUDE_ONCE utils/forms/scriptform.simba}
 
-{$ENDIF}{$ENDIF}{$ENDIF}
+{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
