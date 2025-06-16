@@ -53,10 +53,12 @@ jobs:
         with:
           repository: WaspScripts/wasp-data
           path: ./Data/Assets
-
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
     
+      - name: Print Tree
+        shell: bash
+        run: |
+          tree ./Data
+          
       - name: Run tests
         shell: bash
         run: |
