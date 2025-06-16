@@ -580,6 +580,8 @@ begin
   if not Self.Terminating then
     Self.Shutdown(5000);
 
+  Self.Log(EDebugLevel.VERBOSE, 'Pool resources freed');
+
   Self.Queue.Clear();
   Self.Queue.Free();
   SetLength(Self.Workers, 0);
@@ -589,8 +591,6 @@ begin
     Self.LogLock.Free();
     Self.LogLock := nil;
   end;
-
-  Self.Log(EDebugLevel.VERBOSE, 'Pool resources freed');
 end;
 
 (*
