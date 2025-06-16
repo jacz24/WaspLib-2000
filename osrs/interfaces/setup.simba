@@ -109,7 +109,7 @@ begin
     raise GetDebugLn('WaspLib', 'Failed to create path: ' + WLEnv.AssetsDir);
 
   WLAssets.Setup();
-  {$IFDEF WL_TEST}
+  {$IFNDEF WL_TEST}
   WLAssets.Update();
   {$ENDIF}
 
