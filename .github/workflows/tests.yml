@@ -54,11 +54,6 @@ jobs:
           repository: WaspScripts/wasp-data
           path: ./Data/Assets
     
-      - name: Print Tree
-        shell: bash
-        run: |
-          find . \( -path "./.git" -o -path "./.github" \) -prune -o -print | sed 's|[^/]*/|  |g'
-          
       - name: Run tests
         shell: bash
         run: |

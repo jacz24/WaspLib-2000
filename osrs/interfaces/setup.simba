@@ -168,6 +168,7 @@ begin
     RSClient.Mode := ERSMode.FIXED;
   SetupInterfaces();
 
+  {$IFNDEF WL_TEST}
   while RSFonts.Unzipping do
   begin
     Sleep(100);
@@ -177,6 +178,7 @@ begin
       raise GetDebugLn('RSFonts', 'Timed out unzipping fonts.');
     end;
   end;
+  {$ENDIF}
 end;
 
 {$IFNDEF WL_TEST}
