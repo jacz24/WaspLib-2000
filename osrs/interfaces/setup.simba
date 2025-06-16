@@ -103,6 +103,11 @@ begin
     raise GetDebugLn('WaspLib', 'Failed to create path: ' + WLEnv.CacheDir);
   if not DirCreate(WLEnv.LogsDir) then
     raise GetDebugLn('WaspLib', 'Failed to create path: ' + WLEnv.LogsDir);
+  if not DirCreate(WLEnv.AssetsDir) then
+    raise GetDebugLn('WaspLib', 'Failed to create path: ' + WLEnv.AssetsDir);
+
+  WLAssets.Setup();
+  WLAssets.Update();
 
   Async.HTTPGet('https://api.waspscripts.com/', @WaspClient.Setup, nil);
   Target.AddEvent(ETargetEvent.TARGET_RESIZE, @TargetResized);
@@ -158,6 +163,9 @@ begin
   if RSClient.Mode = ERSMode.UNKNOWN then
     RSClient.Mode := ERSMode.FIXED;
   SetupInterfaces();
+
+  while RSFonts.Unzipping do
+    Sleep(100);
 end;
 
 {$IFNDEF WL_TEST}

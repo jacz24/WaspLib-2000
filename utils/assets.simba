@@ -10,20 +10,39 @@ type
     Fonts: record
       Path, Hash, Latest: String;
     end;
+
+    Queue: Integer;
+
+    const DATA_REPO_URL: String = 'https://raw.githubusercontent.com/WaspScripts/wasp-data/refs/heads/main/';
   end;
 
 procedure TWLAssets.Setup();
 begin
   Self.Fonts.Path   := WLEnv.AssetsDir + 'fonts.zip';
   Self.Fonts.Hash   := HashFile(EHashAlgo.MD5, Self.Fonts.Path);
-  Self.Fonts.Latest := HTTPClient.Get('https://raw.githubusercontent.com/WaspScripts/wasp-data/refs/heads/main/fonts/fonts.zip.hash');
+  Self.Fonts.Latest := HTTPClient.Get(Self.DATA_REPO_URL + 'fonts/fonts.zip.hash').Trim();
+end;
+
+procedure TWLAssets.Download(constref result: TASyncHTTPResult);
+begin
+  if not InRange(result.Response.AsInteger, 200, 299) then
+    raise GetDebugLn('WLAssets', result.Exception);
+
+  Self.Queue -= 1;
+end;
+
+procedure TWLAssets.Update();
+begin
   if Self.Fonts.Hash <> Self.Fonts.Latest then
   begin
     WriteLn GetDebugLn('WLAssets', 'Updating fonts.zip', ELogLevel.WARN);
     FileDelete(Self.Fonts.Path);
-    //TODO:
-    //Async.HTTPGetFile('https://github.com/WaspScripts/wasp-data/raw/refs/heads/main/fonts/fonts.zip', Self.Fonts.Path,
+    Self.Queue += 1;
+    Async.HTTPGetFile(Self.DATA_REPO_URL + 'fonts/fonts.zip', Self.Fonts.Path, @Self.Download);
   end;
+
+  while Self.Queue > 0 do
+    Sleep(100);
 end;
 
 var

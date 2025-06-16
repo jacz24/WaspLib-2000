@@ -96,6 +96,7 @@ type
     BOLD_SHADOW:    TPixelFont;
     QUILL_8:        TPixelFont;
     QUILL:          TPixelFont;
+    Unzipping: Boolean;
     const PATH = WLEnv.CacheDir + 'fonts' + PATH_SEP;
   end;
 
@@ -114,7 +115,11 @@ end;
 procedure TRSFonts._UnzipFinished(constref result: TASyncUnzipResult);
 begin
   if not result.Success then
+  begin
+    DirDelete(Self.PATH, True);
     raise GetDebugLn('RSFonts', 'Failed to unzip fonts: '  + result.Exception);
+  end;
+  Self.Unzipping := False;
   Self._Setup();
 end;
 
@@ -128,7 +133,8 @@ begin
 
   if not DirCreate(Self.PATH) then
     raise GetDebugLn('OCR', 'Failed to create path: ' + Self.PATH);
-  Async.FileUnZip({$MACRO DIR} + 'fonts.zip', Self.PATH, @Self._UnzipFinished, nil);
+  Self.Unzipping := True;
+  Async.FileUnZip(WLAssets.Fonts.Path, Self.PATH, @Self._UnzipFinished, nil);
 end;
 
 var
