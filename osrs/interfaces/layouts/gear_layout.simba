@@ -23,7 +23,7 @@ function TRSGear.ToJSON(): TJSONItem;
 var
   slot: ERSEquipment;
 begin
-  Result := NewJSONObject();
+  Result := new TJSONObject();
 
   for slot := Low(ERSEquipment) to High(ERSEquipment) do
     Result.AddString(ToStr(slot).After('ERSEquipment.').ToLower(), Self.Items[slot]);

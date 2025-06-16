@@ -149,10 +149,8 @@ begin
   Antiban.Zoom.Max := 100;
 
   ItemData.Setup();
-  ObjectsJSON.Data := NewJSONArray();
-  AddOnTerminate(@ObjectsJSON.Data.Free);
-  NPCsJSON.Data := NewJSONArray();
-  AddOnTerminate(@NPCsJSON.Data.Free);
+  ObjectsJSON.Data := new TJSONArray();
+  NPCsJSON.Data := new TJSONArray();
 
   CollectionBox.Setup();
 

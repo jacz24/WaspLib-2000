@@ -13,7 +13,7 @@ type
 Record responsible for providing item information in WaspLib.
 *)
   TItemData = record
-    DefinitionsJSON, PricesJSON: TJSONItem;
+    DefinitionsJSON, PricesJSON: TJSONParser;
     Filename: String;
     Timeout: UInt64;
     Disabled: Boolean;
@@ -80,13 +80,6 @@ Enum representing item definition keys.
     PARAMS
   );
 
-procedure TItemData.Free();
-begin
-  if Self.PricesJSON = nil then Exit;
-  Self.PricesJSON.Free();
-  Self.PricesJSON := nil;
-end;
-
 procedure TItemData.UpdateFile();
 var
   t: UInt64;
@@ -128,10 +121,10 @@ begin
   Self.UpdateFile();
   if current = Self.Filename then Exit;
 
-  Self.Free();
+  Self.PricesJSON := new TJSONParser();
 
   try
-    Self.PricesJSON := LoadJSON(Self.Filename);
+    Self.PricesJSON.Load(Self.Filename);
   except
     FileDelete(Self.Filename);
     Self.Disabled := True;
@@ -145,9 +138,7 @@ begin
   if not DirCreate(Self.CacheDir + 'items' + PATH_SEP) then
     raise GetDebugLn('ItemData', 'Failed to create cache directory: ' + Self.CacheDir + 'items' + PATH_SEP);
 
-  Self.DefinitionsJSON := NewJSONObject();
-  AddOnTerminate(@Self.DefinitionsJSON.Free);
-  AddOnterminate(@Self.Free);
+  Self.DefinitionsJSON := new TJSONParser();
 end;
 
 
@@ -192,7 +183,9 @@ begin
     if not ZipExtractEntry(Self.ZIP, itemID +'.json', path) then
       raise  GetDebugLn('ItemData', 'Couldn''t find ' + itemID + '.json');
 
-  Result := LoadJSON(filename);
+  Result := new TJSONParser();
+
+  TJSONParser(Result).Load(filename);
   Self.DefinitionsJSON.Add(itemID, Result);
 end;
 
@@ -384,8 +377,8 @@ Internal method to setup TGearData.
 procedure TGearData.Setup();
 begin
   if Self.Data <> nil then Exit;
-  Self.Data := LoadJSON({$macro DIR} + 'gear.json');
-  AddOnTerminate(@Self.Data.Free);
+  Self.Data := new TJSONParser();
+  TJSONParser(Self.Data).Load({$macro DIR} + 'gear.json');
 end;
 
 (*

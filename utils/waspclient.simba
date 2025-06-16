@@ -21,13 +21,13 @@ type
       RefreshToken: String;
     end;
 
-    Config: TJSONItem;
+    Config: TConfigJSON;
     IsSetup: Boolean;
   end;
 
 procedure TWaspClient.Setup(constref result: TASyncHTTPResult);
 var
-  json: TJSONItem;
+  json: TJSONParser;
 begin
   if result.Response <> EHTTPStatus.OK then
   begin
@@ -35,13 +35,10 @@ begin
     Exit;
   end;
 
-  try
-    json := ParseJSON(result.Data);
-    if not json.GetString('url', Self.Server) then Exit;
-    if not json.GetString('anon_key', Self.APIKey) then Exit;
-  finally
-    json.Free();
-  end;
+  json := new TJSONParser();
+  json.Parse(result.Data);
+  if not json.GetString('url', Self.Server) then Exit;
+  if not json.GetString('anon_key', Self.APIKey) then Exit;
 
   if not Self.Server.EndsWith('/') then Self.Server += '/';
 

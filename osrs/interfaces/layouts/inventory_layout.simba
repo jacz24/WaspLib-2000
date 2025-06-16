@@ -28,7 +28,7 @@ Convert the `TRSInventoryLayoutItem` into a `TJSONItem`.
 *)
 function TRSInventoryLayouItem.ToJSON(): TJSONItem;
 begin
-  Result := NewJSONObject();
+  Result := new TJSONObject();
   Result.AddString('Item', Self.Item);
   Result.AddInt('Amount', Self.Amount);
 end;
@@ -55,7 +55,7 @@ function TRSInventoryLayoutSlots.ToJSON(): TJSONItem;
 var
   i: Integer;
 begin
-  Result := NewJSONArray();
+  Result := new TJSONArray();
   for i := 0 to 27 do
     Result.AddObject(ToStr(i), Self.Items[i].ToJSON());
 end;

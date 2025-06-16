@@ -25,7 +25,7 @@ Do feel free to read the source code though if you so desire.
 *)
   TGearFormHelper = record
     Sets: array of TRSGear;
-    {%codetools off}
+    {%codetools on}
     Index: Integer;
     Selected: ERSEquipment;
     Gear: TRSGear;
@@ -51,7 +51,7 @@ Do feel free to read the source code though if you so desire.
     {%codetools on}
   end;
 
-{%codetools off}
+{%codetools on}
 procedure TGearFormHelper.Setup();
 var
   i: Integer;

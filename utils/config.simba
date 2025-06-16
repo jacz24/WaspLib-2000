@@ -6,18 +6,6 @@ library configurations in either JSON or INI formats.
 {$DEFINE WL_CONFIG_INCLUDED}
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
-property TJSONItem.Key(index: Integer; name: String);
-var
-  item: TJSONItem;
-begin
-  if name <> Self.Key[index] then
-  begin
-    item := Self.Item[index].Clone();
-    Self.Delete(Self.Item[index]);
-    Self.Add(name, item);
-  end;
-end;
-
 type
 (*
 ## TConfigJSON
@@ -57,12 +45,9 @@ begin
 
   Self.Path += filename;
 
+  Self.Data := new TJSONParser();
   if FileExists(Self.Path) then
-    Self.Data := LoadJSON(Self.Path)
-  else
-    Self.Data := NewJSONObject();
-
-  AddOnTerminate(@Self.Data.Free);
+    TJSONParser(Self.Data).Load(Self.Path);
 end;
 
 (*
@@ -74,8 +59,7 @@ Used to save your `TConfigJSON`.
 *)
 procedure TConfigJSON.SaveConfig();
 begin
-  if not FileWrite(Self.Path, Self.Data.ToJSON()) then
-    raise GetDebugLn('TConfigJSON.' + PathExtractNameWithoutExt(Self.Path), 'Failed to save config.');
+  TJSONParser(Self.Data).Save(Self.Path, [EJSONFormatOption.USE_TABS, EJSONFormatOption.SINGLE_LINE_ARR], 1);
 end;
 
 type
