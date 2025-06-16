@@ -12,7 +12,7 @@ type
     end;
 
     Queue: Integer;
-
+    Timeout: TCountDown;
     const DATA_REPO_URL: String = 'https://raw.githubusercontent.com/WaspScripts/wasp-data/refs/heads/main/';
   end;
 
@@ -33,16 +33,26 @@ end;
 
 procedure TWLAssets.Update();
 begin
+  Self.Timeout.Start(1000);
   if Self.Fonts.Hash <> Self.Fonts.Latest then
   begin
     WriteLn GetDebugLn('WLAssets', 'Updating fonts.zip', ELogLevel.WARN);
     FileDelete(Self.Fonts.Path);
     Self.Queue += 1;
+    Self.Timeout.Extend(60 * ONE_SECOND);
     Async.HTTPGetFile(Self.DATA_REPO_URL + 'fonts/fonts.zip', Self.Fonts.Path, @Self.Download);
   end;
 
   while Self.Queue > 0 do
+  begin
     Sleep(100);
+
+    if Self.Timeout.IsFinished then
+    begin
+      DirDelete(WLEnv.AssetsDir, True);
+      raise GetDebugLn('WLAssets', 'Timed out downloading assets.');
+    end;
+  end;
 end;
 
 var

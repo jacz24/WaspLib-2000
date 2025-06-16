@@ -97,10 +97,11 @@ type
     QUILL_8:        TPixelFont;
     QUILL:          TPixelFont;
     Unzipping: Boolean;
+    Timeout: TCountDown;
     const PATH = WLEnv.CacheDir + 'fonts' + PATH_SEP;
   end;
 
-procedure TRSFonts._Setup();
+procedure TRSFonts.Load();
 begin
   Self.PLAIN_11 := OCR.Engine.LoadFont(Self.PATH + 'Plain 11', 4);
   Self.PLAIN_12 := OCR.Engine.LoadFont(Self.PATH + 'Plain 12', 4);
@@ -119,21 +120,24 @@ begin
     DirDelete(Self.PATH, True);
     raise GetDebugLn('RSFonts', 'Failed to unzip fonts: '  + result.Exception);
   end;
+
   Self.Unzipping := False;
-  Self._Setup();
+  Self.Load();
 end;
 
 procedure TRSFonts.Setup();
 begin
   if DirList(Self.PATH) <> [] then
   begin
-    Self._Setup();
+    Self.Load();
     Exit;
   end;
 
   if not DirCreate(Self.PATH) then
     raise GetDebugLn('OCR', 'Failed to create path: ' + Self.PATH);
+
   Self.Unzipping := True;
+  Self.Timeout.Start(60 * ONE_SECOND);
   Async.FileUnZip(WLAssets.Fonts.Path, Self.PATH, @Self._UnzipFinished, nil);
 end;
 

@@ -96,6 +96,8 @@ end;
 
 //Setup process, for some things the order matters.
 procedure WaspLibSetup();
+var
+  countdown: TCountDown;
 begin
   if not DirCreate(WLEnv.ConfigsDir) then
     raise GetDebugLn('WaspLib', 'Failed to create path: ' + WLEnv.ConfigsDir);
@@ -167,7 +169,14 @@ begin
   SetupInterfaces();
 
   while RSFonts.Unzipping do
+  begin
     Sleep(100);
+    if RSFonts.Timeout.IsFinished then
+    begin
+      DirDelete(RSFonts.PATH, True);
+      raise GetDebugLn('RSFonts', 'Timed out unzipping fonts.');
+    end;
+  end;
 end;
 
 {$IFNDEF WL_TEST}

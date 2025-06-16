@@ -119,8 +119,10 @@ Loses focus if available. Maybe useful for antiban.
 You can optionally delay losing focus by passing in a `delay`.
 *)
 procedure TRSClient.LoseFocus();
+{$IFNDEF WL_DISABLE_FAKE_INPUT}
 var
   space: TBoxArray;
+{$ENDIF}
 begin
   {$IFNDEF WL_DISABLE_FAKE_INPUT}
   case RSClient.Client of
