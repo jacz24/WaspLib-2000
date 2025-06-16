@@ -109,7 +109,9 @@ begin
     raise GetDebugLn('WaspLib', 'Failed to create path: ' + WLEnv.AssetsDir);
 
   WLAssets.Setup();
+  {$IFDEF WL_TEST}
   WLAssets.Update();
+  {$ENDIF}
 
   Async.HTTPGet('https://api.waspscripts.com/', @WaspClient.Setup, nil);
   Target.AddEvent(ETargetEvent.TARGET_RESIZE, @TargetResized);
@@ -168,7 +170,7 @@ begin
 
   while RSFonts.Unzipping do
   begin
-    Sleep(100);
+    Sleep(1000);
     if RSFonts.Timeout.IsFinished then
     begin
       DirDelete(RSFonts.PATH, True);
