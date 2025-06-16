@@ -18,6 +18,8 @@ type
 
 procedure TWLAssets.Setup();
 begin
+  if not DirCreate(WLEnv.AssetsDir + 'fonts' + PATH_SEP) then
+    raise GetDebugLn('WLAssets', 'Failed to create path: ' + WLEnv.AssetsDir + 'fonts' + PATH_SEP);
   Self.Fonts.Path   := WLEnv.AssetsDir + 'fonts' + PATH_SEP + 'fonts.zip';
   Self.Fonts.Hash   := HashFile(EHashAlgo.MD5, Self.Fonts.Path);
   Self.Fonts.Latest := HTTPClient.Get(Self.DATA_REPO_URL + 'fonts/fonts.zip.hash').Trim();

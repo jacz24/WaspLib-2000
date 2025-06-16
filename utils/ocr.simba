@@ -125,6 +125,11 @@ begin
   Self.Load();
 end;
 
+procedure TRSFonts._UnzipProgress(position, total: Int64);
+begin
+  WriteLn(position, '/', total);
+end;
+
 procedure TRSFonts.Setup();
 begin
   if DirList(Self.PATH) <> [] then
@@ -138,7 +143,7 @@ begin
 
   Self.Unzipping := True;
   Self.Timeout.Start(60 * ONE_SECOND);
-  Async.FileUnZip(WLAssets.Fonts.Path, Self.PATH, @Self._UnzipFinished, nil);
+  Async.FileUnZip(WLAssets.Fonts.Path, Self.PATH, @Self._UnzipFinished, @Self._UnzipProgress);
 end;
 
 var
