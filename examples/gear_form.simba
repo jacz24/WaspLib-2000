@@ -1,13 +1,18 @@
 {$I WaspLib/osrs.simba}
 
 var
+  gear1: TRSGearLayout;
+  gear2: TRSGearLayout;
   mainGear: TLazComboBox;
   specAttack: TLazComboBox;
 
 procedure TScriptForm.OnStart(sender: TLazObject); override;
 begin
-  WriteLn('Main Gear: ', GearLayouts.Sets[mainGear.ItemIndex]);
-  WriteLn('SpecAttack Gear: ', GearLayouts.Sets[specAttack.ItemIndex]);
+  gear1.Gear := GearForm.Sets[mainGear.ItemIndex];
+  gear2.Gear := GearForm.Sets[specAttack.ItemIndex];
+
+  WriteLn('Main Gear: ', gear1.Gear);
+  WriteLn('SpecAttack Gear: ', gear2.Gear);
   inherited;
 end;
 

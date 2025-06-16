@@ -1,10 +1,10 @@
 (*
 # Gear Form
-This page is about {ref}`TGearLayout` dedicated `TLazForm` utilities.
+This page is about {ref}`Gear Layouts` dedicated `TLazForm` utilities.
 
 This is meant to be used with {ref}`TScriptForm` with
 {ref}`TScriptForm.CreateGearTab` and will setup a a `TLazTabSheet` on it with
-several controls to configure the {ref}`TGearLayout`:
+several controls to configure the {ref}`Gear Layouts`:
 ```{figure} ../../images/gearform.png
 ```
 *)
@@ -24,6 +24,7 @@ this page because they are internal methods you shouldn't touch.
 Do feel free to read the source code though if you so desire.
 *)
   TGearFormHelper = record
+    Sets: array of TRSGear;
     {%codetools off}
     Index: Integer;
     Selected: ERSEquipment;
@@ -41,6 +42,9 @@ Do feel free to read the source code though if you so desire.
 
     TwoHandedIndex: Integer;
 
+
+    Config: TConfigJSON;
+
     const SLOT_NAMES: TStringArray = ['Head', 'Cape', 'Necklace', 'Ammunition', 'Weapon', 'Body', 'Shield', 'Legs', 'Hands', 'Feet', 'Ring', 'Secondary Ammunition'];
     const SLOT_IMG: TImage = ImageFromString('IMG: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');
     const BACKGROUND_IMG: TImage = ImageFromString('IMG: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');
@@ -48,6 +52,58 @@ Do feel free to read the source code though if you so desire.
   end;
 
 {%codetools off}
+procedure TGearFormHelper.Setup();
+var
+  i: Integer;
+  slot: ERSEquipment;
+begin
+  Self.Config.Setup('gearlayouts' + PATH_SEP + ToStr(PlayerIndex));
+  SetLength(Self.Sets, Self.Config.Data.Count);
+
+  try
+    for i := 0 to Self.Config.Data.Count-1 do
+    begin
+      Self.Sets[i].Name := Self.Config.Data.Key[i];
+
+      for slot := Low(ERSEquipment) to High(ERSEquipment) do
+        Self.Sets[i].Items[slot] := Self.Config.Data.Item[i].Item[Ord(slot)].AsString;
+    end;
+  except
+    FileDelete(Self.Config.Path); //corrupted config.
+  end;
+end;
+
+procedure TGearFormHelper.UpdateConfig();
+var
+  i: Integer;
+  slot: ERSEquipment;
+begin
+  for i := 0 to High(Self.Sets) do
+  begin
+    Self.Config.Data.Key[i] := Self.Sets[i].Name;
+
+    for slot := Low(ERSEquipment) to High(ERSEquipment) do
+      Self.Config.Data.Item[Self.Sets[i].Name].Item[Ord(slot)].AsString := Self.Sets[i].Items[slot];
+  end;
+
+  Self.Config.SaveConfig();
+end;
+
+procedure TGearFormHelper.AddLayout(gear: TRSGear);
+begin
+  Self.Sets += gear;
+  Self.Config.Data.Add(gear.Name, gear.ToJSON());
+  Self.UpdateConfig();
+end;
+
+procedure TGearFormHelper.RemoveLayout(index: Integer);
+begin
+  Delete(Self.Sets, index, 1);
+  Self.Config.Data.Delete(Self.Config.Data.Item[index]);
+  Self.UpdateConfig();
+end;
+
+
 procedure TGearFormHelper.UpdateListBox();
 var
   idx, i: Integer;
@@ -152,16 +208,16 @@ begin
   for i := 0 to High(Self.LinkedComboboxes) do
     Self.LinkedComboboxes[i].Items.Strings[Self.Index] := Self.LayoutName.Text;
 
-  if Self.Index = (High(GearLayouts.Sets) + 1) then
+  if Self.Index = (High(Self.Sets) + 1) then
   begin
-    GearLayouts.AddLayout(Self.Gear);
+    Self.AddLayout(Self.Gear);
     Self.LayoutCombobox.Items.Add('New Layout');
     Self.DuplicateButton.Enabled := True;
     Self.RemoveButton.Enabled := True;
   end
   else
-    GearLayouts.Sets[Self.Index] := Self.Gear;
-  GearLayouts.UpdateConfig();
+    Self.Sets[Self.Index] := Self.Gear;
+  Self.UpdateConfig();
 end;
 
 procedure TGearFormHelper.OnDuplicateClick(sender: TLazObject);
@@ -169,12 +225,12 @@ var
   gear: TRSGear;
   i: Integer;
 begin
-  if Self.Index = (High(GearLayouts.Sets) + 1) then Exit;
-  gear := GearLayouts.Sets[Self.Index];
+  if Self.Index = (High(Self.Sets) + 1) then Exit;
+  gear := Self.Sets[Self.Index];
   gear.Name += ' duplicate';
-  GearLayouts.AddLayout(gear);
-  Self.LayoutCombobox.Items.Insert(High(GearLayouts.Sets), gear.Name);
-  Self.LayoutCombobox.ItemIndex := High(GearLayouts.Sets);
+  Self.AddLayout(gear);
+  Self.LayoutCombobox.Items.Insert(High(Self.Sets), gear.Name);
+  Self.LayoutCombobox.ItemIndex := High(Self.Sets);
   for i := 0 to High(Self.LinkedComboboxes) do
     Self.LinkedComboboxes[i].Items.Add(gear.Name);
 
@@ -185,16 +241,16 @@ procedure TGearFormHelper.OnRemoveClick(sender: TLazObject);
 var
   i: Integer;
 begin
-  if Self.Index = (High(GearLayouts.Sets) + 1) then Exit;
+  if Self.Index = (High(Self.Sets) + 1) then Exit;
 
-  GearLayouts.RemoveLayout(Self.Index);
+  Self.RemoveLayout(Self.Index);
   Self.LayoutCombobox.Items.Delete(Self.Index);
 
   for i := 0 to High(Self.LinkedComboboxes) do
     Self.LinkedComboboxes[i].Items.Delete(Self.Index);
 
   Self.Index := Max(Self.Index-1, 0);
-  Self.LayoutCombobox.ItemIndex := Max(High(GearLayouts.Sets), 0);
+  Self.LayoutCombobox.ItemIndex := Max(High(Self.Sets), 0);
   Self.OnLayoutChange(Self.LayoutCombobox);
 end;
 {$H+}
@@ -236,7 +292,7 @@ var
   slot: ERSEquipment;
 begin
   Self.Index := TLazComboBox(sender).ItemIndex;
-  if Self.Index > High(GearLayouts.Sets) then
+  if Self.Index > High(Self.Sets) then
   begin
     Self.Gear.Name := TLazComboBox(sender).Text;
     for slot := Low(ERSEquipment) to High(ERSEquipment) do
@@ -247,7 +303,7 @@ begin
   end
   else
   begin
-    Self.Gear := GearLayouts.Sets[Self.Index];
+    Self.Gear := Self.Sets[Self.Index];
     Self.DuplicateButton.Enabled := True;
     Self.RemoveButton.Enabled := True;
   end;
@@ -335,10 +391,10 @@ begin
   Result := TLazComboBox.CreateEx(owner, caption, 'Pick a gear layout.', left, top, 170, 40);
   Self.LinkedComboboxes += Result;
 
-  for i := 0 to High(GearLayouts.Sets) do
-    Result.Items.Add(GearLayouts.Sets[i].Name);
+  for i := 0 to High(Self.Sets) do
+    Result.Items.Add(Self.Sets[i].Name);
 
-  Result.ItemIndex := Low(GearLayouts.Sets);
+  Result.ItemIndex := Low(Self.Sets);
 end;
 
 var
@@ -378,7 +434,7 @@ var
   slot: ERSEquipment;
   search: TLazEdit;
 begin
-  GearLayouts.Setup();
+  GearForm.Setup();
   GearData.Setup();
 
   Result := Self.CreateTab('Gear Layouts');
@@ -413,8 +469,8 @@ begin
   GearForm.UnfilterButton.OnClick := @GearForm.OnUnfilterClick;
 
   GearForm.LayoutCombobox := TLazComboBox.CreateEx(Result, 'Layout:', 'Select a gear layout.', Round(Result.Width / FormUtils.Scale) - width - 80, 30, width);
-  for i := 0 to High(GearLayouts.Sets) do
-    GearForm.LayoutCombobox.Items.Add(GearLayouts.Sets[i].Name);
+  for i := 0 to High(GearForm.Sets) do
+    GearForm.LayoutCombobox.Items.Add(GearForm.Sets[i].Name);
   GearForm.LayoutCombobox.Items.Add('New Layout');
   GearForm.LayoutCombobox.ItemIndex := 0;
   GearForm.LayoutCombobox.OnChange := @GearForm.OnLayoutChange;

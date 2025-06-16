@@ -3,36 +3,67 @@
 The `Inventory Layouts` is a handler for OSRS inventory.
 
 You can configure the layouts manually but the recommended way is to use
-{ref}`Inventory Layout Form`.
+{ref}`Inventory Form`.
 *)
 
 {$DEFINE WL_INVENTORY_LAYOUTS_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
-  TRSInventoryLayoutSlot = record
+(*
+## TRSInventoryLayouItem
+Type that represents a single inventory layout item.
+*)
+  TRSInventoryLayouItem = record
     Item: TRSItem;
-    Slot: Integer;
     Amount: Integer;
   end;
+
 (*
-## TRSInventoryLayout
-Type that represents a gear layout.
+## TRSInventoryLayouItem.ToJSON
+```pascal
+function TRSInventoryLayouItem.ToJSON(): TJSONItem;
+```
+Convert the `TRSInventoryLayoutItem` into a `TJSONItem`.
 *)
-  TRSInventoryLayout = record
+function TRSInventoryLayouItem.ToJSON(): TJSONItem;
+begin
+  Result := NewJSONObject();
+  Result.AddString('Item', Self.Item);
+  Result.AddInt('Amount', Self.Amount);
+end;
+
+type
+(*
+## TRSInventoryLayoutSlots
+Type that represents an entire inventory layout.
+*)
+  TRSInventoryLayoutSlots = record
     Name: String;
-    Items: array [0..27] of TRSInventoryLayoutSlot;
+    Items: array [0..27] of TRSInventoryLayouItem;
   end;
 
+(*
+## TRSInventoryLayout.ToJSON
+```pascal
 function TRSInventoryLayout.ToJSON(): TJSONItem;
+```
+Convert the `TRSInventoryLayout` into a `TJSONItem`.
+*)
+
+function TRSInventoryLayoutSlots.ToJSON(): TJSONItem;
 var
   i: Integer;
 begin
-  Result := NewJSONObject();
-
+  Result := NewJSONArray();
   for i := 0 to 27 do
-  begin
-
-    //Todo...
-  end;
+    Result.AddObject(ToStr(i), Self.Items[i].ToJSON());
 end;
+
+type
+  TRSInventoryLayout = record
+    Layout: TRSInventoryLayoutSlots;
+    Holding: array [0..27] of TRSInventoryLayouItem;
+  end;
+
+//TODO: TRSInventoryLayout methods... Withdraw, Deposit... Whatever.

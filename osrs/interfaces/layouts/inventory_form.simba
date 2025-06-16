@@ -1,0 +1,113 @@
+(*
+# Inventory Form
+This page is about {ref}`Inventory Layouts` dedicated `TLazForm` utilities.
+
+This is meant to be used with {ref}`TScriptForm` with
+{ref}`TScriptForm.CreateInventoryTab` and will setup a a `TLazTabSheet` on it
+with several controls to configure the {ref}`Inventory Layouts`:
+```{figure} ../../images/inventoryform.png
+```
+*)
+
+{$DEFINE WL_INVENTORY_FORM_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+(*
+## TInventoryFormHelper
+The `TInventoryFormHelper` type is, as it's name implies a helper type for the
+`Inventory Form`.
+
+It has a lot of methods and callbacks that are hidden by default and won't be
+mentioned on this page because they are internal methods you shouldn't touch.
+
+Do feel free to read the source code though if you so desire.
+*)
+  TInventoryFormHelper = record
+    Layouts: array of TRSInventoryLayoutSlots;
+    Index: Integer;
+
+    LinkedComboboxes: array of TLazComboBox;
+
+    Config: TConfigJSON;
+  end;
+
+procedure TInventoryFormHelper.Setup();
+var
+  i: Integer;
+  slot: Integer;
+begin
+  Self.Config.Setup('inventorylayouts' + PATH_SEP + ToStr(PlayerIndex));
+  SetLength(Self.Layouts, Self.Config.Data.Count);
+
+  try
+    for i := 0 to Self.Config.Data.Count-1 do
+    begin
+      Self.Layouts[i].Name := Self.Config.Data.Key[i];
+
+      for slot := 0 to 27 do
+      begin
+        Self.Layouts[i].Items[slot].Item   := Self.Config.Data.Item[i].Item[slot].Item[0].AsString;
+        Self.Layouts[i].Items[slot].Amount := Self.Config.Data.Item[i].Item[slot].Item[1].AsInt;
+      end;
+    end;
+  except
+    FileDelete(Self.Config.Path); //corrupted config.
+  end;
+end;
+
+(*
+## InventoryForm.CreateGearCombobox
+```pascal
+function TInventoryFormHelper.CreateGearCombobox(owner: Pointer; caption: TLazLabel = nil): TLazComboBox;
+```
+This is the only method from {ref}`Gear Form` you might need to use.
+This will create a combobox for you whose contents auto-update with changes made
+on the `Gear Form`.
+*)
+function TInventoryFormHelper.CreateInventoryCombobox(owner: Pointer; caption: String = 'Inventory Layout:'; left, top: Integer = 0): TLazComboBox;
+var
+  i: Integer;
+begin
+  Result := TLazComboBox.CreateEx(owner, caption, 'Pick an inventory layout.', left, top, 170, 40);
+  Self.LinkedComboboxes += Result;
+
+  for i := 0 to High(Self.Layouts) do
+    Result.Items.Add(Self.Layouts[i].Name);
+
+  Result.ItemIndex := Low(Self.Layouts);
+end;
+
+var
+(*
+## InventoryForm variable
+Global {ref}`TInventoryFormHelper` variable.
+*)
+  InventoryForm: TInventoryFormHelper;
+
+(*
+## ScriptForm CreateInventoryTab
+```pascal
+function TScriptForm.CreateInventoryTab(): TLazTabSheet;
+```
+Sets up a `TLazTabSheet` on your `TScriptForm` to configure your `Inventory Layouts`.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  form: TScriptForm;
+begin
+  form.Setup();
+  form.CreateInventoryTab();
+  form.Run();
+end.
+```
+```{figure} ../../images/inventoryform.gif
+```
+For a more complete example check out the file `Simba/Includes/WaspLib/examples/inventory_form.simba`.
+*)
+function TScriptForm.CreateInventoryTab(): TLazTabSheet;
+begin
+  Result := Self.CreateTab('Inventory Layouts');
+end;

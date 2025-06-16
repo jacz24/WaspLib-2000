@@ -6,9 +6,7 @@ For your convenience you can use {ref}`TBiometrics` methods through the {ref}`Bi
 *)
 
 {$DEFINE WL_BIOMETRICS_INCLUDED}
-{$IFNDEF WL_OSR}
-  {$I WaspLib/osrs.simba}
-{$ENDIF}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*

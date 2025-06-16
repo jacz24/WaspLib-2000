@@ -31,64 +31,79 @@ end;
 
 type
 (*
-## TRSGearLayouts
+## TRSGearLayout
 Main type for the {ref}`Gear Layouts`.
 *)
-  TRSGearLayouts = record
-    Sets: array of TRSGear;
-    Config: TConfigJSON;
+  TRSGearLayout = record
+    Gear: TRSGear;
+    Equipped: array [ERSEquipment] of TRSItem;
   end;
 
-procedure TRSGearLayouts.Setup();
+function TRSGearLayout.Equip(): Boolean;
 var
-  i: Integer;
   slot: ERSEquipment;
-begin
-  Self.Config.Setup('gearlayouts' + PATH_SEP + ToStr(PlayerIndex));
-  SetLength(Self.Sets, Self.Config.Data.Count);
-
-  try
-    for i := 0 to Self.Config.Data.Count-1 do
-    begin
-      Self.Sets[i].Name := Self.Config.Data.Key[i];
-
-      for slot := Low(ERSEquipment) to High(ERSEquipment) do
-        Self.Sets[i].Items[slot] := Self.Config.Data.Item[i].Item[Ord(slot)].AsString;
-    end;
-  except
-    FileDelete(Self.Config.Path); //corrupted config.
-  end;
-end;
-
-procedure TRSGearLayouts.UpdateConfig();
-var
   i: Integer;
-  slot: ERSEquipment;
+  slots: TIntegerArray;
+  items: TRSItemArray;
+  nothing: array of ERSEquipment;
+  slotMap: array [0..27] of ERSEquipment;
 begin
-  for i := 0 to High(Self.Sets) do
+  if Self.Equipped.Equals(Self.Gear.Items) then Exit(True);
+  if not Inventory.Open() then Exit;
+
+  for slot := Low(ERSEquipment) to High(ERSEquipment) do
   begin
-    Self.Config.Data.Key[i] := Self.Sets[i].Name;
+    if Self.Equipped[slot] = Self.Gear.Items[slot] then
+      Continue;
+    if not Inventory.Items.Find(Self.Gear.Items[slot], i) then
+      Exit;
 
-    for slot := Low(ERSEquipment) to High(ERSEquipment) do
-      Self.Config.Data.Item[Self.Sets[i].Name].Item[Ord(slot)].AsString := Self.Sets[i].Items[slot];
+    slots += i;
+    case Self.Gear.Items[slot] of
+      'Nothing': nothing += slot;
+      'Anything': ;
+      else
+      begin
+        items += Self.Gear.Items[slot];
+        slotMap[i] := slot;
+      end;
+    end;
   end;
 
-  Self.Config.SaveConfig();
+  slots := Inventory.RandomPattern().Intersection(slots);
+
+  for i in slots do
+  begin
+    Inventory.Slots.Click(i, EMouseButton.LEFT);
+    Self.Equipped[slotMap[i]] := Self.Gear.Items[slotMap[i]];
+  end;
+
+  Result := SleepUntil(not Inventory.Items.ContainsAny(items), 300, 2000);
+
+  if not Equipment.Open() then Exit;
+
+  for slot in nothing do
+    if Equipment.Slots.IsUsed(Ord(slot)) then
+      Equipment.Slots.Click(Ord(slot), EMouseButton.LEFT);
 end;
 
-procedure TRSGearLayouts.AddLayout(gear: TRSGear);
-begin
-  Self.Sets += gear;
-  Self.Config.Data.Add(gear.Name, gear.ToJSON());
-  Self.UpdateConfig();
-end;
-
-procedure TRSGearLayouts.RemoveLayout(index: Integer);
-begin
-  Delete(Self.Sets, index, 1);
-  Self.Config.Data.Delete(Self.Config.Data.Item[index]);
-  Self.UpdateConfig();
-end;
-
+function TRSGearLayout.Withdraw(): Boolean;
 var
-  GearLayouts: TRSGearLayouts;
+  slot: ERSEquipment;
+begin
+  if Self.Equipped.Equals(Self.Gear.Items) then Exit(True);
+  if not Bank.IsOpen() then Exit;
+
+  for slot := Low(ERSEquipment) to High(ERSEquipment) do
+  begin
+    if Self.Equipped[slot] = Self.Gear.Items[slot] then
+      Continue;
+    if Inventory.Items.Contains(Self.Gear.Items[slot]) then
+      Continue;
+
+    if not Bank.Withdraw(Self.Gear.Items[slot], False, True) then
+      Exit;
+  end;
+
+  Result := True;
+end;
