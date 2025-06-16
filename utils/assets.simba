@@ -18,7 +18,7 @@ type
 
 procedure TWLAssets.Setup();
 begin
-  Self.Fonts.Path   := WLEnv.AssetsDir + 'fonts.zip';
+  Self.Fonts.Path   := WLEnv.AssetsDir + 'fonts' + PATH_SEP + 'fonts.zip';
   Self.Fonts.Hash   := HashFile(EHashAlgo.MD5, Self.Fonts.Path);
   Self.Fonts.Latest := HTTPClient.Get(Self.DATA_REPO_URL + 'fonts/fonts.zip.hash').Trim();
 end;
