@@ -1,0 +1,349 @@
+(*
+# ItemFinder
+Methods to find and compare item images
+*)
+
+{$DEFINE WL_ITEMFINDER_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+  TRSItemFinder = record
+    ItemImages: TStringMap<TImage>;
+    MaskImages: TStringMap<TImage>;
+    Filters: array of record
+      Name: String;
+      Filter: TImageCompareFilter;
+    end;
+    Version: String;
+    Similarity: Single;
+    ImageCompare: TImageCompareUtils;
+    Database: TDatabase;
+    CacheDir: String;
+  end;
+
+function TRSItemFinder.Align(image, template: TImage): Boolean;
+var
+  borderA, borderB, tmp1, tmp2: TPointArray;
+  bounds: TBox;
+  align, p: TPoint;
+begin
+  borderA := image.FindColor(RSColors.ITEM_BORDER, 0);
+  tmp1    := borderA.ExcludeBox([0,0,image.Width,8]);
+  borderA := tmp1;
+  borderB := template.FindColor($000000, 1) + template.FindColor(RSColors.ITEM_BORDER_WHITE, 0);
+  tmp2    := borderB.ExcludeBox([0,0,template.Width,8]);
+  borderB := tmp2;
+
+  if (borderA.Length = 0) or (borderB.Length = 0) then Exit;
+
+  align := borderA[High(borderA)] - borderB[High(borderB)];
+  borderB := borderB.Offset(align);
+
+  for p in borderB do
+  begin
+    if p.Y <= 8 then Continue;//stack number... Don't compare.
+
+    if not image.InImage(p.X, p.Y) then Exit;
+    if (image.Pixel[p.X, p.Y] <> RSColors.ITEM_BORDER) then Exit;
+  end;
+
+  bounds := borderA.Bounds;
+  image.Crop(bounds);
+  template.Crop(bounds.Offset([-align.X, -align.Y]));
+  Result := True;
+end;
+
+procedure TRSItemFinder.Clean(image, template: TImage);
+var
+  color: TColor;
+  tpa: TPointArray;
+begin
+  image.DrawColor := $0;
+  template.DrawColor := $0;
+
+  template.DrawTPA(image.FindColor($0, 0));
+
+  tpa := image.FindColor(RSColors.ITEM_SHADOW, 0);
+  for color in RSColors.STACK_COLORS do
+    tpa += template.FindColor(color, 0);
+
+  tpa += template.FindColor(RSColors.ITEM_BORDER, 0);
+  image.DrawTPA(tpa);
+  template.DrawTPA(tpa);
+end;
+
+procedure TRSItemFinder.Setup();
+var
+  path, tmp: String;
+begin
+  Self.Version := WLAssets.ItemFinder[3].Hash.CopyRange(0, 5);
+  Self.Database.Setup('ItemFinder', ['id', 'item', 'hash'], WLAssets.ITEMFINDER_DATA, Self.Version);
+
+  Self.CacheDir := WLEnv.CacheDir + 'itemfinder' + PATH_SEP;
+
+  //Delete old cache files if they exist
+  for path in DirList(Self.CacheDir) do
+  begin
+    tmp := Copy(path, 1, Length(path)-Length(Self.Version));
+    if tmp = Self.Version then Continue;
+    DirDelete(path, False);
+  end;
+
+  Self.CacheDir += Self.Version + PATH_SEP;
+
+  if not DirCreate(Self.CacheDir) then
+    raise GetDebugLn('ItemFinder', 'Failed to create cache directory: ' + Self.CacheDir);
+
+  //only set similarity if the user didn't set it already
+  if Self.Similarity = 0 then
+    Self.Similarity := 0.999;
+
+  Self.ItemImages.CaseSens := False;
+
+  Self.ImageCompare.Align := @Self.Align;
+  Self.ImageCompare.Clean := @Self.Clean;
+end;
+
+
+function TRSItemFinder.GetIDs(item: String): TStringArray;
+begin
+  Result := Self.Database.GetAll(item.ToLower(), 'item', 'id');
+end;
+
+function TRSItemFinder.GetHashItems(hash: String): TRSItemArray;
+begin
+  Result := Self.Database.GetAll(hash, 'hash', 'item');
+end;
+
+procedure TRSItemFinder.MapItem(item, id: String);
+begin
+  Self.Database.Insert([id, item, '']);
+end;
+
+function TRSItemFinder.GetFilter(item: String): TImageCompareFilter;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self.Filters) do
+    if Self.Filters[i].Name = item then
+      Exit(@Self.Filters[i].Filter);
+end;
+
+function TRSItemFinder.GetImage(id: String): TImage;
+var
+  path: String;
+begin
+  if not Self.ItemImages.Exists(id) or
+    (Self.ItemImages.Value[id] = nil) then
+  begin
+    path := Self.CacheDir + 'items' + PATH_SEP + id + '.png';
+
+    if not FileExists(path) then
+      ZipExtractEntry(WLAssets.ItemFinder[3].Path, id + '.png', Self.CacheDir + 'items' + PATH_SEP);
+
+    Self.ItemImages.Value[id] := new TImage(path);
+  end;
+
+  Result := Self.ItemImages.Value[id];
+end;
+
+function TRSItemFinder.GetMask(id: String): TImage;
+var
+  path: String;
+begin
+  if not Self.MaskImages.Exists(id) or
+    (Self.MaskImages.Value[id] = nil) then
+  begin
+    path := Self.CacheDir + 'masks' + PATH_SEP + id + '.png';
+
+    if not FileExists(path) then
+      ZipExtractEntry(WLAssets.ItemFinder[4].Path, id + '.png', Self.CacheDir + 'masks' + PATH_SEP);
+
+    Self.MaskImages.Value[id] := new TImage(path);
+  end;
+
+  Result := Self.MaskImages.Value[id];
+end;
+
+
+function TRSItemFinder.GetImages(item: String): TImageArray;
+var
+  ids: TStringArray;
+  id: String;
+begin
+  if item.IsNumeric then ids := [item]
+  else ids := Self.GetIDs(item);
+
+  for id in ids do
+    Result += Self.GetImage(id);
+end;
+
+
+function TRSItemFinder.FindAll(items: TRSItemArray; boxes: TBoxArray; maxToFind: Integer = 0): TImageMatchArray;
+var
+  item: TRSItem;
+  img: TImage;
+  i: Integer;
+  skip: TBooleanArray;
+  match: Single;
+begin
+  SetLength(skip, Length(boxes));
+
+  for item in items do
+  begin
+    item := LowerCase(item);
+    Self.ImageCompare.Filter := @Self.GetFilter(item);
+
+    for img in Self.GetImages(item) do
+      for i := 0 to High(boxes) do
+      begin
+        if skip[i] then Continue;
+        if not RSColors.HasItem(boxes[i]) then
+        begin
+          skip[i] := True;
+          Continue;
+        end;
+
+        match := Self.Similarity;
+        if Self.ImageCompare.Compare(img, boxes[i], match) then
+        begin
+          Result += [i, boxes[i], match];
+          if (maxToFind > 0) and (Length(Result) >= maxToFind) then Exit;
+          skip[i] := True;
+        end;
+      end;
+  end;
+end;
+
+function TRSItemFinder.FindAll(items: TRSItemArray; boxes: TBoxArray; out matches: TImageMatchArray): Boolean; overload;
+var
+  item: TRSItem;
+  results: TImageMatchArray;
+  i: Integer;
+  img: TImage;
+  match: Single;
+  skip: TBooleanArray;
+begin
+  SetLength(skip, Length(boxes));
+
+  for item in items do
+  begin
+    item := LowerCase(item);
+    Self.ImageCompare.Filter := @Self.GetFilter(item);
+
+    for img in Self.GetImages(item) do
+      for i := 0 to High(boxes) do
+      begin
+        if skip[i] then Continue;
+        if not RSColors.HasItem(boxes[i]) then
+        begin
+          skip[i] := True;
+          Continue;
+        end;
+
+        match := Self.Similarity;
+        if Self.ImageCompare.Compare(img, boxes[i], match) then
+        begin
+          results += [i, boxes[i], match];
+          skip[i] := True;
+        end;
+      end;
+
+    if results = [] then Exit;
+
+    matches += results;
+    results := [];
+  end;
+
+  Result := True;
+end;
+
+function TRSItemFinder.Find(items: TRSItemArray; boxes: TBoxArray; out match: TImageMatch): Boolean;
+var
+  item: TRSItem;
+  img: TImage;
+  i: Integer;
+  similarity: Single;
+  skip: TBooleanArray;
+begin
+  SetLength(skip, Length(boxes));
+  for item in items do
+  begin
+    item := LowerCase(item);
+    Self.ImageCompare.Filter := @Self.GetFilter(item);
+
+    for img in Self.GetImages(item) do
+    begin
+      for i := 0 to High(boxes) do
+      begin
+        if skip[i] then Continue;
+        if not RSColors.HasItem(boxes[i]) then
+        begin
+          skip[i] := True;
+          Continue;
+        end;
+
+        similarity := Self.Similarity;
+        if Self.ImageCompare.Compare(img, boxes[i], similarity) then
+        begin
+          match := [i, boxes[i], similarity];
+          Exit(True);
+        end;
+      end;
+    end;
+  end;
+end;
+
+
+procedure TRSItemFinder.Show(item: TRSItem);
+var
+  display, img: TImage;
+  h, w, x: Integer;
+begin
+  display := new TImage();
+
+  for img in Self.GetImages(item) do
+  begin
+    if img.Height > h then h:= img.Height;
+    w := img.Width;
+    x := display.Width;
+    display.SetSize(x+w, h);
+    display.DrawImage(img,[x,0]);
+  end;
+
+  display.Show();
+end;
+
+function TRSItemFinder.GetBorderHash(img: TImage): String;
+var
+  tpa: TPointArray;
+  border: TImage;
+begin
+  tpa := img.FindColor(RSColors.ITEM_BORDER, 0, [0, 9, 35, 31]);
+  if tpa = [] then Exit;
+  border := new TImage(36, 32);
+  border.DrawColor := $FFFFFF;
+  border.DrawTPA(tpa);
+                                           //h*w*4=4608
+  Result := HashData(EHashAlgo.MD5, border.Data, 4608).CopyRange(0, 6);
+end;
+
+function TRSItemFinder.GetHash(img: TImage): String;
+var
+  hash: String;
+  bg: TPointArray;
+begin
+  hash := Self.GetBorderHash(img);
+  if hash = '' then Exit;
+
+  bg := Self.GetMask(hash).FindColor($0, 0);
+
+  img.DrawColor := $0;
+  img.DrawTPA(bg);
+
+  Result := HashData(EHashAlgo.MD5, img.Data, 4608).CopyRange(0, 6);
+end;
+
+
+var
+  ItemFinder: TRSItemFinder;

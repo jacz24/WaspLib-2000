@@ -42,9 +42,9 @@ Summary: It includes this file until the current file is reached.
 {$IFNDEF WL_FAKE_INPUT_INCLUDED}          {$INCLUDE_ONCE osrs/fakeinput.simba}
 {$IFNDEF WL_CACHEPARSER_INCLUDED}         {$INCLUDE_ONCE osrs/cacheparser.simba}
 
-{$IFNDEF WL_ITEMFINDER_INCLUDED}          {$INCLUDE_ONCE osrs/finders/items/itemfinder.simba}
-{$IFNDEF WL_SPELLFINDER_INCLUDED}         {$INCLUDE_ONCE osrs/finders/spells/spellfinder.simba}
-{$IFNDEF WL_PRAYERFINDER_INCLUDED}        {$INCLUDE_ONCE osrs/finders/prayer/prayerfinder.simba}
+{$IFNDEF WL_ITEMFINDER_INCLUDED}          {$INCLUDE_ONCE osrs/finders/itemfinder.simba}
+{$IFNDEF WL_SPELLFINDER_INCLUDED}         {$INCLUDE_ONCE osrs/finders/spellfinder.simba}
+{$IFNDEF WL_PRAYERFINDER_INCLUDED}        {$INCLUDE_ONCE osrs/finders/prayerfinder.simba}
 {$IFNDEF WL_DATA_INCLUDED}                {$INCLUDE_ONCE osrs/data/data.simba}
 
 {$IFNDEF WL_INTERFACE_CORE_INCLUDED}      {$INCLUDE_ONCE osrs/interfaces/interface.simba}
@@ -54,7 +54,7 @@ Summary: It includes this file until the current file is reached.
 {$IFNDEF WL_MAINSCREEN_INCLUDED}          {$INCLUDE_ONCE osrs/interfaces/mainscreen/mainscreen.simba}
 {$IFNDEF WL_MINIMAP_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/minimap.simba}
 
-{$IFNDEF WL_OVERHEADFINDER_INCLUDED}      {$INCLUDE_ONCE osrs/finders/overheads/overheadfinder.simba}
+{$IFNDEF WL_OVERHEADFINDER_INCLUDED}      {$INCLUDE_ONCE osrs/finders/overheadfinder.simba}
 
 {$IFNDEF WL_GAMETABS_INCLUDED}            {$INCLUDE_ONCE osrs/interfaces/gametabs/gametabs.simba}
 {$IFNDEF WL_CHAT_TABS_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/chat/chattabs.simba}
@@ -109,7 +109,7 @@ Summary: It includes this file until the current file is reached.
 {$IFNDEF WL_HOUSEUTILS_INCLUDED}          {$INCLUDE_ONCE osrs/position/house/houseutils.simba}
 {$IFNDEF WL_HOUSELOADER_INCLUDED}         {$INCLUDE_ONCE osrs/position/house/houseloader.simba}
 {$IFNDEF WL_HOUSE_INCLUDED}               {$INCLUDE_ONCE osrs/position/house/house.simba}
-{$IFNDEF WL_HOUSE_LAYOUT_FINDER_INCLUDED} {$INCLUDE_ONCE osrs/finders/house/house_layout_finder.simba}
+{$IFNDEF WL_HOUSE_LAYOUT_FINDER_INCLUDED} {$INCLUDE_ONCE osrs/finders/house_layout_finder.simba}
 {$IFNDEF WL_HOUSE_VIEWER_INCLUDED}        {$INCLUDE_ONCE osrs/interfaces/mainscreen/houseviewer.simba}
 {$IFNDEF WL_HOUSE_FORM_INCLUDED}          {$INCLUDE_ONCE osrs/position/house/house_form.simba}
 

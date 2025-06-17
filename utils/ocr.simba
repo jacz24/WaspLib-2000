@@ -138,8 +138,6 @@ begin
 
   Self.Unzipping := True;
   Self.Timeout.Start(60 * ONE_SECOND);
-  WriteLn 'STARTED UNZIPPING!';
-  WriteLn WLAssets.Fonts.Path;
   Async.FileUnZip(WLAssets.Fonts.Path, Self.PATH, @Self._UnzipFinished);
 end;
 

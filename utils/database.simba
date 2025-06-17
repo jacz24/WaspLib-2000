@@ -195,17 +195,17 @@ begin
     Self.Columns += column;
 
     //use cached files that are already sorted if they exist
-    if FileExists(Self.CacheDir + column) then
+    if FileExists(Self.CacheDir + column + '.txt') then
     begin
-      Self.Data.Value[column] := FileReadLines(Self.CacheDir + column);
+      Self.Data.Value[column] := FileReadLines(Self.CacheDir + column + '.txt');
       Self.Rows.Value[column] := FileReadLines(Self.CacheDir + column + '.rows');
       Continue;
     end;
 
     //no cache files found, we need to setup the column from scratch
     //check if column data file exists
-    if not FileExists(Self.DataDir + column) then
-      raise GetDebugLn(Self.Name, 'Failed to find data file: ' + Self.DataDir + column);
+    if not FileExists(Self.DataDir + column + '.txt') then
+      raise GetDebugLn(Self.Name, 'Failed to find data file: ' + Self.DataDir + column + '.txt');
 
     //load the file data
     data := FileReadLines(Self.DataDir + column);
