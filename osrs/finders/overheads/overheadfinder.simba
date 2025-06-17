@@ -114,7 +114,7 @@ begin
 
   //only set similarity if the user didn't set it already
   if Self.Similarity = 0 then
-    Self.Similarity := 0.85;
+    Self.Similarity := 0.90;
 end;
 
 (*
@@ -138,7 +138,7 @@ begin
   if Self.Images[overhead] <> nil then
     Exit(Self.Images[overhead]);
 
-  name := ToStr(overhead).ToLower().After('.');
+  name := ToStr(overhead).ToLower().After('.') + '.png';
   path := Self.CacheDir + name;
 
   if not (FileExists(path) or ZipExtractEntry(TRSOverheadFinder.ZIP, name, Self.CacheDir)) then
@@ -189,7 +189,7 @@ var
   overhead: ERSOverhead;
   bounds: TBox;
   searchingBounds: TBoxArray;
-  prayerImage, targetImage: TImage;
+  overheadImage: TImage;
   matrix: TSingleMatrix;
 begin
   background := Target.FindColor(TRSOverheadFinder.BACKGROUND_COLOR, MainScreen.Bounds);
@@ -199,14 +199,14 @@ begin
   searchingBounds := background.Cluster(8).BoundsArray();
 
   for overhead in overheads do
+  begin
+    overheadImage := Self.GetImage(overhead);
     for bounds in searchingBounds do
     begin
-      if (bounds.Width < Self.Images[overhead].Width) or (bounds.Height < Self.Images[overhead].Height) then
+      if (bounds.Width < overheadImage.Width) or (bounds.Height < overheadImage.Height) then
         Continue;
 
-      prayerImage := Self.GetImage(overhead);
-      targetImage := Target.GetImage(bounds);
-      matrix := MatchTemplate(targetImage, prayerImage, ETMFormula.TM_CCOEFF_NORMED);
+      matrix := MatchTemplate(Target.GetImage(bounds), overheadImage, ETMFormula.TM_CCOEFF_NORMED);
 
       with matrix.ArgMax do
       begin
@@ -218,6 +218,7 @@ begin
           Exit;
       end;
     end;
+  end;
 end;
 
 (*
