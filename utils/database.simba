@@ -208,7 +208,7 @@ begin
       raise GetDebugLn(Self.Name, 'Failed to find data file: ' + Self.DataDir + column + '.txt');
 
     //load the file data
-    data := FileReadLines(Self.DataDir + column);
+    data := FileReadLines(Self.DataDir + column + '.txt');
 
     //create rows data, basically just the index of each line of the data file
     //to save time, we measure the weight of each data row for sorting later
@@ -238,8 +238,9 @@ begin
     //- You then go to your Data at that index and you have the matching data you are looking for.
 
     //Cache files so we don't have to sort stuff everytime
-    if not FileWrite(Self.CacheDir + column, data.Join(LINE_SEP)) then
-      raise GetDebugLn(Self.Name, 'Failed to create cache file: ' + Self.CacheDir + column);
+
+    if not FileWrite(Self.CacheDir + column + '.txt', data.Join(LINE_SEP)) then
+      raise GetDebugLn(Self.Name, 'Failed to create cache file: ' + Self.CacheDir + column + '.txt');
     if not FileWrite(Self.CacheDir + column + '.rows', rows.Join(LINE_SEP)) then
       raise GetDebugLn(Self.Name, 'Failed to create cache file: ' + Self.CacheDir + column + '.rows');
 
