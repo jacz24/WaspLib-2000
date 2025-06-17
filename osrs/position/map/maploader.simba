@@ -71,7 +71,7 @@ This is an internal type. Don't use it if you don't know what you are doing.
     Regions: array of TRSMapRegion;
     Padding, Downscale: Integer;
     CacheDir: String;
-    const FILES: String = {$MACRO DIR} + 'files' + PATH_SEP;
+    const FILES: String = WLEnv.AssetsDir + 'map' + PATH_SEP;
     const ZIPS: TStringArray = ['map', 'heightmap', 'collision', 'objects', 'npcs'];
     _UnzipQueue: Integer;
   end;

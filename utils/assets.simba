@@ -6,6 +6,9 @@ Responsible for managing assets that WaspLib requires to run.
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
 type
+  EWLMapAsset = enum(MAP, COLLISION, HEIGHTMAP, OBJECTS, NPCS);
+  EWLItemFinderAsset = enum(HASH, ID, ITEM, ZIP, MASKS);
+
   TWLAsset = record
     Path, Hash: String;
   end;
@@ -15,18 +18,13 @@ type
     SpellFinder, PrayerFinder, OverheadFinder,
     HouseLayoutFinder: TWLAsset;
 
-    ItemFinder: array [0..4] of TWLAsset;
+    ItemFinder, Map: array [0..4] of TWLAsset;
 
     Queue: TStringArray;
     Timeout: TCountDown;
     const DATA_REPO_URL: String = 'https://raw.githubusercontent.com/WaspScripts/wasp-data/refs/heads/main/';
-    const ITEMFINDER_FILES: array [0..4] of String = [
-      'data/hash.txt',
-      'data/id.txt',
-      'data/item.txt',
-      'items.zip',
-      'masks.zip'
-    ];
+    const MAP_FILES: array [0..4] of String = ['map.zip', 'collision.zip', 'heightmap.zip', 'objects.zip', 'npcs.zip'];
+    const ITEMFINDER_FILES: array [0..4] of String = ['data/hash.txt','data/id.txt','data/item.txt','items.zip','masks.zip'];
     const ITEMFINDER_DATA: String = WLEnv.AssetsDir + 'finders' + PATH_SEP + 'items' + PATH_SEP + 'data' + PATH_SEP;
   end;
 
@@ -39,7 +37,9 @@ begin
   if not DirCreate(WLEnv.AssetsDir + 'jsons' + PATH_SEP) then
     raise GetDebugLn('WLAssets', 'Failed to create path: ' + WLEnv.AssetsDir + 'jsons' + PATH_SEP);
   if not DirCreate(WLEnv.AssetsDir + 'finders' + PATH_SEP + 'items' + PATH_SEP + 'data' + PATH_SEP) then
-    raise GetDebugLn('WLAssets', 'Failed to create path: ' + WLEnv.AssetsDir + 'jsons' + PATH_SEP);
+    raise GetDebugLn('WLAssets', 'Failed to create path: ' + WLEnv.AssetsDir + 'finders' + PATH_SEP + 'items' + PATH_SEP + 'data' + PATH_SEP);
+  if not DirCreate(WLEnv.AssetsDir + 'map' + PATH_SEP) then
+    raise GetDebugLn('WLAssets', 'Failed to create path: ' + WLEnv.AssetsDir + 'map' + PATH_SEP);
 
   Self.Fonts.Path := WLEnv.AssetsDir + 'fonts' + PATH_SEP + 'fonts.zip';
   Self.Fonts.Hash := HashFile(EHashAlgo.MD5, Self.Fonts.Path);
@@ -57,6 +57,12 @@ begin
   Self.Consumables.Path := WLEnv.AssetsDir + 'jsons' + PATH_SEP + 'consumables.json';
   Self.Consumables.Hash := HashFile(EHashAlgo.MD5, Self.Consumables.Path);
 
+  //Map
+  for i := 0 to 4 do
+  begin
+    Self.Map[i].Path := WLEnv.AssetsDir + 'map' + PATH_SEP + Self.MAP_FILES[i];
+    Self.Map[i].Hash := HashFile(EHashAlgo.MD5, Self.Map[i].Path);
+  end;
 
   //Finders
   for i := 0 to 4 do
@@ -134,6 +140,19 @@ begin
     Self.Queue += Self.Consumables.Path;
     Self.Timeout.Extend(30 * ONE_SECOND);
     Async.HTTPGetFile(Self.DATA_REPO_URL + 'jsons/consumables.json', Self.Consumables.Path, @Self.Download);
+  end;
+
+  //Map
+  for i := 0 to 4 do
+  begin
+    if Self.Map[i].Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'map/' + Self.MAP_FILES[i] + '.hash').Trim() then
+    begin
+      WriteLn GetDebugLn('WLAssets', 'Updating map/' + Self.MAP_FILES[i], ELogLevel.WARN);
+      FileDelete(Self.Map[i].Path);
+      Self.Queue += Self.Map[i].Path;
+      Self.Timeout.Extend(15 * ONE_SECOND);
+      Async.HTTPGetFile(Self.DATA_REPO_URL + 'map/' + Self.MAP_FILES[i], Self.Map[i].Path, @Self.Download);
+    end;
   end;
 
   //Finders
