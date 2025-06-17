@@ -174,13 +174,14 @@ begin
   end;
 end;
 
+
 procedure TLogger.Info(text: String; vars: array of Variant = []);
 var
   formatted: String;
 begin
   formatted := Format(text, vars);
-  self.AddLine(Format('[Info] : %s', [formatted]));
-  WriteLn(GetDebugLn(self.Name, formatted, ELogLevel.SUCCESS, True));
+  Self.AddLine(Format('[Info] : %s', [formatted]));
+  WriteLn(GetDebugLn(Self.Name, formatted, ELogLevel.SUCCESS, True));
 end;
 
 procedure TLogger.Warn(text: String; vars: array of Variant = []);
@@ -188,8 +189,8 @@ var
   formatted: String;
 begin
   formatted := Format(text, vars);
-  self.AddLine(Format('[Warn] : %s', [formatted]));
-  WriteLn(GetDebugLn(self.Name, formatted, ELogLevel.WARN, True));
+  Self.AddLine(Format('[Warn] : %s', [formatted]));
+  WriteLn(GetDebugLn(Self.Name, formatted, ELogLevel.WARN, True));
 end;
 
 procedure TLogger.Error(text: String; vars: array of Variant = []);
@@ -197,6 +198,15 @@ var
   formatted: String;
 begin
   formatted := Format(text, vars);
-  self.AddLine(Format('[ERROR] : %s', [formatted]));
-  WriteLn(GetDebugLn(self.Name, formatted, ELogLevel.ERROR, True));
+  Self.AddLine(Format('[ERROR] : %s', [formatted]));
+  WriteLn(GetDebugLn(Self.Name, formatted, ELogLevel.ERROR, True));
+end;
+
+procedure TLogger.Exception(text: String; vars: array of Variant = []);
+var
+  formatted: String;
+begin
+  formatted := Format(text, vars);
+  Self.AddLine(Format('[ERROR] : %s', [formatted]));
+  raise GetDebugLn(Self.Name, formatted, ELogLevel.ERROR, True);
 end;

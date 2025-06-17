@@ -2,7 +2,7 @@
 # ConsumeHandler
 Manages consumable items like food and potions. It handles loading, inventory scanning, and consumption logic with cooldowns and effects.
 *)
-{$DEFINE WL_CONSUMEHANDLER_INCLUDED}
+{$DEFINE WL_CONSUMABLES_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 (*
@@ -23,9 +23,9 @@ type
   );
 
 (*
-## type TConsumable
+## type TRSConsumableItem
 ```pascal
-  TConsumable = record
+  TRSConsumableItem = record
     Name: String;
     Category: ERSConsumable;
     CooldownMs: Int64;
@@ -36,7 +36,7 @@ type
 ```
 Represents a single consumable item with its properties.
 *)
-  TConsumable = record
+  TRSConsumableItem = record
     Name: String;
     Category: ERSConsumable;
     CooldownMs: Int64;
@@ -44,34 +44,34 @@ Represents a single consumable item with its properties.
     IsComboFood: Boolean;
     Points: Int64;
   end;
-  TConsumableArray = array of TConsumable;
+  TRSConsumableItemArray = array of TRSConsumableItem;
 
 (*
-## type TRSConsumeHandler
+## type TRSConsumables
 ```pascal
-  TRSConsumeHandler = record
+  TRSConsumables = record
     Name: String;
-    Consumables: TConsumableArray;
+    Consumables: TRSConsumableItemArray;
     IsSetup: Boolean;
     MinInvPoints: Int64;
-    ActiveConsumables: TConsumableArray;
+    ActiveConsumables: TRSConsumableItemArray;
     Timers: array of TCountDown;
     CooldownTimers: array [ERSConsumable] of TCountDown;
   end;
 ```
 Manages all aspects of item consumption.
 *)
-  TRSConsumeHandler = record
+  TRSConsumables = record
     Name: String;
-    Consumables: TConsumableArray;
+    Consumables: TRSConsumableItemArray;
     IsSetup: Boolean;
     MinInvPoints: Int64;
-    ActiveConsumables: TConsumableArray;
+    ActiveConsumables: TRSConsumableItemArray;
     Timers: array of TCountDown;
     CooldownTimers: array [ERSConsumable] of TCountDown;
   end;
 {%codetools off}
-function TRSConsumeHandler.CalculatePoints(const itemJSON: TJSONItem; const category: ERSConsumable): Int64;
+function TRSConsumables.CalculatePoints(itemJSON: TJSONItem; category: ERSConsumable): Int64;
 var
   i: Integer;
   reqItem: TJSONItem;
@@ -87,6 +87,7 @@ begin
   if itemJSON.Has('level_requirements') and (itemJSON.Item['level_requirements'].Count > 0) then
   begin
     playerLevel := Stats.GetLevel(ERSSkill.HITPOINTS);
+
     if playerLevel <= 0 then
     begin
       if itemJSON.Has('base_amounts') then
@@ -143,10 +144,10 @@ begin
   end;
 end;
 
-function TRSConsumeHandler.LoadFromJSON(const jsonData: TJSONItem): TConsumableArray;
+function TRSConsumables.LoadFromJSON(jsonData: TJSONItem): TRSConsumableItemArray;
 var
   i: Integer;
-  consumable: TConsumable;
+  consumable: TRSConsumableItem;
   itemJSON: TJSONItem;
   categoryStr: String;
   enumCategory: ERSConsumable;
@@ -184,17 +185,17 @@ begin
   end;
 end;
 
-function TRSConsumeHandler._ScanInventory(consumableType: ERSConsumable; filterByType: Boolean): TConsumableArray;
+function TRSConsumables._ScanInventory(consumableType: ERSConsumable; filterByType: Boolean): TRSConsumableItemArray;
 var
   i, j: Integer;
   inventoryItems: TRSItemArray;
   consumableName, inventoryItemName: String;
-  matchedConsumable: TConsumable;
+  matchedConsumable: TRSConsumableItem;
   addedNames: TStringArray;
 begin
-  if not Self.IsSetup then Self.Setup();
+  Self.Setup();
 
-  if not Inventory.Open then
+  if not Inventory.Open() then
     Logger.Warn('Cannot access inventory');
 
   try
@@ -234,7 +235,7 @@ begin
   end;
 end;
 
-procedure TRSConsumeHandler._ClearExpiredConsumables();
+procedure TRSConsumables._ClearExpiredConsumables();
 var
   i: Integer;
 begin
@@ -248,16 +249,16 @@ end;
 
 {%codetools on}
 (*
-## TRSConsumeHandler.Setup
+## TRSConsumables.Setup
 ```pascal
-procedure TRSConsumeHandler.Setup();
+procedure TRSConsumables.Setup();
 ```
 Initializes the consume handler by loading data from `consumables.json`.
 Must be called before other operations.
 *)
-procedure TRSConsumeHandler.Setup();
+procedure TRSConsumables.Setup();
 var
-  config: TConfigJSON;
+  json: TJSONParser;
   consumableType: ERSConsumable;
 begin
   if Self.IsSetup then Exit;
@@ -265,75 +266,62 @@ begin
   for consumableType := Low(ERSConsumable) to High(ERSConsumable) do
     Self.CooldownTimers[consumableType].Start(0);
 
-  config.Setup('consumables.json');
-  try
-    Self.Consumables := Self.LoadFromJSON(config.Data);
-    if Length(Self.Consumables) = 0 then
-    begin
-      Logger.Error('Failed to parse consumables configuration');
-      Exit;
-    end;
+  json := new TJSONParser();
+  json.Load(WLAssets.Consumables.Path);
 
-    try
-      Stats.CacheStats();
-    except
-      Logger.Warn('Could not cache player stats');
-    end;
-
-    Self.IsSetup := True;
-  finally
-    config.Data.Free();
+  Self.Consumables := Self.LoadFromJSON(json);
+  if Length(Self.Consumables) = 0 then
+  begin
+    FileDelete(WLEnv.AssetsDir + 'consumables' + PATH_SEP + 'consumables.json');
+    Logger.Exception('Failed to parse consumables configuration');
   end;
+
+  Self.IsSetup := True;
 end;
 
 (*
-## TRSConsumeHandler.Find
+## TRSConsumables.Find
 ```pascal
-function TRSConsumeHandler.Find(consumableType: ERSConsumable): TConsumableArray;
+function TRSConsumables.Find(consumableType: ERSConsumable): TRSConsumableItemArray;
 ```
 Scans inventory for all consumables of a specific category.
 *)
-function TRSConsumeHandler.Find(consumableType: ERSConsumable): TConsumableArray;
+function TRSConsumables.Find(consumableType: ERSConsumable): TRSConsumableItemArray;
 begin
   Result := Self._ScanInventory(consumableType, True);
 end;
 
 (*
-## TRSConsumeHandler.FindAll
+## TRSConsumables.FindAll
 ```pascal
-function TRSConsumeHandler.FindAll(): TConsumableArray;
+function TRSConsumables.FindAll(): TRSConsumableItemArray;
 ```
 Scans inventory for all available consumables of any category.
 *)
-function TRSConsumeHandler.FindAll(): TConsumableArray;
+function TRSConsumables.FindAll(): TRSConsumableItemArray;
 begin
   Result := Self._ScanInventory(ERSConsumable.FOOD, False);
 end;
 
 (*
-## TRSConsumeHandler.Count
+## TRSConsumables.Count
 ```pascal
-function TRSConsumeHandler.Count(consumableType: ERSConsumable): Int32;
+function TRSConsumables.Count(consumableType: ERSConsumable): Int32;
 ```
 Counts the number of items of a specific consumable category in inventory.
 *)
-function TRSConsumeHandler.Count(consumableType: ERSConsumable): Int32;
+function TRSConsumables.Count(consumableType: ERSConsumable): Integer;
 var
   i, j: Integer;
   inventoryItems: TRSItemArray;
   consumableName, inventoryItemName: String;
 begin
-  Result := 0;
-  if not Self.IsSetup then Self.Setup();
+  Self.Setup();
 
-  if not Inventory.Open then
+  if not Inventory.Open() then
     Exit;
 
-  try
-    inventoryItems := Inventory.Items.DiscoverAll();
-  except
-    Exit;
-  end;
+  inventoryItems := Inventory.Items.DiscoverAll();
 
   for j := 0 to High(inventoryItems) do
   begin
@@ -360,27 +348,27 @@ begin
 end;
 
 (*
-## TRSConsumeHandler.Has
+## TRSConsumables.Has
 ```pascal
-function TRSConsumeHandler.Has(consumableType: ERSConsumable): Boolean;
+function TRSConsumables.Has(consumableType: ERSConsumable): Boolean;
 ```
 Checks if the inventory has at least one item of a specific category.
 *)
-function TRSConsumeHandler.Has(consumableType: ERSConsumable): Boolean;
+function TRSConsumables.Has(consumableType: ERSConsumable): Boolean;
 begin
   Result := Self.Count(consumableType) > 0;
 end;
 
 (*
-## TRSConsumeHandler.GetBest
+## TRSConsumables.GetBest
 ```pascal
-function TRSConsumeHandler.GetBest(consumableType: ERSConsumable): TConsumable;
+function TRSConsumables.GetBest(consumableType: ERSConsumable): TRSConsumableItem;
 ```
 Finds the best consumable of a category from inventory based on `Points`.
 *)
-function TRSConsumeHandler.GetBest(consumableType: ERSConsumable): TConsumable;
+function TRSConsumables.GetBest(consumableType: ERSConsumable): TRSConsumableItem;
 var
-  availableConsumables: TConsumableArray;
+  availableConsumables: TRSConsumableItemArray;
   i: Integer;
 begin
   availableConsumables := Self.Find(consumableType);
@@ -399,15 +387,15 @@ begin
 end;
 
 (*
-## TRSConsumeHandler.CanConsume
+## TRSConsumables.CanConsume
 ```pascal
-function TRSConsumeHandler.CanConsume(consumableType: ERSConsumable): Boolean;
+function TRSConsumables.CanConsume(consumableType: ERSConsumable): Boolean;
 ```
 Checks if a consumable can be used, considering active effects.
 *)
-function TRSConsumeHandler.CanConsume(consumableType: ERSConsumable): Boolean;
+function TRSConsumables.CanConsume(consumableType: ERSConsumable): Boolean;
 var
-  c: TConsumable;
+  c: TRSConsumableItem;
 begin
   Self._ClearExpiredConsumables();
   for c in Self.ActiveConsumables do
@@ -417,17 +405,17 @@ begin
 end;
 
 (*
-## TRSConsumeHandler.HasEnoughPoints
+## TRSConsumables.HasEnoughPoints
 ```pascal
-function TRSConsumeHandler.HasEnoughPoints(consumableType: ERSConsumable): Boolean;
+function TRSConsumables.HasEnoughPoints(consumableType: ERSConsumable): Boolean;
 ```
 Checks if total points of a consumable type meet the `MinInvPoints` threshold.
 *)
-function TRSConsumeHandler.HasEnoughPoints(consumableType: ERSConsumable): Boolean;
+function TRSConsumables.HasEnoughPoints(consumableType: ERSConsumable): Boolean;
 var
-  consumables: TConsumableArray;
-  c: TConsumable;
-  totalPoints: Int64;
+  consumables: TRSConsumableItemArray;
+  c: TRSConsumableItem;
+  totalPoints: Integer;
 begin
   if Self.MinInvPoints <= 0 then Exit(True);
 
@@ -439,46 +427,47 @@ begin
 end;
 
 (*
-## TRSConsumeHandler.Consume
+## TRSConsumables.Consume
 ```pascal
-function TRSConsumeHandler.Consume(consumableType: ERSConsumable; fastMouse: TMouse = Mouse; useFast: Boolean = False): Boolean;
+function TRSConsumables.Consume(consumableType: ERSConsumable; fastMouse: TMouse = Mouse; useFast: Boolean = False): Boolean;
 ```
 Consumes the best item of a specified category from inventory.
 *)
-function TRSConsumeHandler.Consume(consumableType: ERSConsumable; fastMouse: TMouse = Mouse; useFast: Boolean = False): Boolean;
+function TRSConsumables.Consume(consumableType: ERSConsumable; fast: Boolean = False): Boolean;
 var
-  consumable: TConsumable;
+  consumable: TRSConsumableItem;
   slot: Integer;
-  Area: TBox;
+  bounds: TBox;
   totalPixels: Integer;
-  normMouse: TMouse := Mouse;
 begin
   if not Self.CooldownTimers[consumableType].IsFinished then Exit;
-  if not Inventory.Open then
+  if not Inventory.Open() then
     Exit;
     
   consumable := Self.GetBest(consumableType);
   if consumable.Name = '' then Exit;
   if not Inventory.Items.Find(consumable.Name, slot) then Exit;
 
-  Area := Inventory.Slots.Box(slot);
-  totalPixels := Area.Width * Area.Height;
+  bounds := Inventory.Slots.Box(slot);
+  totalPixels := bounds.Area;
 
-  if not useFast then
+  if fast then
+  begin
+    Target.Options.MouseSpeed   := Target.Options.MouseSpeed + 14;
+    Target.Options.MouseGravity := Target.Options.MouseSpeed - 3;
+    Target.Options.MouseWind    := Target.Options.MouseSpeed - 3;
+
+    Inventory.Slots.Click(slot);
+    Result := Round((Length(Target.GetPixelDifference(250, bounds)) / totalPixels) * 100) > 0;
+
+    Target.Options.MouseSpeed   := Target.Options.MouseSpeed - 14;
+    Target.Options.MouseGravity := Target.Options.MouseSpeed + 3;
+    Target.Options.MouseWind    := Target.Options.MouseSpeed + 3;
+  end
+  else
   begin
     Inventory.Slots.Click(slot);
-    Result := SleepUntil(Round((Length(Target.GetPixelDifference(250, Area)) / totalPixels) * 100) > 0, 100, 1800);
-  end;
-
-  if useFast then
-  begin
-    try
-      Mouse := fastMouse;
-      Inventory.Slots.Click(slot);
-      Result := Round((Length(Target.GetPixelDifference(250, Area)) / totalPixels) * 100) > 0;
-    finally
-      Mouse := normMouse;
-    end;
+    Result := SleepUntil(Round((Length(Target.GetPixelDifference(250, bounds)) / totalPixels) * 100) > 0, 100, 1800);
   end;
 
   if not Result then Exit;
@@ -492,3 +481,6 @@ begin
     Self.Timers[High(Self.Timers)].Start(consumable.DurationMs);
   end;
 end;
+
+var
+  Consumables: TRSConsumables;

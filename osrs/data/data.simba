@@ -18,7 +18,6 @@ Record responsible for providing item information in WaspLib.
     Timeout: UInt64;
     Disabled: Boolean;
     const CacheDir: String = WLEnv.CacheDir + 'data' + PATH_SEP;
-    const ZIP: String = {$MACRO DIR} + 'items.zip';
     const PRICES_URL: String = 'https://prices.runescape.wiki/api/v1/osrs/latest';
   end;
 
@@ -180,7 +179,7 @@ begin
   path := Self.CacheDir  + 'items' + PATH_SEP;
   filename := path + itemID + '.json';
   if not FileExists(filename) then
-    if not ZipExtractEntry(Self.ZIP, itemID +'.json', path) then
+    if not ZipExtractEntry(WLAssets.ItemDefinitions.Path, itemID +'.json', path) then
       raise  GetDebugLn('ItemData', 'Couldn''t find ' + itemID + '.json');
 
   Result := new TJSONParser();
@@ -364,7 +363,6 @@ Type responsible for retrieving gear data.
 *)
   TGearData = record
     Data: TJSONItem;
-    const PATH: String = {$MACRO DIR} + 'gear.json';
   end;
 
 (*
@@ -378,7 +376,7 @@ procedure TGearData.Setup();
 begin
   if Self.Data <> nil then Exit;
   Self.Data := new TJSONParser();
-  TJSONParser(Self.Data).Load({$macro DIR} + 'gear.json');
+  TJSONParser(Self.Data).Load(WLAssets.Gear.Path);
 end;
 
 (*

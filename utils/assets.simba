@@ -7,11 +7,11 @@ Responsible for managing assets that WaspLib requires to run.
 
 type
   TWLAssets = record
-    Fonts: record
+    Fonts, Gear, Weapons, ItemDefinitions, Consumables: record
       Path, Hash: String;
     end;
 
-    Queue: Integer;
+    Queue: TStringArray;
     Timeout: TCountDown;
     const DATA_REPO_URL: String = 'https://raw.githubusercontent.com/WaspScripts/wasp-data/refs/heads/main/';
   end;
@@ -20,8 +20,23 @@ procedure TWLAssets.Setup();
 begin
   if not DirCreate(WLEnv.AssetsDir + 'fonts' + PATH_SEP) then
     raise GetDebugLn('WLAssets', 'Failed to create path: ' + WLEnv.AssetsDir + 'fonts' + PATH_SEP);
-  Self.Fonts.Path   := WLEnv.AssetsDir + 'fonts' + PATH_SEP + 'fonts.zip';
-  Self.Fonts.Hash   := HashFile(EHashAlgo.MD5, Self.Fonts.Path);
+  if not DirCreate(WLEnv.AssetsDir + 'jsons' + PATH_SEP) then
+    raise GetDebugLn('WLAssets', 'Failed to create path: ' + WLEnv.AssetsDir + 'jsons' + PATH_SEP);
+
+  Self.Fonts.Path := WLEnv.AssetsDir + 'fonts' + PATH_SEP + 'fonts.zip';
+  Self.Fonts.Hash := HashFile(EHashAlgo.MD5, Self.Fonts.Path);
+
+  Self.Gear.Path := WLEnv.AssetsDir + 'jsons' + PATH_SEP + 'gear.json';
+  Self.Gear.Hash := HashFile(EHashAlgo.MD5, Self.Gear.Path);
+
+  Self.Weapons.Path := WLEnv.AssetsDir + 'jsons' + PATH_SEP + 'weapons.json';
+  Self.Weapons.Hash := HashFile(EHashAlgo.MD5, Self.Weapons.Path);
+
+  Self.ItemDefinitions.Path := WLEnv.AssetsDir + 'jsons' + PATH_SEP + 'item-definitions.zip';
+  Self.ItemDefinitions.Hash := HashFile(EHashAlgo.MD5, Self.ItemDefinitions.Path);
+
+  Self.Consumables.Path := WLEnv.AssetsDir + 'jsons' + PATH_SEP + 'consumables.json';
+  Self.Consumables.Hash := HashFile(EHashAlgo.MD5, Self.Consumables.Path);
 end;
 
 procedure TWLAssets.Download(constref result: TASyncHTTPResult);
@@ -29,29 +44,67 @@ begin
   if not InRange(result.Response.AsInteger, 200, 299) then
     raise GetDebugLn('WLAssets', result.Exception);
 
-  Self.Queue -= 1;
+  Self.Queue.Remove(result.Data);
 end;
 
 procedure TWLAssets.Update();
+var
+  i: Integer;
 begin
-  Self.Timeout.Start(1000);
+  Self.Timeout.Start(100);
   if Self.Fonts.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'fonts/fonts.zip.hash').Trim() then
   begin
     WriteLn GetDebugLn('WLAssets', 'Updating fonts.zip', ELogLevel.WARN);
     FileDelete(Self.Fonts.Path);
-    Self.Queue += 1;
-    Self.Timeout.Extend(60 * ONE_SECOND);
+    Self.Queue += Self.Fonts.Path;
+    Self.Timeout.Extend(30 * ONE_SECOND);
     Async.HTTPGetFile(Self.DATA_REPO_URL + 'fonts/fonts.zip', Self.Fonts.Path, @Self.Download);
   end;
 
-  while Self.Queue > 0 do
+  if Self.Gear.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/gear.json.hash').Trim() then
+  begin
+    WriteLn GetDebugLn('WLAssets', 'Updating gear.json', ELogLevel.WARN);
+    FileDelete(Self.Gear.Path);
+    Self.Queue += Self.Gear.Path;
+    Self.Timeout.Extend(30 * ONE_SECOND);
+    Async.HTTPGetFile(Self.DATA_REPO_URL + 'jsons/gear.json', Self.Gear.Path, @Self.Download);
+  end;
+
+  if Self.Weapons.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/weapons.json.hash').Trim() then
+  begin
+    WriteLn GetDebugLn('WLAssets', 'Updating weapons.json', ELogLevel.WARN);
+    FileDelete(Self.Weapons.Path);
+    Self.Queue += Self.Weapons.Path;
+    Self.Timeout.Extend(30 * ONE_SECOND);
+    Async.HTTPGetFile(Self.DATA_REPO_URL + 'jsons/weapons.json', Self.Weapons.Path, @Self.Download);
+  end;
+
+  if Self.ItemDefinitions.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/item-definitions.zip.hash').Trim() then
+  begin
+    WriteLn GetDebugLn('WLAssets', 'Updating item-definitions.zip', ELogLevel.WARN);
+    FileDelete(Self.ItemDefinitions.Path);
+    Self.Queue += Self.ItemDefinitions.Path;
+    Self.Timeout.Extend(30 * ONE_SECOND);
+    Async.HTTPGetFile(Self.DATA_REPO_URL + 'jsons/item-definitions.zip', Self.ItemDefinitions.Path, @Self.Download);
+  end;
+
+  if Self.Consumables.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/consumables.json.hash').Trim() then
+  begin
+    FileDelete(Self.Consumables.Path);
+    Self.Queue += Self.Consumables.Path;
+    Self.Timeout.Extend(30 * ONE_SECOND);
+    Async.HTTPGetFile(Self.DATA_REPO_URL + 'jsons/consumables.json', Self.Consumables.Path, @Self.Download);
+  end;
+
+  while Length(Self.Queue) > 0 do
   begin
     Sleep(100);
 
     if Self.Timeout.IsFinished then
     begin
-      DirDelete(WLEnv.AssetsDir, True);
-      raise GetDebugLn('WLAssets', 'Timed out downloading assets.');
+      for i := 0 to High(Self.Queue) do
+        FileDelete(Self.Queue[i]);
+      raise GetDebugLn('WLAssets', 'Timed out downloading assets: ' + ToStr(Self.Queue));
     end;
   end;
 end;

@@ -96,8 +96,6 @@ end;
 
 //Setup process, for some things the order matters.
 procedure WaspLibSetup();
-var
-  countdown: TCountDown;
 begin
   if not DirCreate(WLEnv.ConfigsDir) then
     raise GetDebugLn('WaspLib', 'Failed to create path: ' + WLEnv.ConfigsDir);
