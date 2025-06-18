@@ -1,9 +1,12 @@
-{$I WaspLib/osrs.simba}
-
 const
   ENDPOINT = 'https://oldschool.runescape.wiki/api.php?';
   SILENT: Boolean = False;
   TEST_ITEM: String = '';
+
+  SLOT_NAMES: TStringArray = [
+    'head', 'cape', 'neck', 'ammo', 'weapon', 'body', 'shield', 'legs', 'hands',
+    'feet', 'ring', 'spec_weapons', '2h'
+  ];
 
 function GetEndPoint(name: String): String;
 begin
@@ -32,11 +35,9 @@ function TSlotArray.GetStr(): String;
 var
   i: Integer;
 begin
-  for i := 0 to 10 do
-    Result += '  "' + ToStr(ERSEquipment(i)).After('ERSEquipment.').ToLower() + '": ' + Self[i].Unique().Sorted().GetStr() + ',' + LINE_SEP;
-
-  Result += '  "spec_weapons": ' + Self[11].Unique().Sorted().GetStr() + ',' + LINE_SEP;
-  Result += '  "2h": ' + Self[12].Unique().Sorted().GetStr();
+  for i := 0 to 11 do
+    Result += '  "' + SLOT_NAMES[i] + '": ' + Self[i].Unique().Sorted().GetStr() + ',' + LINE_SEP;
+  Result += '  "' + SLOT_NAMES[12] + '": ' + Self[12].Unique().Sorted().GetStr();
 end;
 
 procedure FillSlot(item, txt: String);
@@ -48,7 +49,7 @@ begin
 
   if txt.Contains('slot = weapon') then
   begin
-    Slots[ERSEquipment.WEAPON] += item;
+    Slots[4] += item;
     if txt.Contains('Category:Weapons with Special attacks') then
       Slots[11] += item;
     Exit;
@@ -64,60 +65,60 @@ begin
 
   if txt.Contains('slot = head') then
   begin
-    Slots[ERSEquipment.HEAD] += item;
+    Slots[0] += item;
     Exit;
   end;
 
   if txt.Contains('slot = cape') then
   begin
-    Slots[ERSEquipment.CAPE] += item;
+    Slots[1] += item;
     Exit;
   end;
 
   if txt.Contains('slot = neck') then
   begin
-    Slots[ERSEquipment.NECK] += item;
+    Slots[2] += item;
     Exit;
   end;
 
   if txt.Contains('slot = ammo') then
   begin
-    Slots[ERSEquipment.AMMO] += item;
+    Slots[3] += item;
     Exit;
   end;
 
   if txt.Contains('slot = body') then
   begin
-    Slots[ERSEquipment.BODY] += item;
+    Slots[5] += item;
     Exit;
   end;
 
   if txt.Contains('slot = shield') then
   begin
-    Slots[ERSEquipment.SHIELD] += item;
+    Slots[6] += item;
     Exit;
   end;
 
   if txt.Contains('slot = legs') then
   begin
-    Slots[ERSEquipment.LEGS] += item;
+    Slots[7] += item;
     Exit;
   end;
 
   if txt.Contains('slot = hands') then
   begin
-    Slots[ERSEquipment.HANDS] += item;
+    Slots[8] += item;
     Exit;
   end;
 
   if txt.Contains('slot = feet') then
   begin
-    Slots[ERSEquipment.FEET] += item;
+    Slots[9] += item;
     Exit;
   end;
 
   if txt.Contains('slot = ring') then
-    Slots[ERSEquipment.RING] += item;
+    Slots[10] += item;
 end;
 
 procedure TStringArray.Filter();
@@ -148,17 +149,16 @@ begin
   end;
 end;
 
-
 var
   items: TStringArray;
   i: Integer;
   url: String;
-  json, tmp: TJSONItem;
+  json, tmp: TJSONParser;
   text: String;
 begin
   ClearSimbaOutput();
 
-  items := FileReadLines(ItemFinder.Database.DataDir + 'item').Unique();
+  items := FileReadLines({$MACRO DIR} + '..' + PATH_SEP + 'finders' + PATH_SEP + 'items' + PATH_SEP + 'data' + PATH_SEP + 'item.txt').Unique();
   items.Filter();
 
   for i := 0 to High(items) do
@@ -176,13 +176,14 @@ begin
       WriteLn url;
 
     try
-      json := HTTPClient.GetJson(url);
+      json := new TJSONParser();
+      json.Parse(HTTPClient.Get(url));
     except
       WriteLn('Failed to fetch: ', items[i]);
     end;
 
     if TEST_ITEM <> '' then
-      WriteLn json.ToJSON();
+      WriteLn json.Format();
 
     if json = nil then
     begin
@@ -194,16 +195,14 @@ begin
       tmp := json.Item['parse'];
     except
       WriteLn('Failed to find parse: ', items[i]);
-      json.Free();
       Continue;
     end;
 
     try
-      text := tmp.Item['wikitext'].ToJSON();
+      text := tmp.Item['wikitext'].Format([EJSONFormatOption.SINGLE_LINE_ARR]);
     except
       if not SILENT then
         WriteLn('Failed to find wikitext: ', items[i]);
-      json.Free();
       Continue;
     end;
 
@@ -211,11 +210,10 @@ begin
       FillSlot(TEST_ITEM, text)
     else
       FillSlot(items[i], text);
-    json.Free();
   end;
 
   text := '{' + LINE_SEP + Slots.GetStr() + LINE_SEP + '}';
   WriteLn text;
   if TEST_ITEM = '' then
-    FileWrite(GearData.PATH, text);
+    FileWrite({$MACRO DIR} + '..' + PATH_SEP + 'jsons' + PATH_SEP + 'gear.json', text);
 end;
