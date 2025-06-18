@@ -6,9 +6,6 @@ Responsible for managing assets that WaspLib requires to run.
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
 type
-  EWLMapAsset = enum(MAP, COLLISION, HEIGHTMAP, OBJECTS, NPCS);
-  EWLItemFinderAsset = enum(HASH, ID, ITEM, ZIP, MASKS);
-
   TWLAsset = record
     Path, Hash: String;
   end;
@@ -42,46 +39,46 @@ begin
     raise GetDebugLn('WLAssets', 'Failed to create path: ' + WLEnv.AssetsDir + 'map' + PATH_SEP);
 
   Self.Fonts.Path := WLEnv.AssetsDir + 'fonts' + PATH_SEP + 'fonts.zip';
-  Self.Fonts.Hash := HashFile(EHashAlgo.MD5, Self.Fonts.Path);
+  Self.Fonts.Hash := HashFile(EHashAlgo.CRC32, Self.Fonts.Path);
 
   //JSON
   Self.Gear.Path := WLEnv.AssetsDir + 'jsons' + PATH_SEP + 'gear.json';
-  Self.Gear.Hash := HashFile(EHashAlgo.MD5, Self.Gear.Path);
+  Self.Gear.Hash := HashFile(EHashAlgo.CRC32, Self.Gear.Path);
 
   Self.Weapons.Path := WLEnv.AssetsDir + 'jsons' + PATH_SEP + 'weapons.json';
-  Self.Weapons.Hash := HashFile(EHashAlgo.MD5, Self.Weapons.Path);
+  Self.Weapons.Hash := HashFile(EHashAlgo.CRC32, Self.Weapons.Path);
 
   Self.ItemDefinitions.Path := WLEnv.AssetsDir + 'jsons' + PATH_SEP + 'item-definitions.zip';
-  Self.ItemDefinitions.Hash := HashFile(EHashAlgo.MD5, Self.ItemDefinitions.Path);
+  Self.ItemDefinitions.Hash := HashFile(EHashAlgo.CRC32, Self.ItemDefinitions.Path);
 
   Self.Consumables.Path := WLEnv.AssetsDir + 'jsons' + PATH_SEP + 'consumables.json';
-  Self.Consumables.Hash := HashFile(EHashAlgo.MD5, Self.Consumables.Path);
+  Self.Consumables.Hash := HashFile(EHashAlgo.CRC32, Self.Consumables.Path);
 
   //Map
   for i := 0 to 4 do
   begin
     Self.Map[i].Path := WLEnv.AssetsDir + 'map' + PATH_SEP + Self.MAP_FILES[i];
-    Self.Map[i].Hash := HashFile(EHashAlgo.MD5, Self.Map[i].Path);
+    Self.Map[i].Hash := HashFile(EHashAlgo.CRC32, Self.Map[i].Path);
   end;
 
   //Finders
   for i := 0 to 4 do
   begin
     Self.ItemFinder[i].Path := WLEnv.AssetsDir + 'finders' + PATH_SEP + 'items' + PATH_SEP + Self.ITEMFINDER_FILES[i].Replace('/', PATH_SEP);
-    Self.ItemFinder[i].Hash := HashFile(EHashAlgo.MD5, Self.ItemFinder[i].Path);
+    Self.ItemFinder[i].Hash := HashFile(EHashAlgo.CRC32, Self.ItemFinder[i].Path);
   end;
 
   Self.SpellFinder.Path := WLEnv.AssetsDir + 'finders' + PATH_SEP + 'spells.zip';
-  Self.SpellFinder.Hash := HashFile(EHashAlgo.MD5, Self.SpellFinder.Path);
+  Self.SpellFinder.Hash := HashFile(EHashAlgo.CRC32, Self.SpellFinder.Path);
 
   Self.PrayerFinder.Path := WLEnv.AssetsDir + 'finders' + PATH_SEP + 'prayer.zip';
-  Self.PrayerFinder.Hash := HashFile(EHashAlgo.MD5, Self.PrayerFinder.Path);
+  Self.PrayerFinder.Hash := HashFile(EHashAlgo.CRC32, Self.PrayerFinder.Path);
 
   Self.OverheadFinder.Path := WLEnv.AssetsDir + 'finders' + PATH_SEP + 'overheads.zip';
-  Self.OverheadFinder.Hash := HashFile(EHashAlgo.MD5, Self.OverheadFinder.Path);
+  Self.OverheadFinder.Hash := HashFile(EHashAlgo.CRC32, Self.OverheadFinder.Path);
 
   Self.HouseLayoutFinder.Path := WLEnv.AssetsDir + 'finders' + PATH_SEP + 'house_layout.zip';
-  Self.HouseLayoutFinder.Hash := HashFile(EHashAlgo.MD5, Self.HouseLayoutFinder.Path);
+  Self.HouseLayoutFinder.Hash := HashFile(EHashAlgo.CRC32, Self.HouseLayoutFinder.Path);
 end;
 
 procedure TWLAssets.Download(constref result: TASyncHTTPResult);
@@ -97,7 +94,7 @@ var
   i: Integer;
 begin
   Self.Timeout.Start(100);
-  if Self.Fonts.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'fonts/fonts.zip.hash').Trim() then
+  if Self.Fonts.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'fonts/fonts.zip.hash') then
   begin
     WriteLn GetDebugLn('WLAssets', 'Updating fonts.zip', ELogLevel.WARN);
     FileDelete(Self.Fonts.Path);
@@ -107,7 +104,7 @@ begin
   end;
 
   //JSON
-  if Self.Gear.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/gear.json.hash').Trim() then
+  if Self.Gear.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/gear.json.hash') then
   begin
     WriteLn GetDebugLn('WLAssets', 'Updating gear.json', ELogLevel.WARN);
     FileDelete(Self.Gear.Path);
@@ -116,7 +113,7 @@ begin
     Async.HTTPGetFile(Self.DATA_REPO_URL + 'jsons/gear.json', Self.Gear.Path, @Self.Download);
   end;
 
-  if Self.Weapons.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/weapons.json.hash').Trim() then
+  if Self.Weapons.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/weapons.json.hash') then
   begin
     WriteLn GetDebugLn('WLAssets', 'Updating weapons.json', ELogLevel.WARN);
     FileDelete(Self.Weapons.Path);
@@ -125,7 +122,7 @@ begin
     Async.HTTPGetFile(Self.DATA_REPO_URL + 'jsons/weapons.json', Self.Weapons.Path, @Self.Download);
   end;
 
-  if Self.ItemDefinitions.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/item-definitions.zip.hash').Trim() then
+  if Self.ItemDefinitions.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/item-definitions.zip.hash') then
   begin
     WriteLn GetDebugLn('WLAssets', 'Updating item-definitions.zip', ELogLevel.WARN);
     FileDelete(Self.ItemDefinitions.Path);
@@ -134,7 +131,7 @@ begin
     Async.HTTPGetFile(Self.DATA_REPO_URL + 'jsons/item-definitions.zip', Self.ItemDefinitions.Path, @Self.Download);
   end;
 
-  if Self.Consumables.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/consumables.json.hash').Trim() then
+  if Self.Consumables.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/consumables.json.hash') then
   begin
     FileDelete(Self.Consumables.Path);
     Self.Queue += Self.Consumables.Path;
@@ -145,7 +142,7 @@ begin
   //Map
   for i := 0 to 4 do
   begin
-    if Self.Map[i].Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'map/' + Self.MAP_FILES[i] + '.hash').Trim() then
+    if Self.Map[i].Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'map/' + Self.MAP_FILES[i] + '.hash') then
     begin
       WriteLn GetDebugLn('WLAssets', 'Updating map/' + Self.MAP_FILES[i], ELogLevel.WARN);
       FileDelete(Self.Map[i].Path);
@@ -158,7 +155,7 @@ begin
   //Finders
   for i := 0 to 4 do
   begin
-    if Self.ItemFinder[i].Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/items/' + Self.ITEMFINDER_FILES[i] + '.hash').Trim() then
+    if Self.ItemFinder[i].Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/items/' + Self.ITEMFINDER_FILES[i] + '.hash') then
     begin
       WriteLn GetDebugLn('WLAssets', 'Updating items/' + Self.ITEMFINDER_FILES[i], ELogLevel.WARN);
       FileDelete(Self.ItemFinder[i].Path);
@@ -168,7 +165,7 @@ begin
     end;
   end;
 
-  if Self.SpellFinder.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/spells.zip.hash').Trim() then
+  if Self.SpellFinder.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/spells.zip.hash') then
   begin
     WriteLn GetDebugLn('WLAssets', 'Updating finders/spells.zip', ELogLevel.WARN);
     FileDelete(Self.SpellFinder.Path);
@@ -177,7 +174,7 @@ begin
     Async.HTTPGetFile(Self.DATA_REPO_URL + 'finders/spells.zip', Self.SpellFinder.Path, @Self.Download);
   end;
 
-  if Self.PrayerFinder.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/prayer.zip.hash').Trim() then
+  if Self.PrayerFinder.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/prayer.zip.hash') then
   begin
     WriteLn GetDebugLn('WLAssets', 'Updating finders/prayer.zip', ELogLevel.WARN);
     FileDelete(Self.PrayerFinder.Path);
@@ -186,7 +183,7 @@ begin
     Async.HTTPGetFile(Self.DATA_REPO_URL + 'finders/prayer.zip', Self.PrayerFinder.Path, @Self.Download);
   end;
 
-  if Self.OverheadFinder.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/overheads.zip.hash').Trim() then
+  if Self.OverheadFinder.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/overheads.zip.hash') then
   begin
     WriteLn GetDebugLn('WLAssets', 'Updating finders/overheads.zip', ELogLevel.WARN);
     FileDelete(Self.OverheadFinder.Path);
@@ -195,7 +192,7 @@ begin
     Async.HTTPGetFile(Self.DATA_REPO_URL + 'finders/overheads.zip', Self.OverheadFinder.Path, @Self.Download);
   end;
 
-  if Self.HouseLayoutFinder.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/house_layout.zip.hash').Trim() then
+  if Self.HouseLayoutFinder.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/house_layout.zip.hash') then
   begin
     WriteLn GetDebugLn('WLAssets', 'Updating finders/house_layout.zip', ELogLevel.WARN);
     FileDelete(Self.HouseLayoutFinder.Path);
