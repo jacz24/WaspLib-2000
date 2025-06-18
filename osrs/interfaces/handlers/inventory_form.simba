@@ -26,8 +26,18 @@ Do feel free to read the source code though if you so desire.
   TInventoryFormHelper = record
     Layouts: array of TRSInventoryLayoutSlots;
     Index: Integer;
+    Selected: Integer;
+    Layout: TRSInventoryLayoutSlots;
 
+    SlotBoxes, DPISlots: TBoxArray;
+
+    ListLabel: TLazLabel;
+    FilteredList, ItemList: TLazListBox;
+    LayoutCombobox: TLazComboBox;
     LinkedComboboxes: array of TLazComboBox;
+    LayoutName: TLazEdit;
+    UnfilterButton, DuplicateButton, RemoveButton: TLazButton;
+    ImageBox: TImageBox;
 
     Config: TConfigJSON;
     const BACKGROUND_IMG: TImage = ImageFromString('IMG:AQAAAMoAAAARAQAAAAAAALDjPwEAAAAAr6YOAAEAAAAoAwAAAAAAAGDjPwEAAAAAAQAAAMoAAAARAQAAIAAAAAAAAAAAAAAAAAAAAAMAAAAgCBAICAgACBgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMCLYBgAAAACoXQMAAAAAAAAAAAAAiVBORw0KGgoAAAANSUhEUgAAAMoAAAERCAIAAAC1ia+nAAAI5UlEQVR4nO3dwWsUZxjH8emt/4CltIeWIm3QXuqhtPaSS0EawWIECUVM0FCiAXNJTAURcpFAkIDgwaPgwaooiIce+r/1WZ/Ns2/eeXfdvvv+EgJf+DCdvDvzzkgf3p2defe33Zu/n5rXLx6nrv4+f3fjutm8vbSzvbq/u7W89Nv6zUWzsXbFl/aSrdxauWjrvnG0x16+YtvYyv3NGw8frPuWtjKhZ/o/yv6nPESxPfq0gslK6NnTPdNZbdl/nuzd8yO5C+fnLl34cWH+rC3t2MZWrAv/8/LCL7biYt029u19aT3YSrpln3X1x+KvaSf0f/T9p/9zJx9iXLsfLq2fRw+3rOz+XL7cWaFZbb1/9/Ltq+de2l5bcUhbjus0lZ6f/xm7h/TPfs/0fyz9T3+Ifnvap5WN14/XktWiNQ7Ky4dHf9mWvrUfOM7GytyWvk+fb5ztEnwv76Ev2m1f+j/6/qc8xLj2lJeQ19Kh8opxy47k7GUb3Pyd0Xmjr/h6unHs4vo72jLa+xtE5/R/9P1PeYhie9ZnjGF5eXnFnTl96oczX9oyVtKlr/x07tt+u68728DEn/7S/M9z0VLsmf6Ppf/pDzGh3Xmd2TZ31q4dKi9/T7QCtI2++eoLoIINUn6JZhU2LC9/y4z3V8oL1ezTYlzpf/3Zp133SecVR3lhdlktrd9c7LzivJU3R8wiK6/Bfa/7mze8yT8I2AXgsZ8lTqiNtSt+63VUXjaC+e0yrzC7KDv2s8QJZbV06eD+vuuyiuPNEdWsluL+/rC8sor7/rvPj/0scUJFLfk74XD0SiuO8kI1K6+rB08hh+WVVRzlhWrLHyZfmHhC1WUVR3mh2v7uVjxWH157ZRXHpT2q7WyvxpSN4eiVVRyjF6pt3l6Km1zD0SurOEYvVEufOfq8oC6ruDOnTx37WeKEGvvMMSqO0QvVCs8cmTGBVrLpEYPRi/JCK9n0CCstJuSgGbuOZ0IOVG6tXIzPiMOHQlnFMXqh2s72aj56ZRXHjQlUy25yDcorqzhGL1R7sndvYf7sodErqzjKC9VsqEq/dXZn7VqXVRzlhWp+HR93IQbllVUcc+1RzcrrQ1DPudFt1aziKC9US2c+jx5ppxXHmyOq2XDl6WI+sX5QXlnFUV6odnfjul/HWy2N5tqnFUd5oZo/vz70RbSs4pitimrxTjj6plBWcdy1R7VbKxfTb/wfuvbim0KYUeFrtFnFce2FaulNrtH3HBm90ETh2iurOEYvVMvSlgYPhbj2Qivke0GIfC8Ike8FIfK9IJRdaJHvhZbI94LQ/u6WlRD5XpDY2V5Nf0FtmO+VfnJk9EK17Bb9MN9r+eCn+hi9MItyvldacUzIQTXyvSBEvheEyPeCEPleECLfC0Lke0GIfC8Ike8FIfK9IES+F4TI94IQ+V4QIt8LQuR7QYh8LwiR7wUh8r0gRL4XhMj3ghD5XhAi3wtC5HtBiHwvCJHvBSHyvSBEvheEyPeCEPleECLfC0Lke0GIfC8Ike8FIfK9IES+F4TI94IQ+V4QIt8LQuR7QYh8LwiR7wUh8r0gRL4XhMj3ghD5XhAi3wtC5HtBiHwvCJHvBSHyvSBEvheEyPeCEPleECLfC0Lke0GIfC8Ike8FIfK9IES+F4TI94IQ+V4QIt8LQuR7QYh8LwiR7wUh8r0gRL4XhMj3ghD5XhAi3wtC5HtBiHwvCJHvBSHyvSBEvheEyPeCEPleECLfC0Lke0GIfC8Ike8FIfK9IES+F4TI94IQ+V4QIt8LQuR7QYh8LwiR7wUh8r0gRL4XhMj3ghD5XhAi3wtC5HtBiHwvCJHvBSHyvSBEvheEyPeCEPleECLfC0Lke0GIfC8Ike8FIfK9IES+F4TI94IQ+V4QIt8LQuR7QYh8LwiR7wUh8r0gRL4XhMj3ghD5XhAi3wtC5HtBiHwvCJHvBSHyvSBEvheEyPeCEPleECLfC0Lke0GIfC8Ike8FIfK9IES+F4TI94IQ+V4QIt8LQuR7QYh8LwiR7wUh8r0gRL4XhMj3ghD5XhAi3wtC5HtBiHwvCJHvBSHyvSBEvheEyPeCEPleECLfC0Lke0GIfC8Ike8FIfK9IES+F4TI94IQ+V4QIt8LQuR7QYh8LwiR7wUh8r0gRL4XhMj3ghD5XhAi3wtC5HtBiHwvCJHvBSHyvSBEvheEyPeCEPleECLfC0Lke0GIfC8Ike8FIfK9IES+F4TI94IQ+V4QIt8LQuR7QYh8LwiR7wUh8r0gRL4XhMj3ghD5XhAi3wtChXwvrr3QSmFCDtdeaKXwUIhrL7RSmJDDtRdaKdz3IlsVrRQm5JCtilY+PiGHydCoVpiQQ7YqWilMyCH8Eq0UJuRQXmilMCGHbFW0UrgxQbYqWslu0ZOtipYKE3LIVkUr2S364U9WMXqhiewWPdmqaKnwg3tkq6KVwg/uMZ0QrRR+cI/phGil8IN7TCdEK4Uf3GM6IVop/OAe2apopfCDe2SropXCD+79+8+bt6+ek62K2aVfRHvw153BdMLXLx7v7249e7rHpT1mFDe5rJz89v2wvKzuvMkuxYz9aZ8C7K10Z3vVHyR5u+3fX9pmtmIDo63bjiban+zd807sVVuxSz/r1reZpv8JPfu+9D97/76c5qBxuHHnYOtWUlZI1lVeXl5hfpPC+PW+39r3N1Rv90Zf+tOkGA9jR9/XV9Jt+sb1/9GebXnh/Bz9z96/b5k1+oV4cV9vHHcOXlt5eb1/99KuwLzCLh3cuvBl/xjeMu68kwI9F52E9M/J/U/uOfqh/xn7L24wuSiL5xDjltfSqLwePRyMhFbCMYbZzs4PaYXsK3757x8N0nMKsWPsGx9T034y/f6n75n+Z+///x60eA7puGW15Lt31mpX+DH33tllf8wI8xa/UZZtFo2+Euu+Y+wbjf7FcG9JX+33/9Ge+7vTf13/6ZYTDpoern8OVjD9Ha0uO6+trK69Mc4yO2o0xmb9s/RnAuk/1ZZ+7RkvFfedsmfbwND/7P3HlpMPmrVn52DrxdH0P3sFQQ/wsBO2AAAAAElFTkSuQmCC');
@@ -56,6 +66,287 @@ begin
     FileDelete(Self.Config.Path); //corrupted config.
   end;
 end;
+
+procedure TInventoryFormHelper.UpdateConfig();
+var
+  i: Integer;
+begin
+  Self.Config.Data := new TJSONObject();
+  for i := 0 to High(Self.Layouts) do
+    Self.Config.Data.Add(Self.Layouts[i].Name, Self.Layouts[i].ToJSON());
+  Self.Config.SaveConfig();
+end;
+
+procedure TInventoryFormHelper.AddLayout(layout: TRSInventoryLayoutSlots);
+begin
+  Self.Layouts += layout;
+  Self.Config.Data.Add(layout.Name, layout.ToJSON());
+  Self.UpdateConfig();
+end;
+
+procedure TInventoryFormHelper.RemoveLayout(index: Integer);
+begin
+  Delete(Self.Layouts, index, 1);
+  Self.UpdateConfig();
+end;
+
+
+procedure TInventoryFormHelper.UpdateListBox();
+var
+  i: Integer;
+begin
+  if Self.ItemList.Items.Count = 0 then
+  begin
+    Self.ItemList.Items.BeginUpdate();
+    Self.ItemList.Items.Add('Nothing');
+    Self.ItemList.Items.Add('Anything');
+    Self.ItemList.Items.AddStrings(ItemFinder.Database.Data.Value['item']);
+
+    Self.ItemList.Items.EndUpdate();
+  end;
+
+  i := Self.ItemList.Items.IndexOf(Self.Layout.Items[Self.Selected].Item);
+  if i > 0 then
+    Self.ItemList.ItemIndex := i;
+end;
+
+procedure TInventoryFormHelper.UpdateFilters(items: TStringArray = []);
+begin
+  Self.FilteredList.Items.BeginUpdate();
+  Self.FilteredList.Clear();
+  Self.FilteredList.Items.Add('Nothing');
+  Self.FilteredList.Items.Add('Anything');
+  Self.FilteredList.Items.AddStrings(items);
+  Self.FilteredList.Items.EndUpdate();
+end;
+
+
+
+procedure TInventoryFormHelper.DrawItem(slot: Integer; background: TImage);
+var
+  id: String;
+  item: TImage;
+begin
+  id := ItemFinder.Database.Get(Self.Layout.Items[slot].Item.ToLower(), 'item', 'id');
+  item := ItemFinder.GetImage(id);
+  background.DrawImage(item, Self.SlotBoxes[slot].TopLeft);
+end;
+
+procedure TInventoryFormHelper.UpdateBackground();
+var
+  slot: Integer;
+  bg: TImage;
+begin
+  bg := Self.BACKGROUND_IMG.Copy();
+
+  for slot := 0 to 27 do
+    case Self.Layout.Items[slot].Item of
+      '', 'Nothing': ;
+      'Anything': ; //TODO....
+      else Self.DrawItem(slot, bg);
+    end;
+
+  Self.ImageBox.SetImage(bg.Resize(EImageRotateAlgo.NEAREST_NEIGHBOUR, FormUtils.Scale));
+end;
+
+
+procedure TInventoryFormHelper.OnSelectionChange(sender: TLazObject; user: Boolean);
+begin
+  Self.Layout.Items[Self.Selected].Item := TLazListBox(sender).GetSelectedText();
+  Self.UpdateBackground();
+end;
+
+
+procedure TInventoryFormHelper.OnSaveClick(sender: TLazObject);
+var
+  i: Integer;
+begin
+  Self.Layout.Name := Self.LayoutName.Text;
+  Self.LayoutCombobox.Items.Strings[Self.Index] := Self.LayoutName.Text;
+  for i := 0 to High(Self.LinkedComboboxes) do
+    Self.LinkedComboboxes[i].Items.Strings[Self.Index] := Self.LayoutName.Text;
+
+  if Self.Index = (High(Self.Layouts) + 1) then
+  begin
+    Self.AddLayout(Self.Layout);
+    Self.LayoutCombobox.Items.Add('New Layout');
+    Self.DuplicateButton.Enabled := True;
+    Self.RemoveButton.Enabled := True;
+  end
+  else
+    Self.Layouts[Self.Index] := Self.Layout;
+  Self.UpdateConfig();
+end;
+
+procedure TInventoryFormHelper.OnDuplicateClick(sender: TLazObject);
+var
+  layout: TRSInventoryLayoutSlots;
+  i: Integer;
+begin
+  if Self.Index = (High(Self.Layouts) + 1) then Exit;
+  layout := Self.Layouts[Self.Index];
+  layout.Name += ' duplicate';
+  Self.AddLayout(layout);
+  Self.LayoutCombobox.Items.Insert(High(Self.Layouts), layout.Name);
+  Self.LayoutCombobox.ItemIndex := High(Self.Layouts);
+  for i := 0 to High(Self.LinkedComboboxes) do
+    Self.LinkedComboboxes[i].Items.Add(layout.Name);
+
+  Self.OnLayoutChange(Self.LayoutCombobox);
+end;
+
+procedure TInventoryFormHelper.OnRemoveClick(sender: TLazObject);
+var
+  i: Integer;
+begin
+  if Self.Index = (High(Self.Layouts) + 1) then Exit;
+
+  Self.RemoveLayout(Self.Index);
+  Self.LayoutCombobox.Items.Delete(Self.Index);
+
+  for i := 0 to High(Self.LinkedComboboxes) do
+    Self.LinkedComboboxes[i].Items.Delete(Self.Index);
+
+  Self.Index := Max(Self.Index-1, 0);
+  Self.LayoutCombobox.ItemIndex := Max(High(Self.Layouts), 0);
+  Self.OnLayoutChange(Self.LayoutCombobox);
+end;
+
+
+procedure TInventoryFormHelper.OnImgPaint(sender: TImageBox; canvas: TImageBoxCanvas; r: TLazRect);
+var
+  slot: Integer;
+begin
+  for slot := 0 to 27 do
+  begin
+    if slot = Self.Selected then
+      canvas.DrawBox(Self.DPISlots[slot], $00FF00)
+    else
+      canvas.DrawBox(Self.DPISlots[slot], $00FFFF);
+  end;
+end;
+
+procedure TInventoryFormHelper.OnImgClick(sender: TImageBox; x, y: Integer);
+var
+  i: Integer;
+begin
+  i := Self.DPISlots.ContainsPoint([x,y]);
+  if i >= 0 then
+  begin
+    Self.ItemList.Hide();
+    Self.ItemList.Enabled := False;
+    Self.FilteredList.Hide();
+    Self.FilteredList.Enabled := False;
+
+    Self.Selected := i;
+    Self.ListLabel.Caption := 'Selected slot: ' + ToStr(i);
+    Self.UpdateListBox();
+
+    if Self.UnfilterButton.Enabled then
+    begin
+      Self.FilteredList.Show();
+      Self.FilteredList.Enabled := True;
+    end
+    else
+    begin
+      Self.ItemList.Show();
+      Self.ItemList.Enabled := True;
+    end;
+  end;
+
+  sender.Repaint();
+end;
+
+
+procedure TInventoryFormHelper.OnReadClick(sender: TLazObject);
+var
+  btn: TLazButton;
+  slot: Integer;
+  items: TRSItemArray;
+begin
+  btn := TLazButton(sender);
+  btn.Caption := 'Loading...';
+  btn.Font.Style := btn.Font.Style - [ELazFontStyles.fsBold];
+  btn.Enabled := False;
+  btn.Update();
+
+  for slot := 0 to 27 do
+  begin
+    items := Inventory.Items.Discover(Ord(slot));
+
+    if items <> [] then
+      Self.Layout.Items[slot].Item := items[0]
+    else
+      Self.Layout.Items[slot].Item := 'Nothing';
+
+    if slot = Self.Selected then
+      Self.UpdateFilters(items);
+  end;
+
+  Self.UpdateBackground();
+
+  Self.ItemList.Hide();
+  Self.ItemList.Enabled := False;
+  Self.FilteredList.Show();
+  Self.FilteredList.Enabled := True;
+
+  btn.Caption := 'Read From Client';
+  btn.Font.Style := [ELazFontStyles.fsBold];
+  btn.Enabled := True;
+  Self.UnfilterButton.Enabled := True;
+end;
+
+
+procedure TInventoryFormHelper.OnSearchChange(sender: TLazObject);
+var
+  i: Integer;
+begin
+  if TLazEdit(sender).IsEmpty() then Exit;
+  i := Self.ItemList.Search(TLazEdit(sender).Text);
+  if i > 0 then
+    Self.ItemList.ItemIndex := i;
+end;
+
+procedure TInventoryFormHelper.OnUnfilterClick(sender: TLazObject);
+begin
+  Self.FilteredList.Hide();
+  Self.FilteredList.Enabled := False;
+
+  Self.ItemList.Show();
+  Self.ItemList.Enabled := True;
+
+  TLazButton(sender).Enabled := False;
+end;
+
+procedure TInventoryFormHelper.OnLayoutChange(sender: TLazObject);
+var
+  slot: Integer;
+begin
+  Self.Index := TLazComboBox(sender).ItemIndex;
+  if Self.Index > High(Self.Layouts) then
+  begin
+    Self.Layout.Name := TLazComboBox(sender).Text;
+    for slot := 0 to 27 do
+      Self.Layout.Items[slot].Item := 'Nothing';
+
+    Self.DuplicateButton.Enabled := False;
+    Self.RemoveButton.Enabled := False;
+  end
+  else
+  begin
+    Self.Layout := Self.Layouts[Self.Index];
+    Self.DuplicateButton.Enabled := True;
+    Self.RemoveButton.Enabled := True;
+  end;
+
+  Self.ItemList.ItemIndex := Self.ItemList.Items.IndexOf(Self.Layout.Items[Self.Selected].Item);
+  Self.LayoutName.Caption := TLazComboBox(sender).Text;
+
+  Self.OnUnfilterClick(Self.UnfilterButton);
+
+  Self.UpdateBackground();
+end;
+
 
 (*
 ## InventoryForm.CreateGearCombobox
@@ -109,6 +400,81 @@ end.
 For a more complete example check out the file `Simba/Includes/WaspLib/examples/inventory_form.simba`.
 *)
 function TScriptForm.CreateInventoryTab(): TLazTabSheet;
+var
+  save, read: TLazButton;
+  width: Integer;
+  i: Integer;
+  slot: ERSEquipment;
+  search: TLazEdit;
 begin
+  InventoryForm.Setup();
+
   Result := Self.CreateTab('Inventory Layouts');
+
+  width := 280;
+
+  InventoryForm.ListLabel := TLazLabel.CreateEx(Result, 'Slot item: ', 'Click a slot on the right side to update the list below.', 40, 20);
+
+  search := TLazEdit.CreateEx(Result, 'Search:', 'Search the list below.', 40, 80, width);
+  search.OnChange := @InventoryForm.OnSearchChange;
+
+  InventoryForm.ItemList := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.', 0,0, width, 340);
+  InventoryForm.ItemList.AnchorVertically(search, 10);
+  InventoryForm.ItemList.OnSelectionChange := @InventoryForm.OnSelectionChange;
+
+  InventoryForm.FilteredList := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.', 0,0, width, 340);
+  InventoryForm.FilteredList.AnchorVertically(search, 10);
+  InventoryForm.FilteredList.OnSelectionChange := @InventoryForm.OnSelectionChange;
+  InventoryForm.FilteredList.Hide();
+  InventoryForm.FilteredList.Enabled := False;
+
+  InventoryForm.UnfilterButton := TLazButton.CreateEx(Result, 'Remove list filter', 'Remove the current filter.', 0,0, width);
+  InventoryForm.UnfilterButton.AnchorVertically(search, 360);
+  InventoryForm.UnfilterButton.Enabled := False;
+  InventoryForm.UnfilterButton.OnClick := @InventoryForm.OnUnfilterClick;
+
+  InventoryForm.LayoutCombobox := TLazComboBox.CreateEx(Result, 'Layout:', 'Select a gear layout.', Round(Result.Width / FormUtils.Scale) - width - 80, 30, width);
+  for i := 0 to High(InventoryForm.Layouts) do
+    InventoryForm.LayoutCombobox.Items.Add(InventoryForm.Layouts[i].Name);
+  InventoryForm.LayoutCombobox.Items.Add('New Layout');
+  InventoryForm.LayoutCombobox.ItemIndex := 0;
+  InventoryForm.LayoutCombobox.OnChange := @InventoryForm.OnLayoutChange;
+
+  InventoryForm.LayoutName := TLazEdit.CreateEx(Result, 'Layout name:', 'Change the current layout name.', 0,0, width);
+  InventoryForm.LayoutName.AnchorVertically(InventoryForm.LayoutCombobox, 30);
+
+  save := TLazButton.CreateEx(Result, 'Save' , 'Save the current gear layout.');
+  save.AnchorVertically(InventoryForm.LayoutName, 10);
+  save.BorderSpacing.Left := 18;
+  save.OnClick := @InventoryForm.OnSaveClick;
+
+  InventoryForm.DuplicateButton := TLazButton.CreateEx(Result, 'Duplicate' , 'Duplicate the current gear layout.');
+  InventoryForm.DuplicateButton.AnchorHorizontally(save, 10);
+  InventoryForm.DuplicateButton.OnClick := @InventoryForm.OnDuplicateClick;
+
+  InventoryForm.RemoveButton := TLazButton.CreateEx(Result, 'Remove' , 'Remove the current gear layout.');
+  InventoryForm.RemoveButton.AnchorHorizontally(InventoryForm.DuplicateButton, 10);
+  InventoryForm.RemoveButton.OnClick := @InventoryForm.OnRemoveClick;
+
+  InventoryForm.ImageBox := TImageBox.CreateEx(Result, '', '', Round(Result.Width / FormUtils.Scale) - width - 36, 170, 202, 273);
+  InventoryForm.ImageBox.AllowZoom := False;
+  InventoryForm.ImageBox.AllowMoving := False;
+  InventoryForm.ImageBox.ShowScrollBars := False;
+  InventoryForm.ImageBox.ShowStatusBar := False;
+  InventoryForm.ImageBox.OnImgPaint := @InventoryForm.OnImgPaint;
+  InventoryForm.ImageBox.OnImgClick := @InventoryForm.OnImgClick;
+  InventoryForm.UpdateBackground();
+
+  read := TLazButton.CreateEx(Result, 'Read From Client' , 'Read the layout from the client.', 0, 0, 204);
+  read.Font.Style := [ELazFontStyles.fsBold];
+  read.AnchorVertically(InventoryForm.ImageBox, 10);
+  read.OnClick := @InventoryForm.OnReadClick;
+
+  InventoryForm.SlotBoxes := TBoxArray.Create([20, 13], 4, 7, 31, 31, [11, 5]);
+  for i := 0 to High(InventoryForm.SlotBoxes) do
+    with InventoryForm.SlotBoxes[i] do
+      InventoryForm.DPISlots += [Round(FormUtils.Scale * X1), Round(FormUtils.Scale * Y1), Round(FormUtils.Scale * X2), Round(FormUtils.Scale * Y2)];
+
+  InventoryForm.UpdateListBox();
+  InventoryForm.OnLayoutChange(InventoryForm.LayoutCombobox);
 end;
