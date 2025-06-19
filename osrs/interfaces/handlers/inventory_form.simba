@@ -510,7 +510,7 @@ end.
 ```
 ```{figure} ../../images/inventoryform.gif
 ```
-For a more complete example check out the file `Simba/Includes/WaspLib/examples/inventoryform.simba`.
+For a more complete example check out the file `Simba/Includes/WaspLib/examples/inventory_form.simba`.
 *)
 function TScriptForm.CreateInventoryTab(): TLazTabSheet;
 var
