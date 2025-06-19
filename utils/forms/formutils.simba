@@ -29,6 +29,7 @@ begin
   Self.Scale := Self.DPI / Self.BASE_DPI;
 end;
 
+{$H-}
 (*
 ## FormUtils.NumberField
 ```pascal
@@ -38,7 +39,7 @@ Callback method to limit user input to numbers only and backspace.
 This numbers can be `Integers` only.
 For `Doubles` check {ref}`FormUtils.FloatField`
 *)
-procedure TFormUtils.NumberField({$H-}sender: TLazObject;{$H+} var key: Char);
+procedure TFormUtils.NumberField(sender: TLazObject; var key: Char);
 begin
   case key of
     '0'..'9', #8: ;
@@ -71,7 +72,7 @@ procedure TFormUtils.MailField({$H-}sender: TLazObject;{$H+} var key: Char);
 ```
 Callback method to limit user input to characters used in email addresses.
 *)
-procedure TFormUtils.MailField({$H-}sender: TLazObject;{$H+} var key: Char);
+procedure TFormUtils.MailField(sender: TLazObject; var key: Char);
 begin
   if key = ' ' then key := #0;
 end;
@@ -84,7 +85,7 @@ procedure TFormUtils.TimeField(sender: TLazObject; var key: Char);
 Callback method to limit user input to numbers only, backspace and a few
 characters used in time like ":", "-", "_", ",", etc.
 *)
-procedure TFormUtils.TimeField({$H-}sender: TLazObject;{$H+} var key: Char);
+procedure TFormUtils.TimeField(sender: TLazObject; var key: Char);
 begin
   case key of
     '0'..'9', #8, '.', ':', '-', '_', ',', ' ': ;
@@ -99,13 +100,14 @@ procedure TFormUtils.NumberArrayField(sender: TLazObject; var key: Char);
 ```
 Callback method to limit user input to a `TIntegerArray`. Brackets not included.
 *)
-procedure TFormUtils.NumberArrayField({$H-}sender: TLazObject;{$H+} var key: Char);
+procedure TFormUtils.NumberArrayField(sender: TLazObject; var key: Char);
 begin
   case key of
     '0'..'9', ',', ' ' , #8: ;
     else key := #0;
   end;
 end;
+{$H+}
 
 (*
 ## FormUtils.OpenURL

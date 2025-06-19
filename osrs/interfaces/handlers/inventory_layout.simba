@@ -64,6 +64,150 @@ type
   TRSInventoryLayout = record
     Layout: TRSInventoryLayoutSlots;
     Holding: array [0..27] of TRSInventoryLayouItem;
+    BankItems: TRSBankItemArray;
   end;
 
-//TODO: TRSInventoryLayout methods... Withdraw, Deposit... Whatever.
+procedure TRSInventoryLayout.SetupBankItems();
+var
+  items: array of TRSInventoryLayouItem;
+  i, hi, j, count: Integer;
+  item: TRSItem;
+begin
+  items := Self.Layout.Items.Copy();
+  hi := High(items);
+
+  for i := 0 to hi do
+  begin
+    item := items[i].Item;
+    case item of
+      'Nothing', 'Anything': Continue;
+    end;
+
+    if items[i].Amount > 1 then
+    begin
+      Self.BankItems += item.ToBankItem(items[i].Amount);
+      Continue;
+    end;
+
+    count := 1;
+
+    for j := hi downto i+1 do
+      if items[j].Item = item then
+      begin
+        Delete(items, j, 1);
+        count += 1;
+      end;
+
+    Dec(hi, count);
+    Self.BankItems += item.ToBankItem(count);
+  end;
+end;
+
+
+function TRSInventoryLayout.DepositDiff(): Boolean;
+var
+  i, j, n, stack: Integer;
+  items: TRSItemArray;
+  bitems: TRSBankItemArray;
+begin
+  if not Bank.IsOpen() then Exit;
+
+  if Self.BankItems = [] then
+    Self.SetupBankItems();
+
+  bitems := Self.BankItems.Copy();
+
+  for i := 0 to 27 do
+  begin
+    items := Inventory.Items.Discover(i);
+    if items = [] then Continue;
+
+    for j := 0 to High(items) do
+      for n := 0 to High(bitems) do
+      begin
+        if items[j] <> bitems[i].Item then Continue;
+
+        stack := Inventory.Slots.ReadStack(i);
+
+        if stack < 0 then
+          bitems[i].Quantity -= 1
+        else
+        begin
+          bitems[i].Quantity -= stack;
+          if bitems[i].Quantity < 0 then
+          begin
+            bitems[i].Quantity := Abs(bitems[i].Quantity);
+            if not Bank.Deposit(bitems[i], True) then
+              Exit;
+            bitems[i].Quantity := 0;
+          end;
+        end;
+
+        Continue(3);
+      end;
+
+    if not Bank.Deposit(items[0].ToBankItem(QUANTITY_ALL), True) then
+      Exit;
+  end;
+
+  for i := 0 to High(bitems) do
+  begin
+    if bitems[i].Quantity <= 0 then Continue;
+    if not Bank.Deposit(bitems[i], True) then
+      Exit;
+  end;
+
+  Result := True;
+end;
+
+
+function TRSInventoryLayout.Withdraw(): Boolean;
+var
+  i: Integer;
+  bankitem: TRSBankItem;
+begin
+  if not Bank.IsOpen() then Exit;
+
+  if Self.BankItems = [] then
+    Self.SetupBankItems();
+
+  if Inventory.Slots.Count() > 0 then
+  begin
+    if Biometrics.RandomBoolean(0.7) then
+      Self.DepositDiff()
+    else
+      Bank.DynamicButtons[ERSBankDynamicButtons.DEPOSIT_INVENTORY].Click();
+  end;
+
+  for i := 0 to High(Self.BankItems) do
+    Bank.Withdraw(bankitem, True);
+end;
+
+
+function TRSInventoryLayout.Reorder(): Boolean;
+var
+  i, j: Integer;
+  items: array [0..27] of TRSItemArray;
+begin
+  for i := 0 to 27 do
+  begin
+    if items[i] = [] then
+      items[i] := Inventory.Items.Discover(i);
+
+    if items[i].Contains(Self.Layout.Items[i].Item) then Continue;
+
+    for j := i+1 to 27 do
+    begin
+      if items[j] = [] then
+        items[j] := Inventory.Items.Discover(i);
+
+      if items[j].Contains(Self.Layout.Items[i].Item) then
+      begin
+        if not Inventory.Slots.Move(j, i) then Exit;
+        Break;
+      end;
+    end;
+  end;
+
+  Result := True;
+end;

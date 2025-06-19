@@ -32,10 +32,11 @@ Do feel free to read the source code though if you so desire.
     SlotBoxes, DPISlots: TBoxArray;
 
     ListLabel: TLazLabel;
+    Search: TLazEdit;
     FilteredList, ItemList: TLazListBox;
     LayoutCombobox: TLazComboBox;
     LinkedComboboxes: array of TLazComboBox;
-    LayoutName: TLazEdit;
+    LayoutNameEdit, AmountEdit: TLazEdit;
     UnfilterButton, DuplicateButton, RemoveButton: TLazButton;
     ImageBox: TImageBox;
 
@@ -92,8 +93,6 @@ end;
 
 
 procedure TInventoryFormHelper.UpdateListBox();
-var
-  i: Integer;
 begin
   if Self.ItemList.Items.Count = 0 then
   begin
@@ -104,9 +103,6 @@ begin
 
     Self.ItemList.Items.EndUpdate();
   end;
-
-  i := Self.ItemList.Items.IndexOf(Self.Layout.Items[Self.Selected].Item);
-  Self.ItemList.ItemIndex := Max(i, 0);
 end;
 
 procedure TInventoryFormHelper.UpdateFilters(items: TStringArray = []);
@@ -121,13 +117,23 @@ end;
 
 
 
-procedure TInventoryFormHelper.DrawItem(slot: Integer; background: TImage);
+procedure TInventoryFormHelper.DrawItem(slot: Integer; background: TImage; amount: Integer);
 var
   id: String;
   item: TImage;
 begin
   id := ItemFinder.Database.Get(Self.Layout.Items[slot].Item.ToLower(), 'item', 'id');
   item := ItemFinder.GetImage(id);
+  if amount > 1 then
+  begin
+    if amount < 99999 then
+      item.DrawColor := $00FFFF
+    else if InRange(amount, 100000, 9999999) then
+      item.DrawColor := $FFFFFF
+    else
+      item.DrawColor := $80FF00;
+    item.DrawTPA(OCR.Engine.TextToTPA(RSFonts.PLAIN_11, ToStr(amount)));
+  end;
   background.DrawImage(item, Self.SlotBoxes[slot].TopLeft);
 end;
 
@@ -142,28 +148,30 @@ begin
     case Self.Layout.Items[slot].Item of
       '', 'Nothing': ;
       'Anything': ; //TODO....
-      else Self.DrawItem(slot, bg);
+      else Self.DrawItem(slot, bg, Self.Layout.Items[slot].Amount);
     end;
 
   Self.ImageBox.SetImage(bg.Resize(EImageRotateAlgo.NEAREST_NEIGHBOUR, FormUtils.Scale));
 end;
 
 
-procedure TInventoryFormHelper.OnSelectionChange(sender: TLazObject; user: Boolean);
+procedure TInventoryFormHelper.OnSelectionChange(sender: TLazObject);
 begin
   Self.Layout.Items[Self.Selected].Item := TLazListBox(sender).GetSelectedText();
+  Self.AmountEdit.Enabled := ItemData.IsStackable(Self.Layout.Items[Self.Selected].Item);
   Self.UpdateBackground();
 end;
 
 
+{$H-}
 procedure TInventoryFormHelper.OnSaveClick(sender: TLazObject);
 var
   i: Integer;
 begin
-  Self.Layout.Name := Self.LayoutName.Text;
-  Self.LayoutCombobox.Items.Strings[Self.Index] := Self.LayoutName.Text;
+  Self.Layout.Name := Self.LayoutNameEdit.Text;
+  Self.LayoutCombobox.Items.Strings[Self.Index] := Self.LayoutNameEdit.Text;
   for i := 0 to High(Self.LinkedComboboxes) do
-    Self.LinkedComboboxes[i].Items.Strings[Self.Index] := Self.LayoutName.Text;
+    Self.LinkedComboboxes[i].Items.Strings[Self.Index] := Self.LayoutNameEdit.Text;
 
   if Self.Index = (High(Self.Layouts) + 1) then
   begin
@@ -227,6 +235,81 @@ begin
   end;
 end;
 
+procedure TInventoryFormHelper.OnKeyPress(sender: TLazObject; var key: Int16; shift: ELazShiftStates);
+var
+  str: String;
+  tmp: Int16;
+begin
+  tmp := key;
+  key := 0;
+
+  str := Self.Search.Text;
+  case tmp of
+    8:
+    begin
+      SetLength(str, Length(str)-1);
+      Self.Search.Text := str;
+      Exit;
+    end;
+    13:
+    begin
+      if Self.UnfilterButton.Enabled then
+        Self.OnSelectionChange(Self.FilteredList)
+      else
+        Self.OnSelectionChange(Self.ItemList);
+      Exit;
+    end;
+    37:
+    begin
+      Self.Selected := ((Self.Selected - 1) mod 28 + 28) mod 28;
+      Self.ListLabel.Caption := 'Selected slot: ' + ToStr(Self.Selected);
+      Self.UpdateListBox();
+      Self.ImageBox.Repaint();
+      Exit;
+    end;
+    38:
+    begin
+      Self.Selected := ((Self.Selected - 4) mod 28 + 28) mod 28;
+      Self.ListLabel.Caption := 'Selected slot: ' + ToStr(Self.Selected);
+      Self.UpdateListBox();
+      Self.ImageBox.Repaint();
+      Exit;
+    end;
+    39:
+    begin
+      Self.Selected := ((Self.Selected + 1) mod 28 + 28) mod 28;
+      Self.ListLabel.Caption := 'Selected slot: ' + ToStr(Self.Selected);
+      Self.UpdateListBox();
+      Self.ImageBox.Repaint();
+      Exit;
+    end;
+    40:
+    begin
+      Self.Selected := ((Self.Selected + 4) mod 28 + 28) mod 28;
+      Self.ListLabel.Caption := 'Selected slot: ' + ToStr(Self.Selected);
+      Self.UpdateListBox();
+      Self.ImageBox.Repaint();
+      Exit;
+    end;
+    46:
+    begin
+      Self.Layout.Items[Self.Selected].Item := 'Nothing';
+      Self.UpdateListBox();
+      Self.UpdateBackground();
+      Self.ImageBox.Repaint();
+      Exit;
+    end;
+  end;
+
+  Self.Search.Text := str + Char(tmp);
+end;
+
+procedure TInventoryFormHelper.OnImgKeyPress(sender: TImageBox; var key: UInt16; shift: ELazShiftStates);
+begin
+  Self.OnKeyPress(nil, Int16(key), shift);
+end;
+{$H+}
+
 procedure TInventoryFormHelper.OnImgClick(sender: TImageBox; x, y: Integer);
 var
   i: Integer;
@@ -234,29 +317,16 @@ begin
   i := Self.DPISlots.ContainsPoint([x,y]);
   if i >= 0 then
   begin
-    Self.ItemList.Hide();
-    Self.ItemList.Enabled := False;
-    Self.FilteredList.Hide();
-    Self.FilteredList.Enabled := False;
-
     Self.Selected := i;
     Self.ListLabel.Caption := 'Selected slot: ' + ToStr(i);
     Self.UpdateListBox();
-
-    if Self.UnfilterButton.Enabled then
-    begin
-      Self.FilteredList.Show();
-      Self.FilteredList.Enabled := True;
-    end
-    else
-    begin
-      Self.ItemList.Show();
-      Self.ItemList.Enabled := True;
-    end;
   end;
 
   sender.Repaint();
 end;
+
+
+
 
 
 procedure TInventoryFormHelper.OnReadClick(sender: TLazObject);
@@ -276,7 +346,10 @@ begin
     items := Inventory.Items.Discover(Ord(slot));
 
     if items <> [] then
-      Self.Layout.Items[slot].Item := items[0]
+    begin
+      Self.Layout.Items[slot].Item := items[0];
+      Self.Layout.Items[slot].Amount := Max(0, Inventory.Slots.ReadStack(slot));
+    end
     else
       Self.Layout.Items[slot].Item := 'Nothing';
     filter += items;
@@ -306,6 +379,13 @@ begin
   i := Self.ItemList.Search(TLazEdit(sender).Text);
   if i > 0 then
     Self.ItemList.ItemIndex := i;
+end;
+
+procedure TInventoryFormHelper.OnAmountChange(sender: TLazObject);
+begin
+  if TLazEdit(sender).IsEmpty() then Exit;
+  Self.Layout.Items[Self.Selected].Amount := StrToInt(TLazEdit(sender).Text, 1);
+  Self.UpdateBackground();
 end;
 
 procedure TInventoryFormHelper.OnUnfilterClick(sender: TLazObject);
@@ -341,12 +421,15 @@ begin
   end;
 
   Self.ItemList.ItemIndex := Self.ItemList.Items.IndexOf(Self.Layout.Items[Self.Selected].Item);
-  Self.LayoutName.Caption := TLazComboBox(sender).Text;
+  Self.LayoutNameEdit.Caption := TLazComboBox(sender).Text;
 
   Self.OnUnfilterClick(Self.UnfilterButton);
 
   Self.UpdateBackground();
 end;
+
+
+
 
 
 (*
@@ -405,34 +488,40 @@ var
   save, read: TLazButton;
   width: Integer;
   i: Integer;
-  slot: ERSEquipment;
-  search: TLazEdit;
 begin
   InventoryForm.Setup();
 
   Result := Self.CreateTab('Inventory Layouts');
-
   width := 280;
 
   InventoryForm.ListLabel := TLazLabel.CreateEx(Result, 'Slot item: ', 'Click a slot on the right side to update the list below.', 40, 20);
 
-  search := TLazEdit.CreateEx(Result, 'Search:', 'Search the list below.', 40, 80, width);
-  search.OnChange := @InventoryForm.OnSearchChange;
+  InventoryForm.Search := TLazEdit.CreateEx(Result, 'Search:', 'Search the list below.', 40, 80, width);
+  InventoryForm.Search.OnChange := @InventoryForm.OnSearchChange;
 
   InventoryForm.ItemList := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.', 0,0, width, 340);
-  InventoryForm.ItemList.AnchorVertically(search, 10);
-  InventoryForm.ItemList.OnSelectionChange := @InventoryForm.OnSelectionChange;
+  InventoryForm.ItemList.AnchorVertically(InventoryForm.Search, 10);
+  InventoryForm.ItemList.OnDblClick := @InventoryForm.OnSelectionChange;
+  InventoryForm.ItemList.OnKeyDown := @InventoryForm.OnKeyPress;
 
   InventoryForm.FilteredList := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.', 0,0, width, 340);
-  InventoryForm.FilteredList.AnchorVertically(search, 10);
-  InventoryForm.FilteredList.OnSelectionChange := @InventoryForm.OnSelectionChange;
+  InventoryForm.FilteredList.AnchorVertically(InventoryForm.Search, 10);
+  InventoryForm.FilteredList.OnDblClick := @InventoryForm.OnSelectionChange;
+  InventoryForm.FilteredList.OnKeyDown := @InventoryForm.OnKeyPress;
   InventoryForm.FilteredList.Hide();
   InventoryForm.FilteredList.Enabled := False;
 
   InventoryForm.UnfilterButton := TLazButton.CreateEx(Result, 'Remove list filter', 'Remove the current filter.', 0,0, width);
-  InventoryForm.UnfilterButton.AnchorVertically(search, 360);
+  InventoryForm.UnfilterButton.AnchorVertically(InventoryForm.Search, 360);
   InventoryForm.UnfilterButton.Enabled := False;
   InventoryForm.UnfilterButton.OnClick := @InventoryForm.OnUnfilterClick;
+
+  InventoryForm.AmountEdit := TLazEdit.CreateEx(Result, 'Item Amount:', 'Edit the item amount.', 0, 0, width);
+  InventoryForm.AmountEdit.AnchorVertically(InventoryForm.UnfilterButton, 10);
+  InventoryForm.AmountEdit.Enabled := False;
+  InventoryForm.AmountEdit.Text := '1';
+  InventoryForm.AmountEdit.OnChange := @InventoryForm.OnAmountChange;
+  InventoryForm.AmountEdit.OnKeyPress := @FormUtils.NumberField;
 
   InventoryForm.LayoutCombobox := TLazComboBox.CreateEx(Result, 'Layout:', 'Select a gear layout.', Round(Result.Width / FormUtils.Scale) - width - 80, 30, width);
   for i := 0 to High(InventoryForm.Layouts) do
@@ -441,11 +530,11 @@ begin
   InventoryForm.LayoutCombobox.ItemIndex := 0;
   InventoryForm.LayoutCombobox.OnChange := @InventoryForm.OnLayoutChange;
 
-  InventoryForm.LayoutName := TLazEdit.CreateEx(Result, 'Layout name:', 'Change the current layout name.', 0,0, width);
-  InventoryForm.LayoutName.AnchorVertically(InventoryForm.LayoutCombobox, 30);
+  InventoryForm.LayoutNameEdit := TLazEdit.CreateEx(Result, 'Layout name:', 'Change the current layout name.', 0,0, width);
+  InventoryForm.LayoutNameEdit.AnchorVertically(InventoryForm.LayoutCombobox, 30);
 
   save := TLazButton.CreateEx(Result, 'Save' , 'Save the current gear layout.');
-  save.AnchorVertically(InventoryForm.LayoutName, 10);
+  save.AnchorVertically(InventoryForm.LayoutNameEdit, 10);
   save.BorderSpacing.Left := 18;
   save.OnClick := @InventoryForm.OnSaveClick;
 
@@ -464,6 +553,7 @@ begin
   InventoryForm.ImageBox.ShowStatusBar := False;
   InventoryForm.ImageBox.OnImgPaint := @InventoryForm.OnImgPaint;
   InventoryForm.ImageBox.OnImgClick := @InventoryForm.OnImgClick;
+  InventoryForm.ImageBox.OnImgKeyDown := @InventoryForm.OnImgKeyPress;
   InventoryForm.UpdateBackground();
 
   read := TLazButton.CreateEx(Result, 'Read From Client' , 'Read the layout from the client.', 0, 0, 204);

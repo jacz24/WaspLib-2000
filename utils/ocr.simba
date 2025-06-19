@@ -73,7 +73,7 @@ var
 begin
   img := Target.GetImage(bounds);
   img.ReplaceColorBinary(False, colors, tolerance);
-  Result := Self.Engine.Locate(img, Font, Text);
+  Result := Self.Engine.Locate(img, font, Text);
 end;
 
 function TOCR.LocateInvert(bounds: TBox; Text: String; colors: TColorArray; tolerance: Single; font: TPixelFont): Single;
@@ -82,7 +82,7 @@ var
 begin
   img := Target.GetImage(bounds);
   img.ReplaceColorBinary(True, colors, tolerance);
-  Result := Self.Engine.Locate(img, Font, Text);
+  Result := Self.Engine.Locate(img, font, Text);
 end;
 
 var
