@@ -145,11 +145,22 @@ begin
   bg := Self.BACKGROUND_IMG.Copy();
 
   for slot := 0 to 27 do
-    case Self.Layout.Items[slot].Item of
+  begin
+
+     case Self.Layout.Items[slot].Item of
       '', 'Nothing': ;
       'Anything': ; //TODO....
       else Self.DrawItem(slot, bg, Self.Layout.Items[slot].Amount);
     end;
+
+    if slot = Self.Selected then
+      bg.DrawColor := $00FF00
+    else
+      bg.DrawColor := $00FFFF;
+    bg.DrawAlpha := $7D;
+    bg.DrawBox(Self.DPISlots[slot]);
+    bg.DrawAlpha := $FF;
+  end;
 
   Self.ImageBox.SetImage(bg.Resize(EImageRotateAlgo.NEAREST_NEIGHBOUR, FormUtils.Scale));
 end;
@@ -219,22 +230,6 @@ begin
   Self.OnLayoutChange(Self.LayoutCombobox);
 end;
 
-
-procedure TInventoryFormHelper.OnImgPaint(sender: TImageBox; canvas: TImageBoxCanvas; r: TLazRect);
-var
-  slot: Integer;
-begin
-  //locked $0F61C8
-  for slot := 0 to 27 do
-  begin
-    //$333C45
-    if slot = Self.Selected then
-      canvas.DrawBox(Self.DPISlots[slot], $08E20A)
-    else
-      canvas.DrawBox(Self.DPISlots[slot], $1A9DA2);
-  end;
-end;
-
 procedure TInventoryFormHelper.OnKeyPress(sender: TLazObject; var key: Int16; shift: ELazShiftStates);
 var
   str: String;
@@ -264,7 +259,7 @@ begin
       Self.Selected := ((Self.Selected - 1) mod 28 + 28) mod 28;
       Self.ListLabel.Caption := 'Selected slot: ' + ToStr(Self.Selected);
       Self.UpdateListBox();
-      Self.ImageBox.Repaint();
+      Self.UpdateBackground();
       Exit;
     end;
     38:
@@ -272,7 +267,7 @@ begin
       Self.Selected := ((Self.Selected - 4) mod 28 + 28) mod 28;
       Self.ListLabel.Caption := 'Selected slot: ' + ToStr(Self.Selected);
       Self.UpdateListBox();
-      Self.ImageBox.Repaint();
+      Self.UpdateBackground();
       Exit;
     end;
     39:
@@ -280,7 +275,7 @@ begin
       Self.Selected := ((Self.Selected + 1) mod 28 + 28) mod 28;
       Self.ListLabel.Caption := 'Selected slot: ' + ToStr(Self.Selected);
       Self.UpdateListBox();
-      Self.ImageBox.Repaint();
+      Self.UpdateBackground();
       Exit;
     end;
     40:
@@ -288,7 +283,7 @@ begin
       Self.Selected := ((Self.Selected + 4) mod 28 + 28) mod 28;
       Self.ListLabel.Caption := 'Selected slot: ' + ToStr(Self.Selected);
       Self.UpdateListBox();
-      Self.ImageBox.Repaint();
+      Self.UpdateBackground();
       Exit;
     end;
     46:
@@ -296,7 +291,6 @@ begin
       Self.Layout.Items[Self.Selected].Item := 'Nothing';
       Self.UpdateListBox();
       Self.UpdateBackground();
-      Self.ImageBox.Repaint();
       Exit;
     end;
   end;
@@ -322,7 +316,7 @@ begin
     Self.UpdateListBox();
   end;
 
-  sender.Repaint();
+  Self.UpdateBackground();
 end;
 
 
@@ -551,10 +545,9 @@ begin
   InventoryForm.ImageBox.AllowMoving := False;
   InventoryForm.ImageBox.ShowScrollBars := False;
   InventoryForm.ImageBox.ShowStatusBar := False;
-  InventoryForm.ImageBox.OnImgPaint := @InventoryForm.OnImgPaint;
   InventoryForm.ImageBox.OnImgClick := @InventoryForm.OnImgClick;
   InventoryForm.ImageBox.OnImgKeyDown := @InventoryForm.OnImgKeyPress;
-  InventoryForm.UpdateBackground();
+
 
   read := TLazButton.CreateEx(Result, 'Read From Client' , 'Read the layout from the client.', 0, 0, 204);
   read.Font.Style := [ELazFontStyles.fsBold];
@@ -566,6 +559,7 @@ begin
     with InventoryForm.SlotBoxes[i] do
       InventoryForm.DPISlots += [Round(FormUtils.Scale * X1), Round(FormUtils.Scale * Y1), Round(FormUtils.Scale * X2), Round(FormUtils.Scale * Y2)];
 
+  InventoryForm.UpdateBackground();
   InventoryForm.UpdateListBox();
   InventoryForm.OnLayoutChange(InventoryForm.LayoutCombobox);
 end;

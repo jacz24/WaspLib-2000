@@ -11,6 +11,84 @@ You can configure gear manually but the recommended way is to use {ref}`Gear For
 
 type
 (*
+## TRSGearItem
+Alias type for a {ref}`TRSItem` that is equippable.
+This doesn't have much use other than {ref}`GearItem.Interact` that comes next
+which can be very handy.
+*)
+  TRSGearItem = type TRSItem;
+
+(*
+## GearItem.Interact
+```pascal
+function TRSGearItem.Interact(option: String = ''; attempts: Int32 = 2): Boolean;
+```
+Interact with the `TRSGearItem` regardless of it being on the {ref}`Inventory`
+or {ref}`Equipment` with the least amount of gametab switches possible.
+
+Example:
+```pascal
+ring.Interact('Rub');
+```
+
+Because {ref}`TRSGearItem` have few use cases, you are probably using
+{ref}`TRSItem` instead.
+You can still easily use this by casting:
+```pascal
+TRSGearItem(ring).Interact('Rub');
+```
+*)
+function TRSGearItem.Interact(option: String = ''; attempts: Int32 = 2): Boolean;
+var
+  slot, i: Int32;
+  slotsAPtr, slotsBPtr: ^TRSSlotInterface;
+  itemsAPtr, itemsBPtr: ^TRSItemInterface;
+  tabA, tabB: ERSGameTab;
+begin
+  tabA := GameTabs.GetCurrent();
+
+  case tabA of
+    ERSGameTab.INVENTORY:
+      begin
+        itemsAPtr := @Inventory.Items;
+        itemsBPtr := @Equipment.Items;
+        slotsAPtr := @Inventory.Slots;
+        slotsBPtr := @Equipment.Slots;
+        tabB := ERSGameTab.EQUIPMENT;
+      end;
+    ERSGameTab.EQUIPMENT:
+      begin
+        itemsAPtr := @Equipment.Items;
+        itemsBPtr := @Inventory.Items;
+        slotsAPtr := @Equipment.Slots;
+        slotsBPtr := @Inventory.Slots;
+        tabB := ERSGameTab.INVENTORY;
+      end;
+    else
+      begin
+        if not Inventory.Open() then Exit;
+        Exit(Self.Interact(option));
+      end;
+  end;
+
+  for i := 0 to 1 do
+  begin
+    slot := itemsAPtr^.IndexOf([Self]);
+    if slot > -1 then
+      Exit(slotsAPtr^.Interact(slot, option));
+
+    Swap(slotsAPtr, slotsBPtr);
+    Swap(itemsAPtr, itemsBPtr);
+    Swap(tabA, tabB);
+    if not GameTabs.Open(tabA) then Exit;
+  end;
+
+  if attempts > 0 then
+    Result := Self.Interact(option, Dec(attempts));
+end;
+
+type
+(*
 ## TRSGear
 Type that represents a gear layout.
 *)
@@ -19,6 +97,13 @@ Type that represents a gear layout.
     Items: array [ERSEquipment] of TRSItem;
   end;
 
+(*
+## Gear.ToJSON
+```pascal
+function TRSGear.ToJSON(): TJSONItem;
+```
+Convert the `TRSGear` into a `TJSONItem`.
+*)
 function TRSGear.ToJSON(): TJSONItem;
 var
   slot: ERSEquipment;
@@ -39,6 +124,13 @@ Main type for the {ref}`Gear Layouts`.
     Equipped: array [ERSEquipment] of TRSItem;
   end;
 
+(*
+## GearLayout.Equip
+```pascal
+function TRSGearLayout.Equip(): Boolean;
+```
+Attempts to equip a `GearLayout`.
+*)
 function TRSGearLayout.Equip(): Boolean;
 var
   slot: ERSEquipment;
@@ -87,6 +179,13 @@ begin
       Equipment.Slots.Click(Ord(slot), EMouseButton.LEFT);
 end;
 
+(*
+## GearLayout.Withdraw
+```pascal
+function TRSGearLayout.Withdraw(): Boolean;
+```
+Attempts to withdraw a `GearLayout` from the {ref}`Bank`.
+*)
 function TRSGearLayout.Withdraw(): Boolean;
 var
   slot: ERSEquipment;

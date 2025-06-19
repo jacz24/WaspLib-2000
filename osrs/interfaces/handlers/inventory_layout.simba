@@ -50,7 +50,6 @@ function TRSInventoryLayout.ToJSON(): TJSONItem;
 ```
 Convert the `TRSInventoryLayout` into a `TJSONItem`.
 *)
-
 function TRSInventoryLayoutSlots.ToJSON(): TJSONItem;
 var
   i: Integer;
@@ -61,12 +60,24 @@ begin
 end;
 
 type
+(*
+## TRSInventoryLayout
+Main type to user {ref}`Inventory Layouts`.
+*)
   TRSInventoryLayout = record
     Layout: TRSInventoryLayoutSlots;
     Holding: array [0..27] of TRSInventoryLayouItem;
     BankItems: TRSBankItemArray;
   end;
 
+(*
+## InventoryLayout.SetupBankItems
+```pascal
+procedure TRSInventoryLayout.SetupBankItems();
+```
+Internal function used to setup the `TRSInventoryLayout` {ref}`TRSBankItem`s.
+This is automatically called for you when it's needed.
+*)
 procedure TRSInventoryLayout.SetupBankItems();
 var
   items: array of TRSInventoryLayouItem;
@@ -103,7 +114,20 @@ begin
   end;
 end;
 
+(*
+## InventoryLayout.DepositDiff
+```pascal
+function TRSInventoryLayout.DepositDiff(): Boolean;
+```
+Assuming the {ref}`Bank` is open, this will deposit every item in your inventory
+that doesn't match your {ref}`TRSInventoryLayout`.
 
+Example:
+```pascal
+if Bank.Open() then
+  layout.DepositDiff();
+```
+*)
 function TRSInventoryLayout.DepositDiff(): Boolean;
 var
   i, j, n, stack: Integer;
@@ -160,7 +184,20 @@ begin
   Result := True;
 end;
 
+(*
+## InventoryLayout.Withdraw
+```pascal
+function TRSInventoryLayout.Withdraw(): Boolean;
+```
+Assuming the {ref}`Bank` is open, this will withdraw anything necessay so your
+{ref}`Inventory` contents match your `TRSInventoryLayout`.
 
+Example:
+```pascal
+if Bank.Open() then
+  layout.Withdraw();
+```
+*)
 function TRSInventoryLayout.Withdraw(): Boolean;
 var
   i: Integer;
@@ -180,10 +217,24 @@ begin
   end;
 
   for i := 0 to High(Self.BankItems) do
-    Bank.Withdraw(bankitem, True);
+    if not Bank.Withdraw(bankitem, True) then
+      Exit;
+  Result := True;
 end;
 
+(*
+## InventoryLayout.Reorder
+```pascal
+function TRSInventoryLayout.Reorder(): Boolean;
+```
+Attempts to reorder the items in your {ref}`Inventory` to it matches your
+`TRSInventoryLayout`.
 
+Example:
+```pascal
+layout.Reorder();
+```
+*)
 function TRSInventoryLayout.Reorder(): Boolean;
 var
   i, j: Integer;
