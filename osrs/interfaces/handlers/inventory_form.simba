@@ -41,6 +41,7 @@ Do feel free to read the source code though if you so desire.
     ImageBox: TImageBox;
 
     Config: TConfigJSON;
+    ShiftDown: Boolean;
     const BACKGROUND_IMG: TImage = ImageFromString('IMG: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');
   end;
 
@@ -99,13 +100,13 @@ begin
     Self.ItemList.Items.BeginUpdate();
     Self.ItemList.Items.Add('Nothing');
     Self.ItemList.Items.Add('Anything');
-    Self.ItemList.Items.AddStrings(ItemFinder.Database.Data.Value['item']);
+    Self.ItemList.Items.AddStrings(ItemFinder.Database.Data.Value['item'].Sorted());
 
     Self.ItemList.Items.EndUpdate();
   end;
 end;
 
-procedure TInventoryFormHelper.UpdateFilters(items: TStringArray = []);
+procedure TInventoryFormHelper.UpdateFilters(items: TStringArray);
 begin
   Self.FilteredList.Items.BeginUpdate();
   Self.FilteredList.Clear();
@@ -119,20 +120,30 @@ end;
 
 procedure TInventoryFormHelper.DrawItem(slot: Integer; background: TImage; amount: Integer);
 var
-  id: String;
+  id, txt: String;
   item: TImage;
 begin
   id := ItemFinder.Database.Get(Self.Layout.Items[slot].Item.ToLower(), 'item', 'id');
-  item := ItemFinder.GetImage(id);
+  item := ItemFinder.GetImage(id).Copy();
   if amount > 1 then
   begin
     if amount < 99999 then
-      item.DrawColor := $00FFFF
+    begin
+      item.DrawColor := $00FFFF;
+      txt := ToStr(amount);
+    end
     else if InRange(amount, 100000, 9999999) then
-      item.DrawColor := $FFFFFF
+    begin
+      item.DrawColor := $FFFFFF;
+      txt := ToStr(amount div 1000) + 'K';
+    end
     else
+    begin
       item.DrawColor := $80FF00;
-    item.DrawTPA(OCR.Engine.TextToTPA(RSFonts.PLAIN_11, ToStr(amount)));
+      txt := ToStr(amount div 1000000) + 'M';
+    end;
+
+    item.DrawTPA(OCR.Engine.TextToTPA(RSFonts.PLAIN_11, txt));
   end;
   background.DrawImage(item, Self.SlotBoxes[slot].TopLeft);
 end;
@@ -146,12 +157,11 @@ begin
 
   for slot := 0 to 27 do
   begin
-
-     case Self.Layout.Items[slot].Item of
-      '', 'Nothing': ;
-      'Anything': ; //TODO....
-      else Self.DrawItem(slot, bg, Self.Layout.Items[slot].Amount);
-    end;
+   case Self.Layout.Items[slot].Item of
+    '', 'Nothing': ;
+    'Anything': ; //TODO....
+    else Self.DrawItem(slot, bg, Self.Layout.Items[slot].Amount);
+  end;
 
     if slot = Self.Selected then
       bg.DrawColor := $00FF00
@@ -170,6 +180,8 @@ procedure TInventoryFormHelper.OnSelectionChange(sender: TLazObject);
 begin
   Self.Layout.Items[Self.Selected].Item := TLazListBox(sender).GetSelectedText();
   Self.AmountEdit.Enabled := ItemData.IsStackable(Self.Layout.Items[Self.Selected].Item);
+  if not Self.AmountEdit.Enabled then
+    Self.AmountEdit.Text := '1';
   Self.UpdateBackground();
 end;
 
@@ -252,8 +264,13 @@ begin
         Self.OnSelectionChange(Self.FilteredList)
       else
         Self.OnSelectionChange(Self.ItemList);
+
+      Self.OnSearchChange(Self.Search);
       Exit;
     end;
+
+    16, 17: Exit;
+
     37:
     begin
       Self.Selected := ((Self.Selected - 1) mod 28 + 28) mod 28;
@@ -286,6 +303,7 @@ begin
       Self.UpdateBackground();
       Exit;
     end;
+
     46:
     begin
       Self.Layout.Items[Self.Selected].Item := 'Nothing';
@@ -298,11 +316,19 @@ begin
   Self.Search.Text := str + Char(tmp);
 end;
 
-procedure TInventoryFormHelper.OnImgKeyPress(sender: TImageBox; var key: UInt16; shift: ELazShiftStates);
+procedure TInventoryFormHelper.OnImgKeyDown(sender: TImageBox; var key: UInt16; shift: ELazShiftStates);
 begin
+  if key = 16 then
+    Self.ShiftDown := True;
+
   Self.OnKeyPress(nil, Int16(key), shift);
 end;
-{$H+}
+
+procedure TInventoryFormHelper.OnImgKeyUp(sender: TImageBox; var key: UInt16; shift: ELazShiftStates);
+begin
+  if key = 16 then
+    Self.ShiftDown := False;
+end;
 
 procedure TInventoryFormHelper.OnImgClick(sender: TImageBox; x, y: Integer);
 var
@@ -311,6 +337,16 @@ begin
   i := Self.DPISlots.ContainsPoint([x,y]);
   if i >= 0 then
   begin
+    if Self.ShiftDown then
+    begin
+      if Self.ItemList.Enabled then
+        Self.Layout.Items[i].Item := Self.ItemList.GetSelectedText()
+      else
+        Self.Layout.Items[i].Item := Self.FilteredList.GetSelectedText();
+
+      if ItemData.IsStackable(Self.Layout.Items[i].Item) then
+        Self.Layout.Items[i].Amount := StrToInt(Self.AmountEdit.Text, 1);
+    end;
     Self.Selected := i;
     Self.ListLabel.Caption := 'Selected slot: ' + ToStr(i);
     Self.UpdateListBox();
@@ -318,9 +354,7 @@ begin
 
   Self.UpdateBackground();
 end;
-
-
-
+{$H+}
 
 
 procedure TInventoryFormHelper.OnReadClick(sender: TLazObject);
@@ -337,7 +371,7 @@ begin
 
   for slot := 0 to 27 do
   begin
-    items := Inventory.Items.Discover(Ord(slot));
+    items := Inventory.Items.Discover(slot);
 
     if items <> [] then
     begin
@@ -349,7 +383,7 @@ begin
     filter += items;
   end;
 
-  Self.UpdateFilters(filter);
+  Self.UpdateFilters(filter.Unique().Sorted());
 
   Self.UpdateBackground();
 
@@ -377,7 +411,8 @@ end;
 
 procedure TInventoryFormHelper.OnAmountChange(sender: TLazObject);
 begin
-  if TLazEdit(sender).IsEmpty() then Exit;
+  if TLazEdit(sender).IsEmpty() then
+    TLazEdit(sender).Text := '1';
   Self.Layout.Items[Self.Selected].Amount := StrToInt(TLazEdit(sender).Text, 1);
   Self.UpdateBackground();
 end;
@@ -475,30 +510,31 @@ end.
 ```
 ```{figure} ../../images/inventoryform.gif
 ```
-For a more complete example check out the file `Simba/Includes/WaspLib/examples/inventory_form.simba`.
+For a more complete example check out the file `Simba/Includes/WaspLib/examples/inventoryform.simba`.
 *)
 function TScriptForm.CreateInventoryTab(): TLazTabSheet;
 var
   save, read: TLazButton;
   width: Integer;
   i: Integer;
+  tips: TLazLabel;
 begin
   InventoryForm.Setup();
 
   Result := Self.CreateTab('Inventory Layouts');
-  width := 280;
+  width := 300;
 
   InventoryForm.ListLabel := TLazLabel.CreateEx(Result, 'Slot item: ', 'Click a slot on the right side to update the list below.', 40, 20);
 
-  InventoryForm.Search := TLazEdit.CreateEx(Result, 'Search:', 'Search the list below.', 40, 80, width);
+  InventoryForm.Search := TLazEdit.CreateEx(Result, 'Search:', 'Search the list below.', 40, 60, width);
   InventoryForm.Search.OnChange := @InventoryForm.OnSearchChange;
 
-  InventoryForm.ItemList := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.', 0,0, width, 340);
+  InventoryForm.ItemList := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.', 0,0, width, 240);
   InventoryForm.ItemList.AnchorVertically(InventoryForm.Search, 10);
-  InventoryForm.ItemList.OnDblClick := @InventoryForm.OnSelectionChange;
+  InventoryForm.ItemList.OnClick := @InventoryForm.OnSelectionChange;
   InventoryForm.ItemList.OnKeyDown := @InventoryForm.OnKeyPress;
 
-  InventoryForm.FilteredList := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.', 0,0, width, 340);
+  InventoryForm.FilteredList := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.', 0,0, width, 240);
   InventoryForm.FilteredList.AnchorVertically(InventoryForm.Search, 10);
   InventoryForm.FilteredList.OnDblClick := @InventoryForm.OnSelectionChange;
   InventoryForm.FilteredList.OnKeyDown := @InventoryForm.OnKeyPress;
@@ -506,7 +542,7 @@ begin
   InventoryForm.FilteredList.Enabled := False;
 
   InventoryForm.UnfilterButton := TLazButton.CreateEx(Result, 'Remove list filter', 'Remove the current filter.', 0,0, width);
-  InventoryForm.UnfilterButton.AnchorVertically(InventoryForm.Search, 360);
+  InventoryForm.UnfilterButton.AnchorVertically(InventoryForm.Search, 260);
   InventoryForm.UnfilterButton.Enabled := False;
   InventoryForm.UnfilterButton.OnClick := @InventoryForm.OnUnfilterClick;
 
@@ -516,6 +552,16 @@ begin
   InventoryForm.AmountEdit.Text := '1';
   InventoryForm.AmountEdit.OnChange := @InventoryForm.OnAmountChange;
   InventoryForm.AmountEdit.OnKeyPress := @FormUtils.NumberField;
+
+  tips := TLazLabel.CreateEx(Result,
+                             'Tips:' + LINE_SEP +
+                             '- Shift+Click a slot to add the selected item.' + LINE_SEP +
+                             '- The image accepts keyboard input:' + LINE_SEP +
+                             '  - Arrows, Enter and Delete.' + LINE_SEP +
+                             '- Don''t repeat the same stackable item.' + LINE_SEP +
+                             '- Noted items start with "noted".'
+          );
+  tips.AnchorVertically(InventoryForm.AmountEdit, 10);
 
   InventoryForm.LayoutCombobox := TLazComboBox.CreateEx(Result, 'Layout:', 'Select a gear layout.', Round(Result.Width / FormUtils.Scale) - width - 80, 30, width);
   for i := 0 to High(InventoryForm.Layouts) do
@@ -541,13 +587,13 @@ begin
   InventoryForm.RemoveButton.OnClick := @InventoryForm.OnRemoveClick;
 
   InventoryForm.ImageBox := TImageBox.CreateEx(Result, '', '', Round(Result.Width / FormUtils.Scale) - width - 36, 170, 202, 273);
-  InventoryForm.ImageBox.AllowZoom := False;
-  InventoryForm.ImageBox.AllowMoving := False;
+  InventoryForm.ImageBox.AllowZoom      := False;
+  InventoryForm.ImageBox.AllowMoving    := False;
   InventoryForm.ImageBox.ShowScrollBars := False;
-  InventoryForm.ImageBox.ShowStatusBar := False;
-  InventoryForm.ImageBox.OnImgClick := @InventoryForm.OnImgClick;
-  InventoryForm.ImageBox.OnImgKeyDown := @InventoryForm.OnImgKeyPress;
-
+  InventoryForm.ImageBox.ShowStatusBar  := False;
+  InventoryForm.ImageBox.OnImgClick   := @InventoryForm.OnImgClick;
+  InventoryForm.ImageBox.OnImgKeyDown := @InventoryForm.OnImgKeyDown;
+  InventoryForm.ImageBox.OnImgKeyUp   := @InventoryForm.OnImgKeyUp;
 
   read := TLazButton.CreateEx(Result, 'Read From Client' , 'Read the layout from the client.', 0, 0, 204);
   read.Font.Style := [ELazFontStyles.fsBold];

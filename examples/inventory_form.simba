@@ -17,6 +17,7 @@ var
   tab: TLazTabSheet;
 begin
   form.Setup();
+
   tab := form.CreateTab('My Settings');
   form.CreateInventoryTab();
 
