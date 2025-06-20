@@ -218,7 +218,7 @@ begin
 
   if Self.Keybinds[tab] <> EKeyCode.UNKNOWN then
   begin
-    Keyboard.PressKey(Self.Keybinds[tab]);
+    Keyboard.KeyPress(Self.Keybinds[tab]);
     Exit(Self.WaitOpen(tab, 2000));
   end;
 
@@ -226,7 +226,7 @@ begin
   i := Random(0, High(Self.AvailableKeys));
 
   current := Self.GetCurrent();
-  Keyboard.PressKey(Self.AvailableKeys[i]);
+  Keyboard.KeyPress(Self.AvailableKeys[i]);
 
   switched := SleepUntil(current <> (new := Self.GetCurrent()), RandomMode(100, 50, 1500), 600);
 

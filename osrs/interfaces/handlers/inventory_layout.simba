@@ -217,7 +217,7 @@ begin
   end;
 
   for i := 0 to High(Self.BankItems) do
-    if not Bank.Withdraw(bankitem, True) then
+    if not Bank.Withdraw(Self.BankItems[i], True) then
       Exit;
   Result := True;
 end;

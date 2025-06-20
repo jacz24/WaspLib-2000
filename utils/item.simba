@@ -70,7 +70,11 @@ function TRSItem.SimplifyName(): String;
 var
   short, long: Integer;
 begin
-  Result := ToStr(Self).ToLower();
+  if Self.Contains(' of ') then
+    Result := Self.After(' of ').ToLower()
+  else
+    Result := Self.ToLower();
+
   if Result.EndsWith(')') then Result := Result.Before('(');
 
   long := Length(Result);

@@ -369,7 +369,7 @@ Options.RenderSelf();
 *)
 procedure TRSOptions.RenderSelf();
 begin
-  if Chat.InputHasText() then Keyboard.PressKey(EKeyCode.RETURN);
+  if Chat.InputHasText() then Keyboard.KeyPress(EKeyCode.RETURN);
   Keyboard.Send('::renderself', EKeyCode.RETURN);
 end;
 

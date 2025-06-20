@@ -191,7 +191,7 @@ begin
     keyboardProbability := Biometrics.RandomDouble(0.5);
 
   if RandomBoolean(keyboardProbability) then
-    Keyboard.PressKey(option.Key)
+    Keyboard.KeyPress(option.Key)
   else
     Mouse.Click(option.Bounds, EMouseButton.LEFT);
 

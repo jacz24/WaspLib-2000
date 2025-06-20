@@ -701,7 +701,7 @@ begin
     Exit(True);
 
   if RandomBoolean(0.5) then
-    Keyboard.PressKey(EKeyCode.TAB)
+    Keyboard.KeyPress(EKeyCode.TAB)
   else
     with Self.Inputs[field] do
       Mouse.Click([X1, Y1, X2, Y2-3], EMouseButton.LEFT);

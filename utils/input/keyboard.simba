@@ -60,13 +60,13 @@ begin
 end;
 
 (*
-## Keyboard.PressKey
+## Keyboard.KeyPress
 ```pascal
-procedure TKeyboard.PressKey(key: Integer);
+procedure TKeyboard.KeyPress(key: EKeyCode);
 ```
 Presses the given virtual key.
 *)
-procedure TKeyboard.PressKey(key: EKeyCode);
+procedure TKeyboard.KeyPress(key: EKeyCode);
 begin
   Target.KeyPress(key);
   Self.LastKey := key;
@@ -113,7 +113,7 @@ procedure TKeyboard.Send(text: String; keyPressAfter: EKeyCode); overload;
 begin
   Self.Send(text);
   Sleep(30, 120, ERandomDir.LEFT);
-  Self.PressKey(keyPressAfter);
+  Self.KeyPress(keyPressAfter);
 end;
 
 
@@ -122,12 +122,12 @@ begin
   case Random(100) of
     0..74:
     case Random(3) of
-      0: Self.PressKey(EKeyCode.LEFT);
-      1: Self.PressKey(EKeyCode.RIGHT);
-      2: Self.PressKey(EKeyCode.UP);
+      0: Self.KeyPress(EKeyCode.LEFT);
+      1: Self.KeyPress(EKeyCode.RIGHT);
+      2: Self.KeyPress(EKeyCode.UP);
     end;
-    75..89: Self.PressKey(Self.FKEYS.Random());
-    90..99: Self.PressKey(Self.MISC.Random());
+    75..89: Self.KeyPress(Self.FKEYS.Random());
+    90..99: Self.KeyPress(Self.MISC.Random());
   end;
 end;
 
@@ -138,7 +138,3 @@ var
 Global {ref}`TKeyboard` variable.
 *)
   Keyboard: TKeyboard;
-
-begin
-  Keyboard.Setup();
-end;

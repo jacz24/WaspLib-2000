@@ -646,17 +646,36 @@ Example:
 Bank.Search('logs'); // Search for logs
 ```
 *)
-function TRSBank.Search(item: String): Boolean;
+function TRSBank.Search(item: TRSItem): Boolean;
 var
-  query: String;
+  txt: String;
+  i: Integer;
 begin
-  query := 'Showing items: ' + item.ToLower();
-  if Self.Title.IsTitle(query) then Exit(True);
+  txt := item.SimplifyName();
+
+  if Self.Title.IsTitle('Showing items: ' + txt) then Exit(True);
   if not Self.ClearSearch() then Exit;
   if not Self.OpenSearch(Random(2000, 2500)) then Exit;
 
-  if Chat.AnswerQuery('Show items', item, Random(2000, 2500)) then
-    Result := Self.Title.WaitTitle(query);
+  for i := 1 to Length(txt) do
+  begin
+    Keyboard.KeyPress(Target.KeyCodeFromChar(txt[i]));
+    if i < Length(txt) then
+      Sleep(30, 60, ERandomDir.LEFT);
+
+    if Self.Items.Contains(item) then
+    begin
+      for i := i + 1 to Min(i + Random(4, 6), Length(txt)) do
+      begin
+        Keyboard.KeyPress(Target.KeyCodeFromChar(txt[i]));
+        if i < Length(txt) then
+          Sleep(30, 60, ERandomDir.LEFT);
+      end;
+
+      Sleep(100, 200);
+      Exit(True);
+    end;
+  end;
 end;
 
 (*
@@ -838,7 +857,7 @@ function TRSBank.FindTab(item: TRSItem): Integer;
 var
   bounds: TBox;
 begin
-  if not Self.Search(item.SimplifyName()) then Exit(-1);
+  if not Self.Search(item) then Exit(-1);
   if not Self.Items.Find(item, bounds)  then Exit(-1);
 
   bounds := [Self.Bounds.X1 + 56, Self.Bounds.Y1 + 77, Self.Bounds.X1 + 84, bounds.Y1];

@@ -106,6 +106,9 @@ begin
   if not DirCreate(WLEnv.AssetsDir) then
     raise GetDebugLn('WaspLib', 'Failed to create path: ' + WLEnv.AssetsDir);
 
+  Mouse.Setup();
+  Keyboard.Setup();
+
   WLAssets.Setup();
   WLAssets.Update();
 

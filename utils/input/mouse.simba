@@ -498,7 +498,3 @@ var
 Global {ref}`TMouse` variable.
 *)
   Mouse: TMouse;
-
-begin
-  Mouse.Setup();
-end;

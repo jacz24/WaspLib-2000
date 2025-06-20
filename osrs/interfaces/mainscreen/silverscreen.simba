@@ -254,7 +254,7 @@ begin
   if not Result then Exit;
 
   if UseSpaceBar and Self.IsItemHighlighted(Item) then
-    Keyboard.PressKey(EKeyCode.SPACE)
+    Keyboard.KeyPress(EKeyCode.SPACE)
   else
     Mouse.Click(box, EMouseButton.LEFT);
 end;

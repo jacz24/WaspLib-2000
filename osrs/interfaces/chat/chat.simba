@@ -402,8 +402,7 @@ begin
     while Self.GetQueryAnswer() <> '*' do
       Target.KeyPress(EKeyCode.BACK);
 
-  Target.KeySend(answer);
-  Target.KeyPress(EKeyCode.RETURN);
+  Keyboard.Send(answer, EKeyCode.RETURN);
 end;
 
 
