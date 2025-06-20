@@ -17,7 +17,7 @@ function TMapObjectJSON.GetFile(chunk: TPoint; plane: Integer): TJSONItem;
 ```
 Internal method to return a objects JSON file associated with the specified `chunk` and `plane`.
 *)
-function TMapObjectJSON.GetFile(chunk: TPoint; plane: Integer): TJSONItem;
+function TMapObjectJSON.GetFile(chunk: TPoint; plane: Integer): TJSONParser;
 var
   filename, cachename: String;
 begin
@@ -31,7 +31,7 @@ begin
   if FileExists(cachename) then
   begin
     Result := new TJSONParser();
-    TJSONParser(Result).Load(cachename);
+    Result.Load(cachename);
   end;
 end;
 
@@ -127,7 +127,7 @@ begin
   for i := 0 to  Self.Data.Count-1 do
     if Self.Data.Item[i].Item[1].AsString = name then
     begin
-      Result.AddObject('', Self.Data.Item[i]);
+      Result.AddObject('', Self.Data.Item[i].Clone());
       if Inc(found) = amount then Exit;
     end;
 
@@ -150,7 +150,7 @@ begin
 
   for i := 0 to  Self.Data.Count-1 do
     if Self.Data.Item[i].Item[0].AsInt = id then
-      Exit(Self.Data.Item[i]);
+      Exit(Self.Data.Item[i].Clone());
   raise GetDebugLn('Object with ID ' + ToStr(id) + ' doesn''t exist on the loaded maps.');
 end;
 
@@ -175,7 +175,7 @@ begin
     for j := 0 to Self.Data.Item[i].Item[4].Count-1 do
       if Self.Data.Item[i].Item[4].Item[j].AsString = action then
       begin
-        Result.AddObject('', Self.Data.Item[i]);
+        Result.AddObject('', Self.Data.Item[i].Clone());
         if Inc(found) = amount then Exit;
         Continue(2);
       end;
@@ -186,65 +186,9 @@ end;
 
 
 procedure TMapObjectJSON.Print();
-var
-  i, j, count: Integer;
-  str: String;
 begin
   if Self.Data.Count = 0 then Self.Load();
-
-  str += '[' + LINE_SEP;
-  for i := 0 to Self.Data.Count-1 do
-  begin
-    str += '  {' + LINE_SEP;
-    str += '    "id": ' + Self.Data.Item[i].Item[0].Format() + ',' + LINE_SEP;
-    str += '    "name": ' + Self.Data.Item[i].Item[1].Format() + ',' + LINE_SEP;
-    str += '    "type": ' + Self.Data.Item[i].Item[2].Format() + ',' + LINE_SEP;
-    str += '    "category": ' + Self.Data.Item[i].Item[3].Format() + ',' + LINE_SEP;
-    str += '    "actions": [';
-    count := Self.Data.Item[i].Item[4].Count-1;
-    for j := 0 to count do
-    begin
-      str += '"' + Self.Data.Item[i].Item[4].Item[j].AsString + '"';
-      if j < count then str += ',';
-    end;
-    str += '],' + LINE_SEP;
-
-    str += '    "coordinates": [';
-    count := Self.Data.Item[i].Item[5].Count-1;
-    for j := 0 to count do
-    begin
-      str += '[' + ToStr(Self.Data.Item[i].Item[5].Item[j].Item[0].AsInt) + ',' + ToStr(Self.Data.Item[i].Item[5].Item[j].Item[1].AsInt) + ']';
-      if j < count then str += ',';
-    end;
-    str += '],' + LINE_SEP;
-
-    str += '    "size": [' + ToStr(Self.Data.Item[i].Item[6].Item[0].AsInt) + ',';
-    str += ToStr(Self.Data.Item[i].Item[6].Item[0].AsInt) + ',';
-    str += ToStr(Self.Data.Item[i].Item[6].Item[0].AsInt) + '],' + LINE_SEP;
-
-    str += '    "rotations": [';
-    count := Self.Data.Item[i].Item[7].Count-1;
-    for j := 0 to count do
-    begin
-      str += ToStr(Self.Data.Item[i].Item[7].Item[j].AsInt);
-      if j < count then str += ',';
-    end;
-    str += '],' + LINE_SEP;
-
-    str += '    "colors": [';
-    count := Self.Data.Item[i].Item[8].Count-1;
-    for j := 0 to count do
-    begin
-      str += ToStr(Self.Data.Item[i].Item[8].Item[j].AsInt);
-      if j < count then str += ',';
-    end;
-    str += ']' + LINE_SEP;
-    str += '  }';
-    if i <= Self.Data.Count-2 then str += ',';
-    str += LINE_SEP;
-  end;
-  str += ']';
-  WriteLn str;
+  WriteLn Self.Data.Format([EJSONFormatOption.NO_QUOTE_MEMBERS, EJSONFormatOption.SINGLE_LINE_ARR]);
 end;
 
 
@@ -264,7 +208,7 @@ function TMapNPCJSON.GetFile(chunk: TPoint; plane: Integer): TJSONItem;
 Internal method to return a npcs JSON file associated with the specified
 `chunk` and `plane`.
 *)
-function TMapNPCJSON.GetFile(chunk: TPoint; plane: Integer): TJSONItem;
+function TMapNPCJSON.GetFile(chunk: TPoint; plane: Integer): TJSONParser;
 var
   filename, cachename: String;
 begin
@@ -275,11 +219,11 @@ begin
   filename := PATH_SEP + ToStr(chunk.X) + '-' + ToStr(chunk.Y) + '.json';
   cachename := Map.Loader.CacheDir + 'npcs' + PATH_SEP + ToStr(plane) + filename;
 
-  if FileExists(cachename) then
-  begin
-    Result := new TJSONParser();
-    TJSONParser(Result).Load(cachename);
-  end;
+  if not FileExists(cachename) then
+    Exit(nil);
+
+  Result := new TJSONParser();
+  Result.Load(cachename);
 end;
 
 (*
@@ -373,7 +317,7 @@ begin
   for i := 0 to  Self.Data.Count-1 do
     if Self.Data.Item[i].Item[1].AsString = name then
     begin
-      Result.AddObject('', Self.Data.Item[i]);
+      Result.AddObject('', Self.Data.Item[i].Clone());
       if Inc(found) = amount then Exit;
     end;
 
@@ -396,7 +340,7 @@ begin
 
   for i := 0 to  Self.Data.Count-1 do
     if Self.Data.Item[i].Item[0].AsInt = id then
-      Exit(Self.Data.Item[i]);
+      Exit(Self.Data.Item[i].Clone());
   raise GetDebugLn('Object with ID ' + ToStr(id) + ' doesn''t exist on the loaded maps.');
 end;
 
@@ -421,7 +365,7 @@ begin
     for j := 0 to Self.Data.Item[i].Item[5].Count-1 do
       if Self.Data.Item[i].Item[5].Item[j].AsString = action then
       begin
-        Result.AddObject('', Self.Data.Item[i]);
+        Result.AddObject('', Self.Data.Item[i].Clone());
         if Inc(found) = amount then Exit;
         Continue(2);
       end;
@@ -432,57 +376,10 @@ end;
 
 
 procedure TMapNPCJSON.Print();
-var
-  i, j, count: Integer;
-  str: String;
 begin
   if Self.Data.Count = 0 then Self.Load();
 
-  str += '[' + LINE_SEP;
-  for i := 0 to Self.Data.Count-1 do
-  begin
-    str += '  {' + LINE_SEP;
-    str += '    "id": ' + ToStr(Self.Data.Item[i].Item[0].AsInt) + ',' + LINE_SEP;
-    str += '    "name": ' + Self.Data.Item[i].Item[1].AsString + ',' + LINE_SEP;
-    str += '    "level": ' + Self.Data.Item[i].Item[2].AsString + ',' + LINE_SEP;
-    str += '    "category": ' + ToStr(Self.Data.Item[i].Item[3].AsInt) + ',' + LINE_SEP;
-    str += '    "minimapdot": ' + ToStr(Self.Data.Item[i].Item[4].AsBool) + ',' + LINE_SEP;
-    str += '    "actions": [';
-    count := Self.Data.Item[i].Item[5].Count-1;
-    for j := 0 to count do
-    begin
-      str += '"' + Self.Data.Item[i].Item[5].Item[j].AsString + '"';
-      if j < count then str += ',';
-    end;
-    str += '],' + LINE_SEP;
-
-    str += '    "size": [' + ToStr(Self.Data.Item[i].Item[6].Item[0].AsInt) + ',';
-    str += ToStr(Self.Data.Item[i].Item[6].Item[0].AsInt) + ',';
-    str += ToStr(Self.Data.Item[i].Item[6].Item[0].AsInt) + '],' + LINE_SEP;
-
-    str += '    "coordinates": [';
-    count := Self.Data.Item[i].Item[7].Count-1;
-    for j := 0 to count do
-    begin
-      str += '[' + ToStr(Self.Data.Item[i].Item[7].Item[j].Item[0].AsInt) + ',' + ToStr(Self.Data.Item[i].Item[7].Item[j].Item[1].AsInt) + ']';
-      if j < count then str += ',';
-    end;
-    str += '],' + LINE_SEP;
-
-    str += '    "colors": [';
-    count := Self.Data.Item[i].Item[8].Count-1;
-    for j := 0 to count do
-    begin
-      str += ToStr(Self.Data.Item[i].Item[8].Item[j].AsInt);
-      if j < count then str += ',';
-    end;
-    str += ']' + LINE_SEP;
-    str += '  }';
-    if i <= Self.Data.Count-2 then str += ',';
-    str += LINE_SEP;
-  end;
-  str += ']';
-  WriteLn str;
+  WriteLn Self.Data.Format([EJSONFormatOption.NO_QUOTE_MEMBERS, EJSONFormatOption.SINGLE_LINE_ARR]);
 end;
 
 var

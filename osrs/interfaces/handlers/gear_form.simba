@@ -244,6 +244,22 @@ begin
   Self.LayoutCombobox.ItemIndex := Max(High(Self.Sets), 0);
   Self.OnLayoutChange(Self.LayoutCombobox);
 end;
+
+procedure TGearFormHelper.OnKeyPress(sender: TLazObject; var key: Char);
+var
+  str: String;
+begin
+  str := Self.Search.Text;
+
+  if key = #08 then
+  begin
+    str.Pop;
+    Self.Search.Text := str;
+    Exit;
+  end;
+
+  Self.Search.Text := str + key;
+end;
 {$H+}
 
 procedure TGearFormHelper.OnImgClick(sender: TImageBox; x, y: Integer);

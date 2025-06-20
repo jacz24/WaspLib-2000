@@ -1187,8 +1187,8 @@ begin
 
   if obj.DistanceTo(me) < npc.DistanceTo(me) then
   begin
-    if walk then Result := obj.WalkSelect(['Bank B', 'Bank E'])
-    else Result := obj.Select(['Bank B', 'Bank E']);
+    if walk then Result := obj.WalkSelect(['Bank B', 'Bank E', 'Bank G'])
+    else Result := obj.Select(['Bank B', 'Bank E', 'Bank G']);
 
     if not Result then
     begin

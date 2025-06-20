@@ -458,9 +458,6 @@ begin
 end;
 
 
-
-
-
 (*
 ## InventoryForm.CreateGearCombobox
 ```pascal
