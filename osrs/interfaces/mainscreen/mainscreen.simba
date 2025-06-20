@@ -157,11 +157,17 @@ end;
 (*
 ### MainScreen.IsUpText
 ```pascal
-function TRSMainScreen.IsUpText(text: String; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean
-function TRSMainScreen.IsUpText(strings: TStringArray; caseSensitive: Boolean = True; similarity: Single = 0.85): Boolean; overload;;
+function TRSMainScreen.IsUpText(text: String; caseSensitive: Boolean = True; similarity: Single = 0.85; timeout: Integer = -1): Boolean
+function TRSMainScreen.IsUpText(strings: TStringArray; caseSensitive: Boolean = True; similarity: Single = 0.85; timeout: Integer = -1): Boolean; overload;;
 ```
 Compares `text` or `strings` with the {ref}`uptext` on the mainscreen.
 Returns True if the match above the threshold `similarity`.
+
+UpText is delayed by at least one frame, so this only returns true if the uptext
+doesn't change within 50ms. It also wait 25ms between each loop.
+By default it can wait anywhere from 85ms to 250ms total.
+
+If you cannot afford this delay on your script set a your own `timeout`.
 
 Example:
 ```pascal
