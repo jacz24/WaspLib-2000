@@ -1,0 +1,211 @@
+{$DEFINE WL_PRAYER_FORM_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+  TRSPrayerForm = record
+    OpenFormButton: TLazButton;
+    Selected: TRSPrayerSet;
+    Form: TLazForm;
+    PrayerImages: array of TLazImage;
+    const BACKGROUND_IMAGE = 'IMG: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';
+    const BACKGROUND_COLOR = $333C45;
+    const HIGHLIGHT_COLOR = $6DB3CE;
+  end;
+
+function TRSPrayerForm._GetInterferingPrayers(prayer: ERSPrayer): TRSPrayerSet;
+const
+  GROUP_NONE     = 0; GROUP_ATTACK   = 1; GROUP_STRENGTH = 2; GROUP_DEFENCE  = 3;
+  GROUP_RANGED   = 4; GROUP_MAGIC    = 5; GROUP_COMBO    = 6; GROUP_OVERHEAD = 7;
+
+  PRAYER_GROUPS: array[GROUP_NONE..GROUP_OVERHEAD] of TRSPrayerSet = [
+    [ERSPrayer.RAPID_HEAL, ERSPrayer.RAPID_RESTORE],
+    [ERSPrayer.CLARITY_OF_THOUGHT, ERSPrayer.IMPROVED_REFLEXES, ERSPrayer.INCREDIBLE_REFLEXES],
+    [ERSPrayer.BURST_OF_STRENGTH, ERSPrayer.SUPERHUMAN_STRENGTH, ERSPrayer.ULTIMATE_STRENGTH],
+    [ERSPrayer.THICK_SKIN, ERSPrayer.ROCK_SKIN, ERSPrayer.STEEL_SKIN],
+    [ERSPrayer.SHARP_EYE, ERSPrayer.HAWK_EYE, ERSPrayer.EAGLE_EYE],
+    [ERSPrayer.MYSTIC_WILL, ERSPrayer.MYSTIC_LORE, ERSPrayer.MYSTIC_MIGHT],
+    [ERSPrayer.CHIVALRY, ERSPrayer.PIETY, ERSPrayer.RIGOUR, ERSPrayer.AUGURY],
+    [ERSPrayer.PROTECT_FROM_MAGIC, ERSPrayer.PROTECT_FROM_MISSILES, ERSPrayer.PROTECT_FROM_MELEE, ERSPrayer.REDEMPTION, ERSPrayer.SMITE, ERSPrayer.RETRIBUTION]
+  ];
+var
+  group: Integer;
+begin
+  if prayer in PRAYER_GROUPS[GROUP_NONE] then
+    Exit;
+
+  for group := GROUP_ATTACK to GROUP_OVERHEAD do
+    if prayer in PRAYER_GROUPS[group] then
+      Break;
+
+  if group > GROUP_OVERHEAD then
+    Exit;
+
+  case group of
+    GROUP_ATTACK:   Result += PRAYER_GROUPS[GROUP_RANGED]
+                           +  PRAYER_GROUPS[GROUP_MAGIC]
+                           +  PRAYER_GROUPS[GROUP_COMBO];
+    GROUP_STRENGTH: Result += PRAYER_GROUPS[GROUP_RANGED]
+                           +  PRAYER_GROUPS[GROUP_MAGIC]
+                           +  PRAYER_GROUPS[GROUP_COMBO];
+    GROUP_DEFENCE:  Result += PRAYER_GROUPS[GROUP_COMBO];
+    GROUP_RANGED:   Result += PRAYER_GROUPS[GROUP_ATTACK]
+                           +  PRAYER_GROUPS[GROUP_STRENGTH]
+                           +  PRAYER_GROUPS[GROUP_MAGIC]
+                           +  PRAYER_GROUPS[GROUP_COMBO];
+    GROUP_MAGIC:    Result += PRAYER_GROUPS[GROUP_ATTACK]
+                           +  PRAYER_GROUPS[GROUP_STRENGTH]
+                           +  PRAYER_GROUPS[GROUP_RANGED]
+                           +  PRAYER_GROUPS[GROUP_COMBO];
+    GROUP_COMBO:    Result += PRAYER_GROUPS[GROUP_ATTACK]
+                           +  PRAYER_GROUPS[GROUP_STRENGTH]
+                           +  PRAYER_GROUPS[GROUP_DEFENCE]
+                           +  PRAYER_GROUPS[GROUP_RANGED]
+                           +  PRAYER_GROUPS[GROUP_MAGIC];
+  end;
+
+  Result += PRAYER_GROUPS[group];
+end;
+
+procedure TRSPrayerForm._DrawPrayerCircle(p: ERSPrayer; color: TColor);
+var
+  img: TImage;
+  sprite: TPointArray;
+  highlight: TPointArray;
+begin
+  img := new TImage();
+  img.FromLazBitmap(Self.PrayerImages[p].Picture.Bitmap);
+  sprite := img.FindColor(TRSPrayerForm.BACKGROUND_COLOR, 0)
+    + img.FindColor(TRSPrayerForm.HIGHLIGHT_COLOR, 0);
+  sprite := sprite.Invert([0,0,img.Width-1, img.Height-1]);
+
+  highlight := TPointArray.CreateFromCircle([img.Width div 2, img.Height div 2], img.Width div 2, True);
+  highlight := highlight.Difference(sprite);
+
+  img.DrawColor := color;
+  img.DrawTPA(highlight);
+
+  Self.PrayerImages[p].Picture.Bitmap := img.ToLazBitmap;
+end;
+
+procedure TRSPrayerForm._UpdateHint();
+var
+  hint: String;
+  prayer: ERSPrayer;
+begin
+  for prayer in Self.Selected do
+    hint += ToString(prayer).After('.').ToLower().Capitalize().Replace('_', ' ') + ', ';
+
+  if hint.Length > 2 then
+    SetLength(hint, hint.Length - 2);
+  Self.OpenFormButton.Hint := hint;
+end;
+
+procedure TRSPrayerForm._Select(prayer: ERSPrayer);
+begin
+  Self._DrawPrayerCircle(prayer, TRSPrayerForm.HIGHLIGHT_COLOR);
+  Self.Selected += prayer;
+  Self._UpdateHint();
+end;
+
+procedure TRSPrayerForm._Deselect(prayer: ERSPrayer);
+begin
+  Self._DrawPrayerCircle(prayer, TRSPrayerForm.BACKGROUND_COLOR);
+  Self.Selected := Self.Selected - [prayer];
+  Self._UpdateHint();
+end;
+
+procedure TRSPrayerForm._OnPrayerClick(sender: TLazObject);
+var
+  prayerClicked, prayer: ERSPrayer;
+begin
+  prayerClicked :=  ERSPrayer(Self.PrayerImages.IndexOf(TLazImage(sender)));
+
+  if prayerClicked in Self.Selected then
+    Self._Deselect(prayerClicked)
+  else
+  begin
+    for prayer in Self._GetInterferingPrayers(prayerClicked) do
+      Self._Deselect(prayer);
+    Self._Select(prayerClicked);
+  end;
+end;
+
+{$H-}
+procedure TRSPrayerForm._OnOpenFormButtonClick(sender: TLazObject);
+begin
+  Self.Form.Show();
+end;
+
+procedure TRSPrayerForm._OnSaveButtonClick(sender: TLazObject);
+begin
+  Self.Form.Hide();
+end;
+{$H+}
+
+procedure TRSPrayerForm.SetSelected(prayers: TRSPrayerSet);
+var
+  prayer: ERSPrayer;
+begin
+  for prayer in ERSPrayer do
+    Self._Deselect(prayer);
+
+  for prayer in prayers do
+   Self._Select(prayer);
+end;
+
+{$H-}
+procedure TRSPrayerForm.Disable(prayers: ERSPrayer);
+begin
+  //TODO
+end;
+{$H+}
+
+procedure TRSPrayerForm.Init(buttonParent: Pointer; buttonLeft, buttonTop: Integer);
+var
+  I: Integer;
+  img: TImage;
+  backgroundImage: TImage;
+  background: TLazImage;
+  saveButton: TLazButton;
+begin
+  backgroundImage := new TImage();
+  backgroundImage.FromString(TRSPrayerForm.BACKGROUND_IMAGE);
+
+  Self.Form := TLazForm.Create(TLazComponent(buttonParent));
+  Self.Form.Width := backgroundImage.Width;
+  Self.Form.Height := backgroundImage.Height;
+  with Self.Form.Constraints do
+  begin
+    MinWidth := Self.Form.Width;
+    MaxWidth := MinWidth;
+    MinHeight := Self.Form.Height;
+    MaxHeight := MinHeight;
+  end;
+  Self.Form.Position := ELazFormPosition.OwnerFormCenter;
+
+  background := TLazImage.Create(Self.Form);
+  background.Width := backgroundImage.Width;
+  background.Height := backgroundImage.Height;
+  background.Picture.Bitmap := backgroundImage.ToLazBitmap();
+  background.Parent := Self.Form;
+
+  SetLength(Self.PrayerImages, Length(ERSPrayer));
+  for i := 0 to Ord(High(ERSPrayer)) do
+  begin
+    Self.PrayerImages[i] := TLazImage.Create(Self.Form);
+    img := PrayerFinder.GetImage(ERSPrayer(i)).Copy;
+    img.ReplaceColor($0, TRSPrayerForm.BACKGROUND_COLOR);
+    Self.PrayerImages[i].Picture.Bitmap := img.ToLazBitmap;
+    Self.PrayerImages[i].Top := 46 + ((i div 5) * (33 + 4));
+    Self.PrayerImages[i].Left := 29 + ((i mod 5) * (33 + 4));
+    Self.PrayerImages[i].Parent := Self.Form;
+    Self.PrayerImages[i].OnClick := @Self._OnPrayerClick;
+  end;
+
+  saveButton := TLazButton.CreateEx(Self.Form, 'Save', '', Self.Form.Width div 2 - 60, 270, 120, 20);
+  saveButton.OnClick := @Self._OnSaveButtonClick;
+
+  Self.OpenFormButton := TLazButton.CreateEx(buttonParent, 'Select prayers', 'Select prayers', buttonLeft, buttonTop, 100, 25);
+  Self.OpenFormButton.OnClick := @Self._OnOpenFormButtonClick;
+end;
+

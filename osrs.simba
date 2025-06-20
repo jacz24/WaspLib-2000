@@ -127,15 +127,14 @@ Summary: It includes this file until the current file is reached.
 {$IFNDEF WL_GEAR_FORM_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/handlers/gear_form.simba}
 {$IFNDEF WL_INVENTORY_LAYOUTS_INCLUDED}   {$INCLUDE_ONCE osrs/interfaces/handlers/inventory_layout.simba}
 {$IFNDEF WL_INVENTORY_FORM_INCLUDED}      {$INCLUDE_ONCE osrs/interfaces/handlers/inventory_form.simba}
+{$IFNDEF WL_PRAYER_FORM_INCLUDED}         {$INCLUDE_ONCE osrs/interfaces/handlers/prayer_form.simba}
 {$IFNDEF WL_CONSUMABLES_INCLUDED}         {$INCLUDE_ONCE osrs/interfaces/handlers/consumables.simba}
-
-
 
 {$IFNDEF WL_ANTIBAN_TASKS_INCLUDED}       {$INCLUDE_ONCE osrs/antiban/antibantasks.simba}
 {$IFNDEF WL_SETUP_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/setup.simba}
 {$IFNDEF WL_OVERRIDES_INCLUDED}           {$INCLUDE_ONCE osrs/overrides.simba}
 
-{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
+{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
