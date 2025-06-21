@@ -153,7 +153,8 @@ begin
   begin
     b := tpa.Bounds();
     if b.Height <= 5 then Continue;
-    Result += TBoxArray.Create([Self.SlotsArea.X1, b.Y1 - 1], 8, 1, 32, 32, [16, 0]);
+
+    Result += TBoxArray.Create([Self.SlotsArea.X1, b.Y1], 8, 1, 31, Min(Self.SlotsArea.Y2-b.Y1, 30), [17, 1]);
   end;
 end;
 
@@ -178,7 +179,7 @@ begin
   end;
 
   Self.Scroll.Area.X1 := Self.Bounds.X1 + 5;
-  Self.Scroll.Area.Y1 := Self.Bounds.Y1 + 78;
+  Self.Scroll.Area.Y1 := Self.Bounds.Y1 + 77;
   Self.Scroll.Area.X2 := Self.Bounds.X2 - 22;
   Self.Scroll.Area.Y2 := Self.Bounds.Y2 - 44;
 
@@ -630,7 +631,11 @@ WriteLn Bank.ClearSearch();
 function TRSBank.ClearSearch(): Boolean;
 begin
   if not Self.Title.IsTitle('Showing items:') then Exit(True);
-  Self.DynamicButtons[ERSBankDynamicButtons.SEARCH].Click();
+
+  if Biometrics.RandomBoolean() then
+    Self.DynamicButtons[ERSBankDynamicButtons.SEARCH].Click()
+  else
+    Mouse.Click(Self.Tabs[0], EMouseButton.LEFT);
   Result := SleepUntil(not Self.Title.IsTitle('Showing items:'), RandomMode(100, 50, 1500), 600);
 end;
 
@@ -649,7 +654,7 @@ Bank.Search('logs'); // Search for logs
 function TRSBank.Search(item: TRSItem): Boolean;
 var
   txt: String;
-  i: Integer;
+  i, j: Integer;
 begin
   txt := item.SimplifyName();
 
@@ -660,22 +665,15 @@ begin
   for i := 1 to Length(txt) do
   begin
     Keyboard.KeyPress(Target.KeyCodeFromChar(txt[i]));
-    if i < Length(txt) then
-      Sleep(30, 60, ERandomDir.LEFT);
+    Sleep(100, 200);
 
-    if Self.Items.Contains(item) then
-    begin
-      for i := i + 1 to Min(i + Random(4, 6), Length(txt)) do
-      begin
-        Keyboard.KeyPress(Target.KeyCodeFromChar(txt[i]));
-        if i < Length(txt) then
-          Sleep(30, 60, ERandomDir.LEFT);
-      end;
+    if i = j then Break;
 
-      Sleep(100, 200);
-      Exit(True);
-    end;
+    if (j = 0) and Self.Items.Contains(item) then
+      j := i + Random(2, 4);
   end;
+
+  Result := SleepUntil(Self.Items.Contains(item), 300, 2000);
 end;
 
 (*
@@ -895,6 +893,8 @@ begin
   Result := Self.Scroll.GetLevel();
   down := (Result > 0) or RandomBoolean(0.5);
 
+  if Self.Items.Contains(item) then Exit;
+
   repeat
     if down then next := Result - 5
     else next := Result + 5;
@@ -906,7 +906,6 @@ begin
   until not InRange(Result, 1, 99);
 
   down := not down;
-
   repeat
     if down then next := Result - 5
     else next := Result + 5;

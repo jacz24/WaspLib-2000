@@ -201,7 +201,6 @@ if Bank.Open() then
 function TRSInventoryLayout.Withdraw(): Boolean;
 var
   i: Integer;
-  bankitem: TRSBankItem;
 begin
   if not Bank.IsOpen() then Exit;
 

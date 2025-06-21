@@ -180,7 +180,6 @@ function TRSMainScreen.IsUpText(strings: TStringArray; caseSensitive: Boolean = 
   var
     upText, str, tmp: String;
     i: Integer;
-    match: Single;
   begin
     if caseSensitive then
       upText := Self.UpText

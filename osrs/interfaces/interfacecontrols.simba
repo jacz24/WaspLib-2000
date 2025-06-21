@@ -331,9 +331,9 @@ begin
 end;
 
 (*
-### TRSScrollBar.GetSlider
+### TRSScrollBar.Slider
 ```pascal
-function TRSScrollBar.GetSlider(): TBox;
+property TRSScrollBar.Slider: TBox;
 ```
 Returns a `TBox` of the scrollbar slider.
 
@@ -344,7 +344,7 @@ ShowOnTarget(Bank.Scroll.GetSlider());
 ```{figure} ../../images/scrollbar_slider.png
 ```
 *)
-function TRSScrollBar.GetSlider(): TBox;
+property TRSScrollBar.Slider: TBox;
 var
   p: TPoint;
   tpa: TPointArray;
@@ -374,7 +374,7 @@ WriteLn Chat.Scroll.CanScroll();
 *)
 function TRSScrollBar.CanScroll(): Boolean;
 begin
-  Result := Self.IsVisible() and (Self.GetSlider() <> Self.Bounds);
+  Result := Self.IsVisible() and (Self.Slider <> Self.Bounds);
 end;
 
 
@@ -393,14 +393,14 @@ WriteLn Chat.Scroll.GetLevel();
 *)
 function TRSScrollBar.GetLevel(): Integer;
 begin
-  with Self.GetSlider() do
+  with Self.Slider do
     Result := Round((Y1 - Self.Bounds.Y1) * 100 / (Self.Height - Height));
 end;
 
 (*
-### TRSScrollBar.GetScrollArea
+### TRSScrollBar.ScrollArea
 ```pascal
-function TRSScrollBar.GetScrollArea(): TBox;
+property TRSScrollBar.ScrollArea: TBox;
 ```
 Returns a area where you can scroll the mouse, using {ref}`TBiometrics` between
 `TRSScrollBar.Area` and `TRSScrollBar.Bounds`.
@@ -410,7 +410,7 @@ Example:
 ShowOnTarget(Chat.Scroll.GetScrollArea());
 ```
 *)
-function TRSScrollBar.GetScrollArea(): TBox;
+property TRSScrollBar.ScrollArea: TBox;
 begin
   if Biometrics.RandomBoolean(0.9) then
     Result := Self.Area
@@ -441,7 +441,7 @@ begin
 
   old := Self.GetLevel();
   direction := old > value;
-  area := Self.GetScrollArea();
+  area := Self.ScrollArea;
 
   while direction = (old > value) do
   begin
@@ -456,6 +456,7 @@ begin
     old := Result;
   end;
 end;
+
 
 (*
 ### TRSScrollBar.Scroll
@@ -482,7 +483,7 @@ begin
     False: if Self.GetLevel() = 0   then Exit;
   end;
 
-  Mouse.Move(Self.GetScrollArea());
+  Mouse.Move(Self.ScrollArea);
 
   for i := 1 to amount do
   begin
@@ -507,7 +508,7 @@ begin
   img.DrawBox(Self.Bounds);
 
   img.DrawColor := $FFFFFF;
-  bounds := Self.GetSlider();
+  bounds := Self.Slider;
   img.DrawBox(bounds);
 
   img.DrawColor := $FF;
