@@ -126,7 +126,7 @@ function TRSBankItem.ToItem(): TRSItem;
 begin
   Result := Self.Item;
   if Self.Noted then
-    Result := 'Noted ' + Result.ToLower();
+    Result := 'noted ' + Result.ToLower();
 end;
 
 function TRSBankItem.Create(item: TRSItem; quantity: Integer = QUANTITY_ALL_BUT_ONE): TRSBankItem; static;

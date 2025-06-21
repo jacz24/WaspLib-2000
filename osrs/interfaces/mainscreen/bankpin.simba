@@ -34,7 +34,7 @@ begin
       Self.Bounds := MSInterface.CreateBounds([0, 10, 0, 0], 488, 305);
   end;
 
-  Self.Buttons := TBoxArray.Create(Self.Bounds.TopLeft.Offset(21,84), 3, 3, 63, 63, [31, 9]);
+  Self.Buttons := TBoxArray.Create(Self.Bounds.TopLeft.Offset(21,83), 3, 3, 63, 63, [31, 9]);
   Self.Buttons.Insert(Self.Buttons[2].Offset([84, 0]), 3);
 end;
 

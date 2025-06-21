@@ -216,8 +216,10 @@ begin
   end;
 
   for i := 0 to High(Self.BankItems) do
-    if not Bank.Withdraw(Self.BankItems[i], True) then
-      Exit;
+    if not Bank.Withdraw(Self.BankItems[i], False) then
+      if not Bank.Withdraw(Self.BankItems[i], False) then //2 attempts per item
+        Exit;
+
   Result := True;
 end;
 

@@ -244,6 +244,19 @@ begin
 end;
 
 
+function TRSItemInterface.CountEx(item: TRSItem): Integer;
+var
+  slots: TIntegerArray;
+begin
+  if Self.FindAll([item], slots) then
+  begin
+    Result := Length(slots);
+    if (Result = 1) then
+      Result := Max(1, Self.Slots^.ReadStack(slots[0]));
+  end;
+end;
+
+
 function TRSItemInterface.Hover(item: TRSItem): Boolean;
 var
   box: TBox;
