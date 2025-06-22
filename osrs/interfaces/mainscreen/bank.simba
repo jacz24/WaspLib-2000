@@ -488,6 +488,7 @@ function TRSBank.OpenTab(tab: Integer): Boolean;
     if tab <> 0 then
       Exit(tab = Self.GetCurrentTab());
 
+    //when search is open tab 0 is returned.
     Result := not Chat.FindQuery('Show items');
   end;
 
@@ -960,13 +961,13 @@ begin
     Mouse.Move(slot);
     if quantity <> ERSItemQuantity.CUSTOM then
     begin
-      Target.MouseClick(EMouseButton.LEFT);
+      Mouse.Click(EMouseButton.LEFT);
       Exit(True);
     end;
 
     if MainScreen.IsUpText(modeStr + amountStr) then
     begin
-      Target.MouseClick(EMouseButton.LEFT);
+      Mouse.Click(EMouseButton.LEFT);
       Exit(True);
     end;
 
@@ -975,6 +976,21 @@ begin
   end;
 
   Mouse.Move(slot);
+
+  if (quantity <> ERSItemQuantity.CUSTOM) then
+  begin
+    if Self.QuantityButtons[quantity].Enabled() then
+    begin
+      Mouse.Click(EMouseButton.LEFT);
+      Exit(True);
+    end;
+  end
+  else
+  if MainScreen.IsUpText(modeStr + amountStr) then
+  begin
+    Mouse.Click(EMouseButton.LEFT);
+    Exit(True);
+  end;
 
   if (quantity = ERSItemQuantity.ALL) then
     Exit(ChooseOption.Select(modeStr + 'All'));
