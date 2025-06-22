@@ -144,13 +144,15 @@ begin
   Result := not RSColors.HasItem(b, False) and RSColors.HasItem(b, True);
 end;
 
-function TRSSlotInterface.WaitFade(slot: Integer; time: Integer = 200): Boolean;
-var
-  b: TBox;
+function TRSSlotInterface.WaitFade(slot: TBox; time: Integer = 200): Boolean;
 begin
-  b := Self.Box(slot);
-  if not Self.IsFaded(b) then Exit;
-  Result := SleepUntil(RSColors.HasItem(b, False), 100, time);
+  if not Self.IsFaded(slot) then Exit;
+  Result := SleepUntil(RSColors.HasItem(slot, False), 100, time);
+end;
+
+function TRSSlotInterface.WaitFade(slot: Integer; time: Integer = 200): Boolean; overload;
+begin
+  Result := Self.WaitFade(Self.Box(slot), time);
 end;
 
 

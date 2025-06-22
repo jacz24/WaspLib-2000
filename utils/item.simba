@@ -92,9 +92,9 @@ end;
 
 
 (*
-## GetItemAmountBox
+## Item.GetStackBox
 ```pascal
-function TRSItem.GetItemAmountBox(constref area: TBox): TBox; static;
+function TRSItem.GetStackBox(slot: TBox): TBox; static;
 ```
 Returns the correct text box of an item's amount text based on the item box.
 *)
@@ -104,9 +104,9 @@ begin
 end;
 
 (*
-## SRL.GetItemAmount
+## Item.ReadStack
 ```pascal
-function TSRL.GetItemAmount(area: TBox): Int32;
+function TRSItem.ReadStack(slot: TBox): Integer; static;
 ```
 For use with items in like bankscreen, inventory, shops and so on to
 get the number of stacked items there are.
@@ -119,6 +119,8 @@ begin
   for i := 0 to RSColors.STACK_COLORS.High do
     if Target.HasColor(RSColors.STACK_COLORS[i], 1, 1, slot) then
       Exit(OCR.RecognizeNumber(slot, RSFonts.PLAIN_11, [RSColors.STACK_COLORS[i]], 1) * Round(10 ** (3 * i)));
+  if RSColors.HasItem(slot, False) then
+    Exit(0);
   Result := -1;
 end;
 

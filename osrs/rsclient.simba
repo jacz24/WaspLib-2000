@@ -219,7 +219,6 @@ WriteLn RSClient.GetMode();
 function TRSClient.GetMode(): ERSMode;
 var
   bounds: TBox;
-  img: TImage;
 begin
   if Self.Client = ERSClient.UNKNOWN then
     Exit;

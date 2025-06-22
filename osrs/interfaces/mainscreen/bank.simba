@@ -503,6 +503,7 @@ begin
 
   Mouse.Click(Self.Tabs[tab], EMouseButton.LEFT);
   Result := SleepUntil(_TabChanged(tab), RandomMode(100, 50, 1500), 600);
+  Sleep(200, 300);
 end;
 
 
@@ -621,8 +622,10 @@ WriteLn Bank.OpenSearch();
 function TRSBank.OpenSearch(waitTime: Integer = 0): Boolean;
 begin
   Self.DynamicButtons[ERSBankDynamicButtons.SEARCH].Click();
-  if waitTime <= 0 then Result := Self.IsSearchOpen()
-  else Result := Self.WaitSearchOpen(waitTime);
+  if waitTime <= 0 then
+    Exit(Self.IsSearchOpen());
+  Result := Self.WaitSearchOpen(waitTime);
+  Sleep(200, 300);
 end;
 
 (*
@@ -933,7 +936,7 @@ end;
 ```pascal
 function TRSBank._InteractionHelper(mode: ERSBankInteraction; slot: TBox; amount: Integer; useQuantityButton: Boolean): Boolean;
 ```
-Internal helper method to handle both withdrawing and depositing.
+Internal helper method to handle both withdrawing and depositing of items.
 
 Example:
 ```pascal
@@ -1085,12 +1088,16 @@ begin
 
   for attempt := 0 to 2 do
   begin
-    count := Self.Items.CountEx(tmp);
+    count := Self.Slots.ReadStack(data.Slot);
 
+    if not Self.SetWithdrawMode(item.Noted) then Continue;
     if not Self._InteractionHelper(ERSBankInteraction.WITHDRAW, data.Slot, item.Quantity, useQuantityButton) then
       Continue;
 
-    if SleepUntil(Self.Items.CountEx(tmp) > count, 200, 1200) then
+    Self.Slots.WaitFade(data.Slot);
+    Sleep(200);
+
+    if SleepUntil(Self.Slots.ReadStack(data.Slot) < count, 200, 4200) then
       Exit(True);
   end;
 end;

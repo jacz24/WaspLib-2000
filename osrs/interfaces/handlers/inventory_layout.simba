@@ -184,6 +184,17 @@ begin
   Result := True;
 end;
 
+function BankItemsPrioritySort(constref l, r: TRSBankItem): Int32;
+var
+  a, b: Boolean;
+begin
+  a := Bank.Items.Contains(l.Item);
+  b := Bank.Items.Contains(r.Item);
+  if a = b then Exit(0);
+  if a then Exit(-1);
+  Result := 1;
+end;
+
 (*
 ## InventoryLayout.Withdraw
 ```pascal
@@ -200,7 +211,9 @@ if Bank.Open() then
 *)
 function TRSInventoryLayout.Withdraw(): Boolean;
 var
-  i: Integer;
+  i, hi: Integer;
+  arr: TRSBankItemArray;
+  oldTab, newTab: Integer;
 begin
   if not Bank.IsOpen() then Exit;
 
@@ -215,10 +228,20 @@ begin
       Bank.DynamicButtons[ERSBankDynamicButtons.DEPOSIT_INVENTORY].Click();
   end;
 
-  for i := 0 to High(Self.BankItems) do
-    if not Bank.Withdraw(Self.BankItems[i], False) then
-      if not Bank.Withdraw(Self.BankItems[i], False) then //2 attempts per item
-        Exit;
+  oldTab := Bank.GetCurrentTab();
+  arr := Self.BankItems.Copy();
+
+  while Length(arr) > 0 do
+  begin
+    newTab := Bank.GetCurrentTab();
+    if oldTab <> newTab then
+      arr.Sort(@BankItemsPrioritySort);
+
+    //2 attempts per item
+    if not Bank.Withdraw(arr[0], False) and not Bank.Withdraw(arr[0], False) then
+      Exit;
+    Delete(arr, 0, 1);
+  end;
 
   Result := True;
 end;
