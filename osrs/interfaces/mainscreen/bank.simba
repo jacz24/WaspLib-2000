@@ -1068,7 +1068,7 @@ Example:
 WriteLn Bank.Withdraw(item);
 ```
 *)
-function TRSBank.Withdraw(item: TRSBankItem; useQuantityButton: Boolean = True; useCache: Boolean = True): Boolean;
+function TRSBank.Withdraw(item: TRSBankItem; useQuantityButton, useCache: Boolean = True; waitConfirmation: Boolean = False): Boolean;
 var
   data: TBankPosition;
   tmp: TRSItem;
@@ -1091,14 +1091,17 @@ begin
     count := Self.Slots.ReadStack(data.Slot);
 
     if not Self.SetWithdrawMode(item.Noted) then Continue;
-    if not Self._InteractionHelper(ERSBankInteraction.WITHDRAW, data.Slot, item.Quantity, useQuantityButton) then
-      Continue;
+    if Self._InteractionHelper(ERSBankInteraction.WITHDRAW, data.Slot, item.Quantity, useQuantityButton) then
+    begin
+      if not waitConfirmation then
+        Exit(True);
 
-    Self.Slots.WaitFade(data.Slot);
-    Sleep(200);
+      Self.Slots.WaitFade(data.Slot);
+      Sleep(200);
 
-    if SleepUntil(Self.Slots.ReadStack(data.Slot) < count, 200, 4200) then
-      Exit(True);
+      if SleepUntil(Self.Slots.ReadStack(data.Slot) < count, 200, 4200) then
+        Exit(True);
+    end;
   end;
 end;
 
