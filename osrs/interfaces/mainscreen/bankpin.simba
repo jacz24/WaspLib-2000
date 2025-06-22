@@ -30,7 +30,7 @@ procedure TRSBankPin.SetupInterface();
 begin
   case RSClient.Mode of
     ERSMode.FIXED: Self.Bounds := MSInterface.CreateBounds([0, 11, 0, 0], 488, 305);
-    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
+    ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
       Self.Bounds := MSInterface.CreateBounds([0, 10, 0, 0], 488, 305);
   end;
 

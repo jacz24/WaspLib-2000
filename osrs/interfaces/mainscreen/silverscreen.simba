@@ -98,7 +98,7 @@ begin
   case RSClient.Mode of
     ERSMode.FIXED:
       Self.Bounds := MSInterface.CreateBounds([0,1,0,-1], 505, 323);
-    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
+    ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
       Self.Bounds := MSInterface.CreateBounds([0,1,0,-3], 505, 323);
   end;
 

@@ -104,7 +104,7 @@ This is automatically called for you on the {ref}`XPBar variable`.
 procedure TRSXPBar.SetupInterface();
 begin
   case RSClient.Mode of
-    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
+    ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
       Self.Button := [Minimap.Bounds.X1 - 40, Minimap.Bounds.Y1 + 32,  11];
 
     ERSMode.FIXED:
@@ -125,18 +125,10 @@ begin
 
   with Self.AvailableBounds[ERSXPBarPosition.CENTER-1] do
   begin
-    X1 := MSInterface.Bounds.X1;
-    X2 := MSInterface.Bounds.X2;
+    X1 := MSInterface.Bounds.X1 + (MSInterface.Width) div 2 - 69;
     Y1 := MainScreen.Bounds.Y1 + 25;
-    Y2 := Y1 + 27;
-
-    case RSClient.Mode of
-      ERSMode.FIXED: X1 := X1 + (X2 - X1) div 2 - 69;
-      ERSMode.RESIZABLE_CLASSIC: X1 := X1 + (X2 - X1) div 2 - 69;
-      ERSMode.RESIZABLE_MODERN: X1 := X1 + (X2 - X1) div 2 - 69;
-    end;
-
     X2 := X1 + 139;
+    Y2 := Y1 + 27;
   end;
 
   with Self.AvailableBounds[ERSXPBarPosition.RIGHT-1] do

@@ -179,7 +179,7 @@ begin
   case mode of
     ERSMode.FIXED: Self.ViewEye := [0, EYE_Y_FIXED[zoom], EYE_Z_FIXED[zoom]];
 
-    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
+    ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
       Self.ViewEye := [0, EYE_Y_RESIZABLE[zoom], EYE_Z_RESIZABLE[zoom]];
   end;
 
@@ -196,7 +196,7 @@ begin
       Self.ScaleMax := 6.32 * MainScreen.Bounds.Height / 503; // fixed client height
     end;
 
-    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
+    ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
     begin
       Self.ScaleMin := 0.635 * MainScreen.Bounds.Height / 503; // fixed client height
       Self.ScaleMax := 4.90 * MainScreen.Bounds.Height / 503; // fixed client height

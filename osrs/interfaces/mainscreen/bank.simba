@@ -174,7 +174,7 @@ var
 begin
   case RSClient.Mode of
     ERSMode.FIXED: Self.Bounds := MSInterface.CreateBounds([0, 2, 0, -1], 488, 800);
-    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
+    ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
       Self.Bounds := MSInterface.CreateBounds([0, 2, 0, -2], 488, 800);
   end;
 
@@ -940,7 +940,6 @@ if Bank.Items.Find('Abyssal whip', slot) the
   Bank._InteractionHelper(ERSBankInteraction.WITHDRAW, slot, 1, True);
 ```
 *)
-{%codetools off}
 function TRSBank._InteractionHelper(mode: ERSBankInteraction; slot: TBox; amount: Integer; useQuantityButton: Boolean): Boolean;
 var
   quantity: ERSItemQuantity;
@@ -948,8 +947,11 @@ var
 begin
   amountStr := ToString(amount);
   quantity := ERSItemQuantity.Integer2Quantity(amount);
-  if mode = ERSBankInteraction.DEPOSIT then modeStr := 'Deposit-'
-  else modeStr := 'Withdraw-';
+
+  if mode = ERSBankInteraction.DEPOSIT then
+    modeStr := 'Deposit-'
+  else
+    modeStr := 'Withdraw-';
 
   if useQuantityButton then
   begin
@@ -980,7 +982,6 @@ begin
   Result := ChooseOption.Select(modeStr + amountStr + ' ', True, False) or
             (ChooseOption.Select(modeStr + 'X') and Chat.AnswerQuery('Enter amount', amountStr, RandomLeft(1400, 2400)));
 end;
-{%codetools on}
 
 (*
 ## Bank.Find

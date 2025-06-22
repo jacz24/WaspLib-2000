@@ -22,13 +22,13 @@ begin
       Self.Bounds.Y2 := MainScreen.Bounds.Y2;
     end;
 
-    ERSMode.RESIZABLE_CLASSIC:
+    ERSMode.RESIZABLE:
     begin
       Self.Bounds.X2 := GameTabs.Bounds.X1 - 10;
       Self.Bounds.Y2 := Chat.Bounds.Y1;
     end;
 
-    ERSMode.RESIZABLE_MODERN:
+    ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
     begin
       Self.Bounds.X2 := GameTab.Bounds.X1 - 22;
       Self.Bounds.Y2 := Chat.Bounds.Y1;

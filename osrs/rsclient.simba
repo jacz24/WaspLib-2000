@@ -25,7 +25,7 @@ ERSMode = enum(UNKNOWN, FIXED, RESIZABLE_CLASSIC, RESIZABLE_MODERN);
 ```
 Enum that represent the client mode.
 *)
-  ERSMode = enum(UNKNOWN, FIXED, RESIZABLE_CLASSIC, RESIZABLE_MODERN);
+  ERSMode = enum(UNKNOWN, FIXED, RESIZABLE, MODERN_COMPACT, MODERN_WIDE);
 
 (*
 ## ERSPopoutPanel
@@ -74,10 +74,26 @@ begin
   end;
 end;
 
-{%codetools off}
+
+(*
+## RSClient._Bounds
+```pascal
+function TRSClient._Bounds(img: TImage): TBox;
+function TRSClient._Bounds(): TBox; overload;
+```
+Internal helper methods to figure out the client bounds when we are on the
+`ERSClient.OFFICIAL` client.
+
+You should never have to use this directly.
+
+Example:
+```pascal
+ShowOnTarget(RSClient._Bounds());
+```
+*)
 function TRSClient._Bounds(img: TImage): TBox;
 var
-  x1, x2: Integer;
+  x1, x2, y2: Integer;
 begin
   if img.Pixel[0, img.Height-1] <> $0 then
     Exit(Target.Bounds);
@@ -90,7 +106,19 @@ begin
     if img.Pixel[x2, 150] <> $0 then
       Break;
 
-  Result := [x1, 0, x2, Min(503, img.Height-1)];
+  if img.Height-1 < 503 then
+  begin
+    with GetSimbaTargetWindow().GetBounds() do
+      GetSimbaTargetWindow().SetBounds([X1, Y1, X2, Y1+503]);
+    Result := [x1, 0, x2, 503];
+  end
+  else
+  begin
+    for y2 := img.Height-1 downto 0 do
+      if img.Pixel[x1, y2] <> $0 then
+        Break;
+    Result := [x1, 0, x2, y2];
+  end;
 end;
 
 function TRSClient._Bounds(): TBox; overload;
@@ -98,23 +126,39 @@ begin
   Result := Self._Bounds(Target.GetImage());
 end;
 
-function TRSClient.GetPopoutPanelState(clientImg: TImage): ERSPopoutPanel;
+(*
+## RSClient.GetPopoutPanelState
+```pascal
+function TRSClient.GetPopoutPanelState(img: TImage): ERSPopoutPanel;
+function TRSClient.GetPopoutPanelState(): ERSPopoutPanel; overload;
+```
+Internal helper methods to figure out if the "Popout" panel is open or not
+when we are on the `ERSClient.OFFICIAL` client.
+
+You should never have to use this directly.
+
+Example:
+```pascal
+WriteLn RSClient.GetPopoutPanelState();
+```
+*)
+function TRSClient.GetPopoutPanelState(img: TImage): ERSPopoutPanel;
 var
-  img: TImage;
   x: Integer;
 begin
-  img := clientImg.Copy([clientImg.Width - 331, clientImg.Height-2, clientImg.Width-1, clientImg.Height-1]);
+  img.Crop([img.Width - 331, img.Height-2, img.Width-1, img.Height-1]);
+
+  //find tab border color.
   for x := img.Width-1 downto 0 do
     if img.Pixel[x, 0] = $010000 then
       Break;
 
   case x of
-    0, 3, 16: Result := ERSPopoutPanel.OPEN;
-    270, 273, 286: Result := ERSPopoutPanel.CLOSED;
+    0..3, 15..17: Result := ERSPopoutPanel.OPEN;
+    270..273, 285..287: Result := ERSPopoutPanel.CLOSED;
     else Result := ERSPopoutPanel.DISABLED;
   end;
 end;
-{%codetools on}
 
 function TRSClient.GetPopoutPanelState(): ERSPopoutPanel; overload;
 var
@@ -155,8 +199,8 @@ begin
 
   case Self.GetPopoutPanelState(img) of
     ERSPopoutPanel.DISABLED: Result := b;
-    ERSPopoutPanel.CLOSED: Result := [b.X1, b.Y1, b.X2 - 42, b.Y2];
-    ERSPopoutPanel.OPEN: Result := [b.X1, b.Y1, b.X2 - 312, b.Y2];
+    ERSPopoutPanel.CLOSED:   Result := [b.X1, b.Y1, b.X2 - 42, b.Y2];
+    ERSPopoutPanel.OPEN:     Result := [b.X1, b.Y1, b.X2 - 312, b.Y2];
   end;
 end;
 
@@ -175,6 +219,7 @@ WriteLn RSClient.GetMode();
 function TRSClient.GetMode(): ERSMode;
 var
   bounds: TBox;
+  img: TImage;
 begin
   if Self.Client = ERSClient.UNKNOWN then
     Exit;
@@ -183,10 +228,16 @@ begin
 
   // Music tab in each mode there are different colors at W-4, H-21
   // Two colors each because tab can be active(red) or not(grey)
-  case Target.GetColor([bounds.Width-4, bounds.Height-21]) of
-    2435372, 658467: Result := ERSMode.FIXED;
-    3555653, 922425: Result := ERSMode.RESIZABLE_MODERN;
-    2896180, 790059: Result := ERSMode.RESIZABLE_CLASSIC;
+  case Target.GetColor(bounds.BottomRight.Offset(-3,-20)) of
+    $25292C, $0A0C23: Result := ERSMode.FIXED;
+    $2C3134, $0C0E2B: Result := ERSMode.RESIZABLE;
+    $364145, $0E1339:
+    begin
+      if bounds.Width >= 948 then
+        Result := ERSMode.MODERN_WIDE
+      else
+        Result := ERSMode.MODERN_COMPACT;
+    end;
   end;
 end;
 

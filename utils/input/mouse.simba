@@ -155,7 +155,7 @@ begin
   Target.Options.MouseGravity := 9;
   Target.Options.MouseWind := 5;
 
-  Self.Distribution := EMouseDistribution.ROWP;
+  Self.Distribution := EMouseDistribution.GAUSS;
   Self.CanIdle := True;
 
   {$IFDEF WaspLib_DEBUG_MOUSE}

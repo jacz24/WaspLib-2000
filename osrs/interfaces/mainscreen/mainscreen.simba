@@ -43,7 +43,7 @@ begin
     ERSMode.FIXED:
       with RSClient.Bounds do
         Self.Bounds := TBox.Create(X1+4,4,X1+515,337);
-    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
+    ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
       Self.Bounds := RSClient.Bounds;
   end;
 

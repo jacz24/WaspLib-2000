@@ -79,7 +79,7 @@ var
   i: Integer;
 begin
   case RSClient.Mode of
-    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
+    ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
       with RSClient.Bounds do
       begin
         Self.Bounds.X1 := X2 - 157;
@@ -102,7 +102,7 @@ begin
 
   with Self.Bounds do
     case RSClient.Mode of
-      ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN:
+      ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
       begin
         Self.Compass.Circle := [X1 - 2,  Y1 + 14,  17];
         Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle := [X1 - 13, Y1 + 56,  12];
@@ -771,7 +771,7 @@ begin
 
   case RSClient.Mode of
     ERSMode.FIXED: img.DrawImage(Self.Masks.FIXED, [0,0]);
-    ERSMode.RESIZABLE_CLASSIC, ERSMode.RESIZABLE_MODERN: img.DrawImage(Self.Masks.RESIZABLE, [0,0]);
+    ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE: img.DrawImage(Self.Masks.RESIZABLE, [0,0]);
   end;
 
   tpa := img.FindColor($0, 0) + img.FindColor($010000, 0);

@@ -71,56 +71,49 @@ begin
       Self.Bounds.X1 := bounds.X2 - 242;
       Self.Bounds.X2 := bounds.X2 - 2;
       Self.Bounds.Y1 := bounds.Y2 - 334;
+      Self.Tabs := TBoxArray.Create(Self.Bounds.TopLeft.Offset(6,1), 7, 2, 30, 33, [3, 265]);
     end;
 
-    ERSMode.RESIZABLE_CLASSIC:
+    ERSMode.RESIZABLE:
     begin
       Self.Bounds.X1 := bounds.X2 - 240;
       Self.Bounds.X2 := bounds.X2;
       Self.Bounds.Y1 := bounds.Y2 - 334;
+      Self.Tabs := TBoxArray.Create(Self.Bounds.TopLeft.Offset(6,1), 7, 2, 30, 33, [3, 265]);
     end;
 
-    ERSMode.RESIZABLE_MODERN:
+    ERSMode.MODERN_COMPACT:
     begin
       Self.Bounds.X2 := bounds.X2;
+      Self.Bounds.X1 := bounds.X2 - 230;
+      Self.Bounds.Y1 := bounds.Y2 - 71;
 
-      //Needed because depending on the client width the tabs stack into row(s)
-      if bounds.Width >= 948 then
-      begin
-        Self.Bounds.X1 := bounds.X2 - 428;
-        Self.Bounds.Y1 := bounds.Y2 - 35;
-      end
-      else
-      begin
-        Self.Bounds.X1 := bounds.X2 - 230;
-        Self.Bounds.Y1 := bounds.Y2 - 71;
-      end;
+      Self.Tabs := TBoxArray.Create(Self.Bounds.BottomLeft.Offset(0,-70), 7, 2, 30, 33, [3, 3]);
+      //Logout button is moved to top right corner
+      Self.Tabs[7] := Self.Tabs[10];
+      Self.Tabs[10].X1 := bounds.X2 - 19;
+      Self.Tabs[10].Y1 := bounds.Y1 + 9;
+      Self.Tabs[10].X2 := bounds.X2 - 10;
+      Self.Tabs[10].Y2 := bounds.Y1 + 18;
     end;
-  end;
 
-  case RSClient.Mode of
-    ERSMode.FIXED, ERSMode.RESIZABLE_CLASSIC:
-      Self.Tabs := TBoxArray.Create(Self.Bounds.TopLeft.Offset(6,1), 7, 2, 30, 33, [3, 265]);
+    ERSMode.MODERN_WIDE:
+    begin
+      Self.Bounds.X2 := bounds.X2;
+      Self.Bounds.X1 := bounds.X2 - 428;
+      Self.Bounds.Y1 := bounds.Y2 - 35;
 
-    ERSMode.RESIZABLE_MODERN:
-      begin
-        // One row
-        if bounds.Width >= 948 then
-        begin
-          Self.Tabs := TBoxArray.Create(Self.Bounds.BottomLeft.Offset(0,-35), 14, 1, 30, 33, [3, 0]);
-          for tab := ERSGameTab.MUSIC downto ERSGameTab.FRIENDS do
-            Self.Tabs[tab] := Self.Tabs[tab-1];
-        end
-        else // Two rows
-          Self.Tabs := TBoxArray.Create(Self.Bounds.BottomLeft.Offset(0,-70), 7, 2, 30, 33, [3, 3]);
+      Self.Tabs := TBoxArray.Create(Self.Bounds.BottomLeft.Offset(0,-35), 14, 1, 30, 33, [3, 0]);
+      for tab := ERSGameTab.MUSIC downto ERSGameTab.FRIENDS do
+        Self.Tabs[tab] := Self.Tabs[tab-1];
 
-        // Logout button is moved to top right corner
-        Self.Tabs[7] := Self.Tabs[10];
-        Self.Tabs[10].X1 := bounds.X2 - 19;
-        Self.Tabs[10].Y1 := bounds.Y1 + 9;
-        Self.Tabs[10].X2 := bounds.X2 - 10;
-        Self.Tabs[10].Y2 := bounds.Y1 + 18;
-      end;
+      //Logout button is moved to top right corner
+      Self.Tabs[7] := Self.Tabs[10];
+      Self.Tabs[10].X1 := bounds.X2 - 19;
+      Self.Tabs[10].Y1 := bounds.Y1 + 9;
+      Self.Tabs[10].X2 := bounds.X2 - 10;
+      Self.Tabs[10].Y2 := bounds.Y1 + 18;
+    end;
   end;
 end;
 
@@ -142,7 +135,7 @@ function TRSGameTabs.GetCurrent(): ERSGametab;
 var
   tab: ERSGameTab;
 begin
-  if (RSClient.Mode = ERSMode.RESIZABLE_MODERN) and (Target.CountColor(8639715, 0, Self.Tabs[ERSGameTab.LOGOUT-1]) > 0) then
+  if (RSClient.Mode = ERSMode.RESIZABLE) and (Target.CountColor(8639715, 0, Self.Tabs[ERSGameTab.LOGOUT-1]) > 0) then
     Exit(ERSGameTab.LOGOUT);
 
   for tab := ERSGameTab.COMBAT to ERSGameTab.MUSIC do
@@ -325,7 +318,7 @@ begin
         Self.Bounds.Y2 := Y2 - 37;
       end;
 
-    ERSMode.RESIZABLE_CLASSIC:
+    ERSMode.RESIZABLE:
       with RSClient.Bounds do
       begin
         Self.Bounds.X1 := X2 - 212;
@@ -334,7 +327,7 @@ begin
         Self.Bounds.Y2 := Y2 - 37;
       end;
 
-    ERSMode.RESIZABLE_MODERN:
+    ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
       with RSClient.Bounds do
       begin
         Self.Bounds.X1 := X2 - 193;
