@@ -121,8 +121,8 @@ begin
     raise GetDebugLn('RSFonts', 'Failed to unzip fonts: '  + result.Exception);
   end;
 
-  Self.Unzipping := False;
   Self.Load();
+  Self.Unzipping := False;
 end;
 
 procedure TRSFonts.Setup();

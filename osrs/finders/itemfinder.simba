@@ -7,13 +7,15 @@ Methods to find and compare item images
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
+  TItemFinderFilter = record
+    Name: String;
+    Filter: TImageCompareFilter;
+  end;
+
   TRSItemFinder = record
     ItemImages: TStringMap<TImage>;
     MaskImages: TStringMap<TImage>;
-    Filters: array of record
-      Name: String;
-      Filter: TImageCompareFilter;
-    end;
+    Filters: array of TItemFinderFilter;
     Version: String;
     Similarity: Single;
     ImageCompare: TImageCompareUtils;
@@ -72,6 +74,22 @@ begin
   template.DrawTPA(tpa);
 end;
 
+procedure TRSItemFinder.AddItemFilter(item: String; filter: TImageCompareFilter);
+var
+  i: Integer;
+  tmp: TItemFinderFilter;
+begin
+  tmp := [item, @filter];
+  for i := 0 to High(Self.Filters) do
+    if Self.Filters[i].Name > item then
+    begin
+      Self.Filters.Insert(tmp, i);
+      Exit;
+    end;
+
+  Self.Filters += tmp;
+end;
+
 procedure TRSItemFinder.Setup();
 var
   path, tmp: String;
@@ -107,7 +125,7 @@ end;
 
 function TRSItemFinder.GetIDs(item: String): TStringArray;
 begin
-  Result := Self.Database.GetAll(item.ToLower(), 'item', 'id');
+  Result := Self.Database.GetAll(item, 'item', 'id');
 end;
 
 function TRSItemFinder.GetHashItems(hash: String): TRSItemArray;
@@ -122,11 +140,27 @@ end;
 
 function TRSItemFinder.GetFilter(item: String): TImageCompareFilter;
 var
-  i: Integer;
+  lo, hi, mid, cmp: Integer;
 begin
-  for i := 0 to High(Self.Filters) do
-    if Self.Filters[i].Name = item then
-      Exit(@Self.Filters[i].Filter);
+  lo := 0;
+  hi := High(Self.Filters);
+
+  //binary search filter
+  while lo <= hi do
+  begin
+    mid := (lo + hi) div 2;
+    cmp := CompareStr(Self.Filters[mid].Name, item);
+
+    if cmp = 0 then
+      Exit(@Self.Filters[mid].Filter);
+
+    if cmp < 0 then
+      lo := mid + 1
+    else
+      hi := mid - 1;
+  end;
+
+  Result := nil;
 end;
 
 function TRSItemFinder.GetImage(id: String): TImage;
@@ -189,6 +223,8 @@ var
 begin
   SetLength(skip, Length(boxes));
 
+  Target.FreezeImage();
+
   for item in items do
   begin
     item := LowerCase(item);
@@ -208,11 +244,13 @@ begin
         if Self.ImageCompare.Compare(img, boxes[i], match) then
         begin
           Result += [i, boxes[i], match];
-          if (maxToFind > 0) and (Length(Result) >= maxToFind) then Exit;
+          if (maxToFind > 0) and (Length(Result) >= maxToFind) then Break(3);
           skip[i] := True;
         end;
       end;
   end;
+
+  Target.UnFreezeImage();
 end;
 
 function TRSItemFinder.FindAll(items: TRSItemArray; boxes: TBoxArray; out matches: TImageMatchArray): Boolean; overload;
@@ -225,6 +263,8 @@ var
   skip: TBooleanArray;
 begin
   SetLength(skip, Length(boxes));
+
+  Target.FreezeImage();
 
   for item in items do
   begin
@@ -249,11 +289,17 @@ begin
         end;
       end;
 
-    if results = [] then Exit;
+    if results = [] then
+    begin
+      Target.UnFreezeImage();
+      Exit;
+    end;
 
     matches += results;
     results := [];
   end;
+
+  Target.UnFreezeImage();
 
   Result := True;
 end;
@@ -267,6 +313,8 @@ var
   skip: TBooleanArray;
 begin
   SetLength(skip, Length(boxes));
+  Target.FreezeImage();
+
   for item in items do
   begin
     item := LowerCase(item);
@@ -287,11 +335,14 @@ begin
         if Self.ImageCompare.Compare(img, boxes[i], similarity) then
         begin
           match := [i, boxes[i], similarity];
+          Target.UnFreezeImage();
           Exit(True);
         end;
       end;
     end;
   end;
+
+  Target.UnFreezeImage();
 end;
 
 
@@ -343,7 +394,6 @@ begin
 
   Result := HashData(EHashAlgo.CRC32, img.Data, 4608).CopyRange(0, 6);
 end;
-
 
 var
   ItemFinder: TRSItemFinder;

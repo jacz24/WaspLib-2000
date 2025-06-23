@@ -163,10 +163,6 @@ begin
 
   CollectionBox.Setup();
 
-  RSClient.IsLoggedIn();
-  if RSClient.Mode = ERSMode.UNKNOWN then
-    RSClient.Mode := ERSMode.FIXED;
-  SetupInterfaces();
 
   while RSFonts.Unzipping do
   begin
@@ -177,6 +173,11 @@ begin
       raise GetDebugLn('RSFonts', 'Timed out unzipping fonts.');
     end;
   end;
+
+  RSClient.IsLoggedIn();
+  if RSClient.Mode = ERSMode.UNKNOWN then
+    RSClient.Mode := ERSMode.FIXED;
+  SetupInterfaces();
 end;
 
 {$IFNDEF WL_TEST}

@@ -183,6 +183,7 @@ begin
   end;
   {$ENDIF}
   WriteLn(GetDebugLn('RSClient', 'IsInputEnabled method is not implemented without a fake input tool.', ELogLevel.WARN));
+  Result := False;
 end;
 
 

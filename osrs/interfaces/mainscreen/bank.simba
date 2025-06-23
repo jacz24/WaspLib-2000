@@ -154,7 +154,7 @@ begin
     b := tpa.Bounds();
     if b.Height <= 5 then Continue;
 
-    Result += TBoxArray.Create([Self.SlotsArea.X1, b.Y1], 8, 1, 31, Min(Self.SlotsArea.Y2-b.Y1, 30), [17, 1]);
+    Result += TBoxArray.Create([Self.SlotsArea.X1, b.Y1], 8, 1, 31, Min(Self.SlotsArea.Y2-b.Y1, 31), [17, 1]);
   end;
 end;
 
