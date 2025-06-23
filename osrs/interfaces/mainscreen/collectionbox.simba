@@ -97,7 +97,7 @@ begin
   end;
 
   Self.Slots.Setup('CollectionBox.Slots', Self.ItemSlotBoxes);
-  Self.Items.Setup('CollectionBox.Items', @Self.Slots, [0, 10, 3, 0]);
+  Self.Items.Setup('CollectionBox.Items', @Self.Slots, [0, 10]);
 end;
 
 

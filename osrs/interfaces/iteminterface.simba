@@ -10,11 +10,11 @@ type
   TRSItemInterface = record
     Name: String;
     Slots: ^TRSSlotInterface;
-    DiscoverOffset: TBox;
+    DiscoverOffset: TPoint;
     CheckFunction: function (): Boolean of object;
   end;
 
-procedure TRSItemInterface.Setup(name: String; slots: ^TRSSlotInterface; discoverOffset: TBox; checkFunc: function (): Boolean of object = nil);
+procedure TRSItemInterface.Setup(name: String; slots: ^TRSSlotInterface; discoverOffset: TPoint; checkFunc: function (): Boolean of object = nil);
 begin
   Self.Name := name;
   Self.Slots := slots;
@@ -151,10 +151,10 @@ var
   hash: String;
 begin
   b := Self.Slots^.Box(slot);
-  b.X1 += Self.DiscoverOffset.X1;
-  b.Y1 += Self.DiscoverOffset.Y1;
-  b.X2 += Self.DiscoverOffset.X2;
-  b.Y2 += Self.DiscoverOffset.Y2;
+  b.X1 += Self.DiscoverOffset.X;
+  b.Y1 += Self.DiscoverOffset.Y;
+  b.X2 := b.X1 + 35;
+  b.Y2 := b.Y1 + 31;
 
   if (b.Width <> 36) or (b.Height <> 32) then
     raise GetDebugLn(Self.Name, 'Discover box has to be 36x32. You passed w: ' + ToStr(b.Width) + ' h: ' + ToStr(b.Height));

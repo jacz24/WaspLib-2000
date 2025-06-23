@@ -63,7 +63,7 @@ begin
     Self.SlotBoxes[i] := Self.SlotBoxes[i].Offset([-15, 0]);
 
   Self.Slots.Setup('Bank.Slots', Self.SlotBoxes, @Self.GetSlots);
-  Self.Items.Setup('Bank.Items', @Self.Slots, [0, 10, 3, 0]);
+  Self.Items.Setup('Bank.Items', @Self.Slots, [0, 10]);
 end;
 
 

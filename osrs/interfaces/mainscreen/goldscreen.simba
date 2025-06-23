@@ -137,7 +137,7 @@ begin
 
   {─ slot & item helpers ─}
   Self.Slots.Setup('GoldScreen.Slots', Self.ItemBoxes);
-  Self.Items.Setup('GoldScreen.Items', @Self.Slots, [0,10,3,0]);
+  Self.Items.Setup('GoldScreen.Items', @Self.Slots, [0,10]);
   Self.Title.Setup(Self.Bounds);
   {─ quantity buttons ─}
   btns := Self.GetButtons();

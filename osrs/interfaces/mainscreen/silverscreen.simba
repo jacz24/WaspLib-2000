@@ -132,7 +132,7 @@ begin
   Self.SlotBoxes := leftSlots + rightSlots;
 
   Self.Slots.Setup('SilverScreen.Slots', Self.SlotBoxes);
-  Self.Items.Setup('SilverScreen.Items', @Self.Slots, [0,10,3,0]);
+  Self.Items.Setup('SilverScreen.Items', @Self.Slots, [0,10]);
 
   btns := Self.GetButtons();
   if Length(btns) = Length(ERSItemQuantity) then

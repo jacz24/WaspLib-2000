@@ -84,7 +84,7 @@ begin
   Self.SlotBoxes := Self.GetSlots(GameTab.TopLeft);
 
   Self.Slots.Setup('Equipment.Slots', Self.SlotBoxes);
-  Self.Items.Setup('Equipment.Items', @Self.Slots, [2, 2, 2, -2], @Self.Open);
+  Self.Items.Setup('Equipment.Items', @Self.Slots, [2, 2], @Self.Open);
 
   btns := TBoxArray.Create(GameTab.BottomLeft.Offset(4, -52), 4, 1, 39, 39, [6,0]);
 
