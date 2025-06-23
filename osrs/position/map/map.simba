@@ -496,7 +496,8 @@ var
   arr, tpa: TPointArray;
   pt, loc, currLoc: TPoint;
   x,y: Integer;
-  vector, corner0, corner1, corner2, corner3: TVector3;
+  vector: TVector3;
+  corners: TVector3Array;
   angle, h: Single;
   img: TImage;
 begin
@@ -528,12 +529,14 @@ begin
 
       currLoc := loc + Point(x,y) - Minimap.Center;
 
-      corner0 := [vector.X-2, vector.Y-2, Self.Height(currLoc - [1,3], False) - h];
-      corner1 := [vector.X+2, vector.Y-2, Self.Height(currLoc + [3,-3], False) - h];
-      corner2 := [vector.X+2, vector.Y+2, Self.Height(currLoc + [3,1], False) - h];
-      corner3 := [vector.X-2, vector.Y+2, Self.Height(currLoc - [1,1], False) - h];
+      corners := [
+        [vector.X-2, vector.Y-2, Self.Height(currLoc - [1,3],  False) - h],
+        [vector.X+2, vector.Y-2, Self.Height(currLoc + [3,-3], False) - h],
+        [vector.X+2, vector.Y+2, Self.Height(currLoc + [3,1],  False) - h],
+        [vector.X-2, vector.Y+2, Self.Height(currLoc - [1,1],  False) - h]
+      ];
 
-      arr := MM2MS.Run([corner0, corner1, corner2, corner3], angle);
+      arr := MM2MS.Run(corners, angle);
       quad := [arr[0], arr[1], arr[2], arr[3]];
       tpa := quad.Corners.Connect().ExtractBox(MainScreen.Bounds);
       img.DrawTPA(tpa);
@@ -545,7 +548,7 @@ end;
 function TRSMap.GetQuad(me, pt: TPoint; angle: Single = $FFFF): TQuad;
 var
   vector: TVector2;
-  corner0, corner1, corner2, corner3: TVector3;
+  corners: TVector3Array;
   h: Single;
   currLoc: TPoint;
   arr: TPointArray;
@@ -565,12 +568,14 @@ begin
 
   currLoc := me + vector.ToPoint() - Minimap.Center;
 
-  corner0 := [vector.X-2, vector.Y-2, Self.Height(currLoc - [1,3], False) - h];
-  corner1 := [vector.X+2, vector.Y-2, Self.Height(currLoc + [3,-3], False) - h];
-  corner2 := [vector.X+2, vector.Y+2, Self.Height(currLoc + [3,1], False) - h];
-  corner3 := [vector.X-2, vector.Y+2, Self.Height(currLoc - [1,1], False) - h];
+  corners := [
+    [vector.X-2, vector.Y-2, Self.Height(currLoc - [1,3],  False) - h],
+    [vector.X+2, vector.Y-2, Self.Height(currLoc + [3,-3], False) - h],
+    [vector.X+2, vector.Y+2, Self.Height(currLoc + [3,1],  False) - h],
+    [vector.X-2, vector.Y+2, Self.Height(currLoc - [1,1],  False) - h]
+  ];
 
-  arr := MM2MS.Run([corner0, corner1, corner2, corner3], angle);
+  arr := MM2MS.Run(corners, angle);
   Result := [arr[0], arr[1], arr[2], arr[3]];
 end;
 
