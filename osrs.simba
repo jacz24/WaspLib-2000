@@ -119,6 +119,7 @@ Summary: It includes this file until the current file is reached.
 {$IFNDEF WL_ANVIL_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/mainscreen/anvil.simba}
 {$IFNDEF WL_GOLDSCREEN_INCLUDED}          {$INCLUDE_ONCE osrs/interfaces/mainscreen/goldscreen.simba}
 {$IFNDEF WL_SILVERSCREEN_INCLUDED}        {$INCLUDE_ONCE osrs/interfaces/mainscreen/silverscreen.simba}
+{$IFNDEF WL_DEPOSITBOX_INCLUDED}          {$INCLUDE_ONCE osrs/interfaces/mainscreen/depositbox.simba}
 
 {$IFNDEF WL_HITSPLATS_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/mainscreen/finders/hitsplats.simba}
 {$IFNDEF WL_HPBARS_INCLUDED}              {$INCLUDE_ONCE osrs/interfaces/mainscreen/finders/hpbars.simba}
@@ -134,7 +135,7 @@ Summary: It includes this file until the current file is reached.
 {$IFNDEF WL_SETUP_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/setup.simba}
 {$IFNDEF WL_OVERRIDES_INCLUDED}           {$INCLUDE_ONCE osrs/overrides.simba}
 
-{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
+{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}

@@ -127,7 +127,7 @@ WriteLn Inventory.IsSelected('Vial');
 function TRSInventory.IsSelected(slot: TBox): Boolean;
 begin
   slot.Y1 += 8;
-  Result := Target.HasColor(RSColors.ITEM_BORDER_WHITE, 0, 1, slot);
+  Result := Target.HasColor(RSColors.ITEM_BORDER_WHITE, 1, 1, slot);
 end;
 
 function TRSInventory.IsSelected(slot: Integer): Boolean; overload;

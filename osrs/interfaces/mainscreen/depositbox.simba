@@ -1,0 +1,286 @@
+(*
+# DepositBox
+DepositBox interface.
+*)
+
+{$DEFINE WL_DEPOSITBOX_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+(*
+## ERSDPButtons
+```pascal
+ERSDPButtons = enum(WORN, LOOT, INVENTORY);
+```
+Enum representing the 3 main deposit buttons of the {ref}`DepositBox` interface.
+*)
+  ERSDPButtons = enum(WORN, LOOT, INVENTORY);
+
+(*
+## TRSDepositBox
+Main record to interact with the {ref}`DepositBox` interface.
+*)
+  TRSDepositBox = record
+    Title: TRSInterfaceTitle;
+    ISlots,ESlots: TRSSlotInterface;
+    Items,Equipment: TRSItemInterface;
+    Bounds,SlotsArea: TBox;
+    InvSlotBoxes,EquipSlotBoxes: TBoxArray;
+    DepositButtons: array [ERSDPButtons] of TRSButton;
+    QuantityButtons: array [ERSItemQuantity] of TRSButton;
+  end;
+
+function TRSDepositBox.FindItemBoundaries: TBoxArray;
+var
+  tpa, final: TPointArray;
+  atpa: T2DPointArray;
+  b: TBox;
+  color: Integer;
+begin
+  final := Target.FindColor(RSColors.ITEM_BORDER, 1, Self.SlotsArea);
+  if final = [] then Exit;
+
+  for color in RSColors.STACK_COLORS do
+  begin
+    tpa := Target.FindColor(color, 0, Self.SlotsArea);
+    if tpa <> [] then final += tpa;
+  end;
+
+  atpa := final.Cluster(200, 3);
+
+  for tpa in atpa do
+  begin
+    b := tpa.Bounds;
+    if b.Height <= 5 then Continue;
+    Exit(TBoxArray.Create([Self.SlotsArea.X1, b.Y1 - 1], 4, 7, 32, 32, [10, 4]));
+  end;
+end;
+
+(*
+## DepositBox.SetupInterface
+```pascal
+procedure TRSDepositBox.SetupInterface;
+```
+Initializes depositbox variables.
+
+```{note}
+This is automatically called on the **DepositBox** variable.
+```
+*)
+procedure TRSDepositBox.SetupInterface;
+var
+  i: Integer;
+  tba: TBoxArray;
+begin
+  Self.Bounds := MSInterface.CreateBounds([0,-1,0,1], 425, 310);
+  Self.Title.Setup(Self.Bounds);
+
+  Self.SlotsArea.X1 := Self.Bounds.X1 + 196;
+  Self.SlotsArea.Y1 := Self.Bounds.Y1 + 46;
+  Self.SlotsArea.X2 := Self.Bounds.X2 - 70;
+  Self.SlotsArea.Y2 := Self.Bounds.Y2 - 17;
+
+  Self.InvSlotBoxes := TBoxArray.Create([Self.SlotsArea.X1,Self.SlotsArea.Y1], 4, 7, 32, 32, [10, 4]);
+
+  Self.ISlots.Setup('DepositBox.ISlots', Self.InvSlotBoxes, @Self.FindItemBoundaries);
+  Self.Items.Setup('DepositBox.Items', @Self.ISlots, [0, 1, 3, 0]);
+
+  Self.EquipSlotBoxes := [
+    Box(77,54,110,88), Box(36,93,69,127),      // Helm, Cape
+    Box(77,93,110,127), Box(118,93,151,127),   // Neck, Ammo
+    Box(21,132,54,166), Box(77,132,110,166),   // Weapon, Body
+    Box(133,132,166,165), Box(77,171,110,204), // Shield, Legs
+    Box(21,211,54,244), Box(77,211,110,244),   // Hands, Feet
+    Box(133,211,166,244)                       // Ring
+  ];
+
+  with Self.Bounds do
+  begin
+    tba := TBoxArray.Create([X2-42,Y1+95], 1, 5, 27, 27, [0, 16]);
+    for i := 0 to 4 do
+    begin
+      Self.QuantityButtons[i].Bounds := tba[i];
+      Self.QuantityButtons[i].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
+    end;
+    tba := [];
+    tba := TBoxArray.Create([X1+24,Y2-41], 3, 1, 29, 27, [25, 0]);
+    for i := 0 to 2 do
+      Self.DepositButtons[i].Bounds := tba[i];
+    Self.EquipSlotBoxes := Self.EquipSlotBoxes.Offset(Point(X1,Y1));
+  end;
+end;
+
+
+(*
+## DepositBox.IsOpen
+```pascal
+function TRSDepositBox.IsOpen(): Boolean;
+```
+Returns true if the {ref}`DepositBox` interface is open.
+
+Example:
+```pascal
+WriteLn DepositBox.IsOpen();
+```
+*)
+function TRSDepositBox.IsOpen: Boolean;
+begin
+  Result := (MSInterface.IsOpen(ERSInterfaceType.CLASSIC) and Self.Title.IsTitle('Deposit Box'));
+end;
+
+(*
+## DepositBox.WaitOpen
+```pascal
+function TRSDepositBox.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
+```
+Returns true if the {ref}`DepositBox` is open within `time` milliseconds.
+
+## Example:
+```pascal
+WriteLn DepositBox.WaitOpen();
+```
+*)
+function TRSDepositBox.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
+begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsOpen(), interval, time);
+end;
+
+(*
+## DepositBox.Close
+```pascal
+function TRSDepositBox.Close(escape: Boolean): Boolean;
+function TRSDepositBox.Close(escapeProbability: Single = 0): Boolean; overload;
+```
+Closes the depositbox interface.  Depending on `escape` or `escapeProbability the function will
+either click the button or press escape key.
+
+Example:
+```pascal
+ WriteLn DepositBox.Close();
+```
+*)
+function TRSDepositBox.Close(escape: Boolean): Boolean;
+begin
+  Result := Self.Title.Close(escape);
+end;
+
+function TRSDepositBox.Close(escapeProbability: Single = -1): Boolean; overload;
+begin
+  Result := Self.Title.Close(escapeProbability);
+end;
+
+function TRSDepositBox.DepositHelper(b: TBox; amount: Int32; useQuantityButtons: Boolean): Boolean;
+var
+  Button: TRSButton;
+begin
+  if UseQuantityButtons then
+  begin
+    if ERSItemQuantity.Integer2Quantity(amount) = ERSItemQuantity.CUSTOM then
+    begin
+      Button := Self.QuantityButtons[ERSItemQuantity.CUSTOM];
+
+      if Button.Enable then
+      begin
+        Mouse.Move(B);
+        Biometrics.Sleep(300);
+
+        if MainScreen.IsUpText('Deposit-' + ToString(amount)) then
+        begin
+          Mouse.Click(EMouseButton.LEFT);
+          Result := True;
+        end else
+          Result := ChooseOption.Select('Deposit-X') and Chat.AnswerQuery('Enter amount', ToString(amount), Random(2000, 4000));
+      end;
+    end else
+    begin
+      case amount of
+        1:  Button := Self.QuantityButtons[ERSItemQuantity.ONE];
+        5:  Button := Self.QuantityButtons[ERSItemQuantity.FIVE];
+        10: Button := Self.QuantityButtons[ERSItemQuantity.TEN];
+        else
+            Button := Self.QuantityButtons[ERSItemQuantity.ALL];
+      end;
+
+      if Button.Enable then
+      begin
+        Result := True;
+        Mouse.Move(b, True);
+        Biometrics.Sleep(300);
+        Mouse.Click(EMouseButton.LEFT);
+      end;
+    end;
+  end else
+  begin
+    Mouse.Move(B);
+
+    case amount of
+      QUANTITY_ALL:
+        Result := ChooseOption.Select('Deposit-All');
+      else
+        Result := ChooseOption.Select('Deposit-' + ToString(amount) + ' ', True, False) or
+                  ChooseOption.Select('Deposit-X') and Chat.AnswerQuery('Enter amount', ToString(amount), Random(2000, 2500));
+    end;
+  end;
+end;
+
+function TRSDepositBox.DepositItem(item: TRSBankItem; useQuantityButtons: Boolean): Boolean;
+var
+  ba: TBoxArray;
+begin
+  if Self.Items.FindAll([item.Item], ba) then
+    Result := Self.DepositHelper(ba[Random(0,High(ba))], item.Quantity, useQuantityButtons);
+end;
+
+function TRSDepositBox.DepositItem(Item: TRSItem; useQuantityButtons: Boolean): Boolean; overload;
+var
+  tmp: TRSBankItem;
+begin
+  tmp := tmp.Create(item);
+  Result := Self.DepositItem(tmp, useQuantityButtons);
+end;
+
+function TRSDepositBox.DepositItemArray(items: array of TRSBankItem; useQuantityButtons: Boolean): Boolean;
+var
+  item: TRSBankItem;
+begin
+  Result := True;
+  for item in items do
+    if not Self.DepositItem(item, useQuantityButtons) then
+      Result := False;
+end;
+
+function TRSDepositBox.DepositItemArray(items: TRSItemArray; useQuantityButtons: Boolean): Boolean; overload;
+var
+  item: TRSItem;
+begin
+  Result := True;
+  for item in items do
+    if not Self.DepositItem(item, useQuantityButtons) then
+      Result := False;
+end;
+
+procedure TRSDepositBox.DepositInventory;
+begin
+  if Self.IsOpen then
+    Self.DepositButtons[ERSDPButtons.INVENTORY].Click;
+end;
+
+procedure TRSDepositBox.DepositLootBag;
+begin
+  if Self.IsOpen then
+    Self.DepositButtons[ERSDPButtons.LOOT].Click;
+end;
+
+procedure TRSDepositBox.DepositEquipment;
+begin
+  if Self.IsOpen then
+    Self.DepositButtons[ERSDPButtons.WORN].Click;
+end;
+
+var
+(*
+## DepositBox variable
+Global {ref}`TRSDepositBox` variable.
+*)
+  DepositBox: TRSDepositBox;
