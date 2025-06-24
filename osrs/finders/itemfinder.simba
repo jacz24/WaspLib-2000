@@ -94,7 +94,7 @@ procedure TRSItemFinder.Setup();
 var
   path, tmp: String;
 begin
-  Self.Version := WLAssets.ItemFinder[3].Hash.CopyRange(0, 5);
+  Self.Version := WLAssets.ItemFinder[3].Hash;
   Self.Database.Setup('ItemFinder', ['id', 'item', 'hash'], WLAssets.ITEMFINDER_DATA, Self.Version);
 
   Self.CacheDir := WLEnv.CacheDir + 'itemfinder' + PATH_SEP;
@@ -102,7 +102,7 @@ begin
   //Delete old cache files if they exist
   for path in DirList(Self.CacheDir) do
   begin
-    tmp := Copy(path, 1, Length(path)-Length(Self.Version));
+    tmp := Copy(path, Length(path) - Length(Self.Version) + 1, Length(path));
     if tmp = Self.Version then Continue;
     DirDelete(path, False);
   end;
@@ -376,7 +376,7 @@ begin
   border.DrawColor := $FFFFFF;
   border.DrawTPA(tpa);
                                            //h*w*4=4608
-  Result := HashData(EHashAlgo.CRC32, border.Data, 4608).CopyRange(0, 6);
+  Result := HashData(EHashAlgo.CRC32, border.Data, 4608);
 end;
 
 function TRSItemFinder.GetHash(img: TImage): String;
@@ -392,7 +392,7 @@ begin
   img.DrawColor := $0;
   img.DrawTPA(bg);
 
-  Result := HashData(EHashAlgo.CRC32, img.Data, 4608).CopyRange(0, 6);
+  Result := HashData(EHashAlgo.CRC32, img.Data, 4608);
 end;
 
 var

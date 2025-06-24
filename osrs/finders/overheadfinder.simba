@@ -90,17 +90,17 @@ WriteLn('OverheadFinder initialized successfully');
 *)
 procedure TRSOverheadFinder.Setup();
 var
-  dir, tmp: String;
+  path, tmp: String;
 begin
-  Self.Version := WLAssets.OverheadFinder.Hash.CopyRange(0,5);
+  Self.Version := WLAssets.OverheadFinder.Hash;
   Self.CacheDir := WLEnv.CacheDir + 'overheadfinder' + PATH_SEP;
 
   //Delete old cache files if they exist
-  for dir in DirList(Self.CacheDir) do
+  for path in DirList(Self.CacheDir) do
   begin
-    tmp := Copy(dir, 1, dir.Length - Self.Version.Length);
+    tmp := Copy(path, Length(path) - Length(Self.Version) + 1, Length(path));
     if tmp <> Self.Version then
-      DirDelete(dir, False);
+      DirDelete(path, False);
   end;
 
   Self.CacheDir += Self.Version + PATH_SEP;

@@ -368,7 +368,8 @@ end;
 ```pascal
 function TRSCacheParser.Brightness(bytes: TByteArray = []): Integer;
 ```
-Returns the brightness value converted to a 0-100 value (the value in cache if between 50-100 in a byte format).
+Returns the brightness value converted to a 0-100 value (the value in cache
+is between 50-100 in a byte format).
 
 Example:
 ```pascal

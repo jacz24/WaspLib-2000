@@ -21,8 +21,7 @@ var
   data: TIntegerArray;
 begin
   data := [Self.Spacing, Self.MinimumTiles, Self.NodeRadius, Self.MaxConnections, Integer(Self.WallCrossings)];
-  Result := HashData(EHashAlgo.MD5, @data[0], Length(data));
-  SetLength(Result, 6);
+  Result := HashData(EHashAlgo.CRC32, @data[0], Length(data));
 end;
 
 

@@ -229,15 +229,10 @@ procedure TRSMapLoader.Setup(downscale: Integer);
 var
   dir, tmp: String;
 begin
-  Self.Version := HashString(EHashAlgo.MD5,
-     HashFile(EHashAlgo.MD5, Self.FILES + 'map.zip') +
-     HashFile(EHashAlgo.MD5, Self.FILES + 'heightmap.zip') +
-     HashFile(EHashAlgo.MD5, Self.FILES + 'collision.zip') +
-     HashFile(EHashAlgo.MD5, Self.FILES + 'objects.zip') +
-     HashFile(EHashAlgo.MD5, Self.FILES + 'npcs.zip')
+  Self.Version := HashString(EHashAlgo.CRC32,
+    WLAssets.Map[0].Hash + WLAssets.Map[1].Hash + WLAssets.Map[2].Hash +
+    WLAssets.Map[3].Hash + WLAssets.Map[4].Hash
   );
-
-  SetLength(Self.Version, 6);
 
   Self.CacheDir := WLEnv.CacheDir + 'map' + PATH_SEP;
 

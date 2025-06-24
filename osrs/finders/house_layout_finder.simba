@@ -32,17 +32,17 @@ HouseLayoutFinder.Setup();
 *)
 procedure TRSHouseLayoutFinder.Setup();
 var
-  dir, tmp: String;
+  path, tmp: String;
 begin
-  Self.Version := WLAssets.HouseLayoutFinder.Hash.CopyRange(0,5);
+  Self.Version := WLAssets.HouseLayoutFinder.Hash;
   Self.CacheDir := WLEnv.CacheDir + 'houselayoutfinder' + PATH_SEP;
 
   //Delete old cache files if they exist
-  for dir in DirList(Self.CacheDir) do
+  for path in DirList(Self.CacheDir) do
   begin
-    tmp := Copy(dir, 1, Length(dir)-Length(Self.Version));
+    tmp := Copy(path, Length(path) - Length(Self.Version), Length(path));
     if tmp = Self.Version then Continue;
-    DirDelete(dir, False);
+    DirDelete(path, False);
   end;
 
   Self.CacheDir += Self.Version + PATH_SEP;
