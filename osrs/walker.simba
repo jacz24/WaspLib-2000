@@ -698,6 +698,9 @@ begin
 
   if wasHandlingDoor then
     Exit(not Self._DoorHandler.Handling);
+
+  // Tolerance for final step
+  Result := Self.Position().InRange(walkerPoint, Max(waitUntilDistance, 4));
 end;
 
 (*
@@ -833,7 +836,7 @@ var
 begin
   previous := index;
 
-  //nearest := Self._Path.Find(Self._Path.Sorted(playerPoint)[0]);
+  nearest := Self._Path.IndexOf(Self._Path.NearestPoint(playerPoint));
   Self._Pathindex := nearest;
 
   while (nearest < High(Self._Path)) and (not Self.IsWalkable(Self._Path[nearest+1], playerPoint, tmp, angle)) do
@@ -951,6 +954,7 @@ begin
     begin
       if Self.WalkFinalStep(playerPoint, Self._Path[index], waitUntilDistance) then
         Exit(True);
+      fails := 0;
       Continue;
     end;
 
