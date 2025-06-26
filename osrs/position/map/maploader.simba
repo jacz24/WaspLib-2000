@@ -227,7 +227,7 @@ end;
 
 procedure TRSMapLoader.Setup(downscale: Integer);
 var
-  dir, tmp: String;
+  path, tmp: String;
 begin
   Self.Version := HashString(EHashAlgo.CRC32,
     WLAssets.Map[0].Hash + WLAssets.Map[1].Hash + WLAssets.Map[2].Hash +
@@ -237,11 +237,11 @@ begin
   Self.CacheDir := WLEnv.CacheDir + 'map' + PATH_SEP;
 
   //Delete old cache files if they exist
-  for dir in DirList(Self.CacheDir) do
+  for path in DirList(Self.CacheDir) do
   begin
-    tmp := Copy(dir, Length(dir)-5, 6);
+    tmp := Copy(path, Length(path) - Length(Self.Version) + 1, Length(path));
     if tmp = Self.Version then Continue;
-    DirDelete(dir, False);
+    DirDelete(path, False);
   end;
 
   Self.CacheDir += Self.Version + PATH_SEP;
@@ -252,14 +252,15 @@ begin
   Self.Downscale := downscale;
   AddOnTerminate(@Self.Free);
 
-  for dir in Self.ZIPS do
+
+  for path in Self.ZIPS do
   begin
-    if not DirExists(Self.CacheDir + dir+ PATH_SEP) then
+    if not DirExists(Self.CacheDir + path + PATH_SEP) then
     begin
-      if not DirCreate(Self.CacheDir + dir + PATH_SEP) then
-        raise GetDebugLn('MapLoader', 'Failed to create cache directory: ' + Self.CacheDir + dir);
+      if not DirCreate(Self.CacheDir + path + PATH_SEP) then
+        raise GetDebugLn('MapLoader', 'Failed to create cache directory: ' + Self.CacheDir + path);
       Self._UnzipQueue += 1;
-      Async.FileUnZip(Self.FILES + dir + '.zip', Self.CacheDir + dir, @Self.Unzipped, nil);
+      Async.FileUnZip(Self.FILES + path + '.zip', Self.CacheDir + path, @Self.Unzipped, nil);
     end;
   end;
 end;

@@ -613,12 +613,16 @@ Internal method used by walker to decide if the destination point is within 1 cl
 You will probably never need to call this directly.
 *)
 function TRSWalker.IsWalkable(walkerPoint, playerPoint: TPoint; out mmPoint: TPoint; angle: Double): Boolean;
+var
+  corner: TPoint;
 begin
   mmPoint := Self.Point2MM(playerPoint, walkerPoint, angle);
   if not Self.ScreenWalk then
     Exit(Minimap.Polygon.Expand(-1).Contains(mmPoint));
 
-  Result := Minimap.Center.InRange(mmPoint, MM2MS.MAX_RENDER_DISTANCE);
+  for corner in Self.GetQuadMS(playerPoint, walkerPoint).Expand(-8).Corners do
+    if MainScreen.Bounds.Contains(corner) then
+      Exit(True);
 end;
 
 (*
@@ -800,7 +804,6 @@ begin
   img.Show();
 end;
 
-{%codetools on}
 function TRSWalker._BuildPath(tpa: TPointArray): TPointArray;
 var
   i, j: Integer;
@@ -900,7 +903,7 @@ begin
 
   if Result mod 2 = 0 then Minimap.WaitFlag();
 end;
-{%codetools on}
+
 
 (*
 ## TRSWalker.WalkPath
