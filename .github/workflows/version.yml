@@ -8,13 +8,20 @@ on:
 
 jobs:
   version:
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
+        with:
+          ref: main
 
+      - name: Set up Git
+        run: |
+          git config --global user.name "Wasp Bot"
+          git config --global user.email "waspbot@waspcripts.com"
+          
       - name: Get current date
         id: date
         run: |
@@ -26,21 +33,37 @@ jobs:
         id: commit-hash
         run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
-      - name: Update version.simba
+      - name: Update version.simba on main branch
         run: |
           sed -i "s/WL_VERSION_YEAR: Integer = .*/WL_VERSION_YEAR: Integer = $CURRENT_YEAR;/" version.simba
           sed -i "s/WL_VERSION_MONTH: Integer = .*/WL_VERSION_MONTH: Integer = $CURRENT_MONTH;/" version.simba
           sed -i "s/WL_VERSION_DAY: Integer = .*/WL_VERSION_DAY: Integer = $CURRENT_DAY;/" version.simba
           sed -i "s/WL_VERSION_COMMIT_HASH: String = .*/WL_VERSION_COMMIT_HASH: String = '$COMMIT_HASH';/" version.simba
 
-      - name: Commit changes
+      - name: Push changes to main branch
         run: |
-          git config --global user.name "Wasp Bot"
-          git config --global user.email "waspbot@waspcripts.com"
           git add version.simba
-          git commit -m "Automatic version bump to $CURRENT_YEAR.$CURRENT_MONTH.$CURRENT_DAY-$COMMIT_HASH"
+          git commit -m "Automatic version bump to $CURRENT_YEAR.$CURRENT_MONTH.$CURRENT_DAY-$COMMIT_HASH" || echo "No changes to commit on main"
           git push
+          
+      - name: Switch to release branch
+        run: |
+          git fetch origin release
+          git checkout release
 
+      - name: Update version.simba on release branch
+        run: |
+          sed -i "s/WL_VERSION_YEAR: Integer = .*/WL_VERSION_YEAR: Integer = $CURRENT_YEAR;/" version.simba
+          sed -i "s/WL_VERSION_MONTH: Integer = .*/WL_VERSION_MONTH: Integer = $CURRENT_MONTH;/" version.simba
+          sed -i "s/WL_VERSION_DAY: Integer = .*/WL_VERSION_DAY: Integer = $CURRENT_DAY;/" version.simba
+          sed -i "s/WL_VERSION_COMMIT_HASH: String = .*/WL_VERSION_COMMIT_HASH: String = '$COMMIT_HASH';/" version.simba  
+
+      - name: Push changes to release branch
+        run: |
+          git add version.simba
+          git commit -m "Automatic version bump to $CURRENT_YEAR.$CURRENT_MONTH.$CURRENT_DAY-$COMMIT_HASH" || echo "No changes to commit on release"
+          git push origin release
+          
       - name: Create new tag
         id: tag
         run: |
