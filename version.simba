@@ -2,4 +2,4 @@ const
   WL_VERSION_YEAR: Integer = 2025;
   WL_VERSION_MONTH: Integer = 06;
   WL_VERSION_DAY: Integer = 27;
-  WL_VERSION_COMMIT_HASH: String = '9958101';
+  WL_VERSION_COMMIT_HASH: String = '5e5d3d2';
