@@ -267,7 +267,7 @@ begin
 
     //2 attempts per item
     if not Bank.Withdraw(arr[0], False) and not Bank.Withdraw(arr[0], False) then
-      Exit(Self.Withdraw(Dec(attempts));
+      Exit(Self.Withdraw(Dec(attempts)));
 
     Delete(arr, 0, 1);
   end;
