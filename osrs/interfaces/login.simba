@@ -762,7 +762,7 @@ WriteLn Login.FillInput(ERSLoginInput.USERNAME, 'myPlayer@email.com');
 *)
 function TRSLogin.FillInput(field: ERSLoginInput; details: String): Boolean;
 begin
-  if Self.InputIsFilled(field) then Exit;
+  if Self.InputIsFilled(field) then Exit(True);
   if not Self.SelectInput(field) then Exit;
 
   Result := True;
@@ -1034,7 +1034,7 @@ var
 begin
   timeout := Time() + 40000;
 
-  while not RSClient.IsLoggedIn() or not Lobby.IsOpen() do
+  while not RSClient.IsLoggedIn() and not Lobby.IsOpen() do
   begin
     if Time() > timeout then
     begin
