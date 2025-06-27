@@ -19,7 +19,7 @@ jobs:
           $response = Invoke-WebRequest -Uri $url -UseBasicParsing
           $baseUrl = $response.Content.Trim() -replace 'Win64\.zip\?raw=true$', ''
           Write-Output "Base URL: $baseUrl"
-          echo "::set-output name=baseUrl::$baseUrl"
+          "baseUrl=$baseUrl" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           New-Item -Path ".\Includes" -ItemType Directory
           New-Item -Path ".\Plugins" -ItemType Directory
 
@@ -43,13 +43,13 @@ jobs:
           Expand-Archive -Path $outputFile -DestinationPath . -Force
           Remove-Item -Path $outputFile -Force
 
-      - name: Checkout repository
+      - name: Checkout wasp-plugins
         uses: actions/checkout@v4.2.2
         with:
           repository: WaspScripts/wasp-plugins
           path: ./Plugins/wasp-plugins
         
-      - name: Checkout repository
+      - name: Checkout WaspLib
         uses: actions/checkout@v4.2.2
         with:
           path: ./Includes/WaspLib
