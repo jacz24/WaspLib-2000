@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: ["Tests"]
+    types:
+      - completed
+
+jobs:
+  sync-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4.2.2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "Wasp Bot"
+          git config --global user.email "waspbot@waspcripts.com"
+          
+      - name: Recreate release branch
+        run: |
+          git fetch --all
+          git branch -D release || true
+          git checkout -b release origin/main
+
+      - name: Remove unwanted files
+        run: |
+          rm -rf tests
+ 
+      - name: Strip Pascal-style multiline comments from .simba files
+        run: |
+          find . -name "*.simba" -type f -exec perl -0777 -i -pe 's/\(\*.*?\*\)//gs' {} +
+          
+      - name: Commit and push to release
+        run: |
+          git add .
+          git commit -m "Sync release with main and strip comments" || echo "No changes to commit"
+          git push origin release --force

@@ -1,10 +1,9 @@
 name: Version
 
 on:
-  workflow_run:
-    workflows: ["Tests"]
-    types:
-      - completed
+  push:
+    branches:
+      - release
 
 jobs:
   version:
