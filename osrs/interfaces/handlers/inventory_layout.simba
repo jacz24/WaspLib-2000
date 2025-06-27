@@ -115,6 +115,33 @@ begin
 end;
 
 (*
+## InventoryLayout.IsValid
+```pascal
+function TRSInventoryLayout.IsValid(): Boolean;
+```
+Returns true/false if whatever is inr you current {ref}`Inventory` is valid for
+your {ref}`TRSInventoryLayout`.
+
+Example:
+```pascal
+WriteLn layout.IsValid();
+```
+*)
+function TRSInventoryLayout.IsValid(): Boolean;
+var
+  i: Integer;
+begin
+  if Self.BankItems = [] then
+    Self.SetupBankItems();
+
+  for i := 0 to High(Self.BankItems) do
+    if Inventory.Items.CountEx(Self.BankItems[i].ToItem()) < Self.BankItems[i].Quantity then
+      Exit;
+
+  Result := True;
+end;
+
+(*
 ## InventoryLayout.DepositDiff
 ```pascal
 function TRSInventoryLayout.DepositDiff(): Boolean;
@@ -210,11 +237,12 @@ if Bank.Open() then
   layout.Withdraw();
 ```
 *)
-function TRSInventoryLayout.Withdraw(): Boolean;
+function TRSInventoryLayout.Withdraw(attempts: Integer = 3): Boolean;
 var
   arr: TRSBankItemArray;
   oldTab, newTab: Integer;
 begin
+  if attempts = 0 then Exit;
   if not Bank.IsOpen() then Exit;
 
   if Self.BankItems = [] then
@@ -239,12 +267,12 @@ begin
 
     //2 attempts per item
     if not Bank.Withdraw(arr[0], False) and not Bank.Withdraw(arr[0], False) then
-      Exit;
+      Exit(Self.Withdraw(Dec(attempts));
 
     Delete(arr, 0, 1);
   end;
 
-  Result := True;
+  Result := Self.IsValid() or Self.Withdraw(Dec(attempts));
 end;
 
 (*

@@ -65,4 +65,3 @@ jobs:
               echo "Running test: $testFile" on 64 bits
               ./Simba-Win64.exe --extractopenssl --run "$testFile"
           done
-
