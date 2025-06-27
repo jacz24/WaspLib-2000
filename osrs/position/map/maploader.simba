@@ -43,7 +43,7 @@ Returns a unique string representing this map region.
 property TRSMapRegion.Name: String;
 begin
   with Self.Chunks.Bounds do
-    Result := ToStr(X1) + '-' + ToStr(Y1) + '_' + ToStr(X2) + '-' + ToStr(Y2);
+    Result := ToStr(X1) + '-' + ToStr(Y1) + '_' + ToStr(X2) + '-' + ToStr(Y2) + '_p' + ToStr(Self.Plane);
 end;
 
 type
@@ -558,7 +558,7 @@ begin
       region.Chunks := RSTranslator.GetChunks(topLeft, btmRight);
       region.Plane := plane;
 
-      if plane := 0 then
+      if plane = 0 then
         region.Original := RSTranslator.Chunk2Coordinate(chunk.Chunk)
       else
         region.Original := RSTranslator.Chunk2Coordinate(chunk.Chunk).Offset([RSTranslator.MapWidth * plane, 0]);
