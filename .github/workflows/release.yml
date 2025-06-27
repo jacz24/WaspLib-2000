@@ -8,12 +8,11 @@ on:
 
 jobs:
   release:
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
+    if: ${{ github.repository_owner == 'WaspScripts' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout main
-        uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v4.2.2
 
       - name: Set up Git
         run: |
@@ -27,12 +26,10 @@ jobs:
           git checkout -b release origin/main
 
       - name: Remove unwanted files
-        run: |
-          rm -rf tests
+        run: rm -rf tests
  
       - name: Strip Pascal-style multiline comments from .simba files
-        run: |
-          find . -name "*.simba" -type f -exec perl -0777 -i -pe 's/\(\*.*?\*\)//gs' {} +
+        run: find . -name "*.simba" -type f -exec perl -0777 -i -pe 's/\(\*.*?\*\)//gs' {} +
           
       - name: Commit and push to release
         run: |

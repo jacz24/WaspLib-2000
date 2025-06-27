@@ -8,7 +8,7 @@ on:
 
 jobs:
   version:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.repository_owner == 'WaspScripts' }}
     runs-on: ubuntu-latest
 
     steps:
