@@ -46,8 +46,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
         with:
-          repository: WaspScripts/wasp-input
-          path: ./Plugins/wasp-input
+          repository: WaspScripts/wasp-plugins
+          path: ./Plugins/wasp-plugins
         
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
