@@ -21,6 +21,7 @@ jobs:
           Write-Output "Base URL: $baseUrl"
           echo "::set-output name=baseUrl::$baseUrl"
           New-Item -Path ".\Includes" -ItemType Directory
+          New-Item -Path ".\Plugins" -ItemType Directory
 
       - name: Download Simba 2.0 (64-bit)
         run: |
@@ -42,6 +43,12 @@ jobs:
           Expand-Archive -Path $outputFile -DestinationPath . -Force
           Remove-Item -Path $outputFile -Force
 
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+        with:
+          repository: WaspScripts/wasp-input
+          path: ./Plugins/wasp-input
+        
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
         with:
