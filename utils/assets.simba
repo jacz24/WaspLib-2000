@@ -17,26 +17,32 @@ type
 
     ItemFinder, Map: array [0..4] of TWLAsset;
 
+    Images: array [0..2] of TWLAsset;
+
     Queue: TStringArray;
     Timeout: TCountDown;
     const DATA_REPO_URL: String = 'https://raw.githubusercontent.com/WaspScripts/wasp-data/refs/heads/main/';
+    const IMAGE_FILES: array [0..2] of String = ['gametab.png', 'mm_fixed_mask.png', 'mm_resizable_mask.png'];
     const MAP_FILES: array [0..4] of String = ['map.zip', 'collision.zip', 'heightmap.zip', 'objects.zip', 'npcs.zip'];
     const ITEMFINDER_FILES: array [0..4] of String = ['data/hash.txt','data/id.txt','data/item.txt','items.zip','masks.zip'];
     const ITEMFINDER_DATA: String = WLEnv.AssetsDir + 'finders' + PATH_SEP + 'items' + PATH_SEP + 'data' + PATH_SEP;
   end;
 
 procedure TWLAssets.Setup();
+const
+  PATHS: TStringArray = [
+    WLEnv.AssetsDir + 'fonts' + PATH_SEP,
+    WLEnv.AssetsDir + 'jsons' + PATH_SEP,
+    WLEnv.AssetsDir + 'finders' + PATH_SEP + 'items' + PATH_SEP + 'data' + PATH_SEP,
+    WLEnv.AssetsDir + 'map' + PATH_SEP,
+    WLEnv.AssetsDir + 'images' + PATH_SEP
+  ];
 var
   i: Integer;
 begin
-  if not DirCreate(WLEnv.AssetsDir + 'fonts' + PATH_SEP) then
-    raise GetDebugLn('WLAssets', 'Failed to create path: ' + WLEnv.AssetsDir + 'fonts' + PATH_SEP);
-  if not DirCreate(WLEnv.AssetsDir + 'jsons' + PATH_SEP) then
-    raise GetDebugLn('WLAssets', 'Failed to create path: ' + WLEnv.AssetsDir + 'jsons' + PATH_SEP);
-  if not DirCreate(WLEnv.AssetsDir + 'finders' + PATH_SEP + 'items' + PATH_SEP + 'data' + PATH_SEP) then
-    raise GetDebugLn('WLAssets', 'Failed to create path: ' + WLEnv.AssetsDir + 'finders' + PATH_SEP + 'items' + PATH_SEP + 'data' + PATH_SEP);
-  if not DirCreate(WLEnv.AssetsDir + 'map' + PATH_SEP) then
-    raise GetDebugLn('WLAssets', 'Failed to create path: ' + WLEnv.AssetsDir + 'map' + PATH_SEP);
+  for i := 0 to High(PATHS) do
+    if not DirCreate(PATHS[i]) then
+      raise GetDebugLn('WLAssets', 'Failed to create path: ' + PATHS[i]);
 
   Self.Fonts.Path := WLEnv.AssetsDir + 'fonts' + PATH_SEP + 'fonts.zip';
   Self.Fonts.Hash := HashFile(EHashAlgo.CRC32, Self.Fonts.Path);
@@ -79,6 +85,12 @@ begin
 
   Self.HouseLayoutFinder.Path := WLEnv.AssetsDir + 'finders' + PATH_SEP + 'house_layout.zip';
   Self.HouseLayoutFinder.Hash := HashFile(EHashAlgo.CRC32, Self.HouseLayoutFinder.Path);
+
+  for i := 0 to 2 do
+  begin
+    Self.Images[i].Path := WLEnv.AssetsDir + 'images' + PATH_SEP + Self.IMAGE_FILES[i];
+    Self.Images[i].Hash := HashFile(EHashAlgo.CRC32, Self.Images[i].Path);
+  end;
 end;
 
 procedure TWLAssets.Download(constref result: TASyncHTTPResult);
@@ -199,6 +211,18 @@ begin
     Self.Queue += Self.HouseLayoutFinder.Path;
     Self.Timeout.Extend(30 * ONE_SECOND);
     Async.HTTPGetFile(Self.DATA_REPO_URL + 'finders/house_layout.zip', Self.HouseLayoutFinder.Path, @Self.Download);
+  end;
+
+  for i := 0 to 2 do
+  begin
+    if Self.Images[i].Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'images/' + Self.IMAGE_FILES[i] + '.hash') then
+    begin
+      WriteLn GetDebugLn('WLAssets', 'Updating images/' + Self.IMAGE_FILES[i], ELogLevel.WARN);
+      FileDelete(Self.Images[i].Path);
+      Self.Queue += Self.Images[i].Path;
+      Self.Timeout.Extend(15 * ONE_SECOND);
+      Async.HTTPGetFile(Self.DATA_REPO_URL + 'images/' + Self.IMAGE_FILES[i], Self.Images[i].Path, @Self.Download);
+    end;
   end;
 
   //wait downloads
