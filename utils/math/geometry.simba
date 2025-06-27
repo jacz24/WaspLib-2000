@@ -4,7 +4,7 @@ Methods and functions related to geometry.
 *)
 
 {$DEFINE WL_GEOMETRY_INCLUDED}
-{$loadlib ../../plugins/libtpaex/libtpaex}
+{$loadlib Plugins/wasp-plugins/libtpaex/libtpaex}
 
 const
   TAU: Double = 2 * PI;
