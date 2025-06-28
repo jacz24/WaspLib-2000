@@ -482,5 +482,5 @@ begin
   end;
 end;
 
-var
-  Consumables: TRSConsumables;
+
+{$H-} var Consumables: TRSConsumables;{$H+}
