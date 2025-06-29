@@ -205,8 +205,9 @@ begin
       Break;
     end;
 
-  Mouse.Click(b, EMouseButton.LEFT);
-  Result := not wait or SleepUntil(Self.IsSelected(b), 50, RandomMode(800, 600, 1400));
+  Result := Self.Items.Interact(slot, 'Use');
+  if Result and wait then
+    Result := SleepUntil(Self.IsSelected(b), 50, RandomMode(800, 600, 1400));
 end;
 
 function TRSInventory.Select(item: TRSItem; wait: Boolean = False): Boolean; overload;
