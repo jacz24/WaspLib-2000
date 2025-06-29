@@ -58,7 +58,9 @@ A callback method that is triggered when a task finishes execution.
 ## type TThreadTask
 Represents a single unit of work to be executed by a worker thread.
 - `ID`: A unique identifier for the task.
-- `Method`: The procedure to be executed.
+- `Method`: The method to be executed (if IsMethod is True).
+- `Proc`: The procedure to be executed (if IsMethod is False).
+- `IsMethod`: Flag indicating whether this task uses a method or procedure.
 - `Priority`: The task's priority; higher values are processed first.
 - `Created`: The timestamp when the task was created.
 - `Next`: A pointer to the next task in the queue.
@@ -66,6 +68,8 @@ Represents a single unit of work to be executed by a worker thread.
   TThreadTask = record
     ID: String;
     Method: procedure() of object;
+    Proc: procedure;
+    IsMethod: Boolean;
     Priority: Integer;
     Created: Int64;
     Next: PThreadTask;
@@ -153,7 +157,9 @@ Manages a collection of worker threads to execute tasks concurrently.
 ## type TScheduledTask
 Represents a task that is scheduled to run at regular intervals.
 - `ID`: A unique identifier for the scheduled task.
-- `Method`: The procedure to execute.
+- `Method`: The method to execute (if IsMethod is True).
+- `Proc`: The procedure to execute (if IsMethod is False).
+- `IsMethod`: Flag indicating whether this task uses a method or procedure.
 - `Interval`: The time in milliseconds between executions.
 - `LastRun`: The timestamp of the last execution.
 - `Active`: A flag to pause or resume the task.
@@ -161,6 +167,8 @@ Represents a task that is scheduled to run at regular intervals.
   TScheduledTask = record
     ID: String;
     Method: procedure() of object;
+    Proc: procedure;
+    IsMethod: Boolean;
     Interval: Integer;
     LastRun: Int64;
     Active: Boolean;
@@ -617,6 +625,29 @@ begin
 end;
 
 (*
+## TThreadPool.ValidateTask (overload)
+```pascal
+function TThreadPool.ValidateTask(const TaskID: String; Proc: procedure): String; overload;
+```
+Checks if a task is valid for submission. Returns an empty string on success or an error message on failure.
+
+### Parameters
+- `TaskID`: The task identifier to validate.
+- `Proc`: The procedure to validate.
+
+### Returns
+- `String`: Empty string if valid, or error message if invalid.
+*)
+function TThreadPool.ValidateTask(const TaskID: String; Proc: procedure): String; overload;
+begin
+  Result := '';
+  if TaskID = '' then
+    Result := 'Task ID cannot be empty'
+  else if not Assigned(@Proc) then
+    Result := 'Procedure not assigned';
+end;
+
+(*
 ## TThreadPool.HasPendingTask
 ```pascal
 function TThreadPool.HasPendingTask(const TaskID: String): Boolean;
@@ -705,6 +736,72 @@ begin
   New(NewTask);
   NewTask^.ID := TaskID;
   NewTask^.Method := @Method;
+  NewTask^.IsMethod := True;
+  NewTask^.Priority := Priority;
+  NewTask^.Created := Time();
+  NewTask^.Next := nil;
+
+  Self.Queue.Add(NewTask);
+  Inc(Self.TasksQueued);
+  Result := True;
+  Self.Log(EDebugLevel.INFO, Format('Task "%s" submitted with priority %d', [TaskID, Priority]));
+end;
+
+(*
+## TThreadPool.Submit (overload)
+```pascal
+function TThreadPool.Submit(const TaskID: String; Proc: procedure; Priority: Integer = 0; AllowDuplicates: Boolean = False): Boolean; overload;
+```
+Submits a task to the pool's queue for execution. By default, prevents duplicate task IDs. Returns `True` on successful submission.
+
+### Parameters
+- `TaskID`: A unique identifier for the task.
+- `Proc`: The procedure to be executed.
+- `Priority`: The task's priority (higher values execute sooner). Default is 0.
+- `AllowDuplicates`: Whether to allow duplicate task IDs. Default is False.
+
+### Returns
+- `Boolean`: `True` if task was successfully submitted, `False` otherwise.
+
+Example:
+```pascal
+if Pool.Submit('MyTask', @MyProcedure, 5) then
+  WriteLn('Task submitted successfully');
+```
+*)
+function TThreadPool.Submit(const TaskID: String; Proc: procedure; Priority: Integer = 0; AllowDuplicates: Boolean = False): Boolean; overload;
+var
+  NewTask: PThreadTask;
+  ValidationError: String;
+begin
+  Result := False;
+
+  ValidationError := Self.ValidateTask(TaskID, @Proc);
+  if ValidationError <> '' then
+  begin
+    Self.Log(EDebugLevel.INFO, Format('Task validation failed: %s', [ValidationError]));
+    if Assigned(@Self.OnException) then
+      Self.OnException(TaskID, 'Task validation failed: ' + ValidationError);
+    Exit;
+  end;
+
+  if Self.Terminating or not Self.Running or Self.ShuttingDown then
+  begin
+    Self.Log(EDebugLevel.INFO, Format('Cannot submit task "%s" - pool is shutting down', [TaskID]));
+    Exit;
+  end;
+
+  // Check for duplicates unless explicitly allowed
+  if not AllowDuplicates and Self.HasPendingTask(TaskID) then
+  begin
+    Self.Log(EDebugLevel.VERBOSE, Format('Task "%s" already pending - skipping duplicate', [TaskID]));
+    Exit;
+  end;
+
+  New(NewTask);
+  NewTask^.ID := TaskID;
+  NewTask^.Proc := @Proc;
+  NewTask^.IsMethod := False;
   NewTask^.Priority := Priority;
   NewTask^.Created := Time();
   NewTask^.Next := nil;
@@ -754,12 +851,25 @@ begin
   StartTime := Time();
 
   try
-    if Assigned(@Task^.Method) then
-      Task^.Method()
+    if Task^.IsMethod then
+    begin
+      if Assigned(@Task^.Method) then
+        Task^.Method()
+      else
+      begin
+        Success := False;
+        Error := 'Method not assigned';
+      end;
+    end
     else
     begin
-      Success := False;
-      Error := 'Method not assigned';
+      if Assigned(@Task^.Proc) then
+        Task^.Proc()
+      else
+      begin
+        Success := False;
+        Error := 'Procedure not assigned';
+      end;
     end;
   except
     Success := False;
@@ -939,7 +1049,10 @@ begin
         begin
           Self.Pool.Log(EDebugLevel.INFO, Format('Submitting recurring task "%s" (Interval: %dms)', [Self.Tasks[i].ID, Self.Tasks[i].Interval]));
           // Use base task ID without timestamp for overlap detection
-          Self.Pool.Submit(Self.Tasks[i].ID, @Self.Tasks[i].Method);
+          if Self.Tasks[i].IsMethod then
+            Self.Pool.Submit(Self.Tasks[i].ID, @Self.Tasks[i].Method)
+          else
+            Self.Pool.Submit(Self.Tasks[i].ID, @Self.Tasks[i].Proc);
           Self.Tasks[i].LastRun := CurrentTime;
         end
         else
@@ -1023,6 +1136,44 @@ begin
 
   Self.Tasks[Index].ID := TaskID;
   Self.Tasks[Index].Method := @Method;
+  Self.Tasks[Index].IsMethod := True;
+  Self.Tasks[Index].Interval := IntervalMS;
+  Self.Tasks[Index].LastRun := 0;
+  Self.Tasks[Index].Active := True;
+
+  Result := True;
+  Self.Pool.Log(EDebugLevel.INFO, Format('Task "%s" scheduled to run every %dms', [TaskID, IntervalMS]));
+end;
+
+(*
+## TThreadScheduler.Schedule (overload)
+```pascal
+function TThreadScheduler.Schedule(const TaskID: String; Proc: procedure; IntervalMS: Integer = 100): Boolean; overload;
+```
+Schedules a new recurring task.
+
+### Parameters
+- `TaskID`: A unique identifier for the task.
+- `Proc`: The procedure to execute.
+- `IntervalMS`: The interval in milliseconds at which to run the task. Default is 100ms.
+
+### Returns
+- `Boolean`: `True` if task was successfully scheduled, `False` otherwise.
+*)
+function TThreadScheduler.Schedule(const TaskID: String; Proc: procedure; IntervalMS: Integer = 100): Boolean; overload;
+var
+  Index: Integer;
+begin
+  Result := False;
+  if not Assigned(@Proc) then
+    Exit;
+
+  Index := Length(Self.Tasks);
+  SetLength(Self.Tasks, Index + 1);
+
+  Self.Tasks[Index].ID := TaskID;
+  Self.Tasks[Index].Proc := @Proc;
+  Self.Tasks[Index].IsMethod := False;
   Self.Tasks[Index].Interval := IntervalMS;
   Self.Tasks[Index].LastRun := 0;
   Self.Tasks[Index].Active := True;
@@ -1266,6 +1417,30 @@ begin
   Result := Self.Pool.Submit(TaskID, @Method, Priority, AllowDuplicates);
 end;
 
+(*
+## TThreadManager.Submit (overload)
+```pascal
+function TThreadManager.Submit(const TaskID: String; Proc: procedure; Priority: Integer = 0; AllowDuplicates: Boolean = False): Boolean; overload;
+```
+Submits a one-off task for asynchronous execution. By default, prevents duplicate task IDs.
+
+### Parameters
+- `TaskID`: A unique identifier for the task.
+- `Proc`: The procedure to execute.
+- `Priority`: Task priority (higher values execute sooner). Default is 0.
+- `AllowDuplicates`: Whether to allow duplicate task IDs. Default is False.
+
+### Returns
+- `Boolean`: `True` if task was successfully submitted, `False` otherwise.
+*)
+function TThreadManager.Submit(const TaskID: String; Proc: procedure; Priority: Integer = 0; AllowDuplicates: Boolean = False): Boolean; overload;
+begin
+  if not Self.IsSetup then
+    Self.Init(0, Self.DebugLevel);
+
+  Result := Self.Pool.Submit(TaskID, @Proc, Priority, AllowDuplicates);
+end;
+
 
 
 
@@ -1291,6 +1466,29 @@ begin
     Self.Init(0, Self.DebugLevel);
 
   Result := Self.Scheduler.Schedule(TaskID, @Method, IntervalMS);
+end;
+
+(*
+## TThreadManager.Schedule (overload)
+```pascal
+function TThreadManager.Schedule(const TaskID: String; Proc: procedure; IntervalMS: Integer): Boolean; overload;
+```
+Schedules a recurring task to be executed at a fixed interval.
+
+### Parameters
+- `TaskID`: A unique identifier for the task.
+- `Proc`: The procedure to execute.
+- `IntervalMS`: The interval in milliseconds between executions.
+
+### Returns
+- `Boolean`: `True` if task was successfully scheduled, `False` otherwise.
+*)
+function TThreadManager.Schedule(const TaskID: String; Proc: procedure; IntervalMS: Integer): Boolean; overload;
+begin
+  if not Self.IsSetup then
+    Self.Init(0, Self.DebugLevel);
+
+  Result := Self.Scheduler.Schedule(TaskID, @Proc, IntervalMS);
 end;
 
 (*
@@ -1380,6 +1578,36 @@ begin
 
   for i := 0 to High(TaskIDs) do
     if not Self.Pool.Submit(TaskIDs[i], @Methods[i], 0, False) then
+      Result := False;
+end;
+
+(*
+## TThreadManager.SubmitBatch (overload)
+```pascal
+function TThreadManager.SubmitBatch(const TaskIDs: TStringArray; Procs: array of procedure): Boolean; overload;
+```
+Submits a batch of one-off tasks for execution.
+
+### Parameters
+- `TaskIDs`: Array of unique identifiers for the tasks.
+- `Procs`: Array of procedures to execute (must match TaskIDs length).
+
+### Returns
+- `Boolean`: `True` if all tasks were successfully submitted, `False` if any failed.
+*)
+function TThreadManager.SubmitBatch(const TaskIDs: TStringArray; Procs: array of procedure): Boolean; overload;
+var
+  i: Integer;
+begin
+  Result := True;
+  if not Self.IsSetup then
+    Self.Init(0, Self.DebugLevel);
+
+  if Length(TaskIDs) <> Length(Procs) then
+    Exit(False);
+
+  for i := 0 to High(TaskIDs) do
+    if not Self.Pool.Submit(TaskIDs[i], @Procs[i], 0, False) then
       Result := False;
 end;
 
