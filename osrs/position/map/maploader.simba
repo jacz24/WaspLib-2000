@@ -448,15 +448,14 @@ var
   i: Integer;
   offset: TPoint;
 begin
-  offset := region.Offset - region.Region.TopLeft + [padding, padding];
-
   Result := Self.GetGraph(region.Name, region.Plane, collision);
+  offset := [padding, padding];
 
   Result.Nodes := Result.Nodes.Offset(offset);
   Result.WalkableSpace := Result.WalkableSpace.Offset(offset);
 
   for i := 0 to High(Result.WalkableClusters) do
-    Result.WalkableClusters[i] :=  Result.WalkableClusters[i].Offset(offset);
+    Result.WalkableClusters[i] := Result.WalkableClusters[i].Offset(offset);
 
   for i := 0 to High(Result.ObjectClusters) do
     Result.ObjectClusters[i] := Result.ObjectClusters[i].Offset(offset);
@@ -464,7 +463,7 @@ begin
   for i := 0 to High(Result.Doors) do
   begin
     Result.Doors[i].Before := Result.Doors[i].Before + offset;
-    Result.Doors[i].After  := Result.Doors[i].After + offset;
+    Result.Doors[i].After := Result.Doors[i].After + offset;
     Result.Doors[i].Center := Result.Doors[i].Center + offset;
   end;
 end;
@@ -487,14 +486,38 @@ end;
 
 function TRSMapLoader.InternalGraphLoad(graphs: array of TWebGraph): TWebGraph;
 var
-  i: Integer;
+  i, j: Integer;
+  graph: TWebGraph;
+  offset: TPoint;
 begin
   for i := 0 to High(graphs) do
-    Result.Merge(graphs[i]);
+  begin
+    graph := graphs[i].Copy();
+    offset := Self.Regions[i].Region.TopLeft;
+    
+    graph.Nodes := graph.Nodes.Offset(offset);
+    graph.WalkableSpace := graph.WalkableSpace.Offset(offset);
+
+    for j := 0 to High(graph.WalkableClusters) do
+      graph.WalkableClusters[j] := graph.WalkableClusters[j].Offset(offset);
+
+    for j := 0 to High(graph.ObjectClusters) do
+      graph.ObjectClusters[j] := graph.ObjectClusters[j].Offset(offset);
+
+    for j := 0 to High(graph.Doors) do
+    begin
+      graph.Doors[j].Before := graph.Doors[j].Before + offset;
+      graph.Doors[j].After := graph.Doors[j].After + offset;
+      graph.Doors[j].Center := graph.Doors[j].Center + offset;
+    end;
+    
+    Result.Merge(graph);
+  end;
+  
   for i := 0 to High(Result.Doors) do
   begin
     Result.Doors[i].Before := RSTranslator.Normalize(Result.Doors[i].Before);
-    Result.Doors[i].After  := RSTranslator.Normalize(Result.Doors[i].After);
+    Result.Doors[i].After := RSTranslator.Normalize(Result.Doors[i].After);
   end;
 
   Result.UseCollisionData := Self.Graph.UseCollisionData;
@@ -536,24 +559,58 @@ This is an internal method. Usually, {ref}`TRSMap` `Load` methods will call this
 ```
 *)
 procedure TRSMapLoader.Load(chunks: TRSMapChunkArray; downscale: Integer = 8; padding: Integer = 40);
+begin
+  Self.Setup(downscale);
+  Self.Padding := padding;
+  Self.Add(chunks, downscale, padding);
+end;
+
+
+(*
+## MapLoader.Add
+```pascal
+procedure TRSMapLoader.Add(chunks: array of TRSMapChunk; downscale: UInt32 = 8; padding: UInt32 = 40);
+```
+Adds one or more `TRSMapChunk` to your already, previously loaded `TRSMapLoader`.
+
+This incrementally adds new chunks without regenerating existing ones.
+
+```{note}
+This is an internal method. Usually, {ref}`TRSMap` `Add` methods will call this for you.
+```
+*)
+procedure TRSMapLoader.Add(chunks: array of TRSMapChunk; downscale: UInt32 = 8; padding: UInt32 = 40);
 var
   chunk: TRSMapChunk;
   region: TRSMapRegion;
-  i, plane: Integer;
+  i, j, k, plane, regionCount: Integer;
   maps, heightmaps, collisionmaps: TImageArray;
   topLeft, btmRight: TPoint;
   graphs: array of TWebGraph;
   boxes: TBoxArray;
+  newMap, newHeightmap, newCollision: TImage;
+  existingBox: TBox;
+  oldRegions: array of TBox;
+  offset: TPoint;
 begin
-  Self.Setup(downscale);
-  Self.Padding := padding;
+  if Self.Downscale <> downscale then
+    raise GetDebugLn('MapLoader', 'Cannot add chunks with different downscale value');
+  if Self.Padding <> padding then  
+    raise GetDebugLn('MapLoader', 'Cannot add chunks with different padding value');
 
+  regionCount := Length(Self.Regions);
+  
   for chunk in chunks do
     for plane in chunk.Planes do
     begin
+      for i := 0 to High(Self.Regions) do
+        if (Self.Regions[i].Plane = plane) and 
+           (RSTranslator.Global2Chunk(Self.Regions[i].Original) = chunk.Chunk) then
+          Continue(2);
+
       topLeft  := Point(Min(chunk.Chunk.X1, chunk.Chunk.X2), Max(chunk.Chunk.Y1, chunk.Chunk.Y2));
       btmRight := Point(Max(chunk.Chunk.X1, chunk.Chunk.X2), Min(chunk.Chunk.Y1, chunk.Chunk.Y2));
-      chunk.Chunk := TBox.Create(topLeft.X, topLeft.Y, btmRight.X, btmRight.Y); //ensure the box values are in order
+      chunk.Chunk := TBox.Create(topLeft.X, topLeft.Y, btmRight.X, btmRight.Y);
 
       region.Chunks := RSTranslator.GetChunks(topLeft, btmRight);
       region.Plane := plane;
@@ -586,8 +643,17 @@ begin
       Self.Regions += region;
     end;
 
-  boxes := boxes.Pack(); //pack our boxes into the smallest possible space
+  if Length(Self.Regions) = regionCount then Exit;
 
+  SetLength(oldRegions, regionCount);
+  for i := 0 to regionCount - 1 do
+    oldRegions[i] := Self.Regions[i].Region;
+
+  for i := 0 to regionCount - 1 do
+    boxes.Insert(Self.Regions[i].Region, i);
+
+  boxes := boxes.Pack();
+  existingBox := Self.MapBox;
   Self.MapBox := [];
   for i := 0 to High(boxes) do
   begin
@@ -595,81 +661,100 @@ begin
     Self.MapBox := Self.MapBox.Combine(boxes[i]);
   end;
 
-  Self.Map        := Self.InternalLoad(maps);
-  Self.Heightmap  := Self._InternalLoad(heightmaps);
-  Self.Collision  := Self._InternalLoad(collisionmaps);
+  newMap := new TImage(Self.MapBox.Width, Self.MapBox.Height);
+  newHeightmap := new TImage(Self.MapBox.Width, Self.MapBox.Height);
+  newCollision := new TImage(Self.MapBox.Width, Self.MapBox.Height);
+
+  if (existingBox.Width > 0) and (existingBox.Height > 0) then
+  begin
+    for i := 0 to regionCount - 1 do
+    begin
+      newMap.DrawImage(Self.Map.Copy(oldRegions[i]), Self.Regions[i].Region.TopLeft);
+      if Assigned(Self.Heightmap) then
+        newHeightmap.DrawImage(Self.Heightmap.Copy(oldRegions[i]), Self.Regions[i].Region.TopLeft);
+      newCollision.DrawImage(Self.Collision.Copy(oldRegions[i]), Self.Regions[i].Region.TopLeft);
+    end;
+  end;
+
+  for i := regionCount to High(Self.Regions) do
+  begin
+    newMap.DrawImage(maps[i - regionCount], Self.Regions[i].Region.TopLeft);
+    if i - regionCount < Length(heightmaps) then
+      newHeightmap.DrawImage(heightmaps[i - regionCount], Self.Regions[i].Region.TopLeft);
+    newCollision.DrawImage(collisionmaps[i - regionCount], Self.Regions[i].Region.TopLeft);
+  end;
+
+  Self.Map := newMap;
+  if Length(heightmaps) > 0 then
+    Self.Heightmap := newHeightmap;
+  Self.Collision := newCollision;
+  Self.DownscaledMap := Self.Map.Downsample(Self.Downscale);
 
   if not WebGraphGenerator.Disabled then
-    Self.Graph := Self.InternalGraphLoad(graphs);
+  begin
+    for i := 0 to regionCount - 1 do
+    begin
+      offset := Self.Regions[i].Region.TopLeft - oldRegions[i].TopLeft;
+      
+      if offset <> [0, 0] then
+      begin
+        for j := 0 to High(Self.Graph.Nodes) do
+          if Self.Graph.Nodes[j] in oldRegions[i] then
+            Self.Graph.Nodes[j] := Self.Graph.Nodes[j] + offset;
+        
+        for j := 0 to High(Self.Graph.WalkableSpace) do
+          if Self.Graph.WalkableSpace[j] in oldRegions[i] then
+            Self.Graph.WalkableSpace[j] := Self.Graph.WalkableSpace[j] + offset;
+        
+        for j := 0 to High(Self.Graph.WalkableClusters) do
+          for k := 0 to High(Self.Graph.WalkableClusters[j]) do
+            if Self.Graph.WalkableClusters[j][k] in oldRegions[i] then
+              Self.Graph.WalkableClusters[j][k] := Self.Graph.WalkableClusters[j][k] + offset;
+        
+        for j := 0 to High(Self.Graph.ObjectClusters) do
+          for k := 0 to High(Self.Graph.ObjectClusters[j]) do
+            if Self.Graph.ObjectClusters[j][k] in oldRegions[i] then
+              Self.Graph.ObjectClusters[j][k] := Self.Graph.ObjectClusters[j][k] + offset;
+        
+        for j := 0 to High(Self.Graph.Doors) do
+          if Self.Graph.Doors[j].Center in oldRegions[i] then
+          begin
+            Self.Graph.Doors[j].Before := Self.Graph.Doors[j].Before + offset;
+            Self.Graph.Doors[j].After := Self.Graph.Doors[j].After + offset;
+            Self.Graph.Doors[j].Center := Self.Graph.Doors[j].Center + offset;
+          end;
+      end;
+    end;
+    
+    for i := 0 to High(graphs) do
+    begin
+      offset := Self.Regions[regionCount + i].Region.TopLeft;
+      
+      graphs[i].Nodes := graphs[i].Nodes.Offset(offset);
+      graphs[i].WalkableSpace := graphs[i].WalkableSpace.Offset(offset);
+      
+      for j := 0 to High(graphs[i].WalkableClusters) do
+        graphs[i].WalkableClusters[j] := graphs[i].WalkableClusters[j].Offset(offset);
+      
+      for j := 0 to High(graphs[i].ObjectClusters) do
+        graphs[i].ObjectClusters[j] := graphs[i].ObjectClusters[j].Offset(offset);
+      
+      for j := 0 to High(graphs[i].Doors) do
+      begin
+        graphs[i].Doors[j].Before := graphs[i].Doors[j].Before + offset;
+        graphs[i].Doors[j].After := graphs[i].Doors[j].After + offset;
+        graphs[i].Doors[j].Center := graphs[i].Doors[j].Center + offset;
+      end;
+      
+      Self.Graph.Merge(graphs[i]);
+    end;
+    
+    for i := 0 to High(Self.Graph.Doors) do
+    begin
+      Self.Graph.Doors[i].Before := RSTranslator.Normalize(Self.Graph.Doors[i].Before);
+      Self.Graph.Doors[i].After := RSTranslator.Normalize(Self.Graph.Doors[i].After);
+    end;
+  end;
 end;
 
 
-(*
-## MapLoader.Add
-```pascal
-procedure TRSMapLoader.Add(chunks: array of TRSMapChunk; downscale: UInt32 = 8; padding: UInt32 = 40);
-```
-Adds one or more `TRSMapChunk` to your already, previously loaded `TRSMapLoader`.
-
-This is very similar to what {ref}`MapLoader.Load` does and should be used after it as it sets up some internal
-values that this doesn't.
-
-This basically updates some of the values it previously setup.
-
-```{note}
-This is an internal method. Usually, {ref}`TRSMap` `Add` methods will call this for you.
-```
-*)
-procedure TRSMapLoader.Add(chunks: array of TRSMapChunk; downscale: UInt32 = 8; padding: UInt32 = 40);
-var
-  i, j: Int32;
-  current: TRSMapChunk;
-  loaded, final: array of TRSMapChunk;
-begin
-  for i := 0 to High(Self.Regions) do
-  begin
-    current := Chunk(RSTranslator.Global2Chunk(Self.Regions[i].Original), [Self.Regions[i].Plane]);
-    for j := 0 to High(Self.Regions) do
-    begin
-      if i = j then Continue;
-      if Self.Regions[i].Original <> Self.Regions[j].Original then Continue;
-      if current.Planes.Contains(Self.Regions[j].Plane) then Continue;
-      current.Planes += Self.Regions[j].Plane;
-    end;
-
-    current.Planes := current.Planes.Sorted();
-    loaded += current;
-    current := [];
-  end;
-
-  for i := 0 to High(loaded) do
-  begin
-    current := loaded[i];
-
-    for j := High(chunks) downto 0 do
-    begin
-      if current = chunks[j] then
-      begin
-        Delete(chunks, j, 1);
-        Continue;
-      end;
-
-      if current.Chunk = chunks[j].Chunk then
-      begin
-        current.Planes += current.Planes.Difference(chunks[j].Planes);
-        Delete(chunks, j, 1);
-        Continue;
-      end;
-    end;
-
-    final += current;
-  end;
-
-  for i := 0 to High(chunks) do
-    final += chunks[i];
-
-  Self.Free();
-  Self.Regions := [];
-
-  Self.Load(final, downscale, padding);
-end;
