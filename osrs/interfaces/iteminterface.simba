@@ -313,3 +313,22 @@ begin
   Target.MouseClick(EMouseButton.LEFT);
   Result := True;
 end;
+
+function TRSItemInterface.Interact(slot: Integer; option: String = ''): Boolean; overload;
+var
+  box: TBox;
+begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
+    
+  if not Self.Slots^.IsUsed(slot) then Exit;
+  
+  box := Self.Slots^.Box(slot);
+  Mouse.Move(box);
+  
+  if (option <> '') and not SleepUntil(MainScreen.IsUpText(option), 20, 200) then
+    Exit(ChooseOption.Select(option));
+
+  Target.MouseClick(EMouseButton.LEFT);
+  Result := True;
+end;
