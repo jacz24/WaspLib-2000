@@ -26,17 +26,27 @@ end;
 
 
 function TWebGraphGenerator.GetDoorDirection(center: TPoint; img: TImage): TPoint;
+var
+  imgBounds: TBox;
+  
+  function SafePixelCheck(x, y: Integer): Boolean;
+  begin
+    Result := imgBounds.Contains([x, y]) and (img.Pixel[x, y] = $0000FF);
+  end;
+  
 begin
-  if (img.Pixel[center.X+1, center.Y] = $0000FF) or (img.Pixel[center.X-1, center.Y] = $0000FF) then
+  imgBounds := [0, 0, img.Width - 1, img.Height - 1];
+  
+  if SafePixelCheck(center.X+1, center.Y) or SafePixelCheck(center.X-1, center.Y) then
     Exit([0,1]);
 
-  if (img.Pixel[center.X, center.Y+1] = $0000FF) or (img.Pixel[center.X, center.Y-1] = $0000FF) then
+  if SafePixelCheck(center.X, center.Y+1) or SafePixelCheck(center.X, center.Y-1) then
     Exit([1,0]);
 
-  if (img.Pixel[center.X+1, center.Y+1] = $0000FF) or (img.Pixel[center.X-1, center.Y-1] = $0000FF) then
+  if SafePixelCheck(center.X+1, center.Y+1) or SafePixelCheck(center.X-1, center.Y-1) then
     Exit([1,-1]);
 
-  if (img.Pixel[center.X+1, center.Y-1] = $0000FF) or (img.Pixel[center.X-1, center.Y+1] = $0000FF) then
+  if SafePixelCheck(center.X+1, center.Y-1) or SafePixelCheck(center.X-1, center.Y+1) then
     Exit([1,1]);
 
   Result := [0,0];
@@ -47,29 +57,19 @@ var
   inverted: TPoint;
   i: Integer;
   splitA, splitB: Boolean;
+  testPoint: TPoint;
+  imgBounds: TBox;
 begin
+  imgBounds := [0, 0, img.Width - 1, img.Height - 1];
   inverted := direction.Rotate(HALF_PI, [0,0]);
 
   for i := 1 to 5 do
-    with Point(center.X, center.Y) + (inverted*i) do
+  begin
+    testPoint := Point(center.X, center.Y) + (inverted*i);
+    
+    if imgBounds.Contains(testPoint) then
     begin
-      case img.Pixel[X, Y] of
-        $333333, $0:
-        begin
-          splitA := True;
-          Break;
-        end;
-      end;
-
-      case img.Pixel[X-direction.X, Y-direction.Y] of
-        $333333, $0:
-        begin
-          splitA := True;
-          Break;
-        end;
-      end;
-
-      case img.Pixel[X+direction.X, Y+direction.Y] of
+      case img.Pixel[testPoint.X, testPoint.Y] of
         $333333, $0:
         begin
           splitA := True;
@@ -77,27 +77,39 @@ begin
         end;
       end;
     end;
+
+    testPoint := Point(testPoint.X - direction.X, testPoint.Y - direction.Y);
+    if imgBounds.Contains(testPoint) then
+    begin
+      case img.Pixel[testPoint.X, testPoint.Y] of
+        $333333, $0:
+        begin
+          splitA := True;
+          Break;
+        end;
+      end;
+    end;
+
+    testPoint := Point(center.X, center.Y) + (inverted*i) + direction;
+    if imgBounds.Contains(testPoint) then
+    begin
+      case img.Pixel[testPoint.X, testPoint.Y] of
+        $333333, $0:
+        begin
+          splitA := True;
+          Break;
+        end;
+      end;
+    end;
+  end;
 
   for i := 1 to 5 do
-    with Point(center.X, center.Y) - (inverted * i) do
+  begin
+    testPoint := Point(center.X, center.Y) - (inverted * i);
+    
+    if imgBounds.Contains(testPoint) then
     begin
-      case img.Pixel[X, Y] of
-        $333333, $0:
-        begin
-          splitB := True;
-          Break;
-        end;
-      end;
-
-      case img.Pixel[X-direction.X, Y-direction.Y] of
-        $333333, $0:
-        begin
-          splitB := True;
-          Break;
-        end;
-      end;
-
-      case img.Pixel[X+direction.X, Y+direction.Y] of
+      case img.Pixel[testPoint.X, testPoint.Y] of
         $333333, $0:
         begin
           splitB := True;
@@ -105,6 +117,31 @@ begin
         end;
       end;
     end;
+
+    testPoint := Point(testPoint.X - direction.X, testPoint.Y - direction.Y);
+    if imgBounds.Contains(testPoint) then
+    begin
+      case img.Pixel[testPoint.X, testPoint.Y] of
+        $333333, $0:
+        begin
+          splitB := True;
+          Break;
+        end;
+      end;
+    end;
+
+    testPoint := Point(center.X, center.Y) - (inverted * i) + direction;
+    if imgBounds.Contains(testPoint) then
+    begin
+      case img.Pixel[testPoint.X, testPoint.Y] of
+        $333333, $0:
+        begin
+          splitB := True;
+          Break;
+        end;
+      end;
+    end;
+  end;
 
   Result := splitA and splitB;
 end;
@@ -115,7 +152,11 @@ var
   direction: TPoint;
   i, idx: Integer;
   doorType: ERSDoorType;
+  imgBounds: TBox;
+  centerPt, testPt1, testPt2: TPoint;
 begin
+  imgBounds := [0, 0, img.Width - 1, img.Height - 1];
+  
   for i := 0 to High(doors) do
   begin
     case Length(doors[i]) of
@@ -124,22 +165,25 @@ begin
       else Continue;
     end;
 
-    with doors[i].Mean() do
-    begin
-      direction := Self.GetDoorDirection([X,Y], img);
-      if direction = [0,0] then Continue;
+    centerPt := doors[i].Mean();
+    direction := Self.GetDoorDirection(centerPt, img);
+    if direction = [0,0] then Continue;
 
-      if (img.Pixel[X+direction.X, Y+direction.Y] <> $FFFFFF) or
-         (img.Pixel[X-direction.X, Y-direction.Y] <> $FFFFFF) then
-        Continue;
+    testPt1 := Point(centerPt.X + direction.X, centerPt.Y + direction.Y);
+    testPt2 := Point(centerPt.X - direction.X, centerPt.Y - direction.Y);
+    
+    if not imgBounds.Contains(testPt1) or not imgBounds.Contains(testPt2) then
+      Continue;
+      
+    if (img.Pixel[testPt1.X, testPt1.Y] <> $FFFFFF) or
+       (img.Pixel[testPt2.X, testPt2.Y] <> $FFFFFF) then
+      Continue;
 
-      if not Self.DoorIsSeparating([X,Y], direction, img) then Continue;
+    if not Self.DoorIsSeparating(centerPt, direction, img) then Continue;
 
-      idx := Length(Result);
-      SetLength(Result, idx+1);
-      Result[idx].Center := [X,Y];
-    end;
-
+    idx := Length(Result);
+    SetLength(Result, idx+1);
+    Result[idx].Center := centerPt;
     Result[idx].DoorType := doorType;
     Result[idx].Direction := direction;
     Result[idx].Before := Result[idx].Center + direction * 2;
