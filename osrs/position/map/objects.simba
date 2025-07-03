@@ -484,7 +484,7 @@ begin
     hasPath := True;
   end;
 
-  // check if doors need to be passed to reach target
+  //check if doors need to be passed to reach target
   if hasPath or Self.Walker^.WebGraph^.WalkableClusters.InSameTPA(me, closest) then
   begin
     if not Self.Walker^.MakePointVisible(closest) and not Self.Walker^.WebWalkEx(me, closest, 30, 0.15) then

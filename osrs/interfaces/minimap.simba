@@ -77,7 +77,7 @@ begin
   case RSClient.Mode of
     ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
     begin
-      Self.Mask := new TImage(WLAssets.Images[2].Path);
+      Self.Mask := new TImage(WLAssets.Images[3].Path);
       with RSClient.Bounds do
       begin
         Self.Bounds.X1 := X2 - 157;
@@ -89,7 +89,7 @@ begin
 
     ERSMode.FIXED:
     begin
-      Self.Mask := new TImage(WLAssets.Images[1].Path);
+      Self.Mask := new TImage(WLAssets.Images[2].Path);
       with RSClient.Bounds do
       begin
         Self.Bounds.X1 := X2 - 194;

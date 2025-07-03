@@ -17,12 +17,12 @@ type
 
     ItemFinder, Map: array [0..4] of TWLAsset;
 
-    Images: array [0..2] of TWLAsset;
+    Images: array [0..3] of TWLAsset;
 
     Queue: TStringArray;
     Timeout: TCountDown;
     const DATA_REPO_URL: String = 'https://raw.githubusercontent.com/WaspScripts/wasp-data/refs/heads/main/';
-    const IMAGE_FILES: array [0..2] of String = ['gametab.png', 'mm_fixed_mask.png', 'mm_resizable_mask.png'];
+    const IMAGE_FILES: array [0..3] of String = ['gametab.png', 'equipment.png', 'mm_fixed_mask.png', 'mm_resizable_mask.png'];
     const MAP_FILES: array [0..4] of String = ['map.zip', 'collision.zip', 'heightmap.zip', 'objects.zip', 'npcs.zip'];
     const ITEMFINDER_FILES: array [0..4] of String = ['data/hash.txt','data/id.txt','data/item.txt','items.zip','masks.zip'];
     const ITEMFINDER_DATA: String = WLEnv.AssetsDir + 'finders' + PATH_SEP + 'items' + PATH_SEP + 'data' + PATH_SEP;
@@ -61,14 +61,14 @@ begin
   Self.Consumables.Hash := HashFile(EHashAlgo.CRC32, Self.Consumables.Path);
 
   //Map
-  for i := 0 to 4 do
+  for i := 0 to High(Self.Map) do
   begin
     Self.Map[i].Path := WLEnv.AssetsDir + 'map' + PATH_SEP + Self.MAP_FILES[i];
     Self.Map[i].Hash := HashFile(EHashAlgo.CRC32, Self.Map[i].Path);
   end;
 
   //Finders
-  for i := 0 to 4 do
+  for i := 0 to High(Self.ItemFinder) do
   begin
     Self.ItemFinder[i].Path := WLEnv.AssetsDir + 'finders' + PATH_SEP + 'items' + PATH_SEP + Self.ITEMFINDER_FILES[i].Replace('/', PATH_SEP);
     Self.ItemFinder[i].Hash := HashFile(EHashAlgo.CRC32, Self.ItemFinder[i].Path);
@@ -86,7 +86,7 @@ begin
   Self.HouseLayoutFinder.Path := WLEnv.AssetsDir + 'finders' + PATH_SEP + 'house_layout.zip';
   Self.HouseLayoutFinder.Hash := HashFile(EHashAlgo.CRC32, Self.HouseLayoutFinder.Path);
 
-  for i := 0 to 2 do
+  for i := 0 to High(Self.Images) do
   begin
     Self.Images[i].Path := WLEnv.AssetsDir + 'images' + PATH_SEP + Self.IMAGE_FILES[i];
     Self.Images[i].Hash := HashFile(EHashAlgo.CRC32, Self.Images[i].Path);
@@ -152,7 +152,7 @@ begin
   end;
 
   //Map
-  for i := 0 to 4 do
+  for i := 0 to High(Self.Map) do
   begin
     if Self.Map[i].Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'map/' + Self.MAP_FILES[i] + '.hash') then
     begin
@@ -165,7 +165,7 @@ begin
   end;
 
   //Finders
-  for i := 0 to 4 do
+  for i := 0 to High(Self.ItemFinder) do
   begin
     if Self.ItemFinder[i].Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/items/' + Self.ITEMFINDER_FILES[i] + '.hash') then
     begin
@@ -213,7 +213,7 @@ begin
     Async.HTTPGetFile(Self.DATA_REPO_URL + 'finders/house_layout.zip', Self.HouseLayoutFinder.Path, @Self.Download);
   end;
 
-  for i := 0 to 2 do
+  for i := 0 to High(Self.Images) do
   begin
     if Self.Images[i].Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'images/' + Self.IMAGE_FILES[i] + '.hash') then
     begin

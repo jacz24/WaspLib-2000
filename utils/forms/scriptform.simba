@@ -156,7 +156,7 @@ Example:
 
 var
   form: TScriptForm;
-  selector: TCombobox;
+  selector: TLazCombobox;
   tab: TLazTabSheet;
 begin
   form.Setup();

@@ -143,7 +143,6 @@ begin
   Result := ItemFinder.FindAll(items, Self.Slots^.Boxes(), matches);
 end;
 
-{%CODETOOLS ON}
 function TRSItemInterface._Discover(slot: Integer): TRSItemArray;
 var
   b: TBox;
@@ -164,7 +163,6 @@ begin
   if hash = '' then Exit;
   Result := ItemFinder.GetHashItems(hash);
 end;
-{%CODETOOLS ON}
 
 function TRSItemInterface.Discover(slot: Integer): TRSItemArray;
 begin
