@@ -425,7 +425,7 @@ begin
     ' - Plane   : ' + ToStr(Self.Region.Plane),
     ' - Local   : ' + _BoxStr(Self.Region.Region),
     ' - Original: ' + _BoxStr(Self.Region.Original),
-    ' - Compass: ' + ToStr(Minimap.GetCompassAngle()),
+    ' - Compass: '  + ToStr(Minimap.GetCompassAngle()),
     '',
     'Certainty: '    + ToStr(Round(Self.Similarity, 3)),
     'Time: '         + ToStr(Round(time)) + ' ms'

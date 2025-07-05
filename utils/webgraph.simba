@@ -274,7 +274,6 @@ begin
 end;
 
 function TWebGraph.FindNearestNodes(p: TPoint; amount: Integer): TIntegerArray;
-
 var
   i: Integer;
   weights: TIntegerArray;
@@ -303,10 +302,7 @@ end;
 function TWebGraph.FindNearestNodesEx(p: TPoint; amount: Integer): TPointArray;
 begin
   if Self.Tree.Size = 0 then
-  begin
     Self.Tree.Init(System.Copy(Self.Nodes));
-    //AddOnTerminate(@Self.Tree.Free);
-  end;
 
   Result := Self.Tree.KNearest(p, amount);
 end;
@@ -370,7 +366,8 @@ var
   n1, n2: Integer;
   nodes: TIntegerArray;
 begin
-  if p.DistanceTo(q) <= 4 then Exit([p, q]);
+  if p.InRange(q, 4) then
+    Exit([p, q]);
 
   n1 := Self.FindNearestNode(p);
   n2 := Self.FindNearestNode(q);
@@ -407,8 +404,6 @@ begin
 
   if (Length(nG) = 1) and (Length(Self.Paths[nG[0]]) = 0) then
     raise GetDebugLn('WebGraph', 'Points ' + ToStr(p) + ' and ' + ToStr(q) + ' don''t connect!');
-
-  attempts -= 1;
 
   for i := 0 to High(nS) do
     for j := 0 to High(nG) do

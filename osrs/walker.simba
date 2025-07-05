@@ -445,7 +445,6 @@ begin
     if position.Current <> position.Previous then
       countdown.Restart();
 
-
     if Self._DoorHandler.Handling then
     begin
       if Self.WebGraph^.WalkableClusters.InSameTPA(RSTranslator.NormalizeDoor(position.Current), RSTranslator.NormalizeDoor(Self._DoorHandler.Door.After)) then
@@ -455,7 +454,6 @@ begin
         Exit;
       end;
     end;
-
 
     if @Self.OnWaitMovingEvent <> nil then
       Self.OnWaitMovingEvent(@Self, position.Current, destination);
@@ -565,6 +563,7 @@ begin
     upText := MainScreen.UpText;
 
     hoveringTarget := upText.ContainsAny(Self.TargetUpText);
+
     if hoveringTarget and (Self.ActionUpText <> []) then
     begin
       hoveringTarget := upText.ContainsAny(Self.ActionUpText);
@@ -572,7 +571,8 @@ begin
       if not hoveringTarget then
       begin
         Self.RedClicked := ChooseOption.Select(Self.ActionUpText);
-        if Self.RedClicked then Self.Walking := False;
+        if Self.RedClicked then
+          Self.Walking := False;
         Exit(Self.RedClicked);
       end;
     end
@@ -587,10 +587,10 @@ begin
       else
         Self.RedClicked := ChooseOption.Select(Self.TargetUpText);
 
-      if Self.RedClicked then Self.Walking := False;
+      if Self.RedClicked then
+        Self.Walking := False;
       Exit(Self.RedClicked);
     end;
-
   end
   else
     Mouse.Move(Minimap.RandomPoint(minimapPoint, randomness));
@@ -601,7 +601,8 @@ begin
     Biometrics.Click(EMouseButton.LEFT);
 
   Self.RedClicked := Self.ScreenWalk and hoveringTarget and MainScreen.RedClicked();
-  if Self.RedClicked then Self.Walking := False;
+  if Self.RedClicked then
+    Self.Walking := False;
 end;
 
 (*
@@ -620,7 +621,7 @@ begin
   if not Self.ScreenWalk then
     Exit(Minimap.Polygon.Expand(-1).Contains(mmPoint));
 
-  for corner in Self.GetQuadMS(playerPoint, walkerPoint).Expand(-8).Corners do
+  for corner in Self.GetQuadMS(playerPoint, walkerPoint, angle).Expand(-8).Corners do
     if MainScreen.Bounds.Contains(corner) then
       Exit(True);
 end;
@@ -667,7 +668,6 @@ begin
   Result := Self.Click(playerPoint, walkerPoint, minimapPoint, 0);
   if not Result then Exit;
 
-
   if Self._DoorHandler.Handling then
   begin
     wasHandlingDoor := True;
@@ -688,7 +688,6 @@ begin
         end;
       end;
   end;
-
 
   if Self._DoorHandler.SettingUp then
     if (playerpoint.DistanceTo(Self._DoorHandler.Door.Center) <= 99) and (playerpoint.DistanceTo(walkerPoint) > 20) then
@@ -883,7 +882,8 @@ begin
 
   Result := fails;
 
-  if Self._AdvancePath(index, playerPoint, angle) then Exit(0);
+  if Self._AdvancePath(index, playerPoint, angle) then
+    Exit(0);
 
   //Likely haven't moved far enough to advance to next point
   if Inc(Result) < 5 then
@@ -896,15 +896,18 @@ begin
   if Self.AdaptiveWalk and Self.ScreenWalk then
   begin
     Self.ScreenWalk := False;
-    Self._AdvancePath(index, playerPoint, angle);
-  end
-  else if (Result = 5) then
+    if Self._AdvancePath(index, playerPoint, angle) then
+      Exit(0);
+  end;
+
+  if (Result = 5) then
   begin
     Minimap.SetCompassAngle(RadToDeg(angle) + RandomLeft(30, 360) * Random(-1,1));
     angle := Minimap.GetCompassAngle(False);
   end;
 
-  if Result mod 2 = 0 then Minimap.WaitFlag();
+  if Result mod 2 = 0 then
+    Minimap.WaitFlag();
 end;
 
 
@@ -951,7 +954,6 @@ begin
     *)
 
     fails := Self._WalkPathHelper(index, angle, playerPoint, fails, debug);
-    if fails > 0 then Continue;
 
     if index = High(Self._Path) then
     begin
@@ -959,6 +961,8 @@ begin
         Exit(True);
       Continue;
     end;
+
+    if fails > 0 then Continue;
 
     Self.WalkStep(playerPoint, Self._Path[index]);
   end;
@@ -1372,7 +1376,7 @@ begin
 
   if not Self._DoorHandler.Enabled then
   begin
-    if me = destination then Exit(True);
+    if me.InRange(destination, 3) then Exit(True);
     path := _GetPath(me, True);
     Exit(Self.WalkPath(path, waitUntilDistance, debug));
   end;

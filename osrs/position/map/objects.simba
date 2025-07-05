@@ -42,9 +42,9 @@ begin
     Self.Coordinates += [json.Item[5].Item[i].Item[0].AsInt, json.Item[5].Item[i].Item[1].AsInt];
 
   //6 is size key in trsmap jsons
-  Self.Size.X := json.Item[6].Item[0].AsInt * 0.8;
-  Self.Size.Y := json.Item[6].Item[1].AsInt * 0.8;
-  Self.Size.Z := json.Item[6].Item[2].AsInt / 40;
+  Self.Size.X := Round(json.Item[6].Item[0].AsInt * 0.8, 2);
+  Self.Size.Y := Round(json.Item[6].Item[1].AsInt * 0.8, 2);
+  Self.Size.Z := Max(Round(json.Item[6].Item[2].AsInt / 40, 2), 0.5);
 
   //7 is rotations key in trsmap jsons
   for i := 0 to json.Item[7].Count-1 do
