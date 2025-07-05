@@ -164,7 +164,7 @@ begin
   CollectionBox.Setup();
 
 
-  while RSFonts.Unzipping and ItemFinder.Unzipping do
+  while RSFonts.Unzipping or ItemFinder.Unzipping do
   begin
     Sleep(1000);
     if RSFonts.Timeout.IsFinished then
