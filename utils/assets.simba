@@ -15,7 +15,8 @@ type
     SpellFinder, PrayerFinder, OverheadFinder,
     HouseLayoutFinder: TWLAsset;
 
-    ItemFinder, Map: array [0..4] of TWLAsset;
+    ItemFinder: array [0..3] of TWLAsset;
+    Map: array [0..4] of TWLAsset;
 
     Images: array [0..3] of TWLAsset;
 
@@ -24,7 +25,7 @@ type
     const DATA_REPO_URL: String = 'https://raw.githubusercontent.com/WaspScripts/wasp-data/refs/heads/main/';
     const IMAGE_FILES: array [0..3] of String = ['gametab.png', 'equipment.png', 'mm_fixed_mask.png', 'mm_resizable_mask.png'];
     const MAP_FILES: array [0..4] of String = ['map.zip', 'collision.zip', 'heightmap.zip', 'objects.zip', 'npcs.zip'];
-    const ITEMFINDER_FILES: array [0..4] of String = ['data/hash.txt','data/id.txt','data/item.txt','items.zip','masks.zip'];
+    const ITEMFINDER_FILES: array [0..3] of String = ['data/hash.txt','data/id.txt','data/item.txt','items.zip'];
     const ITEMFINDER_DATA: String = WLEnv.AssetsDir + 'finders' + PATH_SEP + 'items' + PATH_SEP + 'data' + PATH_SEP;
   end;
 

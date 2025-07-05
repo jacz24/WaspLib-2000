@@ -164,13 +164,19 @@ begin
   CollectionBox.Setup();
 
 
-  while RSFonts.Unzipping do
+  while RSFonts.Unzipping and ItemFinder.Unzipping do
   begin
     Sleep(1000);
     if RSFonts.Timeout.IsFinished then
     begin
       DirDelete(RSFonts.PATH, True);
       raise GetDebugLn('RSFonts', 'Timed out unzipping fonts.');
+    end;
+
+    if ItemFinder.Timeout.IsFinished then
+    begin
+      DirDelete(ItemFinder.CacheDir, True);
+      raise GetDebugLn('ItemFinder', 'Timed out unzipping items.');
     end;
   end;
 

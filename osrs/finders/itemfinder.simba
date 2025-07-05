@@ -21,6 +21,10 @@ type
     ImageCompare: TImageCompareUtils;
     Database: TDatabase;
     CacheDir: String;
+
+    ImageReader: TResourceReader;
+    Timeout: TCountDown;
+    Unzipping: Boolean;
   end;
 
 function TRSItemFinder.Align(image, template: TImage): Boolean;
@@ -90,6 +94,24 @@ begin
   Self.Filters += tmp;
 end;
 
+
+procedure TRSItemFinder.SetupReader();
+begin
+  Self.ImageReader := new TResourceReader(Self.CacheDir + 'items.bin');
+end;
+
+procedure TRSItemFinder._UnzipFinished(constref result: TASyncUnzipResult);
+begin
+  if not result.Success then
+  begin
+    DirDelete(Self.CacheDir, True);
+    raise GetDebugLn('ItemFinder', 'Failed to unzip images.bin: '  + result.Exception);
+  end;
+
+  Self.SetupReader();
+  Self.Unzipping := False;
+end;
+
 procedure TRSItemFinder.Setup();
 var
   path, tmp: String;
@@ -120,6 +142,16 @@ begin
 
   Self.ImageCompare.Align := @Self.Align;
   Self.ImageCompare.Clean := @Self.Clean;
+
+  if FileExists(Self.CacheDir + 'items.bin') then
+  begin
+    Self.SetupReader();
+    Exit;
+  end;
+
+  Self.Unzipping := True;
+  Self.Timeout.Start(60 * ONE_SECOND);
+  Async.FileUnZip(WLAssets.ItemFinder[3].Path, Self.CacheDir, @Self._UnzipFinished);
 end;
 
 
@@ -164,38 +196,16 @@ begin
 end;
 
 function TRSItemFinder.GetImage(id: String): TImage;
-var
-  path: String;
 begin
-  if not Self.ItemImages.Exists(id) or
-    (Self.ItemImages.Value[id] = nil) then
-  begin
-    path := Self.CacheDir + 'items' + PATH_SEP + id + '.png';
-
-    if not FileExists(path) then
-      ZipExtractEntry(WLAssets.ItemFinder[3].Path, id + '.png', Self.CacheDir + 'items' + PATH_SEP);
-
-    Self.ItemImages.Value[id] := new TImage(path);
-  end;
-
+  if not Self.ItemImages.Exists(id) or (Self.ItemImages.Value[id] = nil) then
+    Self.ItemImages.Value[id] := Self.ImageReader.LoadImage(Self.ImageReader.Find(id + '.png'));
   Result := Self.ItemImages.Value[id];
 end;
 
 function TRSItemFinder.GetMask(id: String): TImage;
-var
-  path: String;
 begin
-  if not Self.MaskImages.Exists(id) or
-    (Self.MaskImages.Value[id] = nil) then
-  begin
-    path := Self.CacheDir + 'masks' + PATH_SEP + id + '.png';
-
-    if not FileExists(path) then
-      ZipExtractEntry(WLAssets.ItemFinder[4].Path, id + '.png', Self.CacheDir + 'masks' + PATH_SEP);
-
-    Self.MaskImages.Value[id] := new TImage(path);
-  end;
-
+  if not Self.MaskImages.Exists(id) or (Self.MaskImages.Value[id] = nil) then
+    Self.MaskImages.Value[id] := Self.ImageReader.LoadImage(Self.ImageReader.Find(id + '.png'));
   Result := Self.MaskImages.Value[id];
 end;
 
@@ -391,7 +401,6 @@ begin
 
   img.DrawColor := $0;
   img.DrawTPA(bg);
-
   Result := HashData(EHashAlgo.CRC32, img.Data, 4608);
 end;
 
