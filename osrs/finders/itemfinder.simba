@@ -24,7 +24,7 @@ type
 
     ImageReader: TResourceReader;
     Timeout: TCountDown;
-    Unzipping: Boolean;
+    Unzipping, IsSetup: Boolean;
   end;
 
 function TRSItemFinder.Align(image, template: TImage): Boolean;
@@ -98,6 +98,7 @@ end;
 procedure TRSItemFinder.SetupReader();
 begin
   Self.ImageReader := new TResourceReader(Self.CacheDir + 'items.bin');
+  Self.IsSetup := True;
 end;
 
 procedure TRSItemFinder._UnzipFinished(constref result: TASyncUnzipResult);
@@ -116,6 +117,7 @@ procedure TRSItemFinder.Setup();
 var
   path, tmp: String;
 begin
+  if Self.IsSetup then Exit;
   Self.Version := WLAssets.ItemFinder[3].Hash;
   Self.Database.Setup('ItemFinder', ['id', 'item', 'hash'], WLAssets.ITEMFINDER_DATA, Self.Version);
 
