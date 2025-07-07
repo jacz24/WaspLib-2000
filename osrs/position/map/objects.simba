@@ -1,12 +1,17 @@
 (*
 # RSObjects
-This file is responsible for interacting with map objects.
+This page is about {ref}`RSObjects` which are an interface for interacting with
+game objects.
 *)
 
 {$DEFINE WL_RSOBJECTS_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
+(*
+## TRSObject
+Main type to handle {ref}`RSObjects`.
+*)
   TRSObject = record
     UpText: TStringArray;
     Size: TVector3;
@@ -17,16 +22,44 @@ type
     Walker: PRSWalker;
   end;
 
+(*
+## TRSObjectArray
+Array of {ref}`TRSObject`.
+*)
   TRSObjectArray = array of TRSObject;
 
-procedure TRSObject.Setup(size: TVector3; coordinates: TPointArray);
+(*
+## RSObject.Create
+```pascal
+function TRSObject.Create(size: TVector3; coordinates: TPointArray): TRSObject; static;
+function TRSObject.Create(json: TJSONItem): TRSObject; static; overload;
+```
+Constructor functions to build your {ref}`TRSObject`.
+
+The `json` version of the function expects a specific json structure which is
+the one that {ref}`Map JSONs` provide.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+
+var
+  obj: TRSObject;
 begin
-  Self.Coordinates := coordinates;
-  SetLength(Self.Rotations, Length(coordinates));
-  Self.Size := size;
+  Map.Setup([ERSChunk.VARROCK]);
+  //Item[0] because this returns a JSON array. For mroe info read Map JSONs documentation.
+  obj := TRSObject.Create(ObjectsJSON.GetByName('bank', 1).Item[0]);
+end;
+```
+*)
+function TRSObject.Create(size: TVector3; coordinates: TPointArray): TRSObject; static;
+begin
+  Result.Coordinates := coordinates;
+  SetLength(Result.Rotations, Length(coordinates));
+  Result.Size := size;
 end;
 
-procedure TRSObject.Setup(json: TJSONItem); overload;
+function TRSObject.Create(json: TJSONItem): TRSObject; static; overload;
 var
   i: Integer;
   colors: TColorArray;
@@ -35,46 +68,102 @@ begin
   if json.Typ <> EJSONType.OBJ then
     raise GetDebugLn('TRSObject', 'JSON Object expected, got ' + ToStr(json.Typ) + '.');
 
-  Self.UpText := [json.Item[1].AsString];
+  if json.Item[1].AsString <> 'null' then
+    Result.UpText := [json.Item[1].AsString];
 
   //5 is coordinates key in trsmap jsons
   for i := 0 to json.Item[5].Count-1 do
-    Self.Coordinates += [json.Item[5].Item[i].Item[0].AsInt, json.Item[5].Item[i].Item[1].AsInt];
+    Result.Coordinates += [json.Item[5].Item[i].Item[0].AsInt, json.Item[5].Item[i].Item[1].AsInt];
 
   //6 is size key in trsmap jsons
-  Self.Size.X := Round(json.Item[6].Item[0].AsInt * 0.8, 2);
-  Self.Size.Y := Round(json.Item[6].Item[1].AsInt * 0.8, 2);
-  Self.Size.Z := Max(Round(json.Item[6].Item[2].AsInt / 40, 2), 0.5);
+  Result.Size.X := Round(json.Item[6].Item[0].AsInt * 0.8, 2);
+  Result.Size.Y := Round(json.Item[6].Item[1].AsInt * 0.8, 2);
+  Result.Size.Z := Round(json.Item[6].Item[2].AsInt / 40, 2);
+
+  if Result.Size.Z = 0.0 then
+    Result.Size.Z := 3.0;
 
   //7 is rotations key in trsmap jsons
   for i := 0 to json.Item[7].Count-1 do
-    Self.Rotations += json.Item[7].Item[i].AsInt;
+    Result.Rotations += json.Item[7].Item[i].AsInt;
 
-  while Length(Self.Rotations) < Length(Self.Coordinates) do
-    Self.Rotations += Self.Rotations[High(Self.Rotations)];
+  while Length(Result.Rotations) < Length(Result.Coordinates) do
+    Result.Rotations += Result.Rotations[High(Result.Rotations)];
 
   //8 is colors key in trsmap jsons
   for i := 0 to json.Item[8].Count-1 do
     colors += json.Item[8].Item[i].AsInt;
 
-  best := GetBestColor(EColorSpace.HSV, colors);
-  Self.Finder.Colors += [best.Color, best.Tolerance, EColorSpace.HSV, best.Mods];
-  Self.Walker := @Map.Walker;
+  if colors <> [] then
+  begin
+    best := GetBestColor(EColorSpace.HSV, colors);
+    Result.Finder.Colors += [best.Color, best.Tolerance, EColorSpace.HSV, best.Mods];
+  end;
+
+  Result.Walker := @Map.Walker;
 end;
 
-procedure TRSObjectArray.Setup(json: TJSONItem); overload;
+(*
+## RSObjectArray.Create
+```pascal
+function TRSObjectArray.Create(json: TJSONItem): TRSObjectArray; static; overload;
+```
+Constructor function to build your {ref}`TRSObjectArray`.
+
+This only accepts a `json` array and it expects a specific json structure which is
+the one that {ref}`Map JSONs` provide.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+
+var
+  objs: TRSObjectArray;
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+  objs := TRSObject.Create(ObjectsJSON.GetByName('bank'));
+end;
+```
+*)
+function TRSObjectArray.Create(json: TJSONItem): TRSObjectArray; static; overload;
 var
   i: Integer;
 begin
   if json.Typ <> EJSONType.ARR then
     raise GetDebugLn('TRSObject', 'JSON Array expected, got ' + ToStr(json.Typ) + '.');
 
-  SetLength(Self, json.Count);
-  for i := 0 to High(Self) do
-    Self[i].Setup(json.Item[i]);
+  SetLength(Result, json.Count);
+  for i := 0 to High(Result) do
+    Result[i] := TRSObject.Create(json.Item[i]);
 end;
 
 
+(*
+## RSObject.GetCuboidArray
+```pascal
+function TRSObject.GetCuboidArray(me: TPoint; angle: Single = $FFFF): TCuboidArray;
+```
+Internal function that returns an array of cuboids of the object if it's
+coordinates are visible on the {ref}`MainScreen`.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+
+var
+  objs: TRSObjectArray;
+  cuboids: TCuboidArray;
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+  objs := TRSObjectArray.Create(ObjectsJSON.GetByAction('Bank'));
+  cuboids := objs[1].GetCuboidArray(Map.Position());
+  ShowOnTarget(cuboids);
+end.
+```
+
+```{figure} ../../images/objs_cuboids.png
+```
+*)
 function TRSObject.GetCuboidArray(me: TPoint; angle: Single = $FFFF): TCuboidArray;
 var
   weights: TDoubleArray;
@@ -105,12 +194,16 @@ begin
 end;
 
 (*
-## TRSObject.Find
+## RSObject.FindOnMainScreen
 ```pascal
-function TRSObject.Find(cuboidArray: TCuboidArray): T2DPointArray;
+function TRSObject.FindOnMainScreen(cuboidArray: TCuboidArray): T2DPointArray;
 ```
-Internal TRSObject method responsible for filtering a TCuboidArray by what's visible in the mainscren.
-This is meant to filter TRSObject.GetCuboidArray() so targets that are outside of the mainscreen are filtered out.
+Internal TRSObject method responsible for filtering a TCuboidArray by what's
+visible in the mainscren.
+
+This is meant to filter {ref}`TRSObject.GetCuboidArray` so targets that are
+outside of the mainscreen are filtered out.
+
 You will probably never need to use this directly.
 *)
 function TRSObject.FindOnMainScreen(cuboidArray: TCuboidArray): T2DPointArray;
@@ -133,24 +226,68 @@ begin
 end;
 
 (*
-## TRSObjectV2.Find
+## RSObject.FindEx
 ```pascal
-function TRSObjectV2.FindEx(out cuboids: TCuboidArray; out atpa: T2DPointArray): Boolean;
-function TRSObjectV2.Find(out atpa: T2DPointArray): Boolean;
-function TRSObjectV2.FindFromPosition(me: TPoint; out atpa: T2DPointArray): Boolean;
+function TRSObject.FindEx(me: TPoint; out cuboids: TCuboidArray; out atpa: T2DPointArray): Boolean;
 ```
-TRSObjectV2 method used to find a {ref}`TRSObjectV2`. If found returns true, if not returns false.
-The "extended" method in particular is mostly meant for debugging and is the one used when you call `Debug(TRSObject)`.
+Internal {ref}`TRSObject` method used to find a {ref}`RSObject`.
+If found returns true, if not returns false.
 
-Example:
+You also have {ref}`RSObject.Find` to find objects, this version of the method
+is internal because it returns extra information about the found objects for
+internal use, like it's `cuboids` for example.
+
+This also returns an `atpa` containing the colors of the object that were found
+assuming the object has a {ref}`TColorFinder` setup.
+If not, the cuboids area are returned as the match.
+
+This extra information is easy to see when you debug your object with
+`ShowOnTarget(TRSObject)`:
 ```pascal
-WriteLn RSObjects.GEBank.Find(atpa); //Be in ge and with a walker setup there.
-Debug(atpa);
+{$I WaspLib/osrs.simba}
+
+var
+  objs: TRSObjectArray;
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+  objs := TRSObjectArray.Create(ObjectsJSON.GetByAction('Bank'));
+  ShowOnTarget(objs[1]);
+end.
+```
+
+```{figure} ../../images/objs_showontarget.png
+```
+
+As you can see, this image is very similar to the one in
+{ref}`RSObject.GetCuboidArray`, they differ however in the fact that this one,
+aside from the cuboids also shows the object colors that were found within
+the cuboids.
+
+This object colors is what's returned through the `atpa` and is what would be
+clicked if you use {ref}`RSObject.Click` for example.
+
+Assuming your `RSObject`does not have a {ref}`TColorFinder` setup, this is what
+it would look like:
+```pascal
+{$I WaspLib/osrs.simba}
+
+var
+  objs: TRSObjectArray;
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+  objs := TRSObjectArray.Create(ObjectsJSON.GetByAction('Bank'));
+  objs[1].Finder := []; //removing the finder for this example.
+  ShowOnTarget(objs[1]);
+end.
+```
+
+```{figure} ../../images/objs_nofinder.png
 ```
 *)
 function TRSObject.FindEx(me: TPoint; out cuboids: TCuboidArray; out atpa: T2DPointArray): Boolean;
 begin
   cuboids := Self.GetCuboidArray(me);
+
   if cuboids = [] then Exit;
   atpa := Self.FindOnMainScreen(cuboids);
 
@@ -158,6 +295,18 @@ begin
 end;
 
 
+(*
+## RSObject.Find
+```pascal
+function TRSObject.Find(out atpa: T2DPointArray): Boolean;
+```
+{ref}`TRSObject` method used to find a {ref}`RSObject`.
+This returns True/False if the object was found and it's `atpa` which cointains
+the colors of it that were found.
+
+For more information on this refer to {ref}`RSObject.FindEx`, it's an internal
+function but is user within this one and will go into more detail.
+*)
 function TRSObject.Find(out atpa: T2DPointArray): Boolean;
 var
   cuboids: TCuboidArray;
@@ -165,6 +314,51 @@ begin
   Result := Self.FindEx(Self.Walker^.Position(), cuboids, atpa);
 end;
 
+(*
+## RSObject.FindFrom
+```pascal
+function TRSObject.FindFrom(position: TPoint; out atpa: T2DPointArray): Boolean;
+```
+This is similar to {ref}`RSObject.Find` but differs from it in that you can set
+your `position`.
+
+This is only useful when you want to predict an object position as if you were
+somewhere else you are not.
+
+What you use this for is up to you but an example use case is to pre-hover
+objects before you reach a `position` you know you will be at in the future.
+
+For example, imagine a slow agility obstacle on an agility course. Imagine you
+want to click the obstacle and hover the next. You know where you will be after
+you get through the current obstacle so you can use this to set your `position`
+to where you will be after the current obstacle and hover the next one:
+```pascal
+{$I WaspLib/osrs.simba}
+
+var
+  objs: TRSObjectArray;
+  atpa: T2DPointArray;
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+  objs := TRSObjectArray.Create(ObjectsJSON.GetByAction('Bank'));
+  objs[1].Finder := [];
+
+  while True do
+  begin
+    ShowOnTarget(atpa);
+    objs[1].FindFrom([8912,36742], atpa);
+  end;
+end.
+```
+
+```{figure} ../../images/obj_findfrom.gif
+```
+As you can see on the gif above, the objects debug match the object exactly when
+you are at the right coordinate.
+
+For this I also recommend to not have a `TColorFinder` setup because it will
+only match when you are at the right position.
+*)
 function TRSObject.FindFrom(position: TPoint; out atpa: T2DPointArray): Boolean;
 var
   cuboids: TCuboidArray;
@@ -173,11 +367,12 @@ begin
 end;
 
 (*
-## TRSObject._UpTextCheck
+## RSObject._UpTextCheck
 ```pascal
 function TRSObject._UpTextCheck(out shouldExit: Boolean): Boolean;
 ```
-Internal TRSObject helper method that is used by all hovering methods.
+Internal `TRSObject` helper method that is used by all hovering methods.
+
 You probably don't need to use this directly.
 *)
 function TRSObject._UpTextCheck(out shouldExit: Boolean): Boolean;
@@ -206,15 +401,122 @@ begin
   shouldExit := False;
 end;
 
+
 (*
-## TRSObject._HoverHelper
+## RSObject.PreHover
 ```pascal
-function TRSObject._HoverHelper(attempts: Integer; trackTarget: Boolean): Boolean;
+function TRSObject.PreHover(me: TPoint; attempts: Integer = 2): Boolean;
 ```
-Internal helper method used to hover a TRSObject target.
-You should not use this directly.
+To understand what this does it's recommended to read {ref}`RSObject.FindFrom`.
+
+This method basically uses {ref}`RSObject.FindFrom` and asynchronously moves the
+mouse to one of the matches.
 *)
-function TRSObject._HoverHelper(attempts: Integer): Boolean;
+function TRSObject.PreHover(me: TPoint; attempts: Integer = 2): Boolean;
+var
+  attempt: Integer;
+  atpa: T2DPointArray;
+begin
+  for attempt := 0 to attempts do
+  begin
+    if not Self.FindFrom(me, atpa) then Continue;
+    ASync.MouseMove(atpa.Random().Random());
+    Exit(True);
+  end;
+end;
+
+
+(*
+## RSObject._ClickHelper
+```pascal
+function TRSObject._ClickHelper(leftClick: Boolean): Boolean;
+```
+Internal `TRSObject` helper method that is used by other clicking methods.
+You probably don't need to use this directly.
+
+This is what's responsible for deciding if we click a target we are hovering or
+not.
+*)
+function TRSObject._ClickHelper(leftClick: Boolean): Boolean;
+begin
+  Self.Walker^.TargetUpText := [];
+  Self.Walker^.ActionUpText := [];
+
+  if Self.Walker^.RedClicked then
+  begin
+    Self.Walker^.RedClicked := False;
+    Exit(True);
+  end;
+
+  if ChooseOption.IsOpen() then
+  begin
+    if (Self.UpText <> []) and ChooseOption.Select(Self.UpText) then
+      Exit(True);
+    ChooseOption.Close();
+    Exit;
+  end;
+
+  if leftClick and Biometrics.RedClick(EMouseButton.LEFT, 2) then
+    Exit(True);
+
+  Result := not leftClick and (Self.UpText <> []) and ChooseOption.Select(Self.UpText);
+end;
+
+(*
+## RSObject._SelectHelper
+```pascal
+function TRSObject._SelectHelper(action: TStringArray): Boolean;
+```
+Internal TRSObject helper method that is used by other select methods.
+
+You probably don't need to use this directly.
+
+This is what is responsible for deciding if we just left click a target we are
+hovering or right click it and choose an option.
+*)
+function TRSObject._SelectHelper(action: TStringArray): Boolean;
+begin
+  if Self.Walker^.RedClicked then
+  begin
+    Self.Walker^.RedClicked := False;
+    Exit(True);
+  end;
+
+  if ChooseOption.IsOpen() and ChooseOption.Select(action) then
+    Exit(True);
+
+  if MainScreen.IsUpText(action) then
+    Exit(Biometrics.RedClick(EMouseButton.LEFT, 2));
+
+  Result := ChooseOption.Select(action);
+end;
+
+
+(*
+## RSObject.Hover
+```pascal
+function TRSObject.Hover(action: TStringArray = []; attempts: Integer = 2): Boolean;
+```
+Method used to hover a TRSObject target if it's found on the mainscreen.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+
+var
+  objs: TRSObjectArray;
+  atpa: T2DPointArray;
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+  objs := TRSObjectArray.Create(ObjectsJSON.GetByAction('Bank'));
+  objs[1].Hover();
+end.
+```
+
+```{figure} ../../images/obj_hover.gif
+```
+*)
+function TRSObject.Hover(action: TStringArray = []; attempts: Integer = 2): Boolean;
 var
   shouldExit: Boolean;
   attempt: Integer;
@@ -222,6 +524,23 @@ var
   tpa: TPointArray;
   angle: Double;
 begin
+  if ChooseOption.IsOpen() then
+  begin
+    if ((Self.UpText <> []) or (action <> [])) and ChooseOption.Find(Self.UpText + action) then
+      Exit(True);
+    ChooseOption.Close();
+  end;
+
+  if Self.Walker = nil then
+    raise GetDebugLn('TRSObject', 'Walker pointer missing.');
+  if Self.Coordinates = [] then
+    raise GetDebugLn('TRSObject', 'Coordinates missing.');
+  if Length(Self.Coordinates) <> Length(Self.Rotations) then
+    raise GetDebugLn('TRSObject', 'Coordinates and Rotations don''t match.');
+
+  //TODO:
+  //if not Self.Walker^.MakePointVisible(Self.Coordinates) then Exit;
+
   Result := Self._UpTextCheck(shouldExit);
   if shouldExit then Exit;
 
@@ -241,7 +560,7 @@ begin
       if Self.UpText = [] then Exit(True);
     end;
 
-    if MainScreen.IsUpText(Self.UpText) then Exit(True);
+    if MainScreen.IsUpText(Self.UpText + action) then Exit(True);
 
     if attempt <> (attempts - 1) then Continue;
 
@@ -251,23 +570,79 @@ begin
 end;
 
 (*
-## TRSObject._WalkHoverHelper
+## RSObject.WalkHover
 ```pascal
-function TRSObject._WalkHoverHelper(attempts: Integer; trackTarget: Boolean): Boolean;
+function TRSObject.WalkHover(action: TStringArray = []; attempts: Integer = 2): Boolean;
 ```
-Internal helper method used to walk and hover a TRSObject target.
-You should not use this directly.
+Method used to walk towards and hover a `TRSObject` target if it's found on the
+mainscreen.
 
-This is responsible for deciding wether we should walk to a TRSObject target or not before attempting to hover it.
-*)
-function TRSObject._WalkHoverHelper(attempts: Integer): Boolean;
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+
 var
+  objs: TRSObjectArray;
+  atpa: T2DPointArray;
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+  objs := TRSObjectArray.Create(ObjectsJSON.GetByAction('Bank'));
+  objs[1].WalkHover();
+end.
+```
+
+```{figure} ../../images/obj_walkhover.gif
+```
+
+In the gif above the function exited true before we finished walking
+which is why it's not hovering the bank after we finished walking.
+
+The way this works is that if we successfully hover the bank while walking
+it returns true.
+*)
+function TRSObject.WalkHover(action: TStringArray = []; attempts: Integer = 2): Boolean;
+var
+  me, closest: TPoint;
+  path, tpa: TPointArray;
+  hasPath: Boolean;
   shouldExit: Boolean;
   attempt: Integer;
   atpa: T2DPointArray;
-  tpa, path: TPointArray;
-  me, closest: TPoint;
 begin
+  if ChooseOption.IsOpen() then
+  begin
+    if ((Self.UpText <> []) or (action <> [])) then
+      if ChooseOption.Find(Self.UpText + action) then
+        Exit(True);
+    ChooseOption.Close();
+  end;
+
+  me :=  Self.Walker^.Position();
+  closest := Self.Walker^.GetClosestPointEx(me, Self.Coordinates, path);
+
+  //if the point is not reachable with the webgraph (like a banker behind a booth) then pick nearest node as target
+  if path = [] then
+  begin
+    path := Self.Walker^.WebGraph^.FindObjectPath(me, closest);
+    if path = [] then
+      raise GetDebugLn('TRSObject', 'Can''t path to object.');
+    hasPath := True;
+  end;
+
+  if Self.UpText <> [] then
+    Self.Walker^.TargetUpText := Copy(Self.UpText);
+  Self.Walker^.ActionUpText := action;
+
+  //check if doors need to be passed to reach target
+  if hasPath or Self.Walker^.WebGraph^.WalkableClusters.InSameTPA(me, closest) then
+  begin
+    if not Self.Walker^.MakePointVisible(closest) and not Self.Walker^.WebWalkEx(me, closest, 32, 0.33) then
+      Exit;
+  end
+  else
+  if not Self.Walker^.WebWalk(closest, 32, 0.33) then
+    Exit;
+
   Result := Self._UpTextCheck(shouldExit) or Self.Walker^.RedClicked;
   if shouldExit then Exit;
 
@@ -284,10 +659,13 @@ begin
 
       Mouse.Move(tpa.RandomMean());
 
-      if Self.UpText = [] then Exit(True);
+      if Self.UpText = [] then
+        Exit(True);
+      Sleep(50); //give uptext 1~ frame time to update
     end;
 
-    if MainScreen.IsUpText(Self.UpText) then Exit(True);
+    if MainScreen.IsUpText(Self.UpText + action) then
+      Exit(True);
 
     me := Self.Walker^.Position();
     closest := Self.Walker^.GetClosestPointEx(me, Self.Coordinates, path);
@@ -317,236 +695,97 @@ begin
   end;
 end;
 
+
 (*
-## TRSObject._PreHoverHelper
+## RSObject.Click
 ```pascal
-function TRSObject.PreHoverHelper(attempts: Integer): Boolean;
+function TRSObject.Click(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
 ```
-Internal helper method used to pre-hover a TRSObject target.
-You should not use this directly.
-*)
-function TRSObject._PreHoverHelper(me: TPoint; attempts: Integer = 2): Boolean;
+Method used to click a `TRSObject` target if it's found on the mainscreen.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+
 var
-  attempt: Integer;
+  objs: TRSObjectArray;
   atpa: T2DPointArray;
 begin
-  for attempt := 0 to attempts do
-  begin
-    if not Self.FindFrom(me, atpa) then Continue;
-    ASync.MouseMove(atpa.Random().Random());
-    Exit(True);
-  end;
-end;
-
-
-(*
-## TRSObject._ClickHelper
-```pascal
-function TRSObject._ClickHelper(leftClick: Boolean): Boolean;
+  Map.Setup([ERSChunk.VARROCK]);
+  objs := TRSObjectArray.Create(ObjectsJSON.GetByAction('Bank'));
+  objs[1].Click();
+end.
 ```
-Internal TRSObject helper method that is used by other clicking methods.
-You probably don't need to use this directly.
 
-This is what's responsible for deciding if we click a target we are hovering or not.
+```{figure} ../../images/obj_click.gif
+```
 *)
-function TRSObject._ClickHelper(leftClick: Boolean): Boolean;
+function TRSObject.Click(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
 begin
-  Self.Walker^.TargetUpText := [];
-  Self.Walker^.ActionUpText := [];
-
-  if Self.Walker^.RedClicked then
-  begin
-    Self.Walker^.RedClicked := False;
-    Exit(True);
-  end;
-
-  if ChooseOption.IsOpen() then
-  begin
-    if (Self.UpText <> []) and ChooseOption.Select(Self.UpText) then
-      Exit(True);
-    ChooseOption.Close();
-    Exit;
-  end;
-
-  if leftClick and Biometrics.RedClick(EMouseButton.LEFT, 2) then
-    Exit(True);
-
-  Result := not leftClick and (Self.UpText <> []) and ChooseOption.Select(Self.UpText);
+  Result := Self.Hover([], attempts) and Self._ClickHelper(leftClick);
 end;
 
 (*
-## TRSObject._SelectHelper
+## RSObject.Select
 ```pascal
-function TRSObject._SelectHelper(action: TStringArray): Boolean;
+function TRSObject.Select(action: TStringArray; attempts: Integer = 2): Boolean;
 ```
-Internal TRSObject helper method that is used by other select methods.
-You probably don't need to use this directly.
+Method used to select an option on a `TRSObject` target if it's found on the
+mainscreen.
 
-This is what is responsible for deciding if we just left click a target we are hovering or right click it and choose an option.
-*)
-function TRSObject._SelectHelper(action: TStringArray): Boolean;
-begin
-  Self.Walker^.TargetUpText := [];
-  Self.Walker^.ActionUpText := [];
-
-  if Self.Walker^.RedClicked then
-  begin
-    Self.Walker^.RedClicked := False;
-    Exit(True);
-  end;
-
-  if ChooseOption.IsOpen() and ChooseOption.Select(action) then
-    Exit(True);
-
-  if MainScreen.IsUpText(action) then
-    Exit(Biometrics.RedClick(EMouseButton.LEFT, 2));
-
-  Result := ChooseOption.Select(action);
-end;
-
-
-(*
-## TRSObject.Hover
-```pascal
-function TRSObject.Hover(attempts: Integer = 2; trackTarget: Boolean = TRSObject.TrackTarget): Boolean;
-```
-Method used to hover a TRSObject target if it's found on the mainscreen.
-It can update the target position while the mouse moves with **trackTarget**.
+Through `action` you can specify the interaction you are looking for.
+If this interaction is the uptext when you hover the object WaspLib will simply
+left click it.
 
 Example:
 ```pascal
-RSW.WebWalk(WaspWeb.LOCATION_VARROCK);
-RSObjects.GEBank.Hover(); //Be in GE with a walker setup there.
-```
-*)
-function TRSObject.Hover(attempts: Integer = 2): Boolean;
-begin
-  if ChooseOption.IsOpen() then
-  begin
-    if (Self.UpText <> []) and ChooseOption.Find(Self.UpText) then
-      Exit(True);
-    ChooseOption.Close();
-  end;
+{$I WaspLib/osrs.simba}
 
-  if Self.Walker = nil then
-    raise GetDebugLn('TRSObject', 'Walker pointer missing.');
-  if Self.Coordinates = [] then
-    raise GetDebugLn('TRSObject', 'Coordinates missing.');
-  if Length(Self.Coordinates) <> Length(Self.Rotations) then
-    raise GetDebugLn('TRSObject', 'Coordinates and Rotations don''t match.');
-
-  //TODO:
-  //if not Self.Walker^.MakePointVisible(Self.Coordinates) then Exit;
-
-  Result := Self._HoverHelper(attempts);
-end;
-
-(*
-## TRSObject.WalkHover
-```pascal
-function TRSObject.WalkHover(attempts: Integer = 2; trackTarget: Boolean = TRSObject.TrackTarget): Boolean;
-```
-Method used to walk and hover a TRSObject target if it's found on the mainscreen after walking.
-It can update the target position while the mouse moves with **trackTarget**.
-
-Example:
-```pascal
-//Be in varrock with a varrock map loaded.
-RSW.WebWalk(WaspWeb.LOCATION_VARROCK);
-RSObjects.GEBank.WalkHover();
-```
-*)
-function TRSObject.WalkHover(attempts: Integer = 2): Boolean;
 var
-  me, closest: TPoint;
-  path: TPointArray;
-  hasPath: Boolean;
+  objs: TRSObjectArray;
+  atpa: T2DPointArray;
 begin
-  if ChooseOption.IsOpen() then
-  begin
-    if (Self.UpText <> []) and ChooseOption.Find(Self.UpText) then
-      Exit(True);
-    ChooseOption.Close();
-  end;
-
-  if Self.UpText <> [] then
-    Self.Walker^.TargetUpText := Copy(Self.UpText);
-
-  me :=  Self.Walker^.Position();
-  closest := Self.Walker^.GetClosestPointEx(me, Self.Coordinates, path);
-
-  //if the point is not reachable with the webgraph (like a banker behind a booth) then pick nearest node as target
-  if path = [] then
-  begin
-    path := Self.Walker^.WebGraph^.FindObjectPath(me, closest);
-    if path = [] then
-      raise GetDebugLn('TRSObject', 'Can''t path to object.');
-    hasPath := True;
-  end;
-
-  //check if doors need to be passed to reach target
-  if hasPath or Self.Walker^.WebGraph^.WalkableClusters.InSameTPA(me, closest) then
-  begin
-    if not Self.Walker^.MakePointVisible(closest) and not Self.Walker^.WebWalkEx(me, closest, 30, 0.15) then
-      Exit;
-  end
-  else
-  if not Self.Walker^.WebWalk(closest, 30, 0.15) then
-    Exit;
-
-  Result := Self._WalkHoverHelper(attempts);
-end;
-
-
-(*
-## TRSObject.Click
-```pascal
-function TRSObject.Click(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
+  Map.Setup([ERSChunk.VARROCK]);
+  objs := TRSObjectArray.Create(ObjectsJSON.GetByAction('Bank'));
+  objs[1].Select(['Collect']);
+end.
 ```
-Method used to click a TRSObject target if it's found on the mainscreen.
 
-Example:
-```pascal
-//Be in ge with a ge map loaded.
-WriteLn RSObjects.GEBank.Click();
-```
-*)
-function TRSObject.Click(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
-begin
-  Result := Self.Hover(attempts) and Self._ClickHelper(leftClick);
-end;
-
-(*
-## TRSObject.SelectOption
-```pascal
-function TRSObject.SelectOption(action: TStringArray; attempts: Integer = 2): Boolean;
-```
-Method used to select an option on a TRSObject target if it's found on the mainscreen.
-
-Example:
-```pascal
-//Be in ge with a ge map loaded.
-WriteLn RSObjects.GEBank.SelectOption(['Collect']);
+```{figure} ../../images/obj_select.gif
 ```
 *)
 function TRSObject.Select(action: TStringArray; attempts: Integer = 2): Boolean;
 begin
   Self.Walker^.ActionUpText := action;
-  Result := Self.Hover(attempts) and Self._SelectHelper(action);
+  Result := Self.Hover(action, attempts) and Self._SelectHelper(action);
+  Self.Walker^.TargetUpText := [];
   Self.Walker^.ActionUpText := [];
 end;
 
+
 (*
-## TRSObject.WalkClick
+## RSObject.WalkClick
 ```pascal
 function TRSObject.WalkClick(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
 ```
-Method used to walk and click a TRSObject target if it's found on the mainscreen.
+Method used to walk towards and click a `TRSObject` target if it's found on the
+mainscreen.
 
 Example:
 ```pascal
-//Be in ge with a ge map loaded, preferably far away so it has to walk.
-WriteLn RSObjects.GEBank.WalkClick();
+{$I WaspLib/osrs.simba}
+
+var
+  objs: TRSObjectArray;
+  atpa: T2DPointArray;
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+  objs := TRSObjectArray.Create(ObjectsJSON.GetByAction('Bank'));
+  objs[1].WalkClick();
+end.
+```
+
+```{figure} ../../images/obj_walkclick.gif
 ```
 *)
 function TRSObject.WalkClick(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
@@ -558,21 +797,37 @@ begin
   if Length(Self.Coordinates) <> Length(Self.Rotations) then
     raise GetDebugLn('TRSObject', 'Coordinates and Rotations don''t match.');
 
-  Result := Self.WalkHover(attempts) and Self._ClickHelper(leftClick);
+  Result := Self.WalkHover([], attempts) and Self._ClickHelper(leftClick);
   Self.Walker^.TargetUpText := [];
 end;
 
 (*
-## TRSObject.WalkSelectOption
+## RSObject.WalkSelect
 ```pascal
-function TRSObject.WalkSelectOption(action: TStringArray; attempts: Integer = 2): Boolean;
+function TRSObject.WalkSelect(action: TStringArray; attempts: Integer = 2): Boolean;
 ```
-Method used to walk and select an option on a TRSObject target if it's found on the mainscreen.
+Method used to walk towards and select an option on a `TRSObject` target if it's
+found on the mainscreen.
+
+Through `action` you can specify the interaction you are looking for.
+If this interaction is the uptext when you hover the object WaspLib will simply
+left click it.
 
 Example:
 ```pascal
-//Be in ge with a ge map loaded, preferably far away so it has to walk.
-WriteLn RSObjects.GEBank.WalkSelectOption(['Collect']);
+{$I WaspLib/osrs.simba}
+
+var
+  objs: TRSObjectArray;
+  atpa: T2DPointArray;
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+  objs := TRSObjectArray.Create(ObjectsJSON.GetByAction('Bank'));
+  objs[1].WalkSelect(['Collect']);
+end.
+```
+
+```{figure} ../../images/obj_walkselect.gif
 ```
 *)
 function TRSObject.WalkSelect(action: TStringArray; attempts: Integer = 2): Boolean;
@@ -584,15 +839,34 @@ begin
   if Length(Self.Coordinates) <> Length(Self.Rotations) then
     raise GetDebugLn('TRSObject', 'Coordinates and Rotations don''t match.');
 
-  Self.Walker^.ActionUpText := action;
-
-  Result := Self.WalkHover(attempts) and Self._SelectHelper(action);
+  Result := Self.WalkHover(action, attempts);
+  Result := Result and Self._SelectHelper(action);
 
   Self.Walker^.TargetUpText := [];
   Self.Walker^.ActionUpText := [];
 end;
 
 
+(*
+## RSObject.DistanceTo
+```pascal
+function TRSObject.DistanceTo(pt: TPoint): Double;
+```
+Returns the distance of an object to you. Because {ref}`RSObjects` can have
+multiple coordinates, only the closest one is considered for the calculation.
+
+This is useful to for example, compared which of 2 objects are closest to you.
+
+Example:
+```pascal
+me := Map.Position();
+
+if bankBooth.DistanceTo(me) < bankChest.DistanceTo(me) then
+  bankBooth.WalkClick()
+else
+  bankChest.WalkClick();
+```
+*)
 function TRSObject.DistanceTo(pt: TPoint): Double;
 var
   dist: Double;
@@ -607,6 +881,16 @@ begin
   end;
 end;
 
+(*
+## RSObjectArray.ClosestIndex
+```pascal
+function TRSObjectArray.ClosestIndex(pt: TPoint): Integer;
+```
+Returns the index of the `TRSObjectArray` which is closest to you.
+
+Uses {ref}`RSObject.DistanceTo` on each of the indices of the current
+`TRSObjectArray` and returns the closest index.
+*)
 function TRSObjectArray.ClosestIndex(pt: TPoint): Integer;
 var
   closest, dist: Double;
@@ -654,6 +938,13 @@ begin
     Self.DrawTPA(cuboids[i].Edges());
 end;
 
+(*
+## ShowOnTarget TRSObject
+```pascal
+procedure ShowOnTarget(obj: TRSObject); overload;
+```
+Shows an image of the target with the `TRSObject` drawn on it.
+*)
 procedure ShowOnTarget(obj: TRSObject); overload;
 var
   img: TImage;

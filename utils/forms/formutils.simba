@@ -154,6 +154,29 @@ begin
   TLazControl(sender).Font.Color := $20000000;
 end;
 
+procedure TFormUtils.OnCheckboxCaptionClick(sender: TLazObject);
+var
+  caption: TLazLabel;
+  checkbox: TLazCheckBox;
+begin
+  caption := TLazLabel(sender);
+  if caption.Anchors = [] then
+    raise GetDebugLn('FormUtils', 'Label has to be anchored to a control.');
+
+  if ELazAnchorKind.Top in caption.Anchors then
+    checkbox := TLazCheckbox(caption.AnchorSideTop.Control)
+  else if ELazAnchorKind.Right in caption.Anchors then
+    checkbox := TLazCheckbox(caption.AnchorSideRight.Control)
+  else if ELazAnchorKind.Bottom in caption.Anchors then
+    checkbox := TLazCheckbox(caption.AnchorSideBottom.Control)
+  else if ELazAnchorKind.Left in caption.Anchors then
+    checkbox := TLazCheckbox(caption.AnchorSideLeft.Control);
+
+  checkbox.Toggle();
+  Lapify(checkbox.OnChange)(checkbox);
+end;
+
+
 var
   FormUtils: TFormUtils;
 

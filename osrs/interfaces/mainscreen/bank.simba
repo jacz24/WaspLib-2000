@@ -1206,8 +1206,8 @@ end;
 
 procedure TRSBank._SetupMapObjects();
 begin
-  Self.Banks.Setup(ObjectsJSON.GetByAction('Bank'));
-  Self.Bankers.Setup(NPCsJSON.GetByAction('Bank'));
+  Self.Banks := TRSObjectArray.Create(ObjectsJSON.GetByAction('Bank'));
+  Self.Bankers := TRSNPCArray.Create(NPCsJSON.GetByAction('Bank'));
 end;
 
 

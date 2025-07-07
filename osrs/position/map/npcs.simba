@@ -19,13 +19,13 @@ type
 
   TRSNPCArray = array of TRSNPC;
 
-procedure TRSNPC.Setup(size: TVector3; coordinates: TPointArray);
+function TRSNPC.Create(size: TVector3; coordinates: TPointArray): TRSNPC; static;
 begin
-  Self.Coordinates := coordinates;
-  Self.Size := size;
+  Result.Coordinates := coordinates;
+  Result.Size := size;
 end;
 
-procedure TRSNPC.Setup(json: TJSONItem); overload;
+function TRSNPC.Create(json: TJSONItem): TRSNPC; static; overload;
 var
   i: Integer;
   colors: TColorArray;
@@ -34,37 +34,45 @@ begin
   if json.Typ <> EJSONType.OBJ then
     raise GetDebugLn('TRSNPC', 'JSON Object expected, got ' + ToStr(json.Typ) + '.');
 
-  Self.UpText := [json.Item[1].AsString]; //1 is name key in trsmap jsons
-  Self.UseDot := json.Item[4].AsBool; //4 is minimapdot key in trsmap jsons
+  if json.Item[1].AsString <> 'null' then
+    Result.UpText := [json.Item[1].AsString];
+  Result.UseDot := json.Item[4].AsBool; //4 is minimapdot key in TRSMap jsons
 
-  //6 is size key in trsmap jsons
-  Self.Size.X := json.Item[6].Item[0].AsInt * 0.8;
-  Self.Size.Y := json.Item[6].Item[1].AsInt * 0.8;
-  Self.Size.Z := json.Item[6].Item[2].AsInt / 40;
+  //6 is size key in TRSMap jsons
+  Result.Size.X := Round(json.Item[6].Item[0].AsInt * 0.8, 2);
+  Result.Size.Y := Round(json.Item[6].Item[1].AsInt * 0.8, 2);
+  Result.Size.Z := Round(json.Item[6].Item[2].AsInt / 40, 2);
 
-  //7 is coordinates key in trsmap jsons
+  if Result.Size.Z = 0.0 then
+    Result.Size.Z := 3.0;
+
+  //7 is coordinates key in TRSMap jsons
   for i := 0 to json.Item[7].Count-1 do
-    Self.Coordinates += [json.Item[7].Item[i].Item[0].AsInt, json.Item[7].Item[i].Item[1].AsInt];
+    Result.Coordinates += [json.Item[7].Item[i].Item[0].AsInt, json.Item[7].Item[i].Item[1].AsInt];
 
-  //8 is colors key in trsmap jsons
+  //8 is colors key in TRSMap jsons
   for i := 0 to json.Item[8].Count-1 do
     colors += json.Item[8].Item[i].AsInt;
 
-  best := GetBestColor(EColorSpace.HSV, colors);
-  Self.Finder.Colors += [best.Color, best.Tolerance, EColorSpace.HSV, best.Mods];
-  Self.Walker := @Map.Walker;
+  if colors <> [] then
+  begin
+    best := GetBestColor(EColorSpace.HSV, colors);
+    Result.Finder.Colors += [best.Color, best.Tolerance, EColorSpace.HSV, best.Mods];
+  end;
+
+  Result.Walker := @Map.Walker;
 end;
 
-procedure TRSNPCArray.Setup(json: TJSONItem); overload;
+function TRSNPCArray.Create(json: TJSONItem): TRSNPCArray; static; overload;
 var
   i: Integer;
 begin
   if json.Typ <> EJSONType.ARR then
     raise GetDebugLn('TRSNPC', 'JSON Array expected, got ' + ToStr(json.Typ) + '.');
 
-  SetLength(Self, json.Count);
-  for i := 0 to High(Self) do
-    Self[i].Setup(json.Item[i]);
+  SetLength(Result, json.Count);
+  for i := 0 to High(Result) do
+    Result[i] := TRSNPC.Create(json.Item[i]);
 end;
 
 

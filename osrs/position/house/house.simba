@@ -54,7 +54,7 @@ begin
     Exit;
   end;
 
-  Self.Teleports[teleport].Setup(obj.GetSize(), [coordinate]);
+  Self.Teleports[teleport] := TRSObject.Create(obj.GetSize(), [coordinate]);
   Self.Teleports[teleport].Rotations := [rotation];
   Self.Teleports[teleport].UpText := teleport.GetUpText();
   Self.Teleports[teleport].Finder := teleport.GetFinder();
@@ -70,7 +70,7 @@ begin
     Exit;
   end;
 
-  Self.Objects[obj].Setup(obj.GetSize(), [coordinate]);
+  Self.Objects[obj] := TRSObject.Create(obj.GetSize(), [coordinate]);
   Self.Objects[obj].Rotations := [rotation * 90];
   Self.Objects[obj].UpText := obj.GetUpText();
   Self.Objects[obj].Finder := obj.GetFinder();
@@ -133,7 +133,7 @@ begin
         Continue;
       end;
 
-      Result.Setup(size, [coordinate]);
+      Result := TRSObject.Create(size, [coordinate]);
       Result.Rotations := [room.Rotation * 90];
       Result.Walker := @Self.Walker;
     end;
@@ -171,7 +171,7 @@ begin
   //TODO:
   //Self.Graph := Self._BuildGraph(Self.Loader.Collision);
 
-  Self.Entrance.Setup([2,4,7], [Self.Loader.Location.GetEntranceCoordinate()]);
+  Self.Entrance := TRSObject.Create([2,4,7], [Self.Loader.Location.GetEntranceCoordinate()]);
   Self.Entrance.Rotations := [Self.Loader.Location.GetEntranceRotation()];
   Self.Entrance.UpText := ['Portal'];
   Self.Entrance.Walker := @Map.Walker;
