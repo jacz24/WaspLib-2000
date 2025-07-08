@@ -525,48 +525,6 @@ end;
 
 
 (*
-## MapLoader.Load
-```pascal
-procedure TRSMapLoader.Load(chunks: TRSMapChunkArray; downscale: Integer = 8; padding: Integer = 40);
-```
-Loads a map and sets the {ref}`TRSMapLoader` internal values, the most important
-ones being:
-- `TRSMapLoader.Map`, which will hold the image of your map.
-- `TRSMapLoader.Heightmap` which will hold your heightmap.
-- `TRSMapLoader.Collision` which will hold your collision map
-- `TRSMapLoader.DownscaledMap` which is an exact copy of `TRSMapLoader.Map` downscaled by the specified `downscale`.
-- `TRSMapLoader.Graph` which holds your {ref}`TWebGraph` which is used for walking.
-- `TRSMapLoader.Regions` an array of the available {ref}`TRSMapRegion` that were loaded.
-
-The best way to visualize most of these is to use the {ref}`Map Debugger`:
-
-Example:
-```pascal
-{$I WaspLib/osrs.simba}
-
-begin
-  Map.Setup([ERSChunk.VARROCK]);
-  MapDebugger.Setup(@Map.Loader);
-  MapDebugger.Show();
-end.
-```
-
-```{figure} ../../images/map_debugger.gif
-```
-
-```{note}
-This is an internal method. Usually, {ref}`TRSMap` `Load` methods will call this for you.
-```
-*)
-procedure TRSMapLoader.Load(chunks: TRSMapChunkArray; downscale: Integer = 8; padding: Integer = 40);
-begin
-  Self.Setup(downscale);
-  Self.Padding := padding;
-  Self.Add(chunks, downscale, padding);
-end;
-
-
-(*
 ## MapLoader.Add
 ```pascal
 procedure TRSMapLoader.Add(chunks: array of TRSMapChunk; downscale: UInt32 = 8; padding: UInt32 = 40);
@@ -595,16 +553,16 @@ var
 begin
   if Self.Downscale <> downscale then
     raise GetDebugLn('MapLoader', 'Cannot add chunks with different downscale value');
-  if Self.Padding <> padding then  
+  if Self.Padding <> padding then
     raise GetDebugLn('MapLoader', 'Cannot add chunks with different padding value');
 
   regionCount := Length(Self.Regions);
-  
+
   for chunk in chunks do
     for plane in chunk.Planes do
     begin
       for i := 0 to High(Self.Regions) do
-        if (Self.Regions[i].Plane = plane) and 
+        if (Self.Regions[i].Plane = plane) and
            (RSTranslator.Global2Chunk(Self.Regions[i].Original) = chunk.Chunk) then
           Continue(2);
 
@@ -626,11 +584,8 @@ begin
       maps += Self.GetMap(region.Chunks, plane, ERSMap.NORMAL);
       maps.Last.Pad(padding);
 
-      if plane = 0 then
-      begin
-        heightmaps += Self.GetMap(region.Chunks, 0, ERSMap.HEIGHT);
-        heightmaps.Last.Pad(padding);
-      end;
+      heightmaps += Self.GetMap(region.Chunks, 0, ERSMap.HEIGHT);
+      heightmaps.Last.Pad(padding);
 
       collisionmaps += Self.GetMap(region.Chunks, plane, ERSMap.COLLISION);
 
@@ -695,27 +650,27 @@ begin
     for i := 0 to regionCount - 1 do
     begin
       offset := Self.Regions[i].Region.TopLeft - oldRegions[i].TopLeft;
-      
+
       if offset <> [0, 0] then
       begin
         for j := 0 to High(Self.Graph.Nodes) do
           if Self.Graph.Nodes[j] in oldRegions[i] then
             Self.Graph.Nodes[j] := Self.Graph.Nodes[j] + offset;
-        
+
         for j := 0 to High(Self.Graph.WalkableSpace) do
           if Self.Graph.WalkableSpace[j] in oldRegions[i] then
             Self.Graph.WalkableSpace[j] := Self.Graph.WalkableSpace[j] + offset;
-        
+
         for j := 0 to High(Self.Graph.WalkableClusters) do
           for k := 0 to High(Self.Graph.WalkableClusters[j]) do
             if Self.Graph.WalkableClusters[j][k] in oldRegions[i] then
               Self.Graph.WalkableClusters[j][k] := Self.Graph.WalkableClusters[j][k] + offset;
-        
+
         for j := 0 to High(Self.Graph.ObjectClusters) do
           for k := 0 to High(Self.Graph.ObjectClusters[j]) do
             if Self.Graph.ObjectClusters[j][k] in oldRegions[i] then
               Self.Graph.ObjectClusters[j][k] := Self.Graph.ObjectClusters[j][k] + offset;
-        
+
         for j := 0 to High(Self.Graph.Doors) do
           if Self.Graph.Doors[j].Center in oldRegions[i] then
           begin
@@ -725,30 +680,30 @@ begin
           end;
       end;
     end;
-    
+
     for i := 0 to High(graphs) do
     begin
       offset := Self.Regions[regionCount + i].Region.TopLeft;
-      
+
       graphs[i].Nodes := graphs[i].Nodes.Offset(offset);
       graphs[i].WalkableSpace := graphs[i].WalkableSpace.Offset(offset);
-      
+
       for j := 0 to High(graphs[i].WalkableClusters) do
         graphs[i].WalkableClusters[j] := graphs[i].WalkableClusters[j].Offset(offset);
-      
+
       for j := 0 to High(graphs[i].ObjectClusters) do
         graphs[i].ObjectClusters[j] := graphs[i].ObjectClusters[j].Offset(offset);
-      
+
       for j := 0 to High(graphs[i].Doors) do
       begin
         graphs[i].Doors[j].Before := graphs[i].Doors[j].Before + offset;
         graphs[i].Doors[j].After := graphs[i].Doors[j].After + offset;
         graphs[i].Doors[j].Center := graphs[i].Doors[j].Center + offset;
       end;
-      
+
       Self.Graph.Merge(graphs[i]);
     end;
-    
+
     for i := 0 to High(Self.Graph.Doors) do
     begin
       Self.Graph.Doors[i].Before := RSTranslator.Normalize(Self.Graph.Doors[i].Before);
@@ -758,3 +713,43 @@ begin
 end;
 
 
+(*
+## MapLoader.Load
+```pascal
+procedure TRSMapLoader.Load(chunks: TRSMapChunkArray; downscale: Integer = 8; padding: Integer = 40);
+```
+Loads a map and sets the {ref}`TRSMapLoader` internal values, the most important
+ones being:
+- `TRSMapLoader.Map`, which will hold the image of your map.
+- `TRSMapLoader.Heightmap` which will hold your heightmap.
+- `TRSMapLoader.Collision` which will hold your collision map
+- `TRSMapLoader.DownscaledMap` which is an exact copy of `TRSMapLoader.Map` downscaled by the specified `downscale`.
+- `TRSMapLoader.Graph` which holds your {ref}`TWebGraph` which is used for walking.
+- `TRSMapLoader.Regions` an array of the available {ref}`TRSMapRegion` that were loaded.
+
+The best way to visualize most of these is to use the {ref}`Map Debugger`:
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+  MapDebugger.Setup(@Map.Loader);
+  MapDebugger.Show();
+end.
+```
+
+```{figure} ../../images/map_debugger.gif
+```
+
+```{note}
+This is an internal method. Usually, {ref}`TRSMap` `Load` methods will call this for you.
+```
+*)
+procedure TRSMapLoader.Load(chunks: TRSMapChunkArray; downscale: Integer = 8; padding: Integer = 40);
+begin
+  Self.Setup(downscale);
+  Self.Padding := padding;
+  Self.Add(chunks, downscale, padding);
+end;

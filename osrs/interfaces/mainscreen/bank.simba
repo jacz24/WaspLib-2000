@@ -1257,13 +1257,15 @@ function TRSBank.Open(walk: Boolean = True): Boolean;
 ```
 Opens the bank for you.
 This assumes that {ref}`Map` is being used and setup.
+
 It's possible to use this with other systems but you need to configure it all
 manually.
 
-It will always use the closest bank {ref}`TRSObject` or {ref}`TRSNPC` WaspLib
-is aware of on your loaded map.
+It will always use the closest bank {ref}`RSObject` or {ref}`RSNPC` WaspLib is
+aware of on your loaded map.
 
-If you are too far, it will attempt to walk closer to it.
+If you are too far, it will attempt to walk closer to it by default unless you
+set the `walk` parameter to `False`.
 
 Example:
 ```pascal
