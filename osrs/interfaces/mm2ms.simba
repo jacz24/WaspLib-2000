@@ -90,14 +90,28 @@ You will likely not need to use this directly and will only interact with the
 function TRSMM2MS.Run(arr: TVector3Array; roll: Single): TPointArray;
 var
   i: Integer;
+  normed: TVector3Array;
 begin
   Self.Projector.UpdateZoom(Options.GetZoomLevel(True));
   with Minimap.Center do
     for i := 0 to High(arr) do
-      arr[i] := [arr[i].X - X, Y - arr[i].Y, arr[i].Z];
+      normed += [arr[i].X - X, Y - arr[i].Y, arr[i].Z];
 
-  Result := Self.Projector.Run(arr, [0, 0, TAU - roll]);
+  Result := Self.Projector.Run(normed, [0, 0, TAU - roll]);
 end;
+
+function TRSMM2MS.InvertedRun(arr: TVector3Array): TPointArray;
+var
+  i: Integer;
+begin
+  Self.Projector.UpdateZoom(Options.GetZoomLevel(True));
+  Result := Self.Projector.InvertRun(arr, [0.0, 0.0, 0.0]);
+
+  with Minimap.Center do
+    for i := 0 to High(Result) do
+      Result[i] := [Result[i].X + X, Y - Result[i].Y];
+end;
+
 
 var
 (*
@@ -299,56 +313,14 @@ end;
 (*
 ## MainScreen.Point2MM
 ```pascal
-function TRSMainScreen.Point2MM(pt: TPoint; height: Integer; angle: Single; accuracy: Single = 0.2): TVector3;
+function TRSMainScreen.Point2MM(pt: TPoint; height: Integer; angle: Single): TVector3;
 ```
 Converts a mainscreen point `pt` to a minimap `TPoint` with the help of `MM2MS`.
 This is not an exact reversion of what `MM2MS` does but it's very accurate.
 *)
-function TRSMainScreen.Point2MM(pt: TPoint; height: Integer; angle: Single; accuracy: Single = 0.2): TVector3;
-  function FindNearest(Area, Step: Single; FromMM: TVector3; IsFinal: Boolean): TVector3;
-  var
-    i: Integer;
-    tpa: TPointArray;
-    arr, raw: TVector3Array;
-    best: TPoint;
-    x,y: single;
-  begin
-    best := Point(-9999, -9999);
-    x := FromMM.X-Area;
-    while x <= FromMM.X+Area do
-    begin
-      y := FromMM.Y-Area;
-      while y <= FromMM.Y+Area do
-      begin
-        raw += [[x,y,height]];
-        arr += raw[High(raw)].Rotate(-angle, Minimap.Center);
-        y += Step;
-      end;
-      x += Step;
-    end;
-
-    TPA := Minimap.Vectors2MS(Copy(arr), angle);
-    if not IsFinal then Swap(arr, raw);
-    for i:=0 to High(TPA) do
-      if Distance(TPA[i], pt) < Distance(best, pt) then
-      begin
-        best := TPA[i];
-        Result := arr[i];
-      end;
-    Result.z := Height;
-  end;
-
-var
-  area: Single;
+function TRSMainScreen.Point2MM(pt: TPoint; height: Single): TPoint;
 begin
-  area := 48;
-  Result := FindNearest(area, area, Minimap.Center.ToVec3(), False);
-  while area > accuracy do
-  begin
-    Result := FindNearest(area, area, Result, False);
-    area /= 2;
-  end;
-  Result := FindNearest(area, accuracy, Result, True);
+  Result := MM2MS.InvertedRun([[pt.X, pt.Y, height]])[0];
 end;
 
 
@@ -362,28 +334,36 @@ Returns a `TQuad` on the minimap of what's visible on the mainscreen at the curr
 
 Example:
 ```pascal
-while True do
+{$I WaspLib/osrs.simba}
+
 begin
-  Options.GetZoomLevel(False);
-  ShowOnTarget(Minimap.ZoomQuad);
-end;
+  while True do
+  begin
+    Options.GetZoomLevel(False);
+    ShowOnTarget(Minimap.ZoomQuad);
+  end;
+end.
+```
+
+```{figure} ../../images/zoomquad.gif
 ```
 *)
 property TRSMinimap.ZoomQuad: TQuad;
 var
-  angle: Single;
+  tpa: TPointArray;
 begin
   if MM2MS.ZoomQuads[Options.GetZoomLevel(True)] <> [] then
     Exit(MM2MS.ZoomQuads[Options.ZoomLevel]);
 
-  angle := Self.GetCompassAngle(False);
+  tpa := MM2MS.InvertedRun([
+           MainScreen.TopLeft.ToVec3(),
+           MainScreen.TopRight.ToVec3(),
+           MainScreen.BottomRight.ToVec3(),
+           MainScreen.BottomLeft.ToVec3()
+         ]);
 
-  Result := [
-    MainScreen.Point2MM(MainScreen.TopLeft, 0, angle).ToPoint(),
-    MainScreen.Point2MM(MainScreen.TopRight, 0, angle).ToPoint(),
-    MainScreen.Point2MM(MainScreen.BottomRight, 0, angle).ToPoint(),
-    MainScreen.Point2MM(MainScreen.BottomLeft, 0, angle).ToPoint()
-  ];
+  Result := [tpa[0],tpa[1],tpa[2],tpa[3]];
+
   MM2MS.ZoomQuads[Options.ZoomLevel] := Result;
 end;
 
@@ -485,7 +465,7 @@ Rotates the camera to face point `pt`.
 *)
 function TRSMainScreen.FacePoint(pt: TPoint; randomness: Integer = 0): Boolean;
 begin
-  Result := Minimap.FacePoint(Self.Point2MM(pt, 0, Minimap.GetCompassAngle(False)).ToPoint(), randomness);
+  Result := Minimap.FacePoint(Self.Point2MM(pt, 0.0), randomness);
 end;
 
 (*

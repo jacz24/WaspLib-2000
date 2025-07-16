@@ -584,6 +584,7 @@ begin
       maps += Self.GetMap(region.Chunks, plane, ERSMap.NORMAL);
       maps.Last.Pad(padding);
 
+      //heightmap are shared accross planes
       heightmaps += Self.GetMap(region.Chunks, 0, ERSMap.HEIGHT);
       heightmaps.Last.Pad(padding);
 

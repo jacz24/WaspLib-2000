@@ -1,6 +1,9 @@
 (*
 # MM2MS Projector
 Originally created by [slacky](https://slacky.one/).
+
+MM2MS inversion originally created by Bootie.
+
 This is basically the same thing with some pre-calculated math
 
 The MM2MS Projector is usually used through {ref}`MM2MS`, but can be used by
@@ -50,8 +53,8 @@ Main record responsible for {ref}`MM2MS` projection.
   TMM2MSProjector = record
     RSZoom: Single;
     ScaleMin, ScaleMax: Single;
-    ViewMatrix, ProjMatrix, WorldMatrix, TransMatrix: TMatrix4;
-    Transformer: record X, Y, Z: Double; end;
+    View, Projection, InvertedView, InvertedProjection: TMatrix4;
+    Transformer: TVector3;
 
     ViewEye, ViewTarget, ViewUp: TVector3;
   end;
@@ -174,16 +177,89 @@ const
     73
   ];
 
-procedure TMM2MSProjector.UpdateViewMatrix(mode: ERSMode; zoom: Integer);
+
+function TMM2MSProjector._InvertWorld(matrix: TMatrix4): TMatrix4;
+var
+  r11, r12, r13,
+  r21, r22, r23,
+  r31, r32, r33: Single;
+  tx, ty, tz: Single;
 begin
-  case mode of
-    ERSMode.FIXED: Self.ViewEye := [0, EYE_Y_FIXED[zoom], EYE_Z_FIXED[zoom]];
+  // Extract rotation 3×3
+  r11 := matrix.M11; r12 := matrix.M12; r13 := matrix.M13;
+  r21 := matrix.M21; r22 := matrix.M22; r23 := matrix.M23;
+  r31 := matrix.M31; r32 := matrix.M32; r33 := matrix.M33;
+  // Extract translation
+  tx := matrix.M41; ty := matrix.M42; tz := matrix.M43;
 
-    ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
-      Self.ViewEye := [0, EYE_Y_RESIZABLE[zoom], EYE_Z_RESIZABLE[zoom]];
-  end;
+  // Transpose rotation into the result’s upper‐left
+  Result.M11 := r11; Result.M12 := r21; Result.M13 := r31; Result.M14 := 0.0;
+  Result.M21 := r12; Result.M22 := r22; Result.M23 := r32; Result.M24 := 0.0;
+  Result.M31 := r13; Result.M32 := r23; Result.M33 := r33; Result.M34 := 0.0;
 
-  Self.ViewMatrix := TMatrix4.LookAtRH(Self.ViewEye, Self.ViewTarget, Self.ViewUp);
+  // Compute inverse translation = -R^T * T
+  Result.M41 := -(r11*tx + r21*ty + r31*tz);
+  Result.M42 := -(r12*tx + r22*ty + r32*tz);
+  Result.M43 := -(r13*tx + r23*ty + r33*tz);
+
+  // Bottom‐right stays 1
+  Result.M44 := 1;
+end;
+
+function TMM2MSProjector._InvertProjection(matrix: TMatrix4): TMatrix4;
+begin
+  // 1) undo X/Y scale
+  Result.M11 := 1.0 / matrix.M11;
+  Result.M22 := 1.0 / matrix.M22;
+
+  // 2) undo the z–w block:
+  Result.M33 := 0;
+  Result.M34 := 1.0 / matrix.M43;
+
+  Result.M43 := -1.0;
+  Result.M44 := matrix.M33 / matrix.M43;
+
+  Result.M12 := 0.0;
+  Result.M13 := 0.0;
+  Result.M14 := 0.0;
+  Result.M21 := 0.0;
+  Result.M23 := 0.0;
+  Result.M24 := 0.0;
+  Result.M31 := 0.0;
+  Result.M32 := 0.0;
+  Result.M41 := 0.0;
+  Result.M42 := 0.0;
+end;
+
+function TMM2MSProjector._InvertView(matrix: TMatrix4): TMatrix4;
+var
+  t1,t2,t3: Single;
+begin
+  t1 := matrix.M41;
+  t2 := matrix.M42;
+  t3 := matrix.M43;
+
+  //Transpose the 3×3 into the upper‐left of Result
+  Result.M11 := matrix.M11;
+  Result.M12 := matrix.M21;
+  Result.M13 := matrix.M31;
+  Result.M14 := 0.0;
+  Result.M21 := matrix.M12;
+  Result.M22 := matrix.M22;
+  Result.M23 := matrix.M32;
+  Result.M24 := 0.0;
+  Result.M31 := matrix.M13;
+  Result.M32 := matrix.M23;
+  Result.M33 := matrix.M33;
+  Result.M34 := 0.0;
+
+  // Compute inverse translation row:  -T * R^T
+  // T_inv.x = -(t1*r11 + t2*r21 + t3*r31), etc.
+  Result.M41 := -(t1*Result.M11 + t2*Result.M21 + t3*Result.M31);
+  Result.M42 := -(t1*Result.M12 + t2*Result.M22 + t3*Result.M32);
+  Result.M43 := -(t1*Result.M13 + t2*Result.M23 + t3*Result.M33);
+
+  Result.M44 := 1.0;
 end;
 
 
@@ -204,10 +280,26 @@ begin
   end;
 
   // fixed client width & height
-  Self.ProjMatrix := TMatrix4.PerspectiveFovRH(Sqrt(2), 765 / 503 * 1.03, 0.01, 1.0);
+  Self.Projection := TMatrix4.PerspectiveFovRH(Sqrt(2), 765 / 503 * 1.03, 0.01, 1.0);
+  Self.InvertedProjection := Self._InvertProjection(Self.Projection);
+
   Self.ViewTarget := [0.0, 0.0, 1.0];
   Self.ViewUp     := [0.0, 1.0, 0.0];
 end;
+
+procedure TMM2MSProjector.UpdateViewMatrix(mode: ERSMode; zoom: Integer);
+begin
+  case mode of
+    ERSMode.FIXED: Self.ViewEye := [0, EYE_Y_FIXED[zoom], EYE_Z_FIXED[zoom]];
+
+    ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
+      Self.ViewEye := [0, EYE_Y_RESIZABLE[zoom], EYE_Z_RESIZABLE[zoom]];
+  end;
+
+  Self.View := TMatrix4.LookAtRH(Self.ViewEye, Self.ViewTarget, Self.ViewUp);
+  Self.InvertedView := Self._InvertView(Self.View);
+end;
+
 
 procedure TMM2MSProjector.UpdateZoom(zoom: Integer);
 var
@@ -219,11 +311,13 @@ begin
   Self.RSZoom := ZOOM2RSZOOM[zoom];
 
   scale := Self.ScaleMin + Self.RSZoom * (Self.ScaleMax - Self.ScaleMin);
+
   Self.Transformer.X := 513 * scale;
   Self.Transformer.Y := 335 * scale;
   Self.Transformer.Z := MainScreen.Center.Y + (Self.RSZoom * 24);
   Self.UpdateViewMatrix(RSClient.Mode, zoom);
 end;
+
 
 function TMM2MSProjector.Transform(coord: TVector3; matrix: TMatrix4): TVector3;
 begin
@@ -233,6 +327,32 @@ begin
     Result.Y := (-Y * Self.Transformer.Y) + Self.Transformer.Z;
   end;
 end;
+
+function TMM2MSProjector.InvertedTransform(coord: TVector3; matrix: TMatrix4): TVector3;
+var
+  ndcX, ndcY, scale, yOff: Double;
+  nearNDC, farNDC, worldNear, worldFar: TVector3;
+  t: Double;
+begin
+  scale := Self.ScaleMin + Self.RSZoom * (Self.ScaleMax - Self.ScaleMin);
+  yOff  := Self.RSZoom * 24;
+
+  ndcX := (coord.X - MainScreen.Center.X) / (513 * scale);
+  ndcY := -(coord.Y - MainScreen.Center.Y - yOff) / (335 * scale);
+
+  nearNDC := [ndcX, ndcY, -1.0];
+  farNDC  := [ndcX, ndcY, +1.0];
+
+  worldNear := nearNDC.Transform(matrix);
+  worldFar := farNDC.Transform(matrix);
+
+  t := -worldNear.Z / (worldFar.Z - worldNear.Z);
+  Result.X := worldNear.X + (worldFar.X - worldNear.X) * t;
+  Result.Y := worldNear.Y + (worldFar.Y - worldNear.Y) * t;
+  Result.Z := 0.0;
+end;
+
+
 
 function TMM2MSProjector.Run(coords: TVector3Array; rotation: TVector3): TPointArray;
 const
@@ -244,21 +364,44 @@ const
   ];
 var
   i: Integer;
+  worldMatrix, transformMatrix: TMatrix4;
 begin
-  Self.WorldMatrix := TMatrix4.RotationYawPitchRoll(rotation.Y, rotation.X, rotation.Z) * MATRIX_IDENTITY;
-  Self.TransMatrix := Self.WorldMatrix * Self.ViewMatrix * Self.ProjMatrix;
-
-  SetLength(Result, Length(coords));
+  worldMatrix := TMatrix4.RotationYawPitchRoll(rotation.Y, rotation.X, rotation.Z) * MATRIX_IDENTITY;
+  transformMatrix := worldMatrix * Self.View * Self.Projection;
 
   for i := 0 to High(coords) do
-    with Self.Transform(coords[i], Self.TransMatrix) do
-    begin
-      Result[i].X := Round(X);
-      Result[i].Y := Round(Y);
-    end;
+    Result += Self.Transform(coords[i], transformMatrix).ToPoint();
 end;
 
 function TMM2MSProjector.Run(coord: TVector3; rotation: TVector3): TPoint; overload;
 begin
   Result := Self.Run([coord], rotation)[0];
+end;
+
+
+
+function TMM2MSProjector.InvertRun(coords: TVector3Array; rotation: TVector3): TPointArray;
+const
+  MATRIX_IDENTITY: TMatrix4 = [
+    1.0, 0.0, 0.0, 0.0,
+    0.0, 1.0, 0.0, 0.0,
+    0.0, 0.0, 1.0, 0.0,
+    0.0, 0.0, 0.0, 1.0
+  ];
+var
+  i: Integer;
+  world, transform, invWorld: TMatrix4;
+begin
+  world := TMatrix4.RotationYawPitchRoll(rotation.Y, rotation.X, rotation.Z) * MATRIX_IDENTITY;
+  invWorld := Self._InvertWorld(world);
+
+  transform := Self.InvertedProjection * Self.InvertedView * invWorld;
+
+  for i := 0 to High(coords) do
+    Result += Self.InvertedTransform(coords[i], transform).ToPoint();
+end;
+
+function TMM2MSProjector.InvertRun(coord: TVector3; rotation: TVector3): TPoint; overload;
+begin
+  Result := Self.InvertRun([coord], rotation)[0];
 end;

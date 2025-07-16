@@ -217,7 +217,7 @@ var
   cluster, skeleton, nodes, tpa: TPointArray;
   bounds: TBox;
   p, q: TPoint;
-  nodesTree: TSlackTree;
+  nodesTree: TKDPointTree;
   doors: TRSDoorArray;
   connectionMap: array of TIntegerMatrix;
   connectedDoors: array of record
@@ -303,7 +303,7 @@ begin
       connectedDoors[d].Before := True;
     end;
 
-    nodesTree := TSlackTree.Create(nodes);
+    nodesTree := TKDPointTree.Create(nodes);
 
     len := Length(Result.Nodes);
     SetLength(Result.Nodes, len + Length(nodes));

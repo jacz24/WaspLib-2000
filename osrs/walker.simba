@@ -67,7 +67,6 @@ via the {ref}`Walker.Setup` method.
 
     OnWalkEvent, OnWaitMovingEvent: TRSWalkerEvent;
 
-
     //Don't touch:
     _PathIndex: Integer;
     _Path: TPointArray;
@@ -853,8 +852,8 @@ begin
   // do the result check before randomness to avoid false error
   Result := index > previous;
 
-  // 15% chance of randomness else furthest
-  if Random() < 0.15 then
+  // 0.2% chance of randomness else furthest
+  if Biometrics.RandomBoolean(0.002) then
     index := Random(nearest, furthest);
 end;
 

@@ -145,7 +145,7 @@ type
     WalkableClusters, ObjectClusters: T2DPointArray;
 
     UseCollisionData: Boolean;
-    Tree: TSlackTree;
+    Tree: TKDPointTree;
   end;
 
 function TWebGraph.Copy(): TWebGraph;
@@ -280,7 +280,7 @@ var
   tpa: TPointArray;
 begin
   if Self.Tree.Size = 0 then
-    Self.Tree.Init(System.Copy(Self.Nodes));
+    Self.Tree := TKDPointTree.Create(System.Copy(Self.Nodes));
 
   tpa := Self.Tree.KNearest(p, amount);
 
@@ -302,7 +302,7 @@ end;
 function TWebGraph.FindNearestNodesEx(p: TPoint; amount: Integer): TPointArray;
 begin
   if Self.Tree.Size = 0 then
-    Self.Tree.Init(System.Copy(Self.Nodes));
+    Self.Tree := TKDPointTree.Create(System.Copy(Self.Nodes));
 
   Result := Self.Tree.KNearest(p, amount);
 end;
