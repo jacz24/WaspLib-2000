@@ -64,8 +64,7 @@ Main record responsible for minimap to mainscreen ({ref}`MM2MS`) conversion.
     ZoomQuads: array [0..100] of TQuad;
     PlayerBoxes: array [0..100] of TBox;
     {%codetools on}
-    Projector: TMM2MSProjector;
-    Normalizer: TMM2MSProjector;
+    Projector, Normalizer: TMM2MSProjector;
     const MAX_RENDER_DISTANCE: Integer = 80; //roughly 20 tiles
   end;
 
@@ -97,19 +96,20 @@ begin
     for i := 0 to High(arr) do
       normed += [arr[i].X - X, Y - arr[i].Y, arr[i].Z];
 
-  Result := Self.Projector.Run(normed, [0, 0, TAU - roll]);
+  Result := Self.Projector.Run(normed, [0, 0, TAU - roll]).ToPoints();
 end;
 
 function TRSMM2MS.InvertedRun(arr: TVector3Array): TPointArray;
 var
   i: Integer;
+  tmp: TVector2Array;
 begin
   Self.Projector.UpdateZoom(Options.GetZoomLevel(True));
-  Result := Self.Projector.InvertRun(arr, [0.0, 0.0, 0.0]);
+  tmp := Self.Projector.InvertRun(arr, [0.0, 0.0, 0.0]);
 
   with Minimap.Center do
     for i := 0 to High(Result) do
-      Result[i] := [Result[i].X + X, Y - Result[i].Y];
+      Result += [Round(Result[i].X) + X, Y - Round(Result[i].Y)];
 end;
 
 
@@ -471,69 +471,45 @@ end;
 (*
 ## MainScreen.NormalizeDistance
 ```pascal
-function TRSMainScreen.NormalizeDistance(dist: Integer; accuracy: Single = 1.05): Integer;
+function TRSMainScreen.NormalizeDistance(dist: Integer): Integer;
 ```
 Converts a distance acquired from the **fixed client* and **default zoom** to the
-current mainscreen.
+current mainscreen with help of {ref}`MM2MS`.
 
-Example:
+For example, say you want to create a box with the same size regardless of the
+zoom level:
 ```pascal
-// 20 pixels on the fixed client and default zoom(50) is currently x pixels at the current zoom & client size.
-WriteLn(MainScreen.TranslateDistance(20));
+{$I WaspLib/osrs.simba}
+
+var
+  b: TBox;
+  dist: Integer;
+begin
+  while True do
+  begin
+    Options.GetZoomLevel(False);
+    dist := MainScreen.NormalizeDistance(50);
+    b := TBox.Create(MainScreen.Center, dist, dist);
+    ShowOnTarget(b);
+  end;
+end.
+```
+
+It will look something like this:
+```{figure} ../../images/normalizedist.gif
 ```
 *)
-function TRSMainScreen.NormalizeDistance(dist: Integer; accuracy: Single = 1.05): Integer;
+function TRSMainScreen.NormalizeDistance(dist: Integer): Integer;
 var
-  Base: TPoint;
-
-  function _SearchUp(value: Single; target: Single; inc: Single): Single;
-  var
-    pt: TPoint;
-  begin
-    while True do
-    begin
-      pt := MM2MS.Normalizer.Run([value, 0, 0], [0, 0, 0]);
-      if BASE.DistanceTo(pt) > target then
-        Exit(value);
-
-      value *= inc;
-    end;
-  end;
-
-  function _SearchDown(value: Single; target: Single; dec: Single): Single;
-  var
-    pt: TPoint;
-  begin
-    while True do
-    begin
-      pt := MM2MS.Normalizer.Run([value, 0, 0], [0, 0, 0]);
-      if BASE.DistanceTo(pt) < target then
-        Exit(value);
-
-      value /= dec;
-    end;
-  end;
-
-var
-  lo, hi, mean: Single;
-  arr: TPointArray;
+  arr: TVector2Array;
 begin
   if dist = 0 then Exit;
+  MM2MS.Projector.UpdateZoom(Options.GetZoomLevel(True));
 
-  Base := MM2MS.Normalizer.Run([0, 0, 0], [0, 0, 0]);
-  hi := _SearchUp(0.1, dist, 1.50);
-  lo := _SearchDown(hi, dist, 1.50);
-
-  hi := _SearchUp(lo, dist, accuracy);
-  lo := _SearchDown(hi, dist, accuracy);
-  mean := lo + ((hi - lo) / 2);
-
-  with Minimap.Center do
-    arr := MM2MS.Run([[X,Y], [X+mean,Y]], 0);
-
-  Result := Round(arr[0].DistanceTo(arr[1]));
-
-  if Result < 1 then Result := 1;
+  with MainScreen.Center do
+    arr := MM2MS.Normalizer.InvertRun([[X,Y,0], [X,Y-dist,0]], [0,0,0]);
+  arr := MM2MS.Projector.Run([arr[0].ToVec3(0), arr[1].ToVec3(0)], [0,0,0]);
+  Result := Round(arr[0].Distance(arr[1]));
 end;
 
 
