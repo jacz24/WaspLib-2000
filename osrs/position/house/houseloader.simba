@@ -67,13 +67,18 @@ begin
     Self.SetColors(EHouseDecoration.WOOD);
     SetLength(Self.Rooms, Self.AMOUNT, Self.AMOUNT);
     SetLength(Self.TeleportRooms, Self.AMOUNT, Self.AMOUNT);
+
+
+    Self.Config.Data.AddString('Rooms', '');
+    Self.Config.Data.AddString('TeleportRooms', '');
+
     Self.DrawMap([EHouseRoom.GARDEN, 0, [EHouseObject.EXIT]], [Self.AMOUNT div 2, Self.AMOUNT div 2]);
 
-    Self.Config.Data.Item['EHouseObject'].AsInt     := Ord(High(EHouseObject));
-    Self.Config.Data.Item['EHouseTeleport'].AsInt   := Ord(High(EHouseTeleport));
-    Self.Config.Data.Item['Location'].AsInt         := Ord(Self.Location);
-    Self.Config.Data.Item['Decoration'].AsInt       := Ord(Self.Decoration);
-    Self.Config.Data.Item['TeleportMode'].AsInt     := 0;
+    Self.Config.Data.AddInt('EHouseObject', Ord(High(EHouseObject)));
+    Self.Config.Data.AddInt('EHouseTeleport', Ord(High(EHouseTeleport)));
+    Self.Config.Data.AddInt('Location', Ord(Self.Location));
+    Self.Config.Data.AddInt('Decoration', Ord(Self.Decoration));
+    Self.Config.Data.AddInt('TeleportMode', 0);
     Self.Config.SaveConfig();
     Exit;
   end;

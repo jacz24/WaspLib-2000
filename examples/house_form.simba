@@ -2,7 +2,6 @@
 var
   form: TScriptForm;
   tab: TLazTabSheet;
-  lbl: TLazLabel;
   combobox: TLazComboBox;
 begin
   form.Setup();
