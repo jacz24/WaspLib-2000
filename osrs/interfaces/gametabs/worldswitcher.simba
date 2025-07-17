@@ -111,12 +111,10 @@ begin
 end;
 
 
-{%codetools off}
 function TRSWorldSwitcher._IsOpen(): Boolean;
 begin
   Result := Target.HasColor($0C0E10, 3, 134, Self.Buttons[ERSWorldSwitcherButton.CLOSE].Bounds);
 end;
-{%codetools on}
 
 (*
 ## WorldSwitcher.IsOpen
