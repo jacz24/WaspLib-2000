@@ -102,14 +102,13 @@ end;
 function TRSMM2MS.InvertedRun(arr: TVector3Array): TPointArray;
 var
   i: Integer;
-  tmp: TVector2Array;
+  v: TVector2;
 begin
   Self.Projector.UpdateZoom(Options.GetZoomLevel(True));
-  tmp := Self.Projector.InvertRun(arr, [0.0, 0.0, 0.0]);
 
   with Minimap.Center do
-    for i := 0 to High(Result) do
-      Result += [Round(Result[i].X) + X, Y - Round(Result[i].Y)];
+    for v in Self.Projector.InvertRun(arr, [0.0, 0.0, 0.0]) do
+      Result += [Round(v.X) + X, Y - Round(v.Y)];
 end;
 
 
