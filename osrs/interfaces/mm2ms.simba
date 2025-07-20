@@ -101,7 +101,6 @@ end;
 
 function TRSMM2MS.InvertedRun(arr: TVector3Array): TPointArray;
 var
-  i: Integer;
   v: TVector2;
 begin
   Self.Projector.UpdateZoom(Options.GetZoomLevel(True));
