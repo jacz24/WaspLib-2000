@@ -1,4 +1,4 @@
-{$DEFINE WL_BASE_INCLUDED}
+{$DEFINE WL_LOGGER_INCLUDED}
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
 type
@@ -9,8 +9,6 @@ type
     Path: String;
     TimeRunning: TStopwatch;
     IsSetup: Boolean;
-    ReportNames: TStringArray;
-    ValuesGetter: function: TStringArray of Object;
   end;
 
 procedure TLogger._Setup();
@@ -49,10 +47,9 @@ begin
   Self.TimeRunning.Start();
 end;
 
-procedure TLogger.Setup(name: String = ''; reportNames: TStringArray = []);
+procedure TLogger.Setup(name: String = '');
 var
-  old, str: String;
-  i, len: Integer;
+  old: String;
 begin
   Self.Name := name;
   Self.IsSetup := name <> '';
@@ -74,22 +71,6 @@ begin
     if not FileCreate(Self.Path) then
       raise GetTimeStamp() + ':[Logger]: Failed to create log file: ' + PathExtractName(Self.Path);
   end;
-
-  Self.ReportNames := [];
-
-  for i := 0 to High(reportNames) do
-  begin
-    if len < Length(reportNames[i]) then
-      len := Length(reportNames[i]);
-  end;
-
-  len += 2;
-
-  for i := 0 to High(reportNames) do
-  begin
-    str := reportNames[i] + ': ';
-    Self.ReportNames += str.PadRight(len - Length(str), ' ');
-  end;
 end;
 
 procedure TLogger.AddLine(line: String);
@@ -100,38 +81,6 @@ end;
 function TLogger.GetTimeRunning(): String;
 begin
   Result := Self.TimeRunning.ElapsedFmt();
-end;
-
-
-function TLogger.GetReport(values: TStringArray): String;
-var
-  i, len: Integer;
-  half: Single;
-  str, lines, btm, header: String;
-begin
-  if Length(Self.ReportNames) <> Length(values) then
-    raise GetTimeStamp() + ':[Logger]: `TLogger.ReportNames` and `values` need to be the same length!';
-
-  for i := 0 to High(Self.ReportNames) do
-  begin
-    str := '║ ' + Self.ReportNames[i] + values[i] + ' ║';
-    if len < Length(str) then len := Length(str);
-    lines += str + LINE_SEP;
-  end;
-
-  btm := '╚' + '═' * (len-2) + '╝';
-
-  str := '🐝WaspScripts🐝';
-  half := (len - Length(str)-2)/2;
-
-  header := '╔' + '═' * Floor(half) +  str + '═' * Ceil(half) + '╗';
-
-  Result := header + LINE_SEP + lines + btm;
-end;
-
-procedure TLogger.Report();
-begin
-  WriteLn self.GetReport(self.ValuesGetter());
 end;
 
 var
@@ -168,16 +117,25 @@ begin
 end;
 
 
-procedure TLogger.Info(text: String; vars: array of Variant = []);
+procedure TLogger.Info(text: String; vars: TVariantArray = []);
 var
   formatted: String;
 begin
   formatted := Format(text, vars);
   Self.AddLine(Format('[Info] : %s', [formatted]));
+  WriteLn(GetDebugLn(Self.Name, formatted, True));
+end;
+
+procedure TLogger.Success(text: String; vars: TVariantArray = []);
+var
+  formatted: String;
+begin
+  formatted := Format(text, vars);
+  Self.AddLine(Format('[Success] : %s', [formatted]));
   WriteLn(GetDebugLn(Self.Name, formatted, ELogLevel.SUCCESS, True));
 end;
 
-procedure TLogger.Warn(text: String; vars: array of Variant = []);
+procedure TLogger.Warn(text: String; vars: TVariantArray = []);
 var
   formatted: String;
 begin
@@ -186,7 +144,7 @@ begin
   WriteLn(GetDebugLn(Self.Name, formatted, ELogLevel.WARN, True));
 end;
 
-procedure TLogger.Error(text: String; vars: array of Variant = []);
+procedure TLogger.Error(text: String; vars: TVariantArray = []);
 var
   formatted: String;
 begin
@@ -195,7 +153,7 @@ begin
   WriteLn(GetDebugLn(Self.Name, formatted, ELogLevel.ERROR, True));
 end;
 
-procedure TLogger.Exception(text: String; vars: array of Variant = []);
+procedure TLogger.Exception(text: String; vars: TVariantArray = []);
 var
   formatted: String;
 begin
