@@ -13,7 +13,6 @@ Progress report record for managing formatted table output with timing and print
 *)
 type
   TProgressReport = record
-    TimeRunning: TStopwatch;
     Headers: TStringArray;
     ValueProvider: function: TStringArray of Object;
     Title: String;
@@ -29,7 +28,6 @@ Sets up the progress report with title and column headers.
 *)
 procedure TProgressReport.Setup(title: String = 'ProgressReport'; headers: TStringArray = []; printInterval: Integer = ONE_MINUTE * 5);
 begin
-  Self.TimeRunning.Start();
   Self.Headers := headers;
   Self.Title := title;
   Self.PrintTimer.Start(printInterval);
