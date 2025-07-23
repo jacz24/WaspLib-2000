@@ -781,6 +781,10 @@ begin
 
   tpa += Self.Mask;
 
+  tpa += img.FindColor($0000FF, 0); //flag
+  tpa += img.FindColor($0456C6, 0); //idk ask slacky/olly
+  tpa += img.FindColor($11335D, 0); //idk ask slacky/olly
+
   img.DrawColor := $0;
   img.DrawTPA(tpa);
 
@@ -821,7 +825,7 @@ var
 begin
   if angle = $FFFF then angle := Self.GetCompassAngle(False);
   img := Target.GetImage(Self.Bounds);
-  img.ReplaceColor(0, 1);
+  img.ReplaceColor($0, $1);
   clean := Self.CleanImage(img);
   Result := clean.Rotate(EImageRotateAlgo.BILINEAR, angle, False);
 end;
