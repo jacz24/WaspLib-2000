@@ -50,7 +50,7 @@ Main record used to interact with the {ref}`Minimap`.
       Circle: TCircle;
     end;
 
-    Mask: TImage;
+    Mask: TPointArray;
 
     const DotIMGs: array [ERSMinimapDot] of TImage = [
       ImageFromString('IMG:AQAAAAIAAAACAAAAAAAAAFzsuAkAAAAACAAAAAAAAAAgAAAAAAAAAMBkSgABAAAAAAAAAAAAAAAgAAAAAAAAAOD7MgcAAAAArlsBAAEAAACQU1wAAAAAAJAcugYAAAAAtnayBgAAAACIHLoGAAAAAFzsuAkAAAAAXOy4CQAAAAAg/DIHAAAAAHBgAQABiVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAABnRSTlMAAAAAAABupgeRAAAAEUlEQVR4nGP4BwYMQPDmzRsARBgIuYq1W6UAAAAASUVORK5CYII='),
@@ -71,13 +71,16 @@ This is automatically called for you on the {ref}`Minimap variable`.
 *)
 procedure TRSMinimap.SetupInterface();
 var
+  img: TImage;
   tpa: TPointArray;
   i: Integer;
 begin
   case RSClient.Mode of
     ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
     begin
-      Self.Mask := new TImage(WLAssets.Images[3].Path);
+      img := new TImage(WLAssets.Images[3].Path);
+      Self.Mask := img.FindColor($0, 0).Invert().Grow(3).ExtractBox([0, 0, img.Width-1, img.Height-1]);
+
       with RSClient.Bounds do
       begin
         Self.Bounds.X1 := X2 - 157;
@@ -89,7 +92,9 @@ begin
 
     ERSMode.FIXED:
     begin
-      Self.Mask := new TImage(WLAssets.Images[2].Path);
+      img := new TImage(WLAssets.Images[2].Path);
+      Self.Mask := img.FindColor($0, 0).Invert().Grow(3).ExtractBox([0, 0, img.Width-1, img.Height-1]);
+
       with RSClient.Bounds do
       begin
         Self.Bounds.X1 := X2 - 194;
@@ -662,6 +667,17 @@ for pt in tpa do
 ShowOnTarget(boxes);
 ```
 *)
+function TRSMinimap._GetDots(img: TImage): TPointArray;
+var
+  dot: ERSMinimapDot;
+  tmp: TTarget;
+begin
+  tmp := new TTarget();
+  tmp.SetImage(img.Copy());
+  for dot in [ERSMinimapDot.PLAYER, ERSMinimapDot.NPC, ERSMinimapDot.ITEM] do
+    Result += tmp.FindImageEx(Self.DotIMGs[dot], 0, -1);
+end;
+
 function TRSMinimap.GetDots(dot: ERSMinimapDot; bounds: TBox): TPointArray;
 const
   COLORS: array [ERSMinimapDot] of array [0..1] of TColor = [
@@ -688,11 +704,11 @@ end;
 function TRSMinimap.GetDots(dots: ERSMinimapDots; bounds: TBox): TRSMinimapDotArray; overload;
 var
   dot: ERSMinimapDot;
-  angle: Single;
+  b: TBox;
 begin
-  angle := Self.GetCompassAngle(False);
+  b := bounds.Clip(Self.Polygon.Bounds());
   for dot in dots do
-    Result[dot] := Target.FindImageEx(Self.DotIMGs[dot], 0, -1, bounds.Clip(Self.Polygon.Bounds()));
+    Result[dot] := Target.FindImageEx(Self.DotIMGs[dot], 0, -1, b);
 end;
 
 function TRSMinimap.GetDots(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER, ERSMinimapDot.NPC, ERSMinimapDot.ITEM]): TRSMinimapDotArray; overload;
@@ -712,72 +728,69 @@ blended in.
 
 Example:
 ```pascal
-rawIMG := Target.GetImage(Minimap.Bounds);
-cleanIMG := Minimap.CleanImage(rawIMG);
-rawIMG.Free();
+{$I WaspLib/osrs.simba}
 
-cleanIMG.Show();
-cleanIMG.Free();
+var
+  before, after, combined: TImage;
+begin
+  before := Target.GetImage(Minimap.Bounds);
+  after := Minimap.CleanImage(before.Copy());
+
+  combined := new TImage(before.Width*2, before.Height);
+
+  combined.DrawImage(before, [0,0]);
+  combined.DrawImage(after, [before.Width+1, 0]);
+  combined.Show();
+end.
+```
+
+```{figure} ../../images/mm_clean.png
 ```
 *)
 function TRSMinimap.CleanImage(img: TImage): TImage;
 
-  procedure _Paint(p: TPoint);
-  var
-    area: TBox;
-    pixel: Integer;
-    x, y: Integer;
+  function _DotTPA(pt: TPoint): TPointArray;
   begin
-    area := TBox.Create(p.X - 2, p.Y - 2, p.X + 2, p.Y + 4);
-    area := area.Clip([0,0,img.Width-1, img.Height-1]);
-
-    for y := area.Y1 to area.Y2 do
-      for x := area.X1 to area.X2 do
-      begin
-        pixel := img.Pixel[x, y];
-
-        if SimilarColors($FFFFFF, pixel, 20) then
-          img.Pixel[x, y] := 0;
-
-        if SimilarColors($00FFFF, pixel, 20) then
-          img.Pixel[x, y] := 0;
-
-        if SimilarColors($0000FF, pixel, 20) then
-          img.Pixel[x, y] := 0;
-
-        if SimilarColors($000000, pixel, 5) then
-          img.Pixel[x, y] := 0;
-      end;
+    Result := [
+      pt.Offset(0,-1), pt.Offset(1,-1),
+      pt.Offset(-1,0), pt, pt.Offset(1,0), pt.Offset(2,0),
+      pt.Offset(-1,1), pt.Offset(0,1), pt.Offset(1,1), pt.Offset(2,1),
+      pt.Offset(0,2), pt.Offset(1,2)
+    ];
   end;
 
 var
-  dots: TRSMinimapDotArray;
-  dot: ERSMinimapDot;
-  topLeft, p: TPoint;
   tpa: TPointArray;
+  pt: TPoint;
 begin
-  topLeft := Self.Polygon.Bounds().TopLeft;
+  for pt in Self._GetDots(img) do
+    tpa += _DotTPA(pt);
 
-  dots := Self.GetDots();
-  for dot := ERSMinimapDot.PLAYER to ERSMinimapDot.ITEM do
-    for p in dots[dot] do
-      _Paint(p.Offset(-topLeft.X, -topLeft.Y));
-  _Paint(img.Center); // our own player
+  with img.Center do
+  begin
+    tpa += [X,Y];
+    tpa += [X-1,Y];
+    tpa += [X+1,Y];
+    tpa += [X,Y+1];
+    tpa += [X+1,Y+1];
+    tpa += [X-1,Y+1];
+    tpa += [X,Y-1];
+    tpa += [X-1,Y-1];
+    tpa += [X+1,Y-1];
+  end;
 
-  //idk what the heck is this 3 lines
-  img.ReplaceColor($0000FF, $0);
-  img.ReplaceColor($0456C6, $0);
-  img.ReplaceColor($11335D, $0);
+  tpa += Self.Mask;
 
   img.DrawColor := $0;
-  img.DrawImage(Self.Mask, [0,0]);
+  img.DrawTPA(tpa);
 
-  tpa := img.FindColor($0, 0) + img.FindColor($010000, 0);
+  tpa += img.FindColor($010000, 0);
   tpa := tpa.SortFrom(img.Center);
 
   Result := img.Blend(tpa, 32);
   Result.Pad(10);
 end;
+
 
 (*
 ## Minimap.GetCleanImage
@@ -789,9 +802,17 @@ The image returns is also rotated to 0º.
 
 Example:
 ```pascal
-img := Minimap.GetCleanImage();
-img.Show();
-img.Free();
+{$I WaspLib/osrs.simba}
+
+var
+  img: TImage;
+begin
+  img := Minimap.GetCleanImage();
+  img.Show();
+end.
+```
+
+```{figure} ../../images/mm_cleaned.png
 ```
 *)
 function TRSMinimap.GetCleanImage(angle: Single = $FFFF): TImage;
@@ -804,6 +825,7 @@ begin
   clean := Self.CleanImage(img);
   Result := clean.Rotate(EImageRotateAlgo.BILINEAR, angle, False);
 end;
+
 
 (*
 ## Minimap.ScaleMinimap
