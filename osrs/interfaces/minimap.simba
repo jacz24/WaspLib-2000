@@ -27,6 +27,8 @@ Enum representing the available minimap dots.
 ERSMinimapOrb  = enum(HITPOINTS, PRAYER, ENERGY, SPECIAL);
 ```
 Enum representing the 4 available minimap orbs.
+```{figure} ../../images/mmorbs.png
+```
 *)
   ERSMinimapOrb = enum(HITPOINTS, PRAYER, ENERGY, SPECIAL);
 
@@ -232,6 +234,10 @@ Credits: [slacky](https://slacky.one/)
 Example:
 ```pascal
 WriteLn Minimap.GetCompassAngle();
+```
+
+If you are not sure what the compass refers to, it refers to this:
+```{figure} ../../images/compass.png
 ```
 *)
 function TRSMinimap.GetCompassAngle(asDegrees: Boolean = True): Single;
@@ -659,12 +665,22 @@ Returns minimap dots found.
 You can specify which dots you want to look for in `dot` or `dots`.
 You can also optionalyl specify `bounds` to returns minimap dots from just a region of the minimap.
 
-Example:
+For example, this is how you can find NPC dots and debug them:
 ```pascal
-tpa := Minimap.GetDots(ERSMinimapDot.NPC);
-for pt in tpa do
-  boxes += TBox.Create(pt, 6, 6);
-ShowOnTarget(boxes);
+{$I WaspLib/osrs.simba}
+
+var
+  pt: TPoint;
+  boxes: TBoxArray;
+begin
+  for pt in Minimap.GetDots(ERSMinimapDot.NPC) do
+    boxes += TBox.Create(pt, 3, 3);
+  ShowOnTarget(boxes);
+end.
+```
+
+Your result should look something like this on the minimap:
+```{figure} ../../images/npcdots.png
 ```
 *)
 function TRSMinimap._GetDots(img: TImage): TPointArray;
@@ -722,9 +738,11 @@ end;
 ```pascal
 function TRSMinimap.CleanImage(img: TImage): TImage;
 ```
-Cleans a TImage of the minimap you pass into it.
-"Clean" means that minimap dots are removed and the colors around it will be
-blended in.
+Cleans a TImage of the {ref}`Minimap` you pass into it.
+"Clean" means that minimap dots, the running flag and a few other things are
+removed and the colors around it will be blended in.
+
+The image i
 
 Example:
 ```pascal
@@ -744,7 +762,7 @@ begin
 end.
 ```
 
-```{figure} ../../images/mm_clean.png
+```{figure} ../../images/mmclean.png
 ```
 *)
 function TRSMinimap.CleanImage(img: TImage; radius: Integer): TImage;
@@ -786,7 +804,7 @@ begin
   tpa += img.FindColor($010000, 0);
   tpa := tpa.SortFrom(img.Center);
 
-  Result := img.Blend(tpa, 8);
+  Result := img.Blend(tpa, 6);
 end;
 
 (*
@@ -794,22 +812,27 @@ end;
 ```pascal
 function TRSMinimap.GetCleanImage(angle: Single = $FFFF): TImage;
 ```
-Returns a clean TImage of the minimap. Read `Minimap.CleanImage()` for more information.
-The image returns is also rotated to 0º.
+Returns a clean `TImage` of the {ref}`Minimap`.
 
-Example:
+Read {ref}`Minimap.CleanImage` for more information.
+
+Unlike {ref}`Minimap.CleanImage`, the `TImage` returned is rotated to 0º as you
+can see in the following example:
 ```pascal
 {$I WaspLib/osrs.simba}
 
 var
   img: TImage;
 begin
-  img := Minimap.GetCleanImage();
-  img.Show();
+  while True do
+  begin
+    img := Minimap.GetCleanImage();
+    img.Show();
+  end;
 end.
 ```
 
-```{figure} ../../images/mm_cleaned.png
+```{figure} ../../images/mmcleaned.gif
 ```
 *)
 function TRSMinimap.GetCleanImage(angle: Single = $FFFF; radius: Integer = -1): TImage;
@@ -852,12 +875,24 @@ Scales down a minimap TImage passed in the `img` parameter.
 
 Example:
 ```pascal
-cleanIMG := TImage.GetCleanImage();
-scaledIMG := Minimap.ScaleMinimap(cleanIMG, 4);
-cleanIMG.Free();
+{$I WaspLib/osrs.simba}
 
-scaledIMG.Show();
-scaledIMG.Free();
+var
+  img, downscaled: TImage;
+begin
+  img := Minimap.GetCleanImage();
+  downscaled := Minimap.ScaleMinimap(img, 4);
+  downscaled.Show();
+end.
+```
+
+And this should be the result you see:
+```{figure} ../../images/mmdownscale.png
+```
+
+As you can see, it's pretty small, if we zoom it in 800% it should look
+something like this:
+```{figure} ../../images/mmdownscale2.png
 ```
 *)
 function TRSMinimap.ScaleMinimap(img: TImage; scaling: Integer; radius: Integer = -1): TImage;

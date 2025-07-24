@@ -105,6 +105,32 @@ begin
 end;
 
 
+procedure ShowOnTarget(circle: TCircle); overload;
+begin
+  ShowOnTarget(TPointArray.CreateFromCircle(circle.Center, circle.Radius, False));
+end;
+
+procedure TImage.DrawCircleArray(circleArray: TCircleArray); overload;
+var
+  i: Integer;
+  atpa: T2DPointArray;
+begin
+  for i := 0 to High(circleArray) do
+    atpa += TPointArray.CreateFromCircle(circleArray[i].Center, circleArray[i].Radius, False);
+  Self.DrawATPA(atpa);
+end;
+
+procedure ShowOnTarget(circleArray: TCircleArray); overload;
+var
+  i: Integer;
+  atpa: T2DPointArray;
+begin
+  for i := 0 to High(circleArray) do
+    atpa += TPointArray.CreateFromCircle(circleArray[i].Center, circleArray[i].Radius, False);
+  ShowOnTarget(atpa);
+end;
+
+
 type
   TCuboid = record
     Top, Bottom: TQuad;
