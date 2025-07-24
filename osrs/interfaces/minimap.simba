@@ -897,11 +897,9 @@ something like this:
 *)
 function TRSMinimap.ScaleMinimap(img: TImage; scaling: Integer; radius: Integer = -1): TImage;
 var
-  center: TPoint;
   tpa: TPointArray;
 begin
   Result := img.Copy();
-  center := Result.Center;
 
   if radius = -1 then
     case RSClient.Mode of
@@ -911,10 +909,10 @@ begin
         radius := 71;
     end;
 
-  Result.Crop(TBox.Create(center, radius, radius));
+  Result.Crop(TBox.Create(Result.Center, radius, radius));
   tpa := Result.FindColor($0, 0).SortFrom(Result.Center);
 
-  Result := result.Blend(tpa, 8);
+  Result := Result.Blend(tpa, 8);
   Result := Result.Downsample(scaling);
 
   Result.DrawColor := $0;

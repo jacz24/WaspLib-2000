@@ -272,7 +272,7 @@ const
   TEMPL_SIZE: Integer = 40;
   SCALE: Integer = 2;
 var
-  mapSlice, downscaledSlice, downscaledTemplate: TImage;
+  mapSlice, downscaledTemplate: TImage;
   matrix: TSingleMatrix;
   area: TBox;
   tpa: TPointArray;
@@ -292,6 +292,7 @@ begin
 
   tpa := downscaledTemplate.FindColor($0, 0);
   downscaledTemplate := downscaledTemplate.Blend(tpa, 10);
+
   matrix := MatchTemplate(mapSlice, downscaledTemplate, ETMFormula.TM_CCOEFF_NORMED);
 
   with matrix.ArgMax() do
