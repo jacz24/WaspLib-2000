@@ -183,7 +183,7 @@ begin
 
   for i := 0 to High(results) do
   begin
-    hit := Self.FullSearch(half, Self.HalfMap, results[i], SCALE, match);
+    hit := TRSImageMap.FullSearch(half, Self.HalfMap, results[i], SCALE, match);
 
     if match > Self.Similarity then
     begin
@@ -223,7 +223,7 @@ function TRSImageMap.DebugPosition(print: Boolean = True): TPoint;
   end;
 var
   x1, y1, x2, y2, x, y, i: Int32;
-  p, local: TPoint;
+  p: TPoint;
   img, map, cleanMinimap: TImage;
   time: Double;
   lines: TStringArray;
@@ -235,13 +235,13 @@ begin
 
   time   := PerformanceTime() - time;
 
-  x1 := Max(0, local.X - 200);
-  y1 := Max(0, local.Y - 200);
+  x1 := Max(0, Result.X - 200);
+  y1 := Max(0, Result.Y - 200);
   x2 := Min(x1 + 400, Self.Map.Width  - 1);
   y2 := Min(y1 + 400, Self.Map.Height - 1);
 
-  x := local.X - x1;
-  y := local.Y - y1;
+  x := Result.X - x1;
+  y := Result.Y - y1;
 
   lines := [
     'Position:',
@@ -258,15 +258,22 @@ begin
   map.DrawColor := $FFFFFF;
   map.DrawBox([x - 2, y - 2, x + 2, y + 2]);
 
-  cleanMinimap := Minimap.ScaleMinimap(Minimap.GetCleanImage(), 1);
+  cleanMinimap := Minimap.GetCleanImage();
   img := new TImage(700 + cleanMinimap.Width, 440);
   img.DrawImage(map, [10, 20]);
+
   with cleanMinimap.Center do
+  begin
     if RSClient.Mode = ERSMode.FIXED then
-      p := Point(X, Y).Offset(0, 8).Rotate(-Minimap.GetCompassAngle(False), [X,Y]);
+      p := Point(X, Y).Offset(0, 8).Rotate(-Minimap.GetCompassAngle(False), [X,Y])
+    else
+      p := Point(X, Y).Offset(2, 1).Rotate(-Minimap.GetCompassAngle(False), [X,Y]);
+  end;
 
   cleanMinimap.DrawColor := $FFFFFF;
-  cleanMinimap.DrawBoxFilled([p.X - 1, p.Y - 1, p.X + 1, p.Y + 1]);
+  cleanMinimap.DrawBox(TBox.Create(p, 1, 1));
+  cleanMinimap.DrawColor := $FF;
+  cleanMinimap.DrawCross(p, 4);
 
   {$IFDEF WINDOWS}
   img.FontName := 'Consolas';
