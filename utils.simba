@@ -25,8 +25,8 @@
 {$IFNDEF WL_STRINGS_INCLUDED}         {$INCLUDE_ONCE utils/strings.simba}
 {$IFNDEF WL_WASPCLIENT_INCLUDED}      {$INCLUDE_ONCE utils/waspclient.simba}
 {$IFNDEF WL_FORMUTILS_INCLUDED}       {$INCLUDE_ONCE utils/forms/formutils.simba}
-{$IFNDEF WL_SCRIPTFORM_INCLUDED}      {$INCLUDE_ONCE utils/forms/scriptform.simba}
 {$IFNDEF WL_DISCORD_INCLUDED}         {$INCLUDE_ONCE utils/discord.simba}
+{$IFNDEF WL_SCRIPTFORM_INCLUDED}      {$INCLUDE_ONCE utils/forms/scriptform.simba}
 
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
