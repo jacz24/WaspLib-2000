@@ -747,7 +747,7 @@ end.
 ```{figure} ../../images/mm_clean.png
 ```
 *)
-function TRSMinimap.CleanImage(img: TImage): TImage;
+function TRSMinimap.CleanImage(img: TImage; radius: Integer): TImage;
 
   function _DotTPA(pt: TPoint): TPointArray;
   begin
@@ -779,22 +779,15 @@ begin
     tpa += [X+1,Y-1];
   end;
 
-  tpa += Self.Mask;
-
   tpa += img.FindColor($0000FF, 0); //flag
   tpa += img.FindColor($0456C6, 0); //idk ask slacky/olly
   tpa += img.FindColor($11335D, 0); //idk ask slacky/olly
 
-  img.DrawColor := $0;
-  img.DrawTPA(tpa);
-
   tpa += img.FindColor($010000, 0);
   tpa := tpa.SortFrom(img.Center);
 
-  Result := img.Blend(tpa, 32);
-  Result.Pad(10);
+  Result := img.Blend(tpa, 8);
 end;
-
 
 (*
 ## Minimap.GetCleanImage
@@ -819,14 +812,33 @@ end.
 ```{figure} ../../images/mm_cleaned.png
 ```
 *)
-function TRSMinimap.GetCleanImage(angle: Single = $FFFF): TImage;
+function TRSMinimap.GetCleanImage(angle: Single = $FFFF; radius: Integer = -1): TImage;
 var
   img, clean: TImage;
+  center: TPoint;
 begin
   if angle = $FFFF then angle := Self.GetCompassAngle(False);
+
+  if radius = -1 then
+    case RSClient.Mode of
+      ERSMode.FIXED:
+        radius := 65;
+      ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
+        radius := 71;
+    end;
+
   img := Target.GetImage(Self.Bounds);
   img.ReplaceColor($0, $1);
-  clean := Self.CleanImage(img);
+  clean := Self.CleanImage(img, radius);
+
+  center := clean.Center;
+  if RSClient.Mode = ERSMode.FIXED then
+    center := center.Offset(0, -8)
+  else
+    center := center.Offset(-2, -1);
+
+  clean.Crop(TBox.Create(center, radius, radius));
+
   Result := clean.Rotate(EImageRotateAlgo.BILINEAR, angle, False);
 end;
 
@@ -848,25 +860,27 @@ scaledIMG.Show();
 scaledIMG.Free();
 ```
 *)
-function TRSMinimap.ScaleMinimap(img: TImage; scaling: Integer; radius: Integer = 67): TImage;
+function TRSMinimap.ScaleMinimap(img: TImage; scaling: Integer; radius: Integer = -1): TImage;
 var
   center: TPoint;
-  tmp, blend: TImage;
   tpa: TPointArray;
 begin
-  tmp := img.Copy();
+  Result := img.Copy();
+  center := Result.Center;
 
-  center := tmp.Center;
-  if RSClient.Mode = ERSMode.FIXED then
-    center := center.Offset(0, -8).Rotate(-Self.GetCompassAngle(False), center);
+  if radius = -1 then
+    case RSClient.Mode of
+      ERSMode.FIXED:
+        radius := 65;
+      ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
+        radius := 71;
+    end;
 
-  radius += 6;
+  Result.Crop(TBox.Create(center, radius, radius));
+  tpa := Result.FindColor($0, 0).SortFrom(Result.Center);
 
-  tmp.Crop(TBox.Create(center, radius, radius));
-  tpa := tmp.FindColor($0, 0).SortFrom(tmp.Center);
-
-  blend := tmp.Blend(tpa, 30);
-  Result := blend.Downsample(scaling);
+  Result := result.Blend(tpa, 8);
+  Result := Result.Downsample(scaling);
 
   Result.DrawColor := $0;
   Result.DrawCircleInverted(Result.Center, radius div scaling);

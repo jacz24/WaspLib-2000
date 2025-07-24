@@ -65,7 +65,7 @@ This is an internal type. Don't use it if you don't know what you are doing.
 *)
   TRSMapLoader = record
     Version: String;
-    Map, Heightmap, Collision, DownscaledMap: TImage;
+    Map, Heightmap, Collision, DownscaledMap, HalfMap: TImage;
     MapBox: TBox;
     Graph: TWebGraph;
     Regions: array of TRSMapRegion;
@@ -468,61 +468,6 @@ begin
   end;
 end;
 
-function TRSMapLoader._InternalLoad(imgs: TImageArray): TImage;
-var
-  i: Integer;
-begin
-  Result := new TImage(Self.MapBox.Width, Self.MapBox.Height);
-  for i := 0 to High(imgs) do
-    Result.DrawImage(imgs[i], Self.Regions[i].Region.TopLeft);
-end;
-
-function TRSMapLoader.InternalLoad(imgs: TImageArray): TImage;
-begin
-  Result := Self._InternalLoad(imgs);
-  //Self.DownscaledMap := TImage.Create();
-  Self.DownscaledMap := Result.Downsample(Self.Downscale);
-end;
-
-function TRSMapLoader.InternalGraphLoad(graphs: array of TWebGraph): TWebGraph;
-var
-  i, j: Integer;
-  graph: TWebGraph;
-  offset: TPoint;
-begin
-  for i := 0 to High(graphs) do
-  begin
-    graph := graphs[i].Copy();
-    offset := Self.Regions[i].Region.TopLeft;
-    
-    graph.Nodes := graph.Nodes.Offset(offset);
-    graph.WalkableSpace := graph.WalkableSpace.Offset(offset);
-
-    for j := 0 to High(graph.WalkableClusters) do
-      graph.WalkableClusters[j] := graph.WalkableClusters[j].Offset(offset);
-
-    for j := 0 to High(graph.ObjectClusters) do
-      graph.ObjectClusters[j] := graph.ObjectClusters[j].Offset(offset);
-
-    for j := 0 to High(graph.Doors) do
-    begin
-      graph.Doors[j].Before := graph.Doors[j].Before + offset;
-      graph.Doors[j].After := graph.Doors[j].After + offset;
-      graph.Doors[j].Center := graph.Doors[j].Center + offset;
-    end;
-    
-    Result.Merge(graph);
-  end;
-  
-  for i := 0 to High(Result.Doors) do
-  begin
-    Result.Doors[i].Before := RSTranslator.Normalize(Result.Doors[i].Before);
-    Result.Doors[i].After := RSTranslator.Normalize(Result.Doors[i].After);
-  end;
-
-  Result.UseCollisionData := Self.Graph.UseCollisionData;
-end;
-
 
 (*
 ## MapLoader.Add
@@ -644,6 +589,8 @@ begin
   if Length(heightmaps) > 0 then
     Self.Heightmap := newHeightmap;
   Self.Collision := newCollision;
+
+  Self.HalfMap := Self.Map.Downsample(2);
   Self.DownscaledMap := Self.Map.Downsample(Self.Downscale);
 
   if not WebGraphGenerator.Disabled then

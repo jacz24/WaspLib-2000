@@ -83,9 +83,9 @@ var
   b: TBox;
 begin
   if Self.Sample.Amount = 0 then Self.Sample.Amount := 4;
-  if Self.Sample.Radius = 0 then Self.Sample.Radius := 65;
+  if Self.Sample.Radius = 0 then Self.Sample.Radius := -1;
 
-  img := Minimap.GetCleanImage();
+  img := Minimap.GetCleanImage($FFFF, Self.Sample.Radius);
   sample := Minimap.ScaleMinimap(img, Self.Loader.Downscale, Self.Sample.Radius);
 
   Self.Cache.MatchTemplate := TMatchTemplateCache.Create(Self.Loader.DownscaledMap, sample, ETMFormula.TM_CCOEFF_NORMED);
@@ -220,6 +220,7 @@ var
 begin
   sample := Minimap.ScaleMinimap(img, Self.Loader.Downscale, Self.Sample.Radius);
   matrix := MatchTemplateMask(Self.Cache.MatchTemplate, sample.ToMatrix(), ETMFormula.TM_CCOEFF_NORMED);
+
   w := sample.Width div 2;
   h := sample.Height div 2;
 
@@ -252,6 +253,55 @@ begin
   end;
 end;
 
+(*
+## Map.FullSearch
+```pascal
+function TRSImageMap.FullSearch(template, map: TImage; position: TPoint; out match: Single): TPoint;
+```
+Internal TRSImageMap method used to get the player position.
+
+This is used by {ref}`ImageMap.Position` to determine how likely is the
+`position` passed in, our actual position.
+
+This likelyhood is returned with `match` which ranges from `0.0` to `1.0`.
+
+You probably won't ever need to call this directly.
+*)
+function TRSMap.FullSearch(template: TImage; position: TPoint; out match: Single): TPoint;
+const
+  TEMPL_SIZE: Integer = 40;
+  SCALE: Integer = 2;
+var
+  mapSlice, downscaledSlice, downscaledTemplate: TImage;
+  matrix: TSingleMatrix;
+  area: TBox;
+  tpa: TPointArray;
+begin
+  position.X := position.X div SCALE;
+  position.Y := position.Y div SCALE;
+
+  area := [
+    Max(0, position.X - TEMPL_SIZE),
+    Max(0, position.Y - TEMPL_SIZE),
+    Min(Self.Loader.HalfMap.Width  - 1, position.X + TEMPL_SIZE),
+    Min(Self.Loader.HalfMap.Height - 1, position.Y + TEMPL_SIZE)
+  ];
+
+  mapSlice := Self.Loader.HalfMap.Copy(area);
+  downscaledTemplate := Minimap.ScaleMinimap(template, SCALE, Self.Sample.Radius);
+
+  tpa := downscaledTemplate.FindColor($0, 0);
+  downscaledTemplate := downscaledTemplate.Blend(tpa, 10);
+  matrix := MatchTemplate(mapSlice, downscaledTemplate, ETMFormula.TM_CCOEFF_NORMED);
+
+  with matrix.ArgMax() do
+  begin
+    match := matrix[Y, X];
+    Result.X := (area.X1 + X) * SCALE;
+    Result.Y := (area.Y1 + Y) * SCALE;
+  end;
+end;
+
 
 (*
 ## Map.Position
@@ -273,19 +323,20 @@ var
   clean: TImage;
   tpa: TPointArray;
   i: Integer;
-  hit: TPoint;
-  match: Single;
+  hit, center: TPoint;
+  angle, match: Single;
 begin
   Self.RegionIndex := -1;
   Self.Region := [];
   Self.Similarity := 0;
 
-  clean := Minimap.GetCleanImage();
+  angle := Minimap.GetCompassAngle(False);
+  clean := Minimap.GetCleanImage(angle, Self.Sample.Radius);
   tpa := Self.ScaledSearch(clean);
 
   for i := 0 to High(tpa) do
   begin
-    hit := TRSImageMap.FullSearch(clean, Self.Loader.Map, tpa[i], match);
+    hit := Self.FullSearch(clean, tpa[i], match);
 
     if match > Self.Similarity then
     begin
@@ -293,6 +344,14 @@ begin
       Result := hit;
     end;
   end;
+
+  center := clean.Center;
+
+  if RSClient.Mode = ERSMode.FIXED then
+    center := center.Offset(0, 8).Rotate(-angle, center)
+  else
+    center := center.Offset(2, 1).Rotate(-angle, center);
+  Result := Result.Offset(center);
 
   Self.Cache.LocalPosition := Result;
 
@@ -438,15 +497,22 @@ begin
   map.DrawColor := $FFFFFF;
   map.DrawBox([x - 2, y - 2, x + 2, y + 2]);
 
-  cleanMinimap := Minimap.ScaleMinimap(Minimap.GetCleanImage(), 1);
+  cleanMinimap := Minimap.GetCleanImage();
   img := new TImage(700 + cleanMinimap.Width, 440);
   img.DrawImage(map, [10, 20]);
+
   with cleanMinimap.Center do
+  begin
     if RSClient.Mode = ERSMode.FIXED then
-      p := Point(X, Y).Offset(0, 8).Rotate(-Minimap.GetCompassAngle(False), [X,Y]);
+      p := Point(X, Y).Offset(0, 8).Rotate(-Minimap.GetCompassAngle(False), [X,Y])
+    else
+      p := Point(X, Y).Offset(2, 1).Rotate(-Minimap.GetCompassAngle(False), [X,Y]);
+  end;
 
   cleanMinimap.DrawColor := $FFFFFF;
-  cleanMinimap.DrawBoxFilled([p.X - 1, p.Y - 1, p.X + 1, p.Y + 1]);
+  cleanMinimap.DrawBox(TBox.Create(p, 1, 1));
+  cleanMinimap.DrawColor := $FF;
+  cleanMinimap.DrawCross(p, 4);
 
   {$IFDEF WINDOWS}
   img.FontName := 'Consolas';
