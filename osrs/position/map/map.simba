@@ -254,57 +254,6 @@ begin
 end;
 
 (*
-## Map.FullSearch
-```pascal
-function TRSImageMap.FullSearch(template, map: TImage; position: TPoint; out match: Single): TPoint;
-```
-Internal TRSImageMap method used to get the player position.
-
-This is used by {ref}`ImageMap.Position` to determine how likely is the
-`position` passed in, our actual position.
-
-This likelyhood is returned with `match` which ranges from `0.0` to `1.0`.
-
-You probably won't ever need to call this directly.
-*)
-function TRSMap.FullSearch(template: TImage; position: TPoint; out match: Single): TPoint;
-const
-  TEMPL_SIZE: Integer = 40;
-  SCALE: Integer = 2;
-var
-  mapSlice, downscaledTemplate: TImage;
-  matrix: TSingleMatrix;
-  area: TBox;
-  tpa: TPointArray;
-begin
-  position.X := position.X div SCALE;
-  position.Y := position.Y div SCALE;
-
-  area := [
-    Max(0, position.X - TEMPL_SIZE),
-    Max(0, position.Y - TEMPL_SIZE),
-    Min(Self.Loader.HalfMap.Width  - 1, position.X + TEMPL_SIZE),
-    Min(Self.Loader.HalfMap.Height - 1, position.Y + TEMPL_SIZE)
-  ];
-
-  mapSlice := Self.Loader.HalfMap.Copy(area);
-  downscaledTemplate := Minimap.ScaleMinimap(template, SCALE, Self.Sample.Radius);
-
-  tpa := downscaledTemplate.FindColor($0, 0);
-  downscaledTemplate := downscaledTemplate.Blend(tpa, 10);
-
-  matrix := MatchTemplate(mapSlice, downscaledTemplate, ETMFormula.TM_CCOEFF_NORMED);
-
-  with matrix.ArgMax() do
-  begin
-    match := matrix[Y, X];
-    Result.X := (area.X1 + X) * SCALE;
-    Result.Y := (area.Y1 + Y) * SCALE;
-  end;
-end;
-
-
-(*
 ## Map.Position
 ```pascal
 function TRSMap.Position(): TPoint;
@@ -320,9 +269,11 @@ WriteLn(Map.Similarity); // Check to see the match percentage if needed
 ```
 *)
 function TRSMap.Position(): TPoint;
+const
+  SCALE: Integer = 2;
 var
-  clean: TImage;
-  tpa: TPointArray;
+  clean, half: TImage;
+  results: TPointArray;
   i: Integer;
   hit, center: TPoint;
   angle, match: Single;
@@ -333,11 +284,14 @@ begin
 
   angle := Minimap.GetCompassAngle(False);
   clean := Minimap.GetCleanImage(angle, Self.Sample.Radius);
-  tpa := Self.ScaledSearch(clean);
+  results := Self.ScaledSearch(clean);
 
-  for i := 0 to High(tpa) do
+  half := Minimap.ScaleMinimap(clean, SCALE, Self.Sample.Radius);
+  half := half.Blend(half.FindColor($0, 0), 10);
+
+  for i := 0 to High(results) do
   begin
-    hit := Self.FullSearch(clean, tpa[i], match);
+    hit := TRSImageMap.FullSearch(half, Self.Loader.HalfMap, results[i], SCALE, match);
 
     if match > Self.Similarity then
     begin

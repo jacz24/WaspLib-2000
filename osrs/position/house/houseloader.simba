@@ -23,7 +23,7 @@ Helper record used by the {ref}`TRSHouse` to load and/or map a POH.
 *)
   THouseLoader = record
     Downscale, LayoutIndex: Integer;
-    Map, Collision, DownscaledMap: TImage;
+    Map, Collision, DownscaledMap, HalfMap: TImage;
 
     Rooms: THouseRoomMatrix;
 
@@ -108,6 +108,7 @@ begin
   Self.Map := new TImage(Self.SIZE * Self.AMOUNT, Self.SIZE * Self.AMOUNT);
   Self.SetupConfig();
   Self.DownscaledMap := new TImage();
+  Self.HalfMap := new TImage();
 end;
 
 procedure THouseLoader.Setup(downscale: Integer);
@@ -117,6 +118,7 @@ var
 begin
   Self.Downscale := downscale;
   Self.DownscaledMap := Self.Map.Downsample(Self.Downscale);
+  Self.HalfMap := Self.Map.Downsample(2);
 
   walls := Self.Map.FindColor($EEEEEE, 0);
   windows := Self.Map.FindColor($0000EE, 0);

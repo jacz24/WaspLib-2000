@@ -234,21 +234,27 @@ WriteLn(House.Similarity); // Check to see the match percentage if needed
 ```
 *)
 function TRSHouse.Position(): TPoint;
+const
+  SCALE: Integer = 2;
 var
-  cleanMinimap: TImage;
-  tpa: TPointArray;
+  clean, half: TImage;
+  results: TPointArray;
   i: Integer;
-  hit: TPoint;
-  match: Single;
+  hit, center: TPoint;
+  angle, match: Single;
 begin
   Self.Similarity := 0;
 
-  cleanMinimap := Minimap.GetCleanImage();
+  angle := Minimap.GetCompassAngle(False);
+  clean := Minimap.GetCleanImage(angle, Self.Sample.Radius);
+  results := Self.ScaledSearch(clean);
 
-  tpa := Self.ScaledSearch(cleanMinimap);
-  for i := 0 to High(tpa) do
+  half := Minimap.ScaleMinimap(clean, SCALE, Self.Sample.Radius);
+  half := half.Blend(half.FindColor($0, 0), 10);
+
+  for i := 0 to High(results) do
   begin
-    hit := TRSImageMap.FullSearch(cleanMinimap, Self.Loader.Map, tpa[i], match);
+    hit := TRSImageMap.FullSearch(half, Self.Loader.HalfMap, results[i], SCALE, match);
 
     if match > Self.Similarity then
     begin
@@ -257,6 +263,14 @@ begin
     end;
   end;
 
+  center := clean.Center;
+
+  if RSClient.Mode = ERSMode.FIXED then
+    center := center.Offset(0, 8).Rotate(-angle, center)
+  else
+    center := center.Offset(2, 1).Rotate(-angle, center);
+
+  Result := Result.Offset(center);
   Result := RSTranslator.Normalize(Result);
 end;
 

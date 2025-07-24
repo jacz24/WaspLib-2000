@@ -27,7 +27,7 @@ Record used to customize the sample retrieved from the minimap for TRSMap.
 Record responsible for positioning.
 *)
   TRSImageMap = record
-    Map, DownscaledMap: TImage;
+    Map, HalfMap, DownscaledMap: TImage;
 
     Walker: TRSWalker;
     Similarity: Single;
@@ -56,6 +56,7 @@ begin
   Self.Downscale := downscale;
 
   Self.Map := new TImage(path);
+  Self.HalfMap := Self.Map.Downsample(2);
   Self.DownscaledMap := Self.Map.Downsample(Self.Downscale);
 
   img := Minimap.GetCleanImage();
@@ -105,7 +106,7 @@ begin
 end;
 
 (*
-## Map.FullSearch
+## ImageMap.FullSearch
 ```pascal
 function TRSImageMap.FullSearch(template, map: TImage; position: TPoint; out match: Single): TPoint;
 ```
@@ -118,36 +119,35 @@ This likelyhood is returned with `match` which ranges from `0.0` to `1.0`.
 
 You probably won't ever need to call this directly.
 *)
-function TRSImageMap.FullSearch(template, map: TImage; position: TPoint; out match: Single): TPoint; static;
+function TRSImageMap.FullSearch(template, map: TImage; position: TPoint; scale: UInt32; out match: Single): TPoint; static;
 const
-  TEMPL_SIZE = 25;
-  SLICE_SIZE = TEMPL_SIZE + 45;
-  SCALING = 2;
+  TEMPL_SIZE: Integer = 40;
 var
-  slice, downscaledSlice, downscaledTemplate: TImage;
+  slice: TImage;
   matrix: TSingleMatrix;
   area: TBox;
 begin
+  position.X := position.X div scale;
+  position.Y := position.Y div scale;
+
   area := [
-    Max(0, position.X - SLICE_SIZE),
-    Max(0, position.Y - SLICE_SIZE),
-    Min(map.Width  - 1, position.X + SLICE_SIZE),
-    Min(map.Height - 1, position.Y + SLICE_SIZE)
+    Max(0, position.X - TEMPL_SIZE),
+    Max(0, position.Y - TEMPL_SIZE),
+    Min(map.Width  - 1, position.X + TEMPL_SIZE),
+    Min(map.Height - 1, position.Y + TEMPL_SIZE)
   ];
 
   slice := map.Copy(area);
-  downscaledSlice := slice.Downsample(SCALING);
-  downscaledTemplate := template.Downsample(SCALING);
-  downscaledTemplate.Crop(TBox.Create(downscaledTemplate.Center, TEMPL_SIZE, TEMPL_SIZE));
+  matrix := MatchTemplate(slice, template, ETMFormula.TM_CCOEFF_NORMED);
 
-  matrix := MatchTemplate(downscaledSlice, downscaledTemplate, ETMFormula.TM_CCOEFF_NORMED);
   with matrix.ArgMax() do
   begin
     match := matrix[Y, X];
-    Result.X := area.X1 + (X + TEMPL_SIZE) * SCALING;
-    Result.Y := area.Y1 + (Y + TEMPL_SIZE) * SCALING;
+    Result.X := (area.X1 + X) * scale;
+    Result.Y := (area.Y1 + Y) * scale;
   end;
 end;
+
 
 (*
 ## ImageMap.Position
@@ -163,21 +163,27 @@ WriteLn(ImageMap.Similarity); // Check to see the match percentage if needed
 ```
 *)
 function TRSImageMap.Position(): TPoint;
+const
+  SCALE: Integer = 2;
 var
-  clean: TImage;
-  tpa: TPointArray;
+  clean, half: TImage;
+  results: TPointArray;
   i: Integer;
-  hit: TPoint;
-  match: Single;
+  hit, center: TPoint;
+  angle, match: Single;
 begin
   Self.Similarity := 0;
 
-  clean := Minimap.GetCleanImage();
-  tpa := Self.ScaledSearch(clean);
+  angle := Minimap.GetCompassAngle(False);
+  clean := Minimap.GetCleanImage(angle, Self.Sample.Radius);
+  results := Self.ScaledSearch(clean);
 
-  for i := 0 to High(tpa) do
+  half := Minimap.ScaleMinimap(clean, SCALE, Self.Sample.Radius);
+  half := half.Blend(half.FindColor($0, 0), 10);
+
+  for i := 0 to High(results) do
   begin
-    hit := Self.FullSearch(clean, Self.Map, tpa[i], match);
+    hit := Self.FullSearch(half, Self.HalfMap, results[i], SCALE, match);
 
     if match > Self.Similarity then
     begin
@@ -185,6 +191,15 @@ begin
       Result := hit;
     end;
   end;
+
+  center := clean.Center;
+
+  if RSClient.Mode = ERSMode.FIXED then
+    center := center.Offset(0, 8).Rotate(-angle, center)
+  else
+    center := center.Offset(2, 1).Rotate(-angle, center);
+
+  Result := Result.Offset(center);
 end;
 
 (*
