@@ -325,7 +325,7 @@ begin
 
   Self.Config.Setup(Path);
   Self.HTTPClient := new THTTPClient;
-  Self.Logger.Setup(Self.Name, False, False);
+  Self.Logger.Setup(Self.Name);
 
   // Load webhook URL from config
   if Self.Config.Data.Has('webhook_url') then
@@ -389,7 +389,7 @@ begin
 
   // Basic pattern validation for Discord webhook URLs
   if not (Pos('https://', WebhookURL) = 1) or
-         not (Pos('.discord.com/api/webhooks/', WebhookURL) > 0) then
+         not (Pos('discord.com/api/webhooks/', WebhookURL) > 0) then
   begin
     Self.LastError := 'Invalid webhook URL format: ' + WebhookURL;
     Self.Logger.Warn('Webhook URL does not match Discord pattern');
