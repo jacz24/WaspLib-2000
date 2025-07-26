@@ -12,18 +12,59 @@ Responsible for connecting to waspscripts.com database.
 *)
 type
   TWaspClient = record
+    Script: record
+      ID: String;
+      Revision: UInt32;
+    end;
+
+    Client: THTTPClient;
     Server, APIKey, Schema: String;
 
     User: record
       ID: String;
       Username: String;
-      AccessToken: String;
       RefreshToken: String;
     end;
 
-    Config: TConfigJSON;
     IsSetup: Boolean;
   end;
+
+
+procedure TWaspClient.Free();
+begin
+  if not Self.IsSetup then Exit;
+  Async.ScheduleStop('WaspClient-RefreshToken');
+  Self.IsSetup := False;
+end;
+
+procedure TWaspClient.Login();
+var
+  payload, response: String;
+  json: TJSONParser;
+begin
+  payload := '{"refresh_token": "' + Self.User.RefreshToken + '"}';
+
+  response := Self.Client.Post(
+    Self.Server + 'auth/v1/token?grant_type=refresh_token', payload
+  );
+
+  if Self.Client.ResponseStatus <> EHTTPStatus.OK then
+  begin
+    Self.Free();
+    Exit;
+  end;
+
+  json := new TJSONParser();
+  json.Parse(response);
+
+  Self.Client.RequestHeader['Authorization'] := 'Bearer ' + json.Item['access_token'].AsString;
+  Self.User.RefreshToken := json.Item['refresh_token'].AsString;
+  with json.Item['user'] do
+  begin
+    Self.User.ID := Item['id'].AsString;
+    Self.User.Username := Item['user_metadata'].Item['custom_claims'].Item['global_name'].AsString;
+  end;
+end;
 
 procedure TWaspClient.Setup(constref result: TASyncHTTPResult);
 var
@@ -31,18 +72,66 @@ var
 begin
   if result.Response <> EHTTPStatus.OK then
   begin
-    WriteLn GetDebugLn('WaspClient', 'Failed to connect to https://api.waspscripts.com/ to get the database connection info.', ELogLevel.WARN);
-    Exit;
+    WriteLn GetDebugLn('WaspClient', 'Failed to connect to https://api.waspscripts.dev/ to get the database connection info. Falling back to default settings.', ELogLevel.WARN);
+    Self.Server := 'https://db.waspscripts.dev/';
+    Self.APIKey := 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc1MTA0MTIwMCwiZXhwIjo0OTA2NzE0ODAwLCJyb2xlIjoiYW5vbiJ9.C_KW5x45BpIyOQrnZc7CKYKjHe0yxB4l-fTSC4z_kYY';
   end;
 
   json := new TJSONParser();
   json.Parse(result.Data);
+
   if not json.GetString('url', Self.Server) then Exit;
   if not json.GetString('anon_key', Self.APIKey) then Exit;
-
   if not Self.Server.EndsWith('/') then Self.Server += '/';
 
+  Self.Client := new THTTPClient();
+  Self.Client.RequestHeader['Content-Type'] := 'application/json';
+  Self.Client.RequestHeader['apikey'] := Self.APIKey;
+
+  {$IFDEF WS_REFRESH_TOKEN}
+    Self.User.RefreshToken := {$MACRO WS_REFRESH_TOKEN};
+  {$ELSE}
+    Self.User.RefreshToken := GetProcessArg('ws_refresh_token');
+  {$ENDIF}
+
+  {$IFDEF SCRIPT_ID}
+    Self.Script.ID := {$MACRO SCRIPT_ID};
+  {$ELSE}
+    Self.Script.ID := GetProcessArg('script_id');
+  {$ENDIF}
+
+  {$IFDEF SCRIPT_REVISION}
+    Self.Script.Revision := StrToInt({$MACRO SCRIPT_REVISION}, 0);
+  {$ELSE}
+    Self.Script.Revision := StrToInt(GetProcessArg('script_revision'));
+  {$ENDIF}
+
+  if Self.User.RefreshToken = '' then Exit;
+
+  Async.ScheduleEvery('WaspClient-RefreshToken', @Self.Login, 5 * ONE_MINUTE);
   Self.IsSetup := True;
+  AddOnTerminate(@Self.Free);
+end;
+
+procedure TWaspClient.SetSchema(schema: String = 'public');
+begin
+  if schema = 'public' then
+    Self.Client.RequestHeader['Accept-Profile'] := ''
+  else
+    Self.Client.RequestHeader['Accept-Profile'] := schema;
+end;
+
+function TWaspClient.CheckScriptAccess(): Boolean;
+var
+  url: String;
+begin
+  if not Self.Script.ID.IsUUID() then
+    Exit;
+
+  url := Self.Server + 'storage/v1/object/authenticated/scripts/' +
+         Self.Script.ID + '/000000001/script.simba';
+
+  Result := Self.Client.Head(url) = EHTTPStatus.OK;
 end;
 
 var

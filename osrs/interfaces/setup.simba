@@ -113,7 +113,7 @@ begin
   WLAssets.Setup();
   WLAssets.Update();
 
-  Async.HTTPGet('https://api.waspscripts.com/', @WaspClient.Setup, nil);
+  Async.HTTPGet('https://api.waspscripts.dev/', @WaspClient.Setup, nil);
   Target.AddEvent(ETargetEvent.TARGET_RESIZE, @TargetResized);
   FormUtils.Setup();
   RSFonts.Setup();
