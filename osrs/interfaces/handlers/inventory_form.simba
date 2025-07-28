@@ -170,7 +170,7 @@ begin
     else
       bg.DrawColor := $00FFFF;
     bg.DrawAlpha := $7D;
-    bg.DrawBox(Self.DPISlots[slot]);
+    bg.DrawBox(Self.SlotBoxes[slot]);
     bg.DrawAlpha := $FF;
   end;
 
