@@ -451,7 +451,7 @@ end;
 
 function TRSMinimap.RunEnabled(): Boolean;
 begin
-  Result := Target.HasColor(ColorTolerance($58B1CB, 4.504, EColorSpace.HSV, [1.869, 0.609, 0.524]), 1, Self.Orbs[ERSMinimapOrb.ENERGY].Circle.Bounds);
+  Result := Target.HasColor(ColorTolerance($0E567F, 8.845, EColorSpace.HSV, [1.295, 1.247, 0.459]), 1, Self.Orbs[ERSMinimapOrb.ENERGY].Circle.Bounds);
 end;
 
 function TRSMinimap.HasStamina(): Boolean;
