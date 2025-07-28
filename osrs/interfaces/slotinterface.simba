@@ -622,6 +622,7 @@ end;
 function TRSSlotInterface.Interact(slot: Integer; option: String = ''): Boolean;
 ```
 Interacts with `slot` if it has an item, with the specified `option`.
+
 If `option` is empty or if `option` is the default {ref}`UpText` for the item
 this will simply left click it.
 
