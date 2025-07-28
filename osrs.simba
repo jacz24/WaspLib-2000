@@ -26,6 +26,7 @@ Add them **before** including the library to use them.
 They should be self-explanatory.
 *)
 
+{$INCLUDE_ONCE version.simba}
 {$INCLUDE_ONCE utils.simba}
 
 {

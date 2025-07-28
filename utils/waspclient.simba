@@ -88,8 +88,8 @@ begin
   Self.Client.RequestHeader['Content-Type'] := 'application/json';
   Self.Client.RequestHeader['apikey'] := Self.APIKey;
 
-  {$IFDEF WS_REFRESH_TOKEN}
-    Self.User.RefreshToken := {$MACRO WS_REFRESH_TOKEN};
+  {$IFDEF WASP_REFRESH_TOKEN}
+    Self.User.RefreshToken := {$MACRO WASP_REFRESH_TOKEN};
   {$ELSE}
     Self.User.RefreshToken := GetEnvVar('WASP_REFRESH_TOKEN');
   {$ENDIF}
