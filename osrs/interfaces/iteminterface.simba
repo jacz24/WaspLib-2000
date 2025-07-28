@@ -1,12 +1,50 @@
 (*
 # ItemInterface
 Methods to interact item interfaces.
+
+"Item interfaces" in WaspLib refers to any interface that is an item
+container.
+
+In other words, if an interface has holds items, it's both a
+{ref}`SlotInterface` and {ref}`ItemInterface`.
+
+Examples of "item containers" are:
+- {ref}`Inventory`
+- {ref}`Equipment`
+- {ref}`Bank`
+- {ref}`DepositBox`
+- {ref}`CollectBox`
+
+Just because an interface is an "item container", does not mean it uses
+{ref}`ItemInterface`, but all the examples above do and you can access it
+through their `Items` variable, for example:
+```pascal
+Inventory.Items;
+Equipment.Items;
+Bank.Items;
+```
+
+```{note}
+Throughout this page examples, {ref}`Inventory` will be used in most of them
+but any interface that has a {ref}`TRSItemInterface` variable can used
+instead.
+```
 *)
+
 
 {$DEFINE WL_ITEM_INTERFACE_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
+(*
+## TRSItemInterface
+Main record to handle a {ref}`ItemInterface`.
+
+```{note}
+Throughout this page `Items` will always refer to a `TRSItemInterface` variable
+unless specified otherwise.
+```
+*)
   TRSItemInterface = record
     Name: String;
     Slots: ^TRSSlotInterface;
@@ -14,6 +52,36 @@ type
     CheckFunction: function (): Boolean of object;
   end;
 
+(*
+## Items.Setup
+```pascal
+procedure TRSItemInterface.Setup(name: String; slots: ^TRSSlotInterface; discoverOffset: TPoint; checkFunc: function (): Boolean of object = nil);
+```
+Setup method of the {ref}`ItemInterface`.
+
+All interfaces included in WaspLib that use a {ref}`ItemInterface` already call
+this automatically for you.
+
+Unless you create your own, you don't need to use it.
+
+To setup a `TRSItemInterface`, your interface also needs a
+{ref}`TRSSlotInterface` and you need to pass a pointer to it through this.
+
+`checkFunc` should a function to check if the interface is open.
+This is optional but recommended as it will avoid your scripts do actions by
+accident if the interface is not open in the first place for some reason.
+
+For example, this is how {ref}`Inventory` and {ref}`Bank` setup their
+`TRSItemInterface`:
+```pascal
+//Inventory:
+Inventory.Slots.Setup('Inventory.Slots', TBoxArray.Create(GameTab.TopLeft.Offset(13,9), 4, 7, 31, 31, [11, 5]));
+Inventory.Items.Setup('Inventory.Items', @Inventory.Slots, [0, 0], @Inventory.Open);
+//Bank:
+Bank.Slots.Setup('Bank.Slots', Bank.SlotBoxes, @Bank.FindItemBoundaries);
+Bank.Items.Setup('Bank.Items', @Bank.Slots, [0, 1], @Bank.IsOpen);
+```
+*)
 procedure TRSItemInterface.Setup(name: String; slots: ^TRSSlotInterface; discoverOffset: TPoint; checkFunc: function (): Boolean of object = nil);
 begin
   Self.Name := name;
@@ -22,6 +90,22 @@ begin
   Self.CheckFunction := @checkFunc;
 end;
 
+
+(*
+## Items.IndexOf
+```pascal
+function TRSItemInterface.IndexOf(items: TRSItemArray): Integer;
+```
+Returns the index of the first item found in `items`.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+begin
+  WriteLn Inventory.Items.IndexOf(['abyssal whip', 'dragon scimitar']);
+end.
+```
+*)
 function TRSItemInterface.IndexOf(items: TRSItemArray): Integer;
 var
   match: TImageMatch;
@@ -33,6 +117,22 @@ begin
   Result := -1;
 end;
 
+
+(*
+## Items.IndicesOf
+```pascal
+function TRSItemInterface.IndicesOf(items: TRSItemArray): TIntegerArray;
+```
+Returns all the indices of the `items` found in the `TRSItemInterface`.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+begin
+  WriteLn Inventory.Items.IndicesOf(['abyssal whip', 'dragon scimitar']);
+end.
+```
+*)
 function TRSItemInterface.IndicesOf(items: TRSItemArray): TIntegerArray;
 var
   match: TImageMatch;
@@ -45,7 +145,28 @@ begin
 end;
 
 
-function TRSItemInterface.FindAny(items: TRSItemArray; out slot: TBox): Boolean; overload;
+(*
+## Items.FindAny
+```pascal
+function TRSItemInterface.FindAny(items: TRSItemArray; out slot: TBox): Boolean;
+```
+Returns a True/False if any item in `items` was found and returns it's `TBox`
+through `slot`.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  bounds: TBox;
+begin
+  if Inventory.Items.FindAny(['abyssal whip', 'cake'], bounds) then
+    ShowOnTarget(bounds);
+end.
+```
+```{figure} ../../images/itemfind.png
+```
+*)
+function TRSItemInterface.FindAny(items: TRSItemArray; out slot: TBox): Boolean;
 var
   match: TImageMatch;
 begin
@@ -57,11 +178,33 @@ begin
     slot := match.Box;
 end;
 
-function TRSItemInterface.Find(item: TRSItem; out slot: TBox): Boolean; overload;
+(*
+## Items.Find
+```pascal
+function TRSItemInterface.Find(item: TRSItem; out slot: TBox): Boolean;
+function TRSItemInterface.Find(items: TRSItemArray; out slot: Integer): Boolean; overload;
+function TRSItemInterface.Find(item: TRSItem; out slot: Integer): Boolean; overload;
+```
+Returns a True/False if the specified `item` or `items` were found and returns
+their `TBox` or slot index through `slot`.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  bounds: TBox;
+begin
+  if Inventory.Items.Find('cake', bounds) then
+    ShowOnTarget(bounds);
+end.
+```
+```{figure} ../../images/itemfind.png
+```
+*)
+function TRSItemInterface.Find(item: TRSItem; out slot: TBox): Boolean;
 begin
   Result := Self.FindAny([item], slot);
 end;
-
 
 function TRSItemInterface.Find(items: TRSItemArray; out slot: Integer): Boolean; overload;
 var

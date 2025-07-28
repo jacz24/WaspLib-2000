@@ -656,6 +656,7 @@ end;
 (*
 ## Minimap.GetDots
 ```pascal
+function TRSMinimap._GetDots(img: TImage): TPointArray;
 function TRSMinimap.GetDots(dot: ERSMinimapDot; bounds: TBox): TPointArray;
 function TRSMinimap.GetDots(dot: ERSMinimapDot): TPointArray; overload;
 function TRSMinimap.GetDots(dots: ERSMinimapDots; bounds: TBox): TRSMinimapDotArray; overload;
@@ -736,7 +737,7 @@ end;
 (*
 ## Minimap.CleanImage
 ```pascal
-function TRSMinimap.CleanImage(img: TImage): TImage;
+function TRSMinimap.CleanImage(img: TImage; radius: Integer): TImage;
 ```
 Cleans a TImage of the {ref}`Minimap` you pass into it.
 "Clean" means that minimap dots, the running flag and a few other things are
@@ -752,7 +753,7 @@ var
   before, after, combined: TImage;
 begin
   before := Target.GetImage(Minimap.Bounds);
-  after := Minimap.CleanImage(before.Copy());
+  after := Minimap.CleanImage(before.Copy(), 65);
 
   combined := new TImage(before.Width*2, before.Height);
 
@@ -810,7 +811,7 @@ end;
 (*
 ## Minimap.GetCleanImage
 ```pascal
-function TRSMinimap.GetCleanImage(angle: Single = $FFFF): TImage;
+function TRSMinimap.GetCleanImage(angle: Single = $FFFF; radius: Integer = -1): TImage;
 ```
 Returns a clean `TImage` of the {ref}`Minimap`.
 
@@ -869,7 +870,7 @@ end;
 (*
 ## Minimap.ScaleMinimap
 ```pascal
-function TRSMinimap.ScaleMinimap(img: TImage; scaling: Integer; radius: Integer = 67): TImage;
+function TRSMinimap.ScaleMinimap(img: TImage; scaling: Integer; radius: Integer = -1): TImage;
 ```
 Scales down a minimap TImage passed in the `img` parameter.
 
@@ -925,7 +926,8 @@ end;
 ```pascal
 function TRSMinimap.IsPlayerMoving(minShift: Integer = 500): Boolean;
 ```
-Returns whether the player is moving or not according to the specified minimum pixel shift.
+Returns whether the player is moving or not according to the specified minimum
+pixel shift.
 
 Example:
 ```pascal
@@ -937,6 +939,19 @@ begin
   Result := Target.GetPixelDifference(300, TBox.Create(Self.Center, 40, 40)).Length >= minShift;
 end;
 
+(*
+## Minimap.WaitMoving
+```pascal
+procedure TRSMinimap.WaitMoving(time: Integer = 20000; minShift: Integer = 500);
+```
+To put it simply, waits `time` milliseconds for {ref}`Minimap.IsPlayerMoving` to
+return false with the specified `minShift`.
+
+Example:
+```pascal
+WriteLn Minimap.WaitMoving();
+```
+*)
 procedure TRSMinimap.WaitMoving(time: Integer = 20000; minShift: Integer = 500);
 var
   timeout, countdown: TCountDown;
