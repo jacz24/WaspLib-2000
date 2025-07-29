@@ -187,7 +187,7 @@ end.
 *)
 function TRSSlotInterface.Near(slot: Integer; slots: TIntegerArray; maxDist: Single = 60): TIntegerArray;
 var
-  i: Integer;
+  slt: Integer;
   boxes: TBoxArray;
   center: TPoint;
 begin
@@ -200,15 +200,15 @@ begin
   boxes := Self.Boxes();
   center := boxes[slot].Center;
 
-  for i := 0 to High(slots) do
-    if center.InRange(boxes[slots[i]].Center, maxDist) then
-      Result += slots[i];
+  for slt in slots do
+    if center.InRange(boxes[slt].Center, maxDist) then
+      Result += slt;
 end;
 
 (*
 ## Slots.RandomNear
 ```pascal
-function TRSSlotInterface.RandomNear(slot: Integer; slots: TIntegerArray; maxDist: Single = 60): Integer;
+function TRSSlotInterface.RandomNear(slot: Integer; slots: TIntegerArray; maxDist: Single = 60; distribution: ERandomDistribution = ERandomDistribution.GAUSS): Integer;
 ```
 From the `slots` array which should be an array of indices for `Slots.Boxes`,
 return a random index that is "near" `slot` based on the `maxDist` value.
@@ -230,9 +230,25 @@ end.
 ```{figure} ../../images/slotsrandomnear.gif
 ```
 *)
-function TRSSlotInterface.RandomNear(slot: Integer; slots: TIntegerArray; maxDist: Single = 60): Integer;
+function TRSSlotInterface.RandomNear(slot: Integer; slots: TIntegerArray; maxDist: Single = 60; distribution: ERandomDistribution = ERandomDistribution.GAUSS): Integer;
+var
+  near, weights: TIntegerArray;
+  slt: Integer;
+  boxes: TBoxArray;
+  center: TPoint;
 begin
-  Result := Self.Near(slot, slots, maxDist).Random();
+  near := Self.Near(slot, slots, maxDist);
+
+  if distribution = ERandomDistribution.RANDOM then
+    Exit(near.Random());
+
+  boxes := Self.Boxes();
+  center := boxes[slot].Center;
+
+  for slt in near do
+    weights += Round(center.DistanceTo(boxes[slt].Center));
+
+  Result := near.Sorted(weights, True)[RandomLeft(0, High(near))];
 end;
 
 
@@ -644,11 +660,3 @@ begin
   Target.MouseClick(EMouseButton.LEFT);
   Result := True;
 end;
-
-
-//TODO:
-function TRSSlotInterface.RandomPattern(): TIntegerArray;
-begin
-  Result := [];
-end;
-

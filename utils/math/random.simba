@@ -2,6 +2,7 @@
 
 type
   ERandomDir = enum(LEFT, MEAN, RIGHT);
+  ERandomDistribution = enum(RANDOM, GAUSS);
 
 function RandomBoolean(): Boolean;
 begin

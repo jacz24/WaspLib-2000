@@ -8,13 +8,13 @@ DepositBox interface.
 
 type
 (*
-## ERSDPButtons
+## ERSDepositButtons
 ```pascal
-ERSDPButtons = enum(WORN, LOOT, INVENTORY);
+ERSDepositButtons = enum(WORN, LOOT, INVENTORY);
 ```
 Enum representing the 3 main deposit buttons of the {ref}`DepositBox` interface.
 *)
-  ERSDPButtons = enum(WORN, LOOT, INVENTORY);
+  ERSDepositButtons = enum(WORN, LOOT, INVENTORY);
 
 (*
 ## TRSDepositBox
@@ -26,7 +26,7 @@ Main record to interact with the {ref}`DepositBox` interface.
     Items,Equipment: TRSItemInterface;
     Bounds,SlotsArea: TBox;
     InvSlotBoxes,EquipSlotBoxes: TBoxArray;
-    DepositButtons: array [ERSDPButtons] of TRSButton;
+    DepositButtons: array [ERSDepositButtons] of TRSButton;
     QuantityButtons: array [ERSItemQuantity] of TRSButton;
   end;
 
@@ -263,19 +263,19 @@ end;
 procedure TRSDepositBox.DepositInventory;
 begin
   if Self.IsOpen then
-    Self.DepositButtons[ERSDPButtons.INVENTORY].Click;
+    Self.DepositButtons[ERSDepositButtons.INVENTORY].Click;
 end;
 
 procedure TRSDepositBox.DepositLootBag;
 begin
   if Self.IsOpen then
-    Self.DepositButtons[ERSDPButtons.LOOT].Click;
+    Self.DepositButtons[ERSDepositButtons.LOOT].Click;
 end;
 
 procedure TRSDepositBox.DepositEquipment;
 begin
   if Self.IsOpen then
-    Self.DepositButtons[ERSDPButtons.WORN].Click;
+    Self.DepositButtons[ERSDepositButtons.WORN].Click;
 end;
 
 var

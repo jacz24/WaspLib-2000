@@ -283,6 +283,66 @@ end;
 
 
 (*
+## Slots.RandomPattern
+```pascal
+function TRSSlotInterface.RandomPattern(): TIntegerArray;
+```
+Returns a random pattern of slots.
+
+Here is example code to generate and visually debug patterns:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  img, pimg: TImage;
+  slots: TBoxArray;
+  tpa: TPointArray;
+  pattern: TIntegerArray;
+  i: Integer;
+  a, b: TPoint;
+begin
+  img := Target.GetImage();
+  img.DrawColor := $00FFFF;
+
+  slots := Inventory.Slots.Boxes();
+  for i := 0 to High(slots) do
+    img.DrawBox(slots[i]);
+
+  while True do
+  begin
+    pimg := img.Copy();
+    pimg.DrawColor := $0000FF;
+    pattern := Inventory.RandomPattern();
+
+    b := slots[pattern[0]].RandomPointCenter();
+    for i := 0 to High(pattern)-1 do
+    begin
+      a := b;
+      b := slots[pattern[i+1]].RandomPointCenter();
+
+      pimg.DrawLine(a, b);
+      pimg.Show();
+      Sleep(50);
+    end;
+  end;
+end.
+```
+```{figure} ../../images/inventoryrandompattern.gif
+```
+*)
+function TRSInventory.RandomPattern(): TIntegerArray;
+var
+  i: Integer;
+begin
+  i := Biometrics.RandomModeInteger(High(Self.PATTERNS) div 2, 0, High(Self.PATTERNS));
+
+  if Biometrics.RandomBoolean(0.7) then
+    Result := Self.PATTERNS[i]
+  else
+    Result := Self.PATTERNS[i].Reversed();
+end;
+
+
+(*
 ## Inventory.Drop
 ```pascal
 function TRSInventory.Drop(slots: TIntegerArray; attempts: Integer = 5): Boolean;
@@ -330,7 +390,7 @@ function TRSInventory.Drop(items: TRSItemArray; pattern: TIntegerArray = []): Bo
 var
   slots: TIntegerArray;
 begin
-  if pattern = [] then pattern := Self.Slots.RandomPattern();
+  if pattern = [] then pattern := Self.RandomPattern();
   slots := Self.Items.IndicesOf(items);
   Result := (slots <> []) and Self.Drop(pattern.Intersection(slots));
 end;
@@ -409,19 +469,6 @@ var
 begin
   slots := Self.Items.IndicesOf(items);
   Result := (slots <> []) and Self.ShiftDrop(pattern.Intersection(slots));
-end;
-
-
-function TRSInventory.RandomPattern(): TIntegerArray;
-var
-  i: Integer;
-begin
-  i := Biometrics.RandomModeInteger(High(Self.PATTERNS) div 2, 0, High(Self.PATTERNS));
-
-  if Biometrics.RandomBoolean(0.7) then
-    Result := Self.PATTERNS[i]
-  else
-    Result := Self.PATTERNS[i].Reversed();
 end;
 
 var
