@@ -285,9 +285,9 @@ end;
 (*
 ## Slots.RandomPattern
 ```pascal
-function TRSSlotInterface.RandomPattern(): TIntegerArray;
+function TRSInventory.RandomPattern(): TIntegerArray;
 ```
-Returns a random pattern of slots.
+Returns a random pattern of inventory slots.
 
 Here is example code to generate and visually debug patterns:
 ```pascal

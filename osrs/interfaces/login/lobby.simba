@@ -1,0 +1,119 @@
+(*
+# Lobby
+The lobby screen is the first screen you see after logging in:
+```{figure} ../../images/lobby.png
+```
+*)
+{$DEFINE WL_LOBBY_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+(*
+## TRSLobbyScreen
+Simple record that handles the login lobby screen.
+
+The lobby screen is the screen you see after logging in with the large red
+button with "CLICK HERE TO PLAY".
+
+The record is extremely simply and basically only has information about the
+bounds of the lobby screen and the bounds ofthe "CLICK HERE TO PLAY" button,
+as you can see in this image:
+```{figure} ../../images/lobbydebug.png
+```
+*)
+  TRSLobbyScreen = record
+    Bounds, Button: TBox;
+  end;
+
+(*
+## Lobby.Setup
+```pascal
+procedure TRSLobbyScreen.Setup();
+```
+Internal function that sets up the lobby screen coordinates.
+This is automatically called for you on the {ref}`Lobby variable`.
+*)
+procedure TRSLobbyScreen.Setup();
+begin
+  Self.Bounds.X1 := Target.Width div 2 - 382;
+  Self.Bounds.X2 := Target.Width div 2 + 382;
+  Self.Bounds.Y1 := Target.Bounds.Y1;
+  Self.Bounds.Y2 := Self.Bounds.Y1 + 502;
+
+  with Self.Button do
+  begin
+    X1 := Self.Bounds.X1 + 268;
+    Y1 := Self.Bounds.Y1 + 294;
+    X2 := X1 + 228;
+    Y2 := Y1 + 89;
+  end;
+end;
+
+
+(*
+## Lobby.IsOpen
+```pascal
+function TRSLobbyScreen.IsOpen(): Boolean;
+```
+Returns True/False depending on whether the lobby screen is currently open.
+
+Example:
+```pascal
+if Lobby.IsOpen() then
+  Lobby.EnterGame();
+```
+*)
+function TRSLobbyScreen.IsOpen(): Boolean;
+begin
+  Result := OCR.Locate(Self.Button, 'CLICK HERE TO PLAY', [$FFFFFF], 0, RSFonts.BOLD_SHADOW) > 0.999;
+end;
+
+(*
+## Lobby.WaitOpen
+```pascal
+function TRSLobbyScreen.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
+```
+Returns True/False if the lobby screen opens within `time` milliseconds.
+
+Example:
+```pascal
+if Lobby.WaitOpen(2000) then
+  Lobby.EnterGame();
+```
+*)
+function TRSLobbyScreen.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
+begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsOpen(), interval, time);
+end;
+
+(*
+## Lobby.EnterGame
+```pascal
+function TRSLobbyScreen.EnterGame(): Boolean;
+```
+Attempts to enter the game from the lobby screen.
+This is automatically called for you with {ref}`Login.DoLogin`.
+
+Example:
+```pascal
+WriteLn Lobby.EnterGame();
+```
+*)
+function TRSLobbyScreen.EnterGame(): Boolean;
+begin
+  if RSClient.IsLoggedIn() then Exit(True);
+  WriteLn GetDebugLn('Lobby', 'Entering the game.');
+  Mouse.Click(Self.Button, EMouseButton.LEFT);
+  Result := RSClient.WaitLoggedIn(3000);
+end;
+
+var
+(*
+## Lobby variable
+Global {ref}`TRSLobbyScreen` variable.
+*)
+  Lobby: TRSLobbyScreen;
+
+
+
