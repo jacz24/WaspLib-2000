@@ -1219,7 +1219,7 @@ const
   ACTIVITY_TABLE_MAX_LENGTH = 14;
   ACTIVITY_TABLE_TRUNCATE_LENGTH = 12;
 var
-  i: Integer;
+  i, validWorldCount: Integer;
   worldStr, activityStr: String;
 begin
   Self.WorldList.Items.Clear();
@@ -1228,8 +1228,13 @@ begin
     ['World', 'Location', 'Type', 'Activity', 'Players']));
   Self.WorldList.Items.Add('------+-------------+-----------+-------------------+---------');
   
+  validWorldCount := 0;
   for i := 0 to High(Self.FilteredWorlds) do
   begin
+    // Skip worlds with invalid player count (parsing errors)
+    if Self.FilteredWorlds[i].PlayerCount < 0 then
+      Continue;
+      
     activityStr := Self.FilteredWorlds[i].ActivityString;
     if activityStr.Length > ACTIVITY_TABLE_MAX_LENGTH then
       activityStr := activityStr.CopyRange(1, ACTIVITY_TABLE_TRUNCATE_LENGTH) + '...';
@@ -1242,9 +1247,10 @@ begin
        Self.FilteredWorlds[i].PlayerCount]);
     
     Self.WorldList.Items.Add(worldStr);
+    Inc(validWorldCount);
   end;
   
-  Self.StatsLabel.Caption := Format('Found: %d worlds', [Length(Self.FilteredWorlds)]);
+  Self.StatsLabel.Caption := Format('Found: %d worlds', [validWorldCount]);
 end;
 
 (*
