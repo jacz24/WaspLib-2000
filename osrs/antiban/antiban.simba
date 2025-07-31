@@ -546,7 +546,6 @@ procedure TAntiban.WalkingTasks();
 begin
 end;
 
-
 var
 (*
 ## Antiban variable

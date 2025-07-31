@@ -1,0 +1,94 @@
+(*
+# Antiban Form
+This page is about {ref}`Antiban` dedicated `TLazForm` utilities.
+
+This is meant to be used with {ref}`TScriptForm` with
+{ref}`TScriptForm.CreateAntibanTab` and will setup a a `TLazTabSheet` on it
+with several controls to configure {ref}`Antiban`:
+```{figure} ../../images/antibanform.png
+```
+*)
+{$DEFINE WL_ANTIBAN_FORM_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+(*
+## TAntibanFormHelper
+The `TAntibanFormHelper` type is, as it's name implies a helper type for the
+`Antiban Form`.
+
+It has a lot of methods and callbacks that are hidden by default and won't be
+mentioned on this page because they are internal methods you shouldn't touch.
+
+Do feel free to read the source code though if you so desire.
+*)
+  TAntibanFormHelper = record
+    TasksList, BreaksList: TLazCheckListBox;
+    Config: TConfigJSON;
+  end;
+
+procedure TAntibanFormHelper.Setup();
+begin
+  Self.Config.Setup('antiban' + PATH_SEP + ToStr(PlayerIndex));
+end;
+
+
+var
+(*
+## AntibanForm variable
+Global {ref}`TInventoryFormHelper` variable.
+*)
+  AntibanForm: TAntibanFormHelper;
+
+procedure TAntibanFormHelper.OnTasksToggle(sender: TLazObject);
+var
+  checked: Boolean;
+begin
+  checked := TLazCheckBox(sender).IsChecked();
+  Self.TasksList.Enabled := checked;
+end;
+
+(*
+## ScriptForm CreateInventoryTab
+```pascal
+function TScriptForm.CreateInventoryTab(): TLazTabSheet;
+```
+Sets up a `TLazTabSheet` on your `TScriptForm` to configure your `Inventory Layouts`.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  form: TScriptForm;
+begin
+  form.Setup();
+  form.CreateInventoryTab();
+  form.Run();
+end.
+```
+```{figure} ../../images/inventoryform.gif
+```
+For a more complete example check out the file `Simba/Includes/WaspLib/examples/inventory_form.simba`.
+*)
+function TScriptForm.CreateAntibanTab(): TLazTabSheet;
+var
+  checkbox: TLazCheckBox;
+begin
+  AntibanForm.Setup();
+
+  Result := Self.CreateTab('Antiban');
+
+  checkbox := TLazCheckBox.CreateEx(Result, 'Tasks', 'Enable/Disable antiban tasks.', 10, 10);
+  checkbox.OnChange := @AntibanForm.OnTasksToggle;
+
+  AntibanForm.TasksList := TLazCheckListBox.CreateEx(Result, 'Tasks:', 'Configured antiban tasks.', 10, 50, 200, 100);
+  AntibanForm.TasksList.Columns := 3;
+  AntibanForm.TasksList.Style := ELazListBoxStyle.lbOwnerDrawVariable;
+  AntibanForm.TasksList.Items.Add('Hello1');
+  AntibanForm.TasksList.Items.Add('Hello2');
+  AntibanForm.TasksList.Items.Add('Hello3');
+  AntibanForm.TasksList.Items.Add('Hello4');
+  AntibanForm.TasksList.Items.Add('Hello5');
+  AntibanForm.TasksList.Items.Add('Hello6');
+  AntibanForm.TasksList.Items.Add('Hello7');
+end;
