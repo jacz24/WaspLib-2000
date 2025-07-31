@@ -41,6 +41,7 @@ type
     FALADOR,
     FOSSIL_ISLAND,
     HOSIDIUS_KITCHEN,
+    ICEBERG,
     LUMBRIDGE,
     LUNAR_ISLE,
     MINING_GUILD,
@@ -52,6 +53,7 @@ type
     SEERS_VILLAGE,
     STRONGHOLD_SLAYER_CAVE,
     TEMPOROSS_COVE,
+    TITHE_FARM,
     VARROCK,
     WINTERTODT
   );
@@ -71,6 +73,7 @@ begin
     ERSChunk.EDGEVILLE              : Result := Chunk(Box(48,54,48,54), 0);
     ERSChunk.FALADOR                : Result := Chunk(Box(45,53,47,51), 0);
     ERSChunk.FOSSIL_ISLAND          : Result := Chunk(Box(56,61,60,57), [0,1]);
+    ERSChunk.ICEBERG                : Result := Chunk(Box(40,64,42,61), [0,1]);
     ERSChunk.HOSIDIUS_KITCHEN       : Result := Chunk(Box(25,56,26,56), 0);
     ERSChunk.LUMBRIDGE              : Result := Chunk(Box(49,51,50,49), [0,1,2]);
     ERSChunk.LUNAR_ISLE             : Result := Chunk(Box(32,61,33,60), 0);
@@ -83,6 +86,7 @@ begin
     ERSChunk.SEERS_VILLAGE          : Result := Chunk(Box(41,55,43,53), [0,2]);
     ERSChunk.STRONGHOLD_SLAYER_CAVE : Result := Chunk(Box(37,153,38,152), 0);
     ERSChunk.TEMPOROSS_COVE         : Result := Chunk(Box(47,46,47,46), 0);
+    ERSChunk.TITHE_FARM             : Result := Chunk(Box(27,55,28,54), 0);
     ERSChunk.VARROCK                : Result := Chunk(Box(48,55,51,51), 0);
     ERSChunk.WINTERTODT             : Result := Chunk(Box(24,63,26,61), 0);
   end;
