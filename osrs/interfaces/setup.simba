@@ -90,11 +90,6 @@ begin
 end;
 
 
-{$IF FILEEXISTS(Configs/credentials.simba)}
-  {$INCLUDE_ONCE Configs/credentials.simba}
-{$ENDIF}
-
-
 //Setup process, for some things the order matters.
 procedure WaspLibSetup();
 begin

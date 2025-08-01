@@ -45,6 +45,7 @@ end;
 ```
 *)
 {$DEFINE WL_WORLDFETCHER_INCLUDED}
+{$INCLUDE_ONCE WaspLib/utils.simba}
 
 const
   WORLD_LIST_URL = 'http://oldschool.runescape.com/slu';
@@ -52,60 +53,40 @@ const
 type
 (*
 ## type EWorldType
+```pascal
+EWorldType = enum(FREE_TO_PLAY, MEMBERS);
+```
 An enumeration representing the membership type of a world.
-- `EWorldType.WT_FREE_TO_PLAY`: Free-to-play worlds accessible to all players.
-- `EWorldType.WT_MEMBERS`: Members-only worlds requiring active membership.
 *)
-  EWorldType = (
-    WT_FREE_TO_PLAY,
-    WT_MEMBERS
-  );
+  EWorldType = enum(FREE_TO_PLAY, MEMBERS);
 
 (*
 ## type EWorldActivity
+```pascal
+EWorldActivity = enum(NORMAL, DANGEROUS, RESTRICTED, SKILL_TOTAL);
+```
 An enumeration representing world activity categories.
-- `EWorldActivity.WA_NORMAL`: Standard worlds for regular activities.
-- `EWorldActivity.WA_DANGEROUS`: PvP-enabled worlds where players can attack (PvP, Deadman, High Risk).
-- `EWorldActivity.WA_RESTRICTED`: Special game modes or limited worlds (Leagues, Beta, Quest Speedrunning, Fresh Start).
-- `EWorldActivity.WA_SKILL_TOTAL`: Worlds requiring minimum skill total.
 *)
-  EWorldActivity = (
-    WA_NORMAL,
-    WA_DANGEROUS,
-    WA_RESTRICTED,
-    WA_SKILL_TOTAL
-  );
+  EWorldActivity = enum(NORMAL, DANGEROUS, RESTRICTED, SKILL_TOTAL);
 
 (*
 ## type EWorldLocation
+```pascal
+EWorldLocation = enum(GERMANY, UNITED_KINGDOM, UNITED_STATES, AUSTRALIA);
+```
 An enumeration representing the geographical location of world servers.
-- `EWorldLocation.WL_GERMANY`: Servers located in Germany (Europe).
-- `EWorldLocation.WL_UNITED_KINGDOM`: Servers located in the United Kingdom.
-- `EWorldLocation.WL_UNITED_STATES`: Servers located in the United States.
-- `EWorldLocation.WL_AUSTRALIA`: Servers located in Australia (Oceania).
 *)
-  EWorldLocation = (
-    WL_GERMANY,
-    WL_UNITED_KINGDOM,
-    WL_UNITED_STATES,
-    WL_AUSTRALIA
-  );
+  EWorldLocation = enum(GERMANY, UNITED_KINGDOM, UNITED_STATES, AUSTRALIA);
 
 (*
-## type ESortBy
+## type EWorldSort
+```pascal
+EWorldSort = enum(WORLD_NUMBER, PLAYER_COUNT_ASC, PLAYER_COUNT_DESC, PING_ASC, PING_DESC);
+```
 An enumeration for sorting world lists.
-- `ESortBy.SORT_WORLD_NUMBER`: Sort by world number (ascending).
-- `ESortBy.SORT_PLAYER_COUNT_ASC`: Sort by player count (low to high).
-- `ESortBy.SORT_PLAYER_COUNT_DESC`: Sort by player count (high to low).
-- `ESortBy.SORT_PING_ASC`: Sort by ping (low to high).
-- `ESortBy.SORT_PING_DESC`: Sort by ping (high to low).
 *)
-  ESortBy = (
-    SORT_WORLD_NUMBER,
-    SORT_PLAYER_COUNT_ASC,
-    SORT_PLAYER_COUNT_DESC,
-    SORT_PING_ASC,
-    SORT_PING_DESC
+  EWorldSort = enum(
+    WORLD_NUMBER, PLAYER_COUNT_ASC, PLAYER_COUNT_DESC, PING_ASC, PING_DESC
   );
 
 (*
@@ -194,19 +175,19 @@ begin
   if LocationStr = '' then
   begin
     WriteLn('Warning: Empty location string encountered, defaulting to US');
-    Result := EWorldLocation.WL_UNITED_STATES;
+    Result := EWorldLocation.UNITED_STATES;
     Exit;
   end;
 
   case LocationStr of
-    'GERMANY': Result := EWorldLocation.WL_GERMANY;
-    'UNITED KINGDOM': Result := EWorldLocation.WL_UNITED_KINGDOM;
-    'UNITED STATES': Result := EWorldLocation.WL_UNITED_STATES;
-    'AUSTRALIA': Result := EWorldLocation.WL_AUSTRALIA;
+    'GERMANY': Result := EWorldLocation.GERMANY;
+    'UNITED KINGDOM': Result := EWorldLocation.UNITED_KINGDOM;
+    'UNITED STATES': Result := EWorldLocation.UNITED_STATES;
+    'AUSTRALIA': Result := EWorldLocation.AUSTRALIA;
   else
     begin
-      WriteLn('Warning: Unknown world location: "' + LocationStr + '", defaulting to US');
-      Result := EWorldLocation.WL_UNITED_STATES;
+      Result := EWorldLocation(Random(0, Ord(High(EWorldLocation))));
+      WriteLn('Warning: Unknown world location: "' + LocationStr + '", defaulting to ' + ToStr(Result));
     end;
   end;
 end;
@@ -218,10 +199,10 @@ begin
 
   if TypeStr.Contains('FREE') then
   begin
-    Result := EWorldType.WT_FREE_TO_PLAY;
+    Result := EWorldType.FREE_TO_PLAY;
     Exit;
   end;
-  Result := EWorldType.WT_MEMBERS; // Default case
+  Result := EWorldType.MEMBERS; // Default case
 end;
 
 // Categorizes world activity string into activity types
@@ -231,17 +212,17 @@ begin
 
   // Dangerous worlds
   if TypeStr.ContainsAny(['PVP', 'DEADMAN', 'RISK']) then
-    Exit(EWorldActivity.WA_DANGEROUS);
+    Exit(EWorldActivity.DANGEROUS);
 
   // Restricted/Special worlds
   if TypeStr.ContainsAny(['LEAGUE', 'BETA', 'SPEEDRUNNING', 'FRESH', 'TOURNAMENT', 'LOCKED', 'DEVELOPER']) then
-    Exit(EWorldActivity.WA_RESTRICTED);
+    Exit(EWorldActivity.RESTRICTED);
 
   // Skill total worlds
   if TypeStr.Contains('SKILL TOTAL') then
-    Exit(EWorldActivity.WA_SKILL_TOTAL);
+    Exit(EWorldActivity.SKILL_TOTAL);
 
-  Result := EWorldActivity.WA_NORMAL;
+  Result := EWorldActivity.NORMAL;
 end;
 
 // Extracts skill total requirement from activity string
@@ -769,7 +750,7 @@ Filters the cached worlds by membership type.
 
 Example:
 ```pascal
-F2PWorlds := WorldFetcher.FilterByType(EWorldType.WT_FREE_TO_PLAY);
+F2PWorlds := WorldFetcher.FilterByType(EWorldType.FREE_TO_PLAY);
 ```
 *)
 function TWorldFetcher.FilterByType(WorldType: EWorldType): array of TWorldInfo;
@@ -854,7 +835,7 @@ Filters the cached worlds by activity type.
 
 Example:
 ```pascal
-SkillWorlds := WorldFetcher.FilterByActivity(EWorldActivity.WA_SKILL_TOTAL);
+SkillWorlds := WorldFetcher.FilterByActivity(EWorldActivity.SKILL_TOTAL);
 ```
 *)
 function TWorldFetcher.FilterByActivity(Activity: EWorldActivity): array of TWorldInfo;
@@ -1227,7 +1208,7 @@ end;
 (*
 ## TWorldFetcher.SortWorlds
 ```pascal
-function TWorldFetcher.SortWorlds(Worlds: array of TWorldInfo; SortBy: ESortBy): array of TWorldInfo;
+function TWorldFetcher.SortWorlds(Worlds: array of TWorldInfo; worldSort: EWordSort): array of TWorldInfo;
 ```
 Sorts an array of worlds according to the specified criteria.
 
@@ -1236,7 +1217,7 @@ Example:
 SortedWorlds := WorldFetcher.SortWorlds(FilteredWorlds, SORT_PLAYER_COUNT_ASC);
 ```
 *)
-function TWorldFetcher.SortWorlds(Worlds: array of TWorldInfo; SortBy: ESortBy): array of TWorldInfo;
+function TWorldFetcher.SortWorlds(Worlds: array of TWorldInfo; worldSort: EWorldSort): array of TWorldInfo;
 var
   Weights: TIntegerArray;
   i: Int32;
@@ -1246,14 +1227,14 @@ begin
 
   for i := 0 to High(Result) do
   begin
-    case SortBy of
-      ESortBy.SORT_WORLD_NUMBER:
+    case worldSort of
+      EWorldSort.WORLD_NUMBER:
         Weights[i] := Result[i].WorldNumber;
 
-      ESortBy.SORT_PLAYER_COUNT_ASC, ESortBy.SORT_PLAYER_COUNT_DESC:
+      EWorldSort.PLAYER_COUNT_ASC, EWorldSort.PLAYER_COUNT_DESC:
         Weights[i] := Result[i].PlayerCount;
 
-      ESortBy.SORT_PING_ASC, ESortBy.SORT_PING_DESC:
+      EWorldSort.PING_ASC, EWorldSort.PING_DESC:
         // Handle -1 (no ping) as max value for sorting
         if Result[i].Ping = -1 then
           Weights[i] := High(Int32)
@@ -1262,11 +1243,11 @@ begin
     end;
   end;
 
-  case SortBy of
-    ESortBy.SORT_WORLD_NUMBER, ESortBy.SORT_PLAYER_COUNT_ASC, ESortBy.SORT_PING_ASC:
+  case worldSort of
+    EWorldSort.WORLD_NUMBER, EWorldSort.PLAYER_COUNT_ASC, EWorldSort.PING_ASC:
       Sort(Result, Weights, True);  // Low to high
 
-    ESortBy.SORT_PLAYER_COUNT_DESC, ESortBy.SORT_PING_DESC:
+    EWorldSort.PLAYER_COUNT_DESC, EWorldSort.PING_DESC:
       Sort(Result, Weights, False); // High to low
   end;
 end;

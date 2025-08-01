@@ -27,6 +27,8 @@ Do feel free to read the source code though if you so desire.
 
     TaskCombobox: TLazComboBox;
     TaskIntervalSpinner, TaskVariationSpinner: TLazSpinEdit;
+    TaskDelButton, TaskEditButton, TaskAddButton: TLazButton;
+
 
     Config: TConfigJSON;
   end;
@@ -59,7 +61,15 @@ var
   strings: TStringArray;
 begin
   i := TLazListBox(sender).ItemIndex;
-  if i = -1 then Exit;
+  if i = -1 then
+  begin
+    AntibanForm.TaskDelButton.Enabled := False;
+    AntibanForm.TaskEditButton.Enabled := False;
+    Exit;
+  end;
+
+  AntibanForm.TaskDelButton.Enabled := True;
+  AntibanForm.TaskEditButton.Enabled := True;
 
   strings := TLazListBox(sender).Items.Strings[i].Split('|');
   if Length(strings) <> 3 then
@@ -123,7 +133,6 @@ For a more complete example check out the file `Simba/Includes/WaspLib/examples/
 function TScriptForm.CreateAntibanTab(): TLazTabSheet;
 var
   checkbox: TLazCheckBox;
-  btn: TLazButton;
 begin
   AntibanForm.Setup();
 
@@ -150,12 +159,14 @@ begin
   AntibanForm.TaskIntervalSpinner  := TLazSpinEdit.CreateEx(Result, 'Interval (mins): ', 'Edit the currently selected task interval.', 220, 170, 90);
   AntibanForm.TaskVariationSpinner := TLazSpinEdit.CreateEx(Result, 'Variation (%): ', 'Edit the currently selected task interval variation.', 320, 170, 90);
 
-  btn := TLazButton.CreateEx(Result, 'Remove', 'Remove the current task.', 10, 220);
-  btn.OnClick := @AntibanForm.OnTaskRemove;
+  AntibanForm.TaskDelButton := TLazButton.CreateEx(Result, 'Remove', 'Remove the current task.', 10, 220);
+  AntibanForm.TaskDelButton.Enabled := False;
+  AntibanForm.TaskDelButton.OnClick := @AntibanForm.OnTaskRemove;
 
-  btn := TLazButton.CreateEx(Result, 'Update', 'Update the current task.', 110, 220);
-  btn.OnClick := @AntibanForm.OnTaskEdit;
+  AntibanForm.TaskEditButton := TLazButton.CreateEx(Result, 'Update', 'Update the current task.', 110, 220);
+  AntibanForm.TaskEditButton.Enabled := False;
+  AntibanForm.TaskEditButton.OnClick := @AntibanForm.OnTaskEdit;
 
-  btn := TLazButton.CreateEx(Result, 'Add', 'Update the current task.', 220, 220);
-  btn.OnClick := @AntibanForm.OnTaskAdd;
+  AntibanForm.TaskAddButton := TLazButton.CreateEx(Result, 'Add', 'Update the current task.', 220, 220);
+  AntibanForm.TaskAddButton.OnClick := @AntibanForm.OnTaskAdd;
 end;

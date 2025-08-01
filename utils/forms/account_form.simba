@@ -9,7 +9,6 @@ Acknowledgements: Thanks to XJ for design concepts and initial prototyping
 *)
 {$DEFINE WL_ACCOUNT_FORM_INCLUDED}
 {$INCLUDE_ONCE WaspLib/utils.simba}
-{$INCLUDE_ONCE WaspLib/utils/worldfetcher.simba}
 
 type
 (*
@@ -1082,9 +1081,9 @@ begin
   Self.ApplyActivityFilters();
   
   case Self.SortCombo.ItemIndex of
-    0: Self.FilteredWorlds := WorldFetcher.SortWorlds(Self.FilteredWorlds, ESortBy.SORT_WORLD_NUMBER);
-    1: Self.FilteredWorlds := WorldFetcher.SortWorlds(Self.FilteredWorlds, ESortBy.SORT_PLAYER_COUNT_ASC);
-    2: Self.FilteredWorlds := WorldFetcher.SortWorlds(Self.FilteredWorlds, ESortBy.SORT_PLAYER_COUNT_DESC);
+    0: Self.FilteredWorlds := WorldFetcher.SortWorlds(Self.FilteredWorlds, EWorldSort.WORLD_NUMBER);
+    1: Self.FilteredWorlds := WorldFetcher.SortWorlds(Self.FilteredWorlds, EWorldSort.PLAYER_COUNT_ASC);
+    2: Self.FilteredWorlds := WorldFetcher.SortWorlds(Self.FilteredWorlds, EWorldSort.PLAYER_COUNT_DESC);
   end;
   
   Self.DisplayResults();
@@ -1143,28 +1142,28 @@ begin
   if not Self.F2PCheckbox.IsChecked() or not Self.MembersCheckbox.IsChecked() then
   begin
     if not Self.F2PCheckbox.IsChecked() then
-      Result.ExcludeTypes += [EWorldType.WT_FREE_TO_PLAY];
+      Result.ExcludeTypes += [EWorldType.FREE_TO_PLAY];
     if not Self.MembersCheckbox.IsChecked() then
-      Result.ExcludeTypes += [EWorldType.WT_MEMBERS];
+      Result.ExcludeTypes += [EWorldType.MEMBERS];
   end;
   
   if not Self.GermanyCheckbox.IsChecked() then
-    Result.ExcludeLocations += [EWorldLocation.WL_GERMANY];
+    Result.ExcludeLocations += [EWorldLocation.GERMANY];
   if not Self.UKCheckbox.IsChecked() then
-    Result.ExcludeLocations += [EWorldLocation.WL_UNITED_KINGDOM];
+    Result.ExcludeLocations += [EWorldLocation.UNITED_KINGDOM];
   if not Self.USCheckbox.IsChecked() then
-    Result.ExcludeLocations += [EWorldLocation.WL_UNITED_STATES];
+    Result.ExcludeLocations += [EWorldLocation.UNITED_STATES];
   if not Self.AustraliaCheckbox.IsChecked() then
-    Result.ExcludeLocations += [EWorldLocation.WL_AUSTRALIA];
+    Result.ExcludeLocations += [EWorldLocation.AUSTRALIA];
   
   if not Self.NormalCheckbox.IsChecked() then
-    Result.ExcludeActivities += [EWorldActivity.WA_NORMAL];
+    Result.ExcludeActivities += [EWorldActivity.NORMAL];
   if not Self.DangerousCheckbox.IsChecked() then
-    Result.ExcludeActivities += [EWorldActivity.WA_DANGEROUS];
+    Result.ExcludeActivities += [EWorldActivity.DANGEROUS];
   if not Self.RestrictedCheckbox.IsChecked() then
-    Result.ExcludeActivities += [EWorldActivity.WA_RESTRICTED];
+    Result.ExcludeActivities += [EWorldActivity.RESTRICTED];
   if not Self.SkillTotalCheckbox.IsChecked() then
-    Result.ExcludeActivities += [EWorldActivity.WA_SKILL_TOTAL];
+    Result.ExcludeActivities += [EWorldActivity.SKILL_TOTAL];
   
   if Self.ExcludeWorldsEdit.Text <> '' then
   begin
@@ -1322,7 +1321,7 @@ begin
   begin
     j := 0;
     for i := 0 to High(tempWorlds) do
-      if tempWorlds[i].WorldType <> EWorldType.WT_FREE_TO_PLAY then
+      if tempWorlds[i].WorldType <> EWorldType.FREE_TO_PLAY then
       begin
         tempWorlds[j] := tempWorlds[i];
         Inc(j);
@@ -1334,7 +1333,7 @@ begin
   begin
     j := 0;
     for i := 0 to High(tempWorlds) do
-      if tempWorlds[i].WorldType <> EWorldType.WT_MEMBERS then
+      if tempWorlds[i].WorldType <> EWorldType.MEMBERS then
       begin
         tempWorlds[j] := tempWorlds[i];
         Inc(j);
@@ -1346,10 +1345,10 @@ begin
   for i := 0 to High(tempWorlds) do
   begin
     case tempWorlds[i].Location of
-      EWorldLocation.WL_GERMANY: if not Self.GermanyCheckbox.IsChecked() then Continue;
-      EWorldLocation.WL_UNITED_KINGDOM: if not Self.UKCheckbox.IsChecked() then Continue;
-      EWorldLocation.WL_UNITED_STATES: if not Self.USCheckbox.IsChecked() then Continue;
-      EWorldLocation.WL_AUSTRALIA: if not Self.AustraliaCheckbox.IsChecked() then Continue;
+      EWorldLocation.GERMANY: if not Self.GermanyCheckbox.IsChecked() then Continue;
+      EWorldLocation.UNITED_KINGDOM: if not Self.UKCheckbox.IsChecked() then Continue;
+      EWorldLocation.UNITED_STATES: if not Self.USCheckbox.IsChecked() then Continue;
+      EWorldLocation.AUSTRALIA: if not Self.AustraliaCheckbox.IsChecked() then Continue;
     end;
     tempWorlds[j] := tempWorlds[i];
     Inc(j);
@@ -1360,10 +1359,10 @@ begin
   for i := 0 to High(tempWorlds) do
   begin
     case tempWorlds[i].Activity of
-      EWorldActivity.WA_NORMAL: if not Self.NormalCheckbox.IsChecked() then Continue;
-      EWorldActivity.WA_DANGEROUS: if not Self.DangerousCheckbox.IsChecked() then Continue;
-      EWorldActivity.WA_RESTRICTED: if not Self.RestrictedCheckbox.IsChecked() then Continue;
-      EWorldActivity.WA_SKILL_TOTAL: if not Self.SkillTotalCheckbox.IsChecked() then Continue;
+      EWorldActivity.NORMAL: if not Self.NormalCheckbox.IsChecked() then Continue;
+      EWorldActivity.DANGEROUS: if not Self.DangerousCheckbox.IsChecked() then Continue;
+      EWorldActivity.RESTRICTED: if not Self.RestrictedCheckbox.IsChecked() then Continue;
+      EWorldActivity.SKILL_TOTAL: if not Self.SkillTotalCheckbox.IsChecked() then Continue;
     end;
     tempWorlds[j] := tempWorlds[i];
     Inc(j);

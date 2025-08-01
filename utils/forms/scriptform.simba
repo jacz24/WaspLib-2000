@@ -78,17 +78,7 @@ end;
 ```
 *)
 procedure TScriptForm.OnStart(sender: TLazObject);
-var
-  selectedIndex: Integer;
 begin
-  selectedIndex := AccountForm.ProfileCombo.ItemIndex;
-  if (selectedIndex >= 0) and (selectedIndex < Length(AccountForm.Profiles)) then
-  begin
-    if Length(Players) = 0 then
-      Players.LoadAccounts();
-    PlayerIndex := selectedIndex;
-  end;
-  
   Self.Form.OnClose := nil;
   Self.Form.Close();
 end;

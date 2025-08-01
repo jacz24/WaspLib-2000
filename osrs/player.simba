@@ -3,7 +3,7 @@
 Page dedicated to handling player accounts.
 *)
 {$DEFINE WL_PLAYER_INCLUDED}
-{$INCLUDE_ONCE WaspLib/utils.simba}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
 
 var
 (*

@@ -268,3 +268,21 @@ begin
 
   SaveScreenshotEx('levelups', Self.Bounds);
 end;
+
+{$H-}
+procedure TScriptForm.OnStart(sender: TLazObject); override;
+var
+  idx: Integer;
+begin
+  idx := AccountForm.ProfileCombo.ItemIndex;
+  if InRange(idx, 0, Length(AccountForm.Profiles)) then
+  begin
+    if Players = [] then
+      Players.LoadAccounts();
+    PlayerIndex := idx;
+  end;
+
+  Self.Form.OnClose := nil;
+  Self.Form.Close();
+end;
+{$H+}
