@@ -23,7 +23,11 @@ mentioned on this page because they are internal methods you shouldn't touch.
 Do feel free to read the source code though if you so desire.
 *)
   TAntibanFormHelper = record
-    TasksList, BreaksList: TLazCheckListBox;
+    TaskList, BreakList: TLazListBox;
+
+    TaskCombobox: TLazComboBox;
+    TaskIntervalSpinner, TaskVariationSpinner: TLazSpinEdit;
+
     Config: TConfigJSON;
   end;
 
@@ -40,13 +44,59 @@ Global {ref}`TInventoryFormHelper` variable.
 *)
   AntibanForm: TAntibanFormHelper;
 
-procedure TAntibanFormHelper.OnTasksToggle(sender: TLazObject);
+procedure TAntibanFormHelper.OnTaskToggle(sender: TLazObject);
 var
   checked: Boolean;
 begin
   checked := TLazCheckBox(sender).IsChecked();
-  Self.TasksList.Enabled := checked;
+  Self.TaskList.Enabled := checked;
 end;
+
+{$H-}
+procedure TAntibanFormHelper.OnTaskSelected(sender: TLazObject; user: Boolean);
+var
+  i, idx: Integer;
+  strings: TStringArray;
+begin
+  i := TLazListBox(sender).ItemIndex;
+  if i = -1 then Exit;
+
+  strings := TLazListBox(sender).Items.Strings[i].Split('|');
+  if Length(strings) <> 3 then
+    raise GetDebugLn('AntibanForm', 'Error parsing tasks list.');
+
+  Self.TaskCombobox.ItemIndex := Self.TaskCombobox.Items.IndexOf(strings[0].Trim());
+  Self.TaskIntervalSpinner.Text := strings[1].Trim();
+  Self.TaskVariationSpinner.Text := strings[2].Trim();
+end;
+
+procedure TAntibanFormHelper.OnTaskAdd(sender: TLazObject);
+begin
+  Self.TaskList.Items.Add(
+    Self.TaskCombobox.Text.PadRight(24) + ' | ' +
+    Self.TaskIntervalSpinner.Text.PadCenter(6) + ' | ' +
+    String(Self.TaskVariationSpinner.Text + '%').PadLeft(6)
+  );
+end;
+
+procedure TAntibanFormHelper.OnTaskEdit(sender: TLazObject);
+var
+  i: Integer;
+begin
+  i := Self.TaskList.ItemIndex;
+  if i = -1 then Exit;
+
+
+  Self.TaskList.Items.Strings[i] := Self.TaskCombobox.Text.PadRight(24) + ' | ' +
+                                    Self.TaskIntervalSpinner.Text.PadCenter(6) + ' | ' +
+                                    String(Self.TaskVariationSpinner.Text + '%').PadLeft(6);
+end;
+
+procedure TAntibanFormHelper.OnTaskRemove(sender: TLazObject);
+begin
+  Self.TaskList.Items.Delete(Self.TaskList.ItemIndex);
+end;
+{$H+}
 
 (*
 ## ScriptForm CreateInventoryTab
@@ -73,22 +123,39 @@ For a more complete example check out the file `Simba/Includes/WaspLib/examples/
 function TScriptForm.CreateAntibanTab(): TLazTabSheet;
 var
   checkbox: TLazCheckBox;
+  btn: TLazButton;
 begin
   AntibanForm.Setup();
 
   Result := Self.CreateTab('Antiban');
 
   checkbox := TLazCheckBox.CreateEx(Result, 'Tasks', 'Enable/Disable antiban tasks.', 10, 10);
-  checkbox.OnChange := @AntibanForm.OnTasksToggle;
+  checkbox.OnChange := @AntibanForm.OnTaskToggle;
 
-  AntibanForm.TasksList := TLazCheckListBox.CreateEx(Result, 'Tasks:', 'Configured antiban tasks.', 10, 50, 200, 100);
-  AntibanForm.TasksList.Columns := 3;
-  AntibanForm.TasksList.Style := ELazListBoxStyle.lbOwnerDrawVariable;
-  AntibanForm.TasksList.Items.Add('Hello1');
-  AntibanForm.TasksList.Items.Add('Hello2');
-  AntibanForm.TasksList.Items.Add('Hello3');
-  AntibanForm.TasksList.Items.Add('Hello4');
-  AntibanForm.TasksList.Items.Add('Hello5');
-  AntibanForm.TasksList.Items.Add('Hello6');
-  AntibanForm.TasksList.Items.Add('Hello7');
+  AntibanForm.TaskList := TLazListBox.CreateEx(Result, 'Tasks:', 'Toggle antiban tasks.', 10, 50, 400, 100);
+  AntibanForm.TaskList.Font.Name := 'Courier New';
+  AntibanForm.TaskList.OnSelectionChange := @AntibanForm.OnTaskSelected;
+
+  AntibanForm.TaskCombobox := TLazComboBox.CreateEx(Result, 'Task: ', 'Edit the currently selected task.', 10, 170, 190);
+  AntibanForm.TaskCombobox.Items.Add('SmallRandomMouse');
+  AntibanForm.TaskCombobox.Items.Add('LargeRandomMouse');
+  AntibanForm.TaskCombobox.Items.Add('SmallCameraRotation');
+  AntibanForm.TaskCombobox.Items.Add('LargeCameraRotation');
+  AntibanForm.TaskCombobox.Items.Add('HoverSkill');
+  AntibanForm.TaskCombobox.Items.Add('HoverSkills');
+  AntibanForm.TaskCombobox.Items.Add('OpenSkill');
+  AntibanForm.TaskCombobox.Items.Add('OpenSkills');
+  AntibanForm.TaskCombobox.Items.Add('ChatScrolling');
+
+  AntibanForm.TaskIntervalSpinner  := TLazSpinEdit.CreateEx(Result, 'Interval (mins): ', 'Edit the currently selected task interval.', 220, 170, 90);
+  AntibanForm.TaskVariationSpinner := TLazSpinEdit.CreateEx(Result, 'Variation (%): ', 'Edit the currently selected task interval variation.', 320, 170, 90);
+
+  btn := TLazButton.CreateEx(Result, 'Remove', 'Remove the current task.', 10, 220);
+  btn.OnClick := @AntibanForm.OnTaskRemove;
+
+  btn := TLazButton.CreateEx(Result, 'Update', 'Update the current task.', 110, 220);
+  btn.OnClick := @AntibanForm.OnTaskEdit;
+
+  btn := TLazButton.CreateEx(Result, 'Add', 'Update the current task.', 220, 220);
+  btn.OnClick := @AntibanForm.OnTaskAdd;
 end;
