@@ -585,6 +585,10 @@ function TRSLogin.DoLogin(player: TRSPlayer = ['', '', '', [], True]): Boolean;
 var
   timeout: UInt64;
 begin
+  // If no player data provided, get it from Players array
+  if (player.Username = '') and (player.Password = '') and (player.Pin = '') and (Length(player.Worlds) = 0) then
+    player := Players.GetPlayer();
+    
   timeout := Time() + 40000;
 
   while not RSClient.IsLoggedIn() and not Lobby.IsOpen() do
