@@ -16,26 +16,28 @@ WLRecorder.Start(30, 'MyVideos'); // Custom save directory
 
 type
 (*
-## type TWLRecorder
+## type TSimbaRecorder
 ```pascal
-TWLRecorder = record
+TSimbaRecorder = record
   Thread: TThread;
   Running: Boolean;
   BufferSeconds: Integer;
   VideoPath: String;
+  RecorderTarget: TTarget;
 end;
 ```
 Manages video recording with buffered capture.
 *)
-  TWLRecorder = record
+  TSimbaRecorder = record
     Thread: TThread;
     Running: Boolean;
     BufferSeconds: Integer;
     VideoPath: String;
+    RecorderTarget: TTarget;
   end;
 
 var
-  WLRecorder: TWLRecorder;
+  WLRecorder: TSimbaRecorder;
   WLRecorder_CurrentFrame: TImage;  
   WLRecorder_FrameCount: Integer;
 
@@ -46,7 +48,7 @@ begin
   if Assigned(WLRecorder_CurrentFrame) then
     WLRecorder_CurrentFrame.Destroy();
 
-  WLRecorder_CurrentFrame := Target.GetImage();
+  WLRecorder_CurrentFrame := WLRecorder.RecorderTarget.GetImage();
   Inc(WLRecorder_FrameCount);
 
   Result := WLRecorder_CurrentFrame.Data;
@@ -74,6 +76,8 @@ begin
     WLRecorder_CurrentFrame.Destroy();
     WLRecorder_CurrentFrame := nil;
   end;
+  
+  WLRecorder.RecorderTarget := nil;
 end;
 {%codetools on}
 
@@ -82,12 +86,12 @@ begin
 end;
 
 // Thread execution handler
-procedure TWLRecorder._Execute; 
+procedure TSimbaRecorder._Execute; 
 var
   Recorder: TRecorder;
 begin
   try
-    Recorder := TRecorder.Create(Self.BufferSeconds,Self.VideoPath, Target.Width, Target.Height,
+    Recorder := TRecorder.Create(Self.BufferSeconds,Self.VideoPath, Self.RecorderTarget.Width, Self.RecorderTarget.Height,
       @WLRecorder_GetFrame,
       @WLRecorder_GetTerminated
     ); 
@@ -101,13 +105,13 @@ begin
 end;
 
 (*
-## TWLRecorder.Start
+## TSimbaRecorder.Start
 ```pascal
-procedure TWLRecorder.Start(BufferSeconds: Integer = 30; VideoPath: String = 'Videos');
+procedure TSimbaRecorder.Start(BufferSeconds: Integer = 30; VideoPath: String = 'Videos');
 ```
 Starts recording with specified buffer duration and save path.
 *)
-procedure TWLRecorder.Start(BufferSeconds: Integer = 30; VideoPath: String = 'Videos');
+procedure TSimbaRecorder.Start(BufferSeconds: Integer = 30; VideoPath: String = 'Videos');
 begin
   if Self.Running then
     Exit;
@@ -118,18 +122,23 @@ begin
   Self.BufferSeconds := BufferSeconds;
   Self.VideoPath := VideoPath;
   Self.Running := True;
+  
+  // Create separate target for recorder thread
+  Self.RecorderTarget := new TTarget();
+  Self.RecorderTarget.SetWindow(GetSimbaTargetWindow());
+  
   Self.Thread := TThread.Create(@Self._Execute);
   Self.Thread.Name := 'RecorderThread_' + IntToStr(Time());
 end;
 
 (*
-## TWLRecorder.IsRecording
+## TSimbaRecorder.IsRecording
 ```pascal
-function TWLRecorder.IsRecording(): Boolean;
+function TSimbaRecorder.IsRecording(): Boolean;
 ```
 Returns true if currently recording.
 *)
-function TWLRecorder.IsRecording(): Boolean;
+function TSimbaRecorder.IsRecording(): Boolean;
 begin
   Result := Self.Running;
 end;
