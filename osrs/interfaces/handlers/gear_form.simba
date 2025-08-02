@@ -443,17 +443,17 @@ begin
   GearData.Setup();
 
   Result := Self.CreateTab('Gear Layouts');
-  width := 280;
+  width := 300;
 
   GearForm.ListLabel := TLazLabel.CreateEx(Result, 'Selected slot: ' + GearForm.SLOT_NAMES[GearForm.Selected], 'Click a slot on the right side to update the list below.', 40, 20);
 
-  GearForm.Search := TLazEdit.CreateEx(Result, 'Search:', 'Search the list below.', 40, 80, width);
+  GearForm.Search := TLazEdit.CreateEx(Result, 'Search:', 'Search the list below.', 40, 60, width);
   GearForm.Search.OnChange := @GearForm.OnSearchChange;
 
 
   for slot := Low(ERSEquipment) to High(ERSEquipment) do
   begin
-    GearForm.ItemLists[slot] := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.', 0,0, width, 340);
+    GearForm.ItemLists[slot] := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.', 0,0, width, 240);
     GearForm.ItemLists[slot].AnchorVertically(GearForm.Search, 10);
     GearForm.ItemLists[slot].OnSelectionChange := @GearForm.OnSelectionChange;
 
@@ -463,7 +463,7 @@ begin
       GearForm.ItemLists[slot].Enabled := False;
     end;
 
-    GearForm.FilteredLists[slot] := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.', 0,0, width, 340);
+    GearForm.FilteredLists[slot] := TLazListBox.CreateEx(Result, '', 'Click a slot on the right side to update the list below.', 0,0, width, 240);
     GearForm.FilteredLists[slot].AnchorVertically(GearForm.Search, 10);
     GearForm.FilteredLists[slot].OnSelectionChange := @GearForm.OnSelectionChange;
     GearForm.FilteredLists[slot].Hide();
@@ -471,7 +471,7 @@ begin
   end;
 
   GearForm.UnfilterButton := TLazButton.CreateEx(Result, 'Remove list filter', 'Remove the current filter.', 0,0, width);
-  GearForm.UnfilterButton.AnchorVertically(GearForm.Search, 360);
+  GearForm.UnfilterButton.AnchorVertically(GearForm.Search, 260);
   GearForm.UnfilterButton.Enabled := False;
   GearForm.UnfilterButton.OnClick := @GearForm.OnUnfilterClick;
 
