@@ -1,0 +1,135 @@
+(*
+# Recorder
+Records video in separate thread for debugging script crashes and issues.
+
+Basic usage:
+```pascal
+WLRecorder.Start(30); // Start recording with 30 second buffer
+WLRecorder.Start(30, 'MyVideos'); // Custom save directory
+// Videos are automatically saved on script end
+```
+*)
+
+{$DEFINE WL_RECORDER_INCLUDED}
+{$INCLUDE_ONCE WaspLib/utils.simba}
+{$loadlib Plugins/wasp-plugins/librecorder/librecorder}
+
+type
+(*
+## type TWLRecorder
+```pascal
+TWLRecorder = record
+  Thread: TThread;
+  Running: Boolean;
+  BufferSeconds: Integer;
+  VideoPath: String;
+end;
+```
+Manages video recording with buffered capture.
+*)
+  TWLRecorder = record
+    Thread: TThread;
+    Running: Boolean;
+    BufferSeconds: Integer;
+    VideoPath: String;
+  end;
+
+var
+  WLRecorder: TWLRecorder;
+  WLRecorder_CurrentFrame: TImage;  
+  WLRecorder_FrameCount: Integer;
+
+{%codetools off}
+ // Captures frame from target
+function WLRecorder_GetFrame({$H-}Sender: TRecorder){$H+}: Pointer;
+begin
+  if Assigned(WLRecorder_CurrentFrame) then
+    WLRecorder_CurrentFrame.Destroy();
+
+  WLRecorder_CurrentFrame := Target.GetImage();
+  Inc(WLRecorder_FrameCount);
+
+  Result := WLRecorder_CurrentFrame.Data;
+end;
+
+// Checks if recording should stop
+function WLRecorder_GetTerminated({$H-}Sender: TRecorder){$H+}: Boolean; 
+begin
+  Result := not WLRecorder.Running;
+end;
+
+// Cleanup on script termination
+procedure WLRecorder_Free();
+begin
+  WLRecorder.Running := False;
+  if Assigned(WLRecorder.Thread) then
+  begin
+    WLRecorder.Thread.WaitForTerminate();
+    WLRecorder.Thread.Free();
+    WLRecorder.Thread := nil;
+  end;
+
+  if Assigned(WLRecorder_CurrentFrame) then
+  begin
+    WLRecorder_CurrentFrame.Destroy();
+    WLRecorder_CurrentFrame := nil;
+  end;
+end;
+{%codetools on}
+
+begin
+  AddOnTerminate(@WLRecorder_Free);
+end;
+
+// Thread execution handler
+procedure TWLRecorder._Execute; 
+var
+  Recorder: TRecorder;
+begin
+  try
+    Recorder := TRecorder.Create(Self.BufferSeconds,Self.VideoPath, Target.Width, Target.Height,
+      @WLRecorder_GetFrame,
+      @WLRecorder_GetTerminated
+    ); 
+    // Fixed 15 FPS recording rate (DLL limitation)
+    Recorder.SetFFMPEG('Plugins/wasp-plugins/librecorder/ffmpeg.exe');
+    Recorder.Run(False);
+    Recorder.Free();
+  except
+    WriteLn('[Recorder] Error: ', GetExceptionMessage());
+  end;
+end;
+
+(*
+## TWLRecorder.Start
+```pascal
+procedure TWLRecorder.Start(BufferSeconds: Integer = 30; VideoPath: String = 'Videos');
+```
+Starts recording with specified buffer duration and save path.
+*)
+procedure TWLRecorder.Start(BufferSeconds: Integer = 30; VideoPath: String = 'Videos');
+begin
+  if Self.Running then
+    Exit;
+  
+  if not DirExists(VideoPath) then
+    DirCreate(VideoPath);
+  
+  Self.BufferSeconds := BufferSeconds;
+  Self.VideoPath := VideoPath;
+  Self.Running := True;
+  Self.Thread := TThread.Create(@Self._Execute);
+  Self.Thread.Name := 'RecorderThread_' + IntToStr(Time());
+end;
+
+(*
+## TWLRecorder.IsRecording
+```pascal
+function TWLRecorder.IsRecording(): Boolean;
+```
+Returns true if currently recording.
+*)
+function TWLRecorder.IsRecording(): Boolean;
+begin
+  Result := Self.Running;
+end;
