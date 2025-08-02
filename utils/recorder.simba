@@ -4,8 +4,8 @@ Records video in separate thread for debugging script crashes and issues.
 
 Basic usage:
 ```pascal
-WLRecorder.Start(30); // Start recording with 30 second buffer
-WLRecorder.Start(30, 'MyVideos'); // Custom save directory
+SimbaRecorder.Start(30); // Start recording with 30 second buffer
+SimbaRecorder.Start(30, 'MyVideos'); // Custom save directory
 // Videos are automatically saved on script end
 ```
 *)
@@ -37,52 +37,52 @@ Manages video recording with buffered capture.
   end;
 
 var
-  WLRecorder: TSimbaRecorder;
-  WLRecorder_CurrentFrame: TImage;  
-  WLRecorder_FrameCount: Integer;
+  SimbaRecorder: TSimbaRecorder;
+  SimbaRecorder_CurrentFrame: TImage;  
+  SimbaRecorder_FrameCount: Integer;
 
 {%codetools off}
  // Captures frame from target
-function WLRecorder_GetFrame({$H-}Sender: TRecorder){$H+}: Pointer;
+function SimbaRecorder_GetFrame({$H-}Sender: TRecorder){$H+}: Pointer;
 begin
-  if Assigned(WLRecorder_CurrentFrame) then
-    WLRecorder_CurrentFrame.Destroy();
+  if Assigned(SimbaRecorder_CurrentFrame) then
+    SimbaRecorder_CurrentFrame.Destroy();
 
-  WLRecorder_CurrentFrame := WLRecorder.RecorderTarget.GetImage();
-  Inc(WLRecorder_FrameCount);
+  SimbaRecorder_CurrentFrame := SimbaRecorder.RecorderTarget.GetImage();
+  Inc(SimbaRecorder_FrameCount);
 
-  Result := WLRecorder_CurrentFrame.Data;
+  Result := SimbaRecorder_CurrentFrame.Data;
 end;
 
 // Checks if recording should stop
-function WLRecorder_GetTerminated({$H-}Sender: TRecorder){$H+}: Boolean; 
+function SimbaRecorder_GetTerminated({$H-}Sender: TRecorder){$H+}: Boolean; 
 begin
-  Result := not WLRecorder.Running;
+  Result := not SimbaRecorder.Running;
 end;
 
 // Cleanup on script termination
-procedure WLRecorder_Free();
+procedure SimbaRecorder_Free();
 begin
-  WLRecorder.Running := False;
-  if Assigned(WLRecorder.Thread) then
+  SimbaRecorder.Running := False;
+  if Assigned(SimbaRecorder.Thread) then
   begin
-    WLRecorder.Thread.WaitForTerminate();
-    WLRecorder.Thread.Free();
-    WLRecorder.Thread := nil;
+    SimbaRecorder.Thread.WaitForTerminate();
+    SimbaRecorder.Thread.Free();
+    SimbaRecorder.Thread := nil;
   end;
 
-  if Assigned(WLRecorder_CurrentFrame) then
+  if Assigned(SimbaRecorder_CurrentFrame) then
   begin
-    WLRecorder_CurrentFrame.Destroy();
-    WLRecorder_CurrentFrame := nil;
+    SimbaRecorder_CurrentFrame.Destroy();
+    SimbaRecorder_CurrentFrame := nil;
   end;
   
-  WLRecorder.RecorderTarget := nil;
+  SimbaRecorder.RecorderTarget := nil;
 end;
 {%codetools on}
 
 begin
-  AddOnTerminate(@WLRecorder_Free);
+  AddOnTerminate(@SimbaRecorder_Free);
 end;
 
 // Thread execution handler
@@ -92,8 +92,8 @@ var
 begin
   try
     Recorder := TRecorder.Create(Self.BufferSeconds,Self.VideoPath, Self.RecorderTarget.Width, Self.RecorderTarget.Height,
-      @WLRecorder_GetFrame,
-      @WLRecorder_GetTerminated
+      @SimbaRecorder_GetFrame,
+      @SimbaRecorder_GetTerminated
     ); 
     // Fixed 15 FPS recording rate (DLL limitation)
     Recorder.SetFFMPEG('Plugins/wasp-plugins/librecorder/ffmpeg.exe');
