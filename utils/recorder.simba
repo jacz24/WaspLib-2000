@@ -1,0 +1,144 @@
+(*
+# Recorder
+Records video in separate thread for debugging script crashes and issues.
+
+Basic usage:
+```pascal
+SimbaRecorder.Start(30); // Start recording with 30 second buffer
+SimbaRecorder.Start(30, 'MyVideos'); // Custom save directory
+// Videos are automatically saved on script end
+```
+*)
+
+{$DEFINE WL_RECORDER_INCLUDED}
+{$INCLUDE_ONCE WaspLib/utils.simba}
+{$loadlib Plugins/wasp-plugins/librecorder/librecorder}
+
+type
+(*
+## type TSimbaRecorder
+```pascal
+TSimbaRecorder = record
+  Thread: TThread;
+  Running: Boolean;
+  BufferSeconds: Integer;
+  VideoPath: String;
+  RecorderTarget: TTarget;
+end;
+```
+Manages video recording with buffered capture.
+*)
+  TSimbaRecorder = record
+    Thread: TThread;
+    Running: Boolean;
+    BufferSeconds: Integer;
+    VideoPath: String;
+    RecorderTarget: TTarget;
+  end;
+
+var
+  SimbaRecorder: TSimbaRecorder;
+  SimbaRecorder_CurrentFrame: TImage;  
+  SimbaRecorder_FrameCount: Integer;
+
+{%codetools off}
+ // Captures frame from target
+function SimbaRecorder_GetFrame({$H-}Sender: TRecorder){$H+}: Pointer;
+begin
+  if Assigned(SimbaRecorder_CurrentFrame) then
+    SimbaRecorder_CurrentFrame.Destroy();
+
+  SimbaRecorder_CurrentFrame := SimbaRecorder.RecorderTarget.GetImage();
+  Inc(SimbaRecorder_FrameCount);
+
+  Result := SimbaRecorder_CurrentFrame.Data;
+end;
+
+// Checks if recording should stop
+function SimbaRecorder_GetTerminated({$H-}Sender: TRecorder){$H+}: Boolean; 
+begin
+  Result := not SimbaRecorder.Running;
+end;
+
+// Cleanup on script termination
+procedure SimbaRecorder_Free();
+begin
+  SimbaRecorder.Running := False;
+  if Assigned(SimbaRecorder.Thread) then
+  begin
+    SimbaRecorder.Thread.WaitForTerminate();
+    SimbaRecorder.Thread.Free();
+    SimbaRecorder.Thread := nil;
+  end;
+
+  if Assigned(SimbaRecorder_CurrentFrame) then
+  begin
+    SimbaRecorder_CurrentFrame.Destroy();
+    SimbaRecorder_CurrentFrame := nil;
+  end;
+  
+  SimbaRecorder.RecorderTarget := nil;
+end;
+{%codetools on}
+
+begin
+  AddOnTerminate(@SimbaRecorder_Free);
+end;
+
+// Thread execution handler
+procedure TSimbaRecorder._Execute; 
+var
+  Recorder: TRecorder;
+begin
+  try
+    Recorder := TRecorder.Create(Self.BufferSeconds,Self.VideoPath, Self.RecorderTarget.Width, Self.RecorderTarget.Height,
+      @SimbaRecorder_GetFrame,
+      @SimbaRecorder_GetTerminated
+    ); 
+    // Fixed 15 FPS recording rate (DLL limitation)
+    Recorder.SetFFMPEG('Plugins/wasp-plugins/librecorder/ffmpeg.exe');
+    Recorder.Run(False);
+    Recorder.Free();
+  except
+    WriteLn('[Recorder] Error: ', GetExceptionMessage());
+  end;
+end;
+
+(*
+## TSimbaRecorder.Start
+```pascal
+procedure TSimbaRecorder.Start(BufferSeconds: Integer = 30; VideoPath: String = 'Videos');
+```
+Starts recording with specified buffer duration and save path.
+*)
+procedure TSimbaRecorder.Start(BufferSeconds: Integer = 30; VideoPath: String = 'Videos');
+begin
+  if Self.Running then
+    Exit;
+  
+  if not DirExists(VideoPath) then
+    DirCreate(VideoPath);
+  
+  Self.BufferSeconds := BufferSeconds;
+  Self.VideoPath := VideoPath;
+  Self.Running := True;
+  
+  // Create separate target for recorder thread
+  Self.RecorderTarget := new TTarget();
+  Self.RecorderTarget.SetWindow(GetSimbaTargetWindow());
+  
+  Self.Thread := TThread.Create(@Self._Execute);
+  Self.Thread.Name := 'RecorderThread_' + IntToStr(Time());
+end;
+
+(*
+## TSimbaRecorder.IsRecording
+```pascal
+function TSimbaRecorder.IsRecording(): Boolean;
+```
+Returns true if currently recording.
+*)
+function TSimbaRecorder.IsRecording(): Boolean;
+begin
+  Result := Self.Running;
+end;
