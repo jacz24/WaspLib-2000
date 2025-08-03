@@ -215,7 +215,7 @@ begin
     Exit(EWorldActivity.DANGEROUS);
 
   // Restricted/Special worlds
-  if TypeStr.ContainsAny(['LEAGUE', 'BETA', 'SPEEDRUNNING', 'FRESH', 'TOURNAMENT', 'LOCKED', 'DEVELOPER']) then
+  if TypeStr.ContainsAny(['BOUNTY', 'LEAGUE', 'BETA', 'SPEEDRUNNING', 'FRESH', 'TOURNAMENT', 'LOCKED', 'DEVELOPER']) then
     Exit(EWorldActivity.RESTRICTED);
 
   // Skill total worlds
