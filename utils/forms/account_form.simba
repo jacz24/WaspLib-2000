@@ -9,7 +9,6 @@ Acknowledgements: Thanks to XJ for design concepts and initial prototyping
 *)
 {$DEFINE WL_ACCOUNT_FORM_INCLUDED}
 {$INCLUDE_ONCE WaspLib/utils.simba}
-
 type
 (*
 ## TAccountProfile
@@ -29,88 +28,39 @@ The account management system that handles profile storage, validation, and UI.
 *)
   TAccountForm = record
     Profiles: array of TAccountProfile;
-    
+
     ProfileCombo: TLazComboBox;
     EditButton: TLazButton;
-    
+
     EditForm: TLazForm;
     NameEdit, UsernameEdit, PasswordEdit, BankPinEdit: TLazEdit;
-    
+
     TypePanel, LocationPanel, ActivityPanel: TLazScrollBox;
     SpecificActivityPanel: TLazScrollBox;
-    
+
     F2PCheckbox, MembersCheckbox: TLazCheckBox;
-    
+
     GermanyCheckbox, UKCheckbox, USCheckbox, AustraliaCheckbox: TLazCheckBox;
-    
+
     NormalCheckbox, DangerousCheckbox, RestrictedCheckbox, SkillTotalCheckbox: TLazCheckBox;
-    
+
     SelectAllActivitiesCheckbox: TLazCheckBox;
     ActivityCheckboxes: array of TLazCheckBox;
-    
+
     WorldList: TLazListBox;
     GenerateButton: TLazButton;
     ExcludeWorldsEdit: TLazEdit;
     MinPlayersEdit, MaxPlayersEdit: TLazEdit;
     SortCombo: TLazComboBox;
     StatsLabel: TLazLabel;
-    
+
     FilteredWorlds: array of TWorldInfo;
     AllWorldsCache: array of TWorldInfo;
-    
+
     SaveButton, DeleteButton, CloseButton: TLazButton;
     IsNewProfile: Boolean;
     EditIndex: Integer;
   end;
-
-{$H-}
-// File I/O Methods
-function  TAccountForm.GetProfilePath(index: Integer): String; forward;
-procedure TAccountForm.SaveProfileToFile(index: Integer; profile: TAccountProfile); forward;
-function  TAccountForm.LoadProfileFromFile(index: Integer): TAccountProfile; forward;
-function  TAccountForm.GetExistingProfileIndices(): TIntegerArray; forward;
-procedure TAccountForm.ReindexProfiles(fromIndex: Integer); forward;
-
-// Profile Management Methods
-procedure TAccountForm.Setup(); forward;
-function  TAccountForm.ValidateProfile(profile: TAccountProfile): Boolean; forward;
-function  TAccountForm.ProfileExists(profileName: String): Boolean; forward;
-function  TAccountForm.AddProfile(profile: TAccountProfile): Boolean; forward;
-function  TAccountForm.UpdateProfile(index: Integer; profile: TAccountProfile): Boolean; forward;
-function  TAccountForm.DeleteProfile(index: Integer): Boolean; forward;
-function  TAccountForm.GetSelectedProfile(): TAccountProfile; forward;
-
-// UI Setup Methods
-procedure TAccountForm.SetupUI(combo: TLazComboBox; button: TLazButton); forward;
-procedure TAccountForm.UpdateProfileCombo(); forward;
-procedure TAccountForm.SetupEditDialog(parent: TLazForm; profile: TAccountProfile; isNew: Boolean; editIndex: Integer); forward;
-procedure TAccountForm.SetupWorldTypePanel(); forward;
-procedure TAccountForm.SetupLocationPanel(); forward;
-procedure TAccountForm.SetupActivityPanel(); forward;
-procedure TAccountForm.SetupSpecificActivityPanel(); forward;
-
-// Event Handlers
-procedure TAccountForm.OnEditClick(sender: TLazObject); forward;
-procedure TAccountForm.OnSaveClick(sender: TLazObject); forward;
-procedure TAccountForm.OnDeleteClick(sender: TLazObject); forward;
-procedure TAccountForm.OnCloseClick(sender: TLazObject); forward;
-procedure TAccountForm.OnGenerateClick(sender: TLazObject); forward;
-procedure TAccountForm.OnSelectAllActivitiesClick(sender: TLazObject); forward;
-procedure TAccountForm.OnSortChange(sender: TLazObject); forward;
-
-// World Filter Methods
-procedure TAccountForm.LoadWorldData(); forward;
-procedure TAccountForm.LoadSavedWorlds(worldsStr: String); forward;
-function  TAccountForm.BuildFilterSettings(): TSettings; forward;
-procedure TAccountForm.ApplyActivityFilters(); forward;
-procedure TAccountForm.DisplayResults(); forward;
-procedure TAccountForm.RefreshActivities(); forward;
-function  TAccountForm.GetLocationString(loc: EWorldLocation): String; forward;
-function  TAccountForm.GetTypeString(wType: EWorldType): String; forward;
-
-// Validation Methods
-function TAccountForm.ValidateInput(profile: TAccountProfile): String; forward;
-{$H+}
 
 (*
 ## TAccountForm.GetProfilePath
@@ -278,6 +228,18 @@ begin
 end;
 
 (*
+## TAccountForm.ValidateProfile
+```pascal
+function TAccountForm.ValidateProfile(profile: TAccountProfile): Boolean;
+```
+Validates a profile has required fields filled.
+*)
+function TAccountForm.ValidateProfile(profile: TAccountProfile): Boolean;
+begin
+  Result := profile.ProfileName.Trim() <> '';  // Only profile name is required
+end;
+
+(*
 ## TAccountForm.Setup
 ```pascal
 procedure TAccountForm.Setup();
@@ -322,18 +284,6 @@ begin
 end;
 
 (*
-## TAccountForm.ValidateProfile
-```pascal
-function TAccountForm.ValidateProfile(profile: TAccountProfile): Boolean;
-```
-Validates a profile has required fields filled.
-*)
-function TAccountForm.ValidateProfile(profile: TAccountProfile): Boolean;
-begin
-  Result := profile.ProfileName.Trim() <> '';  // Only profile name is required
-end;
-
-(*
 ## TAccountForm.ProfileExists
 ```pascal
 function TAccountForm.ProfileExists(profileName: String): Boolean;
@@ -350,6 +300,30 @@ begin
     if Self.Profiles[i].ProfileName.ToLower() = name then
       Exit(True);
 end;
+
+
+(*
+## TAccountForm.UpdateProfileCombo
+```pascal
+procedure TAccountForm.UpdateProfileCombo();
+```
+Updates the profile combo box with current profiles.
+*)
+procedure TAccountForm.UpdateProfileCombo();
+var
+  i: Integer;
+begin
+  if not Assigned(Self.ProfileCombo) then
+    Exit;
+
+  Self.ProfileCombo.Items.Clear();
+
+  for i := 0 to High(Self.Profiles) do
+    Self.ProfileCombo.Items.Add(Self.Profiles[i].ProfileName);
+
+  Self.ProfileCombo.Items.Add('New Profile');
+end;
+
 
 
 (*
@@ -468,27 +442,6 @@ begin
   end;
 end;
 
-(*
-## TAccountForm.UpdateProfileCombo
-```pascal
-procedure TAccountForm.UpdateProfileCombo();
-```
-Updates the profile combo box with current profiles.
-*)
-procedure TAccountForm.UpdateProfileCombo();
-var
-  i: Integer;
-begin
-  if not Assigned(Self.ProfileCombo) then
-    Exit;
-  
-  Self.ProfileCombo.Items.Clear();
-  
-  for i := 0 to High(Self.Profiles) do
-    Self.ProfileCombo.Items.Add(Self.Profiles[i].ProfileName);
-    
-  Self.ProfileCombo.Items.Add('New Profile');
-end;
 
 (*
 ## TAccountForm.GetSelectedProfile
@@ -544,6 +497,283 @@ begin
   end;
 end;
 
+
+(*
+## TAccountForm.BuildFilterSettings
+```pascal
+function TAccountForm.BuildFilterSettings(): TSettings;
+```
+Builds a TSettings record from the current state of all filter UI controls.
+*)
+function TAccountForm.BuildFilterSettings(): TSettings;
+var
+  i: Integer;
+  excludeWorlds: TStringArray;
+  excludeNum: Integer;
+begin
+  Result := WorldFetcher.Settings;
+
+  Result.MinPlayers := StrToInt(Self.MinPlayersEdit.Text, 0);
+  Result.MaxPlayers := StrToInt(Self.MaxPlayersEdit.Text, 2000);
+
+  if not Self.F2PCheckbox.IsChecked() or not Self.MembersCheckbox.IsChecked() then
+  begin
+    if not Self.F2PCheckbox.IsChecked() then
+      Result.ExcludeTypes += [EWorldType.FREE_TO_PLAY];
+    if not Self.MembersCheckbox.IsChecked() then
+      Result.ExcludeTypes += [EWorldType.MEMBERS];
+  end;
+
+  if not Self.GermanyCheckbox.IsChecked() then
+    Result.ExcludeLocations += [EWorldLocation.GERMANY];
+  if not Self.UKCheckbox.IsChecked() then
+    Result.ExcludeLocations += [EWorldLocation.UNITED_KINGDOM];
+  if not Self.USCheckbox.IsChecked() then
+    Result.ExcludeLocations += [EWorldLocation.UNITED_STATES];
+  if not Self.AustraliaCheckbox.IsChecked() then
+    Result.ExcludeLocations += [EWorldLocation.AUSTRALIA];
+
+  if not Self.NormalCheckbox.IsChecked() then
+    Result.ExcludeActivities += [EWorldActivity.NORMAL];
+  if not Self.DangerousCheckbox.IsChecked() then
+    Result.ExcludeActivities += [EWorldActivity.DANGEROUS];
+  if not Self.RestrictedCheckbox.IsChecked() then
+    Result.ExcludeActivities += [EWorldActivity.RESTRICTED];
+  if not Self.SkillTotalCheckbox.IsChecked() then
+    Result.ExcludeActivities += [EWorldActivity.SKILL_TOTAL];
+
+  if Self.ExcludeWorldsEdit.Text <> '' then
+  begin
+    excludeWorlds := Self.ExcludeWorldsEdit.Text.Split(',');
+    for i := 0 to High(excludeWorlds) do
+    begin
+      excludeNum := StrToInt(excludeWorlds[i].Trim(), -1);
+      if excludeNum > 0 then
+        Result.ExcludeWorlds += [excludeNum];
+    end;
+  end;
+end;
+
+(*
+## TAccountForm.ApplyActivityFilters
+```pascal
+procedure TAccountForm.ApplyActivityFilters();
+```
+Filters the current world list based on selected specific activity checkboxes.
+*)
+procedure TAccountForm.ApplyActivityFilters();
+var
+  i, j, checkboxIndex: Integer;
+begin
+  if Length(Self.ActivityCheckboxes) = 0 then
+    Exit;
+
+  j := 0;
+  for i := 0 to High(Self.FilteredWorlds) do
+  begin
+    for checkboxIndex := 0 to High(Self.ActivityCheckboxes) do
+      if (Self.ActivityCheckboxes[checkboxIndex].Hint = Self.FilteredWorlds[i].ActivityString) and
+         Self.ActivityCheckboxes[checkboxIndex].IsChecked() then
+      begin
+        Self.FilteredWorlds[j] := Self.FilteredWorlds[i];
+        Inc(j);
+        Break;
+      end;
+  end;
+  SetLength(Self.FilteredWorlds, j);
+end;
+
+(*
+## TAccountForm.GetLocationString
+```pascal
+function TAccountForm.GetLocationString(loc: EWorldLocation): String;
+```
+Converts a world location enum to its display string.
+*)
+function TAccountForm.GetLocationString(loc: EWorldLocation): String;
+const
+  LOCATION_NAMES: array [EWorldLocation] of String = ['Germany', 'UK', 'USA', 'Australia'];
+begin
+  Result := LOCATION_NAMES[loc];
+end;
+
+(*
+## TAccountForm.GetTypeString
+```pascal
+function TAccountForm.GetTypeString(worldType: EWorldType): String;
+```
+Converts a world type enum to its display string.
+*)
+function TAccountForm.GetTypeString(worldType: EWorldType): String;
+const
+  TYPE_NAMES: array [EWorldType] of String = ['F2P', 'Members'];
+begin
+  Result := TYPE_NAMES[worldType];
+end;
+
+
+(*
+## TAccountForm.DisplayResults
+```pascal
+procedure TAccountForm.DisplayResults();
+```
+Formats and displays the filtered world list in the list box with columns for world number, location, type, activity, and player count.
+*)
+procedure TAccountForm.DisplayResults();
+const
+  ACTIVITY_TABLE_MAX_LENGTH = 14;
+  ACTIVITY_TABLE_TRUNCATE_LENGTH = 12;
+var
+  i, validWorldCount: Integer;
+  worldStr, activityStr: String;
+begin
+  Self.WorldList.Items.Clear();
+
+  Self.WorldList.Items.Add(Format('%s |  %-9s  |  %-7s  |  %-15s  |  %s',
+    ['World', 'Location', 'Type', 'Activity', 'Players']));
+  Self.WorldList.Items.Add('------+-------------+-----------+-------------------+---------');
+
+  validWorldCount := 0;
+  for i := 0 to High(Self.FilteredWorlds) do
+  begin
+    // Skip worlds with invalid player count (parsing errors)
+    if Self.FilteredWorlds[i].PlayerCount < 0 then
+      Continue;
+
+    activityStr := Self.FilteredWorlds[i].ActivityString;
+    if activityStr.Length > ACTIVITY_TABLE_MAX_LENGTH then
+      activityStr := activityStr.CopyRange(1, ACTIVITY_TABLE_TRUNCATE_LENGTH) + '...';
+
+    worldStr := Format('%-4d  |  %-9s  |  %-7s  |  %-15s  |  %1d',
+      [Self.FilteredWorlds[i].WorldNumber,
+       Self.GetLocationString(Self.FilteredWorlds[i].Location),
+       Self.GetTypeString(Self.FilteredWorlds[i].WorldType),
+       activityStr,
+       Self.FilteredWorlds[i].PlayerCount]);
+
+    Self.WorldList.Items.Add(worldStr);
+    Inc(validWorldCount);
+  end;
+
+  Self.StatsLabel.Caption := Format('Found: %d worlds', [validWorldCount]);
+end;
+
+(*
+## TAccountForm.RefreshActivities
+```pascal
+procedure TAccountForm.RefreshActivities();
+```
+Dynamically creates checkboxes for all unique specific activities found in the currently filtered worlds. Removes previous activity checkboxes before creating new ones.
+*)
+procedure TAccountForm.RefreshActivities();
+const
+  ACTIVITY_CHECKBOX_MAX_LENGTH = 35;
+  ACTIVITY_CHECKBOX_TRUNCATE_LENGTH = 32;
+type
+  TActivityGroup = record
+    Activity: String;
+  end;
+var
+  i, j: Integer;
+  activities: array of TActivityGroup;
+  activity: TActivityGroup;
+  tempWorlds: array of TWorldInfo;
+  checkbox: TLazCheckBox;
+  activityText: String;
+begin
+  for i := 0 to High(Self.ActivityCheckboxes) do
+    if Assigned(Self.ActivityCheckboxes[i]) then
+      Self.ActivityCheckboxes[i].Free();
+  SetLength(Self.ActivityCheckboxes, 0);
+
+  tempWorlds := Copy(Self.AllWorldsCache);
+
+  if not Self.F2PCheckbox.IsChecked() then
+  begin
+    j := 0;
+    for i := 0 to High(tempWorlds) do
+      if tempWorlds[i].WorldType <> EWorldType.FREE_TO_PLAY then
+      begin
+        tempWorlds[j] := tempWorlds[i];
+        Inc(j);
+      end;
+    SetLength(tempWorlds, j);
+  end;
+
+  if not Self.MembersCheckbox.IsChecked() then
+  begin
+    j := 0;
+    for i := 0 to High(tempWorlds) do
+      if tempWorlds[i].WorldType <> EWorldType.MEMBERS then
+      begin
+        tempWorlds[j] := tempWorlds[i];
+        Inc(j);
+      end;
+    SetLength(tempWorlds, j);
+  end;
+
+  j := 0;
+  for i := 0 to High(tempWorlds) do
+  begin
+    case tempWorlds[i].Location of
+      EWorldLocation.GERMANY: if not Self.GermanyCheckbox.IsChecked() then Continue;
+      EWorldLocation.UNITED_KINGDOM: if not Self.UKCheckbox.IsChecked() then Continue;
+      EWorldLocation.UNITED_STATES: if not Self.USCheckbox.IsChecked() then Continue;
+      EWorldLocation.AUSTRALIA: if not Self.AustraliaCheckbox.IsChecked() then Continue;
+    end;
+    tempWorlds[j] := tempWorlds[i];
+    Inc(j);
+  end;
+  SetLength(tempWorlds, j);
+
+  j := 0;
+  for i := 0 to High(tempWorlds) do
+  begin
+    case tempWorlds[i].Activity of
+      EWorldActivity.NORMAL: if not Self.NormalCheckbox.IsChecked() then Continue;
+      EWorldActivity.DANGEROUS: if not Self.DangerousCheckbox.IsChecked() then Continue;
+      EWorldActivity.RESTRICTED: if not Self.RestrictedCheckbox.IsChecked() then Continue;
+      EWorldActivity.SKILL_TOTAL: if not Self.SkillTotalCheckbox.IsChecked() then Continue;
+    end;
+    tempWorlds[j] := tempWorlds[i];
+    Inc(j);
+  end;
+  SetLength(tempWorlds, j);
+
+  for i := 0 to High(tempWorlds) do
+  begin
+    if (tempWorlds[i].ActivityString = '') or (tempWorlds[i].ActivityString = '-') then
+      Continue;
+
+    for j := 0 to High(activities) do
+      if activities[j].Activity = tempWorlds[i].ActivityString then
+        Break;
+
+    if (j > High(activities)) or (Length(activities) = 0) then
+    begin
+      activity.Activity := tempWorlds[i].ActivityString;
+      activities += activity;
+    end;
+  end;
+
+  for i := 0 to High(activities) do
+  begin
+    activityText := activities[i].Activity;
+    if activityText.Length > ACTIVITY_CHECKBOX_MAX_LENGTH then
+      activityText := activityText.CopyRange(1, ACTIVITY_CHECKBOX_TRUNCATE_LENGTH) + '...';
+
+    checkbox := TLazCheckBox.Create(Self.SpecificActivityPanel);
+    checkbox.Parent := Self.SpecificActivityPanel;
+    checkbox.Caption := activityText;
+    checkbox.SetBounds(5, 25 + (i * 20), 180, 18);
+    checkbox.SetChecked(Self.SelectAllActivitiesCheckbox.IsChecked());
+    checkbox.Hint := activities[i].Activity;
+
+    Self.ActivityCheckboxes += checkbox;
+  end;
+end;
+
+
 (*
 ## TAccountForm.OnSaveClick
 ```pascal
@@ -551,7 +781,8 @@ procedure TAccountForm.OnSaveClick(sender: TLazObject);
 ```
 Handles the Save button click event. Validates and saves the profile data from the edit form.
 *)
-procedure TAccountForm.OnSaveClick({$H-}sender: TLazObject){$H+};
+{$H-}
+procedure TAccountForm.OnSaveClick(sender: TLazObject);
 var
   profile: TAccountProfile;
   validationError: String;
@@ -604,7 +835,7 @@ procedure TAccountForm.OnDeleteClick(sender: TLazObject);
 ```
 Handles the Delete button click event. Shows confirmation dialog before deleting the profile.
 *)
-procedure TAccountForm.OnDeleteClick({$H-}sender: TLazObject){$H+};
+procedure TAccountForm.OnDeleteClick(sender: TLazObject);
 begin
   if ShowQuestionDialog('Delete Profile', 'Are you sure you want to delete this profile?') then
   begin
@@ -620,43 +851,312 @@ procedure TAccountForm.OnCloseClick(sender: TLazObject);
 ```
 Handles the Close button click event. Closes the edit dialog without saving.
 *)
-procedure TAccountForm.OnCloseClick({$H-}sender: TLazObject){$H+};
+procedure TAccountForm.OnCloseClick(sender: TLazObject);
 begin
   Self.EditForm.Close();
 end;
 
+(*
+## TAccountForm.OnGenerateClick
+```pascal
+procedure TAccountForm.OnGenerateClick(sender: TLazObject);
+```
+Handles the Generate Worlds button click. Applies current filter settings and refreshes the world list.
+*)
+procedure TAccountForm.OnGenerateClick(sender: TLazObject);
+var
+  settings: TSettings;
+begin
+  settings := Self.BuildFilterSettings();
+
+  if Length(Self.AllWorldsCache) = 0 then
+  begin
+    Self.StatsLabel.Caption := 'Fetching...';
+    Self.EditForm.Update();
+
+    WorldFetcher.Setup();
+    WorldFetcher.Settings.ExcludeActivities := [];
+
+    if not WorldFetcher.FetchAll() then
+    begin
+      Self.StatsLabel.Caption := 'Fetch failed!';
+      Exit;
+    end;
+
+    Self.AllWorldsCache := WorldFetcher.GetFilteredWorlds();
+  end;
+
+  Self.RefreshActivities();
+
+  Self.FilteredWorlds := WorldFetcher.FilterBySettings(settings);
+  Self.ApplyActivityFilters();
+
+  case Self.SortCombo.ItemIndex of
+    0: Self.FilteredWorlds := WorldFetcher.SortWorlds(Self.FilteredWorlds, EWorldSort.WORLD_NUMBER);
+    1: Self.FilteredWorlds := WorldFetcher.SortWorlds(Self.FilteredWorlds, EWorldSort.PLAYER_COUNT_ASC);
+    2: Self.FilteredWorlds := WorldFetcher.SortWorlds(Self.FilteredWorlds, EWorldSort.PLAYER_COUNT_DESC);
+  end;
+
+  Self.DisplayResults();
+end;
 
 (*
-## TAccountForm.OnEditClick
+## TAccountForm.OnSelectAllActivitiesClick
 ```pascal
-procedure TAccountForm.OnEditClick(sender: TLazObject);
+procedure TAccountForm.OnSelectAllActivitiesClick(sender: TLazObject);
 ```
-Handles the Edit button click event. Opens the profile edit dialog for the selected profile or creates a new one.
+Handles the Select/Deselect All checkbox click. Toggles all activity checkboxes to match the master checkbox state.
 *)
-procedure TAccountForm.OnEditClick({$H-}sender: TLazObject){$H+};
+procedure TAccountForm.OnSelectAllActivitiesClick(sender: TLazObject);
 var
-  selectedIndex: Integer;
-  profile: TAccountProfile;
-  isNewProfile: Boolean;
+  i: Integer;
+  newState: Boolean;
 begin
-  selectedIndex := Self.ProfileCombo.ItemIndex;
-  isNewProfile := (selectedIndex = Self.ProfileCombo.Items.Count - 1); // Last item is "New Profile"
-  
-  if isNewProfile then
+  newState := Self.SelectAllActivitiesCheckbox.IsChecked();
+
+  for i := 0 to High(Self.ActivityCheckboxes) do
+    Self.ActivityCheckboxes[i].SetChecked(newState);
+end;
+
+(*
+## TAccountForm.OnSortChange
+```pascal
+procedure TAccountForm.OnSortChange(sender: TLazObject);
+```
+Handles sort order combo box change. Re-generates the world list with the new sort order.
+*)
+procedure TAccountForm.OnSortChange(sender: TLazObject);
+begin
+  if Length(Self.FilteredWorlds) > 0 then
+    Self.OnGenerateClick(Self.GenerateButton);
+end;
+{$H+}
+
+
+(*
+## TAccountForm.SetupWorldTypePanel
+```pascal
+procedure TAccountForm.SetupWorldTypePanel();
+```
+Sets up the world type filter panel with F2P and Members checkboxes.
+*)
+procedure TAccountForm.SetupWorldTypePanel();
+var
+  typeY: Integer;
+  scale: Double;
+  checkboxHeight: Integer;
+begin
+  scale := FormUtils.Scale;
+  checkboxHeight := Round(18 * scale);
+  typeY := 10;
+
+  Self.F2PCheckbox := TLazCheckBox.Create(Self.TypePanel);
+  Self.F2PCheckbox.Parent := Self.TypePanel;
+  Self.F2PCheckbox.Caption := 'Free-to-play';
+  Self.F2PCheckbox.SetBounds(10, typeY, Round(130 * scale), checkboxHeight);
+  Self.F2PCheckbox.SetChecked(True);
+
+  typeY += checkboxHeight + 3;
+  Self.MembersCheckbox := TLazCheckBox.Create(Self.TypePanel);
+  Self.MembersCheckbox.Parent := Self.TypePanel;
+  Self.MembersCheckbox.Caption := 'Members';
+  Self.MembersCheckbox.SetBounds(10, typeY, Round(130 * scale), checkboxHeight);
+  Self.MembersCheckbox.SetChecked(True);
+end;
+
+(*
+## TAccountForm.SetupLocationPanel
+```pascal
+procedure TAccountForm.SetupLocationPanel();
+```
+Sets up the location filter panel with checkboxes for Germany, UK, USA, and Australia.
+*)
+procedure TAccountForm.SetupLocationPanel();
+var
+  locY: Integer;
+  scale: Double;
+  checkboxHeight: Integer;
+begin
+  scale := FormUtils.Scale;
+  checkboxHeight := Round(18 * scale);
+  locY := 10;
+
+  Self.GermanyCheckbox := TLazCheckBox.Create(Self.LocationPanel);
+  Self.GermanyCheckbox.Parent := Self.LocationPanel;
+  Self.GermanyCheckbox.Caption := 'Germany';
+  Self.GermanyCheckbox.SetBounds(10, locY, Round(100 * scale), checkboxHeight);
+  Self.GermanyCheckbox.SetChecked(True);
+
+  locY += checkboxHeight + 3;
+  Self.UKCheckbox := TLazCheckBox.Create(Self.LocationPanel);
+  Self.UKCheckbox.Parent := Self.LocationPanel;
+  Self.UKCheckbox.Caption := 'UK';
+  Self.UKCheckbox.SetBounds(10, locY, Round(100 * scale), checkboxHeight);
+  Self.UKCheckbox.SetChecked(True);
+
+  locY += checkboxHeight + 3;
+  Self.USCheckbox := TLazCheckBox.Create(Self.LocationPanel);
+  Self.USCheckbox.Parent := Self.LocationPanel;
+  Self.USCheckbox.Caption := 'USA';
+  Self.USCheckbox.SetBounds(10, locY, Round(100 * scale), checkboxHeight);
+  Self.USCheckbox.SetChecked(True);
+
+  locY += checkboxHeight + 3;
+  Self.AustraliaCheckbox := TLazCheckBox.Create(Self.LocationPanel);
+  Self.AustraliaCheckbox.Parent := Self.LocationPanel;
+  Self.AustraliaCheckbox.Caption := 'Australia';
+  Self.AustraliaCheckbox.SetBounds(10, locY, Round(100 * scale), checkboxHeight);
+  Self.AustraliaCheckbox.SetChecked(True);
+end;
+
+(*
+## TAccountForm.SetupActivityPanel
+```pascal
+procedure TAccountForm.SetupActivityPanel();
+```
+Sets up the activity type filter panel with checkboxes for Normal, Dangerous, Restricted, and Skill Total worlds.
+*)
+procedure TAccountForm.SetupActivityPanel();
+var
+  actY: Integer;
+  scale: Double;
+  checkboxHeight: Integer;
+begin
+  scale := FormUtils.Scale;
+  checkboxHeight := Round(18 * scale);
+  actY := 10;
+
+  Self.NormalCheckbox := TLazCheckBox.Create(Self.ActivityPanel);
+  Self.NormalCheckbox.Parent := Self.ActivityPanel;
+  Self.NormalCheckbox.Caption := 'Normal';
+  Self.NormalCheckbox.SetBounds(10, actY, Round(130 * scale), checkboxHeight);
+  Self.NormalCheckbox.SetChecked(True);
+
+  actY += checkboxHeight + 3;
+  Self.DangerousCheckbox := TLazCheckBox.Create(Self.ActivityPanel);
+  Self.DangerousCheckbox.Parent := Self.ActivityPanel;
+  Self.DangerousCheckbox.Caption := 'Dangerous';
+  Self.DangerousCheckbox.SetBounds(10, actY, Round(130 * scale), checkboxHeight);
+  Self.DangerousCheckbox.SetChecked(False);
+
+  actY += checkboxHeight + 3;
+  Self.RestrictedCheckbox := TLazCheckBox.Create(Self.ActivityPanel);
+  Self.RestrictedCheckbox.Parent := Self.ActivityPanel;
+  Self.RestrictedCheckbox.Caption := 'Restricted';
+  Self.RestrictedCheckbox.SetBounds(10, actY, Round(130 * scale), checkboxHeight);
+  Self.RestrictedCheckbox.SetChecked(False);
+
+  actY += checkboxHeight + 3;
+  Self.SkillTotalCheckbox := TLazCheckBox.Create(Self.ActivityPanel);
+  Self.SkillTotalCheckbox.Parent := Self.ActivityPanel;
+  Self.SkillTotalCheckbox.Caption := 'Skill Total';
+  Self.SkillTotalCheckbox.SetBounds(10, actY, Round(130 * scale), checkboxHeight);
+  Self.SkillTotalCheckbox.SetChecked(True);
+end;
+
+(*
+## TAccountForm.SetupSpecificActivityPanel
+```pascal
+procedure TAccountForm.SetupSpecificActivityPanel();
+```
+Sets up the specific activities panel with a master select/deselect all checkbox. Individual activity checkboxes are added dynamically by RefreshActivities.
+*)
+procedure TAccountForm.SetupSpecificActivityPanel();
+var
+  scale: Double;
+  checkboxHeight: Integer;
+begin
+  scale := FormUtils.Scale;
+  checkboxHeight := Round(18 * scale);
+
+  Self.SelectAllActivitiesCheckbox := TLazCheckBox.Create(Self.SpecificActivityPanel);
+  Self.SelectAllActivitiesCheckbox.Parent := Self.SpecificActivityPanel;
+  Self.SelectAllActivitiesCheckbox.Caption := 'Select/Deselect All';
+  Self.SelectAllActivitiesCheckbox.SetBounds(5, 5, 200, checkboxHeight);
+  Self.SelectAllActivitiesCheckbox.SetChecked(True);
+  Self.SelectAllActivitiesCheckbox.OnClick := @Self.OnSelectAllActivitiesClick;
+end;
+
+
+(*
+## TAccountForm.LoadWorldData
+```pascal
+procedure TAccountForm.LoadWorldData();
+```
+Fetches all available worlds from the world fetcher and caches them. Automatically generates the initial world list after fetching.
+*)
+procedure TAccountForm.LoadWorldData();
+begin
+  Self.StatsLabel.Caption := 'Fetching...';
+  Self.EditForm.Update();
+
+  WorldFetcher.Setup();
+  WorldFetcher.Settings.ExcludeActivities := [];
+
+  if WorldFetcher.FetchAll() then
   begin
-    profile := Default(TAccountProfile);
-    Self.SetupEditDialog(nil, profile, True, -1);
-  end
-  else if (selectedIndex >= 0) and (selectedIndex < Length(Self.Profiles)) then
-  begin
-    profile := Self.Profiles[selectedIndex];
-    Self.SetupEditDialog(nil, profile, False, selectedIndex);
+    Self.AllWorldsCache := WorldFetcher.GetFilteredWorlds();
+    Self.RefreshActivities();
+    Self.StatsLabel.Caption := Format('Ready: %d worlds', [Length(Self.AllWorldsCache)]);
+    Self.OnGenerateClick(Self.GenerateButton);
   end
   else
-    Exit;
-    
-  Self.EditForm.ShowModal();
+    Self.StatsLabel.Caption := 'Fetch failed!';
 end;
+
+(*
+## TAccountForm.LoadSavedWorlds
+```pascal
+procedure TAccountForm.LoadSavedWorlds(worldsStr: String);
+```
+Loads a comma-separated list of world numbers and displays them. Disables all filter checkboxes when showing saved worlds.
+*)
+procedure TAccountForm.LoadSavedWorlds(worldsStr: String);
+var
+  worldNumbers: TIntegerArray;
+  worldStrs: TStringArray;
+  i: Integer;
+  worldNum: Integer;
+begin
+  if worldsStr = '' then
+    Exit;
+
+  worldStrs := worldsStr.Split(',');
+  for i := 0 to High(worldStrs) do
+  begin
+    worldNum := StrToInt(worldStrs[i].Trim(), -1);
+    if worldNum > 0 then
+      worldNumbers += worldNum;
+  end;
+
+  if Length(worldNumbers) = 0 then
+    Exit;
+
+  WorldFetcher.Setup();
+  if WorldFetcher.Fetch(worldNumbers) then
+  begin
+    Self.FilteredWorlds := WorldFetcher.Worlds;
+    Self.DisplayResults();
+
+    Self.F2PCheckbox.SetChecked(False);
+    Self.MembersCheckbox.SetChecked(False);
+    Self.GermanyCheckbox.SetChecked(False);
+    Self.UKCheckbox.SetChecked(False);
+    Self.USCheckbox.SetChecked(False);
+    Self.AustraliaCheckbox.SetChecked(False);
+    Self.NormalCheckbox.SetChecked(False);
+    Self.DangerousCheckbox.SetChecked(False);
+    Self.RestrictedCheckbox.SetChecked(False);
+    Self.SkillTotalCheckbox.SetChecked(False);
+    Self.SelectAllActivitiesCheckbox.SetChecked(False);
+
+    for i := 0 to High(Self.ActivityCheckboxes) do
+      if Assigned(Self.ActivityCheckboxes[i]) then
+        Self.ActivityCheckboxes[i].Free();
+    SetLength(Self.ActivityCheckboxes, 0);
+  end;
+end;
+
 
 (*
 ## TAccountForm.SetupEditDialog
@@ -694,12 +1194,12 @@ begin
 
   currentX := Round(15 * scale);
   fieldY := Round(35 * scale);
-  
+
   Self.NameEdit := TLazEdit.CreateEx(Self.EditForm, 'Profile Name*:', '', currentX, fieldY, Round(FIELD_WIDTH * scale), Round(FIELD_HEIGHT * scale));
   Self.NameEdit.MaxLength := 50;
   Self.NameEdit.Text := profile.ProfileName;
   currentX += Round(187 * scale);
-  
+
   Self.UsernameEdit := TLazEdit.CreateEx(Self.EditForm, 'Username (optional):', 'Optional for Jagex accounts', currentX, fieldY, Round(FIELD_WIDTH * scale), Round(FIELD_HEIGHT * scale));
   Self.UsernameEdit.MaxLength := 50;
   Self.UsernameEdit.Text := profile.Username;
@@ -717,19 +1217,19 @@ begin
   Self.BankPinEdit.Text := profile.BankPin;
 
   worldY := fieldY + Round(65 * scale);
-  
+
   Self.TypePanel := TLazScrollBox.CreateEx(Self.EditForm, 'World Type', '', Round(15 * scale), worldY, Round(125 * scale), Round(PANEL_HEIGHT * scale));
   Self.SetupWorldTypePanel();
-  
+
   Self.LocationPanel := TLazScrollBox.CreateEx(Self.EditForm, 'Location', '', Round(145 * scale), worldY, Round(115 * scale), Round(PANEL_HEIGHT * scale));
   Self.SetupLocationPanel();
-  
+
   Self.ActivityPanel := TLazScrollBox.CreateEx(Self.EditForm, 'Activity', '', Round(265 * scale), worldY, Round(145 * scale), Round(PANEL_HEIGHT * scale));
   Self.SetupActivityPanel();
-  
+
   Self.SpecificActivityPanel := TLazScrollBox.CreateEx(Self.EditForm, 'Specific Activities', '', Round(415 * scale), worldY, Round(265 * scale), Round(PANEL_HEIGHT * scale));
   Self.SetupSpecificActivityPanel();
-  
+
   worldY += Round(125 * scale);
 
   Self.StatsLabel := TLazLabel.Create(Self.EditForm);
@@ -744,7 +1244,7 @@ begin
   Self.GenerateButton.Caption := 'Generate Worlds';
   Self.GenerateButton.SetBounds(Round(15 * scale), worldY, Round(150 * scale), Round(30 * scale));
   Self.GenerateButton.OnClick := @Self.OnGenerateClick;
-  
+
   Self.SortCombo := TLazComboBox.CreateEx(Self.EditForm, 'Sort by:', '', Round(170 * scale), worldY, Round(130 * scale), Round(22 * scale));
   Self.SortCombo.Style := ELazComboBoxStyle.csDropDownList;
   Self.SortCombo.Items.Add('World Number');
@@ -752,36 +1252,36 @@ begin
   Self.SortCombo.Items.Add('Players (Hi/Lo)');
   Self.SortCombo.ItemIndex := 0;
   Self.SortCombo.OnChange := @Self.OnSortChange;
-  
+
   Self.MinPlayersEdit := TLazEdit.CreateEx(Self.EditForm, 'Players Min/Max', '0', Round(305 * scale), worldY, Round(50 * scale), Round(22 * scale));
   Self.MinPlayersEdit.OnKeyPress := @FormUtils.NumberField;
   Self.MinPlayersEdit.MaxLength := 4;
   Self.MinPlayersEdit.Text := '0';
-  
+
   with TLazLabel.Create(Self.EditForm) do
   begin
     Parent := Self.EditForm;
     Caption := '-';
     SetBounds(Round(365 * scale), worldY + Round(2 * scale), Round(10 * scale), Round(20 * scale));
   end;
-  
+
   Self.MaxPlayersEdit := TLazEdit.CreateEx(Self.EditForm, '', '2000', Round(375 * scale), worldY, Round(50 * scale), Round(22 * scale));
   Self.MaxPlayersEdit.OnKeyPress := @FormUtils.NumberField;
   Self.MaxPlayersEdit.MaxLength := 4;
   Self.MaxPlayersEdit.Text := '2000';
-  
+
   Self.ExcludeWorldsEdit := TLazEdit.CreateEx(Self.EditForm, 'Exclude worlds:', 'e.g., 301, 302', Round(450 * scale), worldY, Round(230 * scale), Round(22 * scale));
-  
+
   worldY += Round(45 * scale);
-  
+
   Self.WorldList := TLazListBox.Create(Self.EditForm);
   Self.WorldList.Parent := Self.EditForm;
   Self.WorldList.SetBounds(Round(15 * scale), worldY, Round(665 * scale), Round(160 * scale));
   Self.WorldList.Font.Name := 'Courier New';
   Self.WorldList.Font.Size := 12;
-  
+
   worldY += Round(175 * scale);
-  
+
   Self.SaveButton := TLazButton.CreateEx(Self.EditForm, 'Save Profile', 'Save this profile', Round(15 * scale), worldY, Round(BUTTON_WIDTH * scale), Round(BUTTON_HEIGHT * scale));
   Self.SaveButton.OnClick := @Self.OnSaveClick;
 
@@ -790,15 +1290,50 @@ begin
     Self.DeleteButton := TLazButton.CreateEx(Self.EditForm, 'Delete', 'Delete this profile', Round(125 * scale), worldY, Round(80 * scale), Round(BUTTON_HEIGHT * scale));
     Self.DeleteButton.OnClick := @Self.OnDeleteClick;
   end;
-  
+
   Self.CloseButton := TLazButton.CreateEx(Self.EditForm, 'Close', 'Close dialog', Round(600 * scale), worldY, Round(80 * scale), Round(BUTTON_HEIGHT * scale));
   Self.CloseButton.OnClick := @Self.OnCloseClick;
-  
+
   Self.LoadWorldData();
-  
+
   if not isNew and (profile.Worlds <> '') then
     Self.LoadSavedWorlds(profile.Worlds);
 end;
+
+
+(*
+## TAccountForm.OnEditClick
+```pascal
+procedure TAccountForm.OnEditClick(sender: TLazObject);
+```
+Handles the Edit button click event. Opens the profile edit dialog for the selected profile or creates a new one.
+*)
+{$H-}
+procedure TAccountForm.OnEditClick(sender: TLazObject);
+var
+  selectedIndex: Integer;
+  profile: TAccountProfile;
+  isNewProfile: Boolean;
+begin
+  selectedIndex := Self.ProfileCombo.ItemIndex;
+  isNewProfile := (selectedIndex = Self.ProfileCombo.Items.Count - 1); // Last item is "New Profile"
+  
+  if isNewProfile then
+  begin
+    profile := Default(TAccountProfile);
+    Self.SetupEditDialog(nil, profile, True, -1);
+  end
+  else if (selectedIndex >= 0) and (selectedIndex < Length(Self.Profiles)) then
+  begin
+    profile := Self.Profiles[selectedIndex];
+    Self.SetupEditDialog(nil, profile, False, selectedIndex);
+  end
+  else
+    Exit;
+    
+  Self.EditForm.ShowModal();
+end;
+{$H+}
 
 (*
 ## TAccountForm.SetupUI
@@ -821,586 +1356,5 @@ begin
     Self.ProfileCombo.ItemIndex := 0;
 end;
 
-(*
-## TAccountForm.SetupWorldTypePanel
-```pascal
-procedure TAccountForm.SetupWorldTypePanel();
-```
-Sets up the world type filter panel with F2P and Members checkboxes.
-*)
-procedure TAccountForm.SetupWorldTypePanel();
 var
-  typeY: Integer;
-  scale: Double;
-  checkboxHeight: Integer;
-begin
-  scale := FormUtils.Scale;
-  checkboxHeight := Round(18 * scale);
-  typeY := 10;
-  
-  Self.F2PCheckbox := TLazCheckBox.Create(Self.TypePanel);
-  Self.F2PCheckbox.Parent := Self.TypePanel;
-  Self.F2PCheckbox.Caption := 'Free-to-play';
-  Self.F2PCheckbox.SetBounds(10, typeY, Round(130 * scale), checkboxHeight);
-  Self.F2PCheckbox.SetChecked(True);
-  
-  typeY += checkboxHeight + 3;
-  Self.MembersCheckbox := TLazCheckBox.Create(Self.TypePanel);
-  Self.MembersCheckbox.Parent := Self.TypePanel;
-  Self.MembersCheckbox.Caption := 'Members';
-  Self.MembersCheckbox.SetBounds(10, typeY, Round(130 * scale), checkboxHeight);
-  Self.MembersCheckbox.SetChecked(True);
-end;
-
-(*
-## TAccountForm.SetupLocationPanel
-```pascal
-procedure TAccountForm.SetupLocationPanel();
-```
-Sets up the location filter panel with checkboxes for Germany, UK, USA, and Australia.
-*)
-procedure TAccountForm.SetupLocationPanel();
-var
-  locY: Integer;
-  scale: Double;
-  checkboxHeight: Integer;
-begin
-  scale := FormUtils.Scale;
-  checkboxHeight := Round(18 * scale);
-  locY := 10;
-  
-  Self.GermanyCheckbox := TLazCheckBox.Create(Self.LocationPanel);
-  Self.GermanyCheckbox.Parent := Self.LocationPanel;
-  Self.GermanyCheckbox.Caption := 'Germany';
-  Self.GermanyCheckbox.SetBounds(10, locY, Round(100 * scale), checkboxHeight);
-  Self.GermanyCheckbox.SetChecked(True);
-  
-  locY += checkboxHeight + 3;
-  Self.UKCheckbox := TLazCheckBox.Create(Self.LocationPanel);
-  Self.UKCheckbox.Parent := Self.LocationPanel;
-  Self.UKCheckbox.Caption := 'UK';
-  Self.UKCheckbox.SetBounds(10, locY, Round(100 * scale), checkboxHeight);
-  Self.UKCheckbox.SetChecked(True);
-  
-  locY += checkboxHeight + 3;
-  Self.USCheckbox := TLazCheckBox.Create(Self.LocationPanel);
-  Self.USCheckbox.Parent := Self.LocationPanel;
-  Self.USCheckbox.Caption := 'USA';
-  Self.USCheckbox.SetBounds(10, locY, Round(100 * scale), checkboxHeight);
-  Self.USCheckbox.SetChecked(True);
-  
-  locY += checkboxHeight + 3;
-  Self.AustraliaCheckbox := TLazCheckBox.Create(Self.LocationPanel);
-  Self.AustraliaCheckbox.Parent := Self.LocationPanel;
-  Self.AustraliaCheckbox.Caption := 'Australia';
-  Self.AustraliaCheckbox.SetBounds(10, locY, Round(100 * scale), checkboxHeight);
-  Self.AustraliaCheckbox.SetChecked(True);
-end;
-
-(*
-## TAccountForm.SetupActivityPanel
-```pascal
-procedure TAccountForm.SetupActivityPanel();
-```
-Sets up the activity type filter panel with checkboxes for Normal, Dangerous, Restricted, and Skill Total worlds.
-*)
-procedure TAccountForm.SetupActivityPanel();
-var
-  actY: Integer;
-  scale: Double;
-  checkboxHeight: Integer;
-begin
-  scale := FormUtils.Scale;
-  checkboxHeight := Round(18 * scale);
-  actY := 10;
-  
-  Self.NormalCheckbox := TLazCheckBox.Create(Self.ActivityPanel);
-  Self.NormalCheckbox.Parent := Self.ActivityPanel;
-  Self.NormalCheckbox.Caption := 'Normal';
-  Self.NormalCheckbox.SetBounds(10, actY, Round(130 * scale), checkboxHeight);
-  Self.NormalCheckbox.SetChecked(True);
-  
-  actY += checkboxHeight + 3;
-  Self.DangerousCheckbox := TLazCheckBox.Create(Self.ActivityPanel);
-  Self.DangerousCheckbox.Parent := Self.ActivityPanel;
-  Self.DangerousCheckbox.Caption := 'Dangerous';
-  Self.DangerousCheckbox.SetBounds(10, actY, Round(130 * scale), checkboxHeight);
-  Self.DangerousCheckbox.SetChecked(False);
-  
-  actY += checkboxHeight + 3;
-  Self.RestrictedCheckbox := TLazCheckBox.Create(Self.ActivityPanel);
-  Self.RestrictedCheckbox.Parent := Self.ActivityPanel;
-  Self.RestrictedCheckbox.Caption := 'Restricted';
-  Self.RestrictedCheckbox.SetBounds(10, actY, Round(130 * scale), checkboxHeight);
-  Self.RestrictedCheckbox.SetChecked(False);
-  
-  actY += checkboxHeight + 3;
-  Self.SkillTotalCheckbox := TLazCheckBox.Create(Self.ActivityPanel);
-  Self.SkillTotalCheckbox.Parent := Self.ActivityPanel;
-  Self.SkillTotalCheckbox.Caption := 'Skill Total';
-  Self.SkillTotalCheckbox.SetBounds(10, actY, Round(130 * scale), checkboxHeight);
-  Self.SkillTotalCheckbox.SetChecked(True);
-end;
-
-(*
-## TAccountForm.SetupSpecificActivityPanel
-```pascal
-procedure TAccountForm.SetupSpecificActivityPanel();
-```
-Sets up the specific activities panel with a master select/deselect all checkbox. Individual activity checkboxes are added dynamically by RefreshActivities.
-*)
-procedure TAccountForm.SetupSpecificActivityPanel();
-var
-  scale: Double;
-  checkboxHeight: Integer;
-begin
-  scale := FormUtils.Scale;
-  checkboxHeight := Round(18 * scale);
-  
-  Self.SelectAllActivitiesCheckbox := TLazCheckBox.Create(Self.SpecificActivityPanel);
-  Self.SelectAllActivitiesCheckbox.Parent := Self.SpecificActivityPanel;
-  Self.SelectAllActivitiesCheckbox.Caption := 'Select/Deselect All';
-  Self.SelectAllActivitiesCheckbox.SetBounds(5, 5, 200, checkboxHeight);
-  Self.SelectAllActivitiesCheckbox.SetChecked(True);
-  Self.SelectAllActivitiesCheckbox.OnClick := @Self.OnSelectAllActivitiesClick;
-end;
-
-(*
-## TAccountForm.LoadWorldData
-```pascal
-procedure TAccountForm.LoadWorldData();
-```
-Fetches all available worlds from the world fetcher and caches them. Automatically generates the initial world list after fetching.
-*)
-procedure TAccountForm.LoadWorldData();
-begin
-  Self.StatsLabel.Caption := 'Fetching...';
-  Self.EditForm.Update();
-  
-  WorldFetcher.Setup();
-  WorldFetcher.Settings.ExcludeActivities := [];
-  
-  if WorldFetcher.FetchAll() then
-  begin
-    Self.AllWorldsCache := WorldFetcher.GetFilteredWorlds();
-    Self.RefreshActivities();
-    Self.StatsLabel.Caption := Format('Ready: %d worlds', [Length(Self.AllWorldsCache)]);
-    Self.OnGenerateClick(Self.GenerateButton);
-  end
-  else
-    Self.StatsLabel.Caption := 'Fetch failed!';
-end;
-
-(*
-## TAccountForm.LoadSavedWorlds
-```pascal
-procedure TAccountForm.LoadSavedWorlds(worldsStr: String);
-```
-Loads a comma-separated list of world numbers and displays them. Disables all filter checkboxes when showing saved worlds.
-*)
-procedure TAccountForm.LoadSavedWorlds(worldsStr: String);
-var
-  worldNumbers: TIntegerArray;
-  worldStrs: TStringArray;
-  i: Integer;
-  worldNum: Integer;
-begin
-  if worldsStr = '' then
-    Exit;
-    
-  worldStrs := worldsStr.Split(',');
-  for i := 0 to High(worldStrs) do
-  begin
-    worldNum := StrToInt(worldStrs[i].Trim(), -1);
-    if worldNum > 0 then
-      worldNumbers += worldNum;
-  end;
-  
-  if Length(worldNumbers) = 0 then
-    Exit;
-    
-  WorldFetcher.Setup();
-  if WorldFetcher.Fetch(worldNumbers) then
-  begin
-    Self.FilteredWorlds := WorldFetcher.Worlds;
-    Self.DisplayResults();
-    
-    Self.F2PCheckbox.SetChecked(False);
-    Self.MembersCheckbox.SetChecked(False);
-    Self.GermanyCheckbox.SetChecked(False);
-    Self.UKCheckbox.SetChecked(False);
-    Self.USCheckbox.SetChecked(False);
-    Self.AustraliaCheckbox.SetChecked(False);
-    Self.NormalCheckbox.SetChecked(False);
-    Self.DangerousCheckbox.SetChecked(False);
-    Self.RestrictedCheckbox.SetChecked(False);
-    Self.SkillTotalCheckbox.SetChecked(False);
-    Self.SelectAllActivitiesCheckbox.SetChecked(False);
-    
-    for i := 0 to High(Self.ActivityCheckboxes) do
-      if Assigned(Self.ActivityCheckboxes[i]) then
-        Self.ActivityCheckboxes[i].Free();
-    SetLength(Self.ActivityCheckboxes, 0);
-  end;
-end;
-
-(*
-## TAccountForm.OnGenerateClick
-```pascal
-procedure TAccountForm.OnGenerateClick(sender: TLazObject);
-```
-Handles the Generate Worlds button click. Applies current filter settings and refreshes the world list.
-*)
-procedure TAccountForm.OnGenerateClick({$H-}sender: TLazObject){$H+};
-var
-  settings: TSettings;
-begin
-  settings := Self.BuildFilterSettings();
-  
-  if Length(Self.AllWorldsCache) = 0 then
-  begin
-    Self.StatsLabel.Caption := 'Fetching...';
-    Self.EditForm.Update();
-    
-    WorldFetcher.Setup();
-    WorldFetcher.Settings.ExcludeActivities := [];
-    
-    if not WorldFetcher.FetchAll() then
-    begin
-      Self.StatsLabel.Caption := 'Fetch failed!';
-      Exit;
-    end;
-    
-    Self.AllWorldsCache := WorldFetcher.GetFilteredWorlds();
-    Self.RefreshActivities();
-  end;
-  
-  Self.RefreshActivities();
-  
-  Self.FilteredWorlds := WorldFetcher.FilterBySettings(settings);
-  Self.ApplyActivityFilters();
-  
-  case Self.SortCombo.ItemIndex of
-    0: Self.FilteredWorlds := WorldFetcher.SortWorlds(Self.FilteredWorlds, EWorldSort.WORLD_NUMBER);
-    1: Self.FilteredWorlds := WorldFetcher.SortWorlds(Self.FilteredWorlds, EWorldSort.PLAYER_COUNT_ASC);
-    2: Self.FilteredWorlds := WorldFetcher.SortWorlds(Self.FilteredWorlds, EWorldSort.PLAYER_COUNT_DESC);
-  end;
-  
-  Self.DisplayResults();
-end;
-
-(*
-## TAccountForm.OnSelectAllActivitiesClick
-```pascal
-procedure TAccountForm.OnSelectAllActivitiesClick(sender: TLazObject);
-```
-Handles the Select/Deselect All checkbox click. Toggles all activity checkboxes to match the master checkbox state.
-*)
-procedure TAccountForm.OnSelectAllActivitiesClick({$H-}sender: TLazObject){$H+};
-var
-  i: Integer;
-  newState: Boolean;
-begin
-  newState := Self.SelectAllActivitiesCheckbox.IsChecked();
-  
-  for i := 0 to High(Self.ActivityCheckboxes) do
-    Self.ActivityCheckboxes[i].SetChecked(newState);
-end;
-
-(*
-## TAccountForm.OnSortChange
-```pascal
-procedure TAccountForm.OnSortChange(sender: TLazObject);
-```
-Handles sort order combo box change. Re-generates the world list with the new sort order.
-*)
-procedure TAccountForm.OnSortChange({$H-}sender: TLazObject){$H+};
-begin
-  if Length(Self.FilteredWorlds) > 0 then
-    Self.OnGenerateClick(Self.GenerateButton);
-end;
-
-
-(*
-## TAccountForm.BuildFilterSettings
-```pascal
-function TAccountForm.BuildFilterSettings(): TSettings;
-```
-Builds a TSettings record from the current state of all filter UI controls.
-*)
-function TAccountForm.BuildFilterSettings(): TSettings;
-var
-  i: Integer;
-  excludeWorlds: TStringArray;
-  excludeNum: Integer;
-begin
-  Result := WorldFetcher.Settings;
-  
-  Result.MinPlayers := StrToInt(Self.MinPlayersEdit.Text, 0);
-  Result.MaxPlayers := StrToInt(Self.MaxPlayersEdit.Text, 2000);
-  
-  if not Self.F2PCheckbox.IsChecked() or not Self.MembersCheckbox.IsChecked() then
-  begin
-    if not Self.F2PCheckbox.IsChecked() then
-      Result.ExcludeTypes += [EWorldType.FREE_TO_PLAY];
-    if not Self.MembersCheckbox.IsChecked() then
-      Result.ExcludeTypes += [EWorldType.MEMBERS];
-  end;
-  
-  if not Self.GermanyCheckbox.IsChecked() then
-    Result.ExcludeLocations += [EWorldLocation.GERMANY];
-  if not Self.UKCheckbox.IsChecked() then
-    Result.ExcludeLocations += [EWorldLocation.UNITED_KINGDOM];
-  if not Self.USCheckbox.IsChecked() then
-    Result.ExcludeLocations += [EWorldLocation.UNITED_STATES];
-  if not Self.AustraliaCheckbox.IsChecked() then
-    Result.ExcludeLocations += [EWorldLocation.AUSTRALIA];
-  
-  if not Self.NormalCheckbox.IsChecked() then
-    Result.ExcludeActivities += [EWorldActivity.NORMAL];
-  if not Self.DangerousCheckbox.IsChecked() then
-    Result.ExcludeActivities += [EWorldActivity.DANGEROUS];
-  if not Self.RestrictedCheckbox.IsChecked() then
-    Result.ExcludeActivities += [EWorldActivity.RESTRICTED];
-  if not Self.SkillTotalCheckbox.IsChecked() then
-    Result.ExcludeActivities += [EWorldActivity.SKILL_TOTAL];
-  
-  if Self.ExcludeWorldsEdit.Text <> '' then
-  begin
-    excludeWorlds := Self.ExcludeWorldsEdit.Text.Split(',');
-    for i := 0 to High(excludeWorlds) do
-    begin
-      excludeNum := StrToInt(excludeWorlds[i].Trim(), -1);
-      if excludeNum > 0 then
-        Result.ExcludeWorlds += [excludeNum];
-    end;
-  end;
-end;
-
-(*
-## TAccountForm.ApplyActivityFilters
-```pascal
-procedure TAccountForm.ApplyActivityFilters();
-```
-Filters the current world list based on selected specific activity checkboxes.
-*)
-procedure TAccountForm.ApplyActivityFilters();
-var
-  i, j, checkboxIndex: Integer;
-begin
-  if Length(Self.ActivityCheckboxes) = 0 then
-    Exit;
-    
-  j := 0;
-  for i := 0 to High(Self.FilteredWorlds) do
-  begin
-    for checkboxIndex := 0 to High(Self.ActivityCheckboxes) do
-      if (Self.ActivityCheckboxes[checkboxIndex].Hint = Self.FilteredWorlds[i].ActivityString) and
-         Self.ActivityCheckboxes[checkboxIndex].IsChecked() then
-      begin
-        Self.FilteredWorlds[j] := Self.FilteredWorlds[i];
-        Inc(j);
-        Break;
-      end;
-  end;
-  SetLength(Self.FilteredWorlds, j);
-end;
-
-(*
-## TAccountForm.DisplayResults
-```pascal
-procedure TAccountForm.DisplayResults();
-```
-Formats and displays the filtered world list in the list box with columns for world number, location, type, activity, and player count.
-*)
-procedure TAccountForm.DisplayResults();
-const
-  ACTIVITY_TABLE_MAX_LENGTH = 14;
-  ACTIVITY_TABLE_TRUNCATE_LENGTH = 12;
-var
-  i, validWorldCount: Integer;
-  worldStr, activityStr: String;
-begin
-  Self.WorldList.Items.Clear();
-  
-  Self.WorldList.Items.Add(Format('%s |  %-9s  |  %-7s  |  %-15s  |  %s',
-    ['World', 'Location', 'Type', 'Activity', 'Players']));
-  Self.WorldList.Items.Add('------+-------------+-----------+-------------------+---------');
-  
-  validWorldCount := 0;
-  for i := 0 to High(Self.FilteredWorlds) do
-  begin
-    // Skip worlds with invalid player count (parsing errors)
-    if Self.FilteredWorlds[i].PlayerCount < 0 then
-      Continue;
-      
-    activityStr := Self.FilteredWorlds[i].ActivityString;
-    if activityStr.Length > ACTIVITY_TABLE_MAX_LENGTH then
-      activityStr := activityStr.CopyRange(1, ACTIVITY_TABLE_TRUNCATE_LENGTH) + '...';
-    
-    worldStr := Format('%-4d  |  %-9s  |  %-7s  |  %-15s  |  %1d',
-      [Self.FilteredWorlds[i].WorldNumber,
-       Self.GetLocationString(Self.FilteredWorlds[i].Location),
-       Self.GetTypeString(Self.FilteredWorlds[i].WorldType),
-       activityStr,
-       Self.FilteredWorlds[i].PlayerCount]);
-    
-    Self.WorldList.Items.Add(worldStr);
-    Inc(validWorldCount);
-  end;
-  
-  Self.StatsLabel.Caption := Format('Found: %d worlds', [validWorldCount]);
-end;
-
-(*
-## TAccountForm.GetLocationString
-```pascal
-function TAccountForm.GetLocationString(loc: EWorldLocation): String;
-```
-Converts a world location enum to its display string.
-*)
-function TAccountForm.GetLocationString(loc: EWorldLocation): String;
-const
-  LOCATION_NAMES: array[EWorldLocation] of String = ['Germany', 'UK', 'USA', 'Australia'];
-begin
-  if (Ord(loc) >= 0) and (Ord(loc) <= High(LOCATION_NAMES)) then
-    Result := LOCATION_NAMES[loc]
-  else
-    Result := 'Unknown';
-end;
-
-(*
-## TAccountForm.GetTypeString
-```pascal
-function TAccountForm.GetTypeString(wType: EWorldType): String;
-```
-Converts a world type enum to its display string.
-*)
-function TAccountForm.GetTypeString(wType: EWorldType): String;
-const
-  TYPE_NAMES: array[EWorldType] of String = ['F2P', 'Members'];
-begin
-  if (Ord(wType) >= 0) and (Ord(wType) <= High(TYPE_NAMES)) then
-    Result := TYPE_NAMES[wType]
-  else
-    Result := 'Unknown';
-end;
-
-
-(*
-## TAccountForm.RefreshActivities
-```pascal
-procedure TAccountForm.RefreshActivities();
-```
-Dynamically creates checkboxes for all unique specific activities found in the currently filtered worlds. Removes previous activity checkboxes before creating new ones.
-*)
-procedure TAccountForm.RefreshActivities();
-const
-  ACTIVITY_CHECKBOX_MAX_LENGTH = 35;
-  ACTIVITY_CHECKBOX_TRUNCATE_LENGTH = 32;
-type
-  TActivityGroup = record
-    Activity: String;
-  end;
-var
-  i, j: Integer;
-  activities: array of TActivityGroup;
-  activity: TActivityGroup;
-  tempWorlds: array of TWorldInfo;
-  checkbox: TLazCheckBox;
-  activityText: String;
-begin
-  for i := 0 to High(Self.ActivityCheckboxes) do
-    if Assigned(Self.ActivityCheckboxes[i]) then
-      Self.ActivityCheckboxes[i].Free();
-  SetLength(Self.ActivityCheckboxes, 0);
-  
-  tempWorlds := Copy(Self.AllWorldsCache);
-  
-  if not Self.F2PCheckbox.IsChecked() then
-  begin
-    j := 0;
-    for i := 0 to High(tempWorlds) do
-      if tempWorlds[i].WorldType <> EWorldType.FREE_TO_PLAY then
-      begin
-        tempWorlds[j] := tempWorlds[i];
-        Inc(j);
-      end;
-    SetLength(tempWorlds, j);
-  end;
-  
-  if not Self.MembersCheckbox.IsChecked() then
-  begin
-    j := 0;
-    for i := 0 to High(tempWorlds) do
-      if tempWorlds[i].WorldType <> EWorldType.MEMBERS then
-      begin
-        tempWorlds[j] := tempWorlds[i];
-        Inc(j);
-      end;
-    SetLength(tempWorlds, j);
-  end;
-  
-  j := 0;
-  for i := 0 to High(tempWorlds) do
-  begin
-    case tempWorlds[i].Location of
-      EWorldLocation.GERMANY: if not Self.GermanyCheckbox.IsChecked() then Continue;
-      EWorldLocation.UNITED_KINGDOM: if not Self.UKCheckbox.IsChecked() then Continue;
-      EWorldLocation.UNITED_STATES: if not Self.USCheckbox.IsChecked() then Continue;
-      EWorldLocation.AUSTRALIA: if not Self.AustraliaCheckbox.IsChecked() then Continue;
-    end;
-    tempWorlds[j] := tempWorlds[i];
-    Inc(j);
-  end;
-  SetLength(tempWorlds, j);
-  
-  j := 0;
-  for i := 0 to High(tempWorlds) do
-  begin
-    case tempWorlds[i].Activity of
-      EWorldActivity.NORMAL: if not Self.NormalCheckbox.IsChecked() then Continue;
-      EWorldActivity.DANGEROUS: if not Self.DangerousCheckbox.IsChecked() then Continue;
-      EWorldActivity.RESTRICTED: if not Self.RestrictedCheckbox.IsChecked() then Continue;
-      EWorldActivity.SKILL_TOTAL: if not Self.SkillTotalCheckbox.IsChecked() then Continue;
-    end;
-    tempWorlds[j] := tempWorlds[i];
-    Inc(j);
-  end;
-  SetLength(tempWorlds, j);
-  
-  for i := 0 to High(tempWorlds) do
-  begin
-    if (tempWorlds[i].ActivityString = '') or (tempWorlds[i].ActivityString = '-') then
-      Continue;
-      
-    for j := 0 to High(activities) do
-      if activities[j].Activity = tempWorlds[i].ActivityString then
-        Break;
-      
-    if (j > High(activities)) or (Length(activities) = 0) then
-    begin
-      activity.Activity := tempWorlds[i].ActivityString;
-      activities += activity;
-    end;
-  end;
-  
-  for i := 0 to High(activities) do
-  begin
-    activityText := activities[i].Activity;
-    if activityText.Length > ACTIVITY_CHECKBOX_MAX_LENGTH then
-      activityText := activityText.CopyRange(1, ACTIVITY_CHECKBOX_TRUNCATE_LENGTH) + '...';
-    
-    checkbox := TLazCheckBox.Create(Self.SpecificActivityPanel);
-    checkbox.Parent := Self.SpecificActivityPanel;
-    checkbox.Caption := activityText;
-    checkbox.SetBounds(5, 25 + (i * 20), 180, 18);
-    checkbox.SetChecked(Self.SelectAllActivitiesCheckbox.IsChecked());
-    checkbox.Hint := activities[i].Activity;
-    
-    Self.ActivityCheckboxes += checkbox;
-  end;
-end;
-
-var
-  {$H-}AccountForm: TAccountForm;{$H+}
+  AccountForm: TAccountForm;
