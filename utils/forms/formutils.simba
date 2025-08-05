@@ -529,6 +529,7 @@ begin
 end;
 
 
+function TLazFloatSpinEdit.CreateEx(owner: Pointer): TLazFloatSpinEdit; static;
 begin
   Result := TLazFloatSpinEdit.Create(TLazControl(owner));
   Result.Parent := TLazWinControl(owner);
