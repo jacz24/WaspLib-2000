@@ -458,9 +458,12 @@ while True do        //Infinite loop
 *)
 function TAntiban.DoAntiban(checkTasks, checkBreaks, checkSleeps: Boolean = True): Boolean;
 begin
-  if Self.DoingAntiban then Exit;
+  if Self.DoingAntiban then
+    Exit;
+
   Self.DoingAntiban := True;
   Logger.TimeRunning.Pause();
+  Activity.Pause();
 
   if checkTasks  and Self.DoTask()  then Result := True;
   if checkBreaks and Self.DoBreak() then Result := True;
@@ -471,6 +474,7 @@ begin
 
   Self.DoingAntiban := False;
   Logger.TimeRunning.Start();
+  Activity.Resume();
 end;
 
 
@@ -544,6 +548,7 @@ end;
 
 procedure TAntiban.WalkingTasks();
 begin
+  //TODO...
 end;
 
 var

@@ -201,12 +201,12 @@ function TRSMainScreen.IsUpText(strings: TStringArray; caseSensitive: Boolean = 
   end;
 
 var
-  t: Integer;
+  t: UInt64;
 begin
   if (timeout = -1) then
-    t := Time() + Round(RandomMode(100, 85, 250))
-  else
-    t := Time() + timeout;
+    timeout := Round(RandomMode(100, 85, 250));
+
+  t := Time() + timeout;
 
   repeat
     if _IsUpText() then

@@ -313,8 +313,10 @@ begin
     WriteLn GetDebugLn('XPBar', 'XP Tracking won''t be used and this can cause issues.', ELogLevel.WARN);
   end;
 
-  if Self.Tracker.Start = 0 then Self.Tracker.Start := Result;
-  if Self.Tracker.Previous = 0 then Self.Tracker.Previous := Result;
+  if Self.Tracker.Start = 0 then
+    Self.Tracker.Start := Result;
+  if Self.Tracker.Previous = 0 then
+    Self.Tracker.Previous := Result;
   Self.Tracker.Current := Result;
 end;
 
@@ -323,7 +325,10 @@ end;
 ```pascal
 function TRSXPBar.EarnedXP(): Boolean;
 ```
-Returns True/False if we earned XP since the last time this, XPBar.Read() or XPBar.WaitXP() were called.
+Returns True/False if we earned XP since the last time this, {ref}`XPBar.Read`
+or {ref}`XPBar.WaitXP` were called.
+
+When this returns true it also resets {ref}`Activity`.
 
 Example:
 ```pascal
@@ -336,7 +341,10 @@ begin
   Result := Self.Read() > Self.Tracker.Previous;
 
   if Result then
+  begin
     Self.Tracker.Previous := Self.Tracker.Current;
+    Activity.Restart();
+  end;
 end;
 
 (*

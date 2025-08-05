@@ -179,6 +179,8 @@ begin
   if RSClient.Mode = ERSMode.UNKNOWN then
     RSClient.Mode := ERSMode.FIXED;
   SetupInterfaces();
+
+  Activity.Start(5 * ONE_MINUTE);
 end;
 
 {$IFNDEF WL_TEST}

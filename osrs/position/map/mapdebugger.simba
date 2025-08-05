@@ -305,7 +305,7 @@ begin
     Self.Graph.ObjectClusters += Self.GetLocal(loader^.Graph.ObjectClusters[i]);
 
   for i := 0 to Max(Length(loader^.Graph.WalkableClusters), Length(loader^.Graph.ObjectClusters)) do
-    Self.ColorArray += Colors.Random();
+    Self.ColorArray += TColor.Random();
 
   Self.ShowGraph := True;
 

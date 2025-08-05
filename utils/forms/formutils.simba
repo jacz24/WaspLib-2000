@@ -529,6 +529,40 @@ begin
 end;
 
 
+begin
+  Result := TLazFloatSpinEdit.Create(TLazControl(owner));
+  Result.Parent := TLazWinControl(owner);
+end;
+
+function TLazFloatSpinEdit.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazFloatSpinEdit; static; overload;
+var
+  lbl: TLazLabel;
+begin
+  Result := TLazFloatSpinEdit.CreateEx(owner);
+
+  if left > 0 then Result.Left := left;
+  if top > 0 then Result.Top := top;
+  if width > 0 then Result.Width := width;
+  if height > 0 then Result.Height := height;
+
+  if caption <> '' then
+  begin
+    lbl := TLazLabel.CreateEx(owner, caption, hint);
+    lbl.AnchorSideBottom.Control := Result;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.asrTop;
+    lbl.AnchorSideLeft.Control := Result;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
+    lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
+  end;
+
+  if hint <> '' then
+  begin
+    Result.Hint := hint;
+    Result.ShowHint := True;
+  end;
+end;
+
+
 function TLazMemo.CreateEx(owner: Pointer): TLazMemo; static;
 begin
   Result := TLazMemo.Create(TLazControl(owner));
