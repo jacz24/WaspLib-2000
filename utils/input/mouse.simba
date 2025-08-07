@@ -498,3 +498,9 @@ var
 Global {ref}`TMouse` variable.
 *)
   Mouse: TMouse;
+
+(*
+## AsyncMouse variable
+Global {ref}`TAsyncMouse` variable.
+*)
+  AsyncMouse: TASyncMouse;

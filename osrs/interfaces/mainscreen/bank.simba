@@ -772,9 +772,9 @@ begin
     Exit(True);
 
   boxes := Self.Incenerator.Invert(Self.Bounds).SortFrom(Target.MouseXY);
-  Async.MouseMove(boxes[RandomLeft(0, High(boxes))].RandomPoint());
+  AsyncMouse.Move(boxes[RandomLeft(0, High(boxes))].RandomPoint());
   Result := SleepUntil(not Self.InceneratorTooltipVisible(), 100, 1000);
-  Async.MouseStop();
+  AsyncMouse.Stop();
 end;
 
 

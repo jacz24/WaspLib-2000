@@ -30,7 +30,7 @@ Main record to interact with the {ref}`DepositBox` interface.
     QuantityButtons: array [ERSItemQuantity] of TRSButton;
   end;
 
-function TRSDepositBox.FindItemBoundaries: TBoxArray;
+function TRSDepositBox.FindItemBoundaries(): TBoxArray;
 var
   tpa, final: TPointArray;
   atpa: T2DPointArray;
@@ -67,7 +67,7 @@ Initializes depositbox variables.
 This is automatically called on the **DepositBox** variable.
 ```
 *)
-procedure TRSDepositBox.SetupInterface;
+procedure TRSDepositBox.SetupInterface();
 var
   i: Integer;
   tba: TBoxArray;
@@ -123,7 +123,7 @@ Example:
 WriteLn DepositBox.IsOpen();
 ```
 *)
-function TRSDepositBox.IsOpen: Boolean;
+function TRSDepositBox.IsOpen(): Boolean;
 begin
   Result := (MSInterface.IsOpen(ERSInterfaceType.CLASSIC) and Self.Title.IsTitle('Deposit Box'));
 end;
@@ -260,19 +260,19 @@ begin
       Result := False;
 end;
 
-procedure TRSDepositBox.DepositInventory;
+procedure TRSDepositBox.DepositInventory();
 begin
   if Self.IsOpen then
     Self.DepositButtons[ERSDepositButtons.INVENTORY].Click;
 end;
 
-procedure TRSDepositBox.DepositLootBag;
+procedure TRSDepositBox.DepositLootBag();
 begin
   if Self.IsOpen then
     Self.DepositButtons[ERSDepositButtons.LOOT].Click;
 end;
 
-procedure TRSDepositBox.DepositEquipment;
+procedure TRSDepositBox.DepositEquipment();
 begin
   if Self.IsOpen then
     Self.DepositButtons[ERSDepositButtons.WORN].Click;

@@ -48,7 +48,7 @@ begin
     pt := Mouse.Position.Random(-350, 350);
   until Mouse.Position.DistanceTo(pt) > 50;
 
-  Async.MouseMove(pt);
+  AsyncMouse.Move(pt);
 end;
 
 procedure TAntiban.LargeRandomMouse();

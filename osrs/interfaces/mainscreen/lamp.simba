@@ -1,0 +1,275 @@
+(*
+# Lamp
+The `Lamp` interface is the interface that opens when you click an XP Lamp:
+```{figure} ../../images/lamp.png
+```
+In these you can select a skill to gain a small amount of experience.
+*)
+
+{$DEFINE WL_LAMP_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+(*
+## TRSLamp
+Main record to interact with the {ref}`Lamp` interface.
+*)
+  TRSLamp = record
+    Title: TRSInterfaceTitle;
+    Bounds, ConfirmBounds: TBox;
+    Slots: TRSButtonArray;
+  end;
+
+function TRSLamp.IsOpen(): Boolean; forward;
+
+(*
+## Lamp.SetupInterface
+```pascal
+procedure TRSLamp.SetupInterface();
+```
+Initializes Lamp variables.
+
+```{note}
+This is automatically called on the **Lamp** variable.
+```
+*)
+procedure TRSLamp.SetupInterface();
+const
+  SKILL_ORDER: array [0..22] of ERSSkill = [
+    ERSSkill.ATTACK, ERSSkill.STRENGTH, ERSSkill.RANGED, ERSSkill.MAGIC,
+    ERSSkill.DEFENCE, ERSSkill.HITPOINTS, ERSSkill.PRAYER, ERSSkill.AGILITY,
+    ERSSkill.HERBLORE, ERSSkill.THIEVING, ERSSkill.CRAFTING,
+    ERSSkill.RUNECRAFTING, ERSSkill.SLAYER, ERSSkill.FARMING, ERSSkill.MINING,
+    ERSSkill.SMITHING, ERSSkill.FISHING, ERSSkill.COOKING, ERSSkill.FIREMAKING,
+    ERSSkill.WOODCUTTING, ERSSkill.FLETCHING, ERSSkill.CONSTRUCTION, ERSSkill.HUNTER
+  ];
+var
+  i: Integer;
+  tba: TBoxArray;
+begin
+  Self.Bounds := MSInterface.CreateBounds([0,0,0,0], 300, 260);
+
+  Self.Title.Bounds.X1 := Self.Bounds.X1+8;
+  Self.Title.Bounds.Y1 := Self.Bounds.Y1+38;
+  Self.Title.Bounds.X2 := Self.Bounds.X2-8;
+  Self.Title.Bounds.Y2 := Self.Title.Bounds.Y1 + 22;
+
+  Self.Title.CloseButton.X1 := Self.Bounds.X2+69;
+  Self.Title.CloseButton.Y1 := Self.Bounds.Y1-20;
+  Self.Title.CloseButton.X2 := Self.Bounds.X2+92;
+  Self.Title.CloseButton.Y2 := Self.Bounds.Y1+2;
+
+  Self.Title.TitleColor := $999999;
+  Self.Title.IsOpen := @Self.IsOpen;
+
+  with Self.Bounds.TopLeft do
+    tba := TBoxArray.Create([X+64,Y+78], 5, 1, 26, 26, [10,10]) +
+           TBoxArray.Create([X+46,Y+114], 6, 3, 26, 26, [10,10]);
+
+  SetLength(Self.Slots, Length(tba));
+
+  for i := 0 to High(tba) do
+  begin
+    Self.Slots[SKILL_ORDER[i]].Bounds := tba[i];
+    Self.Slots[SKILL_ORDER[i]].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
+  end;
+
+  Self.ConfirmBounds.X1 := Self.Bounds.X1 + 81;
+  Self.ConfirmBounds.Y1 := Self.Bounds.Y2 - 35;
+  Self.ConfirmBounds.X2 := Self.Bounds.X2 - 81;
+  Self.ConfirmBounds.Y2 := Self.Bounds.Y2 - 13;
+end;
+
+(*
+## Lamp.IsOpen
+```pascal
+function TRSLamp.IsOpen(): Boolean;
+```
+Returns true if the {ref}`Lamp` interface is open.
+
+Example:
+```pascal
+WriteLn Lamp.IsOpen();
+```
+*)
+function TRSLamp.IsOpen(): Boolean;
+begin
+  Result := Self.Title._IsOpen() and Target.HasColor($999999, 0, 819, Self.Title.Bounds);
+end;
+
+(*
+## Lamp.WaitOpen
+```pascal
+function TRSLamp.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
+```
+Returns true if the {ref}`Lamp` is open within `time` milliseconds.
+
+## Example:
+```pascal
+WriteLn Lamp.WaitOpen();
+```
+*)
+function TRSLamp.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
+begin
+  Result := Self.Title.WaitOpen(time, interval);
+end;
+
+
+(*
+## Lamp.Open
+```pascal
+function TRSLamp.Open(item: TRSItem = 'Lamp'): Boolean;
+```
+Attempts to open the {ref}`Lamp` interface.
+
+By default it attempts to open the interface on the "Lamp" item, if you want a
+different one, e.g. "Antique lamp", you need to specify that.
+
+## Example:
+```pascal
+WriteLn Lamp.Open();
+```
+*)
+function TRSLamp.Open(item: TRSItem = 'Lamp'): Boolean;
+begin
+  if Self.IsOpen() then
+    Exit(True);
+
+  if Inventory.Items.Interact(item, 'Rub') then
+    Result := Self.WaitOpen(1200);
+end;
+
+
+(*
+## Lamp.Close
+```pascal
+function TRSLamp.Close(escape: Boolean): Boolean;
+function TRSLamp.Close(escapeProbability: Single = 0): Boolean; overload;
+```
+Closes the Lamp interface.  Depending on `escape` or `escapeProbability the function will
+either click the button or press escape key.
+
+Example:
+```pascal
+WriteLn Lamp.Close();
+```
+*)
+function TRSLamp.Close(escape: Boolean): Boolean;
+begin
+  Result := Self.Title.Close(escape);
+end;
+
+function TRSLamp.Close(escapeProbability: Single = -1): Boolean; overload;
+begin
+  Result := Self.Title.Close(escapeProbability);
+end;
+
+
+(*
+## Lamp.GetSelected
+```pascal
+function TRSLamp.GetSelected(): ERSSkill;
+```
+Returns the selected skill if there's any.
+
+`ERSSkill.TOTAL` is returned if no skill is selected.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  selected: ERSSkill;
+begin
+  selected := Lamp.GetSelected();
+  WriteLn selected;
+  ShowOnTarget(Lamp.Slots[selected]);
+end.
+```
+```{figure} ../../images/lamp_selected.png
+```
+*)
+function TRSLamp.GetSelected(): ERSSkill;
+begin
+  for Result := Low(ERSSkill) to High(ERSSkill)-1 do
+    if Self.Slots[Result].Enabled() then
+      Exit;
+  Result := ERSSkill.TOTAL;
+end;
+
+(*
+## Lamp.Enable
+```pascal
+function TRSLamp.Enable(skill: ERSSkill): Boolean;
+```
+Enabled a skill in the lamp interface.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+begin
+  Lamp.Enable(ERSSkill.HERBLORE);
+end.
+```
+```{figure} ../../images/lamp_enable.gif
+```
+*)
+function TRSLamp.Enable(skill: ERSSkill): Boolean;
+begin
+  Result := Self.Slots[skill].Enable();
+end;
+
+(*
+## Lamp.Confirm
+```pascal
+function TRSLamp.Confirm(): Boolean;
+```
+Clicks the confirm button in the lamp interface.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+begin
+  Lamp.Select(ERSSkill.HERBLORE);
+end.
+```
+```{figure} ../../images/lamp_select.gif
+```
+*)
+function TRSLamp.Confirm(): Boolean;
+begin
+  if not Self.IsOpen() then
+    Exit;
+  Mouse.Click(Self.ConfirmBounds, EMouseButton.LEFT);
+  Result := SleepUntil(not Self.IsOpen(), 50, 600);
+end;
+
+(*
+## Lamp.Select
+```pascal
+function TRSLamp.Select(skill: ERSSkill): Boolean;
+```
+Selects a skill in the lamp interface and clicks confirm.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+begin
+  Lamp.Select(ERSSkill.HERBLORE);
+end.
+```
+```{figure} ../../images/lamp_select.gif
+```
+*)
+function TRSLamp.Select(skill: ERSSkill): Boolean;
+begin
+  if not Self.Open() then
+    Exit;
+  Result := Self.Slots[skill].Enable() and Self.Confirm();
+end;
+
+var
+(*
+## Lamp variable
+Global {ref}`TRSLamp` variable.
+*)
+  Lamp: TRSLamp;

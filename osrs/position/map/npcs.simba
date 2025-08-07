@@ -358,7 +358,7 @@ begin
   for attempt := 0 to attempts do
   begin
     if not Self.FindFrom(me, atpa) then Continue;
-    ASync.MouseMove(atpa.Random().Random());
+    AsyncMouse.Move(atpa.Random().Random());
     Exit(True);
   end;
 end;

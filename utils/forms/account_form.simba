@@ -841,7 +841,7 @@ begin
   validationError := Self.ValidateInput(profile);
   if validationError <> '' then
   begin
-    ShowMessage('Validation Error: ' + validationError);
+    ShowDialog(EDialogIcon.ERROR, [EDialogButton.OK], 'Invalid Profile', validationError);
     Exit;
   end;
   
@@ -849,7 +849,7 @@ begin
   begin
     if not Self.AddProfile(profile) then
     begin
-      ShowMessage('Error: Failed to add profile. A profile with this name may already exist.');
+      ShowDialog(EDialogIcon.ERROR, [EDialogButton.OK], 'Duplicate Profile', 'Failed to add profile.' + LINE_SEP + 'A profile with this name may already exist.');
       Exit;
     end;
   end
@@ -857,7 +857,7 @@ begin
   begin
     if not Self.UpdateProfile(Self.EditIndex, profile) then
     begin
-      ShowMessage('Error: Failed to update profile. Please check your input.');
+      ShowDialog(EDialogIcon.ERROR, [EDialogButton.OK], 'Profile Error', 'Failed to update profile.' + LINE_SEP + 'Please check your input.');
       Exit;
     end;
   end;
@@ -874,7 +874,7 @@ Handles the Delete button click event. Shows confirmation dialog before deleting
 *)
 procedure TAccountForm.OnDeleteClick(sender: TLazObject);
 begin
-  if ShowQuestionDialog('Delete Profile', 'Are you sure you want to delete this profile?') then
+  if ShowDialog(EDialogIcon.WARNING, [EDialogButton.YES, EDialogButton.NO], 'Delete Profile', 'Are you sure you want to delete this profile?') = EDialogButton.YES then
   begin
     Self.DeleteProfile(Self.EditIndex);
     Self.EditForm.Close();

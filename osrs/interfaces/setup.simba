@@ -49,6 +49,7 @@ begin
   GoldScreen.SetupInterface();
   SilverScreen.SetupInterface();
   DepositBox.SetupInterface();
+  Lamp.SetupInterface();
 
   {$IFDEF WL_DEBUG_INTERFACES}
   WriteLn GetDebugLn('RSClient', 'Interface setup took ' + ToStr(Time()-t) + ' ms to calculate.');
@@ -102,9 +103,6 @@ begin
   if not DirCreate(WLEnv.AssetsDir) then
     raise GetDebugLn('WaspLib', 'Failed to create path: ' + WLEnv.AssetsDir);
 
-  Mouse.Setup();
-  Keyboard.Setup();
-
   WLAssets.Setup();
   WLAssets.Update();
 
@@ -125,6 +123,10 @@ begin
   end;
   {$ENDIF}
   {$ENDIF}
+
+  Mouse.Setup();
+  Keyboard.Setup();
+  AsyncMouse := new TASyncMouse(Target);
 
   RSCacheParser.Setup();
 

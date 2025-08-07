@@ -29,7 +29,14 @@ end;
 type
   TRSInterfaceTitle = record
     Bounds, CloseButton: TBox;
+    TitleColor: TColor;
+    IsOpen: function (): Boolean of object;
   end;
+
+function TRSInterfaceTitle._IsOpen(): Boolean;
+begin
+  Result := Target.HasColor(RSColors.INTERFACE_BORDER, 0, 80, Self.CloseButton);
+end;
 
 procedure TRSInterfaceTitle.Setup(bounds: TBox);
 begin
@@ -42,13 +49,13 @@ begin
   Self.CloseButton.Y1 := bounds.Y1+8;
   Self.CloseButton.X2 := bounds.X2-7;
   Self.CloseButton.Y2 := bounds.Y1+28;
+
+  Self.TitleColor := RSColors.TEXT_ORANGE;
+
+  Self.IsOpen := @Self._IsOpen;
 end;
 
 
-function TRSInterfaceTitle.IsOpen(): Boolean;
-begin
-  Result := Target.HasColor($010000, 0, 80, Self.CloseButton);
-end;
 
 function TRSInterfaceTitle.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
 begin
@@ -59,14 +66,14 @@ end;
 
 function TRSInterfaceTitle.GetTitle(): String;
 begin
-  Result := OCR.Recognize(Self.Bounds, RSFonts.BOLD, [RSColors.TEXT_ORANGE, $0], 0);
+  Result := OCR.Recognize(Self.Bounds, RSFonts.BOLD, [Self.TitleColor, $0], 0);
 end;
 
 function TRSInterfaceTitle.IsTitle(text: String; similarity: Single = 0.8): Boolean;
 var
   match: Single;
 begin
-  match := OCR.LocateInvert(Self.Bounds, text, [$344049,0], 2, RSFonts.BOLD);
+  match := OCR.LocateInvert(Self.Bounds, text, [$344049,$0], 2, RSFonts.BOLD);
   Result := match >= similarity;
 end;
 
