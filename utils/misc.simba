@@ -46,6 +46,7 @@ Record holding a collection of constant colors used throughout the game.
     const TEXT_GREEN: TColor = $0DC10D;
     const TEXT_YELLOW: TColor = $00FFFF;
     const TEXT_RED: TColor = $0000FF;
+    const TEXT_LIGHT_ORANGE: TColor = $3FB8FF;
     const TEXT_LIGHT_YELLOW: TColor = $A2D8E4;
   end;
 

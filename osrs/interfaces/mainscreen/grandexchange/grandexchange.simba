@@ -1,0 +1,389 @@
+(*
+# GrandExchange
+Methods to interact with the GrandExchange interface:
+```{figure} ../../images/ge_interface.png
+```
+*)
+
+{$DEFINE WL_GRANDEXCHANGE_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+(*
+## EGEOfferProgress
+```pascal
+EGEOfferProgress = enum(NONE, PROGRESSING, COMPLETED, ABORTED);
+```
+Enum to represent the Grand Exchange offer slot states.
+*)
+  EGEOfferProgress = enum(NONE, PROGRESSING, COMPLETED, ABORTED);
+
+(*
+## EGESlotType
+```pascal
+EGESlotType = enum(EMPTY, SELL, BUY);
+```
+Enum to represent the type of Grand Exchange offer slot.
+*)
+  EGESlotType = enum(EMPTY, SELL, BUY);
+
+(*
+## TRSGrandExchangeSlot
+Record that represents a slot in the {ref}`GrandExchange` interface.
+
+When you want to interact with a Grand Exchange slot you should do it through
+the `TRSGrandExchange.Slots` array, which is an array of this type.
+
+The next examples will be showing how this is done with random slot numbers.
+
+If you want to visualize what the `TRSGrandExchangeSlot` has to offer are you
+can use this short script:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  img: TImage;
+  slot: TRSGrandExchangeSlot;
+begin
+  img := Target.GetImage();
+  for slot in GrandExchange.Slots do
+  begin
+    case slot.GetType() of
+      EGESlotType.EMPTY:
+      begin
+        img.DrawColor := $00FFFF;
+        img.DrawBox(slot.Bounds);
+        img.DrawColor := $0000FF;
+        img.DrawBox(slot.Header);
+        img.DrawColor := $FF00FF;
+        img.DrawBox(slot.BuyButton);
+        img.DrawColor := $FFFF00;
+        img.DrawBox(slot.SellButton);
+      end;
+
+      EGESlotType.SELL, EGESlotType.BUY:
+      begin
+        img.DrawColor := $00FFFF;
+        img.DrawBox(slot.Bounds);
+        img.DrawColor := $0000FF;
+        img.DrawBox(slot.Header);
+        img.DrawColor := $FF00FF;
+        img.DrawBox(slot.ItemBox);
+        img.DrawColor := $FFFF00;
+        img.DrawBox(slot.ItemNameBox);
+        img.DrawColor := $FFFFFF;
+        img.DrawBox(slot.StatusBox);
+        img.DrawColor := $0000FF;
+        img.DrawBox(slot.ValueBox);
+      end;
+    end;
+  end;
+
+  img.Show();
+end.
+```
+```{figure} ../../images/ge_slots.png
+```
+*)
+  TRSGrandExchangeSlot = record
+    Typ: EGESlotType;
+    Bounds, Header, BuyButton, SellButton: TBox;
+    ItemBox, ItemNameBox, ValueBox, StatusBox: TBox;
+  end;
+
+procedure TRSGrandExchangeSlot._Setup(bounds: TBox);
+begin
+  Self.Bounds := bounds;
+  with bounds do
+  begin
+    Self.Header.X1 := X1+3;
+    Self.Header.Y1 := Y1+4;
+    Self.Header.X2 := X2-3;
+    Self.Header.Y2 := Y1+22;
+
+    Self.BuyButton.X1 := X1+6;
+    Self.BuyButton.Y1 := Y1+43;
+    Self.BuyButton.X2 := Self.BuyButton.X1+46;
+    Self.BuyButton.Y2 := Self.BuyButton.Y1+45;
+
+    Self.SellButton := Self.BuyButton.Offset([56,0]);
+
+    Self.ItemBox.X1 := X1+6;
+    Self.ItemBox.Y1 := Y1+35;
+    Self.ItemBox.X2 := Self.ItemBox.X1+35;
+    Self.ItemBox.Y2 := Self.ItemBox.Y1+31;
+
+    Self.ItemNameBox.X1 := X1+44;
+    Self.ItemNameBox.Y1 := Y1+33;
+    Self.ItemNameBox.X2 := X2-3;
+    Self.ItemNameBox.Y2 := Self.ItemNameBox.Y1+36;
+
+    Self.StatusBox.X1 := X1+4;
+    Self.StatusBox.Y1 := Y2-35;
+    Self.StatusBox.X2 := X2-4;
+    Self.StatusBox.Y2 := Y2-21;
+
+    Self.ValueBox.X1 := X1+4;
+    Self.ValueBox.Y1 := Y2-20;
+    Self.ValueBox.X2 := X2-4;
+    Self.ValueBox.Y2 := Y2-4;
+  end;
+end;
+
+(*
+## TRSGrandExchangeSlot
+```pascal
+function TRSGrandExchangeSlot.GetType(): EGESlotType;
+```
+Returns the {ref}`EGESlotType` of the slot.
+This also sets the `TRSGrandExchangeSlot.Typ` to the result in case you want
+to access it later without calling this.
+
+WaspLib will also try to keep `TRSGrandExchangeSlot.Typ` updated when you
+interact with the `GrandExchange` but it cannot track things a user might do
+manually.
+
+Example:
+```pascal
+WriteLn GrandExchange.Slots[2].GetType();
+```
+*)
+function TRSGrandExchangeSlot.GetType(): EGESlotType;
+var
+  count: Integer;
+begin
+  //no need for ocr, color count is lighter and should work fine.
+  count := Target.CountColor(RSColors.TEXT_ORANGE, 0, Self.Header);
+  case count of
+    154: Result := EGESlotType.EMPTY;
+    90:  Result := EGESlotType.SELL;
+    101: Result := EGESlotType.BUY;
+  end;
+
+  Self.Typ := Result;
+end;
+
+
+(*
+## TRSGrandExchangeSlot.Contains
+```pascal
+function TRSGrandExchangeSlot.Contains(item: TRSItem): Boolean;
+```
+Returns the {ref}`TRSItem` of the slot.
+
+If the slot is empty an empty string is returned.
+
+Example:
+```pascal
+WriteLn GrandExchange.Slots[0].Contains('Abyssal whip');
+```
+*)
+function TRSGrandExchangeSlot.Contains(item: TRSItem): Boolean;
+var
+  match: TImageMatch;
+begin
+  Result := ItemFinder.Find([item], [Self.ItemBox], match);
+end;
+
+(*
+## TRSGrandExchangeSlot.Discover
+```pascal
+function TRSGrandExchangeSlot.Discover(): TRSItemArray;
+```
+Uses item discover to return a {ref}`TRSItemArray` of the possible items in the
+slot.
+
+If the slot is empty an empty array is returned.
+
+Example:
+```pascal
+WriteLn GrandExchange.Slots[5].Discover();
+```
+*)
+function TRSGrandExchangeSlot.Discover(): TRSItemArray;
+var
+  img: TImage;
+  hash: String;
+begin
+  img := Target.GetImage(Self.ItemBox);
+  hash := ItemFinder.GetHash(img);
+  if hash = '' then Exit;
+  Result := ItemFinder.GetHashItems(hash);
+end;
+
+(*
+## TRSGrandExchangeSlot.ReadItem
+```pascal
+function TRSGrandExchangeSlot.ReadItem(): TRSItem;
+```
+Reads the item text in the offer slot.
+
+Example:
+```pascal
+WriteLn GrandExchange.Slots[7].ReadItem();
+```
+*)
+function TRSGrandExchangeSlot.ReadItem(): TRSItem;
+begin
+  Result := OCR.RecognizeLines(Self.ItemNameBox, RSFonts.PLAIN_11, [RSColors.TEXT_LIGHT_ORANGE], 0).Join(' ');
+end;
+
+(*
+## TRSGrandExchangeSlot.Value
+```pascal
+function TRSGrandExchangeSlot.Value(): Integer;
+```
+Reads the value text in the offer slot and returns it as an `Integer`.
+
+Example:
+```pascal
+WriteLn GrandExchange.Slots[3].Value();
+```
+*)
+function TRSGrandExchangeSlot.Value(): Integer;
+var
+  str: String;
+begin
+  str := OCR.Recognize(Self.ValueBox, RSFonts.PLAIN_11, [RSColors.TEXT_ORANGE], 0);
+  Result := str.ExtractInteger(-1);
+end;
+
+(*
+## TRSGrandExchangeSlot.GetProgress
+```pascal
+function TRSGrandExchangeSlot.GetProgress(): EGEOfferProgress;
+```
+Returns the slot {ref}`EGEOfferProgress`.
+
+Example:
+```pascal
+WriteLn GrandExchange.Slots[2].GetProgress();
+```
+*)
+function TRSGrandExchangeSlot.GetProgress(): EGEOfferProgress;
+begin
+  if Target.HasColor($005F00, 0, 1, Self.StatusBox) then
+    Exit(EGEOfferProgress.COMPLETED);
+  if Target.HasColor($2080D8, 0, 1, Self.StatusBox) then
+    Exit(EGEOfferProgress.PROGRESSING);
+  if Target.HasColor($00008F, 0, 1, Self.StatusBox) then
+    Exit(EGEOfferProgress.ABORTED);
+
+  Result := EGEOfferProgress.NONE;
+end;
+
+
+
+type
+(*
+## TRSGrandExchange
+Record responsible to handle the {ref}`GrandExchange` interface.
+*)
+  TRSGrandExchange = record
+    Title: TRSInterfaceTitle;
+    Bounds: TBox;
+    Slots: array [0..7] of TRSGrandExchangeSlot;
+  end;
+
+function TRSGrandExchange.IsOpen(): Boolean; forward;
+
+(*
+## GrandExchange.SetupInterface
+```pascal
+procedure TRSGrandExchange.SetupInterface();
+```
+Internal method used to setup the {ref}`TRSGrandExchange` coordinates.
+This is automatically called for you on the {ref}`GrandExchange variable`.
+*)
+procedure TRSGrandExchange.SetupInterface();
+var
+  i: Integer;
+  tba: TBoxArray;
+begin
+  case RSClient.Mode of
+    ERSMode.FIXED: Self.Bounds := MSInterface.CreateBounds([0, 2, 0, -1], 484, 304);
+    ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
+      Self.Bounds := MSInterface.CreateBounds([0, 1, 0, -2], 484, 304);
+  end;
+
+  Self.Title.Setup(Self.Bounds);
+  Self.Title.IsOpen := @Self.IsOpen;
+
+  tba := TBoxArray.Create(Self.Bounds.TopLeft + [9,65], 4, 2, 114, 110, [3, 9]);
+  for i := 0 to High(tba) do
+    Self.Slots[i]._Setup(tba[i]);
+end;
+
+(*
+## GrandExchange.IsOpen
+```pascal
+function TRSGrandExchange.IsOpen(): Boolean;
+```
+Returns true if the Grand Exchange is open.
+
+Example:
+```pascal
+WriteLn GrandExchange.IsOpen();
+```
+*)
+function TRSGrandExchange.IsOpen(): Boolean;
+begin
+  if BankPin.IsOpen() then
+  begin
+    if not BankPin.WaitLoading(3000) then
+      raise GetDebugLn('BankPin', 'GrandExchange pin buttons don''t seem to have loaded in 3 seconds.');
+
+    if not BankPin.Enter(Players.GetPin()) then
+      raise GetDebugLn('BankPin', 'Failed to enter GrandExchange pin.');
+  end;
+
+  Result := Self.Title.IsTitle('Grand Exchange');
+end;
+
+(*
+## GrandExchange.WaitOpen
+```pascal
+function TRSGrandExchange.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
+```
+Returns true if the Grand Exchange is open within `time` milliseconds.
+
+## Example:
+```pascal
+WriteLn GrandExchange.WaitOpen();
+```
+*)
+function TRSGrandExchange.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
+begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsOpen(), interval, time);
+end;
+
+(*
+## GrandExchange.Close
+```pascal
+function TRSGrandExchange.Close(escape: Boolean): Boolean;
+function TRSGrandExchange.Close(escapeProbability: Single = 0): Boolean; overload;
+```
+Closes the GrandExchange, Depending on `escape` or `escapeProbability the function will
+either click the button or press escape key.
+
+Example:
+```pascal
+ WriteLn GrandExchange.Close();
+```
+*)
+function TRSGrandExchange.Close(escape: Boolean): Boolean;
+begin
+  Result := Self.Title.Close(escape);
+end;
+
+function TRSGrandExchange.Close(escapeProbability: Single = -1): Boolean; overload;
+begin
+  Result := Self.Title.Close(escapeProbability);
+end;
+
+var
+(*
+## GrandExchange variable
+Global {ref}`TRSGrandExchange` variable.
+*)
+  GrandExchange: TRSGrandExchange;

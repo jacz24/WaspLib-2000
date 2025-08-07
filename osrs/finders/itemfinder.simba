@@ -198,16 +198,32 @@ begin
 end;
 
 function TRSItemFinder.GetImage(id: String): TImage;
+var
+  i: Integer;
 begin
   if not Self.ItemImages.Exists(id) or (Self.ItemImages.Value[id] = nil) then
-    Self.ItemImages.Value[id] := Self.ImageReader.LoadImage(Self.ImageReader.Find(id + '.png'));
+  begin
+    i := Self.ImageReader.Find(id + '.png');
+    if i = -1 then
+      raise GetDebugLn('ItemFinder', 'Item ID ' + id + ' doesn''t exist.');
+    Self.ItemImages.Value[id] := Self.ImageReader.LoadImage(i);
+  end;
+
   Result := Self.ItemImages.Value[id];
 end;
 
 function TRSItemFinder.GetMask(id: String): TImage;
+var
+  i: Integer;
 begin
   if not Self.MaskImages.Exists(id) or (Self.MaskImages.Value[id] = nil) then
-    Self.MaskImages.Value[id] := Self.ImageReader.LoadImage(Self.ImageReader.Find(id + '.png'));
+  begin
+    i := Self.ImageReader.Find(id + '.bmp');
+    if i = -1 then
+      raise GetDebugLn('ItemFinder', 'Mask ID ' + id + ' doesn''t exist.');
+    Self.MaskImages.Value[id] := Self.ImageReader.LoadImage(i);
+  end;
+
   Result := Self.MaskImages.Value[id];
 end;
 
@@ -387,6 +403,7 @@ begin
   border := new TImage(36, 32);
   border.DrawColor := $FFFFFF;
   border.DrawTPA(tpa);
+  border.Show();
                                            //h*w*4=4608
   Result := HashData(EHashAlgo.CRC32, border.Data, 4608);
 end;
