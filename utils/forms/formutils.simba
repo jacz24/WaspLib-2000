@@ -367,21 +367,21 @@ begin
 end;
 
 
-procedure TLazControl.AnchorVertically(lbl: Pointer; spacing: Integer = 0);
+procedure TLazControl.AnchorVertically(anchor: Pointer; spacing: Integer = 0);
 begin
-  Self.AnchorSideLeft.Control := TLazControl(lbl);
+  Self.AnchorSideLeft.Control := TLazControl(anchor);
   Self.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
-  Self.AnchorSideTop.Control := TLazControl(lbl);
+  Self.AnchorSideTop.Control := TLazControl(anchor);
   Self.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
   if spacing > 0 then
     Self.BorderSpacing.Top := spacing;
 end;
 
-procedure TLazControl.AnchorHorizontally(lbl: Pointer; spacing: Integer = 0);
+procedure TLazControl.AnchorHorizontally(anchor: Pointer; spacing: Integer = 0);
 begin
-  Self.AnchorSideTop.Control := TLazControl(lbl);
+  Self.AnchorSideTop.Control := TLazControl(anchor);
   Self.AnchorSideTop.Side := ELazAnchorSideReference.asrTop;
-  Self.AnchorSideLeft.Control := TLazControl(lbl);
+  Self.AnchorSideLeft.Control := TLazControl(anchor);
   Self.AnchorSideLeft.Side := ELazAnchorSideReference.asrBottom;
   if spacing > 0 then
     Self.BorderSpacing.Left := 10;

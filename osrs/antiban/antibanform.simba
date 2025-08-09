@@ -36,6 +36,7 @@ Do feel free to read the source code though if you so desire.
 
     SleepTimeEdit: TLazTimeEdit;
     SleepLengthSpinner, SleepVariationSpinner: TLazFloatSpinEdit;
+    SleepPresetButton: TLazButton;
 
     Config: TConfigJSON;
   end;
@@ -180,6 +181,11 @@ procedure TAntibanFormHelper.OnBreakPreset(sender: TLazObject);
 begin
   //TODO
 end;
+
+procedure TAntibanFormHelper.OnSleepPreset(sender: TLazObject);
+begin
+  //TODO
+end;
 {$H+}
 
 
@@ -208,7 +214,7 @@ begin
 
   lbl := TLazLabel.CreateEx(
           rPanel,
-          String('Tasks').PadRight(20) + ' | ' +
+          String('Task').PadRight(20) + ' | ' +
           String('Interval (mins)').PadCenter(16) + ' | ' +
           String('Variation (%)').PadCenter(16),
           'List of currently active antiban tasks.'
@@ -404,7 +410,6 @@ begin
   Self.BreakIntervalSpinner.BorderSpacing.Right := 10;
   Self.BreakIntervalSpinner.BorderSpacing.Bottom := 10;
 
-
   lbl := TLazLabel.CreateEx(lPanel, 'Interval (mins):', 'Edit the currently selected break interval in minutes.');
   lbl.Align := ELazAlign.Top;
   lbl.BorderSpacing.Top := 10;
@@ -423,22 +428,23 @@ begin
   checkbox.Align := ELazAlign.Top;
   checkbox.BorderSpacing.Around := 10;
 
+  lbl := TLazLabel.CreateEx(parent, 'Sleep Time:', 'Pick an aproximated day time for your sleeps.');
+  lbl.AnchorVertically(checkbox, 60);
 
-  Self.SleepTimeEdit := TLazTimeEdit.CreateEx(parent, 'Sleep Time:', 'Pick an aproximated day time for your sleeps.', 10, 80, 100);
+  Self.SleepTimeEdit := TLazTimeEdit.CreateEx(parent, '', 'Pick an aproximated day time for your sleeps.', 0, 0, 120);
   Self.SleepTimeEdit.DefaultNow := True;
   Self.SleepTimeEdit.DirectInput := False;
+  Self.SleepTimeEdit.AnchorVertically(lbl);
 
-  Self.SleepLengthSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Sleep Length (hours):', 'Pick an aproximated length of sleep.', 150, 80, 100);
-  Self.SleepVariationSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Variation (%):', 'Edit the sleep variation.', 300, 80, 100);
+  Self.SleepLengthSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Sleep Length (hours):', 'Pick an aproximated length of sleep.', 0, 0, 120);
+  Self.SleepLengthSpinner.AnchorHorizontally(Self.SleepTimeEdit, 150);
 
-  lbl := TLazLabel.CreateEx(
-          parent,
-          'This settings, like everything in antiban will be randomized.' + LINE_SEP +
-          '- Sleep time can vary -2/+2 hours of the selected time.' + LINE_SEP +
-          '- Sleep length can vary -3/+3 hours of the selected time.' + LINE_SEP +
-          '- Variation adds extra variation to this.'
-         );
-  lbl.AnchorVertically(Self.SleepVariationSpinner, 60);
+  Self.SleepVariationSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Variation (%):', 'Edit the sleep variation.', 0, 0, 120);
+  Self.SleepVariationSpinner.AnchorHorizontally(Self.SleepLengthSpinner, 150);
+
+  Self.SleepPresetButton := TLazButton.CreateEx(parent, 'Preset', 'Reset the task list with a preset.');
+  Self.SleepPresetButton.AnchorVertically(Self.SleepTimeEdit, 60);
+  Self.SleepPresetButton.OnClick := @Self.OnSleepPreset;
 end;
 
 
@@ -474,6 +480,7 @@ For a more complete example check out the file `Simba/Includes/WaspLib/examples/
 function TScriptForm.CreateAntibanTab(): TLazTabSheet;
 var
   tab: TLazTabSheet;
+  lbl: TLazLabel;
 begin
   AntibanForm.Setup();
 
@@ -481,7 +488,7 @@ begin
 
   AntibanForm.PageControl := TLazPageControl.CreateEx(Result);
   AntibanForm.PageControl.Align := ELazAlign.Client;
-  AntibanForm.PageControl.BorderSpacing.Around := 20;
+  AntibanForm.PageControl.BorderSpacing.Around := 30;
 
   tab := AntibanForm.PageControl.AddTab();
   tab.Caption := 'Tasks';
@@ -494,4 +501,15 @@ begin
   tab := AntibanForm.PageControl.AddTab();
   tab.Caption := 'Sleep';
   AntibanForm.SetupSleepsPanel(tab);
+
+  lbl := TLazLabel.CreateEx(
+           Result,
+           'Everything in antiban will have randomization added/subtracted to the values you pick, roughly 25% + "Variation".' +
+           LINE_SEP +
+           'Each profile has it''s own antiban settings.'
+         );
+  lbl.Align := ELazAlign.Bottom;
+  lbl.Alignment := ELazAlignment.taCenter;
+  lbl.BorderSpacing.Around := 20;
+
 end;
