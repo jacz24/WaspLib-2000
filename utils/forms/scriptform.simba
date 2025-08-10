@@ -96,9 +96,6 @@ This sets up the sekeleton of your TScriptForm ready to take in tabs.
 procedure TScriptForm.Setup(caption: String = 'WaspLib');
 var
   panel: TLazPanel;
-  lbl: TLazLabel;
-  profileCombo: TLazComboBox;
-  editButton: TLazButton;
 begin
   AccountForm.Setup();
   
@@ -128,21 +125,16 @@ begin
   panel.Height := 40;
 
   // Account controls
-  lbl := TLazLabel.CreateEx(panel, 'Account: ', '', 6, 7);
-  
-  profileCombo := TLazComboBox.CreateEx(panel, '', '', lbl.Left + lbl.Width + 5, 7, Round(250 * FormUtils.Scale), Round(30 * FormUtils.Scale));
-  profileCombo.Style := ELazComboBoxStyle.csOwnerDrawFixed;
-  
-  editButton := TLazButton.CreateEx(panel, 'Edit Profile', '', profileCombo.Left + profileCombo.Width + 10, Round(4 * FormUtils.Scale), Round(90 * FormUtils.Scale), Round(30 * FormUtils.Scale));
-  
-  AccountForm.SetupUI(profileCombo, editButton);
+  AccountForm.SetupUI(panel);
 
   // Start button
   Self.Start := TLazButton.CreateEx(panel, 'Start', '', 0, 0, Round(80 * FormUtils.Scale));
   Self.Start.Align := ELazAlign.Right;
   Self.Start.OnClick := @Self.OnStart;
-  Self.Start.BorderSpacing.Around := 3;
+  Self.Start.BorderSpacing.Top := 3;
+  Self.Start.BorderSpacing.Left := 3;
   Self.Start.BorderSpacing.Right := 6;
+  Self.Start.BorderSpacing.Bottom := 3;
 end;
 
 (*

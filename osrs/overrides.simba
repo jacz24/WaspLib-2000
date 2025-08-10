@@ -274,13 +274,9 @@ procedure TScriptForm.OnStart(sender: TLazObject); override;
 var
   idx: Integer;
 begin
-  idx := AccountForm.ProfileCombo.ItemIndex;
-  if InRange(idx, 0, Length(AccountForm.Profiles)) then
-  begin
-    if Players = [] then
-      Players.LoadAccounts();
-    PlayerIndex := idx;
-  end;
+  PlayerIndex := Max(AccountForm.ProfileCombo.ItemIndex, 0);
+  if AccountForm.ProfilesEdited then
+    Players.LoadAccounts();
 
   Self.Form.OnClose := nil;
   Self.Form.Close();

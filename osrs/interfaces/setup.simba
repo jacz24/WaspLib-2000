@@ -161,6 +161,7 @@ begin
 
   CollectionBox.Setup();
 
+  Players.LoadAccounts();
 
   while RSFonts.Unzipping or ItemFinder.Unzipping do
   begin

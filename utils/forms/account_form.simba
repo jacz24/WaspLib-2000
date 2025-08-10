@@ -28,6 +28,7 @@ The account management system that handles profile storage, validation, and UI.
 *)
   TAccountForm = record
     Profiles: array of TAccountProfile;
+    ProfilesEdited: Boolean;
 
     ProfileCombo: TLazComboBox;
     EditButton: TLazButton;
@@ -313,9 +314,6 @@ procedure TAccountForm.UpdateProfileCombo();
 var
   i: Integer;
 begin
-  if not Assigned(Self.ProfileCombo) then
-    Exit;
-
   Self.ProfileCombo.Items.Clear();
 
   for i := 0 to High(Self.Profiles) do
@@ -352,11 +350,9 @@ begin
   Self.SaveProfileToFile(Length(Self.Profiles) - 1, profile);
   Result := True;
   
-  if Assigned(Self.ProfileCombo) then
-  begin
-    Self.UpdateProfileCombo();
-    Self.ProfileCombo.ItemIndex := Length(Self.Profiles) - 1;
-  end;
+
+  Self.UpdateProfileCombo();
+  Self.ProfileCombo.ItemIndex := Length(Self.Profiles) - 1;
 end;
 
 (*
@@ -385,13 +381,10 @@ begin
   
   Self.SaveProfileToFile(index, profile);
   Result := True;
-  
-  if Assigned(Self.ProfileCombo) then
-  begin
-    Self.UpdateProfileCombo();
-    if (index >= 0) and (index < Self.ProfileCombo.Items.Count - 1) then
-      Self.ProfileCombo.ItemIndex := index;
-  end;
+
+  Self.UpdateProfileCombo();
+  if (index >= 0) and (index < Self.ProfileCombo.Items.Count - 1) then
+    Self.ProfileCombo.ItemIndex := index;
 end;
 
 (*
@@ -430,16 +423,14 @@ begin
   
   Result := True;
   
-  if Assigned(Self.ProfileCombo) then
-  begin
-    Self.UpdateProfileCombo();
-    if Length(Self.Profiles) = 0 then
-      Self.ProfileCombo.ItemIndex := 0
-    else if index >= Length(Self.Profiles) then
-      Self.ProfileCombo.ItemIndex := Length(Self.Profiles) - 1
-    else
-      Self.ProfileCombo.ItemIndex := index;
-  end;
+
+  Self.UpdateProfileCombo();
+  if Length(Self.Profiles) = 0 then
+    Self.ProfileCombo.ItemIndex := 0
+  else if index >= Length(Self.Profiles) then
+    Self.ProfileCombo.ItemIndex := Length(Self.Profiles) - 1
+  else
+    Self.ProfileCombo.ItemIndex := index;
 end;
 
 
@@ -455,9 +446,7 @@ var
   selectedIndex: Integer;
 begin
   Result := Default(TAccountProfile);
-  
-  if not Assigned(Self.ProfileCombo) then Exit;
-  
+
   selectedIndex := Self.ProfileCombo.ItemIndex;
   
   if (selectedIndex >= 0) and (selectedIndex < Length(Self.Profiles)) then
@@ -1198,11 +1187,11 @@ end;
 (*
 ## TAccountForm.SetupEditDialog
 ```pascal
-procedure TAccountForm.SetupEditDialog(parent: TLazForm; profile: TAccountProfile; isNew: Boolean; editIndex: Integer);
+procedure TAccountForm.SetupEditDialog(profile: TAccountProfile; isNew: Boolean; editIndex: Integer);
 ```
 Sets up the modal edit dialog for profile details.
 *)
-procedure TAccountForm.SetupEditDialog(parent: TLazForm; profile: TAccountProfile; isNew: Boolean; editIndex: Integer);
+procedure TAccountForm.SetupEditDialog(profile: TAccountProfile; isNew: Boolean; editIndex: Integer);
 const
   EDIT_FORM_WIDTH = 700;
   EDIT_FORM_HEIGHT = 520;
@@ -1220,7 +1209,7 @@ begin
 
   scale := FormUtils.Scale;
 
-  Self.EditForm := TLazForm.Create(parent);
+  Self.EditForm := TLazForm.Create(nil);
   Self.EditForm.SetBounds(0, 0, Round(EDIT_FORM_WIDTH * scale), Round(EDIT_FORM_HEIGHT * scale));
   if isNew then
     Self.EditForm.Caption := 'New Account Profile'
@@ -1352,18 +1341,19 @@ var
   profile: TAccountProfile;
   isNewProfile: Boolean;
 begin
+  Self.ProfilesEdited := True;
   selectedIndex := Self.ProfileCombo.ItemIndex;
   isNewProfile := (selectedIndex = Self.ProfileCombo.Items.Count - 1); // Last item is "New Profile"
   
   if isNewProfile then
   begin
     profile := Default(TAccountProfile);
-    Self.SetupEditDialog(nil, profile, True, -1);
+    Self.SetupEditDialog(profile, True, -1);
   end
   else if (selectedIndex >= 0) and (selectedIndex < Length(Self.Profiles)) then
   begin
     profile := Self.Profiles[selectedIndex];
-    Self.SetupEditDialog(nil, profile, False, selectedIndex);
+    Self.SetupEditDialog(profile, False, selectedIndex);
   end
   else
     Exit;
@@ -1379,13 +1369,27 @@ procedure TAccountForm.SetupUI(combo: TLazComboBox; button: TLazButton);
 ```
 Sets up the UI components provided by the parent form.
 *)
-procedure TAccountForm.SetupUI(combo: TLazComboBox; button: TLazButton);
+procedure TAccountForm.SetupUI(parent: TLazComponent);
+var
+  lbl: TLazLabel;
 begin
-  Self.ProfileCombo := combo;
-  Self.EditButton := button;
-  
-  if Assigned(Self.EditButton) then
-    Self.EditButton.OnClick := @Self.OnEditClick;
+  Self.EditButton := TLazButton.CreateEx(parent, 'Edit Profile');
+  Self.EditButton.Align := ELazAlign.Left;
+  Self.EditButton.BorderSpacing.Top := 6;
+  Self.EditButton.BorderSpacing.Left := 6;
+  Self.EditButton.BorderSpacing.Right := 6;
+  Self.EditButton.BorderSpacing.Bottom := 6;
+  Self.EditButton.OnClick := @Self.OnEditClick;
+
+  Self.ProfileCombo := TLazComboBox.CreateEx(parent);
+  Self.ProfileCombo.Align := ELazAlign.Left;
+  Self.ProfileCombo.BorderSpacing.Around := 8;
+
+  lbl := TLazLabel.CreateEx(parent, 'Account:', '');
+  lbl.Align := ELazAlign.Left;
+  lbl.BorderSpacing.Top := 11;
+  lbl.BorderSpacing.Left := 8;
+  lbl.BorderSpacing.Bottom := 11;
   
   Self.UpdateProfileCombo();
   

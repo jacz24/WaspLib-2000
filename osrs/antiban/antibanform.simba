@@ -98,8 +98,8 @@ procedure TAntibanFormHelper.OnTaskAdd(sender: TLazObject);
 begin
   Self.TaskList.Items.Add(
     Self.TaskCombobox.Text.PadRight(20)         + ' | ' +
-    Self.TaskIntervalSpinner.Text.PadCenter(16) + ' | ' +
-    Self.TaskVariationSpinner.Text.PadCenter(16)
+    Self.TaskIntervalSpinner.Text.PadCenter(15) + ' | ' +
+    Self.TaskVariationSpinner.Text.PadCenter(14)
   );
 end;
 
@@ -111,8 +111,8 @@ begin
   if i = -1 then Exit;
 
   Self.TaskList.Items.Strings[i] := Self.TaskCombobox.Text.PadRight(20)         + ' | ' +
-                                    Self.TaskIntervalSpinner.Text.PadCenter(16) + ' | ' +
-                                    Self.TaskVariationSpinner.Text.PadCenter(16);
+                                    Self.TaskIntervalSpinner.Text.PadCenter(15) + ' | ' +
+                                    Self.TaskVariationSpinner.Text.PadCenter(14);
 end;
 
 procedure TAntibanFormHelper.OnTaskRemove(sender: TLazObject);
@@ -155,8 +155,8 @@ procedure TAntibanFormHelper.OnBreakAdd(sender: TLazObject);
 begin
   Self.BreakList.Items.Add(
     Self.BreakIntervalSpinner.Text.PadRight(20) + ' | ' +
-    Self.BreakLengthSpinner.Text.PadCenter(16)  + ' | ' +
-    Self.BreakVariationSpinner.Text.PadCenter(16)
+    Self.BreakLengthSpinner.Text.PadCenter(15)  + ' | ' +
+    Self.BreakVariationSpinner.Text.PadCenter(14)
   );
 end;
 
@@ -168,8 +168,8 @@ begin
   if i = -1 then Exit;
 
   Self.BreakList.Items.Strings[i] := Self.BreakIntervalSpinner.Text.PadRight(20) + ' | ' +
-                                     Self.BreakLengthSpinner.Text.PadCenter(16)  + ' | ' +
-                                     Self.BreakVariationSpinner.Text.PadCenter(16);
+                                     Self.BreakLengthSpinner.Text.PadCenter(15)  + ' | ' +
+                                     Self.BreakVariationSpinner.Text.PadCenter(14);
 end;
 
 procedure TAntibanFormHelper.OnBreakRemove(sender: TLazObject);
@@ -215,8 +215,8 @@ begin
   lbl := TLazLabel.CreateEx(
           rPanel,
           String('Task').PadRight(20) + ' | ' +
-          String('Interval (mins)').PadCenter(16) + ' | ' +
-          String('Variation (%)').PadCenter(16),
+          String('Interval (mins)').PadCenter(15) + ' | ' +
+          String('Variation (%)').PadCenter(14),
           'List of currently active antiban tasks.'
          );
   lbl.Font.Name := 'Courier New';
@@ -236,21 +236,27 @@ begin
   Self.TaskAddButton := TLazButton.CreateEx(lPanel, 'Add', 'Add a new task.');
   Self.TaskAddButton.OnClick := @Self.OnTaskAdd;
   Self.TaskAddButton.Align := ELazAlign.Bottom;
-  Self.TaskAddButton.BorderSpacing.Around := 10;
-
-
+  Self.TaskAddButton.BorderSpacing.Top := 10;
+  Self.TaskAddButton.BorderSpacing.Left := 10;
+  Self.TaskAddButton.BorderSpacing.Right := 10;
+  Self.TaskAddButton.BorderSpacing.Bottom := 5;
 
   Self.TaskEditButton := TLazButton.CreateEx(lPanel, 'Update', 'Update the current task.');
   Self.TaskEditButton.Enabled := False;
   Self.TaskEditButton.OnClick := @Self.OnTaskEdit;
   Self.TaskEditButton.Align := ELazAlign.Bottom;
-  Self.TaskEditButton.BorderSpacing.Around := 10;
+  Self.TaskEditButton.BorderSpacing.Top := 5;
+  Self.TaskEditButton.BorderSpacing.Left := 10;
+  Self.TaskEditButton.BorderSpacing.Right := 10;
+  Self.TaskEditButton.BorderSpacing.Bottom := 5;
 
   Self.TaskDelButton := TLazButton.CreateEx(lPanel, 'Remove', 'Remove the current task.');
   Self.TaskDelButton.Enabled := False;
   Self.TaskDelButton.OnClick := @Self.OnTaskRemove;
   Self.TaskDelButton.Align := ELazAlign.Bottom;
-  Self.TaskDelButton.BorderSpacing.Around := 10;
+  Self.TaskDelButton.BorderSpacing.Top := 5;
+  Self.TaskDelButton.BorderSpacing.Left := 10;
+  Self.TaskDelButton.BorderSpacing.Right := 10;
   Self.TaskDelButton.BorderSpacing.Bottom := 30;
 
   Self.TaskPresetButton := TLazButton.CreateEx(lPanel, 'Preset', 'Reset the task list with a preset.');
@@ -259,7 +265,7 @@ begin
   Self.TaskPresetButton.BorderSpacing.Around := 10;
 
 
-  Self.TaskVariationSpinner := TLazFloatSpinEdit.CreateEx(lPanel);
+  Self.TaskVariationSpinner := TLazFloatSpinEdit.CreateEx(lPanel, '', 'Edit the currently selected task interval variation.');
   Self.TaskVariationSpinner.Text := '3.3';
   Self.TaskVariationSpinner.Align := ELazAlign.Top;
   Self.TaskVariationSpinner.BorderSpacing.Left := 10;
@@ -272,7 +278,7 @@ begin
   lbl.BorderSpacing.Left := 10;
   lbl.BorderSpacing.Right := 10;
 
-  Self.TaskIntervalSpinner := TLazFloatSpinEdit.CreateEx(lPanel);
+  Self.TaskIntervalSpinner := TLazFloatSpinEdit.CreateEx(lPanel, '', 'Edit the currently selected task interval.');
   Self.TaskIntervalSpinner.Text := '5';
   Self.TaskIntervalSpinner.Align := ELazAlign.Top;
   Self.TaskIntervalSpinner.BorderSpacing.Left := 10;
@@ -285,7 +291,7 @@ begin
   lbl.BorderSpacing.Left := 10;
   lbl.BorderSpacing.Right := 10;
 
-  Self.TaskCombobox := TLazComboBox.CreateEx(lPanel);
+  Self.TaskCombobox := TLazComboBox.CreateEx(lPanel, '', 'Edit the currently selected task.');
   Self.TaskCombobox.Items.Add('SmallRandomMouse');
   Self.TaskCombobox.Items.Add('LargeRandomMouse');
   Self.TaskCombobox.Items.Add('SmallCameraRotation');
@@ -335,8 +341,8 @@ begin
   lbl := TLazLabel.CreateEx(
           rPanel,
           String('Length (mins)').PadRight(20) + ' | ' +
-          String('Interval (mins)').PadCenter(16) + ' | ' +
-          String('Variation (%)').PadCenter(16),
+          String('Interval (mins)').PadCenter(15) + ' | ' +
+          String('Variation (%)').PadCenter(14),
           'List of currently active antiban breaks.'
          );
   lbl.Font.Name := 'Courier New';
@@ -356,20 +362,28 @@ begin
   Self.BreakAddButton := TLazButton.CreateEx(lPanel, 'Add', 'Add a new break.');
   Self.BreakAddButton.OnClick := @Self.OnBreakAdd;
   Self.BreakAddButton.Align := ELazAlign.Bottom;
-  Self.BreakAddButton.BorderSpacing.Around := 10;
+  Self.BreakAddButton.BorderSpacing.Top := 10;
+  Self.BreakAddButton.BorderSpacing.Left := 10;
+  Self.BreakAddButton.BorderSpacing.Right := 10;
+  Self.BreakAddButton.BorderSpacing.Bottom := 5;
 
 
   Self.BreakEditButton := TLazButton.CreateEx(lPanel, 'Update', 'Update the current break.');
   Self.BreakEditButton.Enabled := False;
   Self.BreakEditButton.OnClick := @Self.OnBreakEdit;
   Self.BreakEditButton.Align := ELazAlign.Bottom;
-  Self.BreakEditButton.BorderSpacing.Around := 10;
+  Self.BreakEditButton.BorderSpacing.Top := 5;
+  Self.BreakEditButton.BorderSpacing.Left := 10;
+  Self.BreakEditButton.BorderSpacing.Right := 10;
+  Self.BreakEditButton.BorderSpacing.Bottom := 5;
 
   Self.BreakDelButton := TLazButton.CreateEx(lPanel, 'Remove', 'Remove the current break.');
   Self.BreakDelButton.Enabled := False;
   Self.BreakDelButton.OnClick := @Self.OnBreakRemove;
   Self.BreakDelButton.Align := ELazAlign.Bottom;
-  Self.BreakDelButton.BorderSpacing.Around := 10;
+  Self.BreakDelButton.BorderSpacing.Top := 5;
+  Self.BreakDelButton.BorderSpacing.Left := 10;
+  Self.BreakDelButton.BorderSpacing.Right := 10;
   Self.BreakDelButton.BorderSpacing.Bottom := 30;
 
   Self.BreakPresetButton := TLazButton.CreateEx(lPanel, 'Preset', 'Reset the break list with a preset.');
@@ -437,12 +451,13 @@ begin
   Self.SleepTimeEdit.AnchorVertically(lbl);
 
   Self.SleepLengthSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Sleep Length (hours):', 'Pick an aproximated length of sleep.', 0, 0, 120);
-  Self.SleepLengthSpinner.AnchorHorizontally(Self.SleepTimeEdit, 150);
+  Self.SleepLengthSpinner.AnchorHorizontally(Self.SleepTimeEdit, 60);
 
   Self.SleepVariationSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Variation (%):', 'Edit the sleep variation.', 0, 0, 120);
-  Self.SleepVariationSpinner.AnchorHorizontally(Self.SleepLengthSpinner, 150);
+  Self.SleepVariationSpinner.Text := '3.3';
+  Self.SleepVariationSpinner.AnchorHorizontally(Self.SleepLengthSpinner, 60);
 
-  Self.SleepPresetButton := TLazButton.CreateEx(parent, 'Preset', 'Reset the task list with a preset.');
+  Self.SleepPresetButton := TLazButton.CreateEx(parent, 'Preset', 'Reset the task list with a preset.', 0, 0, 100);
   Self.SleepPresetButton.AnchorVertically(Self.SleepTimeEdit, 60);
   Self.SleepPresetButton.OnClick := @Self.OnSleepPreset;
 end;

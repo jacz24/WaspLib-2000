@@ -384,7 +384,7 @@ begin
   Self.AnchorSideLeft.Control := TLazControl(anchor);
   Self.AnchorSideLeft.Side := ELazAnchorSideReference.asrBottom;
   if spacing > 0 then
-    Self.BorderSpacing.Left := 10;
+    Self.BorderSpacing.Left := spacing;
 end;
 
 
