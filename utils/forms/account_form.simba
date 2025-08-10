@@ -699,6 +699,8 @@ var
   checkbox: TLazCheckBox;
   activityText: String;
   previousStates: array of TActivityState;
+  activityStrings: TStringArray;
+  sortedActivities: array of TActivityGroup;
 begin
   // Save current checkbox states before destroying them
   SetLength(previousStates, Length(Self.ActivityCheckboxes));
@@ -783,6 +785,19 @@ begin
       activities += activity;
     end;
   end;
+
+  // Sort activities alphabetically
+  SetLength(activityStrings, Length(activities));
+  for i := 0 to High(activities) do
+    activityStrings[i] := activities[i].Activity;
+  
+  activityStrings.Sort();
+  
+  SetLength(sortedActivities, Length(activityStrings));
+  for i := 0 to High(activityStrings) do
+    sortedActivities[i].Activity := activityStrings[i];
+  
+  activities := sortedActivities;
 
   for i := 0 to High(activities) do
   begin
