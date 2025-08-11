@@ -495,6 +495,55 @@ end;
 
 
 
+procedure TAntiBan.HoverMSTile(dotType: ERSMinimapDot; rightClick: Boolean = False);
+var
+  tries: Int32;
+  a: Double;
+  rDot: TPoint;
+  msBox: TBox;
+  dots,cTPA: TPointArray;
+  cArr: TColorArray;
+begin
+  dots := Minimap.GetDots(dotType);
+  if dots.Length < 1 then Exit;
+  a := Minimap.GetCompassAngle(False);
+  repeat
+    Inc(tries);
+    rDot := dots[Random(Low(dots),High(dots))];
+    msBox := Minimap.Vector2MSQuad([rDot.X, rDot.Y, 0], a).Bounds;
+    if MainScreen.Bounds.ContainsBox(msBox) then
+    begin
+      Writeln('Hovering random ' + toStr(dotType));
+      cArr := Target.GetColors(TPointArray.CreateFromBox(msBox,True));
+      cTPA := Target.FindColor(cArr.GetRarest(), 15, msBox);
+      Mouse.Move(cTPA.Mean());
+      if rightClick then
+        Mouse.Click(EMouseButton.RIGHT);
+
+      Biometrics.Sleep(1500, 2700);
+      if rightClick then
+        ChooseOption.Close();
+      Exit;
+    end;
+  until(tries > 10);
+end;
+
+procedure TAntiban.HoverRandomNPC();
+begin
+  Self.HoverMSTile(ERSMinimapDot.NPC);
+end;
+
+procedure TAntiban.HoverRandomPlayer();
+begin
+  Self.HoverMSTile(ERSMinimapDot.PLAYER);
+end;
+
+procedure TAntiban.HoverRandomGrounditem();
+begin
+  Self.HoverMSTile(ERSMinimapDot.ITEM);
+end;
+
+
 
 //Antiban task "packs"
 procedure TAntiban.RandomCameraTask();
@@ -543,53 +592,6 @@ begin
   end;
 end;
 
-procedure TAntiBan.HoverMSTile(dotType: ERSMinimapDot; rightClick: Boolean = False);
-var
-  tries: Int32;
-  a: Double;
-  rDot: TPoint;
-  msBox: TBox;
-  dots,cTPA: TPointArray;
-  cArr: TColorArray;
-begin
-  dots := Minimap.GetDots(dotType);
-  if dots.Length < 1 then Exit;
-  a := Minimap.GetCompassAngle(False);
-  repeat
-    Inc(tries);
-    rDot := dots[Random(Low(dots),High(dots))];
-    msBox := Minimap.Vector2MSQuad([rDot.X, rDot.Y, 0], a).Bounds;
-    if MainScreen.Bounds.ContainsBox(msBox) then
-    begin
-      Writeln('Hovering random ' + toStr(dotType));
-      cArr := Target.GetColors(TPointArray.CreateFromBox(msBox,True));
-      cTPA := Target.FindColor(cArr.GetRarest(), 15, msBox);
-      Mouse.Move(cTPA.Mean());
-      if rightClick then
-        Mouse.Click(EMouseButton.RIGHT);
-
-      Biometrics.Sleep(1500, 2700);
-      if rightClick then
-        ChooseOption.Close();
-      Exit;
-    end;
-  until(tries > 10);
-end;
-
-procedure TAntiban.HoverRandomNPC();
-begin
-  Self.HoverMSTile(ERSMinimapDot.NPC);
-end;
-
-procedure TAntiban.HoverRandomPlayer();
-begin
-  Self.HoverMSTile(ERSMinimapDot.PLAYER);
-end;
-
-procedure TAntiban.HoverRandomGrounditem();
-begin
-  Self.HoverMSTile(ERSMinimapDot.ITEM);
-end;
 
 
 (* TODO:
@@ -781,5 +783,41 @@ begin
 end;
 *)
 
+type
+  TAntibanNamedMethod = record
+    Name: String;
+    Method: TAntibanMethod;
+  end;
 
-
+const
+  ANTIBAN_TASKS: array of TAntibanNamedMethod := [
+    ['SmallRandomMouse',      @Antiban.SmallRandomMouse],
+    ['LargeRandomMouse',      @Antiban.LargeRandomMouse],
+    ['SmallCameraRotation',   @Antiban.SmallCameraRotation],
+    ['LargeCameraRotation',   @Antiban.LargeCameraRotation],
+    ['LoseFocus',             @RSClient.LoseFocus],
+    ['HoverSkills',           @Antiban.HoverSkills],
+    ['OpenSkills',            @Antiban.OpenSkills],
+    ['ChatScrolling',         @Antiban.ChatScrolling],
+    ['RandomChatTab',         @Antiban.RandomChatTab],
+    ['ToggleChatTab',         @Antiban.ToggleChatTab],
+    ['RandomChatTabState',    @Antiban.RandomChatTabState],
+    ['RandomTab',             @Antiban.RandomTab],
+    ['ToggleTab',             @Antiban.ToggleTab],
+    ['BankScrolling',         @Antiban.BankScrolling],
+    ['RandomBankTab',         @Antiban.RandomBankTab],
+    ['ToggleBankTab',         @Antiban.ToggleBankTab],
+    ['RandomRightClick',      @Antiban.RandomRightClick],
+    ['AdjustZoom',            @Antiban.AdjustZoom],
+    ['Swivel',                @Antiban.Swivel],
+    ['ToggleRun',             @Antiban.ToggleRun],
+    ['TogglePray',            @Antiban.TogglePray],
+    ['HoverRandomNPC',        @Antiban.HoverRandomNPC],
+    ['HoverRandomPlayer',     @Antiban.HoverRandomPlayer],
+    ['HoverRandomGrounditem', @Antiban.HoverRandomGrounditem],
+    ['RandomCameraTask',      @Antiban.RandomCameraTask],
+    ['RandomMouseTask',       @Antiban.RandomMouseTask],
+    ['RandomGameTabTask',     @Antiban.RandomGameTabTask],
+    ['RandomChatTask',        @Antiban.RandomChatTask],
+    ['RandomBankTask',        @Antiban.RandomBankTask]
+  ];
