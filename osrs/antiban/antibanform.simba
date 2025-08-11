@@ -196,7 +196,7 @@ var
   lbl: TLazLabel;
 begin
   checkbox := TLazCheckBox.CreateEx(parent, 'Enable Tasks', 'Enable/Disable antiban tasks.');
-  checkbox.State := ELazCheckBoxState.cbChecked;
+  checkbox.State := ELazCheckBoxState.Checked;
   checkbox.OnChange := @Self.OnCheckboxToggle;
   checkbox.Align := ELazAlign.Top;
   checkbox.BorderSpacing.Around := 10;
@@ -322,7 +322,7 @@ var
   lbl: TLazLabel;
 begin
   checkbox := TLazCheckBox.CreateEx(parent, 'Enable Breaks', 'Enable/Disable antiban breaks.');
-  checkbox.State := ELazCheckBoxState.cbChecked;
+  checkbox.State := ELazCheckBoxState.Checked;
   checkbox.OnChange := @Self.OnCheckboxToggle;
   checkbox.Align := ELazAlign.Top;
   checkbox.BorderSpacing.Around := 10;
@@ -437,7 +437,7 @@ var
   lbl: TLazLabel;
 begin
   checkbox := TLazCheckBox.CreateEx(parent, 'Enable Sleeps', 'Enable/Disable antiban sleeps.');
-  checkbox.State := ELazCheckBoxState.cbChecked;
+  checkbox.State := ELazCheckBoxState.Checked;
   checkbox.OnChange := @Self.OnCheckboxToggle;
   checkbox.Align := ELazAlign.Top;
   checkbox.BorderSpacing.Around := 10;
@@ -524,7 +524,6 @@ begin
            'Each profile has it''s own antiban settings.'
          );
   lbl.Align := ELazAlign.Bottom;
-  lbl.Alignment := ELazAlignment.taCenter;
+  lbl.Alignment := ELazAlignment.Center;
   lbl.BorderSpacing.Around := 20;
-
 end;
