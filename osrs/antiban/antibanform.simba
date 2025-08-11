@@ -240,7 +240,7 @@ begin
 
   //Tasks
   checkbox := TLazCheckBox.CreateEx(Result, 'Tasks', 'Enable/Disable antiban tasks.', left, top);
-  checkbox.State := ELazCheckBoxState.cbChecked;
+  checkbox.State := ELazCheckBoxState.Checked;
   checkbox.OnChange := @AntibanForm.OnTaskToggle;
 
   top += 40;
@@ -289,7 +289,7 @@ begin
 
   //Breaks
   checkbox := TLazCheckBox.CreateEx(Result, 'Breaks', 'Enable/Disable short breaks.', left, top);
-  checkbox.State := ELazCheckBoxState.cbChecked;
+  checkbox.State := ELazCheckBoxState.Checked;
   checkbox.OnChange := @AntibanForm.OnBreakToggle;
 
   top += 40;

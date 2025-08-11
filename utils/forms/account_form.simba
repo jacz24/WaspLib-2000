@@ -1297,8 +1297,7 @@ begin
   Self.GenerateButton.SetBounds(Round(15 * scale), worldY, Round(150 * scale), Round(30 * scale));
   Self.GenerateButton.OnClick := @Self.OnGenerateClick;
 
-  Self.SortCombo := TLazComboBox.CreateEx(Self.EditForm, 'Sort by:', '', Round(170 * scale), worldY, Round(130 * scale), Round(22 * scale));
-  Self.SortCombo.Style := ELazComboBoxStyle.csDropDownList;
+  Self.SortCombo := TLazComboBox.CreateEx(Self.EditForm, 'Sort by:', '', Round(170 * scale), worldY, Round(130 * scale), Round(22 * scale));  Self.SortCombo.Style := ELazComboBoxStyle.DropDownList;
   Self.SortCombo.Items.Add('World Number');
   Self.SortCombo.Items.Add('Players (Lo/Hi)');
   Self.SortCombo.Items.Add('Players (Hi/Lo)');

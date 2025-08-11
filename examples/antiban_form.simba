@@ -10,7 +10,7 @@ var
   tab: TLazTabSheet;
 begin
   form.Setup();
-  //tab := form.CreateTab('My Settings');
+  tab := form.CreateTab('My Settings');
   form.CreateAntibanTab();
 
   form.Run();

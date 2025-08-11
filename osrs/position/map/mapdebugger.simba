@@ -102,25 +102,25 @@ end;
 
 procedure TMapDebugger.GraphOnChange(sender: TLazObject);
 begin
-  Self.ShowGraph := TLazCheckBox(sender).State = ELazCheckBoxState.cbChecked;
+  Self.ShowGraph := TLazCheckBox(sender).IsChecked();
   Self.ImageBox.Repaint();
 end;
 
 procedure TMapDebugger.WalkableSpaceOnChange(sender: TLazObject);
 begin
-  Self.ShowWalkableSpace := TLazCheckBox(sender).State = ELazCheckBoxState.cbChecked;
+  Self.ShowWalkableSpace := TLazCheckBox(sender).IsChecked();
   Self.ImageBox.Repaint();
 end;
 
 procedure TMapDebugger.WalkableClustersOnChange(sender: TLazObject);
 begin
-  Self.ShowWalkableClusters := TLazCheckBox(sender).State = ELazCheckBoxState.cbChecked;
+  Self.ShowWalkableClusters := TLazCheckBox(sender).IsChecked();
   Self.ImageBox.Repaint();
 end;
 
 procedure TMapDebugger.ObjectClustersOnChange(sender: TLazObject);
 begin
-  Self.ShowObjectClusters := TLazCheckBox(sender).State = ELazCheckBoxState.cbChecked;
+  Self.ShowObjectClusters := TLazCheckBox(sender).IsChecked();
   Self.ImageBox.Repaint();
 end;
 {%codetools on}
@@ -207,7 +207,7 @@ begin
 
   checkbox := TLazCheckBox.CreateEx(panel);
   checkbox.Align := ELazAlign.Left;
-  checkbox.State := ELazCheckBoxState.cbChecked;
+  checkbox.State := ELazCheckBoxState.Checked;
   checkbox.BorderSpacing.Left  := 10;
   checkbox.BorderSpacing.Right := 4;
   checkbox.OnChange := @Self.GraphOnChange;
@@ -219,7 +219,6 @@ begin
   combobox.Items.Add('Map');
   combobox.Items.Add('Height');
   combobox.Items.Add('Collision');
-  combobox.Style := ELazComboBoxStyle.csDropDownList;
   combobox.ItemIndex := 0;
   combobox.Align := ELazAlign.Left;
   combobox.BorderSpacing.Left  := 10;

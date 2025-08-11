@@ -131,8 +131,7 @@ begin
   lbl := TLazLabel.CreateEx(panel, 'Account: ', '', 6, 7);
   
   profileCombo := TLazComboBox.CreateEx(panel, '', '', lbl.Left + lbl.Width + 5, 7, Round(250 * FormUtils.Scale), Round(30 * FormUtils.Scale));
-  profileCombo.Style := ELazComboBoxStyle.csOwnerDrawFixed;
-  
+
   editButton := TLazButton.CreateEx(panel, 'Edit Profile', '', profileCombo.Left + profileCombo.Width + 10, Round(4 * FormUtils.Scale), Round(90 * FormUtils.Scale), Round(30 * FormUtils.Scale));
   
   AccountForm.SetupUI(profileCombo, editButton);

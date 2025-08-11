@@ -330,7 +330,7 @@ var
 begin
   btn := TLazButton(sender);
   btn.Caption := 'Loading...';
-  btn.Font.Style := btn.Font.Style - [ELazFontStyles.fsBold];
+  btn.Font.Style := btn.Font.Style - [ELazFontStyles.Bold];
   btn.Enabled := False;
   btn.Update();
 
@@ -354,7 +354,7 @@ begin
   Self.FilteredLists[Self.Selected].Enabled := True;
 
   btn.Caption := 'Read From Client';
-  btn.Font.Style := [ELazFontStyles.fsBold];
+  btn.Font.Style := [ELazFontStyles.Bold];
   btn.Enabled := True;
   Self.UnfilterButton.Enabled := True;
 end;
@@ -508,7 +508,7 @@ begin
   GearForm.UpdateBackground();
 
   read := TLazButton.CreateEx(Result, 'Read From Client' , 'Read the layout from the client.', 0, 0, 204);
-  read.Font.Style := [ELazFontStyles.fsBold];
+  read.Font.Style := [ELazFontStyles.Bold];
   read.AnchorVertically(GearForm.ImageBox, 10);
   read.OnClick := @GearForm.OnReadClick;
 

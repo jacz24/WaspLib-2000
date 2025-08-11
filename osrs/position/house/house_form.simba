@@ -766,7 +766,7 @@ begin
 
   lbl := TLazLabel.CreateEx(panel, 'Decoration:', 'Change your house decoration.');
   lbl.AnchorSideTop.Control := location;
-  lbl.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
+  lbl.AnchorSideTop.Side := ELazAnchorSideReference.Bottom;
   lbl.BorderSpacing.Top := 20;
 
   decoration := TLazComboBox.CreateEx(panel, '', 'Change your house decoration.');
@@ -781,7 +781,7 @@ begin
 
   lbl := TLazLabel.CreateEx(panel, 'Room:', 'Change the selected room.');
   lbl.AnchorSideTop.Control := decoration;
-  lbl.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
+  lbl.AnchorSideTop.Side := ELazAnchorSideReference.Bottom;
   lbl.BorderSpacing.Top := 20;
 
   HouseForm.RoomCombobox := TLazComboBox.CreateEx(panel, '', 'Change the selected room.');
@@ -801,32 +801,32 @@ begin
   rotateLeft := TLazButton.CreateEx(panel, 'Rotate Left', 'Rotate the current room counter clockwise.');
   rotateLeft.Width := 80;
   rotateLeft.AnchorSideTop.Control := HouseForm.RoomCombobox;
-  rotateLeft.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
+  rotateLeft.AnchorSideTop.Side := ELazAnchorSideReference.Bottom;
   rotateLeft.BorderSpacing.Top := 20;
   rotateLeft.OnClick := @HouseForm.OnRotateLeft;
 
   rotateRight := TLazButton.CreateEx(panel, 'Rotate Right', 'Rotate the current room clockwise');
   rotateRight.Width := 80;
   rotateRight.AnchorSideLeft.Control := rotateLeft;
-  rotateRight.AnchorSideLeft.Side := ELazAnchorSideReference.asrBottom;
+  rotateRight.AnchorSideLeft.Side := ELazAnchorSideReference.Bottom;
   rotateRight.AnchorSideTop.Control := rotateLeft;
-  rotateRight.AnchorSideTop.Side := ELazAnchorSideReference.asrTop;
+  rotateRight.AnchorSideTop.Side := ELazAnchorSideReference.Top;
   rotateRight.BorderSpacing.Left := 6;
   rotateRight.OnClick := @HouseForm.OnRotateRight;
 
   loader := TLazButton.CreateEx(panel, 'Read Layout', 'Reads the layout of the house automatically.', 0, 0, 165);
   loader.AnchorSideTop.Control := rotateLeft;
-  loader.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
+  loader.AnchorSideTop.Side := ELazAnchorSideReference.Bottom;
   loader.BorderSpacing.Top := 20;
-  loader.Font.Style := [ELazFontStyles.fsBold];
+  loader.Font.Style := [ELazFontStyles.Bold];
 
   loader.AnchorSideLeft.Control := HouseForm.RoomCombobox;
-  loader.AnchorSideLeft.Side := ELazAnchorSideReference.asrCenter;
+  loader.AnchorSideLeft.Side := ELazAnchorSideReference.Center;
   loader.OnClick := @HouseForm.OnReadClick;
 
   HouseForm.ObjectsPanel := TLazPanel.CreateEx(panel, 0,0, 170, 210);
   HouseForm.ObjectsPanel.AnchorSideTop.Control := loader;
-  HouseForm.ObjectsPanel.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
+  HouseForm.ObjectsPanel.AnchorSideTop.Side := ELazAnchorSideReference.Bottom;
   HouseForm.ObjectsPanel.BorderSpacing.Top := 50;
 
   if House.Loader.Map = nil then
