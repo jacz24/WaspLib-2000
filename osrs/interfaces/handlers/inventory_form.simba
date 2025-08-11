@@ -50,7 +50,7 @@ var
   i: Integer;
   slot: Integer;
 begin
-  Self.Config.Setup('inventorylayouts' + PATH_SEP + ToStr(PlayerIndex));
+  Self.Config.Setup('inventorylayouts' + PATH_SEP + ToStr(ProfileIndex));
   SetLength(Self.Layouts, Self.Config.Data.Count);
 
   Self.BackgroundImg := new TImage(WLAssets.Images[0].Path);

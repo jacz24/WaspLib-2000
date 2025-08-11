@@ -53,7 +53,7 @@ var
   i: Integer;
   slot: ERSEquipment;
 begin
-  Self.Config.Setup('gearlayouts' + PATH_SEP + ToStr(PlayerIndex));
+  Self.Config.Setup('gearlayouts' + PATH_SEP + ToStr(ProfileIndex));
   SetLength(Self.Sets, Self.Config.Data.Count);
 
   Self.BackgroundImg := new TImage(WLAssets.Images[1].Path);

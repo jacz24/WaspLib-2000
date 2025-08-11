@@ -139,7 +139,7 @@ begin
     if not BankPin.WaitLoading(3000) then
       raise GetDebugLn('BankPin', 'Bank pin buttons don''t seem to have loaded in 3 seconds.');
 
-    if not BankPin.Enter(Players.GetPin()) then
+    if not BankPin.Enter(Profiles.GetPin()) then
       raise GetDebugLn('BankPin', 'Failed to enter bank pin.');
   end;
 

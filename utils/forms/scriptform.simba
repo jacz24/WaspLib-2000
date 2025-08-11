@@ -124,7 +124,6 @@ begin
   panel.Align := ELazAlign.Bottom;
   panel.Height := 40;
 
-  // Account controls
   AccountForm.SetupUI(panel);
 
   // Start button
@@ -191,18 +190,6 @@ begin
   Self.PageControl.InsertComponent(tab);
 end;
 
-
-(*
-## ScriptForm.GetSelectedProfile
-```pascal
-function TScriptForm.GetSelectedProfile(): TAccountProfile;
-```
-Returns the currently selected account profile from the AccountForm module.
-*)
-function TScriptForm.GetSelectedProfile(): TAccountProfile;
-begin
-  Result := AccountForm.GetSelectedProfile();
-end;
 
 (*
 ## ScriptForm.Run

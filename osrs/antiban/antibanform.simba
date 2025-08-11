@@ -43,7 +43,7 @@ Do feel free to read the source code though if you so desire.
 
 procedure TAntibanFormHelper.Setup();
 begin
-  Self.Config.Setup('antiban' + PATH_SEP + ToStr(PlayerIndex));
+  Self.Config.Setup('antiban' + PATH_SEP + ToStr(ProfileIndex));
 end;
 
 procedure TAntibanFormHelper.OnCheckboxToggle(sender: TLazObject);

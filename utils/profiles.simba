@@ -1,0 +1,181 @@
+(*
+# Profiles
+Page dedicated to handling profile accounts.
+*)
+{$DEFINE WL_PROFILES_INCLUDED}
+{$INCLUDE_ONCE WaspLib/utils.simba}
+
+var
+(*
+## ProfileIndex variable
+This variable is what tells WaspLib which account you will be using of the ones you have in a {ref}`TProfileArray` you want to
+use for this botting session.
+*)
+  ProfileIndex: Integer;
+
+type
+  TProfile = record
+    Name, Username, Password, Pin: String;
+    Worlds: TIntegerArray;
+    Active: Boolean;
+  end;
+
+(*
+## TProfileArray
+Type that holds player account information for {ref}`login`, world hopping and {ref}`bankpin` handling.
+*)
+  TProfileArray = array of TProfile;
+
+(*
+## TProfileArray.Add
+```pascal
+procedure TProfileArray.Add(user, pass: String; pin: String = ''; worlds: TIntegerArray = []);
+```
+Adds a TRSAccountProfile to the TProfileArray.
+
+Example:
+```pascal
+Profiles.Add('username', 'password', '0000');
+```
+*)
+procedure TProfileArray.Add(name, user, pass: String; pin: String = ''; worlds: TIntegerArray = []);
+begin
+  Self += [name, user, pass, pin, worlds, true];
+end;
+
+procedure TProfileArray.NextPlayer(disableCurrent: Boolean);
+
+  function _Next(): Integer;
+  var
+    i: Integer;
+  begin
+    for i := ProfileIndex + 1 to High(Self) do
+      if Self[i].Active then
+        Exit(i);
+
+    for i := 0 to ProfileIndex - 1 do // wrap around
+      if Self[i].Active then
+        Exit(i);
+
+    Result := -1;
+  end;
+
+begin
+  Self[ProfileIndex].Active := not disableCurrent;
+
+  ProfileIndex := _Next();
+  if ProfileIndex < 0 then
+    raise GetDebugLn('Profiles', 'No active Profiles to switch to.');
+end;
+
+(*
+## Profiles.GetPlayer
+```pascal
+function TProfileArray.GetPlayer(): TRSAccountProfile;
+```
+Returns the currently selected TRSAccountProfile.
+The currently selected TRSAccountProfile is decided by `ProfileIndex` which
+is an index of the TRSAccountProfileArra.
+
+Example:
+```pascal
+WriteLn Profiles.GetPlayer().Username;
+```
+*)
+function TProfileArray.GetPlayer(): TProfile;
+begin
+  if Self = [] then
+    raise GetDebugLn('Profiles', 'No profiles declared: Add a profile if you want scripts to handle login.');
+  if not InRange(ProfileIndex, 0, High(Self)) then
+    raise GetDebugLn('Profiles', 'Profile is out of range: Profile number selected in script does not exist.');
+
+  Result := Self[ProfileIndex];
+end;
+
+(*
+## Profiles.GetPin
+```pascal
+function TProfileArray.GetPin(): String;
+```
+Get the current Player bank pin.
+
+Example:
+```pascal
+if BankPin.IsOpen() then
+  BankPin.Enter(Profiles.GetPin());
+```
+*)
+function TProfileArray.GetPin(): String;
+begin
+  Result := Self.GetPlayer().Pin;
+  if (Length(Result) <> 4) or (not Result.IsNumeric) then
+    raise GetDebugLn('Profiles', 'Invalid bank pin.');
+end;
+
+(*
+## Profiles.Load
+```pascal
+procedure TProfileArray.Load();
+```
+Loads all account profiles from the accounts JSON files (0.json, 1.json, etc).
+*)
+procedure TProfileArray.Load();
+var
+  i: Integer;
+  parser: TJSONParser;
+  worldsJSON: TJSONItem;
+  path, name, username, password, pin: String;
+  worlds: TIntegerArray;
+begin
+  Self := [];
+  path := WLEnv.ConfigsDir + 'profiles' + PATH_SEP;
+  i := -1;
+
+  // Load each account file in order
+  while FileExists(path + ToStr(Inc(i)) + '.json') do
+  begin
+    parser := new TJSONParser();
+    try
+      parser.Load(path + ToStr(i) + '.json');
+      if not parser.GetString('name', name) then raise 'name error';
+      if not parser.GetString('username', username) then raise 'username error';
+      if not parser.GetString('password', password) then raise 'password error';
+      if not parser.GetString('pin', pin) then raise 'pin error';
+      if not parser.GetArray('worlds', worldsJSON) then raise 'worlds error';
+    except
+      WriteLn GetDebugLn('Profiles', 'Error loading profile ' + ToStr(i) + ': ' + GetExceptionMessage(), ELogLevel.ERROR);
+      FileDelete(path + ToStr(i) + '.json');
+      Continue;
+    end;
+
+    //Convert world string to integer array
+    for i := 0 to worldsJSON.Count-1 do
+      worlds += worldsJSON.Item[i].AsInt;
+
+    Self.Add(name, username, password, pin, worlds);
+  end;
+end;
+
+(*
+## TProfileArray.Contains
+```pascal
+function TProfileArray.Contains(name: String): Boolean;
+```
+Checks if a profile with the given name already exists.
+*)
+function TProfileArray.Contains(name: String): Boolean;
+var
+  i: Integer;
+begin
+  name := name.Trim().ToLower();
+  for i := 0 to High(Self) do
+    if Self[i].Name.ToLower() = name then
+      Exit(True);
+end;
+
+var
+(*
+## Profiles variable
+Global {ref}`TProfileArray` variable.
+*)
+  Profiles: TProfileArray;

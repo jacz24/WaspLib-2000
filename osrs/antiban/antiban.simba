@@ -470,7 +470,7 @@ begin
   if checkSleeps and Self.DoSleep() then Result := True;
 
   if not RSClient.IsLoggedIn() then
-    Login.DoLogin(Players.GetPlayer());
+    Login.DoLogin(Profiles.GetPlayer());
 
   Self.DoingAntiban := False;
   Logger.TimeRunning.Start();

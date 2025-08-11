@@ -67,7 +67,7 @@ Enums representing various aspects of the login screen.
   ERSLoginMessage = enum(
     UNKNOWN,
     WELCOME, CONNECTING, INVALID, INCORRECT, SKILL_TOTAL, ENTER_CREDENTIALS,
-    ERROR_CONNECTING, PLAYER_ONLINE, SERVER_OFFLINE, ERROR_LOADING, TIMED_OUT,
+    ERROR_CONNECTING, profile_ONLINE, SERVER_OFFLINE, ERROR_LOADING, TIMED_OUT,
     DISCONNECTED,
 
     LIMIT_EXCEEDED, WORLD_FULL, BANNED, NOT_MEMBER, ON_MEMBER_AREA,
@@ -298,7 +298,7 @@ Attempts to fill the  specified `field` with `details`.
 
 Example:
 ```pascal
-WriteLn Login.FillInput(ERSLoginInput.USERNAME, 'myPlayer@email.com');
+WriteLn Login.FillInput(ERSLoginInput.USERNAME, 'myprofile@email.com');
 ```
 *)
 function TRSLogin.FillInput(field: ERSLoginInput; details: String): Boolean;
@@ -529,11 +529,11 @@ Returns True if we succeed.
 The current `ERSLoginMessage` message has to be passed as `msg` so we know
 when we successfully handled the current error.
 
-The Player `username` and `password` we want to use also have to be passed in.
+The profile `username` and `password` we want to use also have to be passed in.
 This can be empty value if we are using the Jagex Launcher, e.g.: `'', ''`.
 
 On certain `ERSLoginMessages` that cannot be handled this will raise an
-exception to shutdown your script. For example, if the Player you are trying to
+exception to shutdown your script. For example, if the profile you are trying to
 use has been banned.
 *)
 function TRSLogin.HandleMessage(msg: ERSLoginMessage; username, password: String): Boolean;
@@ -549,19 +549,19 @@ begin
 
     ERSLoginMessage.ERROR_CONNECTING,
     ERSLoginMessage.LIMIT_EXCEEDED,
-    ERSLoginMessage.PLAYER_ONLINE,
+    ERSLoginMessage.profile_ONLINE,
     ERSLoginMessage.WORLD_FULL,
     ERSLoginMessage.TIMED_OUT:         Result := Self.HandleError(msg);
 
     ERSLoginMessage.SKILL_TOTAL:       raise GetDebugLn('Login', 'We are trying to login into a total level world you can''t login to.');
     ERSLoginMessage.SERVER_OFFLINE:    raise GetDebugLn('Login', 'Login server offline. The game is/was probably updated.');
     ERSLoginMessage.ERROR_LOADING:     raise GetDebugLn('Login', 'Game loading error. It was probably updated.');
-    ERSLoginMessage.BANNED:            raise GetDebugLn('Login', 'Player seems to be banned or disabled.');
-    ERSLoginMessage.NOT_MEMBER:        raise GetDebugLn('Login', 'Player is not members and we are trying to login into a P2P world.');
+    ERSLoginMessage.BANNED:            raise GetDebugLn('Login', 'profile seems to be banned or disabled.');
+    ERSLoginMessage.NOT_MEMBER:        raise GetDebugLn('Login', 'profile is not members and we are trying to login into a P2P world.');
     ERSLoginMessage.ON_MEMBER_AREA,
-    ERSLoginMessage.ON_MEMBER_AREA2:   raise GetDebugLn('Login', 'Player is on a P2P area and we are trying to login into a F2P world.');
+    ERSLoginMessage.ON_MEMBER_AREA2:   raise GetDebugLn('Login', 'profile is on a P2P area and we are trying to login into a F2P world.');
 
-    ERSLoginMessage.AUTHENTICATOR:     raise GetDebugLn('Login', 'Player needs authenticator to login.');
+    ERSLoginMessage.AUTHENTICATOR:     raise GetDebugLn('Login', 'profile needs authenticator to login.');
 
     ERSLoginMessage.UNKNOWN:          if RSClient.IsLoggedIn() or Lobby.IsOpen() then Exit(True) else raise GetDebugLn('Login', 'Unknown login state.');
   end;
@@ -570,18 +570,18 @@ end;
 (*
 ## Login.DoLogin
 ```pascal
-function TRSLogin.DoLogin(player: TRSPlayer): Boolean;
+function TRSLogin.DoLogin(profile: TProfile): Boolean;
 ```
-Attempts to login into `player`.
+Attempts to login into `profile`.
 If we login, the {ref}`Lobby` screen is handled for you.
 Returns true if we succeed.
 
 Example:
 ```pascal
-WriteLn Login.DoLogin(player);
+WriteLn Login.DoLogin(profile);
 ```
 *)
-function TRSLogin.DoLogin(player: TRSPlayer = ['', '', '', [], True]): Boolean;
+function TRSLogin.DoLogin(profile: TProfile = ['', '', '', [], True]): Boolean;
 var
   timeout: UInt64;
 begin
@@ -595,7 +595,7 @@ begin
       Exit;
     end;
 
-    if not Self.HandleMessage(Self.GetMessage(), player.Username, player.Password) then Exit;
+    if not Self.HandleMessage(Self.GetMessage(), profile.Username, profile.Password) then Exit;
     Sleep(600, 1200);
   end;
 
