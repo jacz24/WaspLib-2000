@@ -81,7 +81,7 @@ jobs:
       - name: Discord notification
         shell: bash
         run: |
-            BODY='{"embeds": [{"title": "${{ github.event.repository.name }} Version $TAG_NAME", "description": ${{ toJSON(github.event.workflow_run.head_commit.message) }}, "url": "${{ github.event.workflow_run.repository.html_url }}/commit/${{ github.event.workflow_run.head_commit.id }}", "color": 16742912,"footer": {"text": "Author: ${{ github.event.workflow_run.head_commit.author.name }}"}}]}'
+            BODY='{"embeds": [{"title": "${{ github.event.repository.name }} Version '"$TAG_NAME"'", "description": ${{ toJSON(github.event.workflow_run.head_commit.message) }}, "url": "${{ github.event.workflow_run.repository.html_url }}/commit/${{ github.event.workflow_run.head_commit.id }}", "color": 16742912,"footer": {"text": "Author: ${{ github.event.workflow_run.head_commit.author.name }}"}}]}'
             curl \
                 -H "Content-Type: application/json" \
                 -d $BODY \
