@@ -194,22 +194,25 @@ var
   checkbox: TLazCheckBox;
   lPanel, rPanel: TLazPanel;
   lbl: TLazLabel;
+  scale: Double;
 begin
+  scale := FormUtils.Scale;
+  
   checkbox := TLazCheckBox.CreateEx(parent, 'Enable Tasks', 'Enable/Disable antiban tasks.');
   checkbox.State := ELazCheckBoxState.Checked;
   checkbox.OnChange := @Self.OnCheckboxToggle;
   checkbox.Align := ELazAlign.Top;
-  checkbox.BorderSpacing.Around := 10;
+  checkbox.BorderSpacing.Around := Round(10 * scale);
 
   lPanel := TLazPanel.CreateEx(parent);
-  lPanel.Width := 220;
+  lPanel.Width := Round(220 * scale);
   lPanel.Align := ELazAlign.Left;
-  lPanel.BorderSpacing.Around := 10;
+  lPanel.BorderSpacing.Around := Round(10 * scale);
   lPanel.BevelWidth := 0;
 
   rPanel := TLazPanel.CreateEx(parent);
   rPanel.Align := ELazAlign.Client;
-  rPanel.BorderSpacing.Around := 10;
+  rPanel.BorderSpacing.Around := Round(10 * scale);
   rPanel.BevelWidth := 0;
 
   lbl := TLazLabel.CreateEx(
@@ -221,75 +224,75 @@ begin
          );
   lbl.Font.Name := 'Courier New';
   lbl.Align := ELazAlign.Top;
-  lbl.BorderSpacing.Top := 10;
-  lbl.BorderSpacing.Left := 13;
-  lbl.BorderSpacing.Right := 10;
+  lbl.BorderSpacing.Top := Round(10 * scale);
+  lbl.BorderSpacing.Left := Round(13 * scale);
+  lbl.BorderSpacing.Right := Round(10 * scale);
 
   Self.TaskList := TLazListBox.CreateEx(rPanel);
   Self.TaskList.Font.Name := 'Courier New';
   Self.TaskList.OnSelectionChange := @Self.OnTaskSelected;
   Self.TaskList.Align := ELazAlign.Client;
-  Self.TaskList.BorderSpacing.Left := 10;
-  Self.TaskList.BorderSpacing.Right := 10;
-  Self.TaskList.BorderSpacing.Bottom := 10;
+  Self.TaskList.BorderSpacing.Left := Round(10 * scale);
+  Self.TaskList.BorderSpacing.Right := Round(10 * scale);
+  Self.TaskList.BorderSpacing.Bottom := Round(10 * scale);
 
   Self.TaskAddButton := TLazButton.CreateEx(lPanel, 'Add', 'Add a new task.');
   Self.TaskAddButton.OnClick := @Self.OnTaskAdd;
   Self.TaskAddButton.Align := ELazAlign.Bottom;
-  Self.TaskAddButton.BorderSpacing.Top := 10;
-  Self.TaskAddButton.BorderSpacing.Left := 10;
-  Self.TaskAddButton.BorderSpacing.Right := 10;
-  Self.TaskAddButton.BorderSpacing.Bottom := 5;
+  Self.TaskAddButton.BorderSpacing.Top := Round(10 * scale);
+  Self.TaskAddButton.BorderSpacing.Left := Round(10 * scale);
+  Self.TaskAddButton.BorderSpacing.Right := Round(10 * scale);
+  Self.TaskAddButton.BorderSpacing.Bottom := Round(5 * scale);
 
   Self.TaskEditButton := TLazButton.CreateEx(lPanel, 'Update', 'Update the current task.');
   Self.TaskEditButton.Enabled := False;
   Self.TaskEditButton.OnClick := @Self.OnTaskEdit;
   Self.TaskEditButton.Align := ELazAlign.Bottom;
-  Self.TaskEditButton.BorderSpacing.Top := 5;
-  Self.TaskEditButton.BorderSpacing.Left := 10;
-  Self.TaskEditButton.BorderSpacing.Right := 10;
-  Self.TaskEditButton.BorderSpacing.Bottom := 5;
+  Self.TaskEditButton.BorderSpacing.Top := Round(5 * scale);
+  Self.TaskEditButton.BorderSpacing.Left := Round(10 * scale);
+  Self.TaskEditButton.BorderSpacing.Right := Round(10 * scale);
+  Self.TaskEditButton.BorderSpacing.Bottom := Round(5 * scale);
 
   Self.TaskDelButton := TLazButton.CreateEx(lPanel, 'Remove', 'Remove the current task.');
   Self.TaskDelButton.Enabled := False;
   Self.TaskDelButton.OnClick := @Self.OnTaskRemove;
   Self.TaskDelButton.Align := ELazAlign.Bottom;
-  Self.TaskDelButton.BorderSpacing.Top := 5;
-  Self.TaskDelButton.BorderSpacing.Left := 10;
-  Self.TaskDelButton.BorderSpacing.Right := 10;
-  Self.TaskDelButton.BorderSpacing.Bottom := 30;
+  Self.TaskDelButton.BorderSpacing.Top := Round(5 * scale);
+  Self.TaskDelButton.BorderSpacing.Left := Round(10 * scale);
+  Self.TaskDelButton.BorderSpacing.Right := Round(10 * scale);
+  Self.TaskDelButton.BorderSpacing.Bottom := Round(30 * scale);
 
   Self.TaskPresetButton := TLazButton.CreateEx(lPanel, 'Preset', 'Reset the task list with a preset.');
   Self.TaskPresetButton.OnClick := @Self.OnTaskPreset;
   Self.TaskPresetButton.Align := ELazAlign.Bottom;
-  Self.TaskPresetButton.BorderSpacing.Around := 10;
+  Self.TaskPresetButton.BorderSpacing.Around := Round(10 * scale);
 
 
   Self.TaskVariationSpinner := TLazFloatSpinEdit.CreateEx(lPanel, '', 'Edit the currently selected task interval variation.');
   Self.TaskVariationSpinner.Text := '3.3';
   Self.TaskVariationSpinner.Align := ELazAlign.Top;
-  Self.TaskVariationSpinner.BorderSpacing.Left := 10;
-  Self.TaskVariationSpinner.BorderSpacing.Right := 10;
-  Self.TaskVariationSpinner.BorderSpacing.Bottom := 10;
+  Self.TaskVariationSpinner.BorderSpacing.Left := Round(10 * scale);
+  Self.TaskVariationSpinner.BorderSpacing.Right := Round(10 * scale);
+  Self.TaskVariationSpinner.BorderSpacing.Bottom := Round(10 * scale);
 
   lbl := TLazLabel.CreateEx(lPanel, 'Variation (%):', 'Edit the currently selected task interval variation.');
   lbl.Align := ELazAlign.Top;
-  lbl.BorderSpacing.Top := 10;
-  lbl.BorderSpacing.Left := 10;
-  lbl.BorderSpacing.Right := 10;
+  lbl.BorderSpacing.Top := Round(10 * scale);
+  lbl.BorderSpacing.Left := Round(10 * scale);
+  lbl.BorderSpacing.Right := Round(10 * scale);
 
   Self.TaskIntervalSpinner := TLazFloatSpinEdit.CreateEx(lPanel, '', 'Edit the currently selected task interval.');
   Self.TaskIntervalSpinner.Text := '5';
   Self.TaskIntervalSpinner.Align := ELazAlign.Top;
-  Self.TaskIntervalSpinner.BorderSpacing.Left := 10;
-  Self.TaskIntervalSpinner.BorderSpacing.Right := 10;
-  Self.TaskIntervalSpinner.BorderSpacing.Bottom := 10;
+  Self.TaskIntervalSpinner.BorderSpacing.Left := Round(10 * scale);
+  Self.TaskIntervalSpinner.BorderSpacing.Right := Round(10 * scale);
+  Self.TaskIntervalSpinner.BorderSpacing.Bottom := Round(10 * scale);
 
   lbl := TLazLabel.CreateEx(lPanel, 'Interval (mins):', 'Edit the currently selected task interval.');
   lbl.Align := ELazAlign.Top;
-  lbl.BorderSpacing.Top := 10;
-  lbl.BorderSpacing.Left := 10;
-  lbl.BorderSpacing.Right := 10;
+  lbl.BorderSpacing.Top := Round(10 * scale);
+  lbl.BorderSpacing.Left := Round(10 * scale);
+  lbl.BorderSpacing.Right := Round(10 * scale);
 
   Self.TaskCombobox := TLazComboBox.CreateEx(lPanel, '', 'Edit the currently selected task.');
   Self.TaskCombobox.Items.Add('SmallRandomMouse');
@@ -303,16 +306,16 @@ begin
   Self.TaskCombobox.Items.Add('ChatScrolling');
   Self.TaskCombobox.ItemIndex := 0;
   Self.TaskCombobox.Align := ELazAlign.Top;
-  Self.TaskCombobox.BorderSpacing.Left := 10;
-  Self.TaskCombobox.BorderSpacing.Right := 10;
-  Self.TaskCombobox.BorderSpacing.Bottom := 10;
+  Self.TaskCombobox.BorderSpacing.Left := Round(10 * scale);
+  Self.TaskCombobox.BorderSpacing.Right := Round(10 * scale);
+  Self.TaskCombobox.BorderSpacing.Bottom := Round(10 * scale);
 
 
   lbl := TLazLabel.CreateEx(lPanel, 'Task:', 'Edit the currently selected task.');
   lbl.Align := ELazAlign.Top;
-  lbl.BorderSpacing.Top := 10;
-  lbl.BorderSpacing.Left := 10;
-  lbl.BorderSpacing.Right := 10;
+  lbl.BorderSpacing.Top := Round(10 * scale);
+  lbl.BorderSpacing.Left := Round(10 * scale);
+  lbl.BorderSpacing.Right := Round(10 * scale);
 end;
 
 procedure TAntibanFormHelper.SetupBreaksPanel(parent: TLazComponent);
@@ -320,22 +323,25 @@ var
   checkbox: TLazCheckBox;
   lPanel, rPanel: TLazPanel;
   lbl: TLazLabel;
+  scale: Double;
 begin
+  scale := FormUtils.Scale;
+  
   checkbox := TLazCheckBox.CreateEx(parent, 'Enable Breaks', 'Enable/Disable antiban breaks.');
   checkbox.State := ELazCheckBoxState.Checked;
   checkbox.OnChange := @Self.OnCheckboxToggle;
   checkbox.Align := ELazAlign.Top;
-  checkbox.BorderSpacing.Around := 10;
+  checkbox.BorderSpacing.Around := Round(10 * scale);
 
   lPanel := TLazPanel.CreateEx(parent);
-  lPanel.Width := 220;
+  lPanel.Width := Round(220 * scale);
   lPanel.Align := ELazAlign.Left;
-  lPanel.BorderSpacing.Around := 10;
+  lPanel.BorderSpacing.Around := Round(10 * scale);
   lPanel.BevelWidth := 0;
 
   rPanel := TLazPanel.CreateEx(parent);
   rPanel.Align := ELazAlign.Client;
-  rPanel.BorderSpacing.Around := 10;
+  rPanel.BorderSpacing.Around := Round(10 * scale);
   rPanel.BevelWidth := 0;
 
   lbl := TLazLabel.CreateEx(
@@ -347,118 +353,121 @@ begin
          );
   lbl.Font.Name := 'Courier New';
   lbl.Align := ELazAlign.Top;
-  lbl.BorderSpacing.Top := 10;
-  lbl.BorderSpacing.Left := 13;
-  lbl.BorderSpacing.Right := 10;
+  lbl.BorderSpacing.Top := Round(10 * scale);
+  lbl.BorderSpacing.Left := Round(13 * scale);
+  lbl.BorderSpacing.Right := Round(10 * scale);
 
   Self.BreakList := TLazListBox.CreateEx(rPanel);
   Self.BreakList.Font.Name := 'Courier New';
   Self.BreakList.OnSelectionChange := @Self.OnBreakSelected;
   Self.BreakList.Align := ELazAlign.Client;
-  Self.BreakList.BorderSpacing.Left := 10;
-  Self.BreakList.BorderSpacing.Right := 10;
-  Self.BreakList.BorderSpacing.Bottom := 10;
+  Self.BreakList.BorderSpacing.Left := Round(10 * scale);
+  Self.BreakList.BorderSpacing.Right := Round(10 * scale);
+  Self.BreakList.BorderSpacing.Bottom := Round(10 * scale);
 
   Self.BreakAddButton := TLazButton.CreateEx(lPanel, 'Add', 'Add a new break.');
   Self.BreakAddButton.OnClick := @Self.OnBreakAdd;
   Self.BreakAddButton.Align := ELazAlign.Bottom;
-  Self.BreakAddButton.BorderSpacing.Top := 10;
-  Self.BreakAddButton.BorderSpacing.Left := 10;
-  Self.BreakAddButton.BorderSpacing.Right := 10;
-  Self.BreakAddButton.BorderSpacing.Bottom := 5;
+  Self.BreakAddButton.BorderSpacing.Top := Round(10 * scale);
+  Self.BreakAddButton.BorderSpacing.Left := Round(10 * scale);
+  Self.BreakAddButton.BorderSpacing.Right := Round(10 * scale);
+  Self.BreakAddButton.BorderSpacing.Bottom := Round(5 * scale);
 
 
   Self.BreakEditButton := TLazButton.CreateEx(lPanel, 'Update', 'Update the current break.');
   Self.BreakEditButton.Enabled := False;
   Self.BreakEditButton.OnClick := @Self.OnBreakEdit;
   Self.BreakEditButton.Align := ELazAlign.Bottom;
-  Self.BreakEditButton.BorderSpacing.Top := 5;
-  Self.BreakEditButton.BorderSpacing.Left := 10;
-  Self.BreakEditButton.BorderSpacing.Right := 10;
-  Self.BreakEditButton.BorderSpacing.Bottom := 5;
+  Self.BreakEditButton.BorderSpacing.Top := Round(5 * scale);
+  Self.BreakEditButton.BorderSpacing.Left := Round(10 * scale);
+  Self.BreakEditButton.BorderSpacing.Right := Round(10 * scale);
+  Self.BreakEditButton.BorderSpacing.Bottom := Round(5 * scale);
 
   Self.BreakDelButton := TLazButton.CreateEx(lPanel, 'Remove', 'Remove the current break.');
   Self.BreakDelButton.Enabled := False;
   Self.BreakDelButton.OnClick := @Self.OnBreakRemove;
   Self.BreakDelButton.Align := ELazAlign.Bottom;
-  Self.BreakDelButton.BorderSpacing.Top := 5;
-  Self.BreakDelButton.BorderSpacing.Left := 10;
-  Self.BreakDelButton.BorderSpacing.Right := 10;
-  Self.BreakDelButton.BorderSpacing.Bottom := 30;
+  Self.BreakDelButton.BorderSpacing.Top := Round(5 * scale);
+  Self.BreakDelButton.BorderSpacing.Left := Round(10 * scale);
+  Self.BreakDelButton.BorderSpacing.Right := Round(10 * scale);
+  Self.BreakDelButton.BorderSpacing.Bottom := Round(30 * scale);
 
   Self.BreakPresetButton := TLazButton.CreateEx(lPanel, 'Preset', 'Reset the break list with a preset.');
   Self.BreakPresetButton.OnClick := @Self.OnBreakPreset;
   Self.BreakPresetButton.Align := ELazAlign.Bottom;
-  Self.BreakPresetButton.BorderSpacing.Around := 10;
+  Self.BreakPresetButton.BorderSpacing.Around := Round(10 * scale);
 
   Self.BreakVariationSpinner := TLazFloatSpinEdit.CreateEx(lPanel);
   Self.BreakVariationSpinner.Text := '3.3';
   Self.BreakVariationSpinner.Align := ELazAlign.Top;
-  Self.BreakVariationSpinner.BorderSpacing.Left := 10;
-  Self.BreakVariationSpinner.BorderSpacing.Right := 10;
-  Self.BreakVariationSpinner.BorderSpacing.Bottom := 10;
+  Self.BreakVariationSpinner.BorderSpacing.Left := Round(10 * scale);
+  Self.BreakVariationSpinner.BorderSpacing.Right := Round(10 * scale);
+  Self.BreakVariationSpinner.BorderSpacing.Bottom := Round(10 * scale);
 
   lbl := TLazLabel.CreateEx(lPanel, 'Variation (%):', 'Edit the currently selected break interval variation.');
   lbl.Align := ELazAlign.Top;
-  lbl.BorderSpacing.Top := 10;
-  lbl.BorderSpacing.Left := 10;
-  lbl.BorderSpacing.Right := 10;
+  lbl.BorderSpacing.Top := Round(10 * scale);
+  lbl.BorderSpacing.Left := Round(10 * scale);
+  lbl.BorderSpacing.Right := Round(10 * scale);
 
   Self.BreakLengthSpinner := TLazFloatSpinEdit.CreateEx(lPanel);
   Self.BreakLengthSpinner.Text := '5';
   Self.BreakLengthSpinner.Align := ELazAlign.Top;
-  Self.BreakLengthSpinner.BorderSpacing.Left := 10;
-  Self.BreakLengthSpinner.BorderSpacing.Right := 10;
-  Self.BreakLengthSpinner.BorderSpacing.Bottom := 10;
+  Self.BreakLengthSpinner.BorderSpacing.Left := Round(10 * scale);
+  Self.BreakLengthSpinner.BorderSpacing.Right := Round(10 * scale);
+  Self.BreakLengthSpinner.BorderSpacing.Bottom := Round(10 * scale);
 
   lbl := TLazLabel.CreateEx(lPanel, 'Length (mins):', 'Edit the currently selected break length in minutes.');
   lbl.Align := ELazAlign.Top;
-  lbl.BorderSpacing.Top := 10;
-  lbl.BorderSpacing.Left := 10;
-  lbl.BorderSpacing.Right := 10;
+  lbl.BorderSpacing.Top := Round(10 * scale);
+  lbl.BorderSpacing.Left := Round(10 * scale);
+  lbl.BorderSpacing.Right := Round(10 * scale);
 
   Self.BreakIntervalSpinner := TLazFloatSpinEdit.CreateEx(lPanel);
   Self.BreakIntervalSpinner.Text := '10';
   Self.BreakIntervalSpinner.Align := ELazAlign.Top;
-  Self.BreakIntervalSpinner.BorderSpacing.Left := 10;
-  Self.BreakIntervalSpinner.BorderSpacing.Right := 10;
-  Self.BreakIntervalSpinner.BorderSpacing.Bottom := 10;
+  Self.BreakIntervalSpinner.BorderSpacing.Left := Round(10 * scale);
+  Self.BreakIntervalSpinner.BorderSpacing.Right := Round(10 * scale);
+  Self.BreakIntervalSpinner.BorderSpacing.Bottom := Round(10 * scale);
 
   lbl := TLazLabel.CreateEx(lPanel, 'Interval (mins):', 'Edit the currently selected break interval in minutes.');
   lbl.Align := ELazAlign.Top;
-  lbl.BorderSpacing.Top := 10;
-  lbl.BorderSpacing.Left := 10;
-  lbl.BorderSpacing.Right := 10;
+  lbl.BorderSpacing.Top := Round(10 * scale);
+  lbl.BorderSpacing.Left := Round(10 * scale);
+  lbl.BorderSpacing.Right := Round(10 * scale);
 end;
 
 procedure TAntibanFormHelper.SetupSleepsPanel(parent: TLazComponent);
 var
   checkbox: TLazCheckBox;
   lbl: TLazLabel;
+  scale: Double;
 begin
+  scale := FormUtils.Scale;
+  
   checkbox := TLazCheckBox.CreateEx(parent, 'Enable Sleeps', 'Enable/Disable antiban sleeps.');
   checkbox.State := ELazCheckBoxState.Checked;
   checkbox.OnChange := @Self.OnCheckboxToggle;
   checkbox.Align := ELazAlign.Top;
-  checkbox.BorderSpacing.Around := 10;
+  checkbox.BorderSpacing.Around := Round(10 * scale);
 
   lbl := TLazLabel.CreateEx(parent, 'Sleep Time:', 'Pick an aproximated day time for your sleeps.');
-  lbl.AnchorVertically(checkbox, 60);
+  lbl.AnchorVertically(checkbox, Round(60 * scale));
 
-  Self.SleepTimeEdit := TLazTimeEdit.CreateEx(parent, '', 'Pick an aproximated day time for your sleeps.', 0, 0, 120);
+  Self.SleepTimeEdit := TLazTimeEdit.CreateEx(parent, '', 'Pick an aproximated day time for your sleeps.', 0, 0, Round(120 * scale));
   Self.SleepTimeEdit.DefaultNow := True;
   Self.SleepTimeEdit.DirectInput := False;
   Self.SleepTimeEdit.AnchorVertically(lbl);
 
-  Self.SleepLengthSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Sleep Length (hours):', 'Pick an aproximated length of sleep.', 0, 0, 120);
-  Self.SleepLengthSpinner.AnchorHorizontally(Self.SleepTimeEdit, 60);
+  Self.SleepLengthSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Sleep Length (hours):', 'Pick an aproximated length of sleep.', 0, 0, Round(120 * scale));
+  Self.SleepLengthSpinner.AnchorHorizontally(Self.SleepTimeEdit, Round(60 * scale));
 
-  Self.SleepVariationSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Variation (%):', 'Edit the sleep variation.', 0, 0, 120);
+  Self.SleepVariationSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Variation (%):', 'Edit the sleep variation.', 0, 0, Round(120 * scale));
   Self.SleepVariationSpinner.Text := '3.3';
-  Self.SleepVariationSpinner.AnchorHorizontally(Self.SleepLengthSpinner, 60);
+  Self.SleepVariationSpinner.AnchorHorizontally(Self.SleepLengthSpinner, Round(60 * scale));
 
-  Self.SleepPresetButton := TLazButton.CreateEx(parent, 'Preset', 'Reset the task list with a preset.', 0, 0, 100);
-  Self.SleepPresetButton.AnchorVertically(Self.SleepTimeEdit, 60);
+  Self.SleepPresetButton := TLazButton.CreateEx(parent, 'Preset', 'Reset the task list with a preset.', 0, 0, Round(100 * scale));
+  Self.SleepPresetButton.AnchorVertically(Self.SleepTimeEdit, Round(60 * scale));
   Self.SleepPresetButton.OnClick := @Self.OnSleepPreset;
 end;
 
@@ -503,7 +512,6 @@ begin
 
   AntibanForm.PageControl := TLazPageControl.CreateEx(Result);
   AntibanForm.PageControl.Align := ELazAlign.Client;
-  AntibanForm.PageControl.BorderSpacing.Around := 30;
 
   tab := AntibanForm.PageControl.AddTab();
   tab.Caption := 'Tasks';
@@ -516,14 +524,13 @@ begin
   tab := AntibanForm.PageControl.AddTab();
   tab.Caption := 'Sleep';
   AntibanForm.SetupSleepsPanel(tab);
-
   lbl := TLazLabel.CreateEx(
            Result,
-           'Everything in antiban will have randomization added/subtracted to the values you pick, roughly 25% + "Variation".' +
-           LINE_SEP +
-           'Each profile has it''s own antiban settings.'
+           'Everything in antiban will have randomization added/subtracted to the values you pick, ' + LINE_SEP +
+           'roughly 25% + "Variation". Each profile has its own antiban settings.'
          );
+
   lbl.Align := ELazAlign.Bottom;
   lbl.Alignment := ELazAlignment.Center;
-  lbl.BorderSpacing.Around := 20;
+  lbl.BorderSpacing.Around := Round(20 * FormUtils.Scale);
 end;
