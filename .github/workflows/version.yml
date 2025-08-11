@@ -82,7 +82,9 @@ jobs:
         shell: bash
         run: |
             DESC="${{ github.event.workflow_run.head_commit.message }}
-            Download: https://github.com/WaspScripts/WaspLib/releases/tag/$TAG_NAME"  
+            
+            Download: https://github.com/WaspScripts/WaspLib/releases/tag/$TAG_NAME" 
+            
             BODY=$(jq -nc \
               --arg title "WaspLib Version $TAG_NAME" \
               --arg desc "$DESC" \
