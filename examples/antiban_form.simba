@@ -14,4 +14,7 @@ begin
   form.CreateAntibanTab();
 
   form.Run();
+
+  WriteLn Profiles;
+  WriteLn Profiles[ProfileIndex];
 end.

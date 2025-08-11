@@ -367,24 +367,24 @@ begin
 end;
 
 
-procedure TLazControl.AnchorVertically(lbl: Pointer; spacing: Integer = 0);
+procedure TLazControl.AnchorVertically(anchor: Pointer; spacing: Integer = 0);
 begin
-  Self.AnchorSideLeft.Control := TLazControl(lbl);
-  Self.AnchorSideLeft.Side := ELazAnchorSideReference.Top;
-  Self.AnchorSideTop.Control := TLazControl(lbl);
-  Self.AnchorSideTop.Side := ELazAnchorSideReference.Bottom;
+  Self.AnchorSideLeft.Control := TLazControl(anchor);
+  Self.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
+  Self.AnchorSideTop.Control := TLazControl(anchor);
+  Self.AnchorSideTop.Side := ELazAnchorSideReference.asrBottom;
   if spacing > 0 then
     Self.BorderSpacing.Top := spacing;
 end;
 
-procedure TLazControl.AnchorHorizontally(lbl: Pointer; spacing: Integer = 0);
+procedure TLazControl.AnchorHorizontally(anchor: Pointer; spacing: Integer = 0);
 begin
-  Self.AnchorSideTop.Control := TLazControl(lbl);
-  Self.AnchorSideTop.Side := ELazAnchorSideReference.Top;
-  Self.AnchorSideLeft.Control := TLazControl(lbl);
-  Self.AnchorSideLeft.Side := ELazAnchorSideReference.Bottom;
+  Self.AnchorSideTop.Control := TLazControl(anchor);
+  Self.AnchorSideTop.Side := ELazAnchorSideReference.asrTop;
+  Self.AnchorSideLeft.Control := TLazControl(anchor);
+  Self.AnchorSideLeft.Side := ELazAnchorSideReference.asrBottom;
   if spacing > 0 then
-    Self.BorderSpacing.Left := 10;
+    Self.BorderSpacing.Left := spacing;
 end;
 
 
@@ -435,6 +435,24 @@ begin
 end;
 
 
+function TLazPageControl.CreateEx(owner: Pointer): TLazPageControl; static;
+begin
+  Result := TLazPageControl.Create(TLazControl(owner));
+  Result.Parent := TLazComponent(owner);
+end;
+
+function TLazPageControl.CreateEx(owner: Pointer; top, left, width, height: Integer): TLazPageControl; static; overload;
+begin
+  Result := TLazPageControl.CreateEx(owner);
+
+  if left > 0 then Result.Left := left;
+  if top > 0 then Result.Top := top;
+  if width > 0 then Result.Width := width;
+  if height > 0 then Result.Height := height;
+end;
+
+
+
 function TLazLabel.CreateEx(owner: Pointer): TLazLabel; static;
 begin
   Result := TLazLabel.Create(TLazControl(owner));
@@ -480,9 +498,9 @@ begin
   begin
     lbl := TLazLabel.CreateEx(owner, caption, hint);
     lbl.AnchorSideBottom.Control := Result;
-    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.asrTop;
     lbl.AnchorSideLeft.Control := Result;
-    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
     lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
   end;
 
@@ -515,9 +533,9 @@ begin
   begin
     lbl := TLazLabel.CreateEx(owner, caption, hint);
     lbl.AnchorSideBottom.Control := Result;
-    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.asrTop;
     lbl.AnchorSideLeft.Control := Result;
-    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
     lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
   end;
 
@@ -550,9 +568,9 @@ begin
   begin
     lbl := TLazLabel.CreateEx(owner, caption, hint);
     lbl.AnchorSideBottom.Control := Result;
-    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.asrTop;
     lbl.AnchorSideLeft.Control := Result;
-    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
     lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
   end;
 
@@ -585,9 +603,9 @@ begin
   begin
     lbl := TLazLabel.CreateEx(owner, caption, hint);
     lbl.AnchorSideBottom.Control := Result;
-    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.asrTop;
     lbl.AnchorSideLeft.Control := Result;
-    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
     lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
   end;
 
@@ -675,7 +693,7 @@ function TLazComboBox.CreateEx(owner: Pointer): TLazComboBox; static;
 begin
   Result := TLazComboBox.Create(TLazControl(owner));
   Result.Parent := TLazComponent(owner);
-  Result.Style := ELazComboBoxStyle.DropDownList;
+  Result.Style := ELazComboBoxStyle.csDropDownList;
 end;
 
 function TLazComboBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazComboBox; static; overload;
@@ -693,9 +711,9 @@ begin
   begin
     lbl := TLazLabel.CreateEx(owner, caption, hint);
     lbl.AnchorSideBottom.Control := Result;
-    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.asrTop;
     lbl.AnchorSideLeft.Control := Result;
-    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
     lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
   end;
 
@@ -728,9 +746,9 @@ begin
   begin
     lbl := TLazLabel.CreateEx(owner, caption, hint);
     lbl.AnchorSideBottom.Control := Result;
-    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.asrTop;
     lbl.AnchorSideLeft.Control := Result;
-    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
     lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
   end;
 
@@ -763,9 +781,9 @@ begin
   begin
     lbl := TLazLabel.CreateEx(owner, caption, hint);
     lbl.AnchorSideBottom.Control := Result;
-    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.asrTop;
     lbl.AnchorSideLeft.Control := Result;
-    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
     lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
   end;
 
@@ -798,9 +816,9 @@ begin
   begin
     lbl := TLazLabel.CreateEx(owner, caption, hint);
     lbl.AnchorSideBottom.Control := Result;
-    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.asrTop;
     lbl.AnchorSideLeft.Control := Result;
-    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
     lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
   end;
 
@@ -833,9 +851,9 @@ begin
   begin
     lbl := TLazLabel.CreateEx(owner, caption, hint);
     lbl.AnchorSideBottom.Control := Result;
-    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.asrTop;
     lbl.AnchorSideLeft.Control := Result;
-    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
     lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
   end;
 
@@ -858,22 +876,92 @@ var
   lbl: TLazLabel;
 begin
   Result := TLazScrollBox.CreateEx(owner);
-  
+
   if left > 0 then Result.Left := left;
   if top > 0 then Result.Top := top;
   if width > 0 then Result.Width := width;
   if height > 0 then Result.Height := height;
-  
+
   if caption <> '' then
   begin
     lbl := TLazLabel.CreateEx(owner, caption, hint);
     lbl.AnchorSideBottom.Control := Result;
-    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.asrTop;
     lbl.AnchorSideLeft.Control := Result;
-    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
     lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
   end;
-  
+
+  if hint <> '' then
+  begin
+    Result.Hint := hint;
+    Result.ShowHint := True;
+  end;
+end;
+
+
+function TLazTimeEdit.CreateEx(owner: Pointer): TLazTimeEdit; static;
+begin
+  Result := TLazTimeEdit.Create(TLazControl(owner));
+  Result.Parent := TLazComponent(owner);
+end;
+
+function TLazTimeEdit.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazTimeEdit; static; overload;
+var
+  lbl: TLazLabel;
+begin
+  Result := TLazTimeEdit.CreateEx(owner);
+
+  if left > 0 then Result.Left := left;
+  if top > 0 then Result.Top := top;
+  if width > 0 then Result.Width := width;
+  if height > 0 then Result.Height := height;
+
+  if caption <> '' then
+  begin
+    lbl := TLazLabel.CreateEx(owner, caption, hint);
+    lbl.AnchorSideBottom.Control := Result;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.asrTop;
+    lbl.AnchorSideLeft.Control := Result;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
+    lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
+  end;
+
+  if hint <> '' then
+  begin
+    Result.Hint := hint;
+    Result.ShowHint := True;
+  end;
+end;
+
+
+function TLazDateEdit.CreateEx(owner: Pointer): TLazDateEdit; static;
+begin
+  Result := TLazDateEdit.Create(TLazControl(owner));
+  Result.Parent := TLazComponent(owner);
+end;
+
+function TLazDateEdit.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazDateEdit; static; overload;
+var
+  lbl: TLazLabel;
+begin
+  Result := TLazDateEdit.CreateEx(owner);
+
+  if left > 0 then Result.Left := left;
+  if top > 0 then Result.Top := top;
+  if width > 0 then Result.Width := width;
+  if height > 0 then Result.Height := height;
+
+  if caption <> '' then
+  begin
+    lbl := TLazLabel.CreateEx(owner, caption, hint);
+    lbl.AnchorSideBottom.Control := Result;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.asrTop;
+    lbl.AnchorSideLeft.Control := Result;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.asrTop;
+    lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
+  end;
+
   if hint <> '' then
   begin
     Result.Hint := hint;
@@ -928,9 +1016,9 @@ Sets the checkbox checked or unchecked with a boolean.
 procedure TLazCheckBox.SetChecked(value: Boolean);
 begin
   if value then
-    Self.State := ELazCheckBoxState.Checked
+    Self.State := ELazCheckBoxState.cbChecked
   else
-    Self.State := ELazCheckBoxState.Unchecked;
+    Self.State := ELazCheckBoxState.cbUnchecked;
 end;
 
 (*
@@ -942,7 +1030,7 @@ Gets the checkbox state, checked or unchecked with a boolean.
 *)
 function TLazCheckBox.IsChecked(): Boolean;
 begin
-  Result := Self.State = ELazCheckBoxState.Checked;
+  Result := Self.State = ELazCheckBoxState.cbChecked;
 end;
 
 (*
@@ -955,8 +1043,8 @@ Inverts the checkbox.
 procedure TLazCheckBox.Toggle();
 begin
   case Self.State of
-    ELazCheckBoxState.Checked: Self.State := ELazCheckBoxState.Unchecked;
-    ELazCheckBoxState.Unchecked: Self.State := ELazCheckBoxState.Checked;
+    ELazCheckBoxState.cbChecked: Self.State := ELazCheckBoxState.cbUnchecked;
+    ELazCheckBoxState.cbUnchecked: Self.State := ELazCheckBoxState.cbChecked;
   end;
 end;
 

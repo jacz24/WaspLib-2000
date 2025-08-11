@@ -56,7 +56,7 @@ Get the current unique hash `TBiometrics.Hash` being used.
 If none is set yet one will be set.
 If the currently used player changed, we also reset the hash.
 
-If there's no players availble we will use a random hash.
+If there's no Profiles availble we will use a random hash.
 
 Example:
 ```pascal
@@ -68,10 +68,10 @@ var
   i: Integer;
   hash: String;
 begin
-  if Self.Index <> PlayerIndex then Self.Hash := [];
+  if Self.Index <> ProfileIndex then Self.Hash := [];
   if Self.Hash <> [] then Exit(Self.Hash);
 
-  if (PlayerIndex > High(Players)) or (Players[PlayerIndex].Username = '') then
+  if not InRange(ProfileIndex, 0, High(Profiles))   then
   begin
     for i := 0 to Ord(High(EBiometric)) do
       Self.Hash += Random(256);
@@ -83,8 +83,8 @@ begin
     Exit(Self.Hash);
   end;
 
-  hash := HashString(EHashAlgo.SHA1, Players[PlayerIndex].Username);
-  WriteLn GetDebugLn('Players', 'Current account seed: ' + hash, ELogLevel.SUCCESS);
+  hash := HashString(EHashAlgo.SHA1, Profiles[ProfileIndex].Name + Profiles[ProfileIndex].Username);
+  WriteLn GetDebugLn('Biometrics', 'Current profile seed: ' + hash, ELogLevel.SUCCESS);
 
   Self.Hash := hash.ToBytes();
   Result := Self.Hash;

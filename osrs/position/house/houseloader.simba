@@ -56,10 +56,10 @@ procedure THouseLoader.SetupConfig();
 var
   str: String;
 begin
-  if (Self.Config.Data <> nil) and (Self.LayoutIndex = PlayerIndex) then
+  if (Self.Config.Data <> nil) and (Self.LayoutIndex = ProfileIndex) then
     Exit;
-  Self.LayoutIndex := PlayerIndex;
-  Self.Config.Setup('house' + PATH_SEP + ToStr(PlayerIndex));
+  Self.LayoutIndex := ProfileIndex;
+  Self.Config.Setup('house' + PATH_SEP + ToStr(ProfileIndex));
 
   if Self.Config.Data.Count = 0 then
   begin

@@ -11,24 +11,10 @@ Acknowledgements: Thanks to XJ for design concepts and initial prototyping
 {$INCLUDE_ONCE WaspLib/utils.simba}
 type
 (*
-## TAccountProfile
-A single account profile with credentials and settings.
-*)
-  TAccountProfile = record
-    ProfileName: String;
-    Username: String;
-    Password: String;
-    BankPin: String;
-    Worlds: String;
-  end;
-
-(*
 ## TAccountForm
 The account management system that handles profile storage, validation, and UI.
 *)
   TAccountForm = record
-    Profiles: array of TAccountProfile;
-
     ProfileCombo: TLazComboBox;
     EditButton: TLazButton;
 
@@ -71,95 +57,71 @@ Constructs the file path for a profile based on its index.
 *)
 function TAccountForm.GetProfilePath(index: Integer): String;
 begin
-  Result := WLEnv.ConfigsDir + 'accounts' + PATH_SEP + ToStr(index) + '.json';
+  Result := WLEnv.ConfigsDir + 'profiles' + PATH_SEP + ToStr(index) + '.json';
 end;
 
 (*
 ## TAccountForm.SaveProfileToFile
 ```pascal
-procedure TAccountForm.SaveProfileToFile(index: Integer; profile: TAccountProfile);
+procedure TAccountForm.SaveProfileToFile(index: Integer; profile: TProfile);
 ```
 Saves profile as a JSON file at the specified index.
 *)
-procedure TAccountForm.SaveProfileToFile(index: Integer; profile: TAccountProfile);
+procedure TAccountForm.SaveProfile(index: Integer; profile: TProfile);
 var
-  root, profileObj: TJSONObject;
   parser: TJSONParser;
+  worldsJSON: TJSONArray;
+  w: Integer;
 begin
-  root := nil;
-  profileObj := nil;
-  parser := nil;
-  
   try
-    root := new TJSONObject();
-    profileObj := new TJSONObject();
-    
-    profileObj.AddString('profilename', profile.ProfileName);
-    profileObj.AddString('username', profile.Username);
-    profileObj.AddString('password', profile.Password);
-    profileObj.AddString('bankpin', profile.BankPin);
-    profileObj.AddString('worlds', profile.Worlds);
-    
-    root.Add('profile', profileObj);
-    
     parser := new TJSONParser();
-    parser.Parse(root.Format());
+    
+    parser.AddString('name', profile.Name);
+    parser.AddString('username', profile.Username);
+    parser.AddString('password', profile.Password);
+    parser.AddString('pin', profile.Pin);
+
+    worldsJSON := new TJSONArray;
+    for w in profile.Worlds do
+      worldsJSON.AddInt('worlds', w);
+    parser.AddArray('worlds', worldsJSON);
+
     parser.Save(Self.GetProfilePath(index), [EJSONFormatOption.USE_TABS, EJSONFormatOption.SINGLE_LINE_ARR], 1);
   except
     WriteLn('Error: Failed to save profile to file - ' + GetExceptionMessage());
-  finally
-    if Assigned(root) then root.Destroy();
-    if Assigned(parser) then parser.Destroy();
   end;
 end;
 
 (*
 ## TAccountForm.LoadProfileFromFile
 ```pascal
-function TAccountForm.LoadProfileFromFile(index: Integer): TAccountProfile;
+function TAccountForm.LoadProfileFromFile(index: Integer): TProfile;
 ```
 Loads a profile from disk at the specified index. Returns a default profile if the file doesn't exist or is invalid.
 *)
-function TAccountForm.LoadProfileFromFile(index: Integer): TAccountProfile;
+function TAccountForm.LoadProfileFromFile(index: Integer): TProfile;
 var
-  data: TJSONItem;
-  profileObj: TJSONItem;
+  parser: TJSONParser;
+  worlds: TJSONItem;
   path: String;
+  i: Integer;
 begin
-  Result := Default(TAccountProfile);
+  Result := Default(TProfile);
   path := Self.GetProfilePath(index);
-  data := nil;
-  
-  if not FileExists(path) then
-    Exit;
-  
-  try
-    data := new TJSONParser();
-    TJSONParser(data).Load(path);
-    
-    if not Assigned(data) then
-    begin
-      WriteLn('Error: Failed to load profile data from ' + path);
-      Exit;
-    end;
-    
-    if not data.GetObject('profile', profileObj) then
-    begin
-      WriteLn('Error: Invalid profile format in ' + path);
-      Exit;
-    end;
-      
-    profileObj.GetString('profilename', Result.ProfileName);
-    profileObj.GetString('username', Result.Username);
-    profileObj.GetString('password', Result.Password);
-    profileObj.GetString('bankpin', Result.BankPin);
-    profileObj.GetString('worlds', Result.Worlds);
-  except
-    WriteLn('Error: Failed to load profile from file - ' + GetExceptionMessage());
-    Result := Default(TAccountProfile);
-  finally
-    if Assigned(data) then data.Destroy();
-  end;
+
+  if not FileExists(path) then Exit;
+
+  parser := new TJSONParser();
+  parser.Load(path);
+
+  if not parser.GetString('name', Result.Name) then Exit;
+  if not parser.GetString('username', Result.Username) then Exit;
+  if not parser.GetString('password', Result.Password) then Exit;
+  if not parser.GetString('pin', Result.Pin) then Exit;
+  if not parser.GetArray('worlds', worlds) then Exit;
+
+  for i := 0 to worlds.Count-1 do
+    Result.Worlds += worlds.Item[i].AsInt;
 end;
 
 (*
@@ -175,7 +137,7 @@ var
   i, index: Integer;
   filename: String;
 begin
-  files := DirList(WLEnv.ConfigsDir + 'accounts', True);
+  files := DirList(WLEnv.ConfigsDir + 'profiles', True);
   
   for i := 0 to High(files) do
   begin
@@ -230,13 +192,13 @@ end;
 (*
 ## TAccountForm.ValidateProfile
 ```pascal
-function TAccountForm.ValidateProfile(profile: TAccountProfile): Boolean;
+function TAccountForm.ValidateProfile(profile: TProfile): Boolean;
 ```
 Validates a profile has required fields filled.
 *)
-function TAccountForm.ValidateProfile(profile: TAccountProfile): Boolean;
+function TAccountForm.ValidateProfile(profile: TProfile): Boolean;
 begin
-  Result := profile.ProfileName.Trim() <> '';  // Only profile name is required
+  Result := profile.Name.Trim() <> '';  // Only profile name is required
 end;
 
 (*
@@ -250,56 +212,39 @@ procedure TAccountForm.Setup();
 var
   indices: TIntegerArray;
   i, profileCount: Integer;
-  profile: TAccountProfile;
-  accountsDir: String;
+  profile: TProfile;
+  profilesDir: String;
 begin
-  accountsDir := WLEnv.ConfigsDir + 'accounts' + PATH_SEP;
+  profilesDir := WLEnv.ConfigsDir + 'profiles' + PATH_SEP;
   
-  if not DirCreate(accountsDir) then
+  if not DirCreate(profilesDir) then
   begin
     WriteLn('Error: Failed to create accounts directory');
     Exit;
   end;
-  
-  
+
   indices := Self.GetExistingProfileIndices();
   profileCount := Length(indices);
   
   if profileCount > 0 then
   begin
-    SetLength(Self.Profiles, profileCount);
+    SetLength(Profiles, profileCount);
     
     for i := 0 to High(indices) do
     begin
       profile := Self.LoadProfileFromFile(indices[i]);
       
       if Self.ValidateProfile(profile) then
-        Self.Profiles[i] := profile
+        Profiles[i] := profile
       else
-        WriteLn('Warning: Invalid profile at index ' + ToStr(indices[i]) + ': ' + profile.ProfileName);
+        WriteLn('Warning: Invalid profile at index ' + ToStr(indices[i]) + ': ' + profile.Name);
     end;
   end
   else
-    SetLength(Self.Profiles, 0);
+    SetLength(Profiles, 0);
 end;
 
-(*
-## TAccountForm.ProfileExists
-```pascal
-function TAccountForm.ProfileExists(profileName: String): Boolean;
-```
-Checks if a profile with the given name already exists.
-*)
-function TAccountForm.ProfileExists(profileName: String): Boolean;
-var
-  i: Integer;
-  name: String;
-begin
-  name := profileName.Trim().ToLower();
-  for i := 0 to High(Self.Profiles) do
-    if Self.Profiles[i].ProfileName.ToLower() = name then
-      Exit(True);
-end;
+
 
 
 (*
@@ -313,13 +258,10 @@ procedure TAccountForm.UpdateProfileCombo();
 var
   i: Integer;
 begin
-  if not Assigned(Self.ProfileCombo) then
-    Exit;
-
   Self.ProfileCombo.Items.Clear();
 
-  for i := 0 to High(Self.Profiles) do
-    Self.ProfileCombo.Items.Add(Self.Profiles[i].ProfileName);
+  for i := 0 to High(Profiles) do
+    Self.ProfileCombo.Items.Add(Profiles[i].Name);
 
   Self.ProfileCombo.Items.Add('New Profile');
 end;
@@ -329,11 +271,13 @@ end;
 (*
 ## TAccountForm.AddProfile
 ```pascal
-function TAccountForm.AddProfile(profile: TAccountProfile): Boolean;
+function TAccountForm.AddProfile(profile: TProfile): Boolean;
 ```
 Adds a new profile to the configuration after validation.
 *)
-function TAccountForm.AddProfile(profile: TAccountProfile): Boolean;
+function TAccountForm.AddProfile(profile: TProfile): Boolean;
+var
+  idx: Integer;
 begin
   if not Self.ValidateProfile(profile) then
   begin
@@ -341,35 +285,34 @@ begin
     Exit;
   end;
   
-  if Self.ProfileExists(profile.ProfileName) then
+  if Profiles.Contains(profile.Name) then
   begin
-    WriteLn('Error: Profile with name "' + profile.ProfileName + '" already exists');
+    WriteLn('Error: Profile with name "' + profile.Name + '" already exists');
     Exit;
   end;
   
-  Self.Profiles += [profile];
-  
-  Self.SaveProfileToFile(Length(Self.Profiles) - 1, profile);
+  Profiles += profile;
+  idx := High(Profiles);
+  Self.SaveProfile(idx, profile);
   Result := True;
-  
-  if Assigned(Self.ProfileCombo) then
-  begin
-    Self.UpdateProfileCombo();
-    Self.ProfileCombo.ItemIndex := Length(Self.Profiles) - 1;
-  end;
+
+  Self.UpdateProfileCombo();
+  Self.ProfileCombo.ItemIndex := idx;
+  ProfileIndex := idx;
 end;
 
 (*
 ## TAccountForm.UpdateProfile
 ```pascal
-function TAccountForm.UpdateProfile(index: Integer; profile: TAccountProfile): Boolean;
+function TAccountForm.UpdateProfile(index: Integer; profile: TProfile): Boolean;
 ```
 Updates an existing profile at the specified index after validation.
 *)
-function TAccountForm.UpdateProfile(index: Integer; profile: TAccountProfile): Boolean;
+function TAccountForm.UpdateProfile(index: Integer; profile: TProfile): Boolean;
 begin
   Result := False;
-  if (index < 0) or (index >= Length(Self.Profiles)) then
+
+  if not InRange(index, 0, High(Profiles)) then
   begin
     WriteLn('Error: Invalid profile index: ' + ToStr(index));
     Exit;
@@ -381,16 +324,16 @@ begin
     Exit;
   end;
   
-  Self.Profiles[index] := profile;
+  Profiles[index] := profile;
   
-  Self.SaveProfileToFile(index, profile);
+  Self.SaveProfile(index, profile);
   Result := True;
-  
-  if Assigned(Self.ProfileCombo) then
+
+  Self.UpdateProfileCombo();
+  if InRange(index, 0, Self.ProfileCombo.Items.Count - 2) then
   begin
-    Self.UpdateProfileCombo();
-    if (index >= 0) and (index < Self.ProfileCombo.Items.Count - 1) then
-      Self.ProfileCombo.ItemIndex := index;
+    Self.ProfileCombo.ItemIndex := index;
+    ProfileIndex := index;
   end;
 end;
 
@@ -403,93 +346,84 @@ Deletes a profile at the specified index.
 *)
 function TAccountForm.DeleteProfile(index: Integer): Boolean;
 var
-  i: Integer;
-  profilePath: String;
+  path: String;
 begin
-  if (index < 0) or (index >= Length(Self.Profiles)) then
+  if (index < 0) or (index >= Length(Profiles)) then
   begin
     WriteLn('Error: Invalid profile index for deletion: ' + ToStr(index));
     Exit;
   end;
   
-  profilePath := Self.GetProfilePath(index);
-  if FileExists(profilePath) then
+  path := Self.GetProfilePath(index);
+  if FileExists(path) then
   begin
     try
-      FileDelete(profilePath);
+      FileDelete(path);
     except
-      WriteLn('Error: Failed to delete profile file ' + profilePath + ' - ' + GetExceptionMessage());
+      WriteLn('Error: Failed to delete profile file ' + path + ' - ' + GetExceptionMessage());
     end;
   end;
-  
-  for i := index to High(Self.Profiles) - 1 do
-    Self.Profiles[i] := Self.Profiles[i + 1];
-  SetLength(Self.Profiles, Length(Self.Profiles) - 1);
-  
+
+  Profiles.Delete(index);
   Self.ReindexProfiles(index);
   
   Result := True;
-  
-  if Assigned(Self.ProfileCombo) then
-  begin
-    Self.UpdateProfileCombo();
-    if Length(Self.Profiles) = 0 then
-      Self.ProfileCombo.ItemIndex := 0
-    else if index >= Length(Self.Profiles) then
-      Self.ProfileCombo.ItemIndex := Length(Self.Profiles) - 1
-    else
-      Self.ProfileCombo.ItemIndex := index;
-  end;
+
+  Self.UpdateProfileCombo();
+  if Length(Profiles) = 0 then
+    Self.ProfileCombo.ItemIndex := 0
+  else if index >= Length(Profiles) then
+    Self.ProfileCombo.ItemIndex := High(Profiles)
+  else
+    Self.ProfileCombo.ItemIndex := index;
 end;
 
 
 (*
 ## TAccountForm.GetSelectedProfile
 ```pascal
-function TAccountForm.GetSelectedProfile(): TAccountProfile;
+function TAccountForm.GetSelectedProfile(): TProfile;
 ```
 Returns the currently selected account profile.
 *)
-function TAccountForm.GetSelectedProfile(): TAccountProfile;
+function TAccountForm.GetSelectedProfile(): TProfile;
 var
   selectedIndex: Integer;
 begin
-  Result := Default(TAccountProfile);
-  
-  if not Assigned(Self.ProfileCombo) then Exit;
-  
+  Result := Default(TProfile);
+
   selectedIndex := Self.ProfileCombo.ItemIndex;
   
-  if (selectedIndex >= 0) and (selectedIndex < Length(Self.Profiles)) then
-    Result := Self.Profiles[selectedIndex];
+  if (selectedIndex >= 0) and (selectedIndex < Length(Profiles)) then
+    Result := Profiles[selectedIndex];
 end;
 
 (*
 ## TAccountForm.ValidateInput
 ```pascal
-function TAccountForm.ValidateInput(profile: TAccountProfile): String;
+function TAccountForm.ValidateInput(profile: TProfile): String;
 ```
 Validates user input and returns error message if validation fails.
 *)
-function TAccountForm.ValidateInput(profile: TAccountProfile): String;
+function TAccountForm.ValidateInput(profile: TProfile): String;
 begin
-  if profile.ProfileName = '' then
+  if profile.Name = '' then
   begin
-    Result := 'Profile Name is required.';
+    Result := 'Profile name is required.';
     Exit;
   end;
   
   // Validate Bank PIN if provided
-  if profile.BankPin <> '' then
+  if profile.Pin <> '' then
   begin
-    if Length(profile.BankPin) <> 4 then  // Bank PIN must be 4 digits
+    if Length(profile.Pin) <> 4 then  //Bank PIN must be 4 digits
     begin
       Result := 'Bank PIN must be exactly 4 digits.';
       Exit;
     end;
     
     // Check that all characters are digits
-    if not profile.BankPin.IsNumeric then
+    if not profile.Pin.IsNumeric then
     begin
       Result := 'Bank PIN must contain only digits (0-9).';
       Exit;
@@ -836,22 +770,17 @@ Handles the Save button click event. Validates and saves the profile data from t
 {$H-}
 procedure TAccountForm.OnSaveClick(sender: TLazObject);
 var
-  profile: TAccountProfile;
+  profile: TProfile;
   validationError: String;
   i: Integer;
 begin
-  profile.ProfileName := Self.NameEdit.Text.Trim();
+  profile.Name := Self.NameEdit.Text.Trim();
   profile.Username := Self.UsernameEdit.Text.Trim();
   profile.Password := Self.PasswordEdit.Text;
-  profile.BankPin := Self.BankPinEdit.Text.Trim();
-  
-  profile.Worlds := '';
+  profile.Pin := Self.BankPinEdit.Text.Trim();
+
   for i := 0 to High(Self.FilteredWorlds) do
-  begin
-    if i > 0 then
-      profile.Worlds += ',';
-    profile.Worlds += ToStr(Self.FilteredWorlds[i].WorldNumber);
-  end;
+    profile.Worlds += Self.FilteredWorlds[i].WorldNumber;
 
   validationError := Self.ValidateInput(profile);
   if validationError <> '' then
@@ -1163,29 +1092,14 @@ procedure TAccountForm.LoadSavedWorlds(worldsStr: String);
 ```
 Loads a comma-separated list of world numbers and displays them. Disables all filter checkboxes when showing saved worlds.
 *)
-procedure TAccountForm.LoadSavedWorlds(worldsStr: String);
+procedure TAccountForm.LoadSavedWorlds(worlds: TIntegerArray);
 var
-  worldNumbers: TIntegerArray;
-  worldStrs: TStringArray;
   i: Integer;
-  worldNum: Integer;
 begin
-  if worldsStr = '' then
-    Exit;
-
-  worldStrs := worldsStr.Split(',');
-  for i := 0 to High(worldStrs) do
-  begin
-    worldNum := StrToInt(worldStrs[i].Trim(), -1);
-    if worldNum > 0 then
-      worldNumbers += worldNum;
-  end;
-
-  if Length(worldNumbers) = 0 then
-    Exit;
+  if worlds = [] then Exit;
 
   WorldFetcher.Setup();
-  if WorldFetcher.Fetch(worldNumbers) then
+  if WorldFetcher.Fetch(worlds) then
   begin
     Self.FilteredWorlds := WorldFetcher.Worlds;
     Self.DisplayResults();
@@ -1203,8 +1117,7 @@ begin
     Self.SelectAllActivitiesCheckbox.SetChecked(False);
 
     for i := 0 to High(Self.ActivityCheckboxes) do
-      if Assigned(Self.ActivityCheckboxes[i]) then
-        Self.ActivityCheckboxes[i].Free();
+      Self.ActivityCheckboxes[i].Free();
     SetLength(Self.ActivityCheckboxes, 0);
   end;
 end;
@@ -1213,11 +1126,11 @@ end;
 (*
 ## TAccountForm.SetupEditDialog
 ```pascal
-procedure TAccountForm.SetupEditDialog(parent: TLazForm; profile: TAccountProfile; isNew: Boolean; editIndex: Integer);
+procedure TAccountForm.SetupEditDialog(profile: TProfile; isNew: Boolean; editIndex: Integer);
 ```
 Sets up the modal edit dialog for profile details.
 *)
-procedure TAccountForm.SetupEditDialog(parent: TLazForm; profile: TAccountProfile; isNew: Boolean; editIndex: Integer);
+procedure TAccountForm.SetupEditDialog(profile: TProfile; isNew: Boolean; editIndex: Integer);
 const
   EDIT_FORM_WIDTH = 700;
   EDIT_FORM_HEIGHT = 520;
@@ -1235,12 +1148,12 @@ begin
 
   scale := FormUtils.Scale;
 
-  Self.EditForm := TLazForm.Create(parent);
+  Self.EditForm := TLazForm.Create(nil);
   Self.EditForm.SetBounds(0, 0, Round(EDIT_FORM_WIDTH * scale), Round(EDIT_FORM_HEIGHT * scale));
   if isNew then
     Self.EditForm.Caption := 'New Account Profile'
   else
-    Self.EditForm.Caption := 'Edit Account Profile: ' + profile.ProfileName;
+    Self.EditForm.Caption := 'Edit Account Profile: ' + profile.Name;
   Self.EditForm.Position := ELazFormPosition.OwnerFormCenter;
   Self.EditForm.BorderStyle := ELazFormBorderStyle.Dialog;
 
@@ -1249,7 +1162,7 @@ begin
 
   Self.NameEdit := TLazEdit.CreateEx(Self.EditForm, 'Profile Name*:', '', currentX, fieldY, Round(FIELD_WIDTH * scale), Round(FIELD_HEIGHT * scale));
   Self.NameEdit.MaxLength := 50;
-  Self.NameEdit.Text := profile.ProfileName;
+  Self.NameEdit.Text := profile.Name;
   currentX += Round(187 * scale);
 
   Self.UsernameEdit := TLazEdit.CreateEx(Self.EditForm, 'Username (optional):', 'Optional for Jagex accounts', currentX, fieldY, Round(FIELD_WIDTH * scale), Round(FIELD_HEIGHT * scale));
@@ -1264,9 +1177,10 @@ begin
   currentX += Round(187 * scale);
 
   Self.BankPinEdit := TLazEdit.CreateEx(Self.EditForm, 'Bank PIN:', '', currentX, fieldY, Round(102 * scale), Round(FIELD_HEIGHT * scale));
+  Self.BankPinEdit.PasswordChar := '*';
   Self.BankPinEdit.OnKeyPress := @FormUtils.NumberField;
   Self.BankPinEdit.MaxLength := 4;  // Bank PIN must be 4 digits
-  Self.BankPinEdit.Text := profile.BankPin;
+  Self.BankPinEdit.Text := profile.Pin;
 
   worldY := fieldY + Round(65 * scale);
 
@@ -1347,7 +1261,7 @@ begin
 
   Self.LoadWorldData();
 
-  if not isNew and (profile.Worlds <> '') then
+  if not isNew and (profile.Worlds <> []) then
     Self.LoadSavedWorlds(profile.Worlds);
 end;
 
@@ -1363,28 +1277,34 @@ Handles the Edit button click event. Opens the profile edit dialog for the selec
 procedure TAccountForm.OnEditClick(sender: TLazObject);
 var
   selectedIndex: Integer;
-  profile: TAccountProfile;
+  profile: TProfile;
   isNewProfile: Boolean;
 begin
   selectedIndex := Self.ProfileCombo.ItemIndex;
   isNewProfile := (selectedIndex = Self.ProfileCombo.Items.Count - 1); // Last item is "New Profile"
-  
+
   if isNewProfile then
   begin
-    profile := Default(TAccountProfile);
-    Self.SetupEditDialog(nil, profile, True, -1);
+    profile := Default(TProfile);
+    Self.SetupEditDialog(profile, True, -1);
   end
-  else if (selectedIndex >= 0) and (selectedIndex < Length(Self.Profiles)) then
+  else if InRange(selectedIndex, 0, High(Profiles)) then
   begin
-    profile := Self.Profiles[selectedIndex];
-    Self.SetupEditDialog(nil, profile, False, selectedIndex);
+    profile := Profiles[selectedIndex];
+    Self.SetupEditDialog(profile, False, selectedIndex);
   end
   else
     Exit;
-    
+
   Self.EditForm.ShowModal();
 end;
 {$H+}
+
+procedure TAccountForm.OnProfileChange(sender: TLazObject);
+begin
+  ProfileIndex := TLazComboBox(sender).ItemIndex;
+end;
+
 
 (*
 ## TAccountForm.SetupUI
@@ -1393,13 +1313,28 @@ procedure TAccountForm.SetupUI(combo: TLazComboBox; button: TLazButton);
 ```
 Sets up the UI components provided by the parent form.
 *)
-procedure TAccountForm.SetupUI(combo: TLazComboBox; button: TLazButton);
+procedure TAccountForm.SetupUI(parent: TLazComponent);
+var
+  lbl: TLazLabel;
 begin
-  Self.ProfileCombo := combo;
-  Self.EditButton := button;
-  
-  if Assigned(Self.EditButton) then
-    Self.EditButton.OnClick := @Self.OnEditClick;
+  Self.EditButton := TLazButton.CreateEx(parent, 'Edit Profile');
+  Self.EditButton.Align := ELazAlign.Left;
+  Self.EditButton.BorderSpacing.Top := 6;
+  Self.EditButton.BorderSpacing.Left := 6;
+  Self.EditButton.BorderSpacing.Right := 6;
+  Self.EditButton.BorderSpacing.Bottom := 6;
+  Self.EditButton.OnClick := @Self.OnEditClick;
+
+  Self.ProfileCombo := TLazComboBox.CreateEx(parent);
+  Self.ProfileCombo.Align := ELazAlign.Left;
+  Self.ProfileCombo.BorderSpacing.Around := 8;
+  Self.ProfileCombo.OnChange := @Self.OnProfileChange;
+
+  lbl := TLazLabel.CreateEx(parent, 'Account:', '');
+  lbl.Align := ELazAlign.Left;
+  lbl.BorderSpacing.Top := 11;
+  lbl.BorderSpacing.Left := 8;
+  lbl.BorderSpacing.Bottom := 11;
   
   Self.UpdateProfileCombo();
   

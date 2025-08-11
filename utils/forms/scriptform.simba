@@ -96,9 +96,6 @@ This sets up the sekeleton of your TScriptForm ready to take in tabs.
 procedure TScriptForm.Setup(caption: String = 'WaspLib');
 var
   panel: TLazPanel;
-  lbl: TLazLabel;
-  profileCombo: TLazComboBox;
-  editButton: TLazButton;
 begin
   AccountForm.Setup();
   
@@ -127,21 +124,16 @@ begin
   panel.Align := ELazAlign.Bottom;
   panel.Height := 40;
 
-  // Account controls
-  lbl := TLazLabel.CreateEx(panel, 'Account: ', '', 6, 7);
-  
-  profileCombo := TLazComboBox.CreateEx(panel, '', '', lbl.Left + lbl.Width + 5, 7, Round(250 * FormUtils.Scale), Round(30 * FormUtils.Scale));
-
-  editButton := TLazButton.CreateEx(panel, 'Edit Profile', '', profileCombo.Left + profileCombo.Width + 10, Round(4 * FormUtils.Scale), Round(90 * FormUtils.Scale), Round(30 * FormUtils.Scale));
-  
-  AccountForm.SetupUI(profileCombo, editButton);
+  AccountForm.SetupUI(panel);
 
   // Start button
   Self.Start := TLazButton.CreateEx(panel, 'Start', '', 0, 0, Round(80 * FormUtils.Scale));
   Self.Start.Align := ELazAlign.Right;
   Self.Start.OnClick := @Self.OnStart;
-  Self.Start.BorderSpacing.Around := 3;
+  Self.Start.BorderSpacing.Top := 3;
+  Self.Start.BorderSpacing.Left := 3;
   Self.Start.BorderSpacing.Right := 6;
+  Self.Start.BorderSpacing.Bottom := 3;
 end;
 
 (*
@@ -198,18 +190,6 @@ begin
   Self.PageControl.InsertComponent(tab);
 end;
 
-
-(*
-## ScriptForm.GetSelectedProfile
-```pascal
-function TScriptForm.GetSelectedProfile(): TAccountProfile;
-```
-Returns the currently selected account profile from the AccountForm module.
-*)
-function TScriptForm.GetSelectedProfile(): TAccountProfile;
-begin
-  Result := AccountForm.GetSelectedProfile();
-end;
 
 (*
 ## ScriptForm.Run
