@@ -77,3 +77,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create $TAG_NAME --generate-notes
+          
+      - name: Discord notification
+        shell: bash
+        run: |
+            BODY='{"embeds": [{"title": "${{ github.event.repository.name }} $TAG_NAME", "description": ${{ toJSON(github.event.workflow_run.head_commit.message) }}, "url": "${{ github.event.workflow_run.repository.html_url }}/commit/${{ github.event.workflow_run.head_commit.id }}", "color": 16742912,"footer": {"text": "Author: ${{ github.event.workflow_run.head_commit.author.name }}"}}]}'
+            curl \
+                -H "Content-Type: application/json" \
+                -d $BODY \
+                ${{ secrets.UPDATES_WEBHOOK }}
