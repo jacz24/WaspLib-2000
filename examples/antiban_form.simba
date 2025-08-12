@@ -14,5 +14,4 @@ begin
   form.CreateAntibanTab();
 
   form.Run();
-
 end.

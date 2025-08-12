@@ -1333,7 +1333,7 @@ begin
   Self.ProfileCombo.BorderSpacing.Around := Round(6 * FormUtils.Scale);
   Self.ProfileCombo.OnChange := @Self.OnProfileChange;
 
-  lbl := TLazLabel.CreateEx(parent, 'Account:', '');
+  lbl := TLazLabel.CreateEx(parent, 'Profile:', '');
   lbl.Align := ELazAlign.Left;
   lbl.BorderSpacing.Top := Round(8 * FormUtils.Scale);
   lbl.BorderSpacing.Left := Round(8 * FormUtils.Scale);

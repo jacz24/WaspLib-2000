@@ -127,7 +127,7 @@ begin
   AccountForm.SetupUI(panel);
 
   // Start button
-  Self.Start := TLazButton.CreateEx(panel, 'Start', '', 0, 0, Round(80 * FormUtils.Scale));
+  Self.Start := TLazButton.CreateEx(panel, 'Start', '', 0, 0, Floor(80 * FormUtils.Scale));
   Self.Start.Align := ELazAlign.Right;
   Self.Start.OnClick := @Self.OnStart;
   Self.Start.BorderSpacing.Top := 3;
