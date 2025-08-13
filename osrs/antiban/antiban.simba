@@ -56,19 +56,16 @@ Main record to handle the built-in WaspLib antiban.
       Min, Max: Integer;
     end;
 
-    Sleeps: array of TSleepTask;
-    OnStartSleep:  procedure(task: PSleepTask) of object;
-    OnSleeping:    procedure(task: PSleepTask; var countdown: TCountdown) of object;
-    OnFinishSleep: procedure(task: PSleepTask) of object;
-
+    Tasks:  array of TAntibanTask;
     Breaks: array of TBreakTask;
-    OnStartBreak:  procedure(task: PBreakTask) of object;
-    OnBreaking:    procedure(task: PBreakTask; var countdown: TCountdown) of object;
-    OnFinishBreak: procedure(task: PBreakTask) of object;
+    Sleeps: array of TSleepTask;
 
-    Tasks: array of TAntibanTask;
-    OnStartTask:  procedure(task: PAntibanTask) of object;
-    OnFinishTask: procedure(task: PAntibanTask) of object;
+    OnStartTask,  OnFinishTask:  procedure(task: PAntibanTask) of object;
+    OnStartBreak, OnFinishBreak: procedure(task: PBreakTask)   of object;
+    OnStartSleep, OnFinishSleep: procedure(task: PSleepTask)   of object;
+
+    OnBreaking: procedure(task: PBreakTask; var countdown: TCountdown) of object;
+    OnSleeping: procedure(task: PSleepTask; var countdown: TCountdown) of object;
   end;
 
 function TAntiban.TimeRunningAtClock(time: String; randomness: Double = 0.10): Int64;
@@ -96,38 +93,63 @@ begin
 end;
 
 
+
+procedure TAntiban._UpdateTask(index: Integer; method: TAntibanMethod; interval, randomness: Double);
+begin
+  Self.Tasks[index].Interval := interval;
+  Self.Tasks[index].Method := @method;
+  Self.Tasks[index].StdVar := randomness;
+  Self.Tasks[index].Countdown.Start(Random(Trunc(Abs(GaussRand(Self.Tasks[index].Interval, Self.Tasks[index].Interval * Self.Tasks[index].StdVar)))));
+end;
+
+procedure TAntiban._UpdateBreak(index: Integer; interval, length, randomness, logoutChance: Double);
+begin
+  Self.Breaks[index].Interval := interval;
+  Self.Breaks[index].Length := length;
+  Self.Breaks[index].StdVar := randomness;
+  Self.Breaks[index].LogoutChance := logoutChance;
+  Self.Breaks[index].Next := GetTimeRunning() + Abs(GaussRand(Self.Breaks[index].Interval, Self.Breaks[index].Interval * Self.Breaks[index].StdVar));
+end;
+
+procedure TAntiban._UpdateSleep(index: Integer; time: String; length, randomness, logoutChance: Double);
+begin
+  Self.Sleeps[index].Time := time;
+  Self.Sleeps[index].Length := length;
+  Self.Sleeps[index].StdVar := randomness;
+  Self.Sleeps[index].LogoutChance := logoutChance;
+  Self.Sleeps[index].Next := Self.TimeRunningAtClock(Self.Sleeps[index].Time, Self.Sleeps[index].StdVar);
+end;
+
+
 (*
 ## Antiban.AddTask
 ```pascal
-procedure TAntiban.AddTask(interval: Double; method: TAntibanMethod; randomness: Double = 0.2);
+procedure TAntiban.AddTask(method: TAntibanMethod; interval: Double; randomness: Double = 0.2);
 ```
 Schedule a antiban task.
 An antiban task can be any procedure but they should be short actions that won't
 break your main script.
 
+`method` is a pointer to the task you want to perform. WaspLib includes a couple of them but you may make your own if you want.
+
 `interval` is the aproximate interval of time that has to pass for the antiban
 task to occur and it will be repeated everytime that the interval has passed
 and the antiban is checked with {ref}`Antiban.DoAntiban`.
-
-`method` is a pointer to the task you want to perform. WaspLib includes a couple of them but you may make your own if you want.
 
 This task will only occur when **TAntiban.DoAntiban** is called.
 
 Example:
 ```pascal
-Antiban.AddTask(15 * ONE_MINUTE, @Antiban.HoverSkills); //Every 15 minutes the script will hover the skills.
+Antiban.AddTask(@Antiban.HoverSkills, 15 * ONE_MINUTE); //Every 15 minutes the script will run Antiban.HoverSkills().
 ```
 *)
-procedure TAntiban.AddTask(interval: Double; method: TAntibanMethod; randomness: Double = 0.2);
+procedure TAntiban.AddTask(method: TAntibanMethod; interval: Double; randomness: Double = 0.2);
 var
-  task: TAntibanTask;
+  len: Integer;
 begin
-  task.Interval := interval;
-  task.Method := @method;
-  task.StdVar := randomness;
-  task.Countdown.Start(Random(Trunc(Abs(GaussRand(task.Interval, task.Interval * task.StdVar)))));
-
-  Self.Tasks += task;
+  len := Length(Self.Tasks);
+  SetLength(Self.Tasks, len+1);
+  Self._UpdateTask(len, @method, interval, randomness);
 end;
 
 (*
@@ -140,6 +162,7 @@ Schedule a break. Breaks can be of short or medium length and should be shorter 
 `interval` is the aproximate interval of time that has to pass for the break to
 occur and it will be repeated everytime that interval passes and the antiban is
 checked either with {ref}`Antiban.DoBreak` or {ref}`Antiban.DoAntiban`.
+
 `length`, `randomness` and `logoutChance` are the same as {ref}`Antiban.AddSleep`.
 
 This break will only occur when {ref}`Antiban.DoAntiban` is called.
@@ -149,17 +172,13 @@ Example:
 Antiban.AddBreak(30 * ONE_MINUTE, 5 * ONE_MINUTE); //Every 30 minutes the script will take a 5 minute break, subject to variance from the randomness variable.
 ```
 *)
-procedure TAntiban.AddBreak(interval, length: Double; randomness: Double = 0.2; logoutChance: Double = 0.33);
+procedure TAntiban.AddBreak(length, interval: Double; randomness: Double = 0.2; logoutChance: Double = 0.33);
 var
-  task: TBreakTask;
+  len: Integer;
 begin
-  task.Interval := interval;
-  task.Length := length;
-  task.StdVar := randomness;
-  task.LogoutChance := logoutChance;
-  task.Next := GetTimeRunning() + Abs(GaussRand(task.Interval, task.Interval * task.StdVar));
-
-  Self.Breaks += task;
+  len := System.Length(Self.Breaks);
+  SetLength(Self.Breaks, len+1);
+  Self._UpdateBreak(len, interval, length, randomness, logoutChance);
 end;
 
 (*
@@ -190,14 +209,11 @@ Antiban.AddSleep('01:30:45', 8 * ONE_HOUR, 0.1, 0.8); //At 01:30:45 on our compu
 *)
 procedure TAntiban.AddSleep(time: String; length: Double; randomness: Double = 0.10; logoutChance: Double = 0.5);
 var
-  task: TSleepTask;
+  len: Integer;
 begin
-  task.Time := time;
-  task.Length := length;
-  task.StdVar := randomness;
-  task.LogoutChance := logoutChance;
-  task.Next := Self.TimeRunningAtClock(task.Time, task.StdVar);
-  Self.Sleeps += task;
+  len := System.Length(Self.Sleeps);
+  SetLength(Self.Sleeps, len+1);
+  Self._UpdateSleep(len, time, length, randomness, logoutChance);
 end;
 
 
@@ -548,7 +564,7 @@ end;
 
 procedure TAntiban.WalkingTasks();
 begin
-  //TODO...
+  //overriden later.
 end;
 
 var

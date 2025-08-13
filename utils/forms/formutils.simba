@@ -621,6 +621,7 @@ function TLazButton.CreateEx(owner: Pointer): TLazButton; static;
 begin
   Result := TLazButton.Create(TLazControl(owner));
   Result.Parent := TLazComponent(owner);
+  Result.Cursor := ELazCursor.HandPoint;
 end;
 
 function TLazButton.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazButton; static; overload;
@@ -645,6 +646,7 @@ function TLazCheckBox.CreateEx(owner: Pointer): TLazCheckBox; static;
 begin
   Result := TLazCheckBox.Create(TLazControl(owner));
   Result.Parent := TLazComponent(owner);
+  Result.Cursor := ELazCursor.HandPoint;
 end;
 
 function TLazCheckBox.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazCheckBox; static; overload;

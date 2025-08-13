@@ -23,6 +23,7 @@ mentioned on this page because they are internal methods you shouldn't touch.
 Do feel free to read the source code though if you so desire.
 *)
   TAntibanFormHelper = record
+    TasksCheckbox, BreaksCheckbox, SleepCheckbox: TLazCheckBox;
     TaskList, BreakList: TLazListBox;
 
     PageControl: TLazPageControl;
@@ -49,13 +50,13 @@ end;
 
 function TAntibanFormHelper.GetBreakListString(a, b, c, d: String): String;
 begin
-  Result := a.PadRight(10) + ' | ' + b.PadCenter(12) + ' | ' + c.PadCenter(12) + ' | ' + d.PadCenter(12);
+  Result := a.PadRight(12) + ' | ' + b.PadCenter(12) + ' | ' + c.PadCenter(12) + ' | ' + d.PadCenter(12);
 end;
+
 
 procedure TAntibanFormHelper.SetDefaultTasks();
 var
-  tasks: TJSONObject;
-  taskObj: TJSONObject;
+  tasks, taskObj: TJSONObject;
   arr: TJSONArray;
   i: Integer;
 begin
@@ -67,71 +68,71 @@ begin
 
   arr := new TJSONArray();
 
-  taskObj := new TJSONArray();
+  taskObj := new TJSONObject();
   taskObj.AddString('task', 'AdjustZoom');
   taskObj.AddFloat('interval', 3);
   taskObj.AddFloat('variation', 0.33);
-  Self.TaskList.Items.Add(Self.GetTaskListString('AdjustZoom', '3 mins', '33%'));
   arr.Add('task', taskObj);
-  Antiban.AddTask(3*ONE_MINUTE, @Antiban.AdjustZoom, 0.33);
+  Self.TaskList.Items.Add(Self.GetTaskListString('AdjustZoom', '3.00 mins', '33.00%'));
+  Antiban.AddTask(@Antiban.AdjustZoom, 3*ONE_MINUTE, 0.33);
 
-  taskObj := new TJSONArray();
+  taskObj := new TJSONObject();
   taskObj.AddString('task', 'RandomCameraTask');
   taskObj.AddFloat('interval', 7);
   taskObj.AddFloat('variation', 0.33);
-  Self.TaskList.Items.Add(Self.GetTaskListString('RandomCameraTask', '7 mins', '33%'));
   arr.Add('task', taskObj);
-  Antiban.AddTask(7*ONE_MINUTE, @Antiban.RandomCameraTask, 0.33);
+  Self.TaskList.Items.Add(Self.GetTaskListString('RandomCameraTask', '7.00 mins', '33.00%'));
+  Antiban.AddTask(@Antiban.RandomCameraTask, 7*ONE_MINUTE, 0.33);
 
-  taskObj := new TJSONArray();
+  taskObj := new TJSONObject();
   taskObj.AddString('task', 'RandomMouseTask');
   taskObj.AddFloat('interval', 8);
   taskObj.AddFloat('variation', 0.33);
-  Self.TaskList.Items.Add(Self.GetTaskListString('RandomMouseTask', '8 mins', '33%'));
   arr.Add('task', taskObj);
-  Antiban.AddTask(8*ONE_MINUTE, @Antiban.RandomMouseTask, 0.33);
+  Self.TaskList.Items.Add(Self.GetTaskListString('RandomMouseTask', '8.00 mins', '33.00%'));
+  Antiban.AddTask(@Antiban.RandomMouseTask, 8*ONE_MINUTE, 0.33);
 
-  taskObj := new TJSONArray();
+  taskObj := new TJSONObject();
   taskObj.AddString('task', 'RandomChatTask');
   taskObj.AddFloat('interval', 9);
   taskObj.AddFloat('variation', 0.33);
-  Self.TaskList.Items.Add(Self.GetTaskListString('RandomChatTask', '9 mins', '33%'));
   arr.Add('task', taskObj);
-  Antiban.AddTask(9*ONE_MINUTE, @Antiban.RandomChatTask, 0.33);
+  Self.TaskList.Items.Add(Self.GetTaskListString('RandomChatTask', '9.00 mins', '33.00%'));
+  Antiban.AddTask(@Antiban.RandomChatTask, 9*ONE_MINUTE, 0.33);
 
 
-  taskObj := new TJSONArray();
+  taskObj := new TJSONObject();
   taskObj.AddString('task', 'LoseFocus');
   taskObj.AddFloat('interval', 10);
   taskObj.AddFloat('variation', 0.33);
-  Self.TaskList.Items.Add(Self.GetTaskListString('LoseFocus', '10 mins', '33%'));
   arr.Add('task', taskObj);
-  Antiban.AddTask(10*ONE_MINUTE, @RSClient.LoseFocus, 0.33);
+  Self.TaskList.Items.Add(Self.GetTaskListString('LoseFocus', '10.00 mins', '33.00%'));
+  Antiban.AddTask(@RSClient.LoseFocus, 10*ONE_MINUTE, 0.33);
 
 
-  taskObj := new TJSONArray();
+  taskObj := new TJSONObject();
   taskObj.AddString('task', 'RandomGameTabTask');
   taskObj.AddFloat('interval', 12);
   taskObj.AddFloat('variation', 0.33);
-  Self.TaskList.Items.Add(Self.GetTaskListString('RandomGameTabTask', '12 mins', '33%'));
   arr.Add('task', taskObj);
-  Antiban.AddTask(12*ONE_MINUTE, @Antiban.RandomGameTabTask, 0.33);
+  Self.TaskList.Items.Add(Self.GetTaskListString('RandomGameTabTask', '12.00 mins', '33.00%'));
+  Antiban.AddTask(@Antiban.RandomGameTabTask, 12*ONE_MINUTE, 0.33);
 
-  taskObj := new TJSONArray();
+  taskObj := new TJSONObject();
   taskObj.AddString('task', 'RandomBankTask');
   taskObj.AddFloat('interval', 13);
   taskObj.AddFloat('variation', 0.33);
-  Self.TaskList.Items.Add(Self.GetTaskListString('RandomBankTask', '13 mins', '33%'));
   arr.Add('task', taskObj);
-  Antiban.AddTask(13*ONE_MINUTE, @Antiban.RandomBankTask, 0.33);
+  Self.TaskList.Items.Add(Self.GetTaskListString('RandomBankTask', '13.00 mins', '33.00%'));
+  Antiban.AddTask(@Antiban.RandomBankTask, 13*ONE_MINUTE, 0.33);
 
-  taskObj := new TJSONArray();
+  taskObj := new TJSONObject();
   taskObj.AddString('task', 'HoverSkills');
   taskObj.AddFloat('interval', 18);
   taskObj.AddFloat('variation', 0.33);
-  Self.TaskList.Items.Add(Self.GetTaskListString('HoverSkills', '18 mins', '33%'));
   arr.Add('task', taskObj);
-  Antiban.AddTask(18*ONE_MINUTE, @Antiban.HoverSkills, 0.33);
+  Self.TaskList.Items.Add(Self.GetTaskListString('HoverSkills', '18.00 mins', '33.00%'));
+  Antiban.AddTask(@Antiban.HoverSkills, 18*ONE_MINUTE, 0.33);
 
   tasks.AddArray('tasks', arr);
 
@@ -147,10 +148,10 @@ end;
 
 procedure TAntibanFormHelper.SetDefaultBreaks();
 var
-  breaks: TJSONObject;
-  breakObj: TJSONObject;
+  breaks, breakObj: TJSONObject;
   arr: TJSONArray;
   i: Integer;
+  value: Double;
 begin
   Self.BreakList.Clear();
   Antiban.Breaks := [];
@@ -159,14 +160,44 @@ begin
   breaks.AddBool('enabled', True);
 
   arr := new TJSONArray();
-  breakObj := new TJSONArray();
+
+  breakObj := new TJSONObject();
   breakObj.AddFloat('interval', 30);
   breakObj.AddFloat('length', 2);
   breakObj.AddFloat('variation', 0.33);
   breakObj.AddFloat('logout', 0.01);
-  Self.BreakList.Items.Add(Self.GetBreakListString('30 mins', '2 mins', '33%', '1%'));
   arr.Add('break', breakObj);
+  Self.BreakList.Items.Add(Self.GetBreakListString('30.00 mins', '2.00 mins', '33.00%', '1.00%'));
   Antiban.AddBreak(30*ONE_MINUTE,2*ONE_MINUTE, 0.33, 0.01);
+
+  breakObj := new TJSONObject();
+  breakObj.AddFloat('interval', 45);
+  breakObj.AddFloat('length', 5);
+  breakObj.AddFloat('variation', 0.33);
+  breakObj.AddFloat('logout', 0.02);
+  arr.Add('break', breakObj);
+  Self.BreakList.Items.Add(Self.GetBreakListString('45.00 mins', '5.00 mins', '33.00%', '2.00%'));
+  Antiban.AddBreak(45*ONE_MINUTE,5*ONE_MINUTE, 0.33, 0.02);
+
+  breakObj := new TJSONObject();
+  breakObj.AddFloat('interval', 90);
+  breakObj.AddFloat('length', 10);
+  breakObj.AddFloat('variation', 0.33);
+  value := 0.05 * Biometrics.RandomDouble(1.0);
+  breakObj.AddFloat('logout', value);
+  arr.Add('break', breakObj);
+  Self.BreakList.Items.Add(Self.GetBreakListString('60.00 mins', '10.00 mins', '33.00%', ToStr(Round(value*100, 2)) + '%'));
+  Antiban.AddBreak(60*ONE_MINUTE,10*ONE_MINUTE, 0.33, value);
+
+  breakObj := new TJSONObject();
+  breakObj.AddFloat('interval', 250);
+  breakObj.AddFloat('length', 20);
+  breakObj.AddFloat('variation', 0.33);
+  value := 0.5 * Biometrics.RandomDouble(1.3);
+  breakObj.AddFloat('logout', value);
+  arr.Add('break', breakObj);
+  Self.BreakList.Items.Add(Self.GetBreakListString('250.00 mins', '20.00 mins', '33.00%', ToStr(Round(value*100, 2)) + '%'));
+  Antiban.AddBreak(250*ONE_MINUTE,20*ONE_MINUTE, 0.33, value);
 
   breaks.AddArray('breaks', arr);
 
@@ -185,45 +216,139 @@ begin
   Antiban.Sleeps := [];
 end;
 
+
+procedure TAntibanFormHelper.LoadTasks(obj: TJSONObject; updateList: Boolean = True);
+var
+  tasks: TJSONObject;
+  i, j: Integer;
+  taskName: String;
+begin
+  tasks := obj.Item['tasks'];
+
+  if updateList then
+  begin
+    for i := 0 to tasks.Count-1 do
+    begin
+      taskName := tasks.Item[i].Item[0].AsString;
+
+      Self.TaskList.Items.Add(
+        Self.GetTaskListString(
+          taskName,
+          ToStr(tasks.Item[i].Item[1].AsFloat) + ' mins',
+          ToStr(tasks.Item[i].Item[2].AsFloat * 100) + '%'
+        )
+      );
+
+      for j := 0 to High(ANTIBAN_TASKS) do
+        if ANTIBAN_TASKS[j].Name = taskName then
+          Break;
+
+      Antiban.AddTask(
+        @ANTIBAN_TASKS[j].Method,
+        tasks.Item[i].Item[1].AsFloat * ONE_MINUTE,
+        tasks.Item[i].Item[2].AsFloat
+      );
+    end;
+
+    Self.TasksCheckbox.SetChecked(obj.Item['enabled'].AsBool);
+    Exit;
+  end;
+
+  for i := 0 to tasks.Count-1 do
+  begin
+    taskName := tasks.Item[i].Item[0].AsString;
+    for j := 0 to High(ANTIBAN_TASKS) do
+      if ANTIBAN_TASKS[j].Name = taskName then
+        Break;
+
+    Antiban.AddTask(
+      @ANTIBAN_TASKS[j].Method, tasks.Item[i].Item[1].AsFloat * ONE_MINUTE, tasks.Item[i].Item[2].AsFloat
+    );
+  end;
+end;
+
+procedure TAntibanFormHelper.LoadBreaks(obj: TJSONObject; updateList: Boolean = True);
+var
+  breaks: TJSONObject;
+  i: Integer;
+begin
+  breaks := obj.Item['breaks'];
+
+  if updateList then
+  begin
+    for i := 0 to breaks.Count-1 do
+    begin
+
+      Self.BreakList.Items.Add(
+        Self.GetBreakListString(
+          ToStr(breaks.Item[i].Item[0].AsFloat) + ' mins',
+          ToStr(breaks.Item[i].Item[1].AsFloat) + ' mins',
+          ToStr(breaks.Item[i].Item[2].AsFloat * 100) + '%',
+          ToStr(breaks.Item[i].Item[3].AsFloat * 100) + '%'
+        )
+      );
+
+      Antiban.AddBreak(
+        breaks.Item[i].Item[0].AsFloat*ONE_MINUTE,
+        breaks.Item[i].Item[1].AsFloat*ONE_MINUTE,
+        breaks.Item[i].Item[2].AsFloat,
+        breaks.Item[i].Item[3].AsFloat
+      );
+    end;
+
+    Self.BreaksCheckbox.SetChecked(obj.Item['enabled'].AsBool);
+    Exit;
+  end;
+
+  for i := 0 to breaks.Count-1 do
+    Antiban.AddBreak(
+      breaks.Item[i].Item[0].AsFloat*ONE_MINUTE, breaks.Item[i].Item[1].AsFloat*ONE_MINUTE,
+      breaks.Item[i].Item[2].AsFloat, breaks.Item[i].Item[3].AsFloat
+    );
+end;
+
+procedure TAntibanFormHelper.LoadSleep(obj: TJSONObject; updateList: Boolean = True);
+begin
+  if updateList then
+  begin
+    Self.SleepCheckbox.SetChecked(obj.Item['enabled'].AsBool);
+    Self.SleepTimeEdit.Time := TDateTime.CreateFromISO(obj.Item['time'].AsString);
+    Self.SleepLengthSpinner.Value    := obj.Item['length'].AsFloat;
+    Self.SleepVariationSpinner.Value := obj.Item['variation'].AsFloat;
+    Self.SleepLogoutSpinner.Value    := obj.Item['logout'].AsFloat;
+  end;
+
+  Antiban.AddSleep(
+    obj.Item['time'].AsString, obj.Item['length'].AsFloat,
+    obj.Item['variation'].AsFloat, obj.Item['logout'].AsFloat
+  );
+end;
+
+
 procedure TAntibanFormHelper.Setup();
 var
-  edited: Boolean;
+  tasks, breaks, sleep: TJSONObject;
+  i: Integer;
 begin
   Self.Config.Setup('antiban' + PATH_SEP + ToStr(ProfileIndex));
 
-  if Self.Config.Data.Has('tasks') then
-  begin
-    //TODO: Load task settings
-  end
-  else
-  begin
-    Self.SetDefaultTasks();
-    edited := True;
-  end;
+  for i := 0 to Self.Config.Data.Count-1 do
+    case Self.Config.Data.Key[i] of
+      'tasks':  tasks  := Self.Config.Data.Item[i];
+      'breaks': breaks := Self.Config.Data.Item[i];
+      'sleep':  sleep  := Self.Config.Data.Item[i];
+    end;
 
+  if tasks = nil then Self.SetDefaultTasks()
+  else Self.LoadTasks(tasks);
 
+  if breaks = nil then Self.SetDefaultBreaks()
+  else Self.LoadBreaks(breaks);
 
-  if Self.Config.Data.Has('breaks') then
-  begin
-    //TODO: Load break settings
-  end
-  else
-  begin
-    Self.SetDefaultBreaks();
-    edited := True;
-  end;
+  if sleep = nil then Self.SetDefaultSleep()
+  else Self.LoadSleep(sleep);
 
-  if Self.Config.Data.Has('sleeps') then
-  begin
-    //TODO: Load sleep settings
-  end
-  else
-  begin
-    Self.SetDefaultSleep();
-    edited := True;
-  end;
-
-  if edited then
+  if (tasks=nil) or (breaks=nil) or (sleep=nil) then
     Self.Config.SaveConfig();
 end;
 
@@ -246,6 +371,32 @@ begin
     control := parent.GetComponent(i);
     if checkbox <> control then
       TLazControl(control).Enabled := checked;
+  end;
+
+  case checkbox of
+    Self.TasksCheckbox:
+    begin
+      if checked then
+        Self.LoadTasks(Self.Config.Data.Item['tasks'], False)
+      else
+        Antiban.Tasks := [];
+    end;
+
+    Self.BreaksCheckbox:
+    begin
+      if checked then
+        Self.LoadBreaks(Self.Config.Data.Item['breaks'], False)
+      else
+        Antiban.Breaks := [];
+    end;
+
+    Self.SleepCheckbox:
+    begin
+      if checked then
+        Self.LoadSleep(Self.Config.Data.Item['sleep'], False)
+      else
+        Antiban.Sleeps := [];
+    end;
   end;
 end;
 
@@ -287,16 +438,17 @@ begin
   );
 
   Antiban.AddTask(
-    Round(Self.TaskIntervalSpinner.Value * ONE_MINUTE, 2),
     @ANTIBAN_TASKS[Self.TaskCombobox.ItemIndex].Method,
-    Round(Self.TaskVariationSpinner.Value, 2)
+    Self.TaskIntervalSpinner.Value * ONE_MINUTE,
+    Self.TaskVariationSpinner.Value
   );
 
-  taskObj := new TJSONArray();
+  taskObj := new TJSONObject();
   taskObj.AddString('task', Self.TaskCombobox.Text);
-  taskObj.AddFloat('interval',  Round(Self.TaskIntervalSpinner.Value * ONE_MINUTE, 2));
-  taskObj.AddFloat('variation', Round(Self.TaskVariationSpinner.Value, 2));
+  taskObj.AddFloat('interval',  Self.TaskIntervalSpinner.Value * ONE_MINUTE);
+  taskObj.AddFloat('variation', Self.TaskVariationSpinner.Value);
   Self.Config.Data.Item['tasks'].Item['tasks'].Add('task', taskObj);
+  Self.Config.SaveConfig();
 end;
 
 procedure TAntibanFormHelper.OnTaskEdit(sender: TLazObject);
@@ -312,14 +464,15 @@ begin
                                       ToStr(Round(Self.TaskVariationSpinner.Value * 100, 2))
                                     );
 
-  Antiban.Tasks[i].Method       := @ANTIBAN_TASKS[Self.TaskCombobox.ItemIndex].Method;
-  Antiban.Tasks[i].Interval     := Round(Self.TaskIntervalSpinner.Value, 2);
-  Antiban.Tasks[i].StdVar       := Round(Self.TaskVariationSpinner.Value, 2);
-  Antiban.Tasks[i].Countdown.Start(Random(Trunc(Abs(GaussRand(Antiban.Tasks[i].Interval, Antiban.Tasks[i].Interval * Antiban.Tasks[i].StdVar)))));
+  Antiban._UpdateTask(
+    i, @ANTIBAN_TASKS[Self.TaskCombobox.ItemIndex].Method,
+    Self.TaskIntervalSpinner.Value, Self.TaskVariationSpinner.Value
+  );
 
-  Self.Config.Data.Item['tasks'].Item['tasks'].Item[0].AsString := Self.TaskCombobox.Text;
-  Self.Config.Data.Item['tasks'].Item['tasks'].Item[1].AsFloat  := Round(Self.TaskIntervalSpinner.Value, 2);
-  Self.Config.Data.Item['tasks'].Item['tasks'].Item[2].AsFloat  := Round(Self.TaskVariationSpinner.Value, 2);
+  Self.Config.Data.Item['tasks'].Item['tasks'].Item[i].Item[0].AsString := Self.TaskCombobox.Text;
+  Self.Config.Data.Item['tasks'].Item['tasks'].Item[i].Item[1].AsFloat  := Self.TaskIntervalSpinner.Value;
+  Self.Config.Data.Item['tasks'].Item['tasks'].Item[i].Item[2].AsFloat  := Self.TaskVariationSpinner.Value;
+  Self.Config.SaveConfig();
 end;
 
 procedure TAntibanFormHelper.OnTaskRemove(sender: TLazObject);
@@ -334,12 +487,7 @@ begin
   item := Self.Config.Data.Item['tasks'].Item['tasks'];
   item.Delete(item.Item[idx]);
   Self.Config.SaveConfig();
-end;
-
-procedure TAntibanFormHelper.OnTaskKeyDown(sender: TLazObject; var key: Int16; shift: ELazShiftStates);
-begin
-  if key <> 46 then Exit;
-  Self.OnTaskRemove(sender);
+  Self.TaskList.ItemIndex := idx-1;
 end;
 
 procedure TAntibanFormHelper.OnTaskPreset(sender: TLazObject);
@@ -383,18 +531,18 @@ begin
     )
   );
   Antiban.AddBreak(
-    Round(Self.BreakIntervalSpinner.Value * ONE_MINUTE, 2),
-    Round(Self.BreakLengthSpinner.Value * ONE_MINUTE, 2),
-    Round(Self.BreakVariationSpinner.Value, 2),
-    Round(Self.BreakLogoutSpinner.Value, 2)
+    Self.BreakIntervalSpinner.Value * ONE_MINUTE,
+    Self.BreakLengthSpinner.Value * ONE_MINUTE,
+    Self.BreakVariationSpinner.Value, Self.BreakLogoutSpinner.Value
   );
 
-  breakObj := new TJSONArray();
-  breakObj.AddFloat('interval', Round(Self.BreakIntervalSpinner.Value * ONE_MINUTE, 2));
-  breakObj.AddFloat('length', Round(Self.BreakLengthSpinner.Value * ONE_MINUTE, 2));
-  breakObj.AddFloat('variation', Round(Self.BreakVariationSpinner.Value, 2));
-  breakObj.AddFloat('logout', Round(Self.BreakLogoutSpinner.Value, 2));
+  breakObj := new TJSONObject();
+  breakObj.AddFloat('interval', Self.BreakIntervalSpinner.Value * ONE_MINUTE);
+  breakObj.AddFloat('length', Self.BreakLengthSpinner.Value * ONE_MINUTE);
+  breakObj.AddFloat('variation', Self.BreakVariationSpinner.Value);
+  breakObj.AddFloat('logout', Self.BreakLogoutSpinner.Value);
   Self.Config.Data.Item['breaks'].Item['breaks'].Add('break', breakObj);
+  Self.Config.SaveConfig();
 end;
 
 procedure TAntibanFormHelper.OnBreakEdit(sender: TLazObject);
@@ -411,16 +559,17 @@ begin
                                        ToStr(Round(Self.BreakLogoutSpinner.Value * 100, 2))
                                      );
 
-  Antiban.Breaks[i].Interval     := Round(Self.BreakIntervalSpinner.Value, 2);
-  Antiban.Breaks[i].Length       := Round(Self.BreakLengthSpinner.Value, 2);
-  Antiban.Breaks[i].StdVar       := Round(Self.BreakVariationSpinner.Value, 2);
-  Antiban.Breaks[i].LogoutChance := Round(Self.BreakLogoutSpinner.Value, 2);
-  Antiban.Breaks[i].Next         := GetTimeRunning() + Abs(GaussRand(Antiban.Breaks[i].Interval, Antiban.Breaks[i].Interval * Antiban.Breaks[i].StdVar));
 
-  Self.Config.Data.Item['breaks'].Item['breaks'].Item[0].AsFloat := Round(Self.BreakLengthSpinner.Value, 2);
-  Self.Config.Data.Item['breaks'].Item['breaks'].Item[1].AsFloat := Round(Self.BreakIntervalSpinner.Value, 2);
-  Self.Config.Data.Item['breaks'].Item['breaks'].Item[2].AsFloat := Round(Self.BreakVariationSpinner.Value, 2);
-  Self.Config.Data.Item['breaks'].Item['breaks'].Item[3].AsFloat := Round(Self.BreakLogoutSpinner.Value, 2);
+  Antiban._UpdateBreak(
+    i, Self.BreakIntervalSpinner.Value, Self.BreakLengthSpinner.Value,
+    Self.BreakVariationSpinner.Value, Self.BreakLogoutSpinner.Value
+  );
+
+  Self.Config.Data.Item['breaks'].Item['breaks'].Item[i].Item[0].AsFloat := Self.BreakLengthSpinner.Value;
+  Self.Config.Data.Item['breaks'].Item['breaks'].Item[i].Item[1].AsFloat := Self.BreakIntervalSpinner.Value;
+  Self.Config.Data.Item['breaks'].Item['breaks'].Item[i].Item[2].AsFloat := Self.BreakVariationSpinner.Value;
+  Self.Config.Data.Item['breaks'].Item['breaks'].Item[i].Item[3].AsFloat := Self.BreakLogoutSpinner.Value;
+  Self.Config.SaveConfig();
 end;
 
 procedure TAntibanFormHelper.OnBreakRemove(sender: TLazObject);
@@ -443,26 +592,41 @@ begin
   Self.Config.SaveConfig();
 end;
 
+
+
+
+
 procedure TAntibanFormHelper.OnSleepPreset(sender: TLazObject);
 begin
   Self.SetDefaultSleep();
   Self.Config.SaveConfig();
 end;
+
+
+procedure TAntibanFormHelper.OnListKeyDown(sender: TLazObject; var key: Int16; shift: ELazShiftStates);
+begin
+  if key <> 46 then Exit;
+
+  if sender = Self.TaskList then
+    Self.OnTaskRemove(sender)
+  else
+    Self.OnBreakRemove(sender);
+end;
+
 {$H+}
 
 
 procedure TAntibanFormHelper.SetupTasksPanel(parent: TLazComponent);
 var
-  checkbox: TLazCheckBox;
   lPanel, rPanel: TLazPanel;
   lbl: TLazLabel;
   i: Integer;
 begin
-  checkbox := TLazCheckBox.CreateEx(parent, 'Enable Tasks', 'Enable/Disable antiban tasks.');
-  checkbox.State := ELazCheckBoxState.Checked;
-  checkbox.OnChange := @Self.OnCheckboxToggle;
-  checkbox.Align := ELazAlign.Top;
-  checkbox.BorderSpacing.Around := 10;
+  Self.TasksCheckbox := TLazCheckBox.CreateEx(parent, 'Enable Tasks', 'Enable/Disable antiban tasks.');
+  Self.TasksCheckbox.State := ELazCheckBoxState.Checked;
+  Self.TasksCheckbox.OnChange := @Self.OnCheckboxToggle;
+  Self.TasksCheckbox.Align := ELazAlign.Top;
+  Self.TasksCheckbox.BorderSpacing.Around := 10;
 
   lPanel := TLazPanel.CreateEx(parent);
   lPanel.Width := 220;
@@ -489,7 +653,7 @@ begin
   Self.TaskList := TLazListBox.CreateEx(rPanel);
   Self.TaskList.Font.Name := 'Courier New';
   Self.TaskList.OnSelectionChange := @Self.OnTaskSelected;
-  Self.TaskList.OnKeyDown := @Self.OnTaskKeyDown;
+  Self.TaskList.OnKeyDown := @Self.OnListKeyDown;
   Self.TaskList.Align := ELazAlign.Client;
   Self.TaskList.BorderSpacing.Left := 10;
   Self.TaskList.BorderSpacing.Right := 10;
@@ -574,15 +738,14 @@ end;
 
 procedure TAntibanFormHelper.SetupBreaksPanel(parent: TLazComponent);
 var
-  checkbox: TLazCheckBox;
   lPanel, rPanel: TLazPanel;
   lbl: TLazLabel;
 begin
-  checkbox := TLazCheckBox.CreateEx(parent, 'Enable Breaks', 'Enable/Disable antiban breaks.');
-  checkbox.State := ELazCheckBoxState.Checked;
-  checkbox.OnChange := @Self.OnCheckboxToggle;
-  checkbox.Align := ELazAlign.Top;
-  checkbox.BorderSpacing.Around := 10;
+  Self.BreaksCheckbox := TLazCheckBox.CreateEx(parent, 'Enable Breaks', 'Enable/Disable antiban breaks.');
+  Self.BreaksCheckbox.State := ELazCheckBoxState.Checked;
+  Self.BreaksCheckbox.OnChange := @Self.OnCheckboxToggle;
+  Self.BreaksCheckbox.Align := ELazAlign.Top;
+  Self.BreaksCheckbox.BorderSpacing.Around := 10;
 
   lPanel := TLazPanel.CreateEx(parent);
   lPanel.Width := 220;
@@ -609,6 +772,7 @@ begin
   Self.BreakList := TLazListBox.CreateEx(rPanel);
   Self.BreakList.Font.Name := 'Courier New';
   Self.BreakList.OnSelectionChange := @Self.OnBreakSelected;
+  Self.BreakList.OnKeyDown := @Self.OnListKeyDown;
   Self.BreakList.Align := ELazAlign.Client;
   Self.BreakList.BorderSpacing.Left := 10;
   Self.BreakList.BorderSpacing.Right := 10;
@@ -703,17 +867,16 @@ end;
 
 procedure TAntibanFormHelper.SetupSleepsPanel(parent: TLazComponent);
 var
-  checkbox: TLazCheckBox;
   lbl: TLazLabel;
 begin
-  checkbox := TLazCheckBox.CreateEx(parent, 'Enable Sleeps', 'Enable/Disable antiban sleeps.');
-  checkbox.State := ELazCheckBoxState.Checked;
-  checkbox.OnChange := @Self.OnCheckboxToggle;
-  checkbox.Align := ELazAlign.Top;
-  checkbox.BorderSpacing.Around := 10;
+  Self.SleepCheckbox := TLazCheckBox.CreateEx(parent, 'Enable Sleeps', 'Enable/Disable antiban sleeps.');
+  Self.SleepCheckbox.State := ELazCheckBoxState.Checked;
+  Self.SleepCheckbox.OnChange := @Self.OnCheckboxToggle;
+  Self.SleepCheckbox.Align := ELazAlign.Top;
+  Self.SleepCheckbox.BorderSpacing.Around := 10;
 
   lbl := TLazLabel.CreateEx(parent, 'Sleep Time:', 'Pick an aproximated day time for your sleeps.');
-  lbl.AnchorVertically(checkbox, 60);
+  lbl.AnchorVertically(Self.SleepCheckbox, 60);
 
   Self.SleepTimeEdit := TLazTimeEdit.CreateEx(parent, '', 'Pick an aproximated day time for your sleeps.', 0, 0, 120);
   Self.SleepTimeEdit.DefaultNow := True;

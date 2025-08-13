@@ -12,6 +12,5 @@ begin
   form.Setup();
   tab := form.CreateTab('My Settings');
   form.CreateAntibanTab();
-
   form.Run();
 end.
