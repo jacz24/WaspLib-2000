@@ -54,11 +54,9 @@ begin
     Exit;
   end;
 
-  Self.Teleports[teleport] := TRSObject.Create(obj.GetSize(), [coordinate]);
+  Self.Teleports[teleport] := new TRSObject(@Self.Walker, obj.GetSize(), [coordinate], teleport.GetUpText());
   Self.Teleports[teleport].Rotations := [rotation];
-  Self.Teleports[teleport].UpText := teleport.GetUpText();
   Self.Teleports[teleport].Finder := teleport.GetFinder();
-  Self.Teleports[teleport].Walker := @Self.Walker;
 end;
 
 procedure TRSHouse._SetupObject(obj: EHouseObject; coordinate: TPoint; rotation: Integer);
@@ -70,11 +68,9 @@ begin
     Exit;
   end;
 
-  Self.Objects[obj] := TRSObject.Create(obj.GetSize(), [coordinate]);
+  Self.Objects[obj] := new TRSObject(@Self.Walker, obj.GetSize(), [coordinate], obj.GetUpText());
   Self.Objects[obj].Rotations := [rotation * 90];
-  Self.Objects[obj].UpText := obj.GetUpText();
   Self.Objects[obj].Finder := obj.GetFinder();
-  Self.Objects[obj].Walker := @Self.Walker;
 end;
 
 procedure TRSHouse.SetupObjects();
@@ -133,9 +129,8 @@ begin
         Continue;
       end;
 
-      Result := TRSObject.Create(size, [coordinate]);
+      Result := new TRSObject(@Self.Walker, size, [coordinate]);
       Result.Rotations := [room.Rotation * 90];
-      Result.Walker := @Self.Walker;
     end;
 end;
 
@@ -171,10 +166,8 @@ begin
   //TODO:
   //Self.Graph := Self._BuildGraph(Self.Loader.Collision);
 
-  Self.Entrance := TRSObject.Create([2,4,7], [Self.Loader.Location.GetEntranceCoordinate()]);
+  Self.Entrance := new TRSObject(@Map.Walker, [2,4,7], [Self.Loader.Location.GetEntranceCoordinate()], ['Portal']);
   Self.Entrance.Rotations := [Self.Loader.Location.GetEntranceRotation()];
-  Self.Entrance.UpText := ['Portal'];
-  Self.Entrance.Walker := @Map.Walker;
   //TODO:
   //Self.Entrance.Finder.Colors += CTS2(6316135, 8, 0.28, 0.12);
   //Self.Entrance.Finder.Colors += CTS2(9379961, 30, 0.16, 1.76);

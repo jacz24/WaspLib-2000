@@ -299,15 +299,15 @@ end;
 
 
 (*
-## NPCsJSON.Get
+## NPCsJSON.GetByName
 ```pascal
-function TMapNPCJSON.Get(name: String; amount: Integer = 0): TJSONItem;
+function TMapNPCJSON.GetByName(name: String; amount: Integer = 0): TJSONItem;
 ```
 Returns a `TJSONItem` JSON array of a map npcs that matches the specified `name`.
 By default you get all npcs that match the `name`, however,
 if you want you can specify how many you want through `amount`.
 *)
-function TMapNPCJSON.Get(name: String; amount: Integer = 0): TJSONItem;
+function TMapNPCJSON.GetByName(name: String; amount: Integer = 0): TJSONItem;
 var
   i, found: Integer;
 begin

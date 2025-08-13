@@ -273,7 +273,7 @@ end;
 function TRSCollectionBox.Hover(walk: Boolean = True): Boolean;
 var
   obj: TRSObject;
-  npc: TRSNPC;
+  npc: TRSEntity;
   me: TPoint;
 begin
   if (Bank.Banks = []) or (Bank.Bankers = []) then
@@ -296,7 +296,7 @@ end;
 function TRSCollectionBox.Open(walk: Boolean = True): Boolean;
 var
   obj: TRSObject;
-  npc: TRSNPC;
+  npc: TRSEntity;
   me: TPoint;
 begin
   if MSInterface.IsOpen() then

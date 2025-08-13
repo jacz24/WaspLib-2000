@@ -1,42 +1,106 @@
 (*
-# RSObjects
-This file is responsible for interacting with map objects.
+# Entities
+This file is responsible for interacting with `RSEntities`.
+
+`RSEntities` is anything in the game that has a {ref}`ERSMinimapDot` assign to
+it on the {ref}`Minimap`.
+
+These are functionally very similar to {ref}`RSObjects` and you create and
+interact with them almost the same way.
+
+They only differ in the fact that `TRSEntity` can use a {ref}`ERSMinimapDot` to
+help find them and/or {ref}`TRSDotFilters`.
+Also, due to the unpredictability of entities that move, unlike {ref}`RSObjects`
+these do not have a rotation field.
 *)
 
-{$DEFINE WL_RSOBJECTS_INCLUDED}
+{$DEFINE WL_RSENTITIES_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
-  TRSNPC = record
+(*
+## TRSEntity
+Main type to handle {ref}`RSEntity`.
+*)
+  TRSEntity = object
     UpText: TStringArray;
     Size: TVector3;
     Coordinates: TPointArray;
     Filter: TRSDotFilter;
     Finder: TColorFinder;
-    UseDot, Track: Boolean;
+    Track: Boolean;
+    MinimapDots: ERSMinimapDots;
     Walker: PRSWalker;
   end;
 
-  TRSNPCArray = array of TRSNPC;
+(*
+## TRSEntityArray
+Array of {ref}`TRSEntity`.
+*)
+  TRSEntityArray = array of TRSEntity;
 
-function TRSNPC.Create(size: TVector3; coordinates: TPointArray): TRSNPC; static;
+(*
+## RSEntity.Construct
+```pascal
+function TRSEntity.Construct(walker: PRSWalker; size: TVector3; coordinates: TPointArray; uptext: TStringArray = []; dots: ERSMinimapDots = []): TRSEntity; static;
+function TRSEntity.Construct(json: TJSONItem): TRSEntity; static; overload;
+```
+Constructors to create your {ref}`TRSEntity`.
+
+Assuming you create the `RSEntity` manually, the constructor will provide you
+with a fully built `TRSEntity` without a finder.
+
+You may optionally assign one later if you want:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  npc: TRSEntity;
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+  npc := new TRSEntity(@Map.Walker, [1,1,7], [[8652,36686]], ['Banked'], [ERSMinimapDot.NPC]);
+  //npc.Finder.Colors += $FFFFFF;
+end;
+```
+
+The `json` version of the function expects a specific json structure which is
+the one that {ref}`Map JSONs` provide:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  npc: TRSEntity;
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+  //Item[0] because this returns a JSON array. For more info read Map JSONs documentation.
+  npc := new TRSEntity(NPCsJSON.GetByName('banker', 1).Item[0]);
+end;
+```
+*)
+function TRSEntity.Construct(walker: PRSWalker; size: TVector3; coordinates: TPointArray; uptext: TStringArray = []; dots: ERSMinimapDots = []): TRSEntity; static;
 begin
   Result.Coordinates := coordinates;
   Result.Size := size;
+
+  if dots <> [] then
+    Result.MinimapDots := dots;
+  if uptext <> [] then
+    Result.UpText := uptext;
+
+  Result.Walker := walker;
 end;
 
-function TRSNPC.Create(json: TJSONItem): TRSNPC; static; overload;
+function TRSEntity.Construct(json: TJSONItem): TRSEntity; static; overload;
 var
   i: Integer;
   colors: TColorArray;
   best: TBestColor;
 begin
   if json.Typ <> EJSONType.OBJ then
-    raise GetDebugLn('TRSNPC', 'JSON Object expected, got ' + ToStr(json.Typ) + '.');
+    raise GetDebugLn('TRSEntity', 'JSON Object expected, got ' + ToStr(json.Typ) + '.');
 
   if json.Item[1].AsString <> 'null' then
     Result.UpText := [json.Item[1].AsString];
-  Result.UseDot := json.Item[4].AsBool; //4 is minimapdot key in TRSMap jsons
+  if json.Item[4].AsBool then //4 is minimapdot key in TRSMap jsons
+    Result.MinimapDots := [ERSMinimapDot.NPC];
 
   //6 is size key in TRSMap jsons
   Result.Size.X := Round(json.Item[6].Item[0].AsInt * 0.8, 2);
@@ -63,20 +127,20 @@ begin
   Result.Walker := @Map.Walker;
 end;
 
-function TRSNPCArray.Create(json: TJSONItem): TRSNPCArray; static; overload;
+function TRSEntityArray.Construct(json: TJSONItem): TRSEntityArray; static;
 var
   i: Integer;
 begin
   if json.Typ <> EJSONType.ARR then
-    raise GetDebugLn('TRSNPC', 'JSON Array expected, got ' + ToStr(json.Typ) + '.');
+    raise GetDebugLn('TRSEntity', 'JSON Array expected, got ' + ToStr(json.Typ) + '.');
 
   SetLength(Result, json.Count);
   for i := 0 to High(Result) do
-    Result[i] := TRSNPC.Create(json.Item[i]);
+    Result[i] := new TRSEntity(json.Item[i]);
 end;
 
 
-function TRSNPC.GetCuboidArray(me: TPoint; angle: Single = $FFFF): TCuboidArray;
+function TRSEntity.GetCuboidArray(me: TPoint; angle: Single = $FFFF): TCuboidArray;
   //gets the points on the rotated minimap which correspond the closest to actual tile coordinates
   function _GetMinimapGrid(angle: Single): TVector3Array;
   var x,y: Integer;
@@ -101,7 +165,7 @@ begin
 
   if Self.Filter <> [] then
   begin
-    dots := Minimap.GetFilteredDotArray(ERSMinimapDot.NPC, Self.Walker^.FiltersToMM(me, [Self.Filter], angle));
+    dots := Minimap.GetFilteredDotArray(Self.MinimapDots, Self.Walker^.FiltersToMM(me, [Self.Filter], angle));
     if dots = [] then Exit;
 
     dots := dots.SortFrom(Minimap.Center);
@@ -130,15 +194,15 @@ begin
 end;
 
 (*
-## TRSNPC.Find
+## TRSEntity.Find
 ```pascal
-function TRSNPC.Find(cuboidArray: TCuboidArray): T2DPointArray;
+function TRSEntity.Find(cuboidArray: TCuboidArray): T2DPointArray;
 ```
-Internal TRSNPC method responsible for filtering a TCuboidArray by what's visible in the mainscren.
-This is meant to filter TRSNPC.GetCuboidArray() so targets that are outside of the mainscreen are filtered out.
+Internal TRSEntity method responsible for filtering a TCuboidArray by what's visible in the mainscren.
+This is meant to filter TRSEntity.GetCuboidArray() so targets that are outside of the mainscreen are filtered out.
 You will probably never need to use this directly.
 *)
-function TRSNPC.FindOnMainScreen(cuboidArray: TCuboidArray): T2DPointArray;
+function TRSEntity.FindOnMainScreen(cuboidArray: TCuboidArray): T2DPointArray;
 var
   i: Integer;
   tpa: TPointArray;
@@ -158,14 +222,14 @@ begin
 end;
 
 (*
-## TRSNPCV2.Find
+## TRSEntityV2.Find
 ```pascal
-function TRSNPCV2.FindEx(out cuboids: TCuboidArray; out atpa: T2DPointArray): Boolean;
-function TRSNPCV2.Find(out atpa: T2DPointArray): Boolean;
-function TRSNPCV2.FindFromPosition(me: TPoint; out atpa: T2DPointArray): Boolean;
+function TRSEntityV2.FindEx(out cuboids: TCuboidArray; out atpa: T2DPointArray): Boolean;
+function TRSEntityV2.Find(out atpa: T2DPointArray): Boolean;
+function TRSEntityV2.FindFromPosition(me: TPoint; out atpa: T2DPointArray): Boolean;
 ```
-TRSNPCV2 method used to find a {ref}`TRSNPCV2`. If found returns true, if not returns false.
-The "extended" method in particular is mostly meant for debugging and is the one used when you call `Debug(TRSNPC)`.
+TRSEntityV2 method used to find a {ref}`TRSEntityV2`. If found returns true, if not returns false.
+The "extended" method in particular is mostly meant for debugging and is the one used when you call `Debug(TRSEntity)`.
 
 Example:
 ```pascal
@@ -173,7 +237,7 @@ WriteLn RSObjects.GEBank.Find(atpa); //Be in ge and with a walker setup there.
 Debug(atpa);
 ```
 *)
-function TRSNPC.FindEx(me: TPoint; out cuboids: TCuboidArray; out atpa: T2DPointArray): Boolean;
+function TRSEntity.FindEx(me: TPoint; out cuboids: TCuboidArray; out atpa: T2DPointArray): Boolean;
 begin
   cuboids := Self.GetCuboidArray(me);
   if cuboids = [] then Exit;
@@ -183,14 +247,14 @@ begin
 end;
 
 
-function TRSNPC.Find(out atpa: T2DPointArray): Boolean;
+function TRSEntity.Find(out atpa: T2DPointArray): Boolean;
 var
   cuboids: TCuboidArray;
 begin
   Result := Self.FindEx(Self.Walker^.Position(), cuboids, atpa);
 end;
 
-function TRSNPC.FindFrom(position: TPoint; out atpa: T2DPointArray): Boolean;
+function TRSEntity.FindFrom(position: TPoint; out atpa: T2DPointArray): Boolean;
 var
   cuboids: TCuboidArray;
 begin
@@ -198,14 +262,14 @@ begin
 end;
 
 (*
-## TRSNPC._UpTextCheck
+## TRSEntity._UpTextCheck
 ```pascal
-function TRSNPC._UpTextCheck(out shouldExit: Boolean): Boolean;
+function TRSEntity._UpTextCheck(out shouldExit: Boolean): Boolean;
 ```
-Internal TRSNPC helper method that is used by all hovering methods.
+Internal TRSEntity helper method that is used by all hovering methods.
 You probably don't need to use this directly.
 *)
-function TRSNPC._UpTextCheck(out shouldExit: Boolean): Boolean;
+function TRSEntity._UpTextCheck(out shouldExit: Boolean): Boolean;
 var
   text: String;
 begin
@@ -232,14 +296,14 @@ begin
 end;
 
 (*
-## TRSNPC._HoverHelper
+## TRSEntity._HoverHelper
 ```pascal
-function TRSNPC._HoverHelper(attempts: Integer; trackTarget: Boolean): Boolean;
+function TRSEntity._HoverHelper(attempts: Integer; trackTarget: Boolean): Boolean;
 ```
-Internal helper method used to hover a TRSNPC target.
+Internal helper method used to hover a TRSEntity target.
 You should not use this directly.
 *)
-function TRSNPC._HoverHelper(attempts: Integer): Boolean;
+function TRSEntity._HoverHelper(attempts: Integer): Boolean;
 var
   shouldExit: Boolean;
   attempt: Integer;
@@ -276,16 +340,16 @@ begin
 end;
 
 (*
-## TRSNPC._WalkHoverHelper
+## TRSEntity._WalkHoverHelper
 ```pascal
-function TRSNPC._WalkHoverHelper(attempts: Integer; trackTarget: Boolean): Boolean;
+function TRSEntity._WalkHoverHelper(attempts: Integer; trackTarget: Boolean): Boolean;
 ```
-Internal helper method used to walk and hover a TRSNPC target.
+Internal helper method used to walk and hover a TRSEntity target.
 You should not use this directly.
 
-This is responsible for deciding wether we should walk to a TRSNPC target or not before attempting to hover it.
+This is responsible for deciding wether we should walk to a TRSEntity target or not before attempting to hover it.
 *)
-function TRSNPC._WalkHoverHelper(attempts: Integer): Boolean;
+function TRSEntity._WalkHoverHelper(attempts: Integer): Boolean;
 var
   shouldExit: Boolean;
   attempt: Integer;
@@ -321,7 +385,7 @@ begin
     begin
       path := Self.Walker^.WebGraph^.FindObjectPath(me, closest);
       if path = [] then
-        raise GetDebugLn('TRSNPC', 'Can''t path to object.');
+        raise GetDebugLn('TRSEntity', 'Can''t path to object.');
     end;
 
     if me.DistanceTo(closest) > 50 then
@@ -343,14 +407,14 @@ begin
 end;
 
 (*
-## TRSNPC._PreHoverHelper
+## TRSEntity._PreHoverHelper
 ```pascal
-function TRSNPC.PreHoverHelper(attempts: Integer): Boolean;
+function TRSEntity.PreHoverHelper(attempts: Integer): Boolean;
 ```
-Internal helper method used to pre-hover a TRSNPC target.
+Internal helper method used to pre-hover a TRSEntity target.
 You should not use this directly.
 *)
-function TRSNPC._PreHoverHelper(me: TPoint; attempts: Integer = 2): Boolean;
+function TRSEntity._PreHoverHelper(me: TPoint; attempts: Integer = 2): Boolean;
 var
   attempt: Integer;
   atpa: T2DPointArray;
@@ -365,16 +429,16 @@ end;
 
 
 (*
-## TRSNPC._ClickHelper
+## TRSEntity._ClickHelper
 ```pascal
-function TRSNPC._ClickHelper(leftClick: Boolean): Boolean;
+function TRSEntity._ClickHelper(leftClick: Boolean): Boolean;
 ```
-Internal TRSNPC helper method that is used by other clicking methods.
+Internal TRSEntity helper method that is used by other clicking methods.
 You probably don't need to use this directly.
 
 This is what's responsible for deciding if we click a target we are hovering or not.
 *)
-function TRSNPC._ClickHelper(leftClick: Boolean): Boolean;
+function TRSEntity._ClickHelper(leftClick: Boolean): Boolean;
 begin
   Self.Walker^.TargetUpText := [];
   Self.Walker^.ActionUpText := [];
@@ -400,16 +464,16 @@ begin
 end;
 
 (*
-## TRSNPC._SelectHelper
+## TRSEntity._SelectHelper
 ```pascal
-function TRSNPC._SelectHelper(action: TStringArray): Boolean;
+function TRSEntity._SelectHelper(action: TStringArray): Boolean;
 ```
-Internal TRSNPC helper method that is used by other select methods.
+Internal TRSEntity helper method that is used by other select methods.
 You probably don't need to use this directly.
 
 This is what is responsible for deciding if we just left click a target we are hovering or right click it and choose an option.
 *)
-function TRSNPC._SelectHelper(action: TStringArray): Boolean;
+function TRSEntity._SelectHelper(action: TStringArray): Boolean;
 begin
   Self.Walker^.TargetUpText := [];
   Self.Walker^.ActionUpText := [];
@@ -431,11 +495,11 @@ end;
 
 
 (*
-## TRSNPC.Hover
+## TRSEntity.Hover
 ```pascal
-function TRSNPC.Hover(attempts: Integer = 2; trackTarget: Boolean = TRSNPC.TrackTarget): Boolean;
+function TRSEntity.Hover(attempts: Integer = 2; trackTarget: Boolean = TRSEntity.TrackTarget): Boolean;
 ```
-Method used to hover a TRSNPC target if it's found on the mainscreen.
+Method used to hover a TRSEntity target if it's found on the mainscreen.
 It can update the target position while the mouse moves with **trackTarget**.
 
 Example:
@@ -444,7 +508,7 @@ RSW.WebWalk(WaspWeb.LOCATION_VARROCK);
 RSObjects.GEBank.Hover(); //Be in GE with a walker setup there.
 ```
 *)
-function TRSNPC.Hover(attempts: Integer = 2): Boolean;
+function TRSEntity.Hover(attempts: Integer = 2): Boolean;
 begin
   if ChooseOption.IsOpen() then
   begin
@@ -454,9 +518,9 @@ begin
   end;
 
   if Self.Walker = nil then
-    raise GetDebugLn('TRSNPC', 'Missing the walker pointer.');
+    raise GetDebugLn('TRSEntity', 'Missing the walker pointer.');
   if Self.Coordinates = [] then
-    raise GetDebugLn('TRSNPC', 'FindFrom requires the object to have coordinates.');
+    raise GetDebugLn('TRSEntity', 'FindFrom requires the object to have coordinates.');
 
   //TODO:
   //if not Self.Walker^.MakePointVisible(Self.Coordinates) then Exit;
@@ -465,11 +529,11 @@ begin
 end;
 
 (*
-## TRSNPC.WalkHover
+## TRSEntity.WalkHover
 ```pascal
-function TRSNPC.WalkHover(attempts: Integer = 2; trackTarget: Boolean = TRSNPC.TrackTarget): Boolean;
+function TRSEntity.WalkHover(attempts: Integer = 2; trackTarget: Boolean = TRSEntity.TrackTarget): Boolean;
 ```
-Method used to walk and hover a TRSNPC target if it's found on the mainscreen after walking.
+Method used to walk and hover a TRSEntity target if it's found on the mainscreen after walking.
 It can update the target position while the mouse moves with **trackTarget**.
 
 Example:
@@ -479,7 +543,7 @@ RSW.WebWalk(WaspWeb.LOCATION_VARROCK);
 RSObjects.GEBank.WalkHover();
 ```
 *)
-function TRSNPC.WalkHover(attempts: Integer = 2): Boolean;
+function TRSEntity.WalkHover(attempts: Integer = 2): Boolean;
 var
   me, closest: TPoint;
   path: TPointArray;
@@ -503,7 +567,7 @@ begin
   begin
     path := Self.Walker^.WebGraph^.FindObjectPath(me, closest);
     if path = [] then
-      raise GetDebugLn('TRSNPC', 'Can''t path to object.');
+      raise GetDebugLn('TRSEntity', 'Can''t path to object.');
     hasPath := True;
   end;
 
@@ -522,11 +586,11 @@ end;
 
 
 (*
-## TRSNPC.Click
+## TRSEntity.Click
 ```pascal
-function TRSNPC.Click(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
+function TRSEntity.Click(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
 ```
-Method used to click a TRSNPC target if it's found on the mainscreen.
+Method used to click a TRSEntity target if it's found on the mainscreen.
 
 Example:
 ```pascal
@@ -534,17 +598,17 @@ Example:
 WriteLn RSObjects.GEBank.Click();
 ```
 *)
-function TRSNPC.Click(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
+function TRSEntity.Click(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
 begin
   Result := Self.Hover(attempts) and Self._ClickHelper(leftClick);
 end;
 
 (*
-## TRSNPC.SelectOption
+## TRSEntity.SelectOption
 ```pascal
-function TRSNPC.SelectOption(action: TStringArray; attempts: Integer = 2): Boolean;
+function TRSEntity.SelectOption(action: TStringArray; attempts: Integer = 2): Boolean;
 ```
-Method used to select an option on a TRSNPC target if it's found on the mainscreen.
+Method used to select an option on a TRSEntity target if it's found on the mainscreen.
 
 Example:
 ```pascal
@@ -552,7 +616,7 @@ Example:
 WriteLn RSObjects.GEBank.SelectOption(['Collect']);
 ```
 *)
-function TRSNPC.Select(action: TStringArray; attempts: Integer = 2): Boolean;
+function TRSEntity.Select(action: TStringArray; attempts: Integer = 2): Boolean;
 begin
   Self.Walker^.ActionUpText := action;
   Result := Self.Hover(attempts) and Self._SelectHelper(action);
@@ -560,11 +624,11 @@ begin
 end;
 
 (*
-## TRSNPC.WalkClick
+## TRSEntity.WalkClick
 ```pascal
-function TRSNPC.WalkClick(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
+function TRSEntity.WalkClick(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
 ```
-Method used to walk and click a TRSNPC target if it's found on the mainscreen.
+Method used to walk and click a TRSEntity target if it's found on the mainscreen.
 
 Example:
 ```pascal
@@ -572,23 +636,23 @@ Example:
 WriteLn RSObjects.GEBank.WalkClick();
 ```
 *)
-function TRSNPC.WalkClick(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
+function TRSEntity.WalkClick(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
 begin
   if Self.Walker = nil then
-    raise GetDebugLn('TRSNPC', 'Missing the walker pointer.');
+    raise GetDebugLn('TRSEntity', 'Missing the walker pointer.');
   if Self.Coordinates = [] then
-    raise GetDebugLn('TRSNPC', 'FindFrom requires the object to have coordinates.');
+    raise GetDebugLn('TRSEntity', 'FindFrom requires the object to have coordinates.');
 
   Result := Self.WalkHover(attempts) and Self._ClickHelper(leftClick);
   Self.Walker^.TargetUpText := [];
 end;
 
 (*
-## TRSNPC.WalkSelectOption
+## TRSEntity.WalkSelectOption
 ```pascal
-function TRSNPC.WalkSelectOption(action: TStringArray; attempts: Integer = 2): Boolean;
+function TRSEntity.WalkSelectOption(action: TStringArray; attempts: Integer = 2): Boolean;
 ```
-Method used to walk and select an option on a TRSNPC target if it's found on the mainscreen.
+Method used to walk and select an option on a TRSEntity target if it's found on the mainscreen.
 
 Example:
 ```pascal
@@ -596,12 +660,12 @@ Example:
 WriteLn RSObjects.GEBank.WalkSelectOption(['Collect']);
 ```
 *)
-function TRSNPC.WalkSelect(action: TStringArray; attempts: Integer = 2): Boolean;
+function TRSEntity.WalkSelect(action: TStringArray; attempts: Integer = 2): Boolean;
 begin
   if Self.Walker = nil then
-    raise GetDebugLn('TRSNPC', 'Missing the walker pointer.');
+    raise GetDebugLn('TRSEntity', 'Missing the walker pointer.');
   if Self.Coordinates = [] then
-    raise GetDebugLn('TRSNPC', 'FindFrom requires the object to have coordinates.');
+    raise GetDebugLn('TRSEntity', 'FindFrom requires the object to have coordinates.');
 
   Self.Walker^.ActionUpText := action;
 
@@ -612,7 +676,7 @@ begin
 end;
 
 
-function TRSNPC.DistanceTo(pt: TPoint): Double;
+function TRSEntity.DistanceTo(pt: TPoint): Double;
 var
   dist: Double;
   i: Integer;
@@ -626,7 +690,7 @@ begin
   end;
 end;
 
-function TRSNPCArray.ClosestIndex(pt: TPoint): Integer;
+function TRSEntityArray.ClosestIndex(pt: TPoint): Integer;
 var
   closest, dist: Double;
   i, j: Integer;
@@ -644,19 +708,19 @@ begin
 end;
 
 (*
-## TImage.DrawNPC
+## TImage.DrawEntity
 ```pascal
-procedure TImage.DrawNPC(npc: TRSNPC);
+procedure TImage.DrawEntity(npc: TRSEntity);
 ```
-Helper method to debug TRSNPCs.
+Helper method to debug TRSEntity.
 *)
-procedure TImage.DrawNPC(npc: TRSNPC);
+procedure TImage.DrawEntity(entity: TRSEntity);
 var
   atpa: T2DPointArray;
   cuboids: TCuboidArray;
   i: Integer;
 begin
-  if not npc.FindEx(npc.Walker^.Position(), cuboids, atpa) then Exit;
+  if not entity.FindEx(entity.Walker^.Position(), cuboids, atpa) then Exit;
 
   Self.DrawColor := $00FFFF;
   for i := 0 to High(cuboids) do
@@ -673,22 +737,22 @@ begin
     Self.DrawTPA(cuboids[i].Edges());
 end;
 
-procedure ShowOnTarget(npc: TRSNPC); overload;
+procedure ShowOnTarget(entity: TRSEntity); overload;
 var
   img: TImage;
 begin
   img := Target.GetImage();
-  img.DrawNPC(npc);
+  img.DrawEntity(entity);
   img.Show();
 end;
 
 
-function ToString(constref npc: TRSNPC): String; override;
+function ToString(constref entity: TRSEntity): String; override;
 begin
-  Result := '[' + ToString(npc.UpText) + ', ' +
-                  ToString(npc.Size) + ', ' +
-                  ToString(npc.Coordinates) + ', ' +
-                  ToString(npc.Finder) + ', ' +
-                  ToString(npc.UseDot) + ', ' +
-                  ToString(npc.Track) + ']';
+  Result := '[' + ToString(entity.UpText) + ', ' +
+                  ToString(entity.Size) + ', ' +
+                  ToString(entity.Coordinates) + ', ' +
+                  ToString(entity.Finder) + ', ' +
+                  ToString(entity.MinimapDots) + ', ' +
+                  ToString(entity.Track) + ']';
 end;

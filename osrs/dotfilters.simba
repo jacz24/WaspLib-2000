@@ -184,17 +184,21 @@ function TRSMinimap.GetFilteredDot(dot: ERSMinimapDot; dotFilters: TRSDotFilterA
 ```
 Retrieves and filters minimap dots according to the specified TRSDotFilters.
 *)
-function TRSMinimap.GetFilteredDotArray(dot: ERSMinimapDot; dotFilters: TRSDotFilterArray): TPointArray;
+function TRSMinimap.GetFilteredDotArray(dots: ERSMinimapDots; dotFilters: TRSDotFilterArray): TPointArray;
+var
+  tpa, flat: TPointArray;
 begin
-  Result := dotFilters.FilterDots(Self.GetDots(dot));
+  for tpa in Self.GetDots(dots) do
+    flat += tpa;
+  Result := dotFilters.FilterDots(flat);
 end;
 
-function TRSMinimap.GetFilteredDot(dot: ERSMinimapDot; dotFilters: TRSDotFilterArray): TPoint;
+function TRSMinimap.GetFilteredDot(dots: ERSMinimapDots; dotFilters: TRSDotFilterArray): TPoint;
 var
-  dots: TPointArray;
+  tpa: TPointArray;
 begin
-  dots := Self.GetFilteredDotArray(dot, dotFilters);
-  if dots <> [] then
-    Result := dots[0];
+  tpa := Self.GetFilteredDotArray(dots, dotFilters);
+  if tpa <> [] then
+    Result := tpa[0];
 end;
 

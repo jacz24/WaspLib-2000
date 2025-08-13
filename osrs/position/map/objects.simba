@@ -12,7 +12,7 @@ type
 ## TRSObject
 Main type to handle {ref}`RSObjects`.
 *)
-  TRSObject = record
+  TRSObject = object
     UpText: TStringArray;
     Size: TVector3;
     Coordinates: TPointArray;
@@ -29,37 +29,52 @@ Array of {ref}`TRSObject`.
   TRSObjectArray = array of TRSObject;
 
 (*
-## RSObject.Create
+## RSObject.Construct
 ```pascal
-function TRSObject.Create(size: TVector3; coordinates: TPointArray): TRSObject; static;
-function TRSObject.Create(json: TJSONItem): TRSObject; static; overload;
+function TRSObject.Construct(walker: PRSWalker; size: TVector3; coordinates: TPointArray; uptext: TStringArray = []): TRSObject; static;
+function TRSObject.Construct(json: TJSONItem): TRSObject; static; overload;
 ```
-Constructor functions to build your {ref}`TRSObject`.
+Constructors to create your {ref}`TRSObject`.
 
-The `json` version of the function expects a specific json structure which is
-the one that {ref}`Map JSONs` provide.
+Assuming you create the `RSObject` manually, the constructor will provide you
+with a fully built `TRSObject` without a finder.
 
-Example:
+You may optionally assign one later if you want:
 ```pascal
 {$I WaspLib/osrs.simba}
-
 var
   obj: TRSObject;
 begin
   Map.Setup([ERSChunk.VARROCK]);
-  //Item[0] because this returns a JSON array. For mroe info read Map JSONs documentation.
-  obj := TRSObject.Create(ObjectsJSON.GetByName('bank', 1).Item[0]);
+  obj := new TRSObject(@Map.Walker, [1,1,7], [[8648,36686]], ['Bank booth']);
+  //obj.Finder.Colors += $FFFFFF;
+end;
+```
+
+The `json` version of the function expects a specific json structure which is
+the one that {ref}`Map JSONs` provide:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  obj: TRSObject;
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+  //Item[0] because this returns a JSON array. For more info read Map JSONs documentation.
+  obj := new TRSObject(ObjectsJSON.GetByName('bank', 1).Item[0]);
 end;
 ```
 *)
-function TRSObject.Create(size: TVector3; coordinates: TPointArray): TRSObject; static;
+function TRSObject.Construct(walker: PRSWalker; size: TVector3; coordinates: TPointArray; uptext: TStringArray = []): TRSObject; static;
 begin
   Result.Coordinates := coordinates;
   SetLength(Result.Rotations, Length(coordinates));
   Result.Size := size;
+  if uptext <> [] then
+    Result.UpText := uptext;
+  Result.Walker := walker;
 end;
 
-function TRSObject.Create(json: TJSONItem): TRSObject; static; overload;
+function TRSObject.Construct(json: TJSONItem): TRSObject; static; overload;
 var
   i: Integer;
   colors: TColorArray;
@@ -125,7 +140,7 @@ begin
 end;
 ```
 *)
-function TRSObjectArray.Create(json: TJSONItem): TRSObjectArray; static; overload;
+function TRSObjectArray.Construct(json: TJSONItem): TRSObjectArray; static;
 var
   i: Integer;
 begin
@@ -134,7 +149,7 @@ begin
 
   SetLength(Result, json.Count);
   for i := 0 to High(Result) do
-    Result[i] := TRSObject.Create(json.Item[i]);
+    Result[i] := new TRSObject(json.Item[i]);
 end;
 
 

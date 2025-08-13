@@ -593,8 +593,15 @@ begin
 end;
 
 
+procedure TAntibanFormHelper.OnSleepChange(sender: TLazObject);
+begin
 
 
+  Self.Config.Data.Item['sleep'].Item[1].AsFloat := Self.SleepLengthSpinner.Value;
+  Self.Config.Data.Item['sleep'].Item[2].AsFloat := Self.SleepVariationSpinner.Value;
+  Self.Config.Data.Item['sleep'].Item[3].AsFloat := Self.SleepLogoutSpinner.Value;
+  Self.Config.SaveConfig();
+end;
 
 procedure TAntibanFormHelper.OnSleepPreset(sender: TLazObject);
 begin
@@ -884,16 +891,19 @@ begin
   Self.SleepTimeEdit.AnchorVertically(lbl);
 
   Self.SleepLengthSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Sleep Length (hours):', 'Pick an aproximated length of sleep.', 0, 0, 120);
+  Self.SleepLengthSpinner.OnChange := @Self.OnSleepChange;
   Self.SleepLengthSpinner.AnchorHorizontally(Self.SleepTimeEdit, 60);
 
   Self.SleepVariationSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Variation (%):', 'Edit the sleep variation.', 0, 0, 120);
-  Self.SleepVariationSpinner.Text := '3.3';
+  Self.SleepVariationSpinner.Text := '3.30';
+  Self.SleepVariationSpinner.OnChange := @Self.OnSleepChange;
   Self.SleepVariationSpinner.AnchorHorizontally(Self.SleepLengthSpinner, 60);
 
   Self.SleepLogoutSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Logout chance (%):', 'Edit the sleep logout chance.', 0, 0, 120);
   Self.SleepLogoutSpinner.MinValue := 0.00;
   Self.SleepLogoutSpinner.MaxValue := 1.00;
-  Self.SleepLogoutSpinner.Text := '0.7';
+  Self.SleepLogoutSpinner.Text := '0.70';
+  Self.SleepLogoutSpinner.OnChange := @Self.OnSleepChange;
   Self.SleepLogoutSpinner.AnchorHorizontally(Self.SleepVariationSpinner, 60);
 
   Self.SleepPresetButton := TLazButton.CreateEx(parent, 'Preset', 'Reset the task list with a preset.', 0, 0, 100);

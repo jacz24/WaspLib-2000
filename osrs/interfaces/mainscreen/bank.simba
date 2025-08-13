@@ -103,7 +103,7 @@ Record responsible to handle the {ref}`Bank` interface.
     _IsOpenHelperBox: TBox;
     {%codetools on}
     Banks: TRSObjectArray;
-    Bankers: TRSNPCArray;
+    Bankers: TRSEntityArray;
   end;
 
 (*
@@ -1206,8 +1206,8 @@ end;
 
 procedure TRSBank._SetupMapObjects();
 begin
-  Self.Banks := TRSObjectArray.Create(ObjectsJSON.GetByAction('Bank'));
-  Self.Bankers := TRSNPCArray.Create(NPCsJSON.GetByAction('Bank'));
+  Self.Banks   := TRSObjectArray.Construct(ObjectsJSON.GetByAction('Bank'));
+  Self.Bankers := TRSEntityArray.Construct(NPCsJSON.GetByAction('Bank'));
 end;
 
 
@@ -1222,7 +1222,7 @@ This assumes that {ref}`Map` is being used and setup.
 It's possible to use this with other systems but you need to configure it all
 manually.
 
-It will always hover the closest bank {ref}`TRSObject` or {ref}`TRSNPC` on your
+It will always hover the closest bank {ref}`TRSObject` or {ref}`TRSEntity` on your
 loaded map.
 
 If you are too far, it will attempt to walk closer to it.
@@ -1230,7 +1230,7 @@ If you are too far, it will attempt to walk closer to it.
 function TRSBank.Hover(walk: Boolean = True): Boolean;
 var
   obj: TRSObject;
-  npc: TRSNPC;
+  npc: TRSEntity;
   me: TPoint;
 begin
   if (Self.Banks = []) or (Self.Bankers = []) then
@@ -1281,7 +1281,7 @@ end.
 function TRSBank.Open(walk: Boolean = True): Boolean;
 var
   obj: TRSObject;
-  npc: TRSNPC;
+  npc: TRSEntity;
   me: TPoint;
 begin
   if MSInterface.IsOpen() then
