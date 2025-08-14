@@ -190,7 +190,7 @@ begin
 end;
 
 
-function TWebGraph.FindPath(Start, Goal: Integer; Rnd:Double=0): TIntegerArray;
+function TWebGraph.FindPath(start, finish: Integer; rnd:Double=0): TIntegerArray;
 type
   TNode = record
     Indices: TIntegerArray;
@@ -221,7 +221,8 @@ begin
   SetLength(visited, Length(Self.Nodes));
 
   // block certain paths by marking them as visited
-  for i:=0 to High(Self.Blocking) do Visited[Self.Blocking[i]] := True;
+  for i:=0 to High(Self.Blocking) do
+    visited[Self.Blocking[i]] := True;
 
   // ...
   while Length(queue) <> 0 do
@@ -231,7 +232,7 @@ begin
     if Visited[cIdx] then Continue; //skip overwrapping paths..
     Visited[cIdx] := True;
 
-    if (cIdx = Goal) then
+    if (cIdx = finish) then
       Exit(current.Indices);
 
     p := Self.Nodes[cIdx];
@@ -399,7 +400,6 @@ begin
 
   nS := Self.FindNearestNodes(p, attempts);
   nG := Self.FindNearestNodes(q, attempts);
-
   if nS[0] = nG[0] then Exit([p, q]);
 
   if (Length(nG) = 1) and (Length(Self.Paths[nG[0]]) = 0) then

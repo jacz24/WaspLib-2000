@@ -212,17 +212,6 @@ begin
 end;
 
 
-function BankItemsPrioritySort(constref l, r: TRSBankItem): Int32;
-var
-  a, b: Boolean;
-begin
-  a := Bank.Items.Contains(l.Item);
-  b := Bank.Items.Contains(r.Item);
-  if a = b then Exit(0);
-  if a then Exit(-1);
-  Result := 1;
-end;
-
 (*
 ## InventoryLayout.Withdraw
 ```pascal
@@ -263,7 +252,7 @@ begin
   begin
     newTab := Bank.GetCurrentTab();
     if oldTab <> newTab then
-      arr.Sort(@BankItemsPrioritySort);
+      Sort(arr, @Bank.PrioritySort);
 
     //2 attempts per item
     if not Bank.Withdraw(arr[0], False) and not Bank.Withdraw(arr[0], False) then

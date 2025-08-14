@@ -1,5 +1,7 @@
 (*
-## OverheadFinder - Prayer/Protection Overhead Detection System
+## OverheadFinder
+
+Prayer/Protection Overhead Detection System.
 
 A comprehensive system for detecting and locating prayer and protection overhead icons
 in Old School RuneScape. This module uses template matching to identify various

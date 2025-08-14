@@ -233,11 +233,8 @@ begin
 end;
 
 function TRSDepositBox.DepositItem(Item: TRSItem; useQuantityButtons: Boolean): Boolean; overload;
-var
-  tmp: TRSBankItem;
 begin
-  tmp := tmp.Create(item);
-  Result := Self.DepositItem(tmp, useQuantityButtons);
+  Result := Self.DepositItem(new TRSBankItem(item), useQuantityButtons);
 end;
 
 function TRSDepositBox.DepositItemArray(items: array of TRSBankItem; useQuantityButtons: Boolean): Boolean;

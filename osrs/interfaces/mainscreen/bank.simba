@@ -1204,6 +1204,37 @@ begin
   Self.Depleted := Result and Self.IsOpen();
 end;
 
+
+(*
+## Bank.PrioritySort
+```pascal
+function TRSBank.PrioritySort(constref l, r: TRSBankItem): Int32;
+```
+Sorting function for {ref}`TRSBankItemArray`.
+
+In a nutshell, this can be used to sort a `TRSBankitemArray` by prioritizing
+what's currently visitble.
+
+Do keep in mind that this uses {ref}`ItemFinder` to work and may be a bad idea
+to use in huge arrays.
+
+Example:
+```pascal
+bankItems := Sorted(bankItems, @Bank.PrioritySort);
+```
+*)
+function TRSBank.PrioritySort(constref l, r: TRSBankItem): Int32;
+var
+  a, b: Boolean;
+begin
+  a := Self.Items.Contains(l.Item);
+  b := Self.Items.Contains(r.Item);
+  if a = b then Exit(0);
+  if a then Exit(-1);
+  Result := 1;
+end;
+
+
 procedure TRSBank._SetupMapObjects();
 begin
   Self.Banks   := TRSObjectArray.Construct(ObjectsJSON.GetByAction('Bank'));

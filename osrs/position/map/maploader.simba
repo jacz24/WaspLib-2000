@@ -449,7 +449,7 @@ var
   offset: TPoint;
 begin
   Result := Self.GetGraph(region.Name, region.Plane, collision);
-  offset := [padding, padding];
+  offset := region.Offset - region.Region.TopLeft + Point(padding, padding);
 
   Result.Nodes := Result.Nodes.Offset(offset);
   Result.WalkableSpace := Result.WalkableSpace.Offset(offset);

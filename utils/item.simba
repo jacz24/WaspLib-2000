@@ -58,7 +58,7 @@ type
 The main type that represents, well, a runescape item.
 `TRSItem` is a type of `String` and therefore inherits all `String` methods.
 *)
-  TRSItem = type String;
+  TRSItem = String;
 (*
 ## TRSItemArray
 Array type of `TRSItem`.
@@ -221,5 +221,3 @@ begin
   if Self.Noted then
     Result := 'noted ' + Result.ToLower();
 end;
-
-
