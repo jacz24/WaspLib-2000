@@ -26,7 +26,6 @@ Type used to filter minimap dots.
     Poly   : TPolygon;
     Circle : TCircle;
     Inside : Boolean;
-
     Timeout: Boolean;
     Timer  : TCountDown;
   end;

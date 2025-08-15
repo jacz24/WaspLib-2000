@@ -22,11 +22,11 @@ type
 ## TRSEntity
 Main type to handle {ref}`RSEntity`.
 *)
-  TRSEntity = object
+  TRSEntity = record
     UpText: TStringArray;
     Size: TVector3;
     Coordinates: TPointArray;
-    Filter: TRSDotFilter;
+    Filter: TRSDotFilterArray;
     Finder: TColorFinder;
     Track: Boolean;
     MinimapDots: ERSMinimapDots;
@@ -40,14 +40,14 @@ Array of {ref}`TRSEntity`.
   TRSEntityArray = array of TRSEntity;
 
 (*
-## RSEntity.Construct
+## RSEntity.Create
 ```pascal
-function TRSEntity.Construct(walker: PRSWalker; size: TVector3; coordinates: TPointArray; uptext: TStringArray = []; dots: ERSMinimapDots = []): TRSEntity; static;
-function TRSEntity.Construct(json: TJSONItem): TRSEntity; static; overload;
+function TRSEntity.Create(walker: PRSWalker; size: TVector3; coordinates: TPointArray; uptext: TStringArray = []; dots: ERSMinimapDots = []): TRSEntity; static;
+function TRSEntity.Create(json: TJSONItem): TRSEntity; static; overload;
 ```
-Constructors to create your {ref}`TRSEntity`.
+Createors to create your {ref}`TRSEntity`.
 
-Assuming you create the `RSEntity` manually, the constructor will provide you
+Assuming you create the `RSEntity` manually, the Createor will provide you
 with a fully built `TRSEntity` without a finder.
 
 You may optionally assign one later if you want:
@@ -56,9 +56,9 @@ You may optionally assign one later if you want:
 var
   npc: TRSEntity;
 begin
-  Map.Setup([ERSChunk.VARROCK]);
-  npc := new TRSEntity(@Map.Walker, [1,1,7], [[8652,36686]], ['Banked'], [ERSMinimapDot.NPC]);
-  //npc.Finder.Colors += $FFFFFF;
+  Map.Setup([ERSChunk.VARROCK]);             //varrock west southern most banker
+  npc := TRSEntity.Create(@Map.Walker, [1,1,7], [[8652,36686]], ['Banker'], [ERSMinimapDot.NPC]);
+  //npc.Finder.Colors += [$543B3B, 10.121, EColorSpace.HSV, [0.528, 1.275, 1.199]];
 end;
 ```
 
@@ -71,11 +71,11 @@ var
 begin
   Map.Setup([ERSChunk.VARROCK]);
   //Item[0] because this returns a JSON array. For more info read Map JSONs documentation.
-  npc := new TRSEntity(NPCsJSON.GetByName('banker', 1).Item[0]);
+  npc := TRSEntity.Create(NPCsJSON.GetByName('banker', 1).Item[0]);
 end;
 ```
 *)
-function TRSEntity.Construct(walker: PRSWalker; size: TVector3; coordinates: TPointArray; uptext: TStringArray = []; dots: ERSMinimapDots = []): TRSEntity; static;
+function TRSEntity.Create(walker: PRSWalker; size: TVector3; coordinates: TPointArray; uptext: TStringArray = []; dots: ERSMinimapDots = []): TRSEntity; static;
 begin
   Result.Coordinates := coordinates;
   Result.Size := size;
@@ -85,10 +85,11 @@ begin
   if uptext <> [] then
     Result.UpText := uptext;
 
+  Result.Finder := Default(TColorFinder);
   Result.Walker := walker;
 end;
 
-function TRSEntity.Construct(json: TJSONItem): TRSEntity; static; overload;
+function TRSEntity.Create(json: TJSONItem): TRSEntity; static; overload;
 var
   i: Integer;
   colors: TColorArray;
@@ -127,7 +128,7 @@ begin
   Result.Walker := @Map.Walker;
 end;
 
-function TRSEntityArray.Construct(json: TJSONItem): TRSEntityArray; static;
+function TRSEntityArray.Create(json: TJSONItem): TRSEntityArray; static;
 var
   i: Integer;
 begin
@@ -136,7 +137,7 @@ begin
 
   SetLength(Result, json.Count);
   for i := 0 to High(Result) do
-    Result[i] := new TRSEntity(json.Item[i]);
+    Result[i] := TRSEntity.Create(json.Item[i]);
 end;
 
 
@@ -165,7 +166,7 @@ begin
 
   if Self.Filter <> [] then
   begin
-    dots := Minimap.GetFilteredDotArray(Self.MinimapDots, Self.Walker^.FiltersToMM(me, [Self.Filter], angle));
+    dots := Minimap.GetFilteredDotArray(Self.MinimapDots, Self.Walker^.FiltersToMM(me, Self.Filter, angle));
     if dots = [] then Exit;
 
     dots := dots.SortFrom(Minimap.Center);
