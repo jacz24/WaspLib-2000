@@ -233,7 +233,7 @@ begin
   sleep += 59.99 * Self.GetProbability(EBiometric.SLEEP_S) * ONE_SECOND;
 
   if sleep > ONE_DAY then sleep -= ONE_DAY;
-  Result := FormatMilliseconds(Round(sleep), 'h:m:s');
+  Result := FormatMilliseconds(Round(sleep), 'hh:mm:ss');
 end;
 
 (*

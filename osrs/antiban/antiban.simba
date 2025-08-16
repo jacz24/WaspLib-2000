@@ -73,6 +73,7 @@ var
   current, res: TDateTime;
 begin
   current := TDateTime.CreateFromSystem();
+
   res := (TDateTime.CreateFromISO(current.Date.ToString('YYYY-MM-DD') + 'T' + time)) - current;
   if (res < 0) then res += 1;
 
