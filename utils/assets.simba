@@ -107,6 +107,7 @@ var
   i: Integer;
 begin
   Self.Timeout.Start(100);
+  HTTPClient.ConnectTimeout := 5000;
   if Self.Fonts.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'fonts/fonts.zip.hash') then
   begin
     WriteLn GetDebugLn('WLAssets', 'Updating fonts.zip', ELogLevel.WARN);
@@ -238,6 +239,8 @@ begin
       raise GetDebugLn('WLAssets', 'Timed out downloading assets: ' + ToStr(Self.Queue));
     end;
   end;
+
+  HTTPClient.ConnectTimeout := 3000;
 end;
 
 var

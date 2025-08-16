@@ -183,7 +183,7 @@ begin
   breakObj.AddFloat('interval', 90);
   breakObj.AddFloat('length', 10);
   breakObj.AddFloat('variation', 0.33);
-  value := 0.05 * Biometrics.RandomDouble(1.0);
+  value := Round(0.05 * Biometrics.RandomDouble(1.0), 2);
   breakObj.AddFloat('logout', value);
   arr.Add('break', breakObj);
   Self.BreakList.Items.Add(Self.GetBreakListString('60 mins', '10 mins', '33%', ToStr(Round(value*100, 2)) + '%'));
@@ -193,7 +193,7 @@ begin
   breakObj.AddFloat('interval', 250);
   breakObj.AddFloat('length', 20);
   breakObj.AddFloat('variation', 0.33);
-  value := 0.5 * Biometrics.RandomDouble(1.3);
+  value := Round(0.5 * Biometrics.RandomDouble(1.3), 2);
   breakObj.AddFloat('logout', value);
   arr.Add('break', breakObj);
   Self.BreakList.Items.Add(Self.GetBreakListString('250 mins', '20 mins', '33%', ToStr(Round(value*100, 2)) + '%'));
@@ -214,7 +214,8 @@ end;
 procedure TAntibanFormHelper.SetDefaultSleep();
 var
   sleepObj: TJSONObject;
-  i: Integer;
+  i: integer;
+  event: TLazNotifyEvent;
 begin
   Antiban.Sleeps := [];
   Antiban.AddSleep(Biometrics.GetSleepHour(), Biometrics.GetSleepLength(), 0.33, 0.8 * Biometrics.RandomDouble(1.3));
@@ -235,10 +236,21 @@ begin
 
   Self.Config.Data.Add('sleep', sleepObj);
 
+  event := Self.SleepTimeEdit.OnChange;
+  Self.SleepTimeEdit.OnChange         := nil;
+  Self.SleepLengthSpinner.OnChange    := nil;
+  Self.SleepVariationSpinner.OnChange := nil;
+  Self.SleepLogoutSpinner.OnChange    := nil;
+
   Self.SleepTimeEdit.Text          := Antiban.Sleeps[0].Time;
   Self.SleepLengthSpinner.Value    := Antiban.Sleeps[0].Length;
   Self.SleepVariationSpinner.Value := Antiban.Sleeps[0].StdVar;
   Self.SleepLogoutSpinner.Value    := Antiban.Sleeps[0].LogoutChance;
+
+  Self.SleepTimeEdit.OnChange         := event;
+  Self.SleepLengthSpinner.OnChange    := event;
+  Self.SleepVariationSpinner.OnChange := event;
+  Self.SleepLogoutSpinner.OnChange    := event;
 end;
 
 
@@ -328,6 +340,8 @@ begin
 end;
 
 procedure TAntibanFormHelper.LoadSleep(obj: TJSONObject; updateList: Boolean = True);
+var
+  event: TLazNotifyEvent;
 begin
   Antiban.AddSleep(
     obj.Item['time'].AsString, obj.Item['length'].AsFloat,
@@ -336,11 +350,22 @@ begin
 
   if updateList then
   begin
+    event := Self.SleepTimeEdit.OnChange;
+    Self.SleepTimeEdit.OnChange         := nil;
+    Self.SleepLengthSpinner.OnChange    := nil;
+    Self.SleepVariationSpinner.OnChange := nil;
+    Self.SleepLogoutSpinner.OnChange    := nil;
+
     Self.SleepCheckbox.SetChecked(obj.Item['enabled'].AsBool);
     Self.SleepTimeEdit.Text          := obj.Item['time'].AsString;
     Self.SleepLengthSpinner.Value    := obj.Item['length'].AsFloat;
     Self.SleepVariationSpinner.Value := obj.Item['variation'].AsFloat;
     Self.SleepLogoutSpinner.Value    := obj.Item['logout'].AsFloat;
+
+    Self.SleepTimeEdit.OnChange         := event;
+    Self.SleepLengthSpinner.OnChange    := event;
+    Self.SleepVariationSpinner.OnChange := event;
+    Self.SleepLogoutSpinner.OnChange    := event;
   end;
 end;
 
@@ -952,14 +977,14 @@ begin
   Self.SleepLengthSpinner.AnchorHorizontally(Self.SleepTimeEdit, 60);
 
   Self.SleepVariationSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Variation (%):', 'Edit the sleep variation.', 0, 0, 120);
-  Self.SleepVariationSpinner.Text := '3.30';
+  Self.SleepVariationSpinner.MinValue := 0.00;
+  Self.SleepVariationSpinner.MaxValue := 1.00;
   Self.SleepVariationSpinner.OnChange := @Self.OnSleepChange;
   Self.SleepVariationSpinner.AnchorHorizontally(Self.SleepLengthSpinner, 60);
 
   Self.SleepLogoutSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Logout chance (%):', 'Edit the sleep logout chance.', 0, 0, 120);
   Self.SleepLogoutSpinner.MinValue := 0.00;
   Self.SleepLogoutSpinner.MaxValue := 1.00;
-  Self.SleepLogoutSpinner.Text := '0.70';
   Self.SleepLogoutSpinner.OnChange := @Self.OnSleepChange;
   Self.SleepLogoutSpinner.AnchorHorizontally(Self.SleepVariationSpinner, 60);
 

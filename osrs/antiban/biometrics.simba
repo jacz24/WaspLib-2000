@@ -251,7 +251,7 @@ WriteLn Biometrics.GetSleepLength();
 *)
 function TBiometrics.GetSleepLength(): Single;
 begin
-  Result := 6 + 4 * Self.GetProbability(EBiometric.SLEEP_LENGTH);
+  Result := Round(6 + 4 * Self.GetProbability(EBiometric.SLEEP_LENGTH), 2);
 end;
 
 

@@ -95,30 +95,30 @@ end;
 
 
 
-procedure TAntiban._UpdateTask(index: Integer; method: TAntibanMethod; interval, randomness: Double);
+procedure TAntiban._UpdateTask(idx: Integer; method: TAntibanMethod; interval, randomness: Double);
 begin
-  Self.Tasks[index].Interval := interval;
-  Self.Tasks[index].Method := @method;
-  Self.Tasks[index].StdVar := randomness;
-  Self.Tasks[index].Countdown.Start(Random(Trunc(Abs(GaussRand(Self.Tasks[index].Interval, Self.Tasks[index].Interval * Self.Tasks[index].StdVar)))));
+  Self.Tasks[idx].Interval := interval;
+  Self.Tasks[idx].Method := @method;
+  Self.Tasks[idx].StdVar := randomness;
+  Self.Tasks[idx].Countdown.Start(Random(Trunc(Abs(GaussRand(Self.Tasks[idx].Interval, Self.Tasks[idx].Interval * Self.Tasks[idx].StdVar)))));
 end;
 
-procedure TAntiban._UpdateBreak(index: Integer; interval, length, randomness, logoutChance: Double);
+procedure TAntiban._UpdateBreak(idx: Integer; interval, length, randomness, logoutChance: Double);
 begin
-  Self.Breaks[index].Interval := interval;
-  Self.Breaks[index].Length := length;
-  Self.Breaks[index].StdVar := randomness;
-  Self.Breaks[index].LogoutChance := logoutChance;
-  Self.Breaks[index].Next := GetTimeRunning() + Abs(GaussRand(Self.Breaks[index].Interval, Self.Breaks[index].Interval * Self.Breaks[index].StdVar));
+  Self.Breaks[idx].Interval := interval;
+  Self.Breaks[idx].Length := length;
+  Self.Breaks[idx].StdVar := randomness;
+  Self.Breaks[idx].LogoutChance := logoutChance;
+  Self.Breaks[idx].Next := GetTimeRunning() + Abs(GaussRand(Self.Breaks[idx].Interval, Self.Breaks[idx].Interval * Self.Breaks[idx].StdVar));
 end;
 
-procedure TAntiban._UpdateSleep(index: Integer; time: String; length, randomness, logoutChance: Double);
+procedure TAntiban._UpdateSleep(idx: Integer; time: String; length, randomness, logoutChance: Double);
 begin
-  Self.Sleeps[index].Time := time;
-  Self.Sleeps[index].Length := length;
-  Self.Sleeps[index].StdVar := randomness;
-  Self.Sleeps[index].LogoutChance := logoutChance;
-  Self.Sleeps[index].Next := Self.TimeRunningAtClock(Self.Sleeps[index].Time, Self.Sleeps[index].StdVar);
+  Self.Sleeps[idx].Time := time;
+  Self.Sleeps[idx].Length := length;
+  Self.Sleeps[idx].StdVar := randomness;
+  Self.Sleeps[idx].LogoutChance := logoutChance;
+  Self.Sleeps[idx].Next := Self.TimeRunningAtClock(Self.Sleeps[idx].Time, Self.Sleeps[idx].StdVar);
 end;
 
 
@@ -185,7 +185,7 @@ end;
 (*
 ## Antiban.AddSleep
 ```pascal
-procedure TAntiban.AddSleep(time: String; length: Double; randomness: Double = 0.10; logoutChance: Double = 0.5);
+procedure TAntiban.AddSleep(time: String; length: Double; randomness: Double = 0.1; logoutChance: Double = 0.5);
 ```
 Schedule a sleep break. A sleep break is a large break, it can be any length but
 it's usually the several hours and also the largest one/ones.
@@ -208,7 +208,7 @@ Example:
 Antiban.AddSleep('01:30:45', 8 * ONE_HOUR, 0.1, 0.8); //At 01:30:45 on our computer time the script will take a break for 8 hours, subject to variance from the randomness variable.
 ```
 *)
-procedure TAntiban.AddSleep(time: String; length: Double; randomness: Double = 0.10; logoutChance: Double = 0.5);
+procedure TAntiban.AddSleep(time: String; length: Double; randomness: Double = 0.1; logoutChance: Double = 0.5);
 var
   len: Integer;
 begin
