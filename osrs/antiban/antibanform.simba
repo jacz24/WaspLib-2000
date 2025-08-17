@@ -394,7 +394,7 @@ begin
   else Self.LoadSleep(sleep);
 
   if (tasks=nil) or (breaks=nil) or (sleep=nil) then
-    Self.Config.SaveConfig();
+    Self.Config.Save();
 end;
 
 
@@ -517,7 +517,7 @@ begin
 
   Self.Config.Data.Item['tasks'].Delete(oldArray);
   Self.Config.Data.Item['tasks'].AddArray('tasks', newArray);
-  Self.Config.SaveConfig();
+  Self.Config.Save();
 end;
 
 procedure TAntibanFormHelper.OnTaskEdit(sender: TLazObject);
@@ -547,7 +547,7 @@ begin
   Delete(Antiban.Tasks, idx, 1);
   item := Self.Config.Data.Item['tasks'].Item['tasks'];
   item.Delete(item.Item[idx]);
-  Self.Config.SaveConfig();
+  Self.Config.Save();
   Self.TaskList.ItemIndex := idx-1;
   Self.OnTaskSelected(Self.TaskList, False);
 end;
@@ -555,7 +555,7 @@ end;
 procedure TAntibanFormHelper.OnTaskPreset(sender: TLazObject);
 begin
   Self.SetDefaultTasks();
-  Self.Config.SaveConfig();
+  Self.Config.Save();
 end;
 
 
@@ -627,7 +627,7 @@ begin
 
   Self.Config.Data.Item['breaks'].Delete(oldArray);
   Self.Config.Data.Item['breaks'].AddArray('breaks', newArray);
-  Self.Config.SaveConfig();
+  Self.Config.Save();
 end;
 
 procedure TAntibanFormHelper.OnBreakEdit(sender: TLazObject);
@@ -657,7 +657,7 @@ begin
   Delete(Antiban.Breaks, idx, 1);
   item := Self.Config.Data.Item['breaks'].Item['breaks'];
   item.Delete(item.Item[idx]);
-  Self.Config.SaveConfig();
+  Self.Config.Save();
   Self.BreakList.ItemIndex := idx-1;
   Self.OnBreakSelected(Self.BreakList, False);
 end;
@@ -665,7 +665,7 @@ end;
 procedure TAntibanFormHelper.OnBreakPreset(sender: TLazObject);
 begin
   Self.SetDefaultBreaks();
-  Self.Config.SaveConfig();
+  Self.Config.Save();
 end;
 
 
@@ -680,13 +680,13 @@ begin
   Self.Config.Data.Item['sleep'].Item['length'].AsFloat    := Self.SleepLengthSpinner.Value;
   Self.Config.Data.Item['sleep'].Item['variation'].AsFloat := Self.SleepVariationSpinner.Value;
   Self.Config.Data.Item['sleep'].Item['logout'].AsFloat    := Self.SleepLogoutSpinner.Value;
-  Self.Config.SaveConfig();
+  Self.Config.Save();
 end;
 
 procedure TAntibanFormHelper.OnSleepPreset(sender: TLazObject);
 begin
   Self.SetDefaultSleep();
-  Self.Config.SaveConfig();
+  Self.Config.Save();
 end;
 
 

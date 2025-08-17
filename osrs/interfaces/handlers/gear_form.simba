@@ -78,7 +78,7 @@ begin
   Self.Config.Data := new TJSONObject();
   for i := 0 to High(Self.Sets) do
     Self.Config.Data.Add(Self.Sets[i].Name, Self.Sets[i].ToJSON());
-  Self.Config.SaveConfig();
+  Self.Config.Save();
 end;
 
 procedure TGearFormHelper.AddLayout(gear: TRSGear);

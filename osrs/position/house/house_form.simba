@@ -559,21 +559,21 @@ procedure THouseFormHelper.OnTeleportChange(sender: TLazObject);
 begin
   House.TeleportMode := EHouseTeleportMode(TLazCombobox(sender).ItemIndex);
   House.Loader.Config.Data.Item['TeleportMode'].AsInt := Ord(House.TeleportMode);
-  House.Loader.Config.SaveConfig();
+  House.Loader.Config.Save();
 end;
 
 procedure THouseFormHelper.LocationOnChange(sender: TLazObject);
 begin
   House.Loader.Location := EHouseLocation(TLazComboBox(sender).ItemIndex);
   House.Loader.Config.Data.Item['Location'].AsInt := Ord(House.Loader.Location);
-  House.Loader.Config.SaveConfig();
+  House.Loader.Config.Save();
 end;
 
 procedure THouseFormHelper.DecorationOnChange(sender: TLazObject);
 begin
   House.Loader.SetColors(EHouseDecoration(TLazComboBox(sender).ItemIndex));
   House.Loader.Config.Data.Item['Decoration'].AsInt := Ord(House.Loader.Decoration);
-  House.Loader.Config.SaveConfig();
+  House.Loader.Config.Save();
   House.Loader.Redraw();
   Self.Redraw();
 end;

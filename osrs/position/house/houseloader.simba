@@ -79,7 +79,7 @@ begin
     Self.Config.Data.AddInt('Location', Ord(Self.Location));
     Self.Config.Data.AddInt('Decoration', Ord(Self.Decoration));
     Self.Config.Data.AddInt('TeleportMode', 0);
-    Self.Config.SaveConfig();
+    Self.Config.Save();
     Exit;
   end;
 
@@ -263,7 +263,7 @@ begin
 
   Self.Config.Data.Item['Rooms'].AsString         := CompressString(ECompressAlgo.ZLIB, EBaseEncoding.b64, String.CreateFromBytes(Self.Rooms.ToBytes()));
   Self.Config.Data.Item['TeleportRooms'].AsString := CompressString(ECompressAlgo.ZLIB, EBaseEncoding.b64, String.CreateFromBytes(Self.TeleportRooms.ToBytes()));
-  Self.Config.SaveConfig();
+  Self.Config.Save();
 end;
 
 (*

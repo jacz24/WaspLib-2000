@@ -291,7 +291,7 @@ Cleans up resources used by the Discord client.
 *)
 procedure TDiscordClient.Free;
 begin
-  Self.Config.SaveConfig();
+  Self.Config.Save();
   if Assigned(Self.Config.Data) then
     Self.Config.Data.Destroy();
   if Assigned(Self.HTTPClient) then
@@ -432,7 +432,7 @@ begin
         Self.Config.Data.Item['webhook_url'].AsString := WebhookURL
       else
         Self.Config.Data.AddString('webhook_url', WebhookURL);
-      Self.Config.SaveConfig();
+      Self.Config.Save();
       Self.Logger.Success('Webhook URL set and validated');
       Exit(True);
     end;
@@ -445,7 +445,7 @@ begin
         Self.Config.Data.Item['webhook_url'].AsString := WebhookURL
       else
         Self.Config.Data.AddString('webhook_url', WebhookURL);
-      Self.Config.SaveConfig();
+      Self.Config.Save();
       Self.Logger.Success('Webhook URL set and validated');
       Exit(True);
     end;
@@ -484,7 +484,7 @@ begin
     Self.Config.Data.Item['webhook_username'].AsString := Username
   else
     Self.Config.Data.AddString('webhook_username', Username);
-  Self.Config.SaveConfig();
+  Self.Config.Save();
   Self.Logger.Info('Username set to: ' + Username);
 end;
 
@@ -507,7 +507,7 @@ begin
     Self.Config.Data.Item['webhook_avatar'].AsString := AvatarURL
   else
     Self.Config.Data.AddString('webhook_avatar', AvatarURL);
-  Self.Config.SaveConfig();
+  Self.Config.Save();
   Self.Logger.Info('Avatar URL set to: ' + AvatarURL);
 end;
 

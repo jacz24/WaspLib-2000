@@ -78,7 +78,7 @@ begin
   Self.Config.Data := new TJSONObject();
   for i := 0 to High(Self.Layouts) do
     Self.Config.Data.Add(Self.Layouts[i].Name, Self.Layouts[i].ToJSON());
-  Self.Config.SaveConfig();
+  Self.Config.Save();
 end;
 
 procedure TInventoryFormHelper.AddLayout(layout: TRSInventoryLayoutSlots);

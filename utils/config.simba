@@ -51,13 +51,13 @@ begin
 end;
 
 (*
-## TConfigJSON.SaveConfig
+## TConfigJSON.Save
 ```pascal
-procedure TConfigJSON.SaveConfig();
+procedure TConfigJSON.Save();
 ```
 Used to save your `TConfigJSON`.
 *)
-procedure TConfigJSON.SaveConfig();
+procedure TConfigJSON.Save();
 begin
   TJSONParser(Self.Data).Save(Self.Path, [EJSONFormatOption.USE_TABS, EJSONFormatOption.SINGLE_LINE_ARR], 1);
 end;

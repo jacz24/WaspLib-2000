@@ -24,6 +24,8 @@ Main type for the {ref}`TScriptForm`.
     Form: TLazForm;
     PageControl: TLazPageControl;
     Start: TLazButton;
+
+    FormClosed: Boolean;
   end;
 
 (*
@@ -50,10 +52,8 @@ ScriptForm.Form.Close();
 *)
 {$H-}
 procedure TScriptForm.OnClose(sender: TLazObject; var closeAction: ELazFormCloseAction);
-var
-  i: Integer;
 begin
-  TerminateScript();
+  Self.FormClosed := True;
 end;
 
 (*
@@ -202,7 +202,12 @@ procedure TScriptForm.Run();
 begin
   try
     Self.Form.ShowModal();
+  except
+    WriteLn(GetExceptionMessage());
   finally
     Self.Form.Free();
   end;
+
+  if Self.FormClosed then
+    TerminateScript('Thank you for using WaspScripts');
 end;
