@@ -159,8 +159,6 @@ begin
   ObjectsJSON.Data := new TJSONArray();
   NPCsJSON.Data := new TJSONArray();
 
-  CollectionBox.Setup();
-
   Profiles.Load();
 
   while RSFonts.Unzipping or ItemFinder.Unzipping do

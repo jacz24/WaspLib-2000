@@ -246,7 +246,11 @@ var
   slot: Integer;
 begin
   if not Self.IsOpen() then Exit;
-  if not Self.Items.FindAll(items, slots) and (slots = []) then Exit;
+  if not Self.Items.FindAll(items, slots) and (slots = []) then
+  begin
+    Self.Depleted := True;
+    Exit;
+  end;
 
   if buttonProbability < 0 then
     buttonProbability := Biometrics.RandomDouble(0.5);

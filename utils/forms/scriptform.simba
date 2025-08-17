@@ -97,7 +97,7 @@ procedure TScriptForm.Setup(caption: String = 'WaspLib');
 var
   panel: TLazPanel;
 begin
-  AccountForm.Setup();
+  ProfileForm.Setup();
   
   Self.Form := TLazForm.Create();
 
@@ -124,7 +124,7 @@ begin
   panel.Align := ELazAlign.Bottom;
   panel.Height := 40;
 
-  AccountForm.SetupUI(panel);
+  ProfileForm.SetupUI(panel);
 
   // Start button
   Self.Start := TLazButton.CreateEx(panel, 'Start', '', 0, 0, Floor(80 * FormUtils.Scale));

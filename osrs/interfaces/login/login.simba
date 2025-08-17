@@ -307,6 +307,8 @@ begin
   if not Self.SelectInput(field) then Exit;
 
   Result := True;
+  if details = '' then
+    raise GetDebugLn('Login', 'Can''t fill ' + ToStr(field) + ' because the details are empty.');
   Keyboard.Send(details, EKeyCode.RETURN);
 end;
 
@@ -581,10 +583,13 @@ Example:
 WriteLn Login.DoLogin(profile);
 ```
 *)
-function TRSLogin.DoLogin(profile: TProfile = ['', '', '', [], True]): Boolean;
+function TRSLogin.DoLogin(profile: TProfile = Default(TProfile)): Boolean;
 var
   timeout: UInt64;
 begin
+  if profile = Default(TProfile) then
+    profile := Profiles[ProfileIndex];
+
   timeout := Time() + 40000;
 
   while not RSClient.IsLoggedIn() and not Lobby.IsOpen() do

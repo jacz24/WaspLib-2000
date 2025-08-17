@@ -44,76 +44,88 @@ Record responsible for biometrics and beiometric behaviour.
 *)
   TBiometrics = record
     Index: Integer;
-    Hash: TByteArray;
+    _Hash: TByteArray;
   end;
 
 (*
-## TBiometrics.GetHash
+## TBiometrics.Hash
 ```pascal
-function TBiometrics.GetHash(): TByteArray;
+property TBiometrics.Hash: TByteArray;
 ```
-Get the current unique hash `TBiometrics.Hash` being used.
-If none is set yet one will be set.
-If the currently used player changed, we also reset the hash.
+Get the current unique hash generated to the for the current {ref}`TProfile` being used.
 
-If there's no Profiles availble we will use a random hash.
+Changing {ref}`ProfileIndex`, will reset the hash.
+
+If there's no {ref}`Profiles` availble WaspLib will use a random hash.
 
 Example:
 ```pascal
-WriteLn Biometrics.GetHash();
+WriteLn Biometrics.Hash;
 ```
 *)
-function TBiometrics.GetHash(): TByteArray;
+property TBiometrics.Hash: TByteArray;
 var
   i: Integer;
-  hash: String;
+  hashStr: String;
 begin
-  if Self.Index <> ProfileIndex then Self.Hash := [];
-  if Self.Hash <> [] then Exit(Self.Hash);
+  if Self.Index <> ProfileIndex then
+    Self._Hash := [];
+  if Self._Hash <> [] then
+    Exit(Self._Hash);
 
-  if not InRange(ProfileIndex, 0, High(Profiles))   then
+  if not InRange(ProfileIndex, 0, High(Profiles)) then
   begin
     for i := 0 to Ord(High(EBiometric)) do
-      Self.Hash += Random(256);
+      Self._Hash += Random(256);
 
-    hash := String.CreateFromBytes(Self.Hash);
-    WriteLn GetDebugLn('Biometrics', 'Random hash created: ' + hash, ELogLevel.WARN);
+    hashStr := String.CreateFromBytes(Self._Hash);
+    WriteLn GetDebugLn('Biometrics', 'Random hash created: ' + hashStr, ELogLevel.WARN);
     WriteLn GetDebugLn('Biometrics', 'Add an account for a permanent one.', ELogLevel.WARN);
 
-    Exit(Self.Hash);
+    Exit(Self._Hash);
   end;
 
-  hash := HashString(EHashAlgo.SHA1, Profiles[ProfileIndex].Name + Profiles[ProfileIndex].Username);
-  WriteLn GetDebugLn('Biometrics', 'Current profile seed: ' + hash, ELogLevel.SUCCESS);
+  hashStr := HashString(EHashAlgo.SHA1, Profiles[ProfileIndex].Name + Profiles[ProfileIndex].Username);
+  WriteLn GetDebugLn('Biometrics', 'Current profile seed: ' + hashStr, ELogLevel.SUCCESS);
 
-  Self.Hash := hash.ToBytes();
-  Result := Self.Hash;
+  Self.Index := ProfileIndex;
+  Self._Hash := hashStr.ToBytes();
+  Result := Self._Hash;
 end;
 
 (*
 ## Biometrics.GetBiometric
 ```pascal
-function TBiometrics.GetBiometric(biometric: EBiometric): Integer;
+function TBiometrics.GetBiometric(biometric: EBiometric): Byte;
+function TBiometrics.GetBiometric(index: Integer): Byte; overload;
 ```
 Get the value that corresponds to the specified `biometric`.
-The value is between 0 and 255.
+
+The return value is a byte, so it's a value between 0 and 255.
 
 Example:
 ```pascal
 WriteLn Biometrics.GetBiometric(EBiometric.FKEYS);
 ```
 *)
-function TBiometrics.GetBiometric(biometric: EBiometric): Integer;
+function TBiometrics.GetBiometric(biometric: EBiometric): Byte;
 begin
-  Result := Self.GetHash[biometric];
+  Result := Self.Hash[biometric];
+end;
+
+function TBiometrics.GetBiometric(index: Integer): Byte; overload;
+begin
+  Result := Self.Hash[index];
 end;
 
 (*
 ## Biometrics.GetProbability
 ```pascal
 function TBiometrics.GetProbability(biometric: EBiometric): Single;
+function TBiometrics.GetProbability(index: Integer): Single; overload;
 ```
-Get a probability from the current hash that is represented by `biometric`.
+Get a probability from the current hash that is represented by `biometric` or `index`.
+
 The probability is between 0.0 and 1.0.
 
 Example:
@@ -124,6 +136,11 @@ WriteLn Biometrics.GetProbability(EBiometric.FKEYS);
 function TBiometrics.GetProbability(biometric: EBiometric): Single;
 begin
   Result := Self.GetBiometric(biometric) / 255;
+end;
+
+function TBiometrics.GetProbability(index: Integer): Single; overload;
+begin
+  Result := Self.GetBiometric(index) / 255;
 end;
 
 
@@ -184,6 +201,7 @@ end;
 ```pascal
 function TBiometrics.RandomBoolean(): Boolean;
 function TBiometrics.RandomBoolean(behaviour: EBiometric): Boolean; overload;
+function TBiometrics.RandomBoolean(index: Integer): Boolean; overload;
 function TBiometrics.RandomBoolean(probability: Double): Boolean; overload;
 ```
 Returns a random boolean that is influenced by the current `TBiometrics.Hash`.
@@ -199,9 +217,14 @@ begin
   Result := RandomBoolean(Self.RandomDouble(0.5));
 end;
 
-function TBiometrics.RandomBoolean(behaviour: EBiometric): Boolean; overload;
+function TBiometrics.RandomBoolean(biometric: EBiometric): Boolean; overload;
 begin
-  Result := RandomBoolean(Self.GetProbability(behaviour));
+  Result := RandomBoolean(Self.GetProbability(biometric));
+end;
+
+function TBiometrics.RandomBoolean(index: Integer): Boolean; overload;
+begin
+  Result := RandomBoolean(Self.GetProbability(index));
 end;
 
 function TBiometrics.RandomBoolean(probability: Double): Boolean; overload;

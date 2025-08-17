@@ -219,6 +219,67 @@ end;
 
 
 (*
+## Antiban.TakeBreak
+```pascal
+procedure TAntiban.TakeBreak(var task: TBreakTask);
+```
+Internal function used by {ref}`Antiban.DoAntiban` and is responsible for
+performing the specified break `task`.
+In other words, this is what makes the script take the break.
+*)
+procedure TAntiban.TakeBreak(var task: TBreakTask);
+var
+  countdown: TCountDown;
+  i: Integer;
+  activeTasks: PAntibanTaskArray;
+begin
+  activeTasks := Self.GetActiveTasks();
+  for i := 0 to High(activeTasks) do
+    activeTasks[i]^.countdown.Pause();
+
+  countdown.Start(Abs(Round(GaussRand(task.Length, task.Length * task.StdVar))));
+
+  WriteLn GetDebugLn('Antiban', 'Taking a break for ' + FormatMilliseconds(countdown.Remaining, MINUTES_FORMAL));
+
+  if (@Self.OnStartBreak <> nil) then
+    Self.OnStartBreak(@task);
+
+  if RandomBoolean(task.LogoutChance) then
+  begin
+    WriteLn GetDebugLn('Antiban', 'Logging out.');
+    Logout.Logout();
+  end;
+
+  if RandomBoolean(0.50) then
+    RSClient.LoseFocus();
+
+  repeat
+    if (Inc(i) mod 12 = 0) then
+      WriteLn GetDebugLn('Antiban', 'Break time remaining: ' + FormatMilliseconds(countdown.Remaining, MINUTES_FORMAL));
+
+    if (@Self.OnBreaking <> nil) then //callback runs every 5 seconds
+      Self.OnBreaking(@task, countdown);
+
+    Sleep(Round(Min(countdown.Remaining, 5 * ONE_SECOND)));
+  until countdown.IsFinished;
+
+  WriteLn GetDebugLn('Antiban', 'Break finished');
+
+  if (@Self.OnFinishBreak <> nil) then
+    Self.OnFinishBreak(@task);
+
+  // Offset all tasks & breaks
+  for i := 0 to High(Self.Breaks) do
+    Self.Breaks[i].Next += Time() - (countdown.FFinishTime - countdown.FLength );
+
+  for I := 0 to High(activeTasks) do
+    activeTasks[i]^.countdown.Resume();
+
+  // Setup next time this break happens
+  task.Next := GetTimeRunning() + Abs(GaussRand(task.Interval, task.Interval * task.StdVar));
+end;
+
+(*
 ## Antiban.TakeSleep
 ```pascal
 procedure TAntiban.TakeSleep(var task: TSleepTask);
@@ -279,67 +340,6 @@ begin
 
   // Schedule next time this sleep will happen
   task.Next := Self.TimeRunningAtClock(task.Time, task.StdVar);
-end;
-
-(*
-## Antiban.TakeBreak
-```pascal
-procedure TAntiban.TakeBreak(var task: TBreakTask);
-```
-Internal function used by {ref}`Antiban.DoAntiban` and is responsible for
-performing the specified break `task`.
-In other words, this is what makes the script take the break.
-*)
-procedure TAntiban.TakeBreak(var task: TBreakTask);
-var
-  countdown: TCountDown;
-  i: Integer;
-  activeTasks: PAntibanTaskArray;
-begin
-  activeTasks := Self.GetActiveTasks();
-  for i := 0 to High(activeTasks) do
-    activeTasks[i]^.countdown.Pause();
-
-  countdown.Start(Abs(Round(GaussRand(task.Length, task.Length * task.StdVar))));
-
-  WriteLn GetDebugLn('Antiban', 'Taking a break for ' + FormatMilliseconds(countdown.Remaining, MINUTES_FORMAL));
-
-  if (@Self.OnStartBreak <> nil) then
-    Self.OnStartBreak(@task);
-
-  if RandomBoolean(task.LogoutChance) then
-  begin
-    WriteLn GetDebugLn('Antiban', 'Logging out.');
-    Logout.Logout();
-  end;
-
-  if RandomBoolean(0.50) then
-    RSClient.LoseFocus();
-
-  repeat
-    if (Inc(i) mod 12 = 0) then
-      WriteLn GetDebugLn('Antiban', 'Break time remaining: ' + FormatMilliseconds(countdown.Remaining, MINUTES_FORMAL));
-
-    if (@Self.OnBreaking <> nil) then //callback runs every 5 seconds
-      Self.OnBreaking(@task, countdown);
-
-    Sleep(Round(Min(countdown.Remaining, 5 * ONE_SECOND)));
-  until countdown.IsFinished;
-
-  WriteLn GetDebugLn('Antiban', 'Break finished');
-
-  if (@Self.OnFinishBreak <> nil) then
-    Self.OnFinishBreak(@task);
-
-  // Offset all tasks & breaks
-  for i := 0 to High(Self.Breaks) do
-    Self.Breaks[i].Next += Time() - (countdown.FFinishTime - countdown.FLength );
-
-  for I := 0 to High(activeTasks) do
-    activeTasks[i]^.countdown.Resume();
-
-  // Setup next time this break happens
-  task.Next := GetTimeRunning() + Abs(GaussRand(task.Interval, task.Interval * task.StdVar));
 end;
 
 

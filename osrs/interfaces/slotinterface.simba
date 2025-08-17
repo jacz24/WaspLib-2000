@@ -185,15 +185,15 @@ end.
 ```{figure} ../../images/slotsnear.png
 ```
 *)
-function TRSSlotInterface.Near(slot: Integer; slots: TIntegerArray; maxDist: Single = 60): TIntegerArray;
+function TRSSlotInterface.Near(slot: Integer; slots: TIntegerArray; maxDist: Single = 60; removeSlot: Boolean = True): TIntegerArray;
 var
   slt: Integer;
   boxes: TBoxArray;
   center: TPoint;
 begin
-  slots.Remove(slot);
+  if removeSlot then
+    slots.Remove(slot);
 
-  WriteLn slots;
   if Length(slots) = 0 then
     raise GetDebugLn(Self.Name, 'RandomSlotNearby: No slots to choose from');
 
@@ -230,14 +230,14 @@ end.
 ```{figure} ../../images/slotsrandomnear.gif
 ```
 *)
-function TRSSlotInterface.RandomNear(slot: Integer; slots: TIntegerArray; maxDist: Single = 60; distribution: ERandomDistribution = ERandomDistribution.GAUSS): Integer;
+function TRSSlotInterface.RandomNear(slot: Integer; slots: TIntegerArray; maxDist: Single = 60; removeSlot: Boolean = True; distribution: ERandomDistribution = ERandomDistribution.GAUSS): Integer;
 var
   near, weights: TIntegerArray;
   slt: Integer;
   boxes: TBoxArray;
   center: TPoint;
 begin
-  near := Self.Near(slot, slots, maxDist);
+  near := Self.Near(slot, slots, maxDist, removeSlot);
 
   if distribution = ERandomDistribution.RANDOM then
     Exit(near.Random());

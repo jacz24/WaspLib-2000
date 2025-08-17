@@ -95,13 +95,11 @@ Record responsible to handle the {ref}`Bank` interface.
 
     Depleted: Boolean;
 
-    {%codetools on}
-    Cache: record
+    _Cache: record
       Quantity: Integer;
       Items: TStringMap<TBankPosition>;
     end;
     _IsOpenHelperBox: TBox;
-    {%codetools on}
     Banks: TRSObjectArray;
     Bankers: TRSEntityArray;
   end;
@@ -1023,7 +1021,7 @@ begin
     begin
       data.Tab := Self.GetCurrentTab();
       data.Scroll := Self.Scroll.GetLevel();
-      Self.Cache.Items.Value[item] := data;
+      Self._Cache.Items.Value[item] := data;
       Exit(True);
     end;
 
@@ -1039,7 +1037,7 @@ begin
   if Self.Items.Find(item, data.Slot) then
   begin
     data.Scroll := Self.Scroll.GetLevel();
-    Self.Cache.Items.Value[item] := data;
+    Self._Cache.Items.Value[item] := data;
     Exit(True);
   end;
 
@@ -1051,7 +1049,7 @@ begin
     Exit(Self.Find(item, data, Dec(attempts)));
 
   Result := True;
-  Self.Cache.Items.Value[item] := data;
+  Self._Cache.Items.Value[item] := data;
 end;
 
 
@@ -1075,8 +1073,8 @@ var
   count: Integer;
   attempt: Integer;
 begin
-  if useCache and Self.Cache.Items.Exists(item.Item) then
-    data := Self.Cache.Items.Value[item.Item]
+  if useCache and Self._Cache.Items.Exists(item.Item) then
+    data := Self._Cache.Items.Value[item.Item]
   else if not Self.Find(item.Item, data) then
     Exit;
 
@@ -1245,7 +1243,9 @@ end;
 (*
 ## Bank.Hover
 ```pascal
-function TRSBank.Hover(walk: Boolean = True): Boolean;
+function TRSBank.Hover(constref obj: TRSObject; walk: Boolean = True): Boolean;
+function TRSBank.Hover(constref npc: TRSEntity; walk: Boolean = True): Boolean; overload;
+function TRSBank.Hover(walk: Boolean = True): Boolean; overload;
 ```
 Hovers the closest bank that WaspLib is aware of.
 
@@ -1258,7 +1258,21 @@ loaded map.
 
 If you are too far, it will attempt to walk closer to it.
 *)
-function TRSBank.Hover(walk: Boolean = True): Boolean;
+function TRSBank.Hover(constref obj: TRSObject; walk: Boolean = True): Boolean;
+begin
+  if walk then
+    Exit(obj.WalkHover());
+  Result := obj.Hover();
+end;
+
+function TRSBank.Hover(constref npc: TRSEntity; walk: Boolean = True): Boolean; overload;
+begin
+  if walk then
+    Exit(npc.WalkHover());
+  Result := npc.Hover();
+end;
+
+function TRSBank.Hover(walk: Boolean = True): Boolean; overload;
 var
   obj: TRSObject;
   npc: TRSEntity;
@@ -1272,19 +1286,16 @@ begin
   npc := Self.Bankers[Self.Bankers.ClosestIndex(me)];
 
   if obj.DistanceTo(me) < npc.DistanceTo(me) then
-  begin
-    if walk then Exit(obj.WalkHover());
-    Exit(obj.Hover());
-  end;
-
-  if walk then Exit(npc.WalkHover());
-  Result := npc.Hover();
+    Exit(Self.Hover(obj, walk));
+  Result := Self.Hover(npc, walk);
 end;
 
 (*
 ## Bank.Open
 ```pascal
-function TRSBank.Open(walk: Boolean = True): Boolean;
+function TRSBank.Open(constref obj: TRSObject; walk: Boolean = True): Boolean;
+function TRSBank.Open(constref npc: TRSEntity; walk: Boolean = True): Boolean; overload;
+function TRSBank.Open(walk: Boolean = True): Boolean; overload;
 ```
 Opens the bank for you.
 This assumes that {ref}`Map` is being used and setup.
@@ -1309,7 +1320,37 @@ end.
 ```{figure} ../../images/bankopen.gif
 ```
 *)
-function TRSBank.Open(walk: Boolean = True): Boolean;
+function TRSBank.Open(constref obj: TRSObject; walk: Boolean = True): Boolean;
+begin
+  if walk then
+    Result := obj.WalkSelect(['Bank B', 'Bank E', 'Bank G'])
+  else
+    Result := obj.Select(['Bank B', 'Bank E', 'Bank G']);
+
+  if not Result then
+    if not MainScreen.IsUpText('Bank') or not ChooseOption.Select(['Bank B', 'Bank E']) then
+      Exit;
+
+  obj.Walker^.WaitMoving();
+  Result := Self.WaitOpen(3000);
+end;
+
+function TRSBank.Open(constref npc: TRSEntity; walk: Boolean = True): Boolean; overload;
+begin
+  if walk then
+    Result := npc.WalkSelect(['Bank B', 'Bank E'])
+  else
+    Result := npc.Select(['Bank B', 'Bank E']);
+
+  if not Result then
+    if not MainScreen.IsUpText('Bank') or not ChooseOption.Select(['Bank B', 'Bank E']) then
+      Exit;
+
+  npc.Walker^.WaitMoving();
+  Result := Self.WaitOpen(3000);
+end;
+
+function TRSBank.Open(walk: Boolean = True): Boolean; overload;
 var
   obj: TRSObject;
   npc: TRSEntity;
@@ -1317,7 +1358,8 @@ var
 begin
   if MSInterface.IsOpen() then
   begin
-    if Self.IsOpen() then Exit(True);
+    if Self.IsOpen() then
+      Exit(True);
     MSInterface.Close(True);
   end;
 
@@ -1329,32 +1371,8 @@ begin
   npc := Self.Bankers[Self.Bankers.ClosestIndex(me)];
 
   if obj.DistanceTo(me) < npc.DistanceTo(me) then
-  begin
-    if walk then Result := obj.WalkSelect(['Bank B', 'Bank E', 'Bank G'])
-    else Result := obj.Select(['Bank B', 'Bank E', 'Bank G']);
-
-    if not Result then
-    begin
-      Result := MainScreen.IsUpText('Bank') and ChooseOption.Select(['Bank B', 'Bank E']);
-      if not Result then Exit;
-    end;
-
-    obj.Walker^.WaitMoving();
-    Result := Self.WaitOpen(3000);
-    Exit;
-  end;
-
-  if walk then Result := npc.WalkSelect(['Bank B', 'Bank E'])
-  else Result := npc.Select(['Bank B', 'Bank E']);
-
-  if not Result then
-  begin
-    Result := MainScreen.IsUpText('Bank') and ChooseOption.Select(['Bank B', 'Bank E']);
-    if not Result then Exit;
-  end;
-
-  npc.Walker^.WaitMoving();
-  Result := Self.WaitOpen(3000);
+    Exit(Self.Open(obj, walk));
+  Result := Self.Open(npc, walk);
 end;
 
 
@@ -1394,7 +1412,6 @@ begin
   Self.Draw(img);
   img.Show();
 end;
-
 
 var
 (*
