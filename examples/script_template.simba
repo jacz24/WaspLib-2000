@@ -1,0 +1,103 @@
+{$I WaspLib/osrs.simba}
+
+type
+  EScriptState = enum(
+    LEVELED_UP, WAIT_STATE
+  );
+
+  TScript = record
+
+    Actions, TotalTime, TotalActions: UInt64;
+    Settings: record
+      FormSetting: Boolean;
+    end;
+  end;
+
+procedure TScript.Init(maxTime, maxActions: UInt64);
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+
+  Self.TotalTime := maxTime;
+  Self.TotalActions := maxActions;
+end;
+
+function TScript.GetState(): EScriptState;
+begin
+  if Chat.LeveledUp() then
+    Exit(EScriptState.LEVELED_UP);
+
+  Result := EScriptState.WAIT_STATE;
+end;
+
+
+function TScript.ShouldTerminate(): Boolean;
+begin
+  if Activity.IsFinished then
+    Exit(True);
+
+  if (Self.TotalTime = 0) and (Self.TotalActions = 0) then
+    Exit;
+
+  if Self.Actions >= Self.TotalActions then
+    Exit(True);
+
+  Result := Time() >= Self.TotalTime;
+end;
+
+procedure TScript.Run(maxTime, maxActions: UInt64 = 0);
+var
+  state: EScriptState;
+begin
+  Self.Init(maxTime, maxActions);
+  repeat
+    state := Self.GetState();
+
+    case state of
+      EScriptState.LEVELED_UP: Chat.HandleLevelUp();
+      EScriptState.WAIT_STATE: Sleep(2000, 4000);
+    end;
+  until Self.ShouldTerminate();
+end;
+
+var
+  Script: TScript;
+  Form: TScriptForm;
+  Config: TConfigJSON;
+  FormCheckbox: TLazCheckBox;
+
+procedure TScriptForm.OnStart(sender: TLazObject); override;
+begin
+  inherited;
+
+  Script.Settings.FormSetting := FormCheckbox.IsChecked();
+  if Config.Data.Has('form_setting') then
+    Config.Data.Item['form_setting'].AsBool := Script.Settings.FormSetting
+  else
+    Config.Data.AddBool('form_setting', Script.Settings.FormSetting);
+
+  Config.Save();
+end;
+
+procedure TScriptForm.Init();
+var
+  tab: TLazTabSheet;
+begin
+  Config.Setup('scripts' + PATH_SEP + 'my-script-name');
+
+  Self.Setup();
+  tab := Self.CreateTab('My Script Name');
+
+  FormCheckbox := TLazCheckBox.CreateEx(tab, 'My Setting', 'My setting does cool stuff', 20, 220);
+  if Config.Data.Has('form_setting') then
+    FormCheckbox.SetChecked(Config.Data.Item['form_setting'].AsBool)
+  else
+    FormCheckbox.SetChecked(True);
+
+  Self.CreateAntibanTab();
+  Self.Run();
+end;
+
+begin
+  Form.Init();
+  Script.Run();
+end.

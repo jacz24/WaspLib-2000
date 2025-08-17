@@ -33,6 +33,7 @@ Main type for the {ref}`TScriptForm`.
 {ref}`TScriptForm` has several built-in callbacks setup by default:
 *)
 
+{$H-}
 (*
 ### ScriptForm.OnClose
 ```pascal
@@ -50,7 +51,6 @@ ScriptForm.Form.OnClose := nil;
 ScriptForm.Form.Close();
 ```
 *)
-{$H-}
 procedure TScriptForm.OnClose(sender: TLazObject; var closeAction: ELazFormCloseAction);
 begin
   Self.FormClosed := True;
