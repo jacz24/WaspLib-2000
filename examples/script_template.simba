@@ -56,6 +56,8 @@ begin
       EScriptState.LEVELED_UP: Chat.HandleLevelUp();
       EScriptState.WAIT_STATE: Sleep(2000, 4000);
     end;
+
+    Antiban.DoAntiban();
   until Self.ShouldTerminate();
 end;
 
