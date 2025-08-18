@@ -162,41 +162,41 @@ begin
   arr := new TJSONArray();
 
   breakObj := new TJSONObject();
-  breakObj.AddFloat('interval', 30);
   breakObj.AddFloat('length', 2);
+  breakObj.AddFloat('interval', 30);
   breakObj.AddFloat('variation', 0.33);
   breakObj.AddFloat('logout', 0.01);
   arr.Add('break', breakObj);
-  Self.BreakList.Items.Add(Self.GetBreakListString('30 mins', '2 mins', '33%', '1%'));
+  Self.BreakList.Items.Add(Self.GetBreakListString('2 mins', '30 mins', '33%', '1%'));
   Antiban.AddBreak(30*ONE_MINUTE,2*ONE_MINUTE, 0.33, 0.01);
 
-  breakObj := new TJSONObject();
-  breakObj.AddFloat('interval', 45);
+  breakObj := new TJSONObject(); 
   breakObj.AddFloat('length', 5);
+  breakObj.AddFloat('interval', 45);
   breakObj.AddFloat('variation', 0.33);
   breakObj.AddFloat('logout', 0.02);
   arr.Add('break', breakObj);
-  Self.BreakList.Items.Add(Self.GetBreakListString('45 mins', '5 mins', '33%', '2%'));
+  Self.BreakList.Items.Add(Self.GetBreakListString('5 mins', '45 mins', '33%', '2%'));
   Antiban.AddBreak(45*ONE_MINUTE,5*ONE_MINUTE, 0.33, 0.02);
 
-  breakObj := new TJSONObject();
-  breakObj.AddFloat('interval', 90);
+  breakObj := new TJSONObject();  
   breakObj.AddFloat('length', 10);
+  breakObj.AddFloat('interval', 90);
   breakObj.AddFloat('variation', 0.33);
   value := Round(0.05 * Biometrics.RandomDouble(1.0), 2);
   breakObj.AddFloat('logout', value);
   arr.Add('break', breakObj);
-  Self.BreakList.Items.Add(Self.GetBreakListString('60 mins', '10 mins', '33%', ToStr(Round(value*100, 2)) + '%'));
+  Self.BreakList.Items.Add(Self.GetBreakListString('10 mins', '60 mins', '33%', ToStr(Round(value*100, 2)) + '%'));
   Antiban.AddBreak(60*ONE_MINUTE,10*ONE_MINUTE, 0.33, value);
 
-  breakObj := new TJSONObject();
-  breakObj.AddFloat('interval', 250);
+  breakObj := new TJSONObject();    
   breakObj.AddFloat('length', 20);
+  breakObj.AddFloat('interval', 250);
   breakObj.AddFloat('variation', 0.33);
   value := Round(0.5 * Biometrics.RandomDouble(1.3), 2);
   breakObj.AddFloat('logout', value);
   arr.Add('break', breakObj);
-  Self.BreakList.Items.Add(Self.GetBreakListString('250 mins', '20 mins', '33%', ToStr(Round(value*100, 2)) + '%'));
+  Self.BreakList.Items.Add(Self.GetBreakListString('20 mins', '250 mins', '33%', ToStr(Round(value*100, 2)) + '%'));
   Antiban.AddBreak(250*ONE_MINUTE,20*ONE_MINUTE, 0.33, value);
 
   breaks.AddArray('breaks', arr);
@@ -378,6 +378,12 @@ var
   i: Integer;
 begin
   Self.Config.Setup('antiban' + PATH_SEP + ToStr(ProfileIndex));
+
+  Antiban.Tasks := [];
+  Antiban.Breaks := [];
+  Antiban.Sleeps := [];
+  Self.TaskList.Clear();
+  Self.BreakList.Clear();
 
   for i := 0 to Self.Config.Data.Count-1 do
     case Self.Config.Data.Key[i] of
