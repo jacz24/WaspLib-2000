@@ -300,7 +300,6 @@ begin
     activeTasks[i]^.countdown.Pause();
 
   countdown.Start(Abs(Round(GaussRand(task.Length, task.Length * task.StdVar))));
-
   WriteLn GetDebugLn('Antiban', 'Sleeping for ' + FormatMilliseconds(countdown.Remaining, TIME_FORMAL));
 
   if @Self.OnStartSleep <> nil then Self.OnStartSleep(@task);
@@ -340,6 +339,7 @@ begin
 
   // Schedule next time this sleep will happen
   task.Next := Self.TimeRunningAtClock(task.Time, task.StdVar);
+  WriteLn('TakeSleep Next: ', task);
 end;
 
 
@@ -412,13 +412,17 @@ Antiban.DoBreak();
 function TAntiban.DoBreak(): Boolean;
 var
   i: Integer;
+  t: UInt64;
 begin
+  t := GetTimeRunning();
   for i := 0 to High(Self.Breaks) do
-    if GetTimeRunning() > Self.Breaks[i].Next then
+    if t > Self.Breaks[i].Next then
     begin
       Self.TakeBreak(Self.Breaks[i]);
       Result := True;
-      i := -1; // Restart loop
+      // Restart loop
+      i := -1;
+      t := GetTimeRunning();
     end;
 end;
 
@@ -441,13 +445,17 @@ Antiban.DoSleep();
 function TAntiban.DoSleep(): Boolean;
 var
   i: Integer;
+  t: UInt64;
 begin
+  t := GetTimeRunning();
   for i := 0 to High(Self.Sleeps) do
-    if GetTimeRunning() > Self.Sleeps[i].Next then
+    if t > Self.Sleeps[i].Next then
     begin
       Self.TakeSleep(Self.Sleeps[i]);
       Result := True;
-      i := -1; // Restart loop
+      // Restart loop
+      i := -1;
+      t := GetTimeRunning();
     end;
 end;
 

@@ -216,14 +216,16 @@ var
   sleepObj: TJSONObject;
   i: integer;
   event: TLazNotifyEvent;
+  len: Double;
 begin
   Antiban.Sleeps := [];
-  Antiban.AddSleep(Biometrics.GetSleepHour(), Biometrics.GetSleepLength(), 0.33, 0.8 * Biometrics.RandomDouble(1.3));
+  Antiban.AddSleep(Biometrics.GetSleepHour(), Biometrics.GetSleepLength() * ONE_HOUR, 0.33, 0.8 * Biometrics.RandomDouble(1.3));
 
+  len := Round(Antiban.Sleeps[0].Length / ONE_HOUR, 2);
   sleepObj := new TJSONObject();
   sleepObj.AddBool('enabled', True);
   sleepObj.AddString('time', Antiban.Sleeps[0].Time);
-  sleepObj.AddFloat('length', Antiban.Sleeps[0].Length);
+  sleepObj.AddFloat('length', len);
   sleepObj.AddFloat('variation', Antiban.Sleeps[0].StdVar);
   sleepObj.AddFloat('logout', Antiban.Sleeps[0].LogoutChance);
 
@@ -243,7 +245,7 @@ begin
   Self.SleepLogoutSpinner.OnChange    := nil;
 
   Self.SleepTimeEdit.Text          := Antiban.Sleeps[0].Time;
-  Self.SleepLengthSpinner.Value    := Antiban.Sleeps[0].Length;
+  Self.SleepLengthSpinner.Value    := len;
   Self.SleepVariationSpinner.Value := Antiban.Sleeps[0].StdVar;
   Self.SleepLogoutSpinner.Value    := Antiban.Sleeps[0].LogoutChance;
 
@@ -344,7 +346,7 @@ var
   event: TLazNotifyEvent;
 begin
   Antiban.AddSleep(
-    obj.Item['time'].AsString, obj.Item['length'].AsFloat,
+    obj.Item['time'].AsString, obj.Item['length'].AsFloat * ONE_HOUR,
     obj.Item['variation'].AsFloat, obj.Item['logout'].AsFloat
   );
 
@@ -672,7 +674,7 @@ end;
 procedure TAntibanFormHelper.OnSleepChange(sender: TLazObject);
 begin
   Antiban._UpdateSleep(
-    0, Self.SleepTimeEdit.Text, Self.SleepLengthSpinner.Value,
+    0, Self.SleepTimeEdit.Text, Self.SleepLengthSpinner.Value * ONE_HOUR,
     Self.SleepVariationSpinner.Value, Self.SleepLogoutSpinner.Value
   );
 
