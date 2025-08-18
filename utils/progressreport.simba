@@ -82,3 +82,6 @@ begin
   WriteLn Self.Generate(Self.ValueProvider());
   Self.PrintTimer.Restart();
 end;
+
+var
+  ProgressReport: TProgressReport;

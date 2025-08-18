@@ -219,7 +219,7 @@ var
   len: Double;
 begin
   Antiban.Sleeps := [];
-  Antiban.AddSleep(Biometrics.GetSleepHour(), Biometrics.GetSleepLength() * ONE_HOUR, 0.33, 0.8 * Biometrics.RandomDouble(1.3));
+  Antiban.AddSleep(Biometrics.GetSleepHour(), Biometrics.GetSleepLength() * ONE_HOUR, 0.1, 0.8 * Biometrics.RandomDouble(1.3));
 
   len := Round(Antiban.Sleeps[0].Length / ONE_HOUR, 2);
   sleepObj := new TJSONObject();
@@ -986,7 +986,7 @@ begin
 
   Self.SleepVariationSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Variation (%):', 'Edit the sleep variation.', 0, 0, 120);
   Self.SleepVariationSpinner.MinValue := 0.00;
-  Self.SleepVariationSpinner.MaxValue := 1.00;
+  Self.SleepVariationSpinner.MaxValue := 0.25;
   Self.SleepVariationSpinner.OnChange := @Self.OnSleepChange;
   Self.SleepVariationSpinner.AnchorHorizontally(Self.SleepLengthSpinner, 60);
 
