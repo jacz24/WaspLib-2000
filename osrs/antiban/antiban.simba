@@ -68,7 +68,7 @@ Main record to handle the built-in WaspLib antiban.
     OnSleeping: procedure(task: PSleepTask; var countdown: TCountdown) of object;
   end;
 
-function TAntiban.TimeRunningAtClock(time: String; randomness: Double = 0.10): UInt64;
+function TAntiban.TimeRunningAtClock(time: String; randomness: Double = 0.10): Int64;
 var
   current, res: TDateTime;
 begin
@@ -338,7 +338,6 @@ begin
 
   // Schedule next time this sleep will happen
   task.Next := Self.TimeRunningAtClock(task.Time, task.StdVar);
-  WriteLn('TakeSleep Next: ', task);
 end;
 
 

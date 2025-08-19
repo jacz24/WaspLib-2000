@@ -440,19 +440,24 @@ begin
   value := EnsureRange(value, 0, 100);
 
   old := Self.GetLevel();
+  if old = value then
+    Exit(value);
+
   direction := old > value;
   area := Self.ScrollArea;
 
-  while direction = (old > value) do
+  while (old <> value) and (direction = (old > value)) do
   begin
     Mouse.Move(area);
     scrolls := Random(1, 3);
-    if direction then scrolls := -scrolls;
+    if direction then
+      scrolls := -scrolls;
     Target.MouseScroll(scrolls);
     Result := Self.GetLevel();
 
     //user probably hover them while using RI
-    if Result = old then Mouse.Move(area, True);
+    if Result = old then
+      Mouse.Move(area, True);
     old := Result;
   end;
 end;
