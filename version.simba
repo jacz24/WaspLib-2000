@@ -91,11 +91,11 @@ version.
                                     {$ENDIF};
 
 begin
-  if (SCRIPT_SIMBA_VERSION <> '') and (SCRIPT_SIMBA_VERSION <> SIMBA_VERSION) then
-    raise GetTimeStamp() + ':[WaspLib]: This script was made for Simba version' +
+  if (SCRIPT_SIMBA_VERSION <> '') and not SCRIPT_SIMBA_VERSION.Contains(SIMBA_VERSION) then
+    raise GetTimeStamp() + ':[WaspLib]: This script was made for Simba version ' +
           SCRIPT_SIMBA_VERSION + ' and we are currently using ' + SIMBA_VERSION;
 
   if (SCRIPT_WASPLIB_VERSION <> '') and (SCRIPT_WASPLIB_VERSION <> WASPLIB_VERSION) then
-    raise GetTimeStamp() + ':[WaspLib]: This script was made for WaspLib version' +
+    raise GetTimeStamp() + ':[WaspLib]: This script was made for WaspLib version ' +
           SCRIPT_WASPLIB_VERSION + ' and we are currently using ' + WASPLIB_VERSION;
 end;
