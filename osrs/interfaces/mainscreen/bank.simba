@@ -1323,9 +1323,9 @@ end.
 function TRSBank.Open(constref obj: TRSObject; walk: Boolean = True): Boolean;
 begin
   if walk then
-    Result := obj.WalkSelect(['Bank B', 'Bank E', 'Bank G'])
+    Result := obj.WalkSelect(['Bank B', 'Bank E', 'Bank G', 'Use B'])
   else
-    Result := obj.Select(['Bank B', 'Bank E', 'Bank G']);
+    Result := obj.Select(['Bank B', 'Bank E', 'Bank G', 'Use B']);
 
   if not Result then
     if not MainScreen.IsUpText('Bank') or not ChooseOption.Select(['Bank B', 'Bank E']) then

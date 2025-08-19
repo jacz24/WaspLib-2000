@@ -5,10 +5,9 @@ type
   ELogLevel = enum(SUCCESS, WARN, ERROR);
 
   TLogger = record
-    Name: String;
-    Path: String;
+    Name, Path, PreviousMessage: String;
     TimeRunning: TStopwatch;
-    IsSetup: Boolean;
+    IsSetup, RepeatedMessages: Boolean;
   end;
 
 procedure TLogger._Setup();
@@ -123,7 +122,10 @@ var
 begin
   formatted := Format(text, vars);
   Self.AddLine(Format('[Info] : %s', [formatted]));
+  if not Self.RepeatedMessages and (Self.PreviousMessage = formatted) then
+    Exit;
   WriteLn(GetDebugLn(Self.Name, formatted, True));
+  Self.PreviousMessage := formatted;
 end;
 
 procedure TLogger.Success(text: String; vars: TVariantArray = []);
