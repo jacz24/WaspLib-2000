@@ -85,9 +85,9 @@ version.
                                   {$ENDIF};
 
   SCRIPT_WASPLIB_VERSION: String := {$IFDEF SCRIPT_WASPLIB_VERSION}
-                                    {$MACRO SCRIPT_SIMBA_VERSION}
+                                    {$MACRO SCRIPT_WASPLIB_VERSION}
                                     {$ELSE}
-                                    GetEnvVar('SCRIPT_SIMBA_VERSION')
+                                    GetEnvVar('SCRIPT_WASPLIB_VERSION')
                                     {$ENDIF};
 
 begin
