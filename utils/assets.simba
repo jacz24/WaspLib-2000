@@ -107,125 +107,178 @@ var
   i: Integer;
 begin
   Self.Timeout.Start(100);
-  HTTPClient.ConnectTimeout := 5000;
-  if Self.Fonts.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'fonts/fonts.zip.hash') then
-  begin
-    WriteLn GetDebugLn('WLAssets', 'Updating fonts.zip', ELogLevel.WARN);
-    FileDelete(Self.Fonts.Path);
-    Self.Queue += Self.Fonts.Path;
-    Self.Timeout.Extend(30 * ONE_SECOND);
-    Async.HTTPGetFile(Self.DATA_REPO_URL + 'fonts/fonts.zip', Self.Fonts.Path, @Self.Download);
+  HTTPClient.ConnectTimeout := 8000;
+
+  try
+    if Self.Fonts.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'fonts/fonts.zip.hash') then
+    begin
+      WriteLn GetDebugLn('WLAssets', 'Updating fonts.zip', ELogLevel.WARN);
+      FileDelete(Self.Fonts.Path);
+      Self.Queue += Self.Fonts.Path;
+      Self.Timeout.Extend(30 * ONE_SECOND);
+      Async.HTTPGetFile(Self.DATA_REPO_URL + 'fonts/fonts.zip', Self.Fonts.Path, @Self.Download);
+    end;
+  except
+    WriteLn GetDebugLn('WLAssets', 'Failed to check fonts: ' + GetExceptionMessage(), ELogLevel.ERROR);
   end;
 
   //JSON
-  if Self.Gear.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/gear.json.hash') then
-  begin
-    WriteLn GetDebugLn('WLAssets', 'Updating gear.json', ELogLevel.WARN);
-    FileDelete(Self.Gear.Path);
-    Self.Queue += Self.Gear.Path;
-    Self.Timeout.Extend(30 * ONE_SECOND);
-    Async.HTTPGetFile(Self.DATA_REPO_URL + 'jsons/gear.json', Self.Gear.Path, @Self.Download);
+  try
+    if Self.Gear.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/gear.json.hash') then
+    begin
+      WriteLn GetDebugLn('WLAssets', 'Updating gear.json', ELogLevel.WARN);
+      FileDelete(Self.Gear.Path);
+      Self.Queue += Self.Gear.Path;
+      Self.Timeout.Extend(30 * ONE_SECOND);
+      Async.HTTPGetFile(Self.DATA_REPO_URL + 'jsons/gear.json', Self.Gear.Path, @Self.Download);
+    end;
+  except
+    WriteLn GetDebugLn('WLAssets', 'Failed to check gear: ' + GetExceptionMessage(), ELogLevel.ERROR);
   end;
 
-  if Self.Weapons.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/weapons.json.hash') then
-  begin
-    WriteLn GetDebugLn('WLAssets', 'Updating weapons.json', ELogLevel.WARN);
-    FileDelete(Self.Weapons.Path);
-    Self.Queue += Self.Weapons.Path;
-    Self.Timeout.Extend(30 * ONE_SECOND);
-    Async.HTTPGetFile(Self.DATA_REPO_URL + 'jsons/weapons.json', Self.Weapons.Path, @Self.Download);
+  try
+    if Self.Weapons.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/weapons.json.hash') then
+    begin
+      WriteLn GetDebugLn('WLAssets', 'Updating weapons.json', ELogLevel.WARN);
+      FileDelete(Self.Weapons.Path);
+      Self.Queue += Self.Weapons.Path;
+      Self.Timeout.Extend(30 * ONE_SECOND);
+      Async.HTTPGetFile(Self.DATA_REPO_URL + 'jsons/weapons.json', Self.Weapons.Path, @Self.Download);
+    end;
+  except
+    WriteLn GetDebugLn('WLAssets', 'Failed to check weapons: ' + GetExceptionMessage(), ELogLevel.ERROR);
   end;
 
-  if Self.ItemDefinitions.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/item-definitions.zip.hash') then
-  begin
-    WriteLn GetDebugLn('WLAssets', 'Updating item-definitions.zip', ELogLevel.WARN);
-    FileDelete(Self.ItemDefinitions.Path);
-    Self.Queue += Self.ItemDefinitions.Path;
-    Self.Timeout.Extend(30 * ONE_SECOND);
-    Async.HTTPGetFile(Self.DATA_REPO_URL + 'jsons/item-definitions.zip', Self.ItemDefinitions.Path, @Self.Download);
+  try
+    if Self.ItemDefinitions.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/item-definitions.zip.hash') then
+    begin
+      WriteLn GetDebugLn('WLAssets', 'Updating item-definitions.zip', ELogLevel.WARN);
+      FileDelete(Self.ItemDefinitions.Path);
+      Self.Queue += Self.ItemDefinitions.Path;
+      Self.Timeout.Extend(30 * ONE_SECOND);
+      Async.HTTPGetFile(Self.DATA_REPO_URL + 'jsons/item-definitions.zip', Self.ItemDefinitions.Path, @Self.Download);
+    end;
+  except
+    WriteLn GetDebugLn('WLAssets', 'Failed to check item definitions: ' + GetExceptionMessage(), ELogLevel.ERROR);
   end;
 
-  if Self.Consumables.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/consumables.json.hash') then
-  begin
-    FileDelete(Self.Consumables.Path);
-    Self.Queue += Self.Consumables.Path;
-    Self.Timeout.Extend(30 * ONE_SECOND);
-    Async.HTTPGetFile(Self.DATA_REPO_URL + 'jsons/consumables.json', Self.Consumables.Path, @Self.Download);
+  try
+    if Self.Consumables.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'jsons/consumables.json.hash') then
+    begin
+      FileDelete(Self.Consumables.Path);
+      Self.Queue += Self.Consumables.Path;
+      Self.Timeout.Extend(30 * ONE_SECOND);
+      Async.HTTPGetFile(Self.DATA_REPO_URL + 'jsons/consumables.json', Self.Consumables.Path, @Self.Download);
+    end;
+  except
+    WriteLn GetDebugLn('WLAssets', 'Failed to check consumables: ' + GetExceptionMessage(), ELogLevel.ERROR);
   end;
 
   //Map
   for i := 0 to High(Self.Map) do
   begin
-    if Self.Map[i].Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'map/' + Self.MAP_FILES[i] + '.hash') then
-    begin
-      WriteLn GetDebugLn('WLAssets', 'Updating map/' + Self.MAP_FILES[i], ELogLevel.WARN);
-      FileDelete(Self.Map[i].Path);
-      Self.Queue += Self.Map[i].Path;
-      Self.Timeout.Extend(15 * ONE_SECOND);
-      Async.HTTPGetFile(Self.DATA_REPO_URL + 'map/' + Self.MAP_FILES[i], Self.Map[i].Path, @Self.Download);
+    try
+      if Self.Map[i].Hash = HTTPClient.Get(Self.DATA_REPO_URL + 'map/' + Self.MAP_FILES[i] + '.hash') then
+        Continue;
+    except
+      WriteLn GetDebugLn('WLAssets', 'Failed to check Map files: ' + GetExceptionMessage(), ELogLevel.ERROR);
+      Continue;
     end;
+
+    WriteLn GetDebugLn('WLAssets', 'Updating map/' + Self.MAP_FILES[i], ELogLevel.WARN);
+    FileDelete(Self.Map[i].Path);
+    Self.Queue += Self.Map[i].Path;
+    Self.Timeout.Extend(15 * ONE_SECOND);
+    Async.HTTPGetFile(Self.DATA_REPO_URL + 'map/' + Self.MAP_FILES[i], Self.Map[i].Path, @Self.Download);
   end;
 
   //Finders
   for i := 0 to High(Self.ItemFinder) do
   begin
-    if Self.ItemFinder[i].Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/items/' + Self.ITEMFINDER_FILES[i] + '.hash') then
-    begin
-      WriteLn GetDebugLn('WLAssets', 'Updating items/' + Self.ITEMFINDER_FILES[i], ELogLevel.WARN);
-      FileDelete(Self.ItemFinder[i].Path);
-      Self.Queue += Self.ItemFinder[i].Path;
-      Self.Timeout.Extend(15 * ONE_SECOND);
-      Async.HTTPGetFile(Self.DATA_REPO_URL + 'finders/items/' + Self.ITEMFINDER_FILES[i], Self.ItemFinder[i].Path, @Self.Download);
+    try
+      if Self.ItemFinder[i].Hash = HTTPClient.Get(Self.DATA_REPO_URL + 'finders/items/' + Self.ITEMFINDER_FILES[i] + '.hash') then
+        Continue;
+    except
+      WriteLn GetDebugLn('WLAssets', 'Failed to check ItemFinder files: ' + GetExceptionMessage(), ELogLevel.ERROR);
+      Continue;
     end;
-  end;
 
-  if Self.SpellFinder.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/spells.zip.hash') then
-  begin
-    WriteLn GetDebugLn('WLAssets', 'Updating finders/spells.zip', ELogLevel.WARN);
-    FileDelete(Self.SpellFinder.Path);
-    Self.Queue += Self.SpellFinder.Path;
+    WriteLn GetDebugLn('WLAssets', 'Updating items/' + Self.ITEMFINDER_FILES[i], ELogLevel.WARN);
+    FileDelete(Self.ItemFinder[i].Path);
+    Self.Queue += Self.ItemFinder[i].Path;
     Self.Timeout.Extend(15 * ONE_SECOND);
-    Async.HTTPGetFile(Self.DATA_REPO_URL + 'finders/spells.zip', Self.SpellFinder.Path, @Self.Download);
+    Async.HTTPGetFile(Self.DATA_REPO_URL + 'finders/items/' + Self.ITEMFINDER_FILES[i], Self.ItemFinder[i].Path, @Self.Download);
   end;
 
-  if Self.PrayerFinder.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/prayer.zip.hash') then
-  begin
-    WriteLn GetDebugLn('WLAssets', 'Updating finders/prayer.zip', ELogLevel.WARN);
-    FileDelete(Self.PrayerFinder.Path);
-    Self.Queue += Self.PrayerFinder.Path;
-    Self.Timeout.Extend(15 * ONE_SECOND);
-    Async.HTTPGetFile(Self.DATA_REPO_URL + 'finders/prayer.zip', Self.PrayerFinder.Path, @Self.Download);
+  try
+    if Self.SpellFinder.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/spells.zip.hash') then
+    begin
+      WriteLn GetDebugLn('WLAssets', 'Updating finders/spells.zip', ELogLevel.WARN);
+      FileDelete(Self.SpellFinder.Path);
+      Self.Queue += Self.SpellFinder.Path;
+      Self.Timeout.Extend(15 * ONE_SECOND);
+      Async.HTTPGetFile(Self.DATA_REPO_URL + 'finders/spells.zip', Self.SpellFinder.Path, @Self.Download);
+    end;
+  except
+    WriteLn GetDebugLn('WLAssets', 'Failed to check fonts: ' + GetExceptionMessage(), ELogLevel.ERROR);
   end;
 
-  if Self.OverheadFinder.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/overheads.zip.hash') then
-  begin
-    WriteLn GetDebugLn('WLAssets', 'Updating finders/overheads.zip', ELogLevel.WARN);
-    FileDelete(Self.OverheadFinder.Path);
-    Self.Queue += Self.OverheadFinder.Path;
-    Self.Timeout.Extend(15 * ONE_SECOND);
-    Async.HTTPGetFile(Self.DATA_REPO_URL + 'finders/overheads.zip', Self.OverheadFinder.Path, @Self.Download);
+  try
+    if Self.PrayerFinder.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/prayer.zip.hash') then
+    begin
+      WriteLn GetDebugLn('WLAssets', 'Updating finders/prayer.zip', ELogLevel.WARN);
+      FileDelete(Self.PrayerFinder.Path);
+      Self.Queue += Self.PrayerFinder.Path;
+      Self.Timeout.Extend(15 * ONE_SECOND);
+      Async.HTTPGetFile(Self.DATA_REPO_URL + 'finders/prayer.zip', Self.PrayerFinder.Path, @Self.Download);
+    end;
+  except
+    WriteLn GetDebugLn('WLAssets', 'Failed to check fonts: ' + GetExceptionMessage(), ELogLevel.ERROR);
   end;
 
-  if Self.HouseLayoutFinder.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/house_layout.zip.hash') then
-  begin
-    WriteLn GetDebugLn('WLAssets', 'Updating finders/house_layout.zip', ELogLevel.WARN);
-    FileDelete(Self.HouseLayoutFinder.Path);
-    Self.Queue += Self.HouseLayoutFinder.Path;
-    Self.Timeout.Extend(30 * ONE_SECOND);
-    Async.HTTPGetFile(Self.DATA_REPO_URL + 'finders/house_layout.zip', Self.HouseLayoutFinder.Path, @Self.Download);
+  try
+    if Self.OverheadFinder.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/overheads.zip.hash') then
+    begin
+      WriteLn GetDebugLn('WLAssets', 'Updating finders/overheads.zip', ELogLevel.WARN);
+      FileDelete(Self.OverheadFinder.Path);
+      Self.Queue += Self.OverheadFinder.Path;
+      Self.Timeout.Extend(15 * ONE_SECOND);
+      Async.HTTPGetFile(Self.DATA_REPO_URL + 'finders/overheads.zip', Self.OverheadFinder.Path, @Self.Download);
+    end;
+  except
+    WriteLn GetDebugLn('WLAssets', 'Failed to check fonts: ' + GetExceptionMessage(), ELogLevel.ERROR);
+  end;
+
+  try
+    if Self.HouseLayoutFinder.Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'finders/house_layout.zip.hash') then
+    begin
+      WriteLn GetDebugLn('WLAssets', 'Updating finders/house_layout.zip', ELogLevel.WARN);
+      FileDelete(Self.HouseLayoutFinder.Path);
+      Self.Queue += Self.HouseLayoutFinder.Path;
+      Self.Timeout.Extend(30 * ONE_SECOND);
+      Async.HTTPGetFile(Self.DATA_REPO_URL + 'finders/house_layout.zip', Self.HouseLayoutFinder.Path, @Self.Download);
+    end;
+  except
+    WriteLn GetDebugLn('WLAssets', 'Failed to check fonts: ' + GetExceptionMessage(), ELogLevel.ERROR);
   end;
 
   for i := 0 to High(Self.Images) do
   begin
-    if Self.Images[i].Hash <> HTTPClient.Get(Self.DATA_REPO_URL + 'images/' + Self.IMAGE_FILES[i] + '.hash') then
-    begin
-      WriteLn GetDebugLn('WLAssets', 'Updating images/' + Self.IMAGE_FILES[i], ELogLevel.WARN);
-      FileDelete(Self.Images[i].Path);
-      Self.Queue += Self.Images[i].Path;
-      Self.Timeout.Extend(15 * ONE_SECOND);
-      Async.HTTPGetFile(Self.DATA_REPO_URL + 'images/' + Self.IMAGE_FILES[i], Self.Images[i].Path, @Self.Download);
+    try
+      if Self.Images[i].Hash = HTTPClient.Get(Self.DATA_REPO_URL + 'images/' + Self.IMAGE_FILES[i] + '.hash') then
+        Continue;
+    except
+      WriteLn GetDebugLn('WLAssets', 'Failed to check Images files: ' + GetExceptionMessage(), ELogLevel.ERROR);
+      Continue;
     end;
+
+    WriteLn GetDebugLn('WLAssets', 'Updating images/' + Self.IMAGE_FILES[i], ELogLevel.WARN);
+    FileDelete(Self.Images[i].Path);
+    Self.Queue += Self.Images[i].Path;
+    Self.Timeout.Extend(15 * ONE_SECOND);
+    Async.HTTPGetFile(Self.DATA_REPO_URL + 'images/' + Self.IMAGE_FILES[i], Self.Images[i].Path, @Self.Download);
   end;
+
 
   //wait downloads
   while Length(Self.Queue) > 0 do

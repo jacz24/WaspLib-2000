@@ -75,7 +75,9 @@ begin
 end;
 ```
 *)
-function TRSEntity.Create(walker: PRSWalker; size: TVector3; coordinates: TPointArray; uptext: TStringArray = []; dots: ERSMinimapDots = []): TRSEntity; static;
+function TRSEntity.Create(walker: PRSWalker; size: TVector3; radius: Integer; coordinates: TPointArray; uptext: TStringArray = []; dots: ERSMinimapDots = []): TRSEntity; static;
+var
+  pt: TPoint;
 begin
   Result.Coordinates := coordinates;
   Result.Size := size;
@@ -87,6 +89,9 @@ begin
 
   Result.Finder := Default(TColorFinder);
   Result.Walker := walker;
+
+  for pt in coordinates do
+    Result.Filter += TRSDotFilter.Create([], TCircle.Create(pt.X, pt.Y, radius), True);
 end;
 
 function TRSEntity.Create(json: TJSONItem): TRSEntity; static; overload;
@@ -94,6 +99,7 @@ var
   i: Integer;
   colors: TColorArray;
   best: TBestColor;
+  coord: TJSONArray;
 begin
   if json.Typ <> EJSONType.OBJ then
     raise GetDebugLn('TRSEntity', 'JSON Object expected, got ' + ToStr(json.Typ) + '.');
@@ -113,8 +119,11 @@ begin
 
   //7 is coordinates key in TRSMap jsons
   for i := 0 to json.Item[7].Count-1 do
-    Result.Coordinates += [json.Item[7].Item[i].Item[0].AsInt, json.Item[7].Item[i].Item[1].AsInt];
-
+  begin
+    coord := json.Item[7].Item[i];
+    Result.Coordinates += [coord.Item[0].AsInt, coord.Item[1].AsInt];
+    Result.Filter += TRSDotFilter.Create([], TCircle.Create(coord.Item[0].AsInt, coord.Item[1].AsInt, 40), True);
+  end;
   //8 is colors key in TRSMap jsons
   for i := 0 to json.Item[8].Count-1 do
     colors += json.Item[8].Item[i].AsInt;
@@ -717,11 +726,31 @@ Helper method to debug TRSEntity.
 *)
 procedure TImage.DrawEntity(entity: TRSEntity);
 var
+  me: TPoint;
   atpa: T2DPointArray;
   cuboids: TCuboidArray;
   i: Integer;
+  filters: TRSDotFilterArray;
+  filter: TRSDotFilter;
 begin
-  if not entity.FindEx(entity.Walker^.Position(), cuboids, atpa) then Exit;
+  me := entity.Walker^.Position();
+  filters := entity.Walker^.FiltersToMM(me, entity.Filter, Minimap.GetCompassAngle(False));
+
+  for filter in filters do
+  begin
+    if not Minimap.Bounds.Overlap(filter.Poly.Bounds()) and
+       not Minimap.Bounds.Overlap(filter.Circle.Bounds) then Continue;
+
+    if filter.Inside then
+      Self.DrawColor := $00FF00
+    else
+      Self.DrawColor := $0000FF;
+
+    Self.DrawPolygon(filter.Poly);
+    Self.DrawCircle(filter.Circle);
+  end;
+
+  if not entity.FindEx(me, cuboids, atpa) then Exit;
 
   Self.DrawColor := $00FFFF;
   for i := 0 to High(cuboids) do

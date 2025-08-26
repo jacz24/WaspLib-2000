@@ -307,3 +307,6 @@ if Activity.IsFinished then
 ```
 *)
   Activity: TCountDown;
+
+type
+  EOrientation = enum(HORIZONTAL, VERTICAL);

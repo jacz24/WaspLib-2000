@@ -906,8 +906,9 @@ begin
   Self.BreakPresetButton.BorderSpacing.Around := 10;
 
   Self.BreakLogoutSpinner := TLazFloatSpinEdit.CreateEx(lPanel);
-  Self.BreakLogoutSpinner.MinValue := 0.00;
-  Self.BreakLogoutSpinner.MaxValue := 1.00;
+  //Self.BreakLogoutSpinner.MinValue  := 0.00;
+  //Self.BreakLogoutSpinner.MaxValue  := 1.00;
+  //Self.BreakLogoutSpinner.Increment := 0.10;
   Self.BreakLogoutSpinner.Text := '0.05';
   Self.BreakLogoutSpinner.Align := ELazAlign.Top;
   Self.BreakLogoutSpinner.BorderSpacing.Left := 10;
@@ -985,14 +986,16 @@ begin
   Self.SleepLengthSpinner.AnchorHorizontally(Self.SleepTimeEdit, 60);
 
   Self.SleepVariationSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Variation (%):', 'Edit the sleep variation.', 0, 0, 120);
-  Self.SleepVariationSpinner.MinValue := 0.00;
-  Self.SleepVariationSpinner.MaxValue := 0.25;
+  //Self.SleepVariationSpinner.MinValue  := 0.00;
+  //Self.SleepVariationSpinner.MaxValue  := 0.30;
+  //Self.SleepVariationSpinner.Increment := 0.03;
   Self.SleepVariationSpinner.OnChange := @Self.OnSleepChange;
   Self.SleepVariationSpinner.AnchorHorizontally(Self.SleepLengthSpinner, 60);
 
   Self.SleepLogoutSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Logout chance (%):', 'Edit the sleep logout chance.', 0, 0, 120);
-  Self.SleepLogoutSpinner.MinValue := 0.00;
-  Self.SleepLogoutSpinner.MaxValue := 1.00;
+  //Self.SleepLogoutSpinner.MinValue  := 0.00;
+  //Self.SleepLogoutSpinner.MaxValue  := 1.00;
+  //Self.SleepLogoutSpinner.Increment := 0.10;
   Self.SleepLogoutSpinner.OnChange := @Self.OnSleepChange;
   Self.SleepLogoutSpinner.AnchorHorizontally(Self.SleepVariationSpinner, 60);
 

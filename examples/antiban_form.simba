@@ -1,10 +1,5 @@
 {$I WaspLib/osrs.simba}
 
-procedure TScriptForm.OnStart(sender: TLazObject); override;
-begin
-  inherited;
-end;
-
 var
   form: TScriptForm;
   tab: TLazTabSheet;

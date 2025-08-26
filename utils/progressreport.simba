@@ -26,11 +26,12 @@ procedure TProgressReport.Setup(title: String = 'Progress Report'; headers: TStr
 ```
 Sets up the progress report with title and column headers.
 *)
-procedure TProgressReport.Setup(title: String = 'ProgressReport'; headers: TStringArray = []; printInterval: Integer = ONE_MINUTE * 5);
+procedure TProgressReport.Setup(title: String = 'ProgressReport'; headers: TStringArray = []; valueProvider: function: TStringArray of Object = nil; printInterval: Integer = ONE_MINUTE * 5);
 begin
   Self.Headers := headers;
   Self.Title := title;
   Self.PrintTimer.Start(printInterval);
+  Self.ValueProvider := @valueProvider;
 end;
 
 (*
@@ -83,5 +84,7 @@ begin
   Self.PrintTimer.Restart();
 end;
 
+{$H-}
 var
   ProgressReport: TProgressReport;
+{$H+}

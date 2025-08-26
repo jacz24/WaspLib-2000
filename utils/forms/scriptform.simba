@@ -25,7 +25,12 @@ Main type for the {ref}`TScriptForm`.
     PageControl: TLazPageControl;
     Start: TLazButton;
 
-    FormClosed: Boolean;
+    Goals: record
+      Actions, Time, Level: TLazSpinEdit;
+    end;
+
+    ConfigData: TJSONItem;
+    _FormClosed: Boolean;
   end;
 
 (*
@@ -33,7 +38,7 @@ Main type for the {ref}`TScriptForm`.
 {ref}`TScriptForm` has several built-in callbacks setup by default:
 *)
 
-{$H-}
+
 (*
 ### ScriptForm.OnClose
 ```pascal
@@ -51,10 +56,12 @@ ScriptForm.Form.OnClose := nil;
 ScriptForm.Form.Close();
 ```
 *)
+{$H-}
 procedure TScriptForm.OnClose(sender: TLazObject; var closeAction: ELazFormCloseAction);
 begin
-  Self.FormClosed := True;
+  Self._FormClosed := True;
 end;
+{$H+}
 
 (*
 ### ScriptForm.OnStart
@@ -79,10 +86,34 @@ end;
 *)
 procedure TScriptForm.OnStart(sender: TLazObject);
 begin
-  Self.Form.OnClose := nil;
-  Self.Form.Close();
+  TLazForm(sender).OnClose := nil;
+  TLazForm(sender).Close();
+
+  if (Self.Goals.Actions <> nil) then
+  begin
+    //if Self.ConfigData.Has('goal_actions') then
+    //  Self.ConfigData.Item['goal_actions'].AsInt := Self.Goals.Actions.Value
+    //else
+    //  Self.ConfigData.AddInt('goal_actions', Self.Goals.Actions.Value);
+  end;
+
+  if (Self.Goals.Time <> nil) then
+  begin
+    //if Self.ConfigData.Has('goal_time') then
+    //  Self.ConfigData.Item['goal_time'].AsInt := Self.Goals.Time.Value
+    //else
+    //  Self.ConfigData.AddInt('goal_time', Self.Goals.Time.Value);
+  end;
+
+  if (Self.Goals.Level <> nil) then
+  begin
+    //if Self.ConfigData.Has('goal_level') then
+    //  Self.ConfigData.Item['goal_level'].AsInt := Self.Goals.Level.Value
+    //else
+    //  Self.ConfigData.AddInt('goal_level', Self.Goals.Level.Value);
+  end;
 end;
-{$H+}
+
 
 
 (*
@@ -93,7 +124,7 @@ procedure TScriptForm.Setup(caption: String = 'Script Form'; size: TPoint = [750
 Responsible for setting your TScriptForm up.
 This sets up the sekeleton of your TScriptForm ready to take in tabs.
 *)
-procedure TScriptForm.Setup(caption: String = 'WaspLib');
+procedure TScriptForm.Setup(caption: String = 'WaspLib'; configData: TJSONItem = nil);
 var
   panel: TLazPanel;
 begin
@@ -113,14 +144,12 @@ begin
   Self.Form.Position := ELazFormPosition.ScreenCenter;
   Self.Form.OnClose  := @Self.OnClose;
 
-  Self.PageControl := TLazPageControl.Create(Self.Form);
-  Self.PageControl.Parent := Self.Form;
+  Self.PageControl := TLazPageControl.CreateEx(Self.Form);
   Self.PageControl.Align := ELazAlign.Client;
   Self.PageControl.Width := 800;
   Self.PageControl.Height := 570;
 
-  panel := TLazPanel.Create(Self.Form);
-  panel.Parent := Self.Form;
+  panel := TLazPanel.CreateEx(Self.Form);
   panel.Align := ELazAlign.Bottom;
   panel.Height := 40;
 
@@ -130,10 +159,12 @@ begin
   Self.Start := TLazButton.CreateEx(panel, 'Start', '', 0, 0, Floor(80 * FormUtils.Scale));
   Self.Start.Align := ELazAlign.Right;
   Self.Start.OnClick := @Self.OnStart;
-  Self.Start.BorderSpacing.Top := 3;
-  Self.Start.BorderSpacing.Left := 3;
-  Self.Start.BorderSpacing.Right := 6;
+  Self.Start.BorderSpacing.Top    := 3;
+  Self.Start.BorderSpacing.Left   := 3;
+  Self.Start.BorderSpacing.Right  := 6;
   Self.Start.BorderSpacing.Bottom := 3;
+
+  Self.ConfigData := configData;
 end;
 
 (*
@@ -191,6 +222,129 @@ begin
 end;
 
 
+function TScriptForm.CreateGoals(owner: Pointer; actions, time, level: Boolean = True; orientation: EOrientation = EOrientation.VERTICAL): TLazPanel;
+var
+  lbl: TLazLabel;
+  y, size: Integer;
+begin
+  case orientation of
+    EOrientation.HORIZONTAL:
+    begin
+      Result := TLazPanel.CreateEx(owner, 0, 0, 0, 40);
+
+      if level then
+      begin
+        Self.Goals.Level := TLazSpinEdit.CreateEx(Result, '', 'Maximum level for the bot to stop.', 0, 0, 80);
+        //Self.Goals.Level.MinValue := 0;
+        //Self.Goals.Level.MaxValue := 99
+        Self.Goals.Level.Align := ELazAlign.Left;
+        Self.Goals.Level.BorderSpacing.Around := 8;
+        lbl := TLazLabel.CreateEx(Result, 'Stop after level', 'Maximum level for the bot to stop.');
+        lbl.Align := ELazAlign.Left;
+        lbl.BorderSpacing.Top    := 10;
+        lbl.BorderSpacing.Bottom := 10;
+        lbl.BorderSpacing.Left   := 30;
+        lbl.BorderSpacing.Right  := 5;
+        size += 234;
+      end;
+
+      if time then
+      begin
+        lbl := TLazLabel.CreateEx(Result, 'minutes', 'Maximum amount of time in minutes for the bot to stop.');
+        lbl.Align := ELazAlign.Left;
+        lbl.BorderSpacing.Top    := 10;
+        lbl.BorderSpacing.Bottom := 10;
+        lbl.BorderSpacing.Left   := 5;
+        lbl.BorderSpacing.Right  := 30;
+        Self.Goals.Time := TLazSpinEdit.CreateEx(Result, '', 'Maximum amount of time in minutes for the bot to stop.', 0, 0, 80);
+        Self.Goals.Time.Align := ELazAlign.Left;
+        Self.Goals.Time.BorderSpacing.Around := 8;
+        lbl := TLazLabel.CreateEx(Result, 'Stop after', 'Maximum amount of time in minutes for the bot to stop.');
+        lbl.Align := ELazAlign.Left;
+        lbl.BorderSpacing.Top    := 10;
+        lbl.BorderSpacing.Bottom := 10;
+        lbl.BorderSpacing.Left   := 30;
+        lbl.BorderSpacing.Right  := 5;
+        size += 234;
+      end;
+
+      if actions then
+      begin
+        lbl := TLazLabel.CreateEx(Result, 'actions', 'Maximum amount of actions for the bot to stop.');
+        lbl.Align := ELazAlign.Left;
+        lbl.BorderSpacing.Top    := 10;
+        lbl.BorderSpacing.Bottom := 10;
+        lbl.BorderSpacing.Left   := 5;
+        lbl.BorderSpacing.Right  := 30;
+        Self.Goals.Actions := TLazSpinEdit.CreateEx(Result, '', 'Maximum amount of actions for the bot to stop.', 0, 0, 80);
+        Self.Goals.Actions.Align := ELazAlign.Left;
+        Self.Goals.Actions.BorderSpacing.Around := 8;
+        lbl := TLazLabel.CreateEx(Result, 'Stop after', 'Maximum amount of actions for the bot to stop.');
+        lbl.Align := ELazAlign.Left;
+        lbl.BorderSpacing.Top    := 10;
+        lbl.BorderSpacing.Bottom := 10;
+        lbl.BorderSpacing.Left   := 30;
+        lbl.BorderSpacing.Right  := 5;
+        size += 234;
+      end;
+
+      Result.Width := size;
+    end;
+
+    EOrientation.VERTICAL:
+    begin
+      Result := TLazPanel.CreateEx(owner, 0, 0, 240, 0);
+      y := 10;
+
+      if actions then
+      begin
+        lbl := TLazLabel.CreateEx(Result, 'Stop after', 'Maximum amount of actions for the bot to stop.', 10, y);
+        Self.Goals.Actions := TLazSpinEdit.CreateEx(Result, '', 'Maximum amount of actions for the bot to stop.', 0, 0, 80);
+        Self.Goals.Actions.AnchorHorizontally(lbl, 34);
+        Self.Goals.Actions.BorderSpacing.Top := -2;
+        lbl := TLazLabel.CreateEx(Result, 'actions', 'Maximum amount of actions for the bot to stop.');
+        lbl.AnchorHorizontally(Self.Goals.Actions, 5);
+        lbl.BorderSpacing.Top := 2;
+        y += 30;
+        size += 34;
+      end;
+
+      if time then
+      begin
+        lbl := TLazLabel.CreateEx(Result, 'Stop after', 'Maximum amount of time in minutes for the bot to stop.', 10, y);
+        Self.Goals.Time := TLazSpinEdit.CreateEx(Result, '', 'Maximum amount of time in minutes for the bot to stop.', 0, 0, 80);
+        Self.Goals.Time.AnchorHorizontally(lbl, 34);
+        Self.Goals.Time.BorderSpacing.Top := -2;
+        lbl := TLazLabel.CreateEx(Result, 'minutes', 'Maximum amount of time in minutes for the bot to stop.');
+        lbl.AnchorHorizontally(Self.Goals.Time, 5);
+        lbl.BorderSpacing.Top := 2;
+        y += 30;
+        size += 34;
+      end;
+
+      if level then
+      begin
+        lbl := TLazLabel.CreateEx(Result, 'Stop after level', 'Maximum level for the bot to stop.', 10, y);
+        Self.Goals.Level := TLazSpinEdit.CreateEx(Result, '', 'Maximum level for the bot to stop.', 0, 0, 80);
+        Self.Goals.Level.AnchorHorizontally(lbl, 5);
+        Self.Goals.Level.BorderSpacing.Top := -2;
+        size += 34;
+      end;
+
+      Result.Height := size;
+    end;
+  end;
+
+  Result.BevelWidth := 0;
+
+  //if actions and Self.ConfigData.Has('goal_actions') then
+  //  Self.Goals.Actions.Value := Self.ConfigData.Item['goal_actions'].AsInt;
+  //if time and Self.ConfigData.Has('goal_time') then
+  //  Self.Goals.Time.Value := Self.ConfigData.Item['goal_time'].AsInt;
+  //if level and Self.ConfigData.Has('goal_level') then
+  //  Self.Goals.Level.Value := Self.ConfigData.Item['goal_level'].AsInt;
+end;
+
 (*
 ## ScriptForm.Run
 ```pascal
@@ -208,6 +362,6 @@ begin
     Self.Form.Free();
   end;
 
-  if Self.FormClosed then
+  if Self._FormClosed then
     TerminateScript('Thank you for using WaspScripts');
 end;
