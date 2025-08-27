@@ -559,7 +559,7 @@ RSObjects.GEBank.WalkHover();
 *)
 function TRSEntity.WalkHover(attempts: Integer = 2): Boolean;
 var
-  me, closest, coordinate: TPoint;
+  me, closest: TPoint;
   path: TPointArray;
   hasPath: Boolean;
 begin
