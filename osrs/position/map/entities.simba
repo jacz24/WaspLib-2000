@@ -30,6 +30,7 @@ Main type to handle {ref}`RSEntity`.
     Finder: TColorFinder;
     Track: Boolean;
     MinimapDots: ERSMinimapDots;
+    LastCoordinate: TPoint;
     Walker: PRSWalker;
   end;
 
@@ -150,25 +151,15 @@ begin
 end;
 
 
-function TRSEntity.GetCuboidArray(me: TPoint; angle: Single = $FFFF): TCuboidArray;
-  //gets the points on the rotated minimap which correspond the closest to actual tile coordinates
-  function _GetMinimapGrid(angle: Single): TVector3Array;
-  var x,y: Integer;
-  begin
-    for x := Minimap.Center.X - 10 * 4 to Minimap.Center.X + 10 * 4 with 4 do
-      for y := Minimap.Center.Y - 10 * 4 to Minimap.Center.Y + 10 * 4 with 4 do
-        Result += point(x,y).ToVec3().Rotate(angle, Minimap.Center);
-  end;
+function TRSEntity.GetCuboidArray(me: TPoint; out coordinates: TPointArray; angle: Single = $FFFF): TCuboidArray;
 var
-  weights: TDoubleArray;
   pt: TPoint;
   h, diff: Single;
   i: Integer;
-  dist: Double;
   vec2: TVector2;
-  vec3: TVector3;
   dots: TPointArray;
 begin
+  coordinates := [];
   if angle = $FFFF then angle := Minimap.GetCompassAngle(False);
 
   h := Self.Walker^.Height(me);
@@ -185,21 +176,19 @@ begin
       pt := RSTranslator.NormalizeNearestTile(pt) + [2,2]*(Ceil(Max(Self.Size.X, Self.Size.Y))-1); //Go from topleft corner of npc to center
       diff := -(h-Self.Walker^.Height(pt))/4;
       vec2 := Self.Walker^.Point2MMVec(me, pt, angle); //translate back to MM space, use vectors to avoid rounding errors
-      vec3 := vec2.ToVec3(diff);
-      Result += Minimap.Vector2MSCuboid(vec3, Self.Size, angle, [0,0,diff]);
+      Result += Minimap.Vector2MSCuboid(vec2.ToVec3(diff), Self.Size, angle, [0,0,diff]);
+      coordinates += pt;
     end;
-  end else
-    for i := 0 to High(Self.Coordinates) do
+    Exit;
+  end;
+
+  for i := 0 to High(Self.Coordinates) do
+    if me.InRange(Self.Coordinates[i], 85) then
     begin
-      pt := Self.Coordinates[i];
-      dist := me.DistanceTo(pt);
-      if dist <= 85 then
-      begin
-        weights += dist;
-        diff := -(h-Self.Walker^.Height(pt));
-        with Self.Walker^.Point2MMVec(me, pt, angle) do
-          Result += Minimap.Vector2MSCuboid([X + 0.15*diff, Y + 0.11*diff, 0], Self.Size, angle,  [0,0,diff]);
-      end;
+      coordinates += Self.Coordinates[i];
+      diff := -(h-Self.Walker^.Height(Self.Coordinates[i]));
+      with Self.Walker^.Point2MMVec(me, Self.Coordinates[i], angle) do
+        Result += Minimap.Vector2MSCuboid([X + 0.15*diff, Y + 0.11*diff, 0], Self.Size, angle,  [0,0,diff]);
     end;
 end;
 
@@ -212,14 +201,20 @@ Internal TRSEntity method responsible for filtering a TCuboidArray by what's vis
 This is meant to filter TRSEntity.GetCuboidArray() so targets that are outside of the mainscreen are filtered out.
 You will probably never need to use this directly.
 *)
-function TRSEntity.FindOnMainScreen(cuboidArray: TCuboidArray): T2DPointArray;
+function TRSEntity.FindOnMainScreen(out coordinates: TPointArray; cuboidArray: TCuboidArray): T2DPointArray;
 var
   i: Integer;
   tpa: TPointArray;
+  found: TBooleanArray;
 begin
   if Self.Finder <> Default(TColorFinder) then
   begin
-    Self.Finder.Find(Result, cuboidArray);
+    Self.Finder.FindEx(Result, found, cuboidArray);
+
+    for i := High(found) downto 0 do
+      if not found[i] then
+        Delete(coordinates, i, 1);
+
     Exit;
   end;
 
@@ -247,28 +242,29 @@ WriteLn RSObjects.GEBank.Find(atpa); //Be in ge and with a walker setup there.
 Debug(atpa);
 ```
 *)
-function TRSEntity.FindEx(me: TPoint; out cuboids: TCuboidArray; out atpa: T2DPointArray): Boolean;
+function TRSEntity.FindEx(me: TPoint; out cuboids: TCuboidArray; out coordinates: TPointArray; out atpa: T2DPointArray): Boolean;
 begin
-  cuboids := Self.GetCuboidArray(me);
+  cuboids := Self.GetCuboidArray(me, coordinates);
   if cuboids = [] then Exit;
-  atpa := Self.FindOnMainScreen(cuboids);
+  atpa := Self.FindOnMainScreen(coordinates, cuboids);
 
   Result := atpa <> [];
 end;
 
 
-function TRSEntity.Find(out atpa: T2DPointArray): Boolean;
+function TRSEntity.Find(out coordinates: TPointArray; out atpa: T2DPointArray): Boolean;
 var
   cuboids: TCuboidArray;
 begin
-  Result := Self.FindEx(Self.Walker^.Position(), cuboids, atpa);
+  Result := Self.FindEx(Self.Walker^.Position(), cuboids, coordinates, atpa);
 end;
 
 function TRSEntity.FindFrom(position: TPoint; out atpa: T2DPointArray): Boolean;
 var
   cuboids: TCuboidArray;
+  coordinates: TPointArray;
 begin
-  Result := Self.FindEx(position, cuboids, atpa);
+  Result := Self.FindEx(position, cuboids, coordinates, atpa);
 end;
 
 (*
@@ -318,22 +314,26 @@ var
   shouldExit: Boolean;
   attempt: Integer;
   atpa: T2DPointArray;
-  tpa: TPointArray;
+  coordinates, tpa: TPointArray;
   angle: Double;
+  i: Integer;
 begin
   Result := Self._UpTextCheck(shouldExit);
   if shouldExit then Exit;
 
   for attempt := 0 to attempts do
   begin
-    if Self.Find(atpa) then
+    if Self.Find(coordinates, atpa) then
     begin
-      if attempt < 2 then
-        tpa := atpa[0] // 0 for the closest one.
-      else if Length(atpa) > (attempt - 2) then
-        tpa := atpa[attempt - 2]
-      else
-        tpa := atpa.Random();
+      if Length(coordinates) <> Length(atpa) then
+        raise 'SOMETHING WENT WRONG CACHING COORDINATES.';
+
+      if attempt < 2 then i := 0
+      else if Length(atpa) > (attempt - 2) then i := attempt - 2
+      else i := Random(Low(atpa), High(atpa));
+
+      tpa := atpa[i];
+      Self.LastCoordinate := coordinates[i];
 
       Mouse.Move(tpa.RandomMean());
 
@@ -364,22 +364,26 @@ var
   shouldExit: Boolean;
   attempt: Integer;
   atpa: T2DPointArray;
-  tpa, path: TPointArray;
+  coordinates, tpa, path: TPointArray;
   me, closest: TPoint;
+  i: Integer;
 begin
   Result := Self._UpTextCheck(shouldExit) or Self.Walker^.RedClicked;
   if shouldExit then Exit;
 
   for attempt := 0 to attempts do
   begin
-    if Self.Find(atpa) then
+    if Self.Find(coordinates, atpa) then
     begin
-      if attempt < 2 then
-        tpa := atpa[0]
-      else if Length(atpa) > (attempt - 2) then
-        tpa := atpa[attempt - 2]
-      else
-        tpa := atpa.Random();
+      if Length(coordinates) <> Length(atpa) then
+        raise 'SOMETHING WENT WRONG CACHING COORDINATES.';
+
+      if attempt < 2 then i := 0
+      else if Length(atpa) > (attempt - 2) then i := attempt - 2
+      else i := Random(Low(atpa), High(atpa));
+
+      tpa := atpa[i];
+      Self.LastCoordinate := coordinates[i];
 
       Mouse.Move(tpa.RandomMean());
 
@@ -555,7 +559,7 @@ RSObjects.GEBank.WalkHover();
 *)
 function TRSEntity.WalkHover(attempts: Integer = 2): Boolean;
 var
-  me, closest: TPoint;
+  me, closest, coordinate: TPoint;
   path: TPointArray;
   hasPath: Boolean;
 begin
@@ -732,6 +736,7 @@ var
   i: Integer;
   filters: TRSDotFilterArray;
   filter: TRSDotFilter;
+  coordinates: TPointArray;
 begin
   me := entity.Walker^.Position();
   filters := entity.Walker^.FiltersToMM(me, entity.Filter, Minimap.GetCompassAngle(False));
@@ -750,7 +755,8 @@ begin
     Self.DrawCircle(filter.Circle);
   end;
 
-  if not entity.FindEx(me, cuboids, atpa) then Exit;
+  if not entity.FindEx(me, cuboids, coordinates, atpa) then
+    Exit;
 
   Self.DrawColor := $00FFFF;
   for i := 0 to High(cuboids) do
