@@ -108,3 +108,7 @@ jobs:
             -H "Authorization: Bearer $SUPABASE_KEY" \
             -H "Content-Type: application/zip" \
             --data-binary @"$ZIP_NAME"
+          curl -X PUT "$SUPABASE_URL/storage/v1/object/wasplib/latest.zip" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            -H "Content-Type: application/zip" \
+            --data-binary @"$ZIP_NAME"
