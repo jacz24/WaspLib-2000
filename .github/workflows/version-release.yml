@@ -1,8 +1,8 @@
-name: Version
+name: Version Release
 
 on:
   workflow_run:
-    workflows: ["Release"]
+    workflows: ["Release Branch"]
     types:
       - completed
 
@@ -64,7 +64,7 @@ jobs:
           git commit -m "Automatic version bump to $CURRENT_YEAR.$CURRENT_MONTH.$CURRENT_DAY-$COMMIT_HASH" || echo "No changes to commit on release"
           git push origin release
           
-      - name: Create new tag
+      - name: Create git tag
         id: tag
         run: |
           TAG_NAME="$CURRENT_YEAR.$CURRENT_MONTH.$CURRENT_DAY-$COMMIT_HASH"
@@ -72,7 +72,7 @@ jobs:
           git tag $TAG_NAME
           git push origin $TAG_NAME
 
-      - name: Create release
+      - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -92,3 +92,19 @@ jobs:
                 -H "Content-Type: application/json" \
                 -d "$BODY" \
                 ${{ secrets.UPDATES_WEBHOOK }}
+      
+      - name: Create Uploaded Release
+        run: |
+          ZIP_NAME="$TAG_NAME.zip"
+          git archive --format zip --output "$ZIP_NAME" HEAD
+          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+          
+      - name: Upload release to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          curl -X POST "$SUPABASE_URL/storage/v1/object/wasplib/$ZIP_NAME" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            -H "Content-Type: application/zip" \
+            --data-binary @"$ZIP_NAME"
