@@ -322,18 +322,18 @@ begin
 end;
 
 (*
-## GrandExchangeOffer.ChangeItem
+## GrandExchangeOffer.Change
 ```pascal
-function TRSGrandExchangeOffer.ChangeItem(item: TRSItem): Boolean;
+function TRSGrandExchangeOffer.Change(item: TRSItem): Boolean;
 ```
 Attempts to change the offer item to the specified `item`.
 
 Example:
 ```pascal
-WriteLn GrandExchangeOffer.ChangeItem('Abyssal whip');
+WriteLn GrandExchangeOffer.Change('Abyssal whip');
 ```
 *)
-function TRSGrandExchangeOffer.ChangeItem(item: TRSItem): Boolean;
+function TRSGrandExchangeOffer.Change(item: TRSItem): Boolean;
 var
   slot: Integer;
 begin
@@ -341,19 +341,23 @@ begin
   if Self.Item.ToLower() = item.ToLower() then Exit(True);
   if Self.OfferInterface = EGEOfferInterface.STATUS then Exit;
 
-  case Self.OfferType of
-    EGEOfferType.SELL:
-    begin
-      if not Inventory.Items.Find(item, slot) then Exit;
-      if not Inventory.Slots.Interact(slot, 'Offer') then Exit;
-      Exit(SleepUntil(Self.Item.ToLower() = item.ToLower(), 200, 2000));
-    end;
-
-    EGEOfferType.BUY:
-    begin
-      //TODO...
-    end;
+  if Self.OfferType = EGEOfferType.SELL then
+  begin
+    if not Inventory.Items.Find(item, slot) then Exit;
+    if not Inventory.Slots.Interact(slot, 'Offer') then Exit;
+    Exit(SleepUntil(Self.Item.ToLower() = item.ToLower(), 200, 2000));
   end;
+
+  if not GrandExchangeChat.Contains(item) then
+  begin
+    if not GrandExchangeChat.SearchText[item] then
+      Exit;
+    if not GrandExchangeChat.ScrollTo(item) then
+      Exit;
+  end;
+
+  if GrandExchangeChat.Click(item) then
+    Result := SleepUntil(Self.Item.ToLower() = item.ToLower(), 200, 2000);
 end;
 
 

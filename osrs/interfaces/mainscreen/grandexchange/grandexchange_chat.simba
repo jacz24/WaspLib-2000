@@ -16,9 +16,69 @@ Record responsible to handle the {ref}`GrandExchangeChat` interface.
   TRSGrandExchangeChat = record
     Bounds, Header: TBox;
     Scroll: TRSScrollBar;
+    Slots: TRSSlotInterface;
+    Items: TRSItemInterface;
   end;
 
 function TRSGrandExchangeChat.IsOpen(): Boolean; forward;
+
+(*
+## GrandExchangeChat.Grid
+```pascal
+property TRSGrandExchangeChat.Grid: TBoxArray;
+```
+Returns the {ref}`GrandExchangeChat` search grid.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+begin
+  while True do
+    ShowOnTarget(GrandExchangeChat.Grid);
+end.
+```
+```{figure} ../../images/gec_grid.gif
+```
+*)
+property TRSGrandExchangeChat.Grid: TBoxArray;
+var
+  b, tmp: TBox;
+  tpa: TPointArray;
+  boxes: TBoxArray;
+  weights: TIntegerArray;
+  i: Integer;
+begin
+  with Self.Scroll.Area do
+    b := [X1+2, Y1, X2, Y2];
+
+  boxes := b.Partition(1, 3);
+  for i := 0 to High(boxes) do
+  begin
+    b := boxes[i];
+    tpa := Target.FindColor($555555, 0, b);
+    if tpa = [] then
+    begin
+      if i = 0 then Exit;
+      Continue;
+    end;
+    tpa += Target.FindColor(RSColors.ITEM_BORDER, 8.5, b);
+
+    if tpa = [] then Continue;
+
+    for tpa in tpa.Cluster(300, 1.5) do
+    begin
+      tmp := tpa.Bounds();
+      if tmp.Height < 8 then Continue;
+
+      tmp.X1 := b.X1;
+      tmp.X2 := b.X2;
+      weights += tmp.X1 + tmp.Y2 * 100;
+      Result += tmp;
+    end;
+  end;
+
+  Result := Result.Sort(weights, False);
+end;
 
 (*
 ## GrandExchangeChat.SetupInterface
@@ -43,6 +103,9 @@ begin
   Self.Scroll.Area.Y2 := Self.Bounds.Y2 - 9;
 
   Self.Scroll.Setup();
+
+  Self.Slots.Setup('GrandExchangeChat.Slots', [], @Self.Grid);
+  Self.Items.Setup('GrandExchangeChat.Items', @Self.Slots, [0, 1], @Self.IsOpen);
 end;
 
 (*
@@ -157,72 +220,151 @@ begin
   Result := search = Self.SearchText;
 end;
 
-
 (*
-## GrandExchangeChat.Grid
+## GrandExchangeChat.Find
 ```pascal
-property TRSGrandExchangeChat.Grid: TBoxArray;
+function TRSGrandExchangeChat.Find(item: TRSItem; out bounds: TBox): Boolean;
 ```
-Returns the {ref}`GrandExchangeChat` search grid.
+Returns true if the specified `item` text is found on the
+{ref}`GrandExchangeChat.Grid`.
+
+`bounds` will return the grid box where the item text was found.
 
 Example:
 ```pascal
-
-```
-```{figure} ../../images/gec_grid.png
-```
-
-*)
-property TRSGrandExchangeChat.Grid: TBoxArray;
+{$I WaspLib/osrs.simba}
 var
-  b, tmp, offset: TBox;
-  tpa: TPointArray;
-  atpa: T2DPointArray;
-  i, h, newH: Integer;
+  b: TBox;
 begin
-  with Self.Scroll.Area do
-    b := [X1+40, Y1+8, X1+160, Y1+80];
-  tpa := Target.FindColor($0, 0, b);
-  if tpa = [] then Exit;
+  if GrandExchangeChat.Find('Abyssal whip', b) then
+    ShowOnTarget(b);
+end.
+```
+```{figure} ../../images/gec_Find.png
+```
+*)
+function TRSGrandExchangeChat.Find(item: TRSItem; out bounds: TBox): Boolean;
+var
+  str: String;
+begin
+  item := item.ToLower();
+  for bounds in Self.Grid do
+  begin
+    str := OCR.RecognizeLines(bounds, RSFonts.PLAIN_12, [RSColors.TEXT_BLACK], 0).Join(' ').ToLower();
+    if item = str then
+      Exit(True);
+  end;
+end;
 
-  //remove small chars, like "'"
-  tpa := tpa.Cluster(1.5, 1.5).ExcludeSize(5, EComparator.__LE__).Merge();
-  atpa := tpa.Cluster(12, 8);
+(*
+## GrandExchangeChat.Contains
+```pascal
+function TRSGrandExchangeChat.Contains(item: TRSItem): Boolean;
+```
+Returns true if the specified `item` text is found on the
+{ref}`GrandExchangeChat.Grid`.
 
-  //for i := 0 to High(atpa) do
-  //begin
-  //  b := atpa[i].Bounds;
-  //  newH := b.Height;
-  //  if newH > h then
-  //  begin
-  //    tmp := b;
-  //    h := newH;
-  //  end;
-  //end;
-  //
-  //if h < 20 then
-  //  b := [Self.Scroll.Area.X1+2, tmp.Y1-10, Self.Scroll.Area.X1+162, tmp.Y2+8]
-  //else
-  //  b := [Self.Scroll.Area.X1+2, tmp.Y1-4, Self.Scroll.Area.X1+162, tmp.Y2+6];
-  //
-  //Result += b;
-  //offset := b;
-  //
-  //h := b.Height;
-  //
-  //repeat
-  //  offset := offset.Offset([0,-h]);
-  //  b := offset.Clip(Self.Scroll.Area);
-  //  if b.Height >= 28 then
-  //    Result += offset;
-  //until offset.Y1 < Self.Scroll.Area.Y1;
-  //
-  //repeat
-  //  offset := offset.Offset([0,h]);
-  //  b := offset.Clip(Self.Scroll.Area);
-  //  if b.Height >= 32 then
-  //    Result += offset;
-  //until offset.Y2 > Self.Scroll.Area.Y2;
+Example:
+```pascal
+WriteLn GrandExchangeChat.Contains('Abyssal whip');
+```
+*)
+function TRSGrandExchangeChat.Contains(item: TRSItem): Boolean;
+var
+  bounds: TBox;
+begin
+  Result := Self.Find(item, bounds);
+end;
+
+(*
+## GrandExchangeChat.Click
+```pascal
+function TRSGrandExchangeChat.Click(item: TRSItem): Boolean;
+```
+Attempts to click the specified `item` on the {ref}`GrandExchangeChat.Grid`.
+
+Example:
+```pascal
+WriteLn GrandExchangeChat.Click('Abyssal whip');
+```
+*)
+function TRSGrandExchangeChat.Click(item: TRSItem): Boolean;
+var
+  bounds: TBox;
+begin
+  if Self.Find(item, bounds) then
+  begin
+    Mouse.Click(bounds, EMouseButton.LEFT);
+    Result := SleepUntil(Self.IsOpen(), 200, 2400);
+  end;
+end;
+
+
+(*
+## GrandExchangeChat.FindScroll
+```pascal
+function TRSGrandExchangeChat.FindScroll(item: TRSItem): Integer;
+```
+Attempts to find the scroll level the specified `item` is found on the
+{ref}`GrandExchangeChat.Grid`.
+
+Example:
+```pascal
+WriteLn GrandExchangeChat.FindScroll('Bandos tassets');
+```
+*)
+function TRSGrandExchangeChat.FindScroll(item: TRSItem): Integer;
+var
+  next: Integer;
+  down: Boolean;
+begin
+  if not Self.Scroll.CanScroll() then Exit(-1);
+
+  Result := Self.Scroll.GetLevel();
+  down := (Result > 0) or RandomBoolean(0.5);
+
+  if Self.Contains(item) then Exit;
+
+  repeat
+    if down then next := Result - 5
+    else next := Result + 5;
+
+    Result := Self.Scroll.SetLevel(next);
+    if Self.Contains(item) then Exit;
+
+    if not Self.IsOpen() then Exit(-1); //failsafe
+  until not InRange(Result, 1, 99);
+
+  down := not down;
+  repeat
+    if down then next := Result - 5
+    else next := Result + 5;
+
+    Result := Self.Scroll.SetLevel(next);
+    if Self.Contains(item) then Exit;
+
+    if not Self.IsOpen() then Exit(-1);
+  until not InRange(Result, 1, 99);
+
+  Result := -1;
+end;
+
+(*
+## GrandExchangeChat.ScrollTo
+```pascal
+function TRSGrandExchangeChat.ScrollTo(item: TRSItem): Boolean;
+```
+Attempts to scroll until the specified `item` is found on the
+{ref}`GrandExchangeChat.Grid`.
+
+Example:
+```pascal
+WriteLn GrandExchangeChat.ScrollTo('Bandos tassets');
+```
+*)
+function TRSGrandExchangeChat.ScrollTo(item: TRSItem): Boolean;
+begin
+  Result := Self.FindScroll(item) > -1;
 end;
 
 
