@@ -10,13 +10,13 @@ Methods to interact with the GrandExchange interface:
 
 type
 (*
-## EGEOfferProgress
+## EGEOfferStatus
 ```pascal
-EGEOfferProgress = enum(NONE, PROGRESSING, COMPLETED, ABORTED);
+EGEOfferStatus = enum(NONE, PROGRESSING, COMPLETED, ABORTED);
 ```
 Enum to represent the Grand Exchange offer slot states.
 *)
-  EGEOfferProgress = enum(NONE, PROGRESSING, COMPLETED, ABORTED);
+  EGEOfferStatus = enum(NONE, PROGRESSING, COMPLETED, ABORTED);
 
 (*
 ## EGESlotType
@@ -211,18 +211,18 @@ begin
 end;
 
 (*
-## TRSGrandExchangeSlot.ReadItem
+## TRSGrandExchangeSlot.Item
 ```pascal
-function TRSGrandExchangeSlot.ReadItem(): TRSItem;
+property TRSGrandExchangeSlot.Item: TRSItem;
 ```
 Reads the item text in the offer slot.
 
 Example:
 ```pascal
-WriteLn GrandExchange.Slots[7].ReadItem();
+WriteLn GrandExchange.Slots[7].Item;
 ```
 *)
-function TRSGrandExchangeSlot.ReadItem(): TRSItem;
+property TRSGrandExchangeSlot.Item: TRSItem;
 begin
   Result := OCR.RecognizeLines(Self.ItemNameBox, RSFonts.PLAIN_11, [RSColors.TEXT_LIGHT_ORANGE], 0).Join(' ');
 end;
@@ -230,16 +230,16 @@ end;
 (*
 ## TRSGrandExchangeSlot.Value
 ```pascal
-function TRSGrandExchangeSlot.Value(): Integer;
+property TRSGrandExchangeSlot.Value: Integer;
 ```
 Reads the value text in the offer slot and returns it as an `Integer`.
 
 Example:
 ```pascal
-WriteLn GrandExchange.Slots[3].Value();
+WriteLn GrandExchange.Slots[3].Value;
 ```
 *)
-function TRSGrandExchangeSlot.Value(): Integer;
+property TRSGrandExchangeSlot.Value: Integer;
 var
   str: String;
 begin
@@ -248,29 +248,28 @@ begin
 end;
 
 (*
-## TRSGrandExchangeSlot.GetProgress
+## TRSGrandExchangeSlot.Status
 ```pascal
-function TRSGrandExchangeSlot.GetProgress(): EGEOfferProgress;
+property TRSGrandExchangeSlot.Status: EGEOfferStatus;
 ```
-Returns the slot {ref}`EGEOfferProgress`.
+Returns the slot {ref}`EGEOfferStatus` status.
 
 Example:
 ```pascal
-WriteLn GrandExchange.Slots[2].GetProgress();
+WriteLn GrandExchange.Slots[2].Status;
 ```
 *)
-function TRSGrandExchangeSlot.GetProgress(): EGEOfferProgress;
+property TRSGrandExchangeSlot.Status: EGEOfferStatus;
 begin
   if Target.HasColor($005F00, 0, 1, Self.StatusBox) then
-    Exit(EGEOfferProgress.COMPLETED);
+    Exit(EGEOfferStatus.COMPLETED);
   if Target.HasColor($2080D8, 0, 1, Self.StatusBox) then
-    Exit(EGEOfferProgress.PROGRESSING);
+    Exit(EGEOfferStatus.PROGRESSING);
   if Target.HasColor($00008F, 0, 1, Self.StatusBox) then
-    Exit(EGEOfferProgress.ABORTED);
+    Exit(EGEOfferStatus.ABORTED);
 
-  Result := EGEOfferProgress.NONE;
+  Result := EGEOfferStatus.NONE;
 end;
-
 
 
 type

@@ -28,6 +28,43 @@ Enum to represent the type of Grand Exchange offers.
   EGEOfferType = enum(SELL, BUY);
 
 (*
+## EGEOfferSpinButton
+```pascal
+EGEOfferSpinButton = enum(DECREASE, INCREASE);
+```
+Enum that represents the buttons to decrease/increase the quantity and price
+spinners of Grand Exchange offers.
+
+```{figure} ../../images/geo_spinners.png
+```
+*)
+  EGEOfferSpinButton = enum(DECREASE, INCREASE);
+
+(*
+## EGEOfferQuantity
+```pascal
+EGEOfferQuantity = enum(ONE, TEN, HUNDRED, THOUSAND, CUSTOM);
+```
+Enum that represents the quantity buttons of Grand Exchange offers.
+
+```{figure} ../../images/geo_quantity_buttons.png
+```
+*)
+  EGEOfferQuantity = enum(ONE, TEN, HUNDRED, THOUSAND, CUSTOM);
+
+(*
+## EGEOfferPrice
+```pascal
+EGEOfferPrice = enum(MINUS_CUSTOM, MINUS_FIVE, GUIDE, CUSTOM, PLUS_FIVE, PLUS_CUSTOM);
+```
+Enum that represents the price buttons of Grand Exchange offers.
+
+```{figure} ../../images/geo_price_buttons.png
+```
+*)
+  EGEOfferPrice = enum(MINUS_CUSTOM, MINUS_FIVE, GUIDE, CUSTOM, PLUS_FIVE, PLUS_CUSTOM);
+
+(*
 ## TRSGrandExchangeOffer
 Record responsible to handle the {ref}`GrandExchangeOffer` interface.
 *)
@@ -41,14 +78,14 @@ Record responsible to handle the {ref}`GrandExchangeOffer` interface.
 
     QuantityBounds: record
       Quantity: TBox;
-      Decrease, Increase: TBox;
-      One, Ten, Hundred, Thousand, Custom: TBox;
+      Spinner: TBoxArray;
+      Buttons: TBoxArray;
     end;
 
     PriceBounds: record
       Price: TBox;
-      Decrease, Increase: TBox;
-      MinusCustom, MinusFive, Guide, Custom, PlusFive, PlusCustom: TBox;
+      Spinner: TBoxArray;
+      Buttons: TBoxArray;
     end;
 
     TotalBounds: TBox;
@@ -75,9 +112,32 @@ begin
   with Self.Bounds do
   begin
     Self.InfoBounds.OfferType  := [X1+40, Y1+45, X1+130, Y1+61];
+    Self.InfoBounds.Item       := [X1+64, Y1+71, X1+103, Y1+106];
     Self.InfoBounds.GuidePrice := [X1+40, Y1+114, X1+130, Y1+122];
     Self.InfoBounds.Name       := [X1+166, Y1+45, X2-20, Y1+61];
     Self.InfoBounds.Examine    := [X1+166, Y1+65, X2-20, Y1+128];
+
+    Self.QuantityBounds.Quantity := [X1+39, Y1+158, X1+191, Y1+177];
+  end;
+
+  with Self.QuantityBounds.Quantity do
+  begin
+    Self.PriceBounds.Price := [X2+60, Y1, X2+253, Y2];
+
+    Self.QuantityBounds.Spinner := [
+      [X1-21, Y1+3, X1-9, Y2-4], [X2+9, Y1+3, X2+21, Y2-4]
+    ];
+
+    Self.QuantityBounds.Buttons := TBoxArray.Create([X1-23, Y2+4], 5, 1, 34, 24, [7,0]);
+  end;
+
+  with Self.PriceBounds.Price do
+  begin
+    Self.PriceBounds.Spinner := [
+      [X1-21, Y1+3, X1-9, Y2-4], [X2+10, Y1+3, X2+22, Y2-4]
+    ];
+
+    Self.PriceBounds.Buttons := TBoxArray.Create([X1-23, Y2+4], 6, 1, 34, 24, [7,0]);
   end;
 end;
 
@@ -346,6 +406,13 @@ begin
     if not Inventory.Items.Find(item, slot) then Exit;
     if not Inventory.Slots.Interact(slot, 'Offer') then Exit;
     Exit(SleepUntil(Self.Item.ToLower() = item.ToLower(), 200, 2000));
+  end;
+
+  if not GrandExchangeChat.IsOpen() then
+  begin
+    Mouse.Click(Self.InfoBounds.Item, EMouseButton.LEFT);
+    if not GrandExchangeChat.WaitOpen(2000) then
+      Exit;
   end;
 
   if not GrandExchangeChat.Contains(item) then
