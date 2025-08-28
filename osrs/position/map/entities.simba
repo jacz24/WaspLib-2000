@@ -158,6 +158,8 @@ var
   i: Integer;
   vec2: TVector2;
   dots: TPointArray;
+  dist: Double;
+  weights: TDoubleArray;
 begin
   coordinates := [];
   if angle = $FFFF then angle := Minimap.GetCompassAngle(False);
@@ -183,13 +185,24 @@ begin
   end;
 
   for i := 0 to High(Self.Coordinates) do
-    if me.InRange(Self.Coordinates[i], 85) then
+  begin
+    pt := Self.Coordinates[i];
+    dist := me.DistanceTo(pt);
+    if dist <= 85 then
     begin
-      coordinates += Self.Coordinates[i];
-      diff := -(h-Self.Walker^.Height(Self.Coordinates[i]));
-      with Self.Walker^.Point2MMVec(me, Self.Coordinates[i], angle) do
+      weights += dist;
+      coordinates += pt;
+      diff := -(h-Self.Walker^.Height(pt));
+      with Self.Walker^.Point2MMVec(me, pt, angle) do
         Result += Minimap.Vector2MSCuboid([X + 0.15*diff, Y + 0.11*diff, 0], Self.Size, angle,  [0,0,diff]);
     end;
+  end;
+
+  if Result <> [] then
+  begin
+    Result.Sort(weights, True);
+    coordinates.Sort(weights, True);
+  end;
 end;
 
 (*
@@ -204,7 +217,6 @@ You will probably never need to use this directly.
 function TRSEntity.FindOnMainScreen(out coordinates: TPointArray; cuboidArray: TCuboidArray): T2DPointArray;
 var
   i: Integer;
-  tpa: TPointArray;
   found: TBooleanArray;
 begin
   if Self.Finder <> Default(TColorFinder) then
@@ -219,11 +231,7 @@ begin
   end;
 
   for i := 0 to High(cuboidArray) do
-  begin
-    tpa := cuboidArray[i].ShapeFill();
-    if tpa <> [] then
-      Result += tpa;
-  end;
+    Result += cuboidArray[i].ShapeFill();
 end;
 
 (*
@@ -312,11 +320,10 @@ You should not use this directly.
 function TRSEntity._HoverHelper(attempts: Integer): Boolean;
 var
   shouldExit: Boolean;
-  attempt: Integer;
+  attempt, i: Integer;
   atpa: T2DPointArray;
   coordinates, tpa: TPointArray;
   angle: Double;
-  i: Integer;
 begin
   Result := Self._UpTextCheck(shouldExit);
   if shouldExit then Exit;
@@ -362,11 +369,10 @@ This is responsible for deciding wether we should walk to a TRSEntity target or 
 function TRSEntity._WalkHoverHelper(attempts: Integer): Boolean;
 var
   shouldExit: Boolean;
-  attempt: Integer;
+  attempt, i: Integer;
   atpa: T2DPointArray;
   coordinates, tpa, path: TPointArray;
   me, closest: TPoint;
-  i: Integer;
 begin
   Result := Self._UpTextCheck(shouldExit) or Self.Walker^.RedClicked;
   if shouldExit then Exit;

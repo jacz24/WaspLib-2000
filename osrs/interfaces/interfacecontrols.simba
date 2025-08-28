@@ -339,7 +339,7 @@ Returns a `TBox` of the scrollbar slider.
 
 Example:
 ```pascal
-ShowOnTarget(Bank.Scroll.GetSlider());
+ShowOnTarget(Bank.Scroll.Slider);
 ```
 ```{figure} ../../images/scrollbar_slider.png
 ```
@@ -407,7 +407,7 @@ Returns a area where you can scroll the mouse, using {ref}`TBiometrics` between
 
 Example:
 ```pascal
-ShowOnTarget(Chat.Scroll.GetScrollArea());
+ShowOnTarget(Chat.Scroll.ScrollArea);
 ```
 *)
 property TRSScrollBar.ScrollArea: TBox;

@@ -91,26 +91,26 @@ begin
 
   if (Self.Goals.Actions <> nil) then
   begin
-    //if Self.ConfigData.Has('goal_actions') then
-    //  Self.ConfigData.Item['goal_actions'].AsInt := Self.Goals.Actions.Value
-    //else
-    //  Self.ConfigData.AddInt('goal_actions', Self.Goals.Actions.Value);
+    if Self.ConfigData.Has('goal_actions') then
+      Self.ConfigData.Item['goal_actions'].AsInt := Self.Goals.Actions.Value
+    else
+      Self.ConfigData.AddInt('goal_actions', Self.Goals.Actions.Value);
   end;
 
   if (Self.Goals.Time <> nil) then
   begin
-    //if Self.ConfigData.Has('goal_time') then
-    //  Self.ConfigData.Item['goal_time'].AsInt := Self.Goals.Time.Value
-    //else
-    //  Self.ConfigData.AddInt('goal_time', Self.Goals.Time.Value);
+    if Self.ConfigData.Has('goal_time') then
+      Self.ConfigData.Item['goal_time'].AsInt := Self.Goals.Time.Value
+    else
+      Self.ConfigData.AddInt('goal_time', Self.Goals.Time.Value);
   end;
 
   if (Self.Goals.Level <> nil) then
   begin
-    //if Self.ConfigData.Has('goal_level') then
-    //  Self.ConfigData.Item['goal_level'].AsInt := Self.Goals.Level.Value
-    //else
-    //  Self.ConfigData.AddInt('goal_level', Self.Goals.Level.Value);
+    if Self.ConfigData.Has('goal_level') then
+      Self.ConfigData.Item['goal_level'].AsInt := Self.Goals.Level.Value
+    else
+      Self.ConfigData.AddInt('goal_level', Self.Goals.Level.Value);
   end;
 end;
 
@@ -235,8 +235,8 @@ begin
       if level then
       begin
         Self.Goals.Level := TLazSpinEdit.CreateEx(Result, '', 'Maximum level for the bot to stop.', 0, 0, 80);
-        //Self.Goals.Level.MinValue := 0;
-        //Self.Goals.Level.MaxValue := 99
+        Self.Goals.Level.MinValue := 0;
+        Self.Goals.Level.MaxValue := 99;
         Self.Goals.Level.Align := ELazAlign.Left;
         Self.Goals.Level.BorderSpacing.Around := 8;
         lbl := TLazLabel.CreateEx(Result, 'Stop after level', 'Maximum level for the bot to stop.');
@@ -337,12 +337,12 @@ begin
 
   Result.BevelWidth := 0;
 
-  //if actions and Self.ConfigData.Has('goal_actions') then
-  //  Self.Goals.Actions.Value := Self.ConfigData.Item['goal_actions'].AsInt;
-  //if time and Self.ConfigData.Has('goal_time') then
-  //  Self.Goals.Time.Value := Self.ConfigData.Item['goal_time'].AsInt;
-  //if level and Self.ConfigData.Has('goal_level') then
-  //  Self.Goals.Level.Value := Self.ConfigData.Item['goal_level'].AsInt;
+  if actions and Self.ConfigData.Has('goal_actions') then
+    Self.Goals.Actions.Value := Self.ConfigData.Item['goal_actions'].AsInt;
+  if time and Self.ConfigData.Has('goal_time') then
+    Self.Goals.Time.Value := Self.ConfigData.Item['goal_time'].AsInt;
+  if level and Self.ConfigData.Has('goal_level') then
+    Self.Goals.Level.Value := Self.ConfigData.Item['goal_level'].AsInt;
 end;
 
 (*

@@ -99,9 +99,9 @@ begin
   else
     TemplateConfig.Data.AddBool('form_setting', Template.FormSetting);
 
-  //Script.MaxActions := Self.Goals.Actions.Value;
-  //Script.MaxTime    := Self.Goals.Time.Value * ONE_MINUTE;
-  //Script.MaxLevel   := Self.Goals.Level.Value;
+  Template.MaxActions := Self.Goals.Actions.Value;
+  Template.MaxTime    := Self.Goals.Time.Value * ONE_MINUTE;
+  Template.MaxLevel   := Self.Goals.Level.Value;
 
   TemplateConfig.Save();
 end;

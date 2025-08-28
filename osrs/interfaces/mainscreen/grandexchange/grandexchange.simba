@@ -282,6 +282,7 @@ Record responsible to handle the {ref}`GrandExchange` interface.
     Title: TRSInterfaceTitle;
     Bounds: TBox;
     Slots: array [0..7] of TRSGrandExchangeSlot;
+    HistoryButton, CollectButton: TBox;
   end;
 
 function TRSGrandExchange.IsOpen(): Boolean; forward;
@@ -311,6 +312,9 @@ begin
   tba := TBoxArray.Create(Self.Bounds.TopLeft + [9,65], 4, 2, 114, 110, [3, 9]);
   for i := 0 to High(tba) do
     Self.Slots[i]._Setup(tba[i]);
+
+  with Self.Bounds do
+    Self.HistoryButton := [X1+7, Y1+7, X1+53, Y1+26];
 end;
 
 (*
@@ -336,7 +340,7 @@ begin
       raise GetDebugLn('BankPin', 'Failed to enter GrandExchange pin.');
   end;
 
-  Result := Self.Title.IsTitle('Grand Exchange');
+  Result := Self.Title.GetTitle() = 'Grand Exchange';
 end;
 
 (*

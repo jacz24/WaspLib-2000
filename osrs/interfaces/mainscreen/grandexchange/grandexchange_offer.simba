@@ -1,0 +1,366 @@
+(*
+# GrandExchangeOffer
+Methods to interact with the GrandExchangeOffer interface:
+```{figure} ../../images/geo_interface.png
+```
+*)
+
+{$DEFINE WL_GRANDEXCHANGE_OFFER_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+(*
+## EGEOfferInterface
+```pascal
+EGEOfferInterface = enum(SETUP, STATUS);
+```
+Enum to represent the type of {ref}`GrandExchange` offer interfaces.
+*)
+  EGEOfferInterface = enum(SETUP, STATUS);
+
+(*
+## EGEOfferType
+```pascal
+EGEOfferType = enum(SELL, BUY);
+```
+Enum to represent the type of Grand Exchange offers.
+*)
+  EGEOfferType = enum(SELL, BUY);
+
+(*
+## TRSGrandExchangeOffer
+Record responsible to handle the {ref}`GrandExchangeOffer` interface.
+*)
+  TRSGrandExchangeOffer = record
+    Title: TRSInterfaceTitle;
+    Bounds: TBox;
+
+    InfoBounds: record
+      Item, Name, Examine, OfferType, GuidePrice: TBox;
+    end;
+
+    QuantityBounds: record
+      Quantity: TBox;
+      Decrease, Increase: TBox;
+      One, Ten, Hundred, Thousand, Custom: TBox;
+    end;
+
+    PriceBounds: record
+      Price: TBox;
+      Decrease, Increase: TBox;
+      MinusCustom, MinusFive, Guide, Custom, PlusFive, PlusCustom: TBox;
+    end;
+
+    TotalBounds: TBox;
+    ConfirmButton, BackButton: TBox;
+  end;
+
+function TRSGrandExchangeOffer.IsOpen(): Boolean; forward;
+
+(*
+## GrandExchangeOffer.SetupInterface
+```pascal
+procedure TRSGrandExchangeOffer.SetupInterface();
+```
+Internal method used to setup the {ref}`TRSGrandExchangeOffer` coordinates.
+This is automatically called for you on the {ref}`GrandExchangeOffer variable`.
+*)
+procedure TRSGrandExchangeOffer.SetupInterface();
+begin
+  Self.Bounds := GrandExchange.Bounds;
+
+  Self.Title.Setup(Self.Bounds);
+  Self.Title.IsOpen := @Self.IsOpen;
+
+  with Self.Bounds do
+  begin
+    Self.InfoBounds.OfferType  := [X1+40, Y1+45, X1+130, Y1+61];
+    Self.InfoBounds.GuidePrice := [X1+40, Y1+114, X1+130, Y1+122];
+    Self.InfoBounds.Name       := [X1+166, Y1+45, X2-20, Y1+61];
+    Self.InfoBounds.Examine    := [X1+166, Y1+65, X2-20, Y1+128];
+  end;
+end;
+
+(*
+## GrandExchangeOffer.IsOpen
+```pascal
+function TRSGrandExchangeOffer.IsOpen(): Boolean;
+```
+Returns true if the Grand Exchange is open.
+
+Example:
+```pascal
+WriteLn GrandExchangeOffer.IsOpen();
+```
+*)
+function TRSGrandExchangeOffer.IsOpen(): Boolean;
+begin
+  if BankPin.IsOpen() then
+  begin
+    if not BankPin.WaitLoading(3000) then
+      raise GetDebugLn('BankPin', 'GrandExchangeOffer pin buttons don''t seem to have loaded in 3 seconds.');
+
+    if not BankPin.Enter(Profiles.GetPin()) then
+      raise GetDebugLn('BankPin', 'Failed to enter GrandExchangeOffer pin.');
+  end;
+
+  Result := Self.Title.IsTitle('Grand Exchange:');
+end;
+
+(*
+## GrandExchangeOffer.WaitOpen
+```pascal
+function TRSGrandExchangeOffer.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
+```
+Returns true if the Grand Exchange is open within `time` milliseconds.
+
+## Example:
+```pascal
+WriteLn GrandExchangeOffer.WaitOpen();
+```
+*)
+function TRSGrandExchangeOffer.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
+begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsOpen(), interval, time);
+end;
+
+(*
+## GrandExchangeOffer.Close
+```pascal
+function TRSGrandExchangeOffer.Close(escape: Boolean): Boolean;
+function TRSGrandExchangeOffer.Close(escapeProbability: Single = 0): Boolean; overload;
+```
+Closes the GrandExchangeOffer, Depending on `escape` or `escapeProbability the function will
+either click the button or press escape key.
+
+Example:
+```pascal
+ WriteLn GrandExchangeOffer.Close();
+```
+*)
+function TRSGrandExchangeOffer.Close(escape: Boolean): Boolean;
+begin
+  Result := Self.Title.Close(escape);
+end;
+
+function TRSGrandExchangeOffer.Close(escapeProbability: Single = -1): Boolean; overload;
+begin
+  Result := Self.Title.Close(escapeProbability);
+end;
+
+(*
+## GrandExchangeOffer.Open
+```pascal
+function TRSGrandExchangeOffer.Open(): Boolean;
+```
+Attempts to open the {ref}`GrandExchangeOffer`, returns `True` on success.
+
+Example:
+```pascal
+WriteLn GrandExchangeOffer.Open();
+```
+*)
+function TRSGrandExchangeOffer.Open(): Boolean;
+begin
+  if Self.IsOpen() then Exit(True);
+  if not GrandExchange.IsOpen() then Exit;
+
+  //Mouse.Click(GrandExchange.OfferButton, EMouseButton.LEFT);
+  Result := Self.WaitOpen(2000);
+end;
+
+
+(*
+## GrandExchangeOffer.OfferInterface
+```pascal
+property TRSGrandExchangeOffer.OfferInterface: EGEOfferInterface;
+```
+Returns the {ref}`EGEOfferInterface` type of the {ref}`GrandExchangeOffer`
+screen.
+
+Example:
+```pascal
+WriteLn GrandExchangeOffer.OfferInterface;
+```
+*)
+property TRSGrandExchangeOffer.OfferInterface: EGEOfferInterface;
+begin
+  if not Self.IsOpen() then Exit;
+  if Self.Title.IsTitle('Grand Exchange: Offer status') then
+    Exit(EGEOfferInterface.STATUS);
+  Result := EGEOfferInterface.SETUP;
+end;
+
+
+(*
+## GrandExchangeOffer.OfferType
+```pascal
+property TRSGrandExchangeOffer.OfferType: EGEOfferType;
+```
+Returns the {ref}`EGEOfferType` of the {ref}`GrandExchangeOffer` screen.
+
+```{figure} ../../images/geo_type.png
+```
+
+Example:
+```pascal
+WriteLn GrandExchangeOffer.OfferType;
+```
+*)
+property TRSGrandExchangeOffer.OfferType: EGEOfferType;
+begin
+  if not Self.IsOpen() then Exit;
+  if Target.HasColor(RSColors.TEXT_ORANGE, 0, 208, Self.InfoBounds.OfferType) then
+    Exit(EGEOfferType.BUY);
+  Result := EGEOfferType.SELL;
+end;
+
+
+(*
+## GrandExchangeOffer.GuidePrice
+```pascal
+property TRSGrandExchangeOffer.GuidePrice: Integer;
+```
+Returns the guide price for the item in the {ref}`GrandExchangeOffer` if any.
+
+```{figure} ../../images/geo_guide.png
+```
+
+Example:
+```pascal
+WriteLn GrandExchangeOffer.GuidePrice;
+```
+*)
+property TRSGrandExchangeOffer.GuidePrice: Integer;
+var
+  txt: String;
+begin
+  if not Self.IsOpen() then Exit;
+  txt := OCR.Recognize(Self.InfoBounds.GuidePrice, RSFonts.PLAIN_11, [RSColors.TEXT_LIGHT_ORANGE], 0);
+  Result := txt.ExtractInteger();
+end;
+
+
+(*
+## GrandExchangeOffer.Item
+```pascal
+property TRSGrandExchangeOffer.Item: TRSItem;
+```
+Returns the item in the {ref}`GrandExchangeOffer` if any.
+
+```{figure} ../../images/geo_item.png
+```
+
+Example:
+```pascal
+WriteLn GrandExchangeOffer.Item;
+```
+*)
+property TRSGrandExchangeOffer.Item: TRSItem;
+begin
+  if not Self.IsOpen() then Exit;
+  Result := OCR.RecognizeStatic(Self.InfoBounds.Name, RSFonts.BOLD_SHADOW, [RSColors.TEXT_ORANGE], 0);
+end;
+
+(*
+## GrandExchangeOffer.Examine
+```pascal
+property TRSGrandExchangeOffer.Examine: String;
+```
+Returns the examine text of the item in the {ref}`GrandExchangeOffer` if any.
+
+```{figure} ../../images/geo_examine.png
+```
+
+Example:
+```pascal
+WriteLn GrandExchangeOffer.Examine;
+```
+*)
+property TRSGrandExchangeOffer.Examine: String;
+var
+  strs: TStringArray;
+begin
+  if not Self.IsOpen() then Exit;
+  strs := OCR.RecognizeLines(Self.InfoBounds.Examine, RSFonts.PLAIN_11, [RSColors.TEXT_LIGHT_ORANGE], 0);
+
+  if strs = [] then Exit;
+  if strs.Last.EndsWith('%') then strs.Pop;
+  Result := strs.Join(' ');
+end;
+
+(*
+## GrandExchangeOffer.Fee
+```pascal
+property TRSGrandExchangeOffer.Fee: Double;
+```
+Returns the fee percentage of the the {ref}`GrandExchangeOffer` if any.
+
+This is returned as a `Double`.
+
+```{figure} ../../images/geo_fee.png
+```
+
+Example:
+```pascal
+WriteLn GrandExchangeOffer.Fee;
+```
+*)
+property TRSGrandExchangeOffer.Fee: Double;
+var
+  tpa: TPointArray;
+  txt: String;
+begin
+  if not Self.IsOpen() then Exit;
+
+  tpa := Target.FindColor(RSColors.TEXT_LIGHT_ORANGE, 0, Self.InfoBounds.Examine);
+  if tpa = [] then Exit;
+  tpa := tpa.Cluster(12, 8).Last;
+  txt := OCR.Recognize(tpa.Bounds, RSFonts.PLAIN_11, [RSColors.TEXT_LIGHT_ORANGE], 0);
+  Result := txt.ExtractInteger(0) / 100;
+end;
+
+(*
+## GrandExchangeOffer.ChangeItem
+```pascal
+function TRSGrandExchangeOffer.ChangeItem(item: TRSItem): Boolean;
+```
+Attempts to change the offer item to the specified `item`.
+
+Example:
+```pascal
+WriteLn GrandExchangeOffer.ChangeItem('Abyssal whip');
+```
+*)
+function TRSGrandExchangeOffer.ChangeItem(item: TRSItem): Boolean;
+var
+  slot: Integer;
+begin
+  if not Self.IsOpen() then Exit;
+  if Self.Item.ToLower() = item.ToLower() then Exit(True);
+  if Self.OfferInterface = EGEOfferInterface.STATUS then Exit;
+
+  case Self.OfferType of
+    EGEOfferType.SELL:
+    begin
+      if not Inventory.Items.Find(item, slot) then Exit;
+      if not Inventory.Slots.Interact(slot, 'Offer') then Exit;
+      Exit(SleepUntil(Self.Item.ToLower() = item.ToLower(), 200, 2000));
+    end;
+
+    EGEOfferType.BUY:
+    begin
+      //TODO...
+    end;
+  end;
+end;
+
+
+
+var
+(*
+## GrandExchangeOffer variable
+Global {ref}`TRSGrandExchangeOffer` variable.
+*)
+  GrandExchangeOffer: TRSGrandExchangeOffer;
