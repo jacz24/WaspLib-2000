@@ -15,6 +15,17 @@ type
 EGEOfferInterface = enum(SETUP, STATUS);
 ```
 Enum to represent the type of {ref}`GrandExchange` offer interfaces.
+
+There's 2 types of "Offer" interfaces:
+```{figure} ../../images/geo_setup.png
+The "Setup offer" interface.
+```
+
+```{figure} ../../images/geo_status.png
+The "Status offer" interface.
+```
+
+You can differ them by their layout and interface title.
 *)
   EGEOfferInterface = enum(SETUP, STATUS);
 
@@ -118,6 +129,7 @@ begin
     Self.InfoBounds.Examine    := [X1+166, Y1+65, X2-20, Y1+128];
 
     Self.QuantityBounds.Quantity := [X1+39, Y1+158, X1+191, Y1+177];
+    Self.ConfirmButton := [X1+166,Y2-54,X2-166,Y2-15];
   end;
 
   with Self.QuantityBounds.Quantity do
@@ -246,7 +258,6 @@ WriteLn GrandExchangeOffer.OfferInterface;
 *)
 property TRSGrandExchangeOffer.OfferInterface: EGEOfferInterface;
 begin
-  if not Self.IsOpen() then Exit;
   if Self.Title.IsTitle('Grand Exchange: Offer status') then
     Exit(EGEOfferInterface.STATUS);
   Result := EGEOfferInterface.SETUP;
@@ -428,6 +439,33 @@ begin
 end;
 
 
+(*
+## GrandExchangeOffer.Confirm
+```pascal
+function TRSGrandExchangeOffer.Confirm(): Boolean;
+```
+Attempts to click the confirm button:
+
+```{figure} ../../images/geo_confirm.png
+```
+
+Example:
+```pascal
+if GrandExchangeOffer.Change('Abyssal whip') then
+  GrandExchangeOffer.Confirm();
+```
+*)
+function TRSGrandExchangeOffer.Confirm(): Boolean;
+begin
+  if not Self.IsOpen() then Exit;
+  if Self.OfferInterface <> EGEOfferInterface.SETUP then Exit;
+
+  if not Target.HasColor(RSColors.TEXT_WHITE, 0, 1, Self.ConfirmButton) then
+    Exit;
+
+  Mouse.Click(Self.ConfirmButton, EMouseButton.LEFT);
+  Result := GrandExchange.WaitOpen(2000);
+end;
 
 var
 (*
