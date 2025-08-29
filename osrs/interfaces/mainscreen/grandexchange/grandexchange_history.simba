@@ -3,6 +3,15 @@
 Methods to interact with the GrandExchangeHistory interface:
 ```{figure} ../../images/geh_interface.png
 ```
+
+The {ref}`GrandExchange` is a very complex interface, probably the most complex
+available in OldSchool RuneScape and for that reason, the functionality to
+fully interact with it is split into multiple files and records:
+- {ref}`GrandExchange`, the main grand exchange screen.
+- {ref}`GrandExchangeHistory`, the history screen of the grand exchange and what this page is about.
+- {ref}`GrandExchangeChat`, the chat interface of the grand exchange when you are setting up a buy offer.
+- {ref}`GrandExchangeOffer`, the screen of the grand exchange where you view or setup a new offer.
+*)
 *)
 
 {$DEFINE WL_GRANDEXCHANGE_HISTORY_INCLUDED}
