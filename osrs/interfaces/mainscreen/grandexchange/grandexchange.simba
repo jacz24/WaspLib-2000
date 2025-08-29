@@ -98,6 +98,8 @@ end.
     ItemBox, ItemNameBox, ValueBox, StatusBox: TBox;
   end;
 
+  TRSGrandExchangeSlotArray = array of TRSGrandExchangeSlot;
+
 procedure TRSGrandExchangeSlot._Setup(bounds: TBox);
 begin
   Self.Bounds := bounds;
@@ -279,6 +281,49 @@ begin
   Result := EGEOfferStatus.NONE;
 end;
 
+(*
+## TRSGrandExchangeSlot.Open
+```pascal
+function TRSGrandExchangeSlot.Open(): Boolean;
+```
+Attempts to open the {ref}`GrandExchangeOffer` status screen of an existing
+offer.
+
+Example:
+```pascal
+WriteLn GrandExchange.Slots[1].Open();
+```
+*)
+function TRSGrandExchangeSlot.Open(): Boolean; forward;
+
+(*
+## TRSGrandExchangeSlot.Buy
+```pascal
+function TRSGrandExchangeSlot.Buy(): Boolean;
+```
+Attempts to open the {ref}`GrandExchangeOffer` screen with the buy button.
+
+Example:
+```pascal
+WriteLn GrandExchange.Slots[2].Buy();
+```
+*)
+function TRSGrandExchangeSlot.Buy(): Boolean; forward;
+
+(*
+## TRSGrandExchangeSlot.Sell
+```pascal
+function TRSGrandExchangeSlot.Sell(): Boolean;
+```
+Attempts to open the {ref}`GrandExchangeOffer` screen with the sell button.
+
+Example:
+```pascal
+WriteLn GrandExchange.Slots[2].Sell();
+```
+*)
+function TRSGrandExchangeSlot.Sell(): Boolean; forward;
+
 
 type
 (*
@@ -392,9 +437,115 @@ begin
   Result := Self.Title.Close(escapeProbability);
 end;
 
+
+(*
+## GrandExchange.GetEmptySlots
+```pascal
+function TRSGrandExchange.GetEmptySlots(): TRSGrandExchangeSlotArray;
+```
+Returns a `TRSGrandExchangeSlotArray` of the empty slots available.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  img: TImage;
+  slot: TRSGrandExchangeSlot;
+begin
+  img := Target.GetImage();
+  img.DrawColor := $00FFFF;
+  for slot in GrandExchange.GetEmptySlots() do
+    img.DrawBox(slot.Bounds);
+  img.Show();
+end.
+```
+```{figure} ../../images/ge_emptyslots.png
+```
+*)
+function TRSGrandExchange.GetEmptySlots(): TRSGrandExchangeSlotArray;
+var
+  i: Integer;
+begin
+  for i := 0 to 7 do
+    if Self.Slots[i].GetType() = EGESlotType.EMPTY then
+      Result += Self.Slots[i];
+end;
+
+(*
+## GrandExchange.IndexOfEmptySlot
+```pascal
+function TRSGrandExchange.IndexOfEmptySlot(): Integer;
+```
+Returns the index of the first empty slot available.
+
+Example:
+```pascal
+WriteLn GrandExchange.IndexOfEmptySlot();
+```
+*)
+function TRSGrandExchange.IndexOfEmptySlot(): Integer;
+begin
+  for Result := 0 to 7 do
+    if Self.Slots[Result].GetType() = EGESlotType.EMPTY then
+      Exit;
+  Result := -1;
+end;
+
+(*
+## GrandExchange.GetEmptySlot
+```pascal
+function TRSGrandExchange.GetEmptySlot(): TRSGrandExchangeSlot;
+```
+Returns a `TRSGrandExchangeSlot` that is empty.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+begin
+  ShowOnTarget(GrandExchange.GetEmptySlot().Bounds);
+end.
+```
+```{figure} ../../images/ge_emptyslot.png
+```
+*)
+function TRSGrandExchange.GetEmptySlot(): TRSGrandExchangeSlot;
+var
+  slot: Integer;
+begin
+  slot := Self.IndexOfEmptySlot();
+  if slot > -1 then
+    Result := Self.Slots[slot];
+end;
+
+
 var
 (*
 ## GrandExchange variable
 Global {ref}`TRSGrandExchange` variable.
 *)
   GrandExchange: TRSGrandExchange;
+
+function TRSGrandExchangeSlot.Open(): Boolean;
+begin
+  if Self.GetType() = EGESlotType.EMPTY then Exit;
+  Mouse.Click(Self.Bounds, EMouseButton.LEFT);
+  Result := SleepUntil(not GrandExchange.IsOpen(), 200, 2000);
+end;
+
+function TRSGrandExchangeSlot.Buy(): Boolean;
+begin
+  if Self.GetType() <> EGESlotType.EMPTY then
+    Exit;
+  Mouse.Click(Self.BuyButton, EMouseButton.LEFT);
+  Result := SleepUntil(not GrandExchange.IsOpen(), 200, 2000);
+end;
+
+function TRSGrandExchangeSlot.Sell(): Boolean;
+begin
+  if Self.GetType() <> EGESlotType.EMPTY then
+    Exit;
+  Mouse.Click(Self.SellButton, EMouseButton.LEFT);
+  Result := SleepUntil(not GrandExchange.IsOpen(), 200, 2000);
+end;
+
+

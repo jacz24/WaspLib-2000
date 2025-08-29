@@ -12,7 +12,6 @@ fully interact with it is split into multiple files and records:
 - {ref}`GrandExchangeChat`, the chat interface of the grand exchange when you are setting up a buy offer.
 - {ref}`GrandExchangeOffer`, the screen of the grand exchange where you view or setup a new offer.
 *)
-*)
 
 {$DEFINE WL_GRANDEXCHANGE_HISTORY_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
