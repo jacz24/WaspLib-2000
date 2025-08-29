@@ -99,6 +99,10 @@ Record responsible to handle the {ref}`GrandExchangeOffer` interface.
       Buttons: TBoxArray;
     end;
 
+    CollectBounds: record
+      Left, Right: TBox;
+    end;
+
     TotalBounds: TBox;
     ConfirmButton, BackButton: TBox;
   end;
@@ -129,7 +133,13 @@ begin
     Self.InfoBounds.Examine    := [X1+166, Y1+65, X2-20, Y1+128];
 
     Self.QuantityBounds.Quantity := [X1+39, Y1+158, X1+191, Y1+177];
-    Self.ConfirmButton := [X1+166,Y2-54,X2-166,Y2-15];
+
+    Self.TotalBounds   := [X1+36, Y2-91, X2-36, Y2-72];
+    Self.ConfirmButton := [X1+166, Y2-54, X2-166, Y2-15];
+    Self.BackButton    := [X1+17, Y2-46, X1+46, Y2-24];
+
+    Self.CollectBounds.Left := [X2-105, Y2-51, X2-70, Y2-20];
+    Self.CollectBounds.Right := [X2-54, Y2-51, X2-19, Y2-20];
   end;
 
   with Self.QuantityBounds.Quantity do
@@ -392,6 +402,290 @@ begin
   Result := txt.ExtractInteger(0) / 100;
 end;
 
+
+(*
+## GrandExchangeOffer.Quantity
+```pascal
+property TRSGrandExchangeOffer.Quantity: Integer;
+property TRSGrandExchangeOffer.Quantity(value: Integer): Boolean;
+```
+Returns or sets the quantity of the the {ref}`GrandExchange` offer:
+```{figure} ../../images/geo_quantity.png
+```
+
+Example:
+```pascal
+WriteLn GrandExchangeOffer.Quantity;
+WriteLn GrandExchangeOffer.Quantity[100];
+WriteLn GrandExchangeOffer.Quantity;
+```
+*)
+property TRSGrandExchangeOffer.Quantity: Integer;
+var
+  font: ^TPixelFont;
+begin
+  if not Self.IsOpen() then Exit(-1);
+
+  case Self.OfferInterface of
+    EGEOfferInterface.SETUP:  font := @RSFonts.PLAIN_11;
+    EGEOfferInterface.STATUS: font := @RSFonts.BOLD_SHADOW;
+  end;
+
+  Result := OCR.RecognizeNumber(Self.QuantityBounds.Quantity, font^, [RSColors.TEXT_LIGHT_ORANGE], 0);
+end;
+
+property TRSGrandExchangeOffer.Quantity(value: Integer): Boolean;
+var
+  old: Integer;
+begin
+  old := Self.Quantity;
+
+  case old of
+    -1: Exit;
+    value: Exit(True);
+  end;
+
+  if Self.OfferInterface <> EGEOfferInterface.SETUP then
+    Exit;
+
+  case value of
+    old-1: Mouse.Click(Self.QuantityBounds.Spinner[EGEOfferSpinButton.DECREASE], EMouseButton.LEFT);
+    old+1:
+    begin
+      if Biometrics.RandomBoolean() then
+        Mouse.Click(Self.QuantityBounds.Spinner[EGEOfferSpinButton.INCREASE], EMouseButton.LEFT)
+      else
+        Mouse.Click(Self.QuantityBounds.Buttons[EGEOfferQuantity.ONE], EMouseButton.LEFT);
+    end;
+
+    old+10: Mouse.Click(Self.QuantityBounds.Buttons[EGEOfferQuantity.TEN], EMouseButton.LEFT);
+    old+100: Mouse.Click(Self.QuantityBounds.Buttons[EGEOfferQuantity.HUNDRED], EMouseButton.LEFT);
+    old+1000: Mouse.Click(Self.QuantityBounds.Buttons[EGEOfferQuantity.THOUSAND], EMouseButton.LEFT);
+    else
+    begin
+      Mouse.Click(Self.QuantityBounds.Buttons[EGEOfferQuantity.CUSTOM], EMouseButton.LEFT);
+      if not Chat.AnswerQuery('How many do you wish to buy?', ToStr(value), 2000) then
+        Exit;
+    end;
+  end;
+
+  Result := SleepUntil(Self.Quantity = value, 200, 2000);
+end;
+
+
+(*
+## GrandExchangeOffer.CustomPricePercent
+```pascal
+property TRSGrandExchangeOffer.CustomPricePercent: Double;
+property TRSGrandExchangeOffer.CustomPricePercent(value: Double): Boolean;
+```
+Returns or sets the custom price percentage button of the {ref}`GrandExchange`
+offer:
+```{figure} ../../images/geo_customperc.png
+```
+
+Example:
+```pascal
+WriteLn GrandExchangeOffer.CustomPricePercent;
+WriteLn GrandExchangeOffer.CustomPricePercent[0.12];
+WriteLn GrandExchangeOffer.CustomPricePercent;
+```
+*)
+property TRSGrandExchangeOffer.CustomPricePercent: Double;
+var
+  txt: String;
+  value: Integer;
+begin
+  if not Self.IsOpen() then Exit(-1);
+  if Self.OfferInterface <> EGEOfferInterface.SETUP then Exit(-1);
+
+  txt := OCR.Recognize(Self.PriceBounds.Buttons[EGEOfferPrice.MINUS_CUSTOM], RSFonts.PLAIN_11, [RSColors.TEXT_ORANGE], 0);
+  value := txt.After('-').ExtractInteger();
+
+  if value > 0 then
+    Result := value / 100;
+end;
+
+property TRSGrandExchangeOffer.CustomPricePercent(value: Double): Boolean;
+var
+  old: Double;
+  str: String;
+begin
+  old := Self.CustomPricePercent;
+
+  if old = -1 then Exit;
+
+  //basically checking if old = value
+  //ignoring extra decimals the user might have set
+  if Abs(old - value) < 0.01 then Exit(True);
+
+  if Biometrics.RandomBoolean() then
+    Mouse.Move(Self.PriceBounds.Buttons[EGEOfferPrice.MINUS_CUSTOM])
+  else
+    Mouse.Move(Self.PriceBounds.Buttons[EGEOfferPrice.PLUS_CUSTOM]);
+
+  if not ChooseOption.Select('Customise') then Exit;
+
+  str := ToStr(Round(value*100));
+  if not Chat.AnswerQuery('Set a percentage to', str, 2000) then
+    Exit;
+
+  Result := SleepUntil(Abs(Self.CustomPricePercent - value) < 0.01, 200, 2000);
+end;
+
+
+(*
+## GrandExchangeOffer.Price
+```pascal
+property TRSGrandExchangeOffer.Price: Integer;
+property TRSGrandExchangeOffer.Price(value: Integer): Boolean;
+property TRSGrandExchangeOffer.Price(value: Integer; tolerance: Single): Boolean;
+```
+Returns or sets the price of the the {ref}`GrandExchange` offer:
+```{figure} ../../images/geo_price.png
+```
+
+Example:
+```pascal
+WriteLn GrandExchangeOffer.Price;
+WriteLn GrandExchangeOffer.Price[1500500];
+WriteLn GrandExchangeOffer.Price;
+```
+*)
+property TRSGrandExchangeOffer.Price: Integer;
+var
+  font: ^TPixelFont;
+begin
+  if not Self.IsOpen() then Exit(-1);
+
+  case Self.OfferInterface of
+    EGEOfferInterface.SETUP:  font := @RSFonts.PLAIN_11;
+    EGEOfferInterface.STATUS: font := @RSFonts.BOLD_SHADOW;
+  end;
+
+  Result := OCR.RecognizeNumber(Self.PriceBounds.Price, font^, [RSColors.TEXT_LIGHT_ORANGE], 0);
+end;
+
+property TRSGrandExchangeOffer.Price(value: Integer): Boolean;
+var
+  old: Integer;
+  cpercent: Double;
+begin
+  old := Self.Price;
+
+  case old of
+    -1: Exit;
+    value: Exit(True);
+  end;
+
+  if Self.OfferInterface <> EGEOfferInterface.SETUP then
+    Exit;
+
+  cpercent := Self.CustomPricePercent;
+
+  case value of
+    Self.GuidePrice: Mouse.Click(Self.PriceBounds.Buttons[EGEOfferPrice.GUIDE], EMouseButton.LEFT);
+    Round(old*0.95): Mouse.Click(Self.PriceBounds.Buttons[EGEOfferPrice.MINUS_FIVE], EMouseButton.LEFT);
+    Round(old*1.05): Mouse.Click(Self.PriceBounds.Buttons[EGEOfferPrice.PLUS_FIVE], EMouseButton.LEFT);
+    Round(old*(1-cpercent)): Mouse.Click(Self.PriceBounds.Buttons[EGEOfferPrice.MINUS_CUSTOM], EMouseButton.LEFT);
+    Round(old*(1+cpercent)): Mouse.Click(Self.PriceBounds.Buttons[EGEOfferPrice.PLUS_CUSTOM], EMouseButton.LEFT);
+    else
+    begin
+      Mouse.Click(Self.PriceBounds.Buttons[EGEOfferPrice.CUSTOM], EMouseButton.LEFT);
+      if not Chat.AnswerQuery('Set a price for each item:', ToStr(value), 2000) then
+        Exit;
+    end;
+  end;
+
+  Result := SleepUntil(Self.Price = value, 200, 2000);
+end;
+
+property TRSGrandExchangeOffer.Price(value: Integer; tolerance: Single): Boolean;
+var
+  old: Integer;
+  cpercent: Double;
+begin
+  old := Self.Price;
+
+  case old of
+    -1: Exit;
+    value: Exit(True);
+  end;
+
+  if Self.OfferInterface <> EGEOfferInterface.SETUP then
+    Exit;
+
+  cpercent := Self.CustomPricePercent;
+
+  case value of
+    Self.GuidePrice: Mouse.Click(Self.PriceBounds.Buttons[EGEOfferPrice.GUIDE], EMouseButton.LEFT);
+    Round(old*0.95): Mouse.Click(Self.PriceBounds.Buttons[EGEOfferPrice.MINUS_FIVE], EMouseButton.LEFT);
+    Round(old*1.05): Mouse.Click(Self.PriceBounds.Buttons[EGEOfferPrice.PLUS_FIVE], EMouseButton.LEFT);
+    Round(old*(1-cpercent)): Mouse.Click(Self.PriceBounds.Buttons[EGEOfferPrice.MINUS_CUSTOM], EMouseButton.LEFT);
+    Round(old*(1+cpercent)): Mouse.Click(Self.PriceBounds.Buttons[EGEOfferPrice.PLUS_CUSTOM], EMouseButton.LEFT);
+    else
+    begin
+      Mouse.Click(Self.PriceBounds.Buttons[EGEOfferPrice.CUSTOM], EMouseButton.LEFT);
+      if not Chat.AnswerQuery('Set a price for each item:', ToStr(value), 2000) then
+        Exit;
+    end;
+  end;
+
+  Result := SleepUntil(InRange(Abs(Self.Price-value), value*(1-tolerance), value*(1+tolerance)), 200, 2000);
+end;
+
+
+(*
+## GrandExchangeOffer.Total
+```pascal
+property TRSGrandExchangeOffer.Total: Integer;
+```
+Returns the total value of the the {ref}`GrandExchange` offer the user will
+pay/receive:
+```{figure} ../../images/geo_total.png
+```
+
+This is returned as an `Integer`.
+
+Example:
+```pascal
+WriteLn GrandExchangeOffer.Total;
+```
+*)
+property TRSGrandExchangeOffer.Total: Integer;
+begin
+  if not Self.IsOpen() then Exit;
+  Result := OCR.RecognizeNumber(Self.TotalBounds, RSFonts.BOLD_SHADOW, [RSColors.TEXT_WHITE], 0);
+end;
+
+(*
+## GrandExchangeOffer.TrueTotal
+```pascal
+property TRSGrandExchangeOffer.TrueTotal: Integer;
+```
+Returns the true total value of the the {ref}`GrandExchange` offer the user will
+receive:
+```{figure} ../../images/geo_truetotal.png
+```
+
+This is returned as an `Integer` and is only available in sell offers.
+
+Example:
+```pascal
+WriteLn GrandExchangeOffer.TrueTotal;
+```
+*)
+property TRSGrandExchangeOffer.TrueTotal: Integer;
+var
+  txt: String;
+begin
+  if not Self.IsOpen() then Exit;
+  txt := OCR.Recognize(Self.TotalBounds, RSFonts.BOLD_SHADOW, [RSColors.TEXT_GREY], 0);
+  Result := txt.Before('-').ExtractInteger();
+end;
+
+
+
 (*
 ## GrandExchangeOffer.Change
 ```pascal
@@ -466,6 +760,83 @@ begin
   Mouse.Click(Self.ConfirmButton, EMouseButton.LEFT);
   Result := GrandExchange.WaitOpen(2000);
 end;
+
+(*
+## GrandExchangeOffer.Back
+```pascal
+function TRSGrandExchangeOffer.Back(): Boolean;
+```
+Attempts to click the back button:
+
+```{figure} ../../images/geo_back.png
+```
+
+Example:
+```pascal
+GrandExchangeOffer.Back();
+```
+*)
+function TRSGrandExchangeOffer.Back(): Boolean;
+begin
+  if not Self.IsOpen() then Exit;
+  Mouse.Click(Self.BackButton, EMouseButton.LEFT);
+  Result := GrandExchange.WaitOpen(2000);
+end;
+
+
+(*
+## GrandExchangeOffer.HasItems
+```pascal
+function TRSGrandExchangeOffer.HasItems(): Boolean;
+```
+Checks if we have items to collect in an offer:
+
+```{figure} ../../images/geo_collect.png
+```
+
+Example:
+```pascal
+WriteLn GrandExchangeOffer.HasItems();
+```
+*)
+function TRSGrandExchangeOffer.HasItems(): Boolean;
+begin
+  if not Self.IsOpen() then Exit;
+  if Self.OfferInterface <> EGEOfferInterface.STATUS then Exit;
+
+  Result := Target.HasColor(RSColors.ITEM_BORDER, 0, 1, Self.CollectBounds.Left) or
+            Target.HasColor(RSColors.ITEM_BORDER, 0, 1, Self.CollectBounds.Right);
+end;
+
+
+(*
+## GrandExchangeOffer.Collect
+```pascal
+function TRSGrandExchangeOffer.Collect(): Boolean;
+```
+Attempts to collect items in an offer.
+
+Example:
+```pascal
+GrandExchangeOffer.Collect();
+```
+*)
+function TRSGrandExchangeOffer.Collect(): Boolean;
+begin
+  if not Self.IsOpen() then Exit;
+  if Self.OfferInterface <> EGEOfferInterface.STATUS then Exit;
+
+  if not Self.HasItems() then Exit(True);
+
+  if Target.HasColor(RSColors.ITEM_BORDER, 0, 1, Self.CollectBounds.Left) then
+    Mouse.Click(Self.CollectBounds.Left, EMouseButton.LEFT);
+
+  if Target.HasColor(RSColors.ITEM_BORDER, 0, 1, Self.CollectBounds.Right) then
+    Mouse.Click(Self.CollectBounds.Right, EMouseButton.LEFT);
+
+  Result := SleepUntil(not Self.HasItems(), 200, 2000);
+end;
+
 
 var
 (*
