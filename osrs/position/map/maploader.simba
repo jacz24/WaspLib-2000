@@ -290,7 +290,7 @@ begin
 
   case map of
     ERSMap.NORMAL: cachename := Self.CacheDir + 'map' + PATH_SEP + ToStr(plane) + PATH_SEP + filename;
-    ERSMap.HEIGHT: cachename := Self.CacheDir + 'heightmap' + PATH_SEP + filename;
+    ERSMap.HEIGHT: cachename := Self.CacheDir + 'heightmap' + PATH_SEP + ToStr(plane) + PATH_SEP + filename;
     ERSMap.COLLISION: cachename := Self.CacheDir + 'collision' + PATH_SEP + ToStr(plane) + PATH_SEP + filename;
   end;
 
@@ -530,7 +530,7 @@ begin
       maps.Last.Pad(padding);
 
       //heightmap are shared accross planes
-      heightmaps += Self.GetMap(region.Chunks, 0, ERSMap.HEIGHT);
+      heightmaps += Self.GetMap(region.Chunks, plane, ERSMap.HEIGHT);
       heightmaps.Last.Pad(padding);
 
       collisionmaps += Self.GetMap(region.Chunks, plane, ERSMap.COLLISION);
