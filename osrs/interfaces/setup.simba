@@ -115,6 +115,7 @@ begin
   FormUtils.Setup();
   RSFonts.Setup();
   Logger.Setup();
+  WebGraphGenerator.Setup();
 
   {$IFDEF WL_TEST}
   RSClient.Client := ERSClient.RUNELITE;

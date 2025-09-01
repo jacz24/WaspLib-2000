@@ -24,6 +24,34 @@ begin
   Result := HashData(EHashAlgo.CRC32, @data[0], Length(data));
 end;
 
+(*
+## WebGraphGenerator.Setup
+```pascal
+procedure TWebGraphGenerator.Setup();
+```
+Sets up the `TWebGraphGenerator` with the following settings which are the
+defaults:
+```pascal
+WebGraphGenerator.Spacing := 18;         //low = better/slower, high = worse/faster
+WebGraphGenerator.MinimumTiles := 4;     //spaces with less tiles than this will be ignored.
+WebGraphGenerator.NodeRadius := 50;      //closed space less than NodeRadius pixels will have a single node.
+WebGraphGenerator.MaxConnections := 6;   //Max connections per node.
+WebGraphGenerator.WallCrossings := True; //Whether to allow wall crossings when there's a close path around it.
+```
+
+Feel free to change the settings to suit your need and use the
+{ref}`Map Debugger` to see what the results look like.
+
+To do so you **MUST DO IT BEFORE** setting up your {ref}`Map`.
+*)
+procedure TWebGraphGenerator.Setup();
+begin
+  Self.Spacing := 18;
+  Self.MinimumTiles := 4;
+  Self.NodeRadius := 50;
+  Self.MaxConnections := 6;
+  Self.WallCrossings := True;
+end;
 
 function TWebGraphGenerator.GetDoorDirection(center: TPoint; img: TImage): TPoint;
 var
@@ -192,12 +220,11 @@ begin
 end;
 
 
-
 (*
-## TRSChunkLoader.BuildGraph
+## WebGraphGenerator.BuildGraph
 ```pascal
-function TRSChunkLoader._BuildGraph(map: TMufasaBitmap; white, red: TPointArray): TWebGraphV2;
-function TRSChunkLoader.BuildGraph(name: String; map: TMufasaBitmap): TWebGraphV2;
+function TWebGraphGenerator._BuildGraph(map: TImage; white, red: TPointArray): TWebGraph;
+function TWebGraphGenerator.BuildGraph(name: String; map: TImage): TWebGraph;
 ```
 Magically builds a webgraph for you for a given collision map passed into `map`.
 
@@ -210,6 +237,28 @@ The collision map can only have 4 colors:
 ```{note}
 This is an internal method. Don't use it if you don't know what you are doing.
 ```
+
+It's hard to go into detail on how this works but if you want to see the result
+run this example code:
+```pascal
+{$I WaspLib/osrs.simba}
+begin
+  Map.Setup([Chunk(Box(49,54,50,53), 0)]);
+  Map.Debug();
+end.
+```
+
+This will setup a map with a small piece of varrock and then open the
+{ref}`Map Debugger`.
+
+On the {ref}`Map Debugger` change the dropdown to the collision map if you want
+to see what it looks like, that is what will go through this as the `map`
+parameter and it should look something like this:
+
+```{figure} ../../images/map_collision.png
+```
+
+As a bonus you can also see the resulting webgraph!
 *)
 function TWebGraphGenerator._BuildGraph(map: TImage; white, red: TPointArray): TWebGraph;
 var
@@ -344,7 +393,6 @@ begin
   SetLength(Result.Names, Length(Result.Nodes));
 end;
 
-
 function TWebGraphGenerator.BuildGraph(name: String; map: TImage): TWebGraph;
 var
   white, red, gray, merged, graySubset: TPointArray;
@@ -393,11 +441,3 @@ var
 Global {ref}`TWebGraphGenerator` variable.
 *)
   WebGraphGenerator: TWebGraphGenerator;
-
-begin
-  WebGraphGenerator.Spacing := 18;         //low = better/slower, high = worse/faster
-  WebGraphGenerator.MinimumTiles := 4;     //spaces with less tiles than this will be ignored.
-  WebGraphGenerator.NodeRadius := 50;      //closed space less than NodeRadius pixels will have a single node.
-  WebGraphGenerator.MaxConnections := 6;   //Max connections per node.
-  WebGraphGenerator.WallCrossings := True; //Whether to allow wall crossings when there's a close path around it.
-end;

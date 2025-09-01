@@ -488,13 +488,11 @@ var
   region: TRSMapRegion;
   i, j, k, plane, regionCount: Integer;
   maps, heightmaps, collisionmaps: TImageArray;
-  topLeft, btmRight: TPoint;
+  topLeft, btmRight, offset: TPoint;
   graphs: array of TWebGraph;
-  boxes: TBoxArray;
+  boxes, oldRegions: TBoxArray;
   newMap, newHeightmap, newCollision: TImage;
-  existingBox: TBox;
-  oldRegions: array of TBox;
-  offset: TPoint;
+  oldMapBox: TBox;
 begin
   if Self.Downscale <> downscale then
     raise GetDebugLn('MapLoader', 'Cannot add chunks with different downscale value');
@@ -529,7 +527,6 @@ begin
       maps += Self.GetMap(region.Chunks, plane, ERSMap.NORMAL);
       maps.Last.Pad(padding);
 
-      //heightmap are shared accross planes
       heightmaps += Self.GetMap(region.Chunks, plane, ERSMap.HEIGHT);
       heightmaps.Last.Pad(padding);
 
@@ -544,18 +541,20 @@ begin
       Self.Regions += region;
     end;
 
-  if Length(Self.Regions) = regionCount then Exit;
+  if Length(Self.Regions) = regionCount then
+    Exit;
 
   SetLength(oldRegions, regionCount);
   for i := 0 to regionCount - 1 do
+  begin
     oldRegions[i] := Self.Regions[i].Region;
-
-  for i := 0 to regionCount - 1 do
     boxes.Insert(Self.Regions[i].Region, i);
+  end;
 
   boxes := boxes.Pack();
-  existingBox := Self.MapBox;
+  oldMapBox := Self.MapBox;
   Self.MapBox := [];
+
   for i := 0 to High(boxes) do
   begin
     Self.Regions[i].Region := boxes[i];
@@ -566,97 +565,74 @@ begin
   newHeightmap := new TImage(Self.MapBox.Width, Self.MapBox.Height);
   newCollision := new TImage(Self.MapBox.Width, Self.MapBox.Height);
 
-  if (existingBox.Width > 0) and (existingBox.Height > 0) then
+  for i := 0 to regionCount - 1 do
   begin
-    for i := 0 to regionCount - 1 do
-    begin
-      newMap.DrawImage(Self.Map.Copy(oldRegions[i]), Self.Regions[i].Region.TopLeft);
-      if Assigned(Self.Heightmap) then
-        newHeightmap.DrawImage(Self.Heightmap.Copy(oldRegions[i]), Self.Regions[i].Region.TopLeft);
-      newCollision.DrawImage(Self.Collision.Copy(oldRegions[i]), Self.Regions[i].Region.TopLeft);
-    end;
+    topLeft := Self.Regions[i].Region.TopLeft;
+    newMap.DrawImage(Self.Map.Copy(oldRegions[i]), topLeft);
+    newHeightmap.DrawImage(Self.Heightmap.Copy(oldRegions[i]), topLeft);
+    newCollision.DrawImage(Self.Collision.Copy(oldRegions[i]), topLeft);
   end;
 
   for i := regionCount to High(Self.Regions) do
   begin
-    newMap.DrawImage(maps[i - regionCount], Self.Regions[i].Region.TopLeft);
-    if i - regionCount < Length(heightmaps) then
-      newHeightmap.DrawImage(heightmaps[i - regionCount], Self.Regions[i].Region.TopLeft);
-    newCollision.DrawImage(collisionmaps[i - regionCount], Self.Regions[i].Region.TopLeft);
+    j := i - regionCount;
+    topLeft := Self.Regions[i].Region.TopLeft;
+    newMap.DrawImage(maps[j], topLeft);
+    newHeightmap.DrawImage(heightmaps[j], topLeft);
+    newCollision.DrawImage(collisionmaps[j], topLeft);
   end;
 
   Self.Map := newMap;
-  if Length(heightmaps) > 0 then
-    Self.Heightmap := newHeightmap;
+  Self.Heightmap := newHeightmap;
   Self.Collision := newCollision;
 
   Self.HalfMap := Self.Map.Downsample(2);
   Self.DownscaledMap := Self.Map.Downsample(Self.Downscale);
 
-  if not WebGraphGenerator.Disabled then
+  if WebGraphGenerator.Disabled then Exit;
+
+  for i := 0 to regionCount - 1 do
   begin
-    for i := 0 to regionCount - 1 do
+    offset := Self.Regions[i].Region.TopLeft - oldRegions[i].TopLeft;
+
+    if offset <> [0, 0] then
     begin
-      offset := Self.Regions[i].Region.TopLeft - oldRegions[i].TopLeft;
+      for j := 0 to High(Self.Graph.Nodes) do
+        if Self.Graph.Nodes[j] in oldRegions[i] then
+          Self.Graph.Nodes[j] := Self.Graph.Nodes[j] + offset;
 
-      if offset <> [0, 0] then
-      begin
-        for j := 0 to High(Self.Graph.Nodes) do
-          if Self.Graph.Nodes[j] in oldRegions[i] then
-            Self.Graph.Nodes[j] := Self.Graph.Nodes[j] + offset;
+      for j := 0 to High(Self.Graph.WalkableSpace) do
+        if Self.Graph.WalkableSpace[j] in oldRegions[i] then
+          Self.Graph.WalkableSpace[j] := Self.Graph.WalkableSpace[j] + offset;
 
-        for j := 0 to High(Self.Graph.WalkableSpace) do
-          if Self.Graph.WalkableSpace[j] in oldRegions[i] then
-            Self.Graph.WalkableSpace[j] := Self.Graph.WalkableSpace[j] + offset;
+      for j := 0 to High(Self.Graph.WalkableClusters) do
+        for k := 0 to High(Self.Graph.WalkableClusters[j]) do
+          if Self.Graph.WalkableClusters[j][k] in oldRegions[i] then
+            Self.Graph.WalkableClusters[j][k] := Self.Graph.WalkableClusters[j][k] + offset;
 
-        for j := 0 to High(Self.Graph.WalkableClusters) do
-          for k := 0 to High(Self.Graph.WalkableClusters[j]) do
-            if Self.Graph.WalkableClusters[j][k] in oldRegions[i] then
-              Self.Graph.WalkableClusters[j][k] := Self.Graph.WalkableClusters[j][k] + offset;
+      for j := 0 to High(Self.Graph.ObjectClusters) do
+        for k := 0 to High(Self.Graph.ObjectClusters[j]) do
+          if Self.Graph.ObjectClusters[j][k] in oldRegions[i] then
+            Self.Graph.ObjectClusters[j][k] := Self.Graph.ObjectClusters[j][k] + offset;
 
-        for j := 0 to High(Self.Graph.ObjectClusters) do
-          for k := 0 to High(Self.Graph.ObjectClusters[j]) do
-            if Self.Graph.ObjectClusters[j][k] in oldRegions[i] then
-              Self.Graph.ObjectClusters[j][k] := Self.Graph.ObjectClusters[j][k] + offset;
-
-        for j := 0 to High(Self.Graph.Doors) do
-          if Self.Graph.Doors[j].Center in oldRegions[i] then
-          begin
-            Self.Graph.Doors[j].Before := Self.Graph.Doors[j].Before + offset;
-            Self.Graph.Doors[j].After := Self.Graph.Doors[j].After + offset;
-            Self.Graph.Doors[j].Center := Self.Graph.Doors[j].Center + offset;
-          end;
-      end;
+      for j := 0 to High(Self.Graph.Doors) do
+        if Self.Graph.Doors[j].Center in oldRegions[i] then
+        begin
+          Self.Graph.Doors[j].Before := Self.Graph.Doors[j].Before + offset;
+          Self.Graph.Doors[j].After := Self.Graph.Doors[j].After + offset;
+          Self.Graph.Doors[j].Center := Self.Graph.Doors[j].Center + offset;
+        end;
     end;
 
-    for i := 0 to High(graphs) do
-    begin
-      offset := Self.Regions[regionCount + i].Region.TopLeft;
+  end;
 
-      graphs[i].Nodes := graphs[i].Nodes.Offset(offset);
-      graphs[i].WalkableSpace := graphs[i].WalkableSpace.Offset(offset);
+  for i := 0 to High(graphs) do
+    Self.Graph.Merge(graphs[i]);
 
-      for j := 0 to High(graphs[i].WalkableClusters) do
-        graphs[i].WalkableClusters[j] := graphs[i].WalkableClusters[j].Offset(offset);
-
-      for j := 0 to High(graphs[i].ObjectClusters) do
-        graphs[i].ObjectClusters[j] := graphs[i].ObjectClusters[j].Offset(offset);
-
-      for j := 0 to High(graphs[i].Doors) do
-      begin
-        graphs[i].Doors[j].Before := graphs[i].Doors[j].Before + offset;
-        graphs[i].Doors[j].After := graphs[i].Doors[j].After + offset;
-        graphs[i].Doors[j].Center := graphs[i].Doors[j].Center + offset;
-      end;
-
-      Self.Graph.Merge(graphs[i]);
-    end;
-
-    for i := 0 to High(Self.Graph.Doors) do
-    begin
-      Self.Graph.Doors[i].Before := RSTranslator.Normalize(Self.Graph.Doors[i].Before);
-      Self.Graph.Doors[i].After := RSTranslator.Normalize(Self.Graph.Doors[i].After);
-    end;
+  for i := 0 to High(Self.Graph.Doors) do
+  begin
+    Self.Graph.Doors[i].Before := RSTranslator.Normalize(Self.Graph.Doors[i].Before);
+    Self.Graph.Doors[i].After := RSTranslator.Normalize(Self.Graph.Doors[i].After);
   end;
 end;
 

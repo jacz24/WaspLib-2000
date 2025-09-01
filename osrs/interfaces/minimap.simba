@@ -45,6 +45,7 @@ Main record used to interact with the {ref}`Minimap`.
     Orbs: array of TRSMinimapOrb;
     Bounds: TBox;
     Center: TPoint;
+    Radius: Integer;
     Polygon: TPolygon;
 
     Compass: record
@@ -90,6 +91,8 @@ begin
         Self.Bounds.Y1 := Y1 + 8;
         Self.Bounds.Y2 := Y1 + 159;
       end;
+
+      Self.Radius := 71;
     end;
 
     ERSMode.FIXED:
@@ -104,6 +107,8 @@ begin
         Self.Bounds.Y1 := Y1 + 9;
         Self.Bounds.Y2 := Y1 + 159;
       end;
+
+      Self.Radius := 65;
     end;
   end;
 
@@ -844,12 +849,7 @@ begin
   if angle = $FFFF then angle := Self.GetCompassAngle(False);
 
   if radius = -1 then
-    case RSClient.Mode of
-      ERSMode.FIXED:
-        radius := 65;
-      ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
-        radius := 71;
-    end;
+    radius := Self.Radius;
 
   img := Target.GetImage(Self.Bounds);
   img.ReplaceColor($0, $1);
@@ -903,12 +903,7 @@ begin
   Result := img.Copy();
 
   if radius = -1 then
-    case RSClient.Mode of
-      ERSMode.FIXED:
-        radius := 65;
-      ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
-        radius := 71;
-    end;
+    radius := Self.Radius;
 
   Result.Crop(TBox.Create(Result.Center, radius, radius));
   tpa := Result.FindColor($0, 0).SortFrom(Result.Center);
