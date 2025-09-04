@@ -190,6 +190,36 @@ begin
 end;
 
 
+function TWebGraph.DoorsOnPath(path: TPointArray; out lastIdx: Integer): TRSDoorArray;
+var
+  i, j: Integer;
+  before, after: TPoint;
+  doors: TRSDoorArray;
+begin
+  doors := Copy(Self.Doors);
+
+  for i := 0 to High(path) - 1 do
+  begin
+    before := RSTranslator.Normalize(path[i]);
+    after := RSTranslator.Normalize(path[i+1]);
+
+    for j := High(doors) downto 0 do
+    begin
+      if (before = doors[j].After) and (after = doors[j].Before) then
+        Swap(doors[j].Before, doors[j].After);
+
+      if (before = doors[j].Before) and (after = doors[j].After) then
+      begin
+        Result += doors[j];
+        Delete(doors, j, 1);
+        lastIdx := i;
+        Break;
+      end;
+    end;
+  end;
+end;
+
+
 function TWebGraph.FindPath(start, finish: Integer; rnd:Double=0): TIntegerArray;
 type
   TNode = record
