@@ -69,7 +69,7 @@ begin
       if i = 0 then Exit;
       Continue;
     end;
-    tpa += Target.FindColor(RSColors.ITEM_BORDER, 8.5, b);
+    tpa += Target.FindColor(TRSItem.Border, 8.5, b);
 
     if tpa = [] then Continue;
 

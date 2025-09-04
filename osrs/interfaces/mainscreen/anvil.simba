@@ -19,9 +19,50 @@ Main record to interact with the {ref}`Anvil` interface.
     Items: TRSItemInterface;
     Bounds, SlotsArea: TBox;
     SlotBoxes: TBoxArray;
+    QuantityButtons: TRSButtonArray;
+
+    Anvils: TRSObjectArray;
   end;
 
-function TRSAnvil.GetSlots(): TBoxArray;
+(*
+## Anvil.GetSlotBoxes
+```pascal
+function TRSAnvil.GetSlotBoxes(): TBoxArray;
+```
+Returns `Anvil.SlotBoxes` that have "smithable" items.
+
+To see `Anvil.SlotBoxes` you can run this:
+```pascal
+{$I WaspLib/osrs.simba}
+begin
+  ShowOnTarget(Anvil.SlotBoxes);
+end.
+```
+And it should look something like this:
+```{figure} ../../images/anvil_slotboxes.png
+```
+
+`Anvil.GetSlotBoxes` filters out the slots that are unavailable:
+```pascal
+{$I WaspLib/osrs.simba}
+begin
+  ShowOnTarget(Anvil.GetSlotBoxes());
+end.
+```
+```{figure} ../../images/anvil_getslotboxes.png
+```
+
+One thing you might notice from the rune 2h sword, is that our slot boxes are
+smaller than the actual click boxes of the slot.
+
+This is on purpose and there's 2 reasons for it:
+- Simplifies code because the slot sizes are not always equal, the size used is
+the smallest one anvil slots can have (limbs and bolts).
+- From previous click accuracy tests, we concluded humans tend to focus the
+click towards the center of what they are trying to click, close to a gaussian
+distribution, so using the whole click box is a little bit pointless.
+*)
+function TRSAnvil.GetSlotBoxes(): TBoxArray;
 var
   i: Integer;
 begin
@@ -31,19 +72,20 @@ begin
 end;
 
 (*
-## Anvil.Setup
+## Anvil.SetupInterface
 ```pascal
-procedure Anvil.Setup;
+procedure TRSAnvil.SetupInterface;
 ```
-Initializes Anvil variables.
+Initializes {ref}`Anvil` variables.
 
 ```{note}
-This is automatically called on the **Anvil** variable.
+This is automatically called for you on the {ref}`Anvil variable`.
 ```
 *)
 procedure TRSAnvil.SetupInterface();
 var
   i: Integer;
+  boxes: TBoxArray;
 begin
   case RSClient.Mode of
     ERSMode.FIXED: Self.Bounds := MSInterface.CreateBounds([0, 2, 0, -1], 500, 320);
@@ -62,10 +104,19 @@ begin
   for i in [5, 11, 17, 23, 29] do
     Self.SlotBoxes[i] := Self.SlotBoxes[i].Offset([-15, 0]);
 
-  Self.Slots.Setup('Bank.Slots', Self.SlotBoxes, @Self.GetSlots);
-  Self.Items.Setup('Bank.Items', @Self.Slots, [0, 10]);
-end;
+  Self.Slots.Setup('Anvil.Slots', Self.SlotBoxes, @Self.GetSlotBoxes);
+  Self.Items.Setup('Anvil.Items', @Self.Slots, [0, 0]);
 
+  with Self.Bounds do
+    boxes := TBoxArray.Create([X2-46, Y1+36], 1, 6, 36, 36, [0,9]);
+
+  SetLength(Self.QuantityButtons, 6);
+  for i := 0 to High(boxes) do
+  begin
+    Self.QuantityButtons[i].Bounds := boxes[i];
+    Self.QuantityButtons[i].EnabledColors := [[RSColors.TEXT_WHITE]];
+  end;
+end;
 
 (*
 ## Anvil.IsOpen
@@ -101,6 +152,189 @@ function TRSAnvil.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsOpen(), interval, time);
+end;
+
+(*
+## Anvil.SetQuantity
+```pascal
+function TRSAnvil.SetQuantity(value: Integer): Boolean;
+```
+Attempts to enable the quantity button for the given `value`.
+
+This is probably more complex than most people would think it is because buttons
+are not always visible depending on the amount of metal bars your have in your
+{ref}`Inventory`.
+
+## Example:
+```pascal
+WriteLn Anvil.SetQuantity(QUANTITY_ALL);
+```
+*)
+function TRSAnvil.SetQuantity(value: Integer): Boolean;
+var
+  i: Integer;
+  btns: TRSButtonArray;
+  str: String;
+begin
+  if value = 1 then
+    Exit(Self.QuantityButtons[0].Enable());
+
+  for i := 1 to High(Self.QuantityButtons) do
+    if Target.HasColor(RSColors.TEXT_BLACK, 0,  1, Self.QuantityButtons[i].Bounds) then
+      btns += Self.QuantityButtons[i];
+
+  if btns = [] then Exit;
+
+  case value of
+    -1, 0: str := 'All';
+    5, 10: str := ToStr(value);
+    else
+    begin
+      if Length(btns) < 2 then
+        Exit;
+
+      str := ToStr(value);
+      i := High(btns);
+      if OCR.RecognizeShadow(btns[i].Bounds, RSFonts.PLAIN_11, 0) = str then
+        Exit(btns[i].Enabled());
+
+      case OCR.RecognizeShadow(btns[Dec(i)].Bounds, RSFonts.PLAIN_11, 0) of
+        'X': Mouse.Click(btns[i].Bounds, EMouseButton.LEFT);
+        '?': ;
+        else Exit;
+      end;
+
+      Exit(Chat.AnswerQuery('Enter amount:', str, 1200));
+    end;
+  end;
+
+  for i := 0 to High(btns) do
+    if OCR.RecognizeShadow(btns[i].Bounds, RSFonts.PLAIN_11, 0) = str then
+      Exit(btns[i].Enable());
+end;
+
+(*
+## Anvil.Smith
+```pascal
+function TRSAnvil.Smith(item: TRSItem; quantity: Integer = QUANTITY_ALL; keyboardProbability: Single = -1): Boolean;
+```
+Attempts to smith the specified `item` with the specified `quantity`.
+
+## Example:
+```pascal
+WriteLn Anvil.Smith('Rune 2h sword');
+```
+*)
+function TRSAnvil.Smith(item: TRSItem; quantity: Integer = QUANTITY_ALL; keyboardProbability: Single = -1): Boolean;
+var
+  slot, count: Integer;
+begin
+  slot := Self.Items.IndexOf([item]);
+  if slot = -1 then Exit;
+
+  if not Target.HasColor($00FF00, 0, 1, Self.Slots.Box(slot)) then
+    Exit;
+
+  if not Self.SetQuantity(quantity) then Exit;
+
+  if keyboardProbability < 0 then
+    keyboardProbability := Biometrics.RandomDouble(0.5);
+
+  count := Inventory.Items.CountEx(item);
+  if RandomBoolean(keyboardProbability) and Target.HasColor($485969, 0.5, 300, Self.Slots.Box(slot)) then
+    Keyboard.KeyPress(EKeyCode.SPACE)
+  else
+    Mouse.Click(Self.Slots.Box(slot), EMouseButton.LEFT);
+
+  if SleepUntil(not Self.IsOpen(), 200, 4 * TICK) then
+    Result := SleepUntil(Inventory.Items.CountEx(item) > count, 200, 6 * TICK);
+end;
+
+
+(*
+## Anvil.Hover
+```pascal
+function TRSAnvil.Hover(walk: Boolean = True): Boolean;
+```
+Hovers the closest anvil that WaspLib is aware of.
+
+This assumes that {ref}`Map` is being used and setup.
+It's possible to use this with other systems but you need to configure it all
+manually.
+
+It will always hover the closest anvil {ref}`TRSObject` on your loaded map.
+
+If you are too far, it will attempt to walk closer to it by default unless you
+set the `walk` parameter to `False`.
+*)
+function TRSAnvil.Hover(walk: Boolean = True): Boolean;
+var
+  obj: TRSObject;
+begin
+  if Self.Anvils = [] then
+    Self.Anvils := TRSObjectArray.Create(ObjectsJSON.GetByAction('Smith'));
+
+  obj := Self.Anvils[Self.Anvils.ClosestIndex(Map.Position())];
+  if walk then
+    Exit(obj.WalkHover());
+  Result := obj.Hover();
+end;
+
+(*
+## Anvil.Open
+```pascal
+function TRSAnvil.Open(walk: Boolean = True): Boolean;
+```
+Opens the anvil for you.
+This assumes that {ref}`Map` is being used and is set up.
+
+It's possible to use this with other systems but you need to configure it all
+manually.
+
+It will always use the closest anvil {ref}`RSObject` WaspLib is aware of on your
+loaded map.
+
+If you are too far, it will attempt to walk closer to it by default unless you
+set the `walk` parameter to `False`.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+  Anvil.Open();
+end.
+```
+```{figure} ../../images/anvilopen.gif
+```
+*)
+function TRSAnvil.Open(walk: Boolean = True): Boolean; overload;
+var
+  obj: TRSObject;
+begin
+  if MSInterface.IsOpen() then
+  begin
+    if Self.IsOpen() then
+      Exit(True);
+    MSInterface.Close(True);
+  end;
+
+  if Self.Anvils = [] then
+    Self.Anvils := TRSObjectArray.Create(ObjectsJSON.GetByAction('Smith'));
+
+  obj := Self.Anvils[Self.Anvils.ClosestIndex(Map.Position())];
+
+  if walk then
+    Result := obj.WalkSelect(['nvil'])
+  else
+    Result := obj.Select(['nvil']);
+
+  if not Result then
+    if not MainScreen.IsUpText('Smith') or not ChooseOption.Select(['Smith']) then
+      Exit;
+
+  obj.Walker^.WaitMoving();
+  Result := Self.WaitOpen(3000);
 end;
 
 var

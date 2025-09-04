@@ -134,15 +134,16 @@ var
   tpa, final: TPointArray;
   atpa: T2DPointArray;
   b: TBox;
-  color: Integer;
+  stack: ERSStack;
 begin
-  final := Target.FindColor(RSColors.ITEM_BORDER, 1, Self.SlotsArea);
+  final := Target.FindColor(TRSItem.Border, 1, Self.SlotsArea);
   if final = [] then Exit;
 
-  for color in RSColors.STACK_COLORS do
+  for stack := Low(ERSStack) to High(ERSStack) do
   begin
-    tpa := Target.FindColor(color, 0, Self.SlotsArea);
-    if tpa <> [] then final += tpa;
+    tpa := Target.FindColor(stack.Color, 0, Self.SlotsArea);
+    if tpa <> [] then
+      final += tpa;
   end;
 
   atpa := final.Cluster(200, 3);
@@ -440,7 +441,7 @@ var
   i: Integer;
 begin
   for i := 9 downto 1 do
-    if Target.HasColor(RSColors.ITEM_BORDER, 0, 1, Self.Tabs[i]) then
+    if Target.HasColor(TRSItem.Border, 0, 1, Self.Tabs[i]) then
       Exit(i);
 end;
 
@@ -811,7 +812,6 @@ begin
 end;
 
 
-{%codetools off}
 (*
 ## Bank._FindTabText
 ```pascal
@@ -843,7 +843,6 @@ begin
   bounds.Y2 += 3;
   Result := True;
 end;
-{%codetools on}
 
 (*
 ## Bank.FindTab

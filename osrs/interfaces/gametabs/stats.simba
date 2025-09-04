@@ -229,7 +229,7 @@ begin
   if not Self.Open() then Exit(-1);
 
   with Self.Skills[skill] do
-    Result := OCR.RecognizeNumber([X1, Y2 - (Height div 2), X2, Y2], RSFonts.PLAIN_11, [RSColors.STACK_YELLOW], 0);
+    Result := OCR.RecognizeNumber([X1, Y2 - (Height div 2), X2, Y2], RSFonts.PLAIN_11, [ERSStack.YELLOW.Color], 0);
 
   if Result > 0 then
     Self.Levels[skill] := Result;

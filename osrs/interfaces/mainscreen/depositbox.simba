@@ -35,15 +35,16 @@ var
   tpa, final: TPointArray;
   atpa: T2DPointArray;
   b: TBox;
-  color: Integer;
+  stack: ERSStack;
 begin
-  final := Target.FindColor(RSColors.ITEM_BORDER, 1, Self.SlotsArea);
+  final := Target.FindColor(TRSItem.Border, 1, Self.SlotsArea);
   if final = [] then Exit;
 
-  for color in RSColors.STACK_COLORS do
+  for stack := Low(ERSStack) to High(ERSStack) do
   begin
-    tpa := Target.FindColor(color, 0, Self.SlotsArea);
-    if tpa <> [] then final += tpa;
+    tpa := Target.FindColor(stack.Color, 0, Self.SlotsArea);
+    if tpa <> [] then
+      final += tpa;
   end;
 
   atpa := final.Cluster(200, 3);

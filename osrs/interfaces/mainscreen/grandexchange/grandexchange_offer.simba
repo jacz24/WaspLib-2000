@@ -812,8 +812,8 @@ begin
   if not Self.IsOpen() then Exit;
   if Self.OfferInterface <> EGEOfferInterface.STATUS then Exit;
 
-  Result := Target.HasColor(RSColors.ITEM_BORDER, 0, 1, Self.CollectBounds.Left) or
-            Target.HasColor(RSColors.ITEM_BORDER, 0, 1, Self.CollectBounds.Right);
+  Result := Target.HasColor(TRSItem.Border, 0, 1, Self.CollectBounds.Left) or
+            Target.HasColor(TRSItem.Border, 0, 1, Self.CollectBounds.Right);
 end;
 
 
@@ -836,10 +836,10 @@ begin
 
   if not Self.HasItems() then Exit(True);
 
-  if Target.HasColor(RSColors.ITEM_BORDER, 0, 1, Self.CollectBounds.Left) then
+  if Target.HasColor(TRSItem.Border, 0, 1, Self.CollectBounds.Left) then
     Mouse.Click(Self.CollectBounds.Left, EMouseButton.LEFT);
 
-  if Target.HasColor(RSColors.ITEM_BORDER, 0, 1, Self.CollectBounds.Right) then
+  if Target.HasColor(TRSItem.Border, 0, 1, Self.CollectBounds.Right) then
     Mouse.Click(Self.CollectBounds.Right, EMouseButton.LEFT);
 
   Result := SleepUntil(not Self.HasItems(), 200, 2000);

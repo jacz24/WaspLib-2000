@@ -5,10 +5,11 @@ Time related misc functions and variables
 {$DEFINE WL_TIME_INCLUDED}
 
 const
+  TICK: Integer = 600;
   ONE_SECOND: Integer = 1000;
-  ONE_MINUTE: Integer = ONE_SECOND * 60;
-  ONE_HOUR: Integer   = ONE_MINUTE * 60;
-  ONE_DAY: Integer    = ONE_HOUR   * 24;
+  ONE_MINUTE: Integer = 6000;
+  ONE_HOUR: Integer   = 360000;
+  ONE_DAY: Integer    = 8640000;
   TIME_FORMAL: String = 'h \ho\ur\s, m \min\ute\s and s \second\s';
   MINUTES_FORMAL: String = 'm \min\ute\s and s \second\s';
   FILE_TIME_FORMAT: String = 'YYYY-MM-DD_hh-mm-ss-ms';

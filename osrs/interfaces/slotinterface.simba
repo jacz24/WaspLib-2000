@@ -307,8 +307,8 @@ var
 begin
   slots := Self.Boxes();
   for i := 0 to High(slots) do
-    if Target.HasColor(RSColors.ITEM_BORDER, 8.5, 1, slots[i]) or
-       Target.HasColor(RSColors.ITEM_BORDER_WHITE, 0, 1, slots[i]) then
+    if Target.HasColor(TRSItem.Border, 8.5, 1, slots[i]) or
+       Target.HasColor(TRSItem.BorderWhite, 0, 1, slots[i]) then
       Result += i;
 end;
 
@@ -339,8 +339,8 @@ var
 begin
   slots := Self.Boxes();
   for i := 0 to High(slots) do
-    if not Target.HasColor(RSColors.ITEM_BORDER, 8.5, 1, slots[i]) and
-       not Target.HasColor(RSColors.ITEM_BORDER_WHITE, 0, 1, slots[i]) then
+    if not Target.HasColor(TRSItem.Border, 8.5, 1, slots[i]) and
+       not Target.HasColor(TRSItem.BorderWhite, 0, 1, slots[i]) then
       Result += i;
 end;
 
@@ -363,12 +363,12 @@ end.
 *)
 function TRSSlotInterface.IsUsed(slot: TBox): Boolean;
 begin
-  Result := RSColors.HasItem(slot);
+  Result := TRSItem.InBounds(slot);
 end;
 
 function TRSSlotInterface.IsUsed(slot: Integer): Boolean; overload;
 begin
-  Result := RSColors.HasItem(Self.Box(slot));
+  Result := TRSItem.InBounds(Self.Box(slot));
 end;
 
 (*
@@ -389,12 +389,12 @@ end.
 *)
 function TRSSlotInterface.IsEmpty(slot: TBox): Boolean;
 begin
-  Result := not RSColors.HasItem(slot);
+  Result := not TRSItem.InBounds(slot);
 end;
 
 function TRSSlotInterface.IsEmpty(slot: Integer): Boolean; overload;
 begin
-  Result := not RSColors.HasItem(Self.Box(slot));
+  Result := not TRSItem.InBounds(Self.Box(slot));
 end;
 
 
@@ -417,7 +417,7 @@ end.
 *)
 function TRSSlotInterface.IsFaded(slot: TBox): Boolean;
 begin
-  Result := not RSColors.HasItem(slot, False) and RSColors.HasItem(slot, True);
+  Result := not TRSItem.InBounds(slot, 0) and TRSItem.InBounds(slot);
 end;
 
 function TRSSlotInterface.IsFaded(slot: Integer): Boolean; overload;
@@ -425,7 +425,7 @@ var
   b: TBox;
 begin
   b := Self.Box(slot);
-  Result := not RSColors.HasItem(b, False) and RSColors.HasItem(b, True);
+  Result := not TRSItem.InBounds(b, 0) and TRSItem.InBounds(b);
 end;
 
 
@@ -448,7 +448,7 @@ end.
 function TRSSlotInterface.WaitFade(slot: TBox; time: Integer = 200): Boolean;
 begin
   if not Self.IsFaded(slot) then Exit;
-  Result := SleepUntil(RSColors.HasItem(slot, False), 100, time);
+  Result := SleepUntil(TRSItem.InBounds(slot, 0), 100, time);
 end;
 
 function TRSSlotInterface.WaitFade(slot: Integer; time: Integer = 200): Boolean; overload;

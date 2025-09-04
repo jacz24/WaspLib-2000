@@ -180,7 +180,7 @@ WriteLn CollectionBox.HasChange(0);
 function TRSCollectionBox.HasChange(slot: Integer): Boolean;
 begin
   if not Self.IsOpen() then Exit;
-  Result := RSColors.HasItem(Self.SlotBoxes[slot].Slots[ERSCollectSlots.CHANGE]);
+  Result := TRSItem.InBounds(Self.SlotBoxes[slot].Slots[ERSCollectSlots.CHANGE]);
 end;
 
 
