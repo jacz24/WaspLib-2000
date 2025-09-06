@@ -1,5 +1,7 @@
 {$DEFINE WL_CONVERSIONS_INCLUDED}
+{$INCLUDE_ONCE WaspLib/utils.simba}
 
+{$R-}
 function String.CreateFromBytes(bytes: TByteArray): String; static;
 var
   len: Integer;
@@ -85,7 +87,6 @@ begin
 end;
 
 
-
 function TPointArray.ToBytes(): TByteArray;
 var
   len: Integer;
@@ -143,7 +144,6 @@ begin
   Result := bytes;
 end;
 
-
 function T2DPointArray.CreateFromBytes(bytes: TByteArray): T2DPointArray; static;
 var
   size, i, len, row, offset: Int32;
@@ -169,3 +169,25 @@ begin
     end;
   end;
 end;
+
+
+function TGraphNodeArray.ToBytes(): TByteArray;
+var
+  len: Integer;
+begin
+  len := Length(Self) * SizeOf(TGraphNode);
+  if len = 0 then Exit;
+  SetLength(Result, len);
+  Move(Self[0], Result[0], len);
+end;
+
+function TGraphNodeArray.CreateFromBytes(bytes: TByteArray): TGraphNodeArray; static;
+var
+  len: Integer;
+begin
+  len := Length(bytes);
+  if len = 0 then Exit;
+  SetLength(Result, len div SizeOf(TGraphNode));
+  Move(bytes[0], Result[0], len);
+end;
+{$R+}

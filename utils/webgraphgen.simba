@@ -12,6 +12,7 @@ script **BEFORE INCLUDING WASPLIB**:
 
 {$DEFINE WL_WEBGRAPHGEN_INCLUDED}
 {$INCLUDE_ONCE WaspLib/utils.simba}
+{$R+}
 
 type
 (*
@@ -268,7 +269,6 @@ function TWebGraphGenerator._BuildGraph(map: TImage; white, red: TPointArray): T
 var
   i, j, l, n, hi, len, minLen: Integer;
   cluster, skeleton, nodes, tpa: TPointArray;
-  bounds: TBox;
   p, q: TPoint;
   tree: TKDPointTree;
   doors: T2DPointArray;
@@ -440,6 +440,7 @@ begin
 
   WriteLn GetDebugLn('WebGraphGenerator', 'Generating webgraph took ' + ToStr(Round(((GetTimeRunning()-t)/1000), 2)) + ' seconds.', ELogLevel.SUCCESS);
 end;
+{$R+}
 
 var
 (*

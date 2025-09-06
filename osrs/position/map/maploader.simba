@@ -394,9 +394,9 @@ begin
 
     Result := WebGraphGenerator.BuildGraph(name, map);
 
-    //if (Result.Nodes <> []) then
-    //  if not FileWriteBytes(path + 'nodes.txt', CompressBytes(ECompressAlgo.ZLIB, Result.Nodes.ToBytes())) then
-    //    raise GetDebugLn('MapLoader', 'Failed to create cache for graph nodes: ' + path);
+    if (Result.Nodes <> []) then
+      if not FileWriteBytes(path + 'nodes.txt', CompressBytes(ECompressAlgo.ZLIB, Result.Nodes.ToBytes())) then
+        raise GetDebugLn('MapLoader', 'Failed to create cache for graph nodes: ' + path);
 
     if (Result.Paths <> []) then
       if not FileWriteBytes(path + 'paths.txt', CompressBytes(ECompressAlgo.ZLIB, Result.Paths.ToBytes())) then
@@ -414,8 +414,8 @@ begin
     Exit;
   end;
 
-  //if FileExists(path + 'nodes.txt') then
-  //  Result.Nodes := TPointArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'nodes.txt')));
+  if FileExists(path + 'nodes.txt') then
+    Result.Nodes := TGraphNodeArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'nodes.txt')));
   if FileExists(path + 'paths.txt') then
     Result.Paths := T2DIntegerArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'paths.txt')));
 
