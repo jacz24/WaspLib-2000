@@ -9,6 +9,7 @@ but it was written from scratch by Torwent.
 {$DEFINE WL_WEBGRAPH_INCLUDED}
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
+{$R-}
 type
 (*
 ## EGraphNode
@@ -17,14 +18,72 @@ EGraphNode = enum(NORMAL, NAMED, DOOR, LADDER, AGILITY, OBSTACLE, OTHER, BLOCKED
 ```
 Enum representing the type of nodes in a `TWebGraph`.
 *)
-  EGraphNode = enum(NORMAL, NAMED, DOOR, LADDER, AGILITY, OBSTACLE, OTHER, BLOCKED);
-  EGraphNodeArray = array of EGraphNode;
+  EGraphNode = enum(
+    NORMAL, DOOR, LADDER, SHORTCUT, OBSTACLE, TRANSPORT, TELEPORT, OTHER,
+    BLOCKED
+  );
 
+  TGraphNode = record
+    Node: TPoint;
+    Typ: EGraphNode;
+  end;
+
+function TGraphNode.Create(pt: TPoint; typ: EGraphNode = EGraphNode.NORMAL): TGraphNode; static;
+begin
+  Result.Node := pt;
+  Result.Typ := typ;
+end;
+
+type
+  TGraphNodeArray = array of TGraphNode;
+
+function TGraphNodeArray.Offset(pt: TPoint): TGraphNodeArray;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self) do
+    Result += [Self[i].Node.Offset(pt), Self[i].Typ];
+end;
+
+function TGraphNodeArray.IndexOf(value: TPoint): Integer; overload;
+begin
+  for Result := 0 to High(Self) do
+    if Self[Result].Node = value then
+      Exit;
+  Result := -1;
+end;
+
+function TGraphNodeArray.NearestIndex(pt: TPoint): Integer;
+var
+  i: Integer;
+  dist, best: Double;
+begin
+  best := $FFFFFF;
+  for i := 1 to High(Self) do
+  begin
+    dist := Self[i].Node.DistanceTo(pt);
+
+    if (dist < best) then
+    begin
+      best := dist;
+      Result := i;
+    end;
+  end;
+end;
+
+function TGraphNodeArray.PolylineLength(): Double;
+var
+  i: Integer;
+begin
+  if Length(Self) < 2 then Exit;
+  for i := 0 to High(Self)-1 do
+    Result += Self[i].Node.DistanceTo(Self[i+1].Node);
+end;
+
+type
   TWebGraph = record
-    Nodes: TPointArray;
+    Nodes: TGraphNodeArray;
     Paths: T2DIntegerArray;
-    Data: EGraphNodeArray;
-    Names: TStringArray;
 
     WalkableSpace: TPointArray;
     WalkableClusters, ObjectClusters: T2DPointArray;
@@ -32,21 +91,22 @@ Enum representing the type of nodes in a `TWebGraph`.
   end;
 
 procedure TWebGraph.Setup();
+var
+  tpa: TPointArray;
+  node: TGraphNode;
 begin
-  Self.Tree := TKDPointTree.Create(System.Copy(Self.Nodes));
+  for node in Self.Nodes do
+    tpa += node.Node;
+  Self.Tree := TKDPointTree.Create(tpa);
 end;
 
 function TWebGraph.Copy(): TWebGraph;
 begin
-  Result.Nodes    := System.Copy(Self.Nodes);
-  Result.Paths    := System.Copy(Self.Paths);
-  Result.Data     := System.Copy(Self.Data);
-  Result.Names    := System.Copy(Self.Names);
-
-  Result.WalkableSpace    := System.Copy(Self.WalkableSpace);
+  Result.Nodes := System.Copy(Self.Nodes);
+  Result.WalkableSpace := System.Copy(Self.WalkableSpace);
   Result.WalkableClusters := System.Copy(Self.WalkableClusters);
-  Result.ObjectClusters   := System.Copy(Self.ObjectClusters);
-  Result.Tree := TKDPointTree.Create(System.Copy(Result.Nodes));
+  Result.ObjectClusters := System.Copy(Self.ObjectClusters);
+  Result.Setup();
 end;
 
 procedure TWebGraph.BlockArea(area: TBox; inside: Boolean = True);
@@ -56,29 +116,15 @@ begin
   if inside then
   begin
     for i := 0 to High(Self.Nodes) do
-      if area.Contains(Self.Nodes[i]) then
-        Self.Data[i] := EGraphNode.BLOCKED;
+      if area.Contains(Self.Nodes[i].Node) then
+        Self.Nodes[i].Typ := EGraphNode.BLOCKED;
     Exit;
   end;
 
   for i := 0 to High(Self.Nodes) do
-    if not area.Contains(Self.Nodes[i]) then
-      Self.Data[i] := EGraphNode.BLOCKED;
+    if not area.Contains(Self.Nodes[i].Node) then
+      Self.Nodes[i].Typ := EGraphNode.BLOCKED;
 end;
-
-
-function TWebGraph.NearestNode(pt: TPoint): TPoint;
-begin
-  Result := Self.Tree.Nearest(pt, False);
-  if not Self.WalkableClusters.InSameTPA(pt, Result) then
-    raise GetDebugLn('WebGraph', 'No near nodes were found around point ' + ToStr(pt));
-end;
-
-function TWebGraph.NearNodes(pt: TPoint; amount: Integer): TPointArray;
-begin
-  Result := Self.Tree.KNearest(pt, amount);
-end;
-
 
 function TWebGraph.NearestNodeIndex(pt: TPoint): Integer;
 var
@@ -96,7 +142,7 @@ var
   weights: TDoubleArray;
   tpa: TPointArray;
 begin
-  tpa := Self.NearNodes(pt, amount);
+  tpa := Self.Tree.KNearest(pt, amount);
 
   for i := 0 to High(tpa) do
     if Self.WalkableClusters.InSameTPA(pt, tpa[i]) then
@@ -111,8 +157,9 @@ begin
   Result.Sort(weights, True);
 end;
 
+{$R+}
 
-function TWebGraph.FindPath(start, finish: Integer; rnd:Double=0): TIntegerArray;
+function TWebGraph.FindPath(start, finish: Integer; rnd: Double = 0): TIntegerArray;
 type
   TNode = record
     Indices: TIntegerArray;
@@ -146,19 +193,19 @@ begin
   begin
     current := GetNextShortest();
     cIdx := current.Indices[High(current.Indices)];
-    if (Self.Data[cIdx] = EGraphNode.BLOCKED) or visited[cIdx] then
+    if (Self.Nodes[cIdx].Typ = EGraphNode.BLOCKED) or visited[cIdx] then
       Continue;
     visited[cIdx] := True;
 
     if (cIdx = finish) then
       Exit(current.Indices);
 
-    p := Self.Nodes[cIdx];
+    p := Self.Nodes[cIdx].Node;
     for pathIdx in Self.Paths[cIdx] do
     begin
       if not visited[pathIdx] then
       begin
-        q := Self.Nodes[pathIdx];
+        q := Self.Nodes[pathIdx].Node;
         node.Indices := current.Indices + pathIdx;
 
         hyp := Hypot(p.x-q.x, p.y-q.y);
@@ -168,9 +215,6 @@ begin
     end;
   end;
 end;
-
-
-
 
 function TWebGraph.NearestWalkablePoint(p: TPoint): TPoint;
 var
@@ -210,16 +254,11 @@ begin
     end;
   end;
   Result := bestObj.NearestPoint(p);
-
-  {$IFDEF DEBUG_WALKER}
-  WriteLn('Found nearest walkable point as: ',result);
-  {$ENDIF}
 end;
 
-
-
-function TWebGraph.PathBetweenEx(a, b: TPoint; out data: EGraphNodeArray; rnd: Double = 0; attempts: Integer = 3; safe: Boolean = True): TPointArray;
+function TWebGraph.PathBetween(a, b: TPoint; rnd: Double = 0; attempts: Integer = 3): TGraphNodeArray;
 var
+  nodeA, nodeB: TGraphNode;
   i, j: Integer;
   nS, nG, indices: TIntegerArray;
 begin
@@ -237,13 +276,12 @@ begin
   nS := Self.NearNodesIndices(a, attempts);
   nG := Self.NearNodesIndices(b, attempts);
 
+  nodeA := [a, EGraphNode.NORMAL];
+  nodeB := [b, EGraphNode.NORMAL];
   if nS[0] = nG[0] then
-  begin
-    data := [EGraphNode.NORMAL, EGraphNode.NORMAL];
-    Exit([a, b]);
-  end;
+    Exit([nodeA, nodeB]);
 
-  if (Length(nG) = 1) and (Length(Self.Paths[nG[0]]) = 0) then
+  if (Length(nG) = 1) and (Self.Paths[nG[0]] = []) then
     raise GetDebugLn('WebGraph', 'Points ' + ToStr(a) + ' and ' + ToStr(b) + ' don''t connect!');
 
   for i := 0 to High(nS) do
@@ -256,132 +294,56 @@ begin
         Break(2);
     end;
 
-  if safe and (Length(indices) = 0) then
-    Exit;
-
   if Length(indices) = 0 then
     raise GetDebugLn('WebGraph', 'Points ' + ToStr(a) + ' and ' + ToStr(b) + ' don''t connect!');
 
-  Result += a;
-  data := [EGraphNode.NORMAL];
+  Result += nodeA;
   for i in indices do
-  begin
     Result += Self.Nodes[i];
-    data += Self.Data[i];
-  end;
-  Result += b;
-  data += EGraphNode.NORMAL;
-end;
-
-function TWebGraph.PathBetween(a, b: TPoint; rnd: Double = 0; attempts: Integer = 3; safe: Boolean = True): TPointArray;
-var
-  data: EGraphNodeArray;
-begin
-  Result := Self.PathBetweenEx(a,b,data,rnd,attempts,safe);
+  Result += nodeB;
 end;
 
 
-
-function TWebGraph.FindObjectPath(me: TPoint; out pt: TPoint): TPointArray;
+function TWebGraph.PathToNear(a: TPoint; out b: TPoint; rnd: Double = 0): TGraphNodeArray;
 var
   i: Integer;
-  cluster, best: TPointArray;
+  cluster: TPointArray;
+  best: TIntegerArray;
 begin
   for i := 0 to High(Self.WalkableClusters) do
-    if Self.WalkableClusters[i].Contains(me) then
-      cluster := Self.WalkableClusters[i];
-
-  if cluster = [] then
-    raise GetDebugLn('WebGraph', 'Can''t find player cluster containg: ' + ToStr(me));
-
-  best := Self.NearNodes(pt, 12);
-  for i := 0 to High(best) do
-  begin
-    pt := best[i];
-
-    if cluster.Contains(pt) then
+    if Self.WalkableClusters[i].Contains(a) then
     begin
-      try
-        Result := Self.PathBetween(me, pt, 0.2, 2);
-        if Result = [] then
-        begin
-          if me.DistanceTo(pt) <= 52 then Exit([pt]);
-          RaiseException('Path empty');
-        end;
-      except
-        if me.DistanceTo(pt) <= 52 then Exit([pt]);
-        raise GetDebugLn('WebGraph', 'Can''t find a walkable path to ' + ToStr(pt) + ' object.');
-      end;
+      cluster := Self.WalkableClusters[i];
       Break;
     end;
+
+  if cluster = [] then
+    raise GetDebugLn('WebGraph', 'Can''t find player cluster containg: ' + ToStr(a));
+
+  best := Self.NearNodesIndices(b, 12);
+  for i := 0 to High(best) do
+  begin
+    b := Self.Nodes[best[i]].Node;
+    if cluster.Contains(b) then
+      Exit(Self.PathBetween(a, b, rnd, 2));
   end;
 end;
 
 
-
-function TWebGraph.InvalidConnection(p,q: TPoint): Boolean;
-
-  function LinesIntersect(p,q:array[0..1] of TPoint; out i:TPoint): Boolean;
-  var
-    dx,dy,d: TPoint;
-    dt,s,t: Double;
-    function Det(a,b: TPoint): Int64;
-    begin
-      Result := a.x*b.y - a.y*b.x;
-    end;
-  begin
-    dx := [p[0].x - p[1].x, q[0].x - q[1].x];
-    dy := [p[0].y - p[1].y, q[0].y - q[1].y];
-    dt := det(dx, dy);
-    if dt = 0 then Exit(False);
-    d := [Det(p[0],p[1]), Det(q[0],q[1])];
-    i.x := Round(Det(d, dx) / dt);
-    i.y := Round(Det(d, dy) / dt);
-    s := (dx.x * (q[0].y-p[0].y) + dy.x * (p[0].x-q[0].x)) / dt;
-    t := (dx.y * (p[0].y-q[0].y) + dy.y * (q[0].x-p[0].x)) / (-dt);
-    Result := (s > 0) and (s < 1) and (t > 0) and (t < 1);
-  end;
-
+function TWebGraph.AddNode(pt: TPoint; typ: EGraphNode; fromNode: Integer): Boolean;
 var
-  i,n: Integer;
-  l1,l2: array[0..1] of TPoint;
-  _: TPoint;
+  i: Integer;
 begin
-  l1 := [p,q];
-  for i:=0 to High(self.Paths) do
-  begin
-    l2[0] := self.Nodes[i];
-    for n in self.Paths[i] do
-    begin
-      l2[1] := self.Nodes[n];
-      if (l1[0] = l2[0]) and (l1[1] = l2[1]) then
-        Continue;
-      if LinesIntersect(l1,l2,_) then
-        Exit(True);
-    end;
-  end;
-end;
-
-
-function TWebGraph.AddNode(p: TPoint; FromNode: Integer): Boolean;
-var
-  c: Integer;
-begin
-  if (FromNode <> -1) and (Self.InvalidConnection(p, Self.Nodes[FromNode])) then
+  if fromNode < 0 then
     Exit(False);
 
-  c := Length(Self.Nodes);
-  SetLength(Self.Nodes, c+1);
-  SetLength(Self.Paths, c+1);
-  SetLength(Self.Names, c+1);
-  Self.Nodes[c] := p;
+  i := Length(Self.Nodes);
+  SetLength(Self.Nodes, i+1);
+  SetLength(Self.Paths, i+1);
+  Self.Nodes[i] := [pt, typ];
 
-  if FromNode <> -1 then
-  begin
-    Self.Paths[FromNode] += c;
-    Self.Paths[c] += FromNode;
-  end;
-
+  Self.Paths[fromNode] += i;
+  Self.Paths[i] += fromNode;
   Result := True;
 end;
 
@@ -471,12 +433,10 @@ var
   i: Integer;
 begin
   for i := High(Self.Nodes) downto 0 do
-    if b.Contains(Self.Nodes[i]) then
-    begin
+    if b.Contains(Self.Nodes[i].Node) then
       Self.DeleteNode(i);
-      i := High(Self.Nodes) + 1;
-    end;
 end;
+
 
 
 procedure TWebGraph.Merge(graph: TWebGraph);
@@ -492,9 +452,6 @@ begin
 
     for j := 0 to High(Self.Paths[len+i]) do
       Self.Paths[len+i,j] += len;
-
-    Self.Data += graph.Data[i];
-    Self.Names += graph.Names[i];
   end;
 
   Self.WalkableSpace    += graph.WalkableSpace;
@@ -512,17 +469,17 @@ begin
   img.DrawColor := $00EAEA;
   for i := 0 to High(Self.Paths) do
     for j := 0 to High(Self.Paths[i]) do
-      img.DrawLine(Self.Nodes[i], Self.Nodes[Self.Paths[i, j]]);
+      img.DrawLine(Self.Nodes[i].Node, Self.Nodes[Self.Paths[i, j]].Node);
 
   for i := 0 to High(Self.Nodes) do
   begin
-    case Self.Data[i] of
+    case Self.Nodes[i].Typ of
       EGraphNode.DOOR:  img.DrawColor := $FF105F;
-      EGraphNode.NAMED: img.DrawColor := $FF7F00;
+      EGraphNode.TELEPORT: img.DrawColor := $FF7F00;
       EGraphNode.NORMAL: img.DrawColor := $0101CC;
       else img.DrawColor := $FF00FF;
     end;
-    img.DrawBox(TBox.Create(Self.Nodes[i], 1, 1));
+    img.DrawBox(TBox.Create(Self.Nodes[i].Node, 1, 1));
   end;
 
 end;
@@ -530,6 +487,7 @@ end;
 procedure TWebGraph.Draw(canvas: TImageBoxCanvas); overload;
 var
   i,j: Integer;
+  color: TColor;
 begin
   if Self.Nodes = [] then Exit;
 
@@ -537,20 +495,19 @@ begin
     for j := 0 to High(Self.Paths[i]) do
     begin
       if Self.Paths[i, j] > High(Self.Nodes) then Continue;
-      canvas.DrawLine(Self.Nodes[i], Self.Nodes[Self.Paths[i, j]], $00EAEA);
+      canvas.DrawLine(Self.Nodes[i].Node, Self.Nodes[Self.Paths[i, j]].Node, $00EAEA);
     end;
 
   for i := 0 to High(Self.Nodes) do
   begin
-    case Self.Data[i] of
-      EGraphNode.DOOR:
-      begin
-        canvas.DrawCross(Self.Nodes[i], 4, $FF105F);
-        canvas.DrawBox(TBox.Create(Self.Nodes[i], 1, 1), $FF105F);
-      end ;
-      EGraphNode.NAMED: canvas.DrawBox(TBox.Create(Self.Nodes[i], 1, 1), $FF7F00);
-      EGraphNode.NORMAL: canvas.DrawBox(TBox.Create(Self.Nodes[i], 1, 1), $0101CC);
-      else canvas.DrawBox(TBox.Create(Self.Nodes[i], 1, 1), $FF00FF);
+    case Self.Nodes[i].Typ of
+      EGraphNode.DOOR: color := $FF105F;
+      EGraphNode.TELEPORT: color := $FF7F00;
+      EGraphNode.NORMAL: color := $0101CC;
+      else color :=  $FF00FF;
     end;
+    canvas.DrawBox(TBox.Create(Self.Nodes[i].Node, 1, 1), color);
   end;
 end;
+
+

@@ -624,7 +624,8 @@ it returns true.
 function TRSObject.WalkHover(action: TStringArray = []; attempts: Integer = 2): Boolean;
 var
   me, closest: TPoint;
-  path, coordinates, tpa: TPointArray;
+  coordinates, tpa: TPointArray;
+  path: TGraphNodeArray;
   hasPath: Boolean;
   shouldExit: Boolean;
   attempt, i: Integer;
@@ -644,7 +645,7 @@ begin
   //if the point is not reachable with the webgraph (like a banker behind a booth) then pick nearest node as target
   if path = [] then
   begin
-    path := Self.Walker^.WebGraph^.FindObjectPath(me, closest);
+    path := Self.Walker^.WebGraph^.PathToNear(me, closest, 0.33);
     if path = [] then
       raise GetDebugLn('TRSObject', 'Can''t path to object.');
     hasPath := True;
@@ -693,7 +694,7 @@ begin
 
     if path = [] then
     begin
-      path := Self.Walker^.WebGraph^.FindObjectPath(me, closest);
+      path := Self.Walker^.WebGraph^.PathToNear(me, closest, 0.33);
       if path = [] then
         raise GetDebugLn('TRSObject', 'Can''t path to object.');
     end;

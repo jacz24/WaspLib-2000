@@ -6,9 +6,9 @@ Methods and functions related to geometry.
 {$DEFINE WL_GEOMETRY_INCLUDED}
 {$loadlib Plugins/wasp-plugins/libtpaex/libtpaex}
 
+{$R-}
 const
   TAU: Double = 2 * PI;
-
 
 function TBox.Create(p, q: TPoint): TBox; static; overload;
 begin
@@ -296,4 +296,4 @@ begin
   for i := 1 to times do
     Result := Result.Mirror(EImageMirrorStyle.LINE).Mirror(EImageMirrorStyle.HEIGHT);
 end;
-
+{$R+}

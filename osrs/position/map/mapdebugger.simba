@@ -31,8 +31,8 @@ Main record used to hold core values of the {ref}`Map Debugger`.
 
     Graph: TWebGraph;
 
-    GetLocal: function (tpa: TPointArray; offset: TPoint = [0,0]): TPointArray of object;
-    GetGlobal: function (p: TPoint; offset: TPoint = [0,0]): TPoint of object;
+    GetLocal: function (pt: TPoint; offset: TPoint = [0,0]): TPoint of object;
+    GetGlobal: function (pt: TPoint; offset: TPoint = [0,0]): TPoint of object;
 
     Coordinate: TLazLabel;
     ShowGraph, ShowWalkableSpace, ShowWalkableClusters, ShowObjectClusters: Boolean;
@@ -261,6 +261,7 @@ var
   map, heightmap, collision: TImage;
   p: TPoint;
   x, y, i: Integer;
+  node: TGraphNode;
 begin
   map := loader^.Map.Copy();
   heightmap := loader^.Heightmap.Copy();
@@ -279,17 +280,23 @@ begin
   Self.GetGlobal := @loader^.GetGlobal;
   Self.GetLocal  := @loader^.GetLocal;
 
-  Self.Graph.Nodes    := Self.GetLocal(loader^.Graph.Nodes);
+  for node in loader^.Graph.Nodes do
+    Self.Graph.Nodes += TGraphNode.Create(Self.GetLocal(node.Node), node.Typ);
+
   Self.Graph.Paths    := Copy(loader^.Graph.Paths);
-  Self.Graph.Names    := Copy(loader^.Graph.Names);
-  Self.Graph.Data     := Copy(loader^.Graph.Data);
 
-  Self.Graph.WalkableSpace := Self.GetLocal(loader^.Graph.WalkableSpace);
+  for p in loader^.Graph.WalkableSpace do
+    Self.Graph.WalkableSpace += Self.GetLocal(p);
 
+  SetLength(Self.Graph.WalkableClusters, loader^.Graph.WalkableClusters.Length);
   for i := 0 to High(loader^.Graph.WalkableClusters) do
-    Self.Graph.WalkableClusters += Self.GetLocal(loader^.Graph.WalkableClusters[i]);
+    for p in loader^.Graph.WalkableClusters[i] do
+      Self.Graph.WalkableClusters[i] += Self.GetLocal(p);
+
+  SetLength(Self.Graph.ObjectClusters, loader^.Graph.ObjectClusters.Length);
   for i := 0 to High(loader^.Graph.ObjectClusters) do
-    Self.Graph.ObjectClusters += Self.GetLocal(loader^.Graph.ObjectClusters[i]);
+    for p in loader^.Graph.ObjectClusters[i] do
+      Self.Graph.ObjectClusters[i] += Self.GetLocal(p);
 
   for i := 0 to Max(Length(loader^.Graph.WalkableClusters), Length(loader^.Graph.ObjectClusters)) do
     Self.ColorArray += TColor.Random();

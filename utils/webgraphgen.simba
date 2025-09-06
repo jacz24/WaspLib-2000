@@ -304,10 +304,9 @@ begin
     with cluster.Bounds() do
       if Max(Width, Height) < Self.NodeRadius then
       begin
-        Result.Nodes += cluster.Median();
+        Result.Nodes += TGraphNode.Create(cluster.Median());
         hi := High(Result.Nodes);
         SetLength(Result.Paths, hi+1);
-        SetLength(Result.Data, hi+1);
 
         for j := 0 to High(doors) do
         begin
@@ -318,9 +317,8 @@ begin
             n := doorMap[doors[j,0].Y, doors[j,0].X];
             if n = 0 then
             begin
-              Result.Nodes += doors[j,0];
+              Result.Nodes += TGraphNode.Create(doors[j,0], EGraphNode.DOOR);
               Result.Paths += [High(Result.Nodes)];
-              Result.Data += EGraphNode.DOOR;
               n := High(Result.Nodes)+1;
               doorMap[doors[j,0].Y, doors[j,0].X] := n;
             end
@@ -345,7 +343,6 @@ begin
     len := Length(Result.Nodes);
     SetLength(Result.Nodes, len + Length(nodes));
     SetLength(Result.Paths, Length(Result.Nodes));
-    SetLength(Result.Data, Length(Result.Nodes));
 
     for i := 0 to High(tree.Data) do
     begin
@@ -366,10 +363,10 @@ begin
     for i := 0 to High(tree.Data) do
     begin
       p := tree.Data[i].Split;
-      Result.Nodes[i+len] := p;
+      Result.Nodes[i+len] := TGraphNode.Create(p);
       for j in connectMap[p.Y,p.X] do
       begin
-        Result.Nodes[j+len] := tree.Data[j].Split;
+        Result.Nodes[j+len] := TGraphNode.Create(tree.Data[j].Split);
 
         if not Result.Paths[i+len].Contains(j+len) then
           Result.Paths[i+len] += j+len;
@@ -387,9 +384,8 @@ begin
         n := doorMap[doors[j,0].Y, doors[j,0].X];
         if n = 0 then
         begin
-          Result.Nodes += doors[j,0];
+          Result.Nodes += TGraphNode.Create(doors[j,0], EGraphNode.DOOR);
           Result.Paths += [High(Result.Nodes)];
-          Result.Data += EGraphNode.DOOR;
           n := High(Result.Nodes)+1;
           doorMap[doors[j,0].Y, doors[j,0].X] := n;
         end
@@ -400,11 +396,7 @@ begin
         Result.Paths[l] += Dec(n);
       end;
     end;
-
   end;
-
-  SetLength(Result.Data, Length(Result.Nodes));
-  SetLength(Result.Names, Length(Result.Nodes));
 end;
 
 function TWebGraphGenerator.BuildGraph(name: String; map: TImage): TWebGraph;

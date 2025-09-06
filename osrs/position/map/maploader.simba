@@ -377,8 +377,8 @@ var
   path: String;
 begin
   {$IFDEF WL_GENERATE_GRAPH_ALWAYS}
-  Exit(WebGraphGenerator.BuildGraph(name, map));
-  {$ENDIF}
+  Result := WebGraphGenerator.BuildGraph(name, map);
+  {$ELSE}
   path := Self.CacheDir + 'graphs' + PATH_SEP + ToStr(plane) + PATH_SEP + name + '-' + WebGraphGenerator.Hash() + PATH_SEP;
 
   if
@@ -394,21 +394,14 @@ begin
 
     Result := WebGraphGenerator.BuildGraph(name, map);
 
-    if (Result.Nodes <> []) then
-      if not FileWriteBytes(path + 'nodes.txt', CompressBytes(ECompressAlgo.ZLIB, Result.Nodes.ToBytes())) then
-        raise GetDebugLn('MapLoader', 'Failed to create cache for graph nodes: ' + path);
+    //if (Result.Nodes <> []) then
+    //  if not FileWriteBytes(path + 'nodes.txt', CompressBytes(ECompressAlgo.ZLIB, Result.Nodes.ToBytes())) then
+    //    raise GetDebugLn('MapLoader', 'Failed to create cache for graph nodes: ' + path);
 
     if (Result.Paths <> []) then
       if not FileWriteBytes(path + 'paths.txt', CompressBytes(ECompressAlgo.ZLIB, Result.Paths.ToBytes())) then
         raise GetDebugLn('MapLoader', 'Failed to create cache for graph paths: ' + path);
-    if (Result.Names <> []) then
-      if not FileWriteBytes(path + 'names.txt', CompressBytes(ECompressAlgo.ZLIB, Result.Names.ToBytes())) then
-        raise GetDebugLn('MapLoader', 'Failed to create cache for graph names: ' + path);
 
-    //if (Result.DoorsLegacy <> []) then
-    //  if not FileWriteBytes(path + 'doors.txt', CompressBytes(ECompressAlgo.ZLIB, Result.DoorsLegacy.ToBytes())) then
-    //    raise GetDebugLn('MapLoader', 'Failed to create cache for graph doors: ' + path);
-    //
     if (Result.WalkableSpace <> []) then
       if not FileWriteBytes(path + 'walkablespace.txt', CompressBytes(ECompressAlgo.ZLIB, Result.WalkableSpace.ToBytes())) then
         raise GetDebugLn('MapLoader', 'Failed to create cache for graph WalkableSpace: ' + path);
@@ -421,16 +414,11 @@ begin
     Exit;
   end;
 
-  if FileExists(path + 'nodes.txt') then
-    Result.Nodes := TPointArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'nodes.txt')));
+  //if FileExists(path + 'nodes.txt') then
+  //  Result.Nodes := TPointArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'nodes.txt')));
   if FileExists(path + 'paths.txt') then
     Result.Paths := T2DIntegerArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'paths.txt')));
-  if FileExists(path + 'names.txt') then
-    Result.Names := TStringArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'names.txt')));
 
-  //if FileExists(path + 'doors.txt') then
-  //  Result.DoorsLegacy := TRSDoorArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'doors.txt')));
-  //
   if FileExists(path + 'walkablespace.txt') then
     Result.WalkableSpace := TPointArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'walkablespace.txt')));
   if FileExists(path + 'walkableclusters.txt') then
@@ -439,7 +427,7 @@ begin
     Result.ObjectClusters := T2DPointArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'objectclusters.txt')));
 
   SetLength(Result.Paths, Length(Result.Nodes));
-  SetLength(Result.Names, Length(Result.Nodes));
+  {$ENDIF}
 end;
 
 
@@ -591,8 +579,8 @@ begin
     if offset <> [0, 0] then
     begin
       for j := 0 to High(Self.Graph.Nodes) do
-        if Self.Graph.Nodes[j] in oldRegions[i] then
-          Self.Graph.Nodes[j] := Self.Graph.Nodes[j] + offset;
+        if Self.Graph.Nodes[j].Node in oldRegions[i] then
+          Self.Graph.Nodes[j].Node := Self.Graph.Nodes[j].Node + offset;
 
       for j := 0 to High(Self.Graph.WalkableSpace) do
         if Self.Graph.WalkableSpace[j] in oldRegions[i] then

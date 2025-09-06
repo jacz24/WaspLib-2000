@@ -371,7 +371,8 @@ var
   shouldExit: Boolean;
   attempt, i: Integer;
   atpa: T2DPointArray;
-  coordinates, tpa, path: TPointArray;
+  coordinates, tpa: TPointArray;
+  path: TGraphNodeArray;
   me, closest: TPoint;
 begin
   Result := Self._UpTextCheck(shouldExit) or Self.Walker^.RedClicked;
@@ -403,7 +404,7 @@ begin
 
     if path = [] then
     begin
-      path := Self.Walker^.WebGraph^.FindObjectPath(me, closest);
+      path := Self.Walker^.WebGraph^.PathToNear(me, closest, 0.33);
       if path = [] then
         raise GetDebugLn('TRSEntity', 'Can''t path to object.');
     end;
@@ -566,7 +567,7 @@ RSObjects.GEBank.WalkHover();
 function TRSEntity.WalkHover(attempts: Integer = 2): Boolean;
 var
   me, closest: TPoint;
-  path: TPointArray;
+  path: TGraphNodeArray;
   hasPath: Boolean;
 begin
   if ChooseOption.IsOpen() then
@@ -585,7 +586,7 @@ begin
   //if the point is not reachable with the webgraph (like a banker behind a booth) then pick nearest node as target
   if path = [] then
   begin
-    path := Self.Walker^.WebGraph^.FindObjectPath(me, closest);
+    path := Self.Walker^.WebGraph^.PathToNear(me, closest, 0.33);
     if path = [] then
       raise GetDebugLn('TRSEntity', 'Can''t path to object.');
     hasPath := True;
