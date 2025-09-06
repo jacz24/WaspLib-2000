@@ -9,6 +9,14 @@ Methods and functions related to geometry.
 const
   TAU: Double = 2 * PI;
 
+
+function TBox.Create(p, q: TPoint): TBox; static; overload;
+begin
+  Result := TBox.Create(
+    Min(p.X,q.X), Min(p.Y,q.Y), Max(p.X,q.X), Max(p.Y,q.Y)
+  );
+end;
+
 function TBox.ContainsBox(other: TBox): Boolean;
 begin
   Result := InRange(other.X1, Self.X1, Self.X2) and

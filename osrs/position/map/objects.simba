@@ -639,7 +639,7 @@ begin
   end;
 
   me :=  Self.Walker^.Position();
-  closest := Self.Walker^.GetClosestPointEx(me, Self.Coordinates, path);
+  closest := Self.Walker^.GetClosestPoint(me, Self.Coordinates, path);
 
   //if the point is not reachable with the webgraph (like a banker behind a booth) then pick nearest node as target
   if path = [] then
@@ -689,7 +689,7 @@ begin
       Exit(True);
 
     me := Self.Walker^.Position();
-    closest := Self.Walker^.GetClosestPointEx(me, Self.Coordinates, path);
+    closest := Self.Walker^.GetClosestPoint(me, Self.Coordinates, path);
 
     if path = [] then
     begin

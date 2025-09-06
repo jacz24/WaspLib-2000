@@ -1,6 +1,13 @@
 (*
 # WebGraph Generator
-File responsible for webgraph generation out of collision map images.
+This page is about webgraph generation out of collision map images.
+
+You can force WaspLib's graph generator to always run even if there's already
+cached graphs by adding the following compiler directive at the top of your
+script **BEFORE INCLUDING WASPLIB**:
+```pascal
+{$DEFINE WL_GENERATE_GRAPH_ALWAYS}
+```
 *)
 
 {$DEFINE WL_WEBGRAPHGEN_INCLUDED}
@@ -175,11 +182,10 @@ begin
 end;
 
 
-function TWebGraphGenerator.FindDoors(doors: T2DPointArray; img: TImage): TRSDoorArray;
+function TWebGraphGenerator.FindDoors(doors: T2DPointArray; img: TImage): T2DPointArray;
 var
   direction: TPoint;
   i, idx: Integer;
-  doorType: ERSDoorType;
   imgBounds: TBox;
   centerPt, testPt1, testPt2: TPoint;
 begin
@@ -188,8 +194,7 @@ begin
   for i := 0 to High(doors) do
   begin
     case Length(doors[i]) of
-      4: doorType := ERSDoorType.NORMAL;
-      8: doorType := ERSDoorType.WIDE;
+      4, 8: ;
       else Continue;
     end;
 
@@ -207,15 +212,14 @@ begin
        (img.Pixel[testPt2.X, testPt2.Y] <> $FFFFFF) then
       Continue;
 
-    if not Self.DoorIsSeparating(centerPt, direction, img) then Continue;
+    if not Self.DoorIsSeparating(centerPt, direction, img) then
+      Continue;
 
     idx := Length(Result);
     SetLength(Result, idx+1);
-    Result[idx].Center := centerPt;
-    Result[idx].DoorType := doorType;
-    Result[idx].Direction := direction;
-    Result[idx].Before := Result[idx].Center + direction * 2;
-    Result[idx].After  := Result[idx].Center - direction * 2;
+    Result[idx] += centerPt;
+    Result[idx] += centerPt + direction * 2;
+    Result[idx] += centerPt - direction * 2;
   end;
 end;
 
@@ -262,77 +266,73 @@ As a bonus you can also see the resulting webgraph!
 *)
 function TWebGraphGenerator._BuildGraph(map: TImage; white, red: TPointArray): TWebGraph;
 var
-  i, j, d, len, hi, minLen: Integer;
+  i, j, l, n, hi, len, minLen: Integer;
   cluster, skeleton, nodes, tpa: TPointArray;
   bounds: TBox;
   p, q: TPoint;
-  nodesTree: TKDPointTree;
-  doors: TRSDoorArray;
-  connectionMap: array of TIntegerMatrix;
-  connectedDoors: array of record
-    After, Before: Boolean;
-  end;
-  connectA, connectB: TIntegerArray;
+  tree: TKDPointTree;
+  doors: T2DPointArray;
+  connectMap: array of TIntegerMatrix;
+  doorMap: TIntegerMatrix;
+  connectionA, connectionB, ignore: TBooleanArray;
 begin
-  doors := Self.FindDoors(red.Cluster(1), map);
-  SetLength(connectedDoors, Length(doors));
+  doors := Self.FindDoors(red.Cluster(1.5), map);
+  SetLength(ignore, Length(doors));
+  SetLength(connectionA, Length(doors));
+  SetLength(connectionB, Length(doors));
+
   with white.Bounds() do
-    SetLength(connectionMap, X2, Y2);
+  begin
+    SetLength(connectMap, Y2, X2);
+    SetLength(doorMap, Y2, X2);
+  end;
 
   minLen := Self.MinimumTiles * RSTranslator.TileArea;
 
   for cluster in white.Cluster(1).SortBySize(True) do
   begin
-    if Length(cluster) <= minLen then Continue; //remove very small spaces
-
-    hi := High(connectedDoors);
-    connectA := [];
-    connectB := [];
-
-    for d := 0 to hi do
+    for j := 0 to High(doors) do
     begin
-      if connectedDoors[d].After and connectedDoors[d].Before then
+      connectionA[j] := cluster.Contains(doors[j,1]);
+      connectionB[j] := cluster.Contains(doors[j,2]);
+      ignore[j] := connectionA.Last and connectionB.Last;
+    end;
+
+    if Length(cluster) <= minLen then
+      Continue;
+
+    with cluster.Bounds() do
+      if Max(Width, Height) < Self.NodeRadius then
       begin
-        Result.Doors += doors[d];
-        Delete(doors, d, 1);
-        Delete(connectedDoors, d, 1);
-        hi -= 1;
-        d -= 1;
+        Result.Nodes += cluster.Median();
+        hi := High(Result.Nodes);
+        SetLength(Result.Paths, hi+1);
+        SetLength(Result.Data, hi+1);
+
+        for j := 0 to High(doors) do
+        begin
+          if ignore[j] then Continue;
+
+          if connectionA[j] or connectionB[j] then
+          begin
+            n := doorMap[doors[j,0].Y, doors[j,0].X];
+            if n = 0 then
+            begin
+              Result.Nodes += doors[j,0];
+              Result.Paths += [High(Result.Nodes)];
+              Result.Data += EGraphNode.DOOR;
+              n := High(Result.Nodes)+1;
+              doorMap[doors[j,0].Y, doors[j,0].X] := n;
+            end
+            else
+              ignore[j] := True;
+
+            Result.Paths[hi] += Dec(n);
+          end;
+        end;
+
         Continue;
       end;
-
-      if not connectedDoors[d].After and cluster.Contains(doors[d].After) then
-        connectA += d;
-      if not connectedDoors[d].Before and cluster.Contains(doors[d].Before) then
-        connectB += d;
-    end;
-
-    bounds := cluster.Bounds();
-
-    if Max(bounds.Width, bounds.Height) < Self.NodeRadius then
-    begin
-      Result.Nodes += cluster.Median(); //mark spaces less than NodeRadius with a single node and continue
-
-      for d in connectA do
-      begin
-        Result.Nodes += doors[d].After;
-        connectedDoors[d].After := True;
-        SetLength(Result.Paths, Length(Result.Nodes));
-        Result.Paths[High(Result.Nodes)-1] := [High(Result.Nodes)];
-        Result.Paths[High(Result.Nodes)] := [High(Result.Nodes)-1];
-      end;
-
-      for d in connectB do
-      begin
-        Result.Nodes += doors[d].Before;
-        connectedDoors[d].Before := True;
-        SetLength(Result.Paths, Length(Result.Nodes));
-        Result.Paths[High(Result.Nodes)-1] := [High(Result.Nodes)];
-        Result.Paths[High(Result.Nodes)] := [High(Result.Nodes)-1];
-      end;
-
-      Continue;
-    end;
 
     skeleton := cluster.Erode(1).Skeleton(2, 6);
 
@@ -340,28 +340,17 @@ begin
     for tpa in skeleton.Partition(Self.Spacing) do
       nodes += tpa.Cluster(1.5).Means();
 
-    for d in connectA do
-    begin
-      nodes += doors[d].After;
-      connectedDoors[d].After := True;
-    end;
-
-    for d in connectB do
-    begin
-      nodes += doors[d].Before;
-      connectedDoors[d].Before := True;
-    end;
-
-    nodesTree := TKDPointTree.Create(nodes);
+    tree := TKDPointTree.Create(nodes);
 
     len := Length(Result.Nodes);
     SetLength(Result.Nodes, len + Length(nodes));
     SetLength(Result.Paths, Length(Result.Nodes));
+    SetLength(Result.Data, Length(Result.Nodes));
 
-    for i := 0 to High(nodesTree.Data) do
+    for i := 0 to High(tree.Data) do
     begin
-      p := nodesTree.Data[i].Split;
-      for q in nodesTree.KNearest(p, Self.MaxConnections, True) do
+      p := tree.Data[i].Split;
+      for q in tree.KNearest(p, Self.MaxConnections, True) do
       begin
         if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > Self.Spacing * 2 then Continue;
 
@@ -370,17 +359,17 @@ begin
             if cluster.ExtractBox(TBox.Create(Min(p.X, q.X), Min(p.Y, q.Y), Max(p.X, q.X), Max(p.Y, q.Y)).Expand(Self.Spacing div 2)).AStar(p, q, True) = [] then
               Continue;
 
-        connectionMap[q.X, q.Y] += i;
+        connectMap[q.Y,q.X] += i;
       end;
     end;
 
-    for i := 0 to High(nodesTree.Data) do
+    for i := 0 to High(tree.Data) do
     begin
-      p := nodesTree.Data[i].Split;
+      p := tree.Data[i].Split;
       Result.Nodes[i+len] := p;
-      for j in connectionMap[p.X, p.Y] do
+      for j in connectMap[p.Y,p.X] do
       begin
-        Result.Nodes[j+len] := nodesTree.Data[j].Split;
+        Result.Nodes[j+len] := tree.Data[j].Split;
 
         if not Result.Paths[i+len].Contains(j+len) then
           Result.Paths[i+len] += j+len;
@@ -388,8 +377,33 @@ begin
           Result.Paths[j+len] += i+len;
       end;
     end;
+
+    for j := 0 to High(doors) do
+    begin
+      if ignore[j] then Continue;
+
+      if connectionA[j] or connectionB[j] then
+      begin
+        n := doorMap[doors[j,0].Y, doors[j,0].X];
+        if n = 0 then
+        begin
+          Result.Nodes += doors[j,0];
+          Result.Paths += [High(Result.Nodes)];
+          Result.Data += EGraphNode.DOOR;
+          n := High(Result.Nodes)+1;
+          doorMap[doors[j,0].Y, doors[j,0].X] := n;
+        end
+        else
+          ignore[j] := True;
+
+        l := Result.Nodes.IndexOf(tree.Nearest(doors[j,0], True));
+        Result.Paths[l] += Dec(n);
+      end;
+    end;
+
   end;
 
+  SetLength(Result.Data, Length(Result.Nodes));
   SetLength(Result.Names, Length(Result.Nodes));
 end;
 

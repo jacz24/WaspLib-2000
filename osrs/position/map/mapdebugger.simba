@@ -39,7 +39,6 @@ Main record used to hold core values of the {ref}`Map Debugger`.
     ColorArray: TColorArray;
   end;
 
-{%codetools off}
 procedure TMapDebugger.OnChange(sender: TLazObject);
 begin
   Self.ImageBox.SetImage(Self.Images[TLazComboBox(sender).ItemIndex]);
@@ -123,7 +122,6 @@ begin
   Self.ShowObjectClusters := TLazCheckBox(sender).IsChecked();
   Self.ImageBox.Repaint();
 end;
-{%codetools on}
 
 (*
 ## MapDebugger.Show
@@ -198,7 +196,6 @@ begin
   checkbox.OnChange := @Self.WalkableSpaceOnChange;
   lbl.AnchorSideTop.Control := checkbox;
   lbl.OnClick := @FormUtils.OnCheckboxCaptionClick;
-
 
   lbl := TLazLabel.CreateEx(panel, 'Show webgraph');
   lbl.Font.Color := $FFFFFF;
@@ -285,18 +282,9 @@ begin
   Self.Graph.Nodes    := Self.GetLocal(loader^.Graph.Nodes);
   Self.Graph.Paths    := Copy(loader^.Graph.Paths);
   Self.Graph.Names    := Copy(loader^.Graph.Names);
-  Self.Graph.Doors    := Copy(loader^.Graph.Doors);
-  Self.Graph.Blocking := Copy(loader^.Graph.Blocking);
+  Self.Graph.Data     := Copy(loader^.Graph.Data);
 
   Self.Graph.WalkableSpace := Self.GetLocal(loader^.Graph.WalkableSpace);
-
-
-  for i := 0 to High(Self.Graph.Doors) do
-  begin
-    Self.Graph.Doors[i].Before := Self.GetLocal([Self.Graph.Doors[i].Before])[0];
-    Self.Graph.Doors[i].After  := Self.GetLocal([Self.Graph.Doors[i].After])[0];
-    Self.Graph.Doors[i].Center := Self.GetLocal([Self.Graph.Doors[i].Center])[0];
-  end;
 
   for i := 0 to High(loader^.Graph.WalkableClusters) do
     Self.Graph.WalkableClusters += Self.GetLocal(loader^.Graph.WalkableClusters[i]);

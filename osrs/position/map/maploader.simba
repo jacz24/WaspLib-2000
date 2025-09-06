@@ -405,10 +405,10 @@ begin
       if not FileWriteBytes(path + 'names.txt', CompressBytes(ECompressAlgo.ZLIB, Result.Names.ToBytes())) then
         raise GetDebugLn('MapLoader', 'Failed to create cache for graph names: ' + path);
 
-    if (Result.Doors <> []) then
-      if not FileWriteBytes(path + 'doors.txt', CompressBytes(ECompressAlgo.ZLIB, Result.Doors.ToBytes())) then
-        raise GetDebugLn('MapLoader', 'Failed to create cache for graph doors: ' + path);
-
+    //if (Result.DoorsLegacy <> []) then
+    //  if not FileWriteBytes(path + 'doors.txt', CompressBytes(ECompressAlgo.ZLIB, Result.DoorsLegacy.ToBytes())) then
+    //    raise GetDebugLn('MapLoader', 'Failed to create cache for graph doors: ' + path);
+    //
     if (Result.WalkableSpace <> []) then
       if not FileWriteBytes(path + 'walkablespace.txt', CompressBytes(ECompressAlgo.ZLIB, Result.WalkableSpace.ToBytes())) then
         raise GetDebugLn('MapLoader', 'Failed to create cache for graph WalkableSpace: ' + path);
@@ -428,9 +428,9 @@ begin
   if FileExists(path + 'names.txt') then
     Result.Names := TStringArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'names.txt')));
 
-  if FileExists(path + 'doors.txt') then
-    Result.Doors := TRSDoorArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'doors.txt')));
-
+  //if FileExists(path + 'doors.txt') then
+  //  Result.DoorsLegacy := TRSDoorArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'doors.txt')));
+  //
   if FileExists(path + 'walkablespace.txt') then
     Result.WalkableSpace := TPointArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'walkablespace.txt')));
   if FileExists(path + 'walkableclusters.txt') then
@@ -459,13 +459,6 @@ begin
 
   for i := 0 to High(Result.ObjectClusters) do
     Result.ObjectClusters[i] := Result.ObjectClusters[i].Offset(offset);
-
-  for i := 0 to High(Result.Doors) do
-  begin
-    Result.Doors[i].Before := Result.Doors[i].Before + offset;
-    Result.Doors[i].After := Result.Doors[i].After + offset;
-    Result.Doors[i].Center := Result.Doors[i].Center + offset;
-  end;
 end;
 
 
@@ -614,26 +607,13 @@ begin
         for k := 0 to High(Self.Graph.ObjectClusters[j]) do
           if Self.Graph.ObjectClusters[j][k] in oldRegions[i] then
             Self.Graph.ObjectClusters[j][k] := Self.Graph.ObjectClusters[j][k] + offset;
-
-      for j := 0 to High(Self.Graph.Doors) do
-        if Self.Graph.Doors[j].Center in oldRegions[i] then
-        begin
-          Self.Graph.Doors[j].Before := Self.Graph.Doors[j].Before + offset;
-          Self.Graph.Doors[j].After := Self.Graph.Doors[j].After + offset;
-          Self.Graph.Doors[j].Center := Self.Graph.Doors[j].Center + offset;
-        end;
     end;
-
   end;
 
   for i := 0 to High(graphs) do
     Self.Graph.Merge(graphs[i]);
 
-  for i := 0 to High(Self.Graph.Doors) do
-  begin
-    Self.Graph.Doors[i].Before := RSTranslator.Normalize(Self.Graph.Doors[i].Before);
-    Self.Graph.Doors[i].After := RSTranslator.Normalize(Self.Graph.Doors[i].After);
-  end;
+  Self.Graph.Setup();
 end;
 
 

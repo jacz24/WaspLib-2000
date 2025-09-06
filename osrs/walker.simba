@@ -58,7 +58,8 @@ via the {ref}`Walker.Setup` method.
 
     ScreenWalk, AdaptiveWalk, FancyMouse, Walking, RedClicked: Boolean;
 
-    AdaptiveToggleDistances: TPoint;
+    AdaptiveToggleDistances, AdaptiveDistance: TPoint;
+
 
     WalkUpText, TargetUpText, ActionUpText: TStringArray;
 
@@ -70,16 +71,7 @@ via the {ref}`Walker.Setup` method.
     //Don't touch:
     _PathIndex: Integer;
     _Path: TPointArray;
-
-    _DoorHandler: record
-      Current: TRSDoor;
-      Doors: TRSDoorArray;
-      FlagMoved, Handling, SettingUp, Skipped, Enabled: Boolean;
-    end;
   end;
-
-var
-  WALKER_ADAPTIVE_SCREEN_TOGGLE_DISTANCES: TPoint = [25,110];
 
 (*
 ## TRSWalker.Setup
@@ -136,8 +128,13 @@ Walker.Setup(@Map.Position, @Map.Height, @Map.Loader.GetLocal, @Map.Loader.Graph
 procedure TRSWalker.Setup(position: TRSWalkerPositionFunction; height: TRSWalkerHeightFunction; getLocal: TRWalkerGetLocalFunction; graph: ^TWebGraph; mapImage: TImage);
 begin
   Self.Position := @position;
-  if @height <> nil then Self.Height := @height else Self.Height := @Self.DummyHeight;
-  if @getLocal <> nil then Self.GetLocal := @getLocal else Self.GetLocal := @Self.DummyGetLocal;
+
+  if @height <> nil then
+    Self.Height := @height else Self.Height := @Self.DummyHeight;
+  if @getLocal <> nil then
+    Self.GetLocal := @getLocal else Self.GetLocal := @Self.DummyGetLocal;
+  if Self.AdaptiveDistance = Default(TPoint) then
+    Self.AdaptiveDistance := [25,110];
 
   Self.WalkUpText := ['Walk here', 'alk her'];
   Self.AdaptiveWalk := True;
@@ -410,14 +407,14 @@ end;
 (*
 ## Walker.WaitMoving
 ```pascal
-procedure TRSWalker.WaitMoving(destination: TPoint; waitUntilDistance: Integer);
+procedure TRSWalker.WaitMoving(destination: TPoint; minDistance: Integer);
 ```
 Internal method used to wait while we are moving using walker.
 You will probably never need to call this directly.
 
 This is where TRSWalker.OnWaitMoving are called.
 *)
-procedure TRSWalker.WaitMoving(destination: TPoint; waitUntilDistance: Integer);
+procedure TRSWalker.WaitMoving(destination: TPoint; minDistance: Integer);
 var
   timeout, countdown: TCountDown;
   position: record Current, Previous: TPoint; end;
@@ -435,7 +432,7 @@ begin
   // Break from the loop if:
   // - Haven't moved in 500ms
   // - Been walking for over 20 seconds
-  // - Within `waitUntilDistance` to the destination
+  // - Within `minDistance` to the destination
   repeat
     Self.CheckRunEnergy();
 
@@ -444,15 +441,15 @@ begin
     if position.Current <> position.Previous then
       countdown.Restart();
 
-    if Self._DoorHandler.Handling then
-    begin
-      if Self.WebGraph^.WalkableClusters.InSameTPA(RSTranslator.NormalizeDoor(position.Current), RSTranslator.NormalizeDoor(Self._DoorHandler.Current.After)) then
-      begin
-        Self._PathIndex := Self._Path.IndexOf(Self._Path.NearestPoint(destination));
-        Self._DoorHandler.Handling := False;
-        Exit;
-      end;
-    end;
+    //if Self._DoorHandler.Handling then
+    //begin
+    //  if Self.WebGraph^.WalkableClusters.InSameTPA(RSTranslator.NormalizeDoor(position.Current), RSTranslator.NormalizeDoor(Self._DoorHandler.Current.After)) then
+    //  begin
+    //    Self._PathIndex := Self._Path.IndexOf(Self._Path.NearestPoint(destination));
+    //    Self._DoorHandler.Handling := False;
+    //    Exit;
+    //  end;
+    //end;
 
     if @Self.OnWaitMovingEvent <> nil then
       Self.OnWaitMovingEvent(@Self, position.Current, destination);
@@ -467,7 +464,7 @@ begin
     if not Self.Walking then Break;
 
     Sleep(50, 150);
-  until timeout.IsFinished or countdown.IsFinished or position.Current.InRange(destination, waitUntilDistance);
+  until timeout.IsFinished or countdown.IsFinished or position.Current.InRange(destination, minDistance);
 end;
 
 procedure TRSWalker.WaitMoving(time: Integer = 20000; doAntiban: Boolean = True); overload;
@@ -648,12 +645,12 @@ end;
 (*
 ## Walker.WalkFinalStep
 ```pascal
-function TRSWalker.WalkFinalStep(playerPoint, walkerPoint: TPoint; waitUntilDistance: Integer): Boolean;
+function TRSWalker.WalkFinalStep(playerPoint, walkerPoint: TPoint; minDistance: Integer): Boolean;
 ```
 Internal method used by walker when finishing walking a path.
 You will probably never need to call this directly but it can be used to take a single step.
 *)
-function TRSWalker.WalkFinalStep(playerPoint, walkerPoint: TPoint; waitUntilDistance: Integer): Boolean;
+function TRSWalker.WalkFinalStep(playerPoint, walkerPoint: TPoint; minDistance: Integer): Boolean;
 var
   minimapPoint, flag: TPoint;
   wasHandlingDoor: Boolean;
@@ -667,42 +664,42 @@ begin
   Result := Self.Click(playerPoint, walkerPoint, minimapPoint, 0);
   if not Result then Exit;
 
-  if Self._DoorHandler.Handling then
-  begin
-    wasHandlingDoor := True;
-    if (walkerPoint.DistanceTo(Self._DoorHandler.Current.After) > 4) and (walkerPoint.DistanceTo(playerPoint) > 10) then
-      if Self.FindFlagMove(flag) then
-      begin
-        flag := RSTranslator.NormalizeDoor(flag);
-        flag := Self.WebGraph^.NearestWalkablePoint(flag);
-        if not Self.WebGraph^.WalkableClusters.InSameTPA(flag, walkerpoint) then
-        begin
-          if Self.WebGraph^.WalkableClusters.InSameTPA(Self.Position(), RSTranslator.NormalizeDoor(Self._DoorHandler.Current.After)) then
-            Exit;
+  //if Self._DoorHandler.Handling then
+  //begin
+  //  wasHandlingDoor := True;
+  //  if (walkerPoint.DistanceTo(Self._DoorHandler.Current.After) > 4) and (walkerPoint.DistanceTo(playerPoint) > 10) then
+  //    if Self.FindFlagMove(flag) then
+  //    begin
+  //      flag := RSTranslator.NormalizeDoor(flag);
+  //      flag := Self.WebGraph^.NearestWalkablePoint(flag);
+  //      if not Self.WebGraph^.WalkableClusters.InSameTPA(flag, walkerpoint) then
+  //      begin
+  //        if Self.WebGraph^.WalkableClusters.InSameTPA(Self.Position(), RSTranslator.NormalizeDoor(Self._DoorHandler.Current.After)) then
+  //          Exit;
+  //
+  //        if Minimap.IsPlayerMoving() then
+  //          SleepUntil(not Minimap.IsPlayermoving(), 100, 2000);
+  //        Self._DoorHandler.FlagMoved := True;
+  //        Exit(False);
+  //      end;
+  //    end;
+  //end;
+  //
+  //if Self._DoorHandler.SettingUp then
+  //  if (playerpoint.DistanceTo(Self._DoorHandler.Current.Center) <= 99) and (playerpoint.DistanceTo(walkerPoint) > 20) then
+  //  begin
+  //    Minimap.SetCompassAngleEx(Self._DoorHandler.Current.GetVisibleAngle(Minimap.GetCompassAngle()), 15);
+  //    Self._DoorHandler.SettingUp := False;
+  //  end;
+  //
 
-          if Minimap.IsPlayerMoving() then
-            SleepUntil(not Minimap.IsPlayermoving(), 100, 2000);
-          Self._DoorHandler.FlagMoved := True;
-          Exit(False);
-        end;
-      end;
-  end;
+  Self.WaitMoving(walkerPoint, minDistance);
 
-  if Self._DoorHandler.SettingUp then
-    if (playerpoint.DistanceTo(Self._DoorHandler.Current.Center) <= 99) and (playerpoint.DistanceTo(walkerPoint) > 20) then
-    begin
-      Minimap.SetCompassAngleEx(Self._DoorHandler.Current.GetVisibleAngle(Minimap.GetCompassAngle()), 15);
-      Self._DoorHandler.SettingUp := False;
-    end;
-
-
-  Self.WaitMoving(walkerPoint, waitUntilDistance);
-
-  if wasHandlingDoor then
-    Exit(not Self._DoorHandler.Handling);
-
+  //if wasHandlingDoor then
+  //  Exit(not Self._DoorHandler.Handling);
+  //
   // Tolerance for final step
-  Result := Self.Position().InRange(walkerPoint, Max(waitUntilDistance, 4));
+  Result := Self.Position().InRange(walkerPoint, Max(minDistance, 4));
 end;
 
 (*
@@ -716,7 +713,7 @@ You will probably never need to call this directly.
 function TRSWalker.WalkStep(playerPoint, walkerPoint: TPoint): Boolean;
 var
   minimapPoint, flag: TPoint;
-  waitUntilDistance: Integer;
+  minDistance: Integer;
   wasHandlingDoor: Boolean;
 begin
   if not Self.WalkStepHelper(playerPoint, walkerPoint, minimapPoint) then
@@ -729,41 +726,41 @@ begin
   if Result then
   begin
     if (Random() < 0.15) then // 15% chance of randomness else mean
-      waitUntilDistance := Random(Round(Minimap.Center.DistanceTo(minimapPoint)))
+      minDistance := Random(Round(Minimap.Center.DistanceTo(minimapPoint)))
     else
-      waitUntilDistance := RandomMean(0, Round(Minimap.Center.DistanceTo(minimapPoint)) + 10);
+      minDistance := RandomMean(0, Round(Minimap.Center.DistanceTo(minimapPoint)) + 10);
 
-    if Self._DoorHandler.Handling then
-    begin
-      wasHandlingDoor := True;
-      if (walkerPoint.DistanceTo(Self._DoorHandler.Current.After) > 4) and (walkerPoint.DistanceTo(playerpoint) > 10) then
-        if Self.FindFlagMove(flag) then
-        begin
-          flag := Self.WebGraph^.WalkableSpace.NearestPoint(flag);
-          if not Self.WebGraph^.WalkableClusters.InSameTPA(flag, walkerpoint) then
-          begin
-            if Self.WebGraph^.WalkableClusters.InSameTPA(Self.Position(), Self._DoorHandler.Current.After) then
-              Exit;
-
-            if Minimap.IsPlayermoving() then
-              SleepUntil(not Minimap.IsPlayermoving(), 100, 2000);
-            Self._DoorHandler.FlagMoved := True;
-            Exit(False);
-          end;
-        end;
-    end;
-
-    if Self._DoorHandler.SettingUp then
-      if (playerpoint.DistanceTo(Self._DoorHandler.Current.Center) <= 99) and (playerpoint.DistanceTo(walkerPoint) > 20) then
-      begin
-        Minimap.SetCompassAngleEx(Self._DoorHandler.Current.GetVisibleAngle(Minimap.GetCompassAngle()), 15);
-        Self._DoorHandler.SettingUp := False;
-      end;
-
-    Self.WaitMoving(walkerPoint, waitUntilDistance);
-
-    if wasHandlingDoor then
-      Exit(not Self._DoorHandler.Handling);
+    //if Self._DoorHandler.Handling then
+    //begin
+    //  wasHandlingDoor := True;
+    //  if (walkerPoint.DistanceTo(Self._DoorHandler.Current.After) > 4) and (walkerPoint.DistanceTo(playerpoint) > 10) then
+    //    if Self.FindFlagMove(flag) then
+    //    begin
+    //      flag := Self.WebGraph^.WalkableSpace.NearestPoint(flag);
+    //      if not Self.WebGraph^.WalkableClusters.InSameTPA(flag, walkerpoint) then
+    //      begin
+    //        if Self.WebGraph^.WalkableClusters.InSameTPA(Self.Position(), Self._DoorHandler.Current.After) then
+    //          Exit;
+    //
+    //        if Minimap.IsPlayermoving() then
+    //          SleepUntil(not Minimap.IsPlayermoving(), 100, 2000);
+    //        Self._DoorHandler.FlagMoved := True;
+    //        Exit(False);
+    //      end;
+    //    end;
+    //end;
+    //
+    //if Self._DoorHandler.SettingUp then
+    //  if (playerpoint.DistanceTo(Self._DoorHandler.Current.Center) <= 99) and (playerpoint.DistanceTo(walkerPoint) > 20) then
+    //  begin
+    //    Minimap.SetCompassAngleEx(Self._DoorHandler.Current.GetVisibleAngle(Minimap.GetCompassAngle()), 15);
+    //    Self._DoorHandler.SettingUp := False;
+    //  end;
+    //
+    //Self.WaitMoving(walkerPoint, minDistance);
+    //
+    //if wasHandlingDoor then
+    //  Exit(not Self._DoorHandler.Handling);
   end;
 end;
 
@@ -868,8 +865,8 @@ begin
 
   if Self.AdaptiveWalk then
   begin
-    Self.AdaptiveToggleDistances.X := WALKER_ADAPTIVE_SCREEN_TOGGLE_DISTANCES.X + Random(-6,6);
-    Self.AdaptiveToggleDistances.Y := WALKER_ADAPTIVE_SCREEN_TOGGLE_DISTANCES.Y + Random(-16,16);
+    Self.AdaptiveToggleDistances.X := Self.AdaptiveDistance.X + Random(-6,6);
+    Self.AdaptiveToggleDistances.Y := Self.AdaptiveDistance.Y + Random(-16,16);
     Self.AdaptiveWalkCheck(me);
   end;
 end;
@@ -913,24 +910,24 @@ end;
 (*
 ## TRSWalker.WalkPath
 ```pascal
-function TRSWalker.WalkPath(Path: TPointArray; waitUntilDistance: Integer = 0): Boolean;
+function TRSWalker.WalkPath(Path: TPointArray; minDistance: Integer = 0): Boolean;
 ```
-Walks a path of points taken from the loaded map. We advice that waitUntilDistance is not 0.
+Walks a path of points taken from the loaded map. We advice that minDistance is not 0.
 
 Parameters:
 - Path
 	Array of points taken from the loaded map to walk. Must be ordered from start to finish.
-- waitUntilDistance
+- minDistance
 	Determines when the method returns once the final point has been clicked. Default value: 0.
-	| *waitUntilDistance=0* waits until the player has reached the final point.
-	| *waitUntilDistance=20* waits until the player is within 20 pixels of the final point.
+	| *minDistance=0* waits until the player has reached the final point.
+	| *minDistance=20* waits until the player is within 20 pixels of the final point.
 
 Example:
 ```pascal
 Walker.WalkPath([[100,100],[120,120],[140,140],[160,160],[180,180]]);
 ```
 *)
-function TRSWalker.WalkPath(path: TPointArray; waitUntilDistance: Integer = 0; debug: Boolean = False): Boolean;
+function TRSWalker.WalkPath(path: TPointArray; minDistance: Integer = 0; data: EGraphNodeArray = []; debug: Boolean = False): Boolean;
 var
   playerPoint: TPoint;
   index, fails: Integer;
@@ -943,20 +940,17 @@ begin
   begin
     playerPoint := Self.Position();
 
-    (*
-    if Self._DoorHandler.FlagMoved then
-    begin
-      Self._DoorHandler.FlagMoved := False;
-      //TODO
-      //Exit(Self.WebGraph^.WalkableClusters.InSameTPA(playerPoint, RSTranslator.NormalizeDoor(Self._DoorHandler.Door.After)));
-    end;
-    *)
-
+    //if Self._DoorHandler.FlagMoved then
+    //begin
+    //  Self._DoorHandler.FlagMoved := False;
+    //  Exit(Self.WebGraph^.WalkableClusters.InSameTPA(playerPoint, RSTranslator.NormalizeDoor(Self._DoorHandler.Current.After)));
+    //end;
+    //
     fails := Self._WalkPathHelper(index, angle, playerPoint, fails, debug);
 
     if index = High(Self._Path) then
     begin
-      if Self.WalkFinalStep(playerPoint, Self._Path[index], waitUntilDistance) then
+      if Self.WalkFinalStep(playerPoint, Self._Path[index], minDistance) then
         Exit(True);
       Continue;
     end;
@@ -970,174 +964,10 @@ begin
     WriteLn GetDebugLn(Self.Name, 'Failed to advance path', ELogLevel.WARN);
 end;
 
-
-procedure TRSWalker.SolveDoor(door: TRSDoor; compass: Single);
-var
-  quad: TQuad;
-  middleOfDoorside, doorTile: TPoint;
-  tpa: TPointArray;
-begin
-  WriteLn GetDebugLn('Walker', 'Solving door from far away');
-
-  SleepUntil(not minimap.IsPlayerMoving(), 10, 7000);
-
-  if Abs(DeltaAngle(door.GetDoorAngle,compass)) < 90 then
-    doorTile := door.After
-  else
-    doorTile := door.Before;
-
-  quad := Self.GetQuadMS(Self.Position(), doorTile);
-
-  //move mouse to the average of the middle of the bottom edge and the center of the quad
-  // recent addition, shift 3/5 of the way towards the bottom instead of in the middle
-  // potential addition for more randomness: make tpa from line and grow by 1
-  tpa := TRSDoor.GetCorners(quad.Corners, door.GetDoorAngle(), compass);
-  middleOfDoorside := [Round((tpa[0].X+tpa[1].X)/2), Round((tpa[0].Y+tpa[1].Y)/2)];
-
-  Mouse.Move([Round((2*quad.Mean.X+3*middleOfDoorside.X)/5), Round((2*quad.Mean.Y+3*middleOfDoorside.Y)/5)]);
-
-  Self._DoorHandler.Skipped := False; //I can't explain why but without this like, it always skips the door
-
-  //Check Uptext and walk through
-  if Mainscreen.IsUpText(['Open', 'Squeeze']) then
-  begin
-    Target.MouseClick(EMouseButton.LEFT);
-    Exit;
-  end;
-
-  if Mainscreen.IsUpText('Walk here') then
-  begin
-    Self._DoorHandler.Skipped := True;
-    Target.MouseClick(EMouseButton.LEFT);
-    Exit;
-  end;
-
-  if not ChooseOption.Select('Open', True, False) then
-  begin
-    ChooseOption.Select('Walk here');
-    Self._DoorHandler.Skipped := True;
-  end;
-end;
-
-function TRSWalker.WalkDoorway(path: TPointArray; doorIdx: Integer; waitUntilDistance: Integer = 0; debug: Boolean = False): Boolean;
-var
-  me: TPoint;
-  pathToDoor: TPointArray;
-  index, fails, postDoorIndex, i: Integer;
-  quad: TQuad;
-  compass, cAngle: Double;
-begin
-  pathToDoor := Copy(path, 0, doorIdx + 1); //+1 to get door.After node
-  Self._WalkPathSetup(pathToDoor);
-
-  while Self.Walking and (fails < 10) do
-  begin
-    me := Self.Position();
-    if Self.WebGraph^.WalkableClusters.InSameTPA(RSTranslator.NormalizeDoor(me), RSTranslator.NormalizeDoor(Self._DoorHandler.Current.After)) then
-      Exit(True);
-
-    if Self._DoorHandler.FlagMoved then
-    begin
-      Self._DoorHandler.FlagMoved := False;
-      Exit(Self.WebGraph^.WalkableClusters.InSameTPA(RSTranslator.NormalizeDoor(me), RSTranslator.NormalizeDoor(Self._DoorHandler.Current.After)));
-    end;
-
-    compass := Minimap.GetCompassAngle(False);
-    fails := Self._WalkPathHelper(index, compass, me, fails, debug);
-    if fails > 0 then Continue;
-
-    if not Self._DoorHandler.Handling then
-    begin
-      cAngle := RadToDeg(compass);
-      quad := Self.GetQuadMS(me, Self._DoorHandler.Current.After, compass);
-
-      if Mainscreen.IsVisible(quad.Mean) then
-      begin
-        if not Self._DoorHandler.SettingUp then
-        begin
-          compass := Self._DoorHandler.Current.GetVisibleAngle(Minimap.GetCompassAngle());
-          Minimap.SetCompassAngleEx(compass, 15);
-
-          Self._DoorHandler.SettingUp := True;
-
-          compass := Minimap.GetCompassAngle(False);
-          quad := Self.GetQuadMS(me, Self._DoorHandler.Current.After, compass);
-
-          if not Mainscreen.IsVisible(quad.Mean) then
-            Continue;
-        end;
-
-        SleepUntil(not Minimap.IsPlayerMoving(), 10, 5000);
-
-        cAngle := Minimap.GetCompassAngle(True);
-        quad := Self.GetQuadMS(me, Self._DoorHandler.Current.After);
-
-        if Mainscreen.IsVisible(quad.Mean) then
-        begin
-          Self.SolveDoor(Self._DoorHandler.Current, cAngle);
-          me := Self.Position();
-
-          //if you didnt skip the door you need to check if you are moving towards it
-          //if you are not close to the door when you stop moving, it means the door was opened by someone else in the mean time
-          //in this case you are not handling the door anymore so you Continue and it will try to handle again
-          if not Self._DoorHandler.Skipped then
-          begin
-            Self._DoorHandler.Skipped := False;
-            SleepUntil(Minimap.IsPlayerMoving(), 200, 1200);
-            SleepUntil(not Minimap.IsPlayerMoving(), 50, 2000 + 600 * Round(me.DistanceTo(Self._DoorHandler.Current.Before) / 4)); //max duration it can take to get to a point with a 2 second buffer
-
-            me := Self.Position();
-            if Self.WebGraph^.WalkableClusters.InSameTPA(RSTranslator.NormalizeDoor(me), RSTranslator.NormalizeDoor(Self._DoorHandler.Current.After)) then
-              Exit(True);
-            if (Self._DoorHandler.Current.Before.DistanceTo(me) > 3) then
-              Continue;
-          end;
-
-          index := 0;
-
-          if Length(Self._DoorHandler.Doors) > 1 then
-          begin
-            postDoorIndex := -1;
-            for i := 0 to High(path) do
-              if RSTranslator.Normalize(path[i]) = Self._DoorHandler.Doors[1].Before then
-              begin
-                postDoorIndex := i;
-                Break;
-              end;
-
-            if postDoorIndex = -1 then
-              raise GetDebugLn('Walker', 'Couldn''t find then next door on the path for TRSWalker.WalkDoorway to handle!');
-          end
-          else
-            postDoorIndex := High(path);
-
-          pathToDoor := Copy(path, doorIdx, postDoorIndex - doorIdx + 1);
-          Self._WalkPathSetup(pathToDoor);
-          Self._DoorHandler.Handling := True;
-          Continue;
-        end;
-      end;
-    end;
-
-    if index = High(Self._Path) then
-    begin
-      if Self.WalkFinalStep(me, Self._Path[index], waitUntilDistance) then
-        Exit(not Self._DoorHandler.Handling);
-      Continue;
-    end;
-
-    Self.WalkStep(me, Self._Path[index]);
-  end;
-
-  if fails = 10 then
-    WriteLn GetDebugLn('Walker', 'Failed to advance path', ELogLevel.ERROR);
-end;
-
-
 (*
 ## TRSWalker.WalkBlind
 ```pascal
-function TRSWalker.WalkBlind(Destination: TPoint; waitUntilDistance: Integer = 0): Boolean;
+function TRSWalker.WalkBlind(Destination: TPoint; minDistance: Integer = 0): Boolean;
 ```
 "Blindly" walks to a point taken from the loaded map.
 A straight line is generated between the player's position and destination which is then walked.
@@ -1145,19 +975,19 @@ A straight line is generated between the player's position and destination which
 Parameters:
 - Destination
   Destination point taken from the loaded map.
-- waitUntilDistance
+- minDistance
 	Determines when the method returns once the final point has been clicked. Default value: 0.
-	| *waitUntilDistance=0* waits until the player has reached the final point.
-	| *waitUntilDistance=20* waits until the player is within 20 pixels of the final point.
+	| *minDistance=0* waits until the player has reached the final point.
+	| *minDistance=20* waits until the player is within 20 pixels of the final point.
 
 Example:
 ```pascal
 Walker.WalkBlind([300, 300]);
 ```
 *)
-function TRSWalker.WalkBlind(Destination: TPoint; waitUntilDistance: Integer = 0): Boolean;
+function TRSWalker.WalkBlind(Destination: TPoint; minDistance: Integer = 0): Boolean;
 begin
-  Result := Self.WalkPath([Destination], waitUntilDistance);
+  Result := Self.WalkPath([Destination], minDistance);
 end;
 
 
@@ -1169,7 +999,7 @@ function TRSWalker.GetClosestPoint(destinations: TPointArray): TPoint;
 ```
 Method used to get the closest Point to the Player out of a TPA.
 *)
-function TRSWalker.GetClosestPointEx(me: TPoint; destinations: TPointArray; out path: TPointArray): TPoint; overload;
+function TRSWalker.GetClosestPointEx(me: TPoint; destinations: TPointArray; out path: TPointArray; out data: EGraphNodeArray): TPoint; overload;
 var
   shortPaths: T2DPointArray;
   shortest, dist: Integer;
@@ -1181,7 +1011,7 @@ begin
   for destination in destinations do
   begin
     try
-      path := Self.WebGraph^.PathBetweenEx(me, destination, 0, 4);
+      path := Self.WebGraph^.PathBetween(me, destination, 0, 4);
     except
       Continue;
     end;
@@ -1204,190 +1034,115 @@ begin
     Exit(destinations.NearestPoint(me));
 
   path := shortPaths.Random();
-  Result := shortPaths.Random().Last;
+  Result := path.Last;
 end;
 
-function TRSWalker.GetClosestPointEx(me: TPoint; destinations: TPointArray): TPoint; overload;
+function TRSWalker.GetClosestPoint(me: TPoint; destinations: TPointArray; out path: TPointArray): TPoint; overload;
 var
-  tpa: TPointArray;
+  data: EGraphNodeArray;
 begin
-  Result := Self.GetClosestPointEx(me, destinations, tpa);
-end;
-
-function TRSWalker.GetClosestPoint(destinations: TPointArray): TPoint;
-begin
-  Result := Self.GetClosestPointEx(Self.Position(), destinations);
+  Result := Self.GetClosestPointEx(me, destinations, path, data);
 end;
 
 
-function TRSWalker._HardSolveDoor(door: TRSDoor): Boolean;
+
+function TRSWalker._GetPath(me, destination: TPoint; out data: EGraphNodeArray; safe: Boolean; randomness: Double): TPointArray;
 var
-  middleBottom, me: TPoint;
-  angle: Single;
-  quad: TQuad;
-  tpa: TPointArray;
+  img: TImage;
+  tmp: TWebGraph;
+  closestMe, closestDest: TIntegerArray;
+  i: Integer;
 begin
-  angle := door.GetVisibleAngle(Minimap.GetCompassAngle() , 0 , False);
-  Minimap.SetCompassAngleEx(angle, 15);
-  SleepUntil(not minimap.IsPlayerMoving, 50,5000);
+  try
+    Result := Self.WebGraph^.PathBetweenEx(me, destination, data, randomness, 4, safe);
+  except
+    if Assigned(Self.MapImage) and (Length(Self.WebGraph^.Nodes) > 0) then
+    begin
+      img := Self.MapImage.Copy();
+      tmp := Self.WebGraph^;
 
-  me := Self.Position();
-  quad := Self.GetQuadMS(me, door.After, Minimap.GetCompassAngle(False));
-  if not Mainscreen.IsVisible(quad.Mean) then Exit(False);
+      closestMe   := Self.WebGraph^.NearNodesIndices(me, 4);
+      closestDest := Self.WebGraph^.NearNodesIndices(destination, 4);
 
-  //move mouse slightly below the mean of the rectangle
-  tpa := quad.Corners;
-  tpa.SortByY(False);
-  middleBottom := [(tpa[0].X + tpa[1].X) div 2, (tpa[0].Y + tpa[1].Y) div 2];
+      tmp.Nodes := Self.GetLocalEx(tmp.Nodes);
+      me := Self.GetLocal(me);
+      destination := Self.GetLocal(destination);
 
-  with quad.Mean do
-    Mouse.Move([(X + middleBottom.X) div 2, (Y + middleBottom.Y) div 2]);
+      tmp.Draw(img);
 
-  if Mainscreen.IsUpText(['Open', 'Squeeze']) then
-  begin
-    Target.MouseClick(EMouseButton.LEFT);
-    if not SleepUntil(not Mainscreen.IsUpText(['Open', 'Close', 'Squeeze']), 100, 2000) then
-      Exit;
+      for i := 0 to 3 do
+      begin
+        if i < Length(closestMe) then
+        begin
+          img.DrawColor := $FF00FF;
+          img.DrawCircle(tmp.Nodes[closestMe[i]], 4);
+        end;
+
+        if i < Length(closestDest) then
+        begin
+          img.DrawColor := $FF0000;
+          img.DrawCircle(tmp.Nodes[closestDest[i]], 4);
+        end;
+      end;
+
+      img.DrawColor := $00FF00;
+      if img.InImage(me.X, me.Y) then
+        img.DrawCross(me, 4);
+
+      if img.InImage(destination.X, destination.Y) then
+        img.DrawCross(destination, 4);
+
+      img.Show();
+    end;
+    raise GetDebugLn(Self.Name, GetExceptionMessage());
   end;
-
-  Self.WalkBlind(door.After, 0);
-  Sleep(1000,2000, ERandomDir.LEFT);
-
-  with Self.Position() do
-    Result := door.After.DistanceTo([X, Y]) < me.DistanceTo([X, Y]);
 end;
-
 
 (*
 ## TRSWalker.WebWalk
 ```pascal
-function TRSWalker.WebWalkEx(me: TPoint; destination: TPoint; waitUntilDistance: Integer = 0; pathRandomness: Double = 0): Boolean;
-function TRSWalker.WebWalk(destination: TPoint; waitUntilDistance: Integer = 0; pathRandomness: Double = 0): Boolean;
-function TRSWalker.WebWalk(destinations: TPointArray; waitUntilDistance: Integer = 0; pathRandomness: Double = 0): Boolean; overload;
+function TRSWalker.WebWalkEx(me, destination: TPoint; minDistance: Integer = 0; randomness: Double = 0): Boolean;
+function TRSWalker.WebWalk(destination: TPoint; minDistance: Integer = 0; randomness: Double = 0): Boolean;
+function TRSWalker.WebWalk(destinations: TPointArray; minDistance: Integer = 0; randomness: Double = 0): Boolean; overload;
 ```
 Web walks to the destination point on the loaded map. Does **not** handle any obstacles.
 *)
-function TRSWalker.WebWalkEx(me: TPoint; destination: TPoint; waitUntilDistance: Integer = 0; pathRandomness: Double = 0; debug: Boolean = False): Boolean;
-  function _GetPath(me: TPoint; safe: Boolean): TPointArray;
-  var
-    img: TImage;
-    tmp: TWebGraph;
-    closestMe, closestDest: TIntegerArray;
-    i: Integer;
-  begin
-    try
-      Result := Self.WebGraph^.PathBetweenEx(me, destination, pathRandomness, 4, safe);
-    except
-      if Assigned(Self.MapImage) and (Length(Self.WebGraph^.Nodes) > 0) then
-      begin
-        img := Self.MapImage.Copy();
-        tmp := Self.WebGraph^;
-
-        closestMe   := Self.WebGraph^.FindNearestNodes(me, 4);
-        closestDest := Self.WebGraph^.FindNearestNodes(destination, 4);
-
-        tmp.Nodes := Self.GetLocalEx(tmp.Nodes);
-        me := Self.GetLocal(me);
-        destination := Self.GetLocal(destination);
-
-        tmp.Draw(img);
-
-        for i := 0 to 3 do
-        begin
-          if i < Length(closestMe) then
-          begin
-            img.DrawColor := $FF00FF;
-            img.DrawCircle(tmp.Nodes[closestMe[i]], 4);
-          end;
-
-          if i < Length(closestDest) then
-          begin
-            img.DrawColor := $FF0000;
-            img.DrawCircle(tmp.Nodes[closestDest[i]], 4);
-          end;
-        end;
-
-        img.DrawColor := $00FF00;
-        if img.InImage(me.X, me.Y) then
-          img.DrawCross(me, 4);
-
-        if img.InImage(destination.X, destination.Y) then
-          img.DrawCross(destination, 4);
-
-        img.Show();
-      end;
-      raise GetDebugLn(Self.Name, GetExceptionMessage());
-    end;
-  end;
-
+function TRSWalker.WebWalkEx(me, destination: TPoint; minDistance: Integer = 0; randomness: Double = 0; debug: Boolean = False): Boolean;
 var
   path: TPointArray;
+  data: EGraphNodeArray;
   tries, lastIdx: Integer;
 begin
-  if not System.InRange(pathRandomness, 0, 1) then
-    raise GetDebugLn('Walker' 'WebWalk `pathRandomness` must be between 0.0 an 1.0');
+  if not System.InRange(randomness, 0, 1) then
+    raise GetDebugLn('Walker' 'WebWalk `randomness` must be between 0.0 an 1.0');
 
-  if not Self._DoorHandler.Enabled then
-  begin
-    if me.InRange(destination, 3) then
+  if me.InRange(destination, 3) then
     Exit(True);
-    path := _GetPath(me, True);
-    Exit(Self.WalkPath(path, waitUntilDistance, debug));
-  end;
-
-  for tries := 0 to 4 do
-  begin
-    path := _GetPath(Self.Position(), False);
-    Self._DoorHandler.Doors := Self.WebGraph^.DoorsOnPath(path, lastIdx);
-
-    Self._DoorHandler.SettingUp := False;
-    Self._DoorHandler.Handling := False;
-
-    if Self._DoorHandler.Doors = [] then
-      Break;
-
-    Self._DoorHandler.Current := Self._DoorHandler.Doors[0];
-
-    WriteLn GetDebugLn('Walker', 'Attempting to solve door, attempt ' + ToStr(tries + 1));
-
-    if Self.WalkDoorway(path, lastIdx, 0, debug) then
-    begin
-      tries := 0;
-      Continue;
-    end;
-
-    Inc(tries);
-
-    Self._DoorHandler.SettingUp := False;
-    Self._DoorHandler.Handling := False;
-
-    if tries <= 2 then Continue;
-
-    WriteLn GetDebugLn('Walker', 'Hard solving door.', ELogLevel.WARN);
-
-    if Self.WalkStep(Self.Position(), Self._DoorHandler.Current.Before) then
-      if Self._HardSolveDoor(Self._DoorHandler.Current) then tries := 0;
-  end;
-
-  me := Self.Position();
-  if me = destination then
-    Exit(True);
-  path := _GetPath(me, True);
-  Result := Self.WalkPath(path, waitUntilDistance, debug);
+  path := Self._GetPath(me, destination, data, True, randomness);
+  Result := Self.WalkPath(path, minDistance, data, debug);
 end;
 
-function TRSWalker.WebWalk(destination: TPoint; waitUntilDistance: Integer = 0; pathRandomness: Double = 0; debug: Boolean = False): Boolean;
+function TRSWalker.WebWalk(destination: TPoint; minDistance: Integer = 0; randomness: Double = 0; debug: Boolean = False): Boolean;
 begin
-  Result := Self.WebWalkEx(Self.Position(), destination, waitUntilDistance, pathRandomness, debug);
+  Result := Self.WebWalkEx(Self.Position(), destination, minDistance, randomness, debug);
 end;
 
-function TRSWalker.WebWalk(destinations: TPointArray; waitUntilDistance: Integer = 0; pathRandomness: Double = 0; debug: Boolean = False): Boolean; overload;
+function TRSWalker.WebWalk(destinations: TPointArray; minDistance: Integer = 0; randomness: Double = 0; debug: Boolean = False): Boolean; overload;
 var
   me, destination: TPoint;
+  path: TPointArray;
+  data: EGraphNodeArray;
 begin
+  if not System.InRange(randomness, 0, 1) then
+    raise GetDebugLn('Walker' 'WebWalk `randomness` must be between 0.0 an 1.0');
+
   me := Self.Position();
-  destination := Self.GetClosestPointEx(me, destinations);
-  Result := Self.WebWalkEx(me, destination, waitUntilDistance, pathRandomness, debug);
+  destination := Self.GetClosestPointEx(me, destinations, path, data);
+
+  if me.InRange(destination, 3) then
+    Exit(True);
+
+  Result := Self.WalkPath(path, minDistance, data, debug);
 end;
 
 (*
