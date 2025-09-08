@@ -409,7 +409,7 @@ end;
 (*
 ## Chat.GetMessage
 ```pascal
-function TRSChat.GetMessage(line: Integer; colors: TIntegerArray = []): String;
+function TRSChat.GetMessage(line: Integer): String;
 ```
 Get the message in the specified `line`.
 
@@ -461,7 +461,7 @@ end;
 (*
 ## Chat.FindMessageLine
 ```pascal
-function TRSChat.FindMessageLine(msg: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): Integer;
+function TRSChat.FindMessageLine(msg: String; caseSensitive: Boolean = False): Integer;
 ```
 Find which line has a specific `msg` either entirely or partially if any.
 
@@ -483,7 +483,7 @@ end;
 (*
 ## Chat.ContainsMessage
 ```pascal
-function TRSChat.ContainsMessage(msg: String; caseSensitive: Boolean = False; colors: TIntegerArray = []): Boolean;
+function TRSChat.ContainsMessage(msg: String; caseSensitive: Boolean = False): Boolean;
 ```
 Returns True/False if the specified `msg` is visible on the {ref}`Chat` interface.
 

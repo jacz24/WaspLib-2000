@@ -377,14 +377,13 @@ var
   path: String;
 begin
   {$IFDEF WL_GENERATE_GRAPH_ALWAYS}
-  Result := WebGraphGenerator.BuildGraph(name, map);
-  {$ELSE}
+  Exit(WebGraphGenerator.BuildGraph(name, map));
+  {$ENDIF}
   path := Self.CacheDir + 'graphs' + PATH_SEP + ToStr(plane) + PATH_SEP + name + '-' + WebGraphGenerator.Hash() + PATH_SEP;
 
   if
     not FileExists(path + 'nodes.txt') or
     not FileExists(path + 'paths.txt') or
-    not FileExists(path + 'names.txt') or
     not FileExists(path + 'walkablespace.txt') or
     not FileExists(path + 'walkableclusters.txt') or
     not FileExists(path + 'objectclusters.txt') then
@@ -427,7 +426,6 @@ begin
     Result.ObjectClusters := T2DPointArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'objectclusters.txt')));
 
   SetLength(Result.Paths, Length(Result.Nodes));
-  {$ENDIF}
 end;
 
 

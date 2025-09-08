@@ -652,8 +652,7 @@ You will probably never need to call this directly but it can be used to take a 
 *)
 function TRSWalker.WalkFinalStep(me, walkerPoint: TPoint; minDist: Integer): Boolean;
 var
-  minimapPoint, flag: TPoint;
-  wasHandlingDoor: Boolean;
+  minimapPoint: TPoint;
 begin
   if not Self.WalkStepHelper(me, walkerPoint, minimapPoint) then
     Exit(not Self.Walking);
@@ -712,9 +711,8 @@ You will probably never need to call this directly.
 *)
 function TRSWalker.WalkStep(me, walkerPoint: TPoint): Boolean;
 var
-  minimapPoint, flag: TPoint;
+  minimapPoint: TPoint;
   minDist: Integer;
-  wasHandlingDoor: Boolean;
 begin
   if not Self.WalkStepHelper(me, walkerPoint, minimapPoint) then
     Exit(not Self.Walking);

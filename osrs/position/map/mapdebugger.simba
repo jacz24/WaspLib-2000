@@ -31,10 +31,13 @@ Main record used to hold core values of the {ref}`Map Debugger`.
 
     Graph: TWebGraph;
 
+    Selected: Integer;
+    Path: TGraphNodeArray;
+
     GetLocal: function (pt: TPoint; offset: TPoint = [0,0]): TPoint of object;
     GetGlobal: function (pt: TPoint; offset: TPoint = [0,0]): TPoint of object;
 
-    Coordinate: TLazLabel;
+    Coordinate, SelectedInfo: TLazLabel;
     ShowGraph, ShowWalkableSpace, ShowWalkableClusters, ShowObjectClusters: Boolean;
     ColorArray: TColorArray;
   end;
@@ -44,6 +47,7 @@ begin
   Self.ImageBox.SetImage(Self.Images[TLazComboBox(sender).ItemIndex]);
 end;
 
+{$R-}
 {$H-}
 procedure TMapDebugger.ImgBoxPaint(sender: TImageBox; canvas: TImageBoxCanvas; r: TLazRect);
 var
@@ -64,7 +68,19 @@ begin
       canvas.DrawPoints(Self.Graph.ObjectClusters[i], Self.ColorArray[i]);
 
   if Self.ShowGraph then
+  begin
     Self.Graph.Draw(canvas);
+    if Self.Selected > -1 then
+    begin
+      canvas.DrawBoxFilled(TBox.Create(Self.Graph.Nodes[Self.Selected].Node, 1, 1), $00FF00);
+      if Self.Path <> [] then
+      begin
+        for i := 0 to High(Self.Path)-1 do
+          tpa += TPointArray.CreateFromLine(Self.Path[i].Node, Self.Path[i+1].Node);
+        canvas.DrawPoints(tpa, $FF0000);
+      end;
+    end;
+  end;
 
   with sender.MouseXY do
     p := [X div 4 * 4, Y div 4 * 4];
@@ -75,29 +91,64 @@ begin
 end;
 {$H+}
 
-procedure TMapDebugger.ImgBoxMouseMove(sender: TImageBox; {$H-}shift: ELazShiftStates;{$H+} x, y: Integer);
+procedure TMapDebugger.ImgBoxMouseMove(sender: TImageBox; shift: ELazShiftStates; x, y: Integer);
 var
-  p: TPoint;
+  pt, g: TPoint;
+  i: Integer;
 begin
-  p := Self.GetGlobal([x,y]);
-  Self.Coordinate.Caption := 'Coordinate: ' + ToStr(p.X) + ' X ' + ToStr(p.Y) + ' Y';
+  pt := TPoint.Create(x,y);
+  g := Self.GetGlobal(pt);
+  Self.Coordinate.Caption := Format('[%d, %d]', [pt.X, pt.Y]);
+
+  Self.Path := [];
+  if (shift = [ELazShiftStates.Shift]) and (Self.Selected > -1) then
+  begin
+    i := Self.Graph.Nodes.NearestIndex(pt);
+    if Self.Selected <> i then
+    try
+      Self.Path := Self.Graph.PathBetween(Self.Graph.Nodes[Self.Selected].Node, Self.Graph.Nodes[i].Node, 0.33);
+    except
+      WriteLn GetExceptionMessage();
+    end;
+  end;
+
   sender.Repaint();
 end;
 
-procedure TMapDebugger.ImgBoxMouseDown({$H-}sender: TImageBox; button: ELazMouseButton; shift: ELazShiftStates;{$H+} x, y: Integer);
+procedure TMapDebugger.ImgBoxMouseDown(sender: TImageBox; button: ELazMouseButton; shift: ELazShiftStates; x, y: Integer);
 var
-  p: TPoint;
+  pt, g: TPoint;
 begin
   if button <> ELazMouseButton.Left then Exit;
 
-  p := [x, y];
+  pt := TPoint.Create(x, y);
 
-  if @Self.GetGlobal <> nil then
-    p := Self.GetGlobal(p, [0,0]);
+  Self.Selected := Self.Graph.Nodes.NearestIndex(pt);
 
-  WriteLn('Clicked: ' + Format('[%d, %d]', [p.X, p.Y]));
+  if pt.InRange(Self.Graph.Nodes[Self.Selected].Node, 4) then
+  begin
+    g := Self.GetGlobal(Self.Graph.Nodes[Self.Selected].Node);
+
+    Self.SelectedInfo.Caption :=
+      'Selected Index: ' + ToStr(Self.Selected).PadRight(4, ' ') +
+      ' Coordinate: [' +
+      String(ToStr(g.X) + ',' + ToStr(g.Y) + ']').PadRight(12, ' ') +
+      ' Type: ' +
+      ToStr(Self.Graph.Nodes[Self.Selected].Typ).After('EGraphNode.').PadRight(11,' ') +
+      ' Path Count: ' +
+      ToStr(Self.Graph.Paths[Self.Selected].Length).PadRight(2, ' ') +
+      ' Paths: ' + ToStr(Self.Graph.Paths[Self.Selected]);
+  end
+  else
+  begin
+    Self.Selected := -1;
+    Self.SelectedInfo.Caption := 'Selected Node: None';
+  end;
+
+  Self.ImgBoxMouseMove(sender, shift, x, y);
+  WriteLn('Clicked: ' + Self.Coordinate.Caption);
 end;
-
+{$R+}
 
 procedure TMapDebugger.GraphOnChange(sender: TLazObject);
 begin
@@ -151,6 +202,23 @@ begin
   form.Position := ELazFormPosition.ScreenCenter;
   form.Color := $242322;
   form.BorderStyle := ELazFormBorderStyle.Sizeable;
+
+  panel := TLazPanel.CreateEx(form);
+  panel.SetBounds(0, 0, form.Width, 30);
+  panel.BevelOuter := ELazPanelBevel.None;
+  panel.Align := ELazAlign.Top;
+
+  Self.SelectedInfo := TLazLabel.CreateEx(panel);
+  Self.SelectedInfo.Font.Color := $FFFFFF;
+  Self.SelectedInfo.Align := ELazAlign.Left;
+  Self.SelectedInfo.Font.Name := 'Courier New';
+  Self.SelectedInfo.BorderSpacing.Around := 5;
+
+  lbl := TLazLabel.CreateEx(panel, 'Total nodes: ' + ToStr(Length(Self.Graph.Nodes)) + ' ');
+  lbl.Font.Color := $FFFFFF;
+  lbl.Align := ELazAlign.Left;
+  lbl.Font.Name := 'Courier New';
+  lbl.BorderSpacing.Around := 5;
 
   panel := TLazPanel.CreateEx(form);
   panel.SetBounds(0, 0, form.Width, 30);
@@ -222,13 +290,17 @@ begin
   combobox.BorderSpacing.Right := 10;
   combobox.OnChange := @Self.OnChange;
 
-  lbl := TLazLabel.CreateEx(panel);
-  lbl.Caption := 'Map:';
+  lbl := TLazLabel.CreateEx(panel, 'Map:');
   lbl.Font.Color := $FFFFFF;
   lbl.Align := ELazAlign.Left;
   lbl.BorderSpacing.Around := 5;
 
-  Self.Coordinate := TLazLabel.CreateEx(panel, 'Coordinate: 0 X 0 Y');
+  lbl := TLazLabel.CreateEx(panel, 'Coordinate: ');
+  lbl.Font.Color := $FFFFFF;
+  lbl.Align := ELazAlign.Right;
+  lbl.BorderSpacing.Around := 5;
+
+  Self.Coordinate := TLazLabel.CreateEx(panel);
   Self.Coordinate.Align := ELazAlign.Right;
   Self.Coordinate.BorderSpacing.Around := 5;
   Self.Coordinate.Font.Color := $FFFFFF;
@@ -301,6 +373,7 @@ begin
   for i := 0 to Max(Length(loader^.Graph.WalkableClusters), Length(loader^.Graph.ObjectClusters)) do
     Self.ColorArray += TColor.Random();
 
+  Self.Graph.Setup();
   Self.ShowGraph := True;
 
   Self.Show();

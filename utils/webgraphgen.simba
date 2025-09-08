@@ -20,15 +20,16 @@ type
 Record responsible for generating webgraphs from collision map images.
 *)
   TWebGraphGenerator = record
-    Spacing, MinimumTiles, NodeRadius, MaxConnections: Integer;
-    WallCrossings, Disabled: Boolean;
+    Spacing, MinimumTiles, NodeRadius, MaxConnections,
+    MaxDoorConnections: Integer;
+    Disabled: Boolean;
   end;
 
 function TWebGraphGenerator.Hash(): String;
 var
   data: TIntegerArray;
 begin
-  data := [Self.Spacing, Self.MinimumTiles, Self.NodeRadius, Self.MaxConnections, Integer(Self.WallCrossings)];
+  data := [Self.Spacing, Self.MinimumTiles, Self.NodeRadius, Self.MaxConnections, Self.MaxDoorConnections];
   Result := HashData(EHashAlgo.CRC32, @data[0], Length(data));
 end;
 
@@ -40,11 +41,12 @@ procedure TWebGraphGenerator.Setup();
 Sets up the `TWebGraphGenerator` with the following settings which are the
 defaults:
 ```pascal
-WebGraphGenerator.Spacing := 18;         //low = better/slower, high = worse/faster
-WebGraphGenerator.MinimumTiles := 4;     //spaces with less tiles than this will be ignored.
-WebGraphGenerator.NodeRadius := 50;      //closed space less than NodeRadius pixels will have a single node.
-WebGraphGenerator.MaxConnections := 6;   //Max connections per node.
-WebGraphGenerator.WallCrossings := True; //Whether to allow wall crossings when there's a close path around it.
+WebGraphGenerator.Spacing := 18;           //low = better/slower, high = worse/faster
+WebGraphGenerator.MinimumTiles := 4;       //spaces with less tiles than this will be ignored.
+WebGraphGenerator.NodeRadius := 50;        //closed space less than NodeRadius pixels will have a single node.
+WebGraphGenerator.MaxConnections := 6;     //Max connections per node.
+WebGraphGenerator.MaxDoorConnections := 3; //Max connections per door node.
+WebGraphGenerator.WallCrossings := True;   //Whether to allow wall crossings when there's a close path around it.
 ```
 
 Feel free to change the settings to suit your need and use the
@@ -58,7 +60,7 @@ begin
   Self.MinimumTiles := 4;
   Self.NodeRadius := 50;
   Self.MaxConnections := 6;
-  Self.WallCrossings := True;
+  Self.MaxDoorConnections := 6;
 end;
 
 function TWebGraphGenerator.GetDoorDirection(center: TPoint; img: TImage): TPoint;
@@ -267,19 +269,25 @@ As a bonus you can also see the resulting webgraph!
 *)
 function TWebGraphGenerator._BuildGraph(map: TImage; white, red: TPointArray): TWebGraph;
 var
-  i, j, l, n, hi, len, minLen: Integer;
-  cluster, skeleton, nodes, tpa: TPointArray;
+  i, j, l, n, hi, len, minLen, maxSpacing, minSpacing: Integer;
+  clusters: T2DPointArray;
+  skeleton, nodes, tpa: TPointArray;
   p, q: TPoint;
   tree: TKDPointTree;
   doors: T2DPointArray;
   connectMap: array of TIntegerMatrix;
-  doorMap: TIntegerMatrix;
-  connectionA, connectionB, ignore: TBooleanArray;
+  doorMapA, doorMapB, doorMap: TIntegerMatrix;
+  skip, ignore: TBooleanArray;
+  left, right: Boolean;
+  connectA, connectB: TIntegerArray;
+  tmp: TImage;
 begin
   doors := Self.FindDoors(red.Cluster(1.5), map);
+
+  SetLength(skip, Length(doors));
   SetLength(ignore, Length(doors));
-  SetLength(connectionA, Length(doors));
-  SetLength(connectionB, Length(doors));
+  SetLength(connectA, Length(doors));
+  SetLength(connectB, Length(doors));
 
   with white.Bounds() do
   begin
@@ -289,50 +297,77 @@ begin
 
   minLen := Self.MinimumTiles * RSTranslator.TileArea;
 
-  for cluster in white.Cluster(1).SortBySize(True) do
+  maxSpacing := Self.Spacing * 2;
+  minSpacing := Self.Spacing div 2;
+
+  clusters := white.Cluster(1).SortBySize(True);
+
+  for i := High(clusters) downto 0 do
+    if Length(clusters[i]) < minLen then
+      Delete(clusters, i, 1);
+
+  SetLength(doorMapA, Length(clusters));
+  SetLength(doorMapB, Length(clusters));
+
+  for i := 0 to High(clusters) do
   begin
     for j := 0 to High(doors) do
     begin
-      connectionA[j] := cluster.Contains(doors[j,1]);
-      connectionB[j] := cluster.Contains(doors[j,2]);
-      ignore[j] := connectionA.Last and connectionB.Last;
-    end;
+      if skip[j] or ignore[j] then Continue;
+      left  := clusters[i].Contains(doors[j,1]);
+      right := clusters[i].Contains(doors[j,2]);
 
-    if Length(cluster) <= minLen then
-      Continue;
-
-    with cluster.Bounds() do
-      if Max(Width, Height) < Self.NodeRadius then
+      if left and right then
       begin
-        Result.Nodes += TGraphNode.Create(cluster.Median());
-        hi := High(Result.Nodes);
-        SetLength(Result.Paths, hi+1);
-
-        for j := 0 to High(doors) do
-        begin
-          if ignore[j] then Continue;
-
-          if connectionA[j] or connectionB[j] then
-          begin
-            n := doorMap[doors[j,0].Y, doors[j,0].X];
-            if n = 0 then
-            begin
-              Result.Nodes += TGraphNode.Create(doors[j,0], EGraphNode.DOOR);
-              Result.Paths += [High(Result.Nodes)];
-              n := High(Result.Nodes)+1;
-              doorMap[doors[j,0].Y, doors[j,0].X] := n;
-            end
-            else
-              ignore[j] := True;
-
-            Result.Paths[hi] += Dec(n);
-          end;
-        end;
-
+        ignore[j] := True;
         Continue;
       end;
 
-    skeleton := cluster.Erode(1).Skeleton(2, 6);
+      if left then
+      begin
+        connectA[j] := i;
+        doorMapA[i] += j;
+        skip[j] := connectB[j] <> 0;
+      end
+      else if right then
+      begin
+        connectB[j] := i;
+        doorMapB[i] += j;
+        skip[j] := connectA[j] <> 0;
+      end
+      else
+        Continue;
+
+      if not skip[j] then
+      begin
+        Result.Nodes += TGraphNode.Create(doors[j,0], EGraphNode.DOOR);
+        doorMap[doors[j,0].Y, doors[j,0].X] := High(Result.Nodes);
+        SetLength(Result.Paths, High(Result.Nodes));
+      end;
+    end;
+  end;
+
+  for i := 0 to High(clusters) do
+  begin
+    with clusters[i].Bounds() do
+      if Max(Width, Height) < Self.NodeRadius then
+      begin
+        Result.Nodes += TGraphNode.Create(clusters[i].Median());
+        hi := High(Result.Nodes);
+        SetLength(Result.Paths, hi+1);
+
+        for j in doorMapA[i] + doorMapB[i] do
+          if not ignore[j] and ((connectA[j] = i) or (connectB[j] = i)) then
+          begin
+            l := doorMap[doors[j,0].Y, doors[j,0].X];
+            ignore[j] := Result.Paths[l] <> [];
+            Result.Paths[l] += [hi];
+            Result.Paths[hi] += l;
+          end;
+        Continue;
+      end;
+
+    skeleton := clusters[i].Erode(1).Skeleton(2, 6);
 
     nodes := [];
     for tpa in skeleton.Partition(Self.Spacing) do
@@ -344,56 +379,54 @@ begin
     SetLength(Result.Nodes, len + Length(nodes));
     SetLength(Result.Paths, Length(Result.Nodes));
 
-    for i := 0 to High(tree.Data) do
+    for j := 0 to High(tree.Data) do
     begin
-      p := tree.Data[i].Split;
-      for q in tree.KNearest(p, Self.MaxConnections, True) do
+      p := tree.Data[j].Split;
+      for q in tree.KNearest(p, Self.MaxConnections*2, True) do
       begin
-        if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > Self.Spacing * 2 then Continue;
+        if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > maxSpacing then Continue;
+        tpa := clusters[i].ExtractBox(TBox.Create(p, q).Expand(minSpacing));
+        tpa := tpa.AStar(p, q, False);
+        if (tpa = []) or (Length(tpa) > 80) then
+          Continue;
+        connectMap[q.Y,q.X] += j;
+        if Inc(n) > Self.MaxConnections then
+          Break;
+      end;
+      n := 0;
+    end;
 
-        if map.ColorsInLine(p, q, [$0, $FF, $333333]) then
-          if map.ColorsInLineEx(p, q, [$0, $FF, $333333]) then
-            if cluster.ExtractBox(TBox.Create(Min(p.X, q.X), Min(p.Y, q.Y), Max(p.X, q.X), Max(p.Y, q.Y)).Expand(Self.Spacing div 2)).AStar(p, q, True) = [] then
-              Continue;
+    for j := 0 to High(tree.Data) do
+    begin
+      p := tree.Data[j].Split;
+      Result.Nodes[j+len] := TGraphNode.Create(p);
+      for n in connectMap[p.Y,p.X] do
+      begin
+        q := tree.Data[n].Split;
+        Result.Nodes[n+len] := TGraphNode.Create(q);
 
-        connectMap[q.Y,q.X] += i;
+        if not Result.Paths[j+len].Contains(n+len) then
+          Result.Paths[j+len] += n+len;
+        if not Result.Paths[n+len].Contains(j+len) then
+          Result.Paths[n+len] += j+len;
       end;
     end;
 
-    for i := 0 to High(tree.Data) do
-    begin
-      p := tree.Data[i].Split;
-      Result.Nodes[i+len] := TGraphNode.Create(p);
-      for j in connectMap[p.Y,p.X] do
-      begin
-        Result.Nodes[j+len] := TGraphNode.Create(tree.Data[j].Split);
-
-        if not Result.Paths[i+len].Contains(j+len) then
-          Result.Paths[i+len] += j+len;
-        if not Result.Paths[j+len].Contains(i+len) then
-          Result.Paths[j+len] += i+len;
-      end;
-    end;
-
-    for j := 0 to High(doors) do
+    for j in (doorMapA[i] + doorMapB[i]) do
     begin
       if ignore[j] then Continue;
 
-      if connectionA[j] or connectionB[j] then
-      begin
-        n := doorMap[doors[j,0].Y, doors[j,0].X];
-        if n = 0 then
-        begin
-          Result.Nodes += TGraphNode.Create(doors[j,0], EGraphNode.DOOR);
-          Result.Paths += [High(Result.Nodes)];
-          n := High(Result.Nodes)+1;
-          doorMap[doors[j,0].Y, doors[j,0].X] := n;
-        end
-        else
-          ignore[j] := True;
+      p := doors[j,0];
+      l := doorMap[p.Y, p.X];
 
-        l := Result.Nodes.IndexOf(tree.Nearest(doors[j,0], True));
-        Result.Paths[l] += Dec(n);
+      for q in tree.KNearest(p, Self.MaxDoorConnections, True) do
+      begin
+        if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > maxSpacing then
+          Continue;
+        n := Result.Nodes.IndexOf(q);
+        //ignore[j] := Result.Paths[l] <> [];
+        Result.Paths[l] += [n];
+        Result.Paths[n] += l;
       end;
     end;
   end;
