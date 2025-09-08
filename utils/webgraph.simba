@@ -14,13 +14,12 @@ type
 (*
 ## EGraphNode
 ```pascal
-EGraphNode = enum(NORMAL, NAMED, DOOR, LADDER, AGILITY, OBSTACLE, OTHER, BLOCKED);
+EGraphNode = enum(NORMAL, NAMED, DOOR, LADDER, AGILITY, OBSTACLE, BLOCKED);
 ```
 Enum representing the type of nodes in a `TWebGraph`.
 *)
   EGraphNode = enum(
-    NORMAL, DOOR, LADDER, SHORTCUT, OBSTACLE, TRANSPORT, TELEPORT, OTHER,
-    BLOCKED
+    NORMAL, DOOR, LADDER, SHORTCUT, OBSTACLE, TRANSPORT, TELEPORT, BLOCKED
   );
 
   TGraphNode = record

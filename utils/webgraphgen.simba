@@ -22,6 +22,7 @@ Record responsible for generating webgraphs from collision map images.
   TWebGraphGenerator = record
     Spacing, MinimumTiles, NodeRadius, MaxConnections,
     MaxDoorConnections: Integer;
+    Skeletonize: Boolean;
     Disabled: Boolean;
   end;
 
@@ -29,38 +30,45 @@ function TWebGraphGenerator.Hash(): String;
 var
   data: TIntegerArray;
 begin
-  data := [Self.Spacing, Self.MinimumTiles, Self.NodeRadius, Self.MaxConnections, Self.MaxDoorConnections];
+  data := [
+    Self.Spacing, Self.MinimumTiles, Self.NodeRadius, Self.MaxConnections,
+    Self.MaxDoorConnections, Int32(Self.Skeletonize)
+  ];
   Result := HashData(EHashAlgo.CRC32, @data[0], Length(data));
 end;
 
 (*
 ## WebGraphGenerator.Setup
 ```pascal
-procedure TWebGraphGenerator.Setup();
+procedure TWebGraphGenerator.Setup(spacing, minimumTiles, nodeRadius, maxConnections, maxDoorConnections: Integer);
 ```
 Sets up the `TWebGraphGenerator` with the following settings which are the
 defaults:
 ```pascal
-WebGraphGenerator.Spacing := 18;           //low = better/slower, high = worse/faster
-WebGraphGenerator.MinimumTiles := 4;       //spaces with less tiles than this will be ignored.
-WebGraphGenerator.NodeRadius := 50;        //closed space less than NodeRadius pixels will have a single node.
-WebGraphGenerator.MaxConnections := 6;     //Max connections per node.
-WebGraphGenerator.MaxDoorConnections := 3; //Max connections per door node.
-WebGraphGenerator.WallCrossings := True;   //Whether to allow wall crossings when there's a close path around it.
+WebGraphGenerator.Setup(18, 4, 50, 6, 3);
 ```
+
+Parameters explanation
+- `spacing`: Lower values have better results but the generation is slower, high
+values have worse results but geneartion is faster.
+- `minimumTiles`: spaces with less tiles than this will be ignored.
+- `nodeRadius`: closed spaces that are less than this values in pixels will have a single node in the middle.
+- `maxConnections`: max connections per node.
+- `maxDoorConnections`: max connections per door node.
 
 Feel free to change the settings to suit your need and use the
 {ref}`Map Debugger` to see what the results look like.
 
 To do so you **MUST DO IT BEFORE** setting up your {ref}`Map`.
 *)
-procedure TWebGraphGenerator.Setup();
+procedure TWebGraphGenerator.Setup(spacing, minimumTiles, nodeRadius, maxConnections, maxDoorConnections: Integer; skeletonize: Boolean);
 begin
-  Self.Spacing := 18;
-  Self.MinimumTiles := 4;
-  Self.NodeRadius := 50;
-  Self.MaxConnections := 6;
-  Self.MaxDoorConnections := 6;
+  Self.Spacing := spacing;
+  Self.MinimumTiles := minimumTiles;
+  Self.NodeRadius := nodeRadius;
+  Self.MaxConnections := maxConnections;
+  Self.MaxDoorConnections := maxDoorConnections;
+  Self.Skeletonize := skeletonize;
 end;
 
 function TWebGraphGenerator.GetDoorDirection(center: TPoint; img: TImage): TPoint;
@@ -271,7 +279,7 @@ function TWebGraphGenerator._BuildGraph(map: TImage; white, red: TPointArray): T
 var
   i, j, l, n, hi, len, minLen, maxSpacing, minSpacing: Integer;
   clusters: T2DPointArray;
-  skeleton, nodes, tpa: TPointArray;
+  skeleton, nodes, tpa, tmp: TPointArray;
   p, q: TPoint;
   tree: TKDPointTree;
   doors: T2DPointArray;
@@ -280,7 +288,6 @@ var
   skip, ignore: TBooleanArray;
   left, right: Boolean;
   connectA, connectB: TIntegerArray;
-  tmp: TImage;
 begin
   doors := Self.FindDoors(red.Cluster(1.5), map);
 
@@ -300,17 +307,16 @@ begin
   maxSpacing := Self.Spacing * 2;
   minSpacing := Self.Spacing div 2;
 
-  clusters := white.Cluster(1).SortBySize(True);
-
-  for i := High(clusters) downto 0 do
-    if Length(clusters[i]) < minLen then
-      Delete(clusters, i, 1);
+  clusters := white.Cluster(1);
 
   SetLength(doorMapA, Length(clusters));
   SetLength(doorMapB, Length(clusters));
 
   for i := 0 to High(clusters) do
   begin
+    if Length(clusters[i]) < minLen then
+      Continue;
+
     for j := 0 to High(doors) do
     begin
       if skip[j] or ignore[j] then Continue;
@@ -349,6 +355,9 @@ begin
 
   for i := 0 to High(clusters) do
   begin
+    if Length(clusters[i]) < minLen then
+      Continue;
+
     with clusters[i].Bounds() do
       if Max(Width, Height) < Self.NodeRadius then
       begin
@@ -367,11 +376,18 @@ begin
         Continue;
       end;
 
-    skeleton := clusters[i].Erode(1).Skeleton(2, 6);
-
     nodes := [];
-    for tpa in skeleton.Partition(Self.Spacing) do
-      nodes += tpa.Cluster(1.5).Means();
+    if Self.Skeletonize then
+    begin
+      skeleton := clusters[i].Erode(1).Skeleton(2, 6);
+      for tpa in skeleton.Partition(Self.Spacing) do
+        nodes += tpa.Cluster(1.5).Means();
+    end
+    else
+    begin
+      for tpa in clusters[i].Erode(1).Partition(Self.Spacing) do
+        nodes += tpa.Cluster(1.5).Means();
+    end;
 
     tree := TKDPointTree.Create(nodes);
 
@@ -419,12 +435,20 @@ begin
       p := doors[j,0];
       l := doorMap[p.Y, p.X];
 
+      tmp := clusters[i];
+      tmp += p;
+
       for q in tree.KNearest(p, Self.MaxDoorConnections, True) do
       begin
         if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > maxSpacing then
           Continue;
+
+        tpa := tmp.ExtractBox(TBox.Create(p, q).Expand(minSpacing));
+        tpa := tpa.AStar(p, q, False);
+        if (tpa = []) or (Length(tpa) > 80) then
+          Continue;
+
         n := Result.Nodes.IndexOf(q);
-        //ignore[j] := Result.Paths[l] <> [];
         Result.Paths[l] += [n];
         Result.Paths[n] += l;
       end;

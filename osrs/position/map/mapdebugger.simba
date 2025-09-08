@@ -104,7 +104,8 @@ begin
   if (shift = [ELazShiftStates.Shift]) and (Self.Selected > -1) then
   begin
     i := Self.Graph.Nodes.NearestIndex(pt);
-    if Self.Selected <> i then
+
+    if (Self.Selected <> i) and pt.InRange(Self.Graph.Nodes[i].Node, 12) then
     try
       Self.Path := Self.Graph.PathBetween(Self.Graph.Nodes[Self.Selected].Node, Self.Graph.Nodes[i].Node, 0.33);
     except
