@@ -514,7 +514,7 @@ You will probably never need to call this directly.
 
 If you wish to modify certain walker behaviors, it can be a good approach to override this function.
 *)
-function TRSWalker.Click(me, walkerPoint, minimapPoint: TPoint; randomness: Integer): Boolean;
+function TRSWalker.Click(me, mapPoint, minimapPoint: TPoint; randomness: Integer): Boolean;
 var
   pt: TPoint;
   upText: String;
@@ -533,7 +533,7 @@ begin
 
   if Self.ScreenWalk then
   begin
-    pt := walkerPoint.Random(-8, 8);
+    pt := mapPoint.Random(-8, 8);
     if not me.InRange(pt, MM2MS.MAX_RENDER_DISTANCE) then Exit;
 
     quad := Self.GetQuadMS(me, pt);
@@ -590,95 +590,142 @@ end;
 (*
 ## Walker.IsWalkable
 ```pascal
-function TRSWalker.IsWalkable(walkerPoint: TPoint; me: TPoint; out mmPoint: TPoint; angle: Double): Boolean;
+function TRSWalker.IsWalkable(mapPoint: TPoint; me: TPoint; out mmPoint: TPoint; angle: Double): Boolean;
 ```
 Internal method used by walker to decide if the destination point is within 1 click reach.
 You will probably never need to call this directly.
 *)
-function TRSWalker.IsWalkable(walkerPoint, me: TPoint; out mmPoint: TPoint; angle: Double): Boolean;
+function TRSWalker.IsWalkable(mapPoint, me: TPoint; out mmPoint: TPoint; angle: Double): Boolean;
 var
   corner: TPoint;
 begin
-  mmPoint := Self.Point2MM(me, walkerPoint, angle);
+  mmPoint := Self.Point2MM(me, mapPoint, angle);
   if not Self.ScreenWalk then
     Exit(Minimap.Polygon.Expand(-1).Contains(mmPoint));
 
-  for corner in Self.GetQuadMS(me, walkerPoint, angle).Expand(-8).Corners do
+  for corner in Self.GetQuadMS(me, mapPoint, angle).Expand(-8).Corners do
     if MainScreen.Bounds.Contains(corner) then
       Exit(True);
 end;
 
-function TRSWalker._WalkStepHelper(me, walkerPoint: TPoint; randomness: Integer; out minimapPoint: TPoint; out shouldExit: Boolean): Boolean;
+function TRSWalker._WalkStepHelper(me, mapPoint: TPoint; randomness: Integer; out minimapPoint: TPoint; out shouldExit: Boolean): Boolean;
 var
   t: UInt64;
 begin
   shouldExit := True;
   t := Time();
-  if @Self.OnWalkEvent <> nil then Self.OnWalkEvent(@Self, me, walkerPoint);
+  if @Self.OnWalkEvent <> nil then Self.OnWalkEvent(@Self, me, mapPoint);
   if Time() - t > 100 then me := Self.Position(); //Check if event took too long and update position.
 
-  if not Self.Walking or not Self.IsWalkable(walkerPoint, me, minimapPoint, Minimap.GetCompassAngle(False)) then
+  if not Self.Walking or not Self.IsWalkable(mapPoint, me, minimapPoint, Minimap.GetCompassAngle(False)) then
     Exit(not Self.Walking);
 
   if Minimap.Center.InRange(minimapPoint, 4) then
     Exit(True);
 
   shouldExit := False;
-  Result := Self.Click(me, walkerPoint, minimapPoint, randomness);
+  Result := Self.Click(me, mapPoint, minimapPoint, randomness);
 end;
 
-(*
-## Walker.WalkFinalStep
-```pascal
-function TRSWalker.WalkFinalStep(me, walkerPoint: TPoint; minDist: Integer): Boolean;
-```
-Internal method used by walker when finishing walking a path.
-You will probably never need to call this directly but it can be used to take a single step.
-*)
-
-function TRSWalker.WalkFinalStep(me, walkerPoint: TPoint; minDist: Integer): Boolean;
-var
-  minimapPoint: TPoint;
-  shouldExit: Boolean;
-begin
-  Result := Self._WalkStepHelper(me, walkerPoint, 0, minimapPoint, shouldExit);
-  if shouldExit or not Result then
-    Exit;
-
-  if Result then
-  begin
-    Self.WaitMoving(walkerPoint, minDist);
-
-    Result := Self.Position().InRange(walkerPoint, Max(minDist, 4));
-  end;
-end;
 
 (*
 ## Walker.WalkStep
 ```pascal
-function TRSWalker.WalkStep(me, walkerPoint: TPoint): Boolean;
+function TRSWalker.WalkStep(me: TPoint; index, minDist: Integer): Boolean;
 ```
 Internal method used by walker while walking a path.
 You will probably never need to call this directly.
 *)
-function TRSWalker.WalkStep(me, walkerPoint: TPoint): Boolean;
+function TRSWalker.WalkStep(me: TPoint; index, minDist: Integer): Boolean;
 var
-  minimapPoint: TPoint;
-  minDist: Integer;
+  mapPt, minimapPt: TPoint;
   shouldExit: Boolean;
+  randomness: Integer;
 begin
-  Result := Self._WalkStepHelper(me, walkerPoint, Self.ClickRandomness, minimapPoint, shouldExit);
-  if shouldExit then Exit;
+  mapPt := Self._Path[index].Node;
 
-  if Result then
+  if index = High(Self._Path) then
+    randomness := 0
+  else
+    randomness := Self.ClickRandomness;
+
+  Result := Self._WalkStepHelper(me, mapPt, randomness, minimapPt, shouldExit);
+
+  if shouldExit then Exit;
+  if not Result then Exit;
+
+  if index <> High(Self._Path) then
   begin
+    minDist := Round(Minimap.Center.DistanceTo(minimapPt));
     if (Random() < 0.15) then // 15% chance of randomness else mean
-      minDist := Random(Round(Minimap.Center.DistanceTo(minimapPoint)))
+      minDist := Random(minDist)
     else
-      minDist := RandomMean(0, Round(Minimap.Center.DistanceTo(minimapPoint)) + 10);
-    Self.WaitMoving(walkerPoint, minDist);
+      minDist := RandomMean(0, minDist + 10);
   end;
+
+  Self.WaitMoving(mapPt, minDist);
+  if index = High(Self._Path) then
+    Result := Self.Position().InRange(mapPt, Max(minDist, 3));
 end;
+
+function TRSWalker.CrossDoor(me: TPoint; index: Integer): Boolean;
+var
+  tmp: TPoint;
+  door, furthest: Integer;
+  angle: Double;
+begin
+  if index = High(Self._Path) then
+    raise GetDebugLn(Self.Name, 'Paths should not end at a door node.');
+
+  door := Self._Path.IndexOf(Self._Path[index].Node);
+  furthest := door;
+
+  angle := Minimap.GetCompassAngle(False);
+  while (furthest < High(Self._Path)) and Self.IsWalkable(Self._Path[furthest+1].Node, me, tmp, angle) do
+    if Self._Path[furthest+1].Typ = EGraphNode.NORMAL then
+      Inc(furthest);
+
+  if Biometrics.RandomBoolean(0.002) then
+    furthest := Random(door, furthest);
+
+  //TODO: ... Handle door
+end;
+
+function TRSWalker.UseStairs(me: TPoint; index: Integer): Boolean;
+begin
+  if index = High(Self._Path) then
+    raise GetDebugLn(Self.Name, 'Paths should not end at a stairs node.');
+  Result := me = me;
+end;
+
+function TRSWalker.UseShortcut(me: TPoint; index: Integer): Boolean;
+begin
+  if index = High(Self._Path) then
+    raise GetDebugLn(Self.Name, 'Paths should not end at a shortcut node.');
+  Result := me = me;
+end;
+
+function TRSWalker.UseTransport(me: TPoint; index: Integer): Boolean;
+begin
+  if index = High(Self._Path) then
+    raise GetDebugLn(Self.Name, 'Paths should not end at a transport node.');
+  Result := me = me;
+end;
+
+function TRSWalker.HandleObstacle(me: TPoint; index: Integer): Boolean;
+begin
+  if index = High(Self._Path) then
+    raise GetDebugLn(Self.Name, 'Paths should not end at a obstacle node.');
+  Result := me = me;
+end;
+
+function TRSWalker.UseFairyRing(me: TPoint; index: Integer): Boolean;
+begin
+  if index = High(Self._Path) then
+    raise GetDebugLn(Self.Name, 'Paths should not end at a fairy ring node.');
+  Result := me = me;
+end;
+
 
 
 procedure TRSWalker.DrawPath(img: TImage; index: Integer; me: TPoint);
@@ -722,42 +769,62 @@ begin
   img.Show();
 end;
 
-function TRSWalker._BuildPath(nodes: TGraphNodeArray): TGraphNodeArray;
+
+procedure TRSWalker._WalkPathSetup(path: TGraphNodeArray);
 var
+  me: TPoint;
+  smallSteps: Boolean;
   i, j: Integer;
   line: TPointArray;
 begin
-  for i := 1 to Length(nodes) do
-  begin
-    line := TPointArray.CreateFromLine(nodes[i-1].Node, nodes[i].Node);
+  Self.Walking := True;
+  Self._Path := [];
 
-    if nodes[i-1].Typ <> EGraphNode.NORMAL then
+  me := Self.Position();
+
+  if not me.InRange(path[0].Node, 3) then
+    path := [TGraphNode.Create(me)] + path;
+
+  smallSteps := (Self.ScreenWalk or Self.AdaptiveWalk) and InRange(Options.GetZoomLevel(), 70, 100);
+
+  for i := 1 to High(path)-1 do
+  begin
+    line := TPointArray.CreateFromLine(path[i-1].Node, path[i].Node);
+
+    if path[i-1].Typ <> EGraphNode.NORMAL then
     begin
       j := Random(1, 4);
-      Result += nodes[i-1];
+      Self._Path += path[i-1];
     end
     else
       j := 0;
 
     while j < High(line) do
     begin
-      Result += TGraphNode.Create(line[j]);
+      Self._Path += TGraphNode.Create(line[j]);
 
-      if (Self.ScreenWalk or Self.AdaptiveWalk) and InRange(Options.GetZoomLevel(), 70, 100) then
+      if smallSteps then
         Inc(j, Random(1, 4))
       else
         Inc(j, Random(3, 12));
     end;
   end;
 
-  Result += nodes.Last;
+  Self._Path += path.Last;
+
+  if Self.AdaptiveWalk then
+  begin
+    Self.AdaptiveToggleDistances.X := Self.AdaptiveDistance.X + Random(-6,6);
+    Self.AdaptiveToggleDistances.Y := Self.AdaptiveDistance.Y + Random(-16,16);
+    Self.AdaptiveWalkCheck(me);
+  end;
 end;
+
 
 function TRSWalker._AdvancePath(out index: Integer; me: TPoint; angle: Double): Boolean;
 var
   tmp: TPoint;
-  previous: Integer;
-  nearest, furthest: Integer;
+  previous, nearest, furthest: Integer;
 begin
   Self._Node := EGraphNode.NORMAL;
   previous := index;
@@ -769,41 +836,24 @@ begin
     Inc(nearest);
 
   furthest := nearest;
-  if Self._Path[furthest].Typ <> EGraphNode.NORMAL then
+  if Self._Path[furthest].Typ = EGraphNode.NORMAL then
+  begin
+    while (furthest < High(Self._Path)) and Self.IsWalkable(Self._Path[furthest+1].Node, me, tmp, angle) do
+      if (Self._Path[Inc(furthest)].Typ <> EGraphNode.NORMAL) then
+      begin
+        Self._Node := Self._Path[furthest].Typ;
+        Break;
+      end;
+  end
+  else
     Self._Node := Self._Path[furthest].Typ;
-
-  while (furthest < High(Self._Path)) and Self.IsWalkable(Self._Path[furthest+1].Node, me, tmp, angle) do
-    if (Self._Node <> EGraphNode.NORMAL) and (Self._Path[Inc(furthest)].Typ <> EGraphNode.NORMAL) then
-      Self._Node := Self._Path[furthest].Typ;
 
   index := furthest;
 
-  // do the result check before randomness to avoid false error
   Result := index > previous;
 
-  // 0.2% chance of randomness else furthest
   if Biometrics.RandomBoolean(0.002) then
     index := Random(nearest, furthest);
-end;
-
-procedure TRSWalker._WalkPathSetup(path: TGraphNodeArray);
-var
-  me: TPoint;
-begin
-  Self.Walking := True;
-  me := Self.Position();
-
-  if not me.InRange(path[0].Node, 3) then
-    path := [TGraphNode.Create(me)] + path;
-
-  Self._Path := Self._BuildPath(path);
-
-  if Self.AdaptiveWalk then
-  begin
-    Self.AdaptiveToggleDistances.X := Self.AdaptiveDistance.X + Random(-6,6);
-    Self.AdaptiveToggleDistances.Y := Self.AdaptiveDistance.Y + Random(-16,16);
-    Self.AdaptiveWalkCheck(me);
-  end;
 end;
 
 function TRSWalker._WalkPathHelper(out index: Integer; out angle: Double; me: TPoint; fails: Integer; debug: Boolean): Integer;
@@ -842,35 +892,6 @@ begin
 end;
 
 
-function TRSWalker.OpenDoor(index: Integer): Boolean;
-var
-  me: TPoint;
-begin
-  me := Self.Position();
-
-end;
-
-function TRSWalker.ChangePlane(me: TPoint): Boolean;
-begin
-
-end;
-
-function TRSWalker.UseShortcut(me: TPoint): Boolean;
-begin
-
-end;
-
-function TRSWalker.UseTransport(me: TPoint): Boolean;
-begin
-
-end;
-
-function TRSWalker.HandleObstacle(me: TPoint): Boolean;
-begin
-
-end;
-
-
 (*
 ## TRSWalker.WalkPath
 ```pascal
@@ -894,9 +915,8 @@ Walker.WalkPath([[100,100],[120,120],[140,140],[160,160],[180,180]]);
 function TRSWalker.WalkPath(path: TGraphNodeArray; minDist: Integer = 0; debug: Boolean = False): Boolean;
 var
   me: TPoint;
-  index, fails: Integer;
+  idx, fails: Integer;
   angle: Double;
-  failed: Boolean;
 begin
   Self._WalkPathSetup(path);
 
@@ -905,31 +925,19 @@ begin
   begin
     me := Self.Position();
 
-    fails := Self._WalkPathHelper(index, angle, me, fails, debug);
+    fails := Self._WalkPathHelper(idx, angle, me, fails, debug);
+
+    if fails > 0 then
+      Continue;
 
     case Self._Node of
-      EGraphNode.LADDER: failed := Self.ChangePlane(me);
-      EGraphNode.OBSTACLE: failed := Self.HandleObstacle(me);
-      EGraphNode.SHORTCUT: failed := Self.UseShortcut(me);
-      EGraphNode.TRANSPORT: failed := Self.UseTransport(me);
-    end;
-
-    if failed then Continue;
-
-    if index = High(Self._Path) then
-    begin
-      if Self.WalkFinalStep(me, Self._Path[index].Node, minDist) then
-        Exit(True);
-      Continue;
-    end;
-
-    if fails > 0 then Continue;
-
-    Self.WalkStep(me, Self._Path[index].Node);
-
-    if (Self._Node = EGraphNode.DOOR) and not Self.Walking then
-    begin
-      Self.Walking := Self.OpenDoor(index);
+      EGraphNode.NORMAL: if Self.WalkStep(me, idx, minDist) and (idx = High(Self._Path)) then Exit(True);
+      EGraphNode.DOOR: Self.CrossDoor(me, idx);
+      EGraphNode.STAIRS: Self.UseStairs(me, idx);
+      EGraphNode.OBSTACLE: Self.HandleObstacle(me, idx);
+      EGraphNode.SHORTCUT: Self.UseShortcut(me, idx);
+      EGraphNode.TRANSPORT: Self.UseTransport(me, idx);
+      EGraphNode.FAIRYRING: Self.UseFairyRing(me, idx);
     end;
   end;
 
@@ -1011,8 +1019,7 @@ begin
 end;
 
 
-
-function TRSWalker._GetPath(me, destination: TPoint; randomness: Double): TGraphNodeArray;
+function TRSWalker.GetPath(me, destination: TPoint; randomness: Double): TGraphNodeArray;
 begin
   Result := Self.WebGraph^.PathBetween(me, destination, randomness, 4);
 end;
@@ -1031,11 +1038,11 @@ var
   path: TGraphNodeArray;
 begin
   if not System.InRange(randomness, 0, 1) then
-    raise GetDebugLn('Walker' 'WebWalk `randomness` must be between 0.0 an 1.0');
+    raise GetDebugLn(Self.Name, 'WebWalk `randomness` must be between 0.0 an 1.0');
 
   if me.InRange(destination, 3) then
     Exit(True);
-  path := Self._GetPath(me, destination, randomness);
+  path := Self.GetPath(me, destination, randomness);
   Result := Self.WalkPath(path, minDist, debug);
 end;
 
@@ -1050,7 +1057,7 @@ var
   path: TGraphNodeArray;
 begin
   if not System.InRange(randomness, 0, 1) then
-    raise GetDebugLn('Walker' 'WebWalk `randomness` must be between 0.0 an 1.0');
+    raise GetDebugLn(Self.Name, 'WebWalk `randomness` must be between 0.0 an 1.0');
 
   me := Self.Position();
   destination := Self.GetClosestPoint(me, destinations, path);
