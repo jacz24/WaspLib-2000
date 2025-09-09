@@ -98,7 +98,7 @@ var
 begin
   pt := TPoint.Create(x,y);
   g := Self.GetGlobal(pt);
-  Self.Coordinate.Caption := Format('[%d, %d]', [pt.X, pt.Y]);
+  Self.Coordinate.Caption := Format('[%d, %d]', [g.X, g.Y]);
 
   Self.Path := [];
   if (shift = [ELazShiftStates.Shift]) and (Self.Selected > -1) then

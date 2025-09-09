@@ -232,11 +232,11 @@ var
   arr: TPointArray;
 begin
   if not me.InRange(mapPoint, MM2MS.MAX_RENDER_DISTANCE) then Exit;
-  if radians = $FFFF then radians := Minimap.GetCompassAngle(False);
+  if radians = $FFFF then radians := Minimap.CompassRadians;
   vector := Self.Point2MMVec(me, mapPoint, radians);
   pt := vector.ToPoint();
 
-  vector := Minimap.NormalizeEx(vector, radians);
+  vector := vector.Rotate(-radians, Minimap.Center.ToVec2());
   me := Self.GetLocal(me);
 
   h := Self.Height(me - [1,3], False) + Self.Height(me + [3,-3], False) +
@@ -265,11 +265,11 @@ var
   arr: TPointArray;
 begin
   if not me.InRange(mapPoint, MM2MS.MAX_RENDER_DISTANCE) then Exit;
-  if radians = $FFFF then radians := Minimap.GetCompassAngle(False);
+  if radians = $FFFF then radians := Minimap.CompassRadians;
   vector := Self.Point2MMVec(me, mapPoint, radians);
   pt := vector.ToPoint();
 
-  vector := Minimap.NormalizeEx(vector, radians);
+  vector := vector.Rotate(-radians, Minimap.Center.ToVec2());
   me := Self.GetLocal(me);
 
   h := Self.Height(me - [1,3], False) + Self.Height(me + [3,-3], False) +
@@ -299,7 +299,7 @@ function TRSWalker.MM2Map(me, minimapPoint: TPoint; radians: Single = $FFFF): TP
 begin
   Result := me + minimapPoint - Minimap.Center;
   if (radians = $FFFF) then
-    radians := Minimap.GetCompassAngle(False);
+    radians := Minimap.CompassRadians;
   Result := Result.Rotate(-radians, me);
 end;
 
@@ -433,7 +433,7 @@ var
     speed: Double;
     angle, h, diff: Single;
   begin
-    angle := Minimap.GetCompassAngle(False);
+    angle := Minimap.CompassRadians;
     idx := Self._Index;
 
     while (idx < High(Self._Path)) and Self.IsWalkable(Self._Path[idx+1].Node, myPos, tmp, angle) do
@@ -511,7 +511,7 @@ begin
     if position.Current <> position.Previous then
       countdown.Restart();
 
-    //if (Self._Node <> EGraphNode.NORMAL) and Self.FlagMoved(position.Current, Minimap.GetCompassAngle(False)) then
+    //if (Self._Node <> EGraphNode.NORMAL) and Self.FlagMoved(position.Current, Minimap.CompassRadians) then
     begin
       Self.Walking := False;
       Break;
@@ -584,7 +584,11 @@ begin
 
   if Self.ScreenWalk then
   begin
-    pt := mapPoint.Random(-8, 8);
+    if randomness = 0 then
+      pt := mapPoint
+    else
+      pt := mapPoint.Random(-randomness, randomness);
+
     if not me.InRange(pt, MM2MS.MAX_RENDER_DISTANCE) then Exit;
 
     quad := Self.GetQuadMS(me, pt);
@@ -666,7 +670,7 @@ begin
   if @Self.OnWalkEvent <> nil then Self.OnWalkEvent(@Self, me, mapPoint);
   if Time() - t > 100 then me := Self.Position(); //Check if event took too long and update position.
 
-  if not Self.Walking or not Self.IsWalkable(mapPoint, me, minimapPoint, Minimap.GetCompassAngle(False)) then
+  if not Self.Walking or not Self.IsWalkable(mapPoint, me, minimapPoint, Minimap.CompassRadians) then
     Exit(not Self.Walking);
 
   if Minimap.Center.InRange(minimapPoint, 4) then
@@ -720,28 +724,26 @@ end;
 function TRSWalker.CrossDoor(me: TPoint; index: Integer; attempts: Integer = 3): Boolean;
 var
   tmp: TPoint;
-  door, furthest: Integer;
+  furthest: Integer;
   radians: Double;
   mapPt, minimapPt, flag: TPoint;
   shouldExit, handleDoor: Boolean;
   cuboid: TCuboid;
 begin
-  WriteLn GetDebugLn(Self.Name, 'Attempting to cross door');
   if attempts = 0 then Exit;
-
   if index = High(Self._Path) then
     raise GetDebugLn(Self.Name, 'Paths should not end at a door node.');
+  WriteLn GetDebugLn(Self.Name, 'Attempting to cross door');
 
-  door := Self._Path.IndexOf(Self._Path[index].Node);
-  furthest := door;
+  furthest := index;
 
-  radians := Minimap.GetCompassAngle(False);
+  radians := Minimap.CompassRadians;
   while (furthest < High(Self._Path)) and Self.IsWalkable(Self._Path[furthest+1].Node, me, tmp, radians) do
     if Self._Path[furthest+1].Typ = EGraphNode.NORMAL then
       Inc(furthest);
 
   if Biometrics.RandomBoolean(0.002) then
-    furthest := Random(door, furthest);
+    furthest := Random(index, furthest);
 
   mapPt := Self._Path[furthest].Node;
   if not Self._WalkStepHelper(me, mapPt, 0, minimapPt, shouldExit) then
@@ -750,7 +752,7 @@ begin
   if shouldExit then Exit;
 
   if Self.WaitFlag(flag) then
-    handleDoor := Self.FlagMoved(flag, radians)
+    handleDoor := not me.InRange(flag, 12) and Self.FlagMoved(flag, radians)
   else
     handleDoor := True;
 
@@ -766,7 +768,7 @@ begin
   if handleDoor then
   begin
     WriteLn GetDebugLn(Self.Name, 'Attempting to open door');
-    cuboid := Self.GetCuboidMS(me, Self._Path[door].Node, [0.6,0.6,4], radians);
+    cuboid := Self.GetCuboidMS(me, Self._Path[index].Node, [0.6,0.6,4], radians);
     ShowOnTarget(cuboid);
     Mouse.Move(cuboid.ShapeFill().RandomMean());
     if MainScreen.IsUpText('Open') then
@@ -821,7 +823,7 @@ var
   path: TPointArray;
   compass: Single;
 begin
-  compass := Minimap.GetCompassAngle(False);
+  compass := Minimap.CompassRadians;
   for i := 0 to High(Self._Path) do
     if me.InRange(Self._Path[i].Node, 90) then
       path += Self.Point2MM(me, Self._Path[i].Node, compass);
@@ -971,7 +973,7 @@ begin
   if (Result = 5) then
   begin
     Minimap.SetCompassAngle(RadToDeg(angle) + RandomLeft(30, 360) * Random(-1,1));
-    angle := Minimap.GetCompassAngle(False);
+    angle := Minimap.CompassRadians;
   end;
 
   if Result mod 2 = 0 then
@@ -1007,7 +1009,7 @@ var
 begin
   Self._WalkPathSetup(path);
 
-  angle := Minimap.GetCompassAngle(False);
+  angle := Minimap.CompassRadians;
   while Self.Walking and (fails < 10) do
   begin
     me := Self.Position();
@@ -1165,7 +1167,7 @@ Wrapper function used to attempt to make a Point visible on the MainScreen.
 *)
 function TRSWalker.MakePointVisible(me: TPoint; pt: TPoint): Boolean;
 begin
-  Result := Minimap.MakePointVisible(Self.Point2MM(me, pt, Minimap.GetCompassAngle(False)));
+  Result := Minimap.MakePointVisible(Self.Point2MM(me, pt, Minimap.CompassRadians));
 end;
 
 function TRSWalker.MakePointVisible(pt: TPoint): Boolean; overload;

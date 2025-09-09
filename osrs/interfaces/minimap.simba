@@ -290,6 +290,58 @@ begin
   if asDegrees then Result := RadToDeg(Result);
 end;
 
+property TRSMinimap.CompassRadians: Single;
+var
+  center: TPoint;
+  bounds: TBox;
+  north,south,west,east: TPoint;
+  Nclr, dials, southArr, westArr, eastArr: TPointArray;
+  n,w,e,s,x,y: Single;
+begin
+  center := Self.Compass.Circle.Center;
+  bounds := Self.Compass.Circle.Bounds;
+
+  dials := Target.FindColor($26259C,  12, bounds);
+  Nclr  := Target.FindColor($1D2931, 0.6, bounds);
+
+  dials := dials.ExtractDist(center, 10, 20);
+  north := Nclr.ExtractDist(center, 0,20).Mean();
+
+  southArr := dials.ExtractDist(north, 21, 50);
+  south    := southArr.FurthestPoint(center);
+
+  dials  := dials.Difference(southArr);
+
+  for dials in dials.Cluster(3) do
+  begin
+    if CrossProduct(dials.Mean(), north, south) > 0 then
+      westArr := dials
+    else
+      eastArr := dials;
+  end;
+
+  west := westArr.FurthestPoint(eastArr.Mean()); //late edit: Should not this be middle, not eastarr.mean
+  east := eastArr.FurthestPoint(westArr.Mean()); //late edit: Should not this be middle, not westarr.mean
+
+  n := ArcTan2(north.y-center.y, north.x-center.x) + HALF_PI;
+  s := ArcTan2(south.y-center.y, south.x-center.x) - HALF_PI;
+  w := ArcTan2(west.y-center.y, west.x-center.x)+PI;
+  e := ArcTan2(east.y-center.y, east.x-center.x);
+
+  x := Cos(s) + Cos(e) + Cos(w) + Cos(n);
+  y := Sin(s) + Sin(e) + Sin(w) + Sin(n);
+
+  Result := ArcTan2(y/4, x/4);
+  if Result < 0 then
+    Result := Result + TAU;
+end;
+
+property TRSMinimap.CompassDegrees: Single;
+begin
+  Result := RadToDeg(Self.CompassRadians);
+end;
+
+
 
 (*
 ## Minimap.SetCompassAngle
