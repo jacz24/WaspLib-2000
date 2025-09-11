@@ -748,9 +748,9 @@ begin
 end;
 
 (*
-## RSObject.Select
+## RSObject.Interact
 ```pascal
-function TRSObject.Select(action: TStringArray; attempts: Integer = 2): Boolean;
+function TRSObject.Interact(action: TStringArray; attempts: Integer = 2): Boolean;
 ```
 Method used to select an option on a `TRSObject` target if it's found on the
 mainscreen.
@@ -769,14 +769,14 @@ var
 begin
   Map.Setup([ERSChunk.VARROCK]);
   objs := TRSObjectArray.Create(ObjectsJSON.GetByAction('Bank'));
-  objs[1].Select(['Collect']);
+  objs[1].Interact(['Collect']);
 end.
 ```
 
 ```{figure} ../../images/obj_select.gif
 ```
 *)
-function TRSObject.Select(action: TStringArray; attempts: Integer = 2): Boolean;
+function TRSObject.Interact(action: TStringArray; attempts: Integer = 2): Boolean;
 begin
   Self.Walker^.ActionUpText := action;
   Result := Self.Hover(action, attempts) and Self._SelectHelper(action);
@@ -824,9 +824,9 @@ begin
 end;
 
 (*
-## RSObject.WalkSelect
+## RSObject.WalkInteract
 ```pascal
-function TRSObject.WalkSelect(action: TStringArray; attempts: Integer = 2): Boolean;
+function TRSObject.WalkInteract(action: TStringArray; attempts: Integer = 2): Boolean;
 ```
 Method used to walk towards and select an option on a `TRSObject` target if it's
 found on the mainscreen.
@@ -845,14 +845,14 @@ var
 begin
   Map.Setup([ERSChunk.VARROCK]);
   objs := TRSObjectArray.Create(ObjectsJSON.GetByAction('Bank'));
-  objs[1].WalkSelect(['Collect']);
+  objs[1].WalkInteract(['Collect']);
 end.
 ```
 
 ```{figure} ../../images/obj_walkselect.gif
 ```
 *)
-function TRSObject.WalkSelect(action: TStringArray; attempts: Integer = 2): Boolean;
+function TRSObject.WalkInteract(action: TStringArray; attempts: Integer = 2): Boolean;
 begin
   if Self.Walker = nil then
     raise GetDebugLn('TRSObject', 'Walker pointer missing.');

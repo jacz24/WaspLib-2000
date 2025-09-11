@@ -379,7 +379,7 @@ begin
 
   if Map.Position().AnyInRange(Self.Entrance.Coordinates, 60) then
   begin
-    if not Self.Entrance.WalkSelect(['Home']) then Exit;
+    if not Self.Entrance.WalkInteract(['Home']) then Exit;
     Exit(SleepUntil(Self.Inside(), 300, 10000));
   end;
 
@@ -432,7 +432,7 @@ begin
   begin
     if Map.Position().AnyInRange(Self.Entrance.Coordinates, 60) then
     begin
-      if not Self.Entrance.WalkSelect(['Home']) then Exit;
+      if not Self.Entrance.WalkInteract(['Home']) then Exit;
       Exit(SleepUntil(Self.Inside(), 300, 4000));
     end;
   end;
@@ -444,7 +444,7 @@ begin
 
   case Biometrics.RandomBoolean(0.95) of
     True:  if not HouseOptions.LeaveHouse() then Exit;
-    False: if not Self.Objects[EHouseObject.EXIT].WalkSelect(['Enter']) then Exit;
+    False: if not Self.Objects[EHouseObject.EXIT].WalkInteract(['Enter']) then Exit;
   end;
 
   Result := SleepUntil(not Self.Inside(), 300, 3000);

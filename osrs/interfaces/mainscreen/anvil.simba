@@ -325,13 +325,12 @@ begin
   obj := Self.Anvils[Self.Anvils.ClosestIndex(Map.Position())];
 
   if walk then
-    Result := obj.WalkSelect(['nvil'])
+    Result := obj.WalkInteract(['nvil'])
   else
-    Result := obj.Select(['nvil']);
+    Result := obj.Interact(['nvil']);
 
-  if not Result then
-    if not MainScreen.IsUpText('Smith') or not ChooseOption.Select(['Smith']) then
-      Exit;
+  if not Result and not MainScreen.Interact(['Smith']) then
+    Exit;
 
   obj.Walker^.WaitMoving();
   Result := Self.WaitOpen(3000);

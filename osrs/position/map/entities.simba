@@ -625,19 +625,13 @@ begin
 end;
 
 (*
-## TRSEntity.SelectOption
+## TRSEntity.Interact
 ```pascal
-function TRSEntity.SelectOption(action: TStringArray; attempts: Integer = 2): Boolean;
+function TRSEntity.Interact(action: TStringArray; attempts: Integer = 2): Boolean;
 ```
 Method used to select an option on a TRSEntity target if it's found on the mainscreen.
-
-Example:
-```pascal
-//Be in ge with a ge map loaded.
-WriteLn RSObjects.GEBank.SelectOption(['Collect']);
-```
 *)
-function TRSEntity.Select(action: TStringArray; attempts: Integer = 2): Boolean;
+function TRSEntity.Interact(action: TStringArray; attempts: Integer = 2): Boolean;
 begin
   Self.Walker^.ActionUpText := action;
   Result := Self.Hover(attempts) and Self._SelectHelper(action);
@@ -669,19 +663,13 @@ begin
 end;
 
 (*
-## TRSEntity.WalkSelectOption
+## TRSEntity.WalkInteract
 ```pascal
-function TRSEntity.WalkSelectOption(action: TStringArray; attempts: Integer = 2): Boolean;
+function TRSEntity.WalkInteract(action: TStringArray; attempts: Integer = 2): Boolean;
 ```
 Method used to walk and select an option on a TRSEntity target if it's found on the mainscreen.
-
-Example:
-```pascal
-//Be in ge with a ge map loaded, preferably far away so it has to walk.
-WriteLn RSObjects.GEBank.WalkSelectOption(['Collect']);
-```
 *)
-function TRSEntity.WalkSelect(action: TStringArray; attempts: Integer = 2): Boolean;
+function TRSEntity.WalkInteract(action: TStringArray; attempts: Integer = 2): Boolean;
 begin
   if Self.Walker = nil then
     raise GetDebugLn('TRSEntity', 'Missing the walker pointer.');

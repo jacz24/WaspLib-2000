@@ -318,8 +318,8 @@ begin
 
   if obj.DistanceTo(me) < npc.DistanceTo(me) then
   begin
-    if walk then Result := obj.WalkSelect(['Collect'])
-    else Result := obj.Select(['Collect']);
+    if walk then Result := obj.WalkInteract(['Collect'])
+    else Result := obj.Interact(['Collect']);
 
     if not Result then
     begin
@@ -332,8 +332,8 @@ begin
     Exit;
   end;
 
-  if walk then Result := npc.WalkSelect(['Collect'])
-  else Result := npc.Select(['Collect']);
+  if walk then Result := npc.WalkInteract(['Collect'])
+  else Result := npc.Interact(['Collect']);
 
   if not Result then
   begin

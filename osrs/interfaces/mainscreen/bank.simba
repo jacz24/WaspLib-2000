@@ -1322,9 +1322,9 @@ end.
 function TRSBank.Open(constref obj: TRSObject; walk: Boolean = True): Boolean;
 begin
   if walk then
-    Result := obj.WalkSelect(['Bank B', 'Bank E', 'Bank G', 'Use B'])
+    Result := obj.WalkInteract(['Bank B', 'Bank E', 'Bank G', 'Use B'])
   else
-    Result := obj.Select(['Bank B', 'Bank E', 'Bank G', 'Use B']);
+    Result := obj.Interact(['Bank B', 'Bank E', 'Bank G', 'Use B']);
 
   if not Result then
     if not MainScreen.IsUpText('Bank') or not ChooseOption.Select(['Bank B', 'Bank E']) then
@@ -1337,13 +1337,12 @@ end;
 function TRSBank.Open(constref npc: TRSEntity; walk: Boolean = True): Boolean; overload;
 begin
   if walk then
-    Result := npc.WalkSelect(['Bank B', 'Bank E'])
+    Result := npc.WalkInteract(['Bank B', 'Bank E'])
   else
-    Result := npc.Select(['Bank B', 'Bank E']);
+    Result := npc.Interact(['Bank B', 'Bank E']);
 
-  if not Result then
-    if not MainScreen.IsUpText('Bank') or not ChooseOption.Select(['Bank B', 'Bank E']) then
-      Exit;
+  if not Result and not MainScreen.Interact(['Bank B', 'Bank E']) then
+    Exit;
 
   npc.Walker^.WaitMoving();
   Result := Self.WaitOpen(3000);

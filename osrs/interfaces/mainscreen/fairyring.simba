@@ -172,6 +172,7 @@ WriteLn FairyRing.Item;
 *)
 function TRSFairyRing.HandleItem(attempts: Int32 = 2): Boolean;
 begin
+  Result := attempts = 2; //Todo...
 end;
 
 
@@ -199,13 +200,7 @@ begin
   if not Self.HandleItem() then
     Exit;
 
-  Mouse.Move(cuboid.ShapeFill().RandomMean());
-  if not MainScreen.IsUpText('Fairy ring') then
-    Exit;
-
-  if MainScreen.IsUpText('onfigure') then
-    Mouse.Click(EMouseButton.LEFT)
-  else if not ChooseOption.Select('onfigure') then
+  if not MainScreen.Interact(cuboid.ShapeFill().RandomMean(), ['onfigure']) then
     Exit;
 
   Minimap.WaitMoving();
@@ -639,7 +634,7 @@ function TRSFairyRing.ClickLogCode(fairyCode: String): Boolean;
 var
   b: TBox;
 begin
-  code := code.Replace(' ', '').ToUpper();
+  fairyCode := fairyCode.Replace(' ', '').ToUpper();
   if Self.Code = fairyCode then
     Exit(True);
 

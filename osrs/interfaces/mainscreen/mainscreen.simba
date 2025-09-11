@@ -361,12 +361,10 @@ begin
 end;
 
 
-{%codetools off}
 function TRSMainScreen._RedClicked(area: TBox): Boolean;
 begin
   Result := Target.HasColor($0000FF, 0, 1, area) or Target.HasColor($0401C8, 0, 1, area);
 end;
-{%codetools on}
 
 (*
 ## MainScreen.RedClicked
@@ -410,13 +408,10 @@ begin
   Result := SleepUntil(Self._RedClicked(area), 50, time);
 end;
 
-
-{%codetools off}
 function TRSMainScreen._YellowClicked(area: TBox): Boolean;
 begin
   Result := Target.HasColor(65535, 0, 1, area);
 end;
-{%codetools on}
 
 (*
 ## MainScreen.YellowClicked
@@ -460,6 +455,38 @@ begin
   Result := SleepUntil(Self._YellowClicked(area), 50, time);
 end;
 
+(*
+## MainScreen.Interact
+```pascal
+function TRSMainScreen.Interact(strings: TStringArray): Boolean;
+function TRSMainScreen.Interact(pt: TPoint; strings: TStringArray): Boolean; overload;
+```
+Attempts to interact with something on the mainscreen.
+If the uptext matches `strings` wasplib will left click, otherwise it will use
+{ref}`ChooseOption`.
+
+Example:
+```pascal
+WriteLn MainScreen.Interact('Pick-up');
+```
+*)
+function TRSMainScreen.Interact(strings: TStringArray): Boolean;
+begin
+  if Self.IsUpText(strings) then
+  begin
+    Mouse.Click(EMouseButton.LEFT);
+    Exit(Self.RedClicked());
+  end;
+
+  if ChooseOption.Select(strings) then
+    Exit(Self.RedClicked());
+end;
+
+function TRSMainScreen.Interact(pt: TPoint; strings: TStringArray): Boolean; overload;
+begin
+  Mouse.Move(pt);
+  Result := Self.Interact(strings);
+end;
 
 var
 (*

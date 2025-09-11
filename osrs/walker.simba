@@ -700,7 +700,7 @@ end;
 function TRSWalker.CrossDoor(me: TPoint; index: Integer; attempts: Integer = 3): Boolean;
 var
   tmp: TPoint;
-  furthest: Integer;
+  furthest, doorAttempts: Integer;
   radians: Double;
   mapPt, minimapPt, flag: TPoint;
   shouldExit, handleDoor: Boolean;
@@ -743,14 +743,17 @@ begin
 
   if handleDoor then
   begin
-    WriteLn GetDebugLn(Self.Name, 'Attempting to open door');
-    cuboid := Self.GetCuboidMS(me, Self._Path[index].Node, [0.6,0.6,4], radians);
-    ShowOnTarget(cuboid);
-    Mouse.Move(cuboid.ShapeFill().RandomMean());
-    if MainScreen.IsUpText('Open') then
-      Mouse.Click(EMouseButton.LEFT)
-    else if not ChooseOption.Select('Open') then
-      Exit;
+    for doorAttempts := 0 to 2 do
+    begin
+      WriteLn GetDebugLn(Self.Name, 'Attempt to open door number: ' + ToStr(doorAttempts+1));
+      cuboid := Self.GetCuboidMS(me, Self._Path[index].Node, [0.6,0.6,4], radians);
+      ShowOnTarget(cuboid);
+      if MainScreen.Interact(cuboid.ShapeFill().RandomMean(), ['Open']) then
+        Break;
+    end;
+    Self.WaitMoving(mapPt, 4);
+    Biometrics.Sleep(600, 800);
+    WriteLn GetDebugLn(Self.Name, 'Door should now be open.');
   end;
 
   Result := Self.CrossDoor(me, index, Dec(attempts));
@@ -764,7 +767,9 @@ begin
     raise GetDebugLn(Self.Name, 'Paths should not end at a stairs node.');
 
   if Abs(Self._Path[index].Node.X - Self._Path[index+1].Node.X) < RSTranslator.MapWidth then
-  'Down';
+    direction := 'Down';
+
+  Result := me = me; //todo...
 end;
 
 function TRSWalker.UseShortcut(me: TPoint; index: Integer): Boolean;
