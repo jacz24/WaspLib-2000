@@ -98,6 +98,18 @@ type
     QUILL:          TPixelFont;
     Unzipping: Boolean;
     Timeout: TCountDown;
+
+    const WHITE: TColor        = $FFFFFF;
+    const BLACK: TColor        = $0;
+    const ORANGE: TColor       = $1F98FF;
+    const GREY: TColor         = $9F9F9F;
+    const GREEN: TColor        = $0DC10D;
+    const YELLOW: TColor       = $00FFFF;
+    const RED: TColor          = $0000FF;
+    const DARK_BLUE: TColor    = $800000;
+    const LIGHT_ORANGE: TColor = $3FB8FF;
+    const LIGHT_YELLOW: TColor = $A2D8E4;
+    const BROWN: TColor        = $002040;
     const PATH = WLEnv.CacheDir + 'fonts' + PATH_SEP;
   end;
 

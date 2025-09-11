@@ -149,7 +149,7 @@ WriteLn WorldSwitcher.IsLoading();
 *)
 function TRSWorldSwitcher.IsLoading(): Boolean;
 begin
-  Result := not Target.HasColor(RSColors.TEXT_ORANGE, 0, 1, Self.CurrentWorldBounds);
+  Result := not Target.HasColor(RSFonts.ORANGE, 0, 1, Self.CurrentWorldBounds);
 end;
 
 (*
@@ -261,7 +261,7 @@ WriteLn WorldSwitcher.GetCurrentWorld();
 *)
 function TRSWorldSwitcher.GetCurrentWorld(): Integer;
 begin
-  Result := OCR.RecognizeNumber(Self.CurrentWorldBounds, RSFonts.BOLD, [RSColors.TEXT_ORANGE], 0);
+  Result := OCR.RecognizeNumber(Self.CurrentWorldBounds, RSFonts.BOLD, [RSFonts.ORANGE], 0);
 end;
 
 (*

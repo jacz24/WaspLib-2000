@@ -12,7 +12,7 @@ script **BEFORE INCLUDING WASPLIB**:
 
 {$DEFINE WL_WEBGRAPHGEN_INCLUDED}
 {$INCLUDE_ONCE WaspLib/utils.simba}
-{$R+}
+{$R-}
 
 type
 (*

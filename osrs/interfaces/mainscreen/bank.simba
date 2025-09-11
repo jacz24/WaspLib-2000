@@ -351,7 +351,7 @@ begin
   end;
 
   count := Target.CountColor($0, 0, Self._IsOpenHelperBox);
-  tpa := Target.FindColor(RSColors.TEXT_ORANGE, 0, Self._IsOpenHelperBox);
+  tpa := Target.FindColor(RSFonts.ORANGE, 0, Self._IsOpenHelperBox);
   Result := ((count = 94) and (Length(tpa) = 116)) or Self.Title.IsTitle('Bank') or Self.Title.IsTitle('Equip');
 
   if Result then
@@ -822,7 +822,7 @@ Internal helper function help process the tabs text when you search.
 Example:
 ```pascal
 if Bank.Search('logs') then
-  if Bank._FindTabText(Target.FindColor(RSColors.TEXT_LIGHT_YELLOW, 0, bounds), bounds) then
+  if Bank._FindTabText(Target.FindColor(RSFonts.LIGHT_YELLOW, 0, bounds), bounds) then
     ShowOnTarget(bounds);
 ```
 *)
@@ -870,10 +870,10 @@ begin
   bounds := [Self.Bounds.X1 + 56, Self.Bounds.Y1 + 77, Self.Bounds.X1 + 84, bounds.Y1];
   if bounds.Height < 8 then Exit(0);
 
-  if Self._FindTabText(Target.FindColor(RSColors.TEXT_LIGHT_YELLOW, 0, bounds), bounds) then
-    Result := OCR.RecognizeNumber(bounds, RSFonts.PLAIN_11, [RSColors.TEXT_LIGHT_YELLOW], 0);
-  if Self._FindTabText(Target.FindColor(RSColors.TEXT_WHITE, 0, bounds), bounds) then
-    Result := OCR.RecognizeNumber(bounds, RSFonts.PLAIN_11, [RSColors.TEXT_WHITE], 0);
+  if Self._FindTabText(Target.FindColor(RSFonts.LIGHT_YELLOW, 0, bounds), bounds) then
+    Result := OCR.RecognizeNumber(bounds, RSFonts.PLAIN_11, [RSFonts.LIGHT_YELLOW], 0);
+  if Self._FindTabText(Target.FindColor(RSFonts.WHITE, 0, bounds), bounds) then
+    Result := OCR.RecognizeNumber(bounds, RSFonts.PLAIN_11, [RSFonts.WHITE], 0);
 end;
 
 (*

@@ -48,7 +48,7 @@ Main record used to interact with the {ref}`Chat` interface.
     MessageLines: TBoxArray;
     InputLine: TBox;
     ReportButton: TRSButton;
-    const Colors: array [ERSChatColor] of TColor = [RSColors.TEXT_BLACK, $7F0000, $FF0000, $7F007F, $2010EF, RSColors.TEXT_RED, RSColors.TEXT_WHITE, $FF9090, RSColors.TEXT_DARK_BLUE, $005F00];
+    Colors: TColorArray;
   end;
 
 (*
@@ -86,6 +86,8 @@ begin
   Self.Scroll.Area.Y2 := Self.InputLine.Y1 - 1;
 
   Self.Scroll.Setup();
+
+  Self.Colors := [RSFonts.BLACK, $7F0000, $FF0000, $7F007F, $2010EF, RSFonts.RED, RSFonts.WHITE, $FF9090, RSFonts.DARK_BLUE, $005F00];
 end;
 
 (*
@@ -340,7 +342,7 @@ WriteLn Chat.GetQueryAnswer();
 *)
 function TRSChat.GetQueryAnswer(): String;
 begin
-  Result := OCR.Recognize(Self.Bounds, RSFonts.BOLD, [RSColors.TEXT_DARK_BLUE], 0);
+  Result := OCR.Recognize(Self.Bounds, RSFonts.BOLD, [RSFonts.DARK_BLUE], 0);
 end;
 
 (*

@@ -93,6 +93,8 @@ type
     Tree: TKDPointTree;
   end;
 
+  PWebGraph = ^TWebGraph;
+
 procedure TWebGraph.Setup();
 var
   tpa: TPointArray;

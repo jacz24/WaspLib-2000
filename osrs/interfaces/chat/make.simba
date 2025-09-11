@@ -282,13 +282,13 @@ begin
 
   if quantity = ERSItemQuantity.CUSTOM then
   begin
-    if amount = OCR.RecognizeNumber(Self.QuantityButtons[2], RSFonts.PLAIN_11, [Self.TEXT_COLOR, RSColors.TEXT_WHITE], 0) then
+    if amount = OCR.RecognizeNumber(Self.QuantityButtons[2], RSFonts.PLAIN_11, [Self.TEXT_COLOR, RSFonts.WHITE], 0) then
       Exit(2);
     Exit(1);
   end;
 
   for i := 1 to High(Self.QuantityButtons) do
-    if amount = OCR.RecognizeNumber(Self.QuantityButtons[i], RSFonts.PLAIN_11, [Self.TEXT_COLOR, RSColors.TEXT_WHITE], 0) then
+    if amount = OCR.RecognizeNumber(Self.QuantityButtons[i], RSFonts.PLAIN_11, [Self.TEXT_COLOR, RSFonts.WHITE], 0) then
       Exit(i);
   Result := -1;
 end;
@@ -307,7 +307,7 @@ WriteLn Make.IsQuantitySelected(Make.QUANTITY_ALL);
 *)
 function TRSMake.IsQuantitySelected(idx: Integer): Boolean;
 begin
-  Result := Target.HasColor(RSColors.TEXT_WHITE, 0, 1, Self.QuantityButtons[idx]);
+  Result := Target.HasColor(RSFonts.WHITE, 0, 1, Self.QuantityButtons[idx]);
 end;
 
 

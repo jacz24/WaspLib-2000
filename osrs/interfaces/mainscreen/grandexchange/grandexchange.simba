@@ -162,7 +162,7 @@ var
   count: Integer;
 begin
   //no need for ocr, color count is lighter and should work fine.
-  count := Target.CountColor(RSColors.TEXT_ORANGE, 0, Self.Header);
+  count := Target.CountColor(RSFonts.ORANGE, 0, Self.Header);
   case count of
     154: Result := EGESlotType.EMPTY;
     90:  Result := EGESlotType.SELL;
@@ -234,7 +234,7 @@ WriteLn GrandExchange.Slots[7].Item;
 *)
 property TRSGrandExchangeSlot.Item: TRSItem;
 begin
-  Result := OCR.RecognizeLines(Self.ItemNameBox, RSFonts.PLAIN_11, [RSColors.TEXT_LIGHT_ORANGE], 0).Join(' ');
+  Result := OCR.RecognizeLines(Self.ItemNameBox, RSFonts.PLAIN_11, [RSFonts.LIGHT_ORANGE], 0).Join(' ');
 end;
 
 (*
@@ -253,7 +253,7 @@ property TRSGrandExchangeSlot.Value: Integer;
 var
   str: String;
 begin
-  str := OCR.Recognize(Self.ValueBox, RSFonts.PLAIN_11, [RSColors.TEXT_ORANGE], 0);
+  str := OCR.Recognize(Self.ValueBox, RSFonts.PLAIN_11, [RSFonts.ORANGE], 0);
   Result := str.ExtractInteger(-1);
 end;
 

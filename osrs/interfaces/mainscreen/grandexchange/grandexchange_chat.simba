@@ -141,7 +141,7 @@ begin
       raise GetDebugLn('BankPin', 'Failed to enter GrandExchangeChat pin.');
   end;
 
-  match := OCR.Locate(Self.Header, 'What would you like to buy?', [RSColors.TEXT_BLACK], 0, RSFonts.BOLD);
+  match := OCR.Locate(Self.Header, 'What would you like to buy?', [RSFonts.BLACK], 0, RSFonts.BOLD);
   Result := match >= 0.8;
 end;
 
@@ -187,7 +187,7 @@ WriteLn GrandExchangeChat.SearchText;
 *)
 property TRSGrandExchangeChat.SearchText: String;
 begin
-  Result := OCR.Recognize(Self.Header, RSFonts.BOLD, [RSColors.TEXT_DARK_BLUE], 0).Before('*');
+  Result := OCR.Recognize(Self.Header, RSFonts.BOLD, [RSFonts.DARK_BLUE], 0).Before('*');
 end;
 
 property TRSGrandExchangeChat.SearchText(search: String): Boolean;
@@ -258,7 +258,7 @@ begin
   item := item.ToLower();
   for bounds in Self.Grid do
   begin
-    str := OCR.RecognizeLines(bounds, RSFonts.PLAIN_12, [RSColors.TEXT_BLACK], 0).Join(' ').ToLower();
+    str := OCR.RecognizeLines(bounds, RSFonts.PLAIN_12, [RSFonts.BLACK], 0).Join(' ').ToLower();
     if item = str then
       Exit(True);
   end;

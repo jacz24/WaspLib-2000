@@ -82,9 +82,11 @@ begin
   Result := [];
 end;
 
-function TRSInterfaceArea.Close(escape: Boolean = True): Boolean;
+
+function TRSInterfaceArea.Close(escape: Boolean): Boolean;
 begin
-  if not Self.IsOpen() then Exit(True);
+  if not Self.IsOpen() then
+    Exit(True);
 
   case escape of
     False: Self.GetCloseButton().Click();
@@ -92,6 +94,12 @@ begin
   end;
 
   Result := SleepUntil(not Self.IsOpen(), 50, 600);
+end;
+
+function TRSInterfaceArea.Close(escapeProbability: Single = -1): Boolean; overload;
+begin
+  if escapeProbability = -1 then escapeProbability := Biometrics.RandomDouble(0.5);
+  Result := Self.Close(RandomBoolean(escapeProbability));
 end;
 
 

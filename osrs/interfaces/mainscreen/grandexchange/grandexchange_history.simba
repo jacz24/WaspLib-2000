@@ -149,7 +149,7 @@ var
   h: Integer;
 begin
   with Self.Bounds do
-    tpa := Target.FindColor(RSColors.TEXT_ORANGE, 0, [X1+42, Y1+80, X1+92, Y2-80]);
+    tpa := Target.FindColor(RSFonts.ORANGE, 0, [X1+42, Y1+80, X1+92, Y2-80]);
   if tpa = [] then Exit;
 
   for tpa in tpa.Cluster(20, 20) do

@@ -33,9 +33,9 @@ end;
 ```
 *)
   TRSWalkerEvent            = procedure(walker: PRSWalker; position, destination: TPoint) of object;
-  TRSWalkerPositionFunction = function (): TPoint of object;
-  TRSWalkerHeightFunction   = function (pt: TPoint = [0,0]; global: Boolean = True): Single of object;
-  TRWalkerGetLocalFunction  = function (pt: TPoint; offset: TPoint = [0,0]): TPoint of object;
+  TWalkerPositionFunction = function (): TPoint of object;
+  TWalkerHeightFunction   = function (pt: TPoint = [0,0]; global: Boolean = True): Single of object;
+  TWalkerGetLocalFunction  = function (pt: TPoint; offset: TPoint = [0,0]): TPoint of object;
 
 (*
 ## TRSWalker
@@ -50,9 +50,9 @@ via the {ref}`Walker.Setup` method.
   TRSWalker = record
     Name: String;
 
-    Position: TRSWalkerPositionFunction;
-    Height:   TRSWalkerHeightFunction;
-    GetLocal: TRWalkerGetLocalFunction;
+    Position: TWalkerPositionFunction;
+    Height:   TWalkerHeightFunction;
+    GetLocal: TWalkerGetLocalFunction;
 
     MinEnergy, ClickRandomness, MouseAheadTimer: Integer;
 
@@ -63,7 +63,7 @@ via the {ref}`Walker.Setup` method.
 
     WalkUpText, TargetUpText, ActionUpText: TStringArray;
 
-    WebGraph: ^TWebGraph;
+    WebGraph: PWebGraph;
     MapImage: TImage;
 
     OnWalkEvent, OnWaitMovingEvent: TRSWalkerEvent;
@@ -75,60 +75,33 @@ via the {ref}`Walker.Setup` method.
     _Flag: TPoint;
   end;
 
-(*
-## TRSWalker.Setup
-```pascal
-procedure TRSWalker.Setup(
-  position: function (): TPoint of object;
-  height: function (p: TPoint = [-1,-1]): Single of object;
-  getLocal: function (tpa: TPointArray; offset: TPoint = [0,0]): TPointArray of object;
-  graph: ^TWebGraph;
-  mapImage: TImage
-);
-```
-Setup method for TRSWalker.
-
-Only `position` is a hard requirement of this method,
-all others can be `nil` if you don't need them.
-
-`graph` is only required if you plan on doing webwaking and should point to your webgraph.
-`getLocal` and `mapImage` are just for webgraph debugging if webwalking crashes.
-
-`height` is only required if you want to pass in tile heights information to TRSWalker.
-
-Example:
-```pascal
-Walker.Setup(@MyCustomPositionSystem, nil, nil, nil, nil);
-```
-*)
-
-{%codetools off}
 {$H-}
+{%codetools off}
 function TRSWalker.DummyHeight(pt: TPoint = [0,0]; global: Boolean = True): Single; begin Result := pt.X; end;
 function TRSWalker.DummyGetLocal(pt: TPoint; offset: TPoint = [0,0]): TPoint; begin Result := pt+offset; end;
-{$H+}
 {%codetools on}
+{$H+}
+
 
 (*
 ## Walker.Setup
 ```pascal
-procedure TRSWalker.Setup(position: TRSWalkerPositionFunction; height: TRSWalkerHeightFunction; getLocal: TRWalkerGetLocalFunction; graph: ^TWebGraph; mapImage: TImage);
+procedure TRSWalker.Setup(position: TWalkerPositionFunction; height: TWalkerHeightFunction; getLocal: TWalkerGetLocalFunction; graph: PWebGraph; mapImage: TImage);
 ```
 Method responsible for setting up the {ref}`TRSWalker` variable.
 All parameters of this function can be `nil` except for `position`.
 Without a `position` callback you cannot use `TRSWalker`.
 
-The following example is purely an example, you never have to do this since
-`Map.Setup` already does this for you anyway.
-
-Example:
+The following is purely an example, you never have to do this since `Map.Setup`
+already does this for you anyway:
 ```pascal
 Map.Setup(ERSChunk.CATACOMBS_OF_KOUREND);
 Walker.Setup(@Map.Position, @Map.Height, @Map.Loader.GetLocal, @Map.Loader.Graph, @Map.Loader.Map);
 ```
 *)
-procedure TRSWalker.Setup(position: TRSWalkerPositionFunction; height: TRSWalkerHeightFunction; getLocal: TRWalkerGetLocalFunction; graph: ^TWebGraph; mapImage: TImage);
+procedure TRSWalker.Setup(position: TWalkerPositionFunction; height: TWalkerHeightFunction; getLocal: TWalkerGetLocalFunction; graph: PWebGraph; mapImage: TImage);
 begin
+  Self.Name := 'Walker';
   Self.Position := @position;
 
   if @height <> nil then
@@ -223,7 +196,7 @@ begin
     Result += Self.GetLocal(pt, offset);
 end;
 
-function TRSWalker.GetQuadMS(me, mapPoint: TPoint; radians: Single = $FFFF): TQuad;
+function TRSWalker.GetQuadMS(me, mapPoint: TPoint; size: TVector2; radians: Single): TQuad;
 var
   vector: TVector2;
   corners: TVector3Array;
@@ -231,8 +204,8 @@ var
   pt, currLoc: TPoint;
   arr: TPointArray;
 begin
-  if not me.InRange(mapPoint, MM2MS.MAX_RENDER_DISTANCE) then Exit;
-  if radians = $FFFF then radians := Minimap.CompassRadians;
+  if not me.InRange(mapPoint, MM2MS.MAX_RENDER_DISTANCE) then
+    Exit;
   vector := Self.Point2MMVec(me, mapPoint, radians);
   pt := vector.ToPoint();
 
@@ -245,18 +218,21 @@ begin
 
   currLoc := me + vector.ToPoint() - Minimap.Center;
 
+  size.X := size.X*2;
+  size.Y := size.Y*2;
+
   corners := [
-    [vector.X-2, vector.Y-2, Self.Height(currLoc - [1,3],  False) - h],
-    [vector.X+2, vector.Y-2, Self.Height(currLoc + [3,-3], False) - h],
-    [vector.X+2, vector.Y+2, Self.Height(currLoc + [3,1],  False) - h],
-    [vector.X-2, vector.Y+2, Self.Height(currLoc - [1,1],  False) - h]
+    [vector.X-size.X, vector.Y-size.Y, Self.Height(currLoc - [1,3],  False) - h],
+    [vector.X+size.X, vector.Y-size.Y, Self.Height(currLoc + [3,-3], False) - h],
+    [vector.X+size.X, vector.Y+size.Y, Self.Height(currLoc + [3,1],  False) - h],
+    [vector.X-size.X, vector.Y+size.Y, Self.Height(currLoc - [1,1],  False) - h]
   ];
 
   arr := MM2MS.Run(corners, radians);
   Result := [arr[0], arr[1], arr[2], arr[3]];
 end;
 
-function TRSWalker.GetCuboidMS(me, mapPoint: TPoint; size: TVector3; radians: Single = $FFFF): TCuboid;
+function TRSWalker.GetCuboidMS(me, mapPoint: TPoint; size: TVector3; radians: Single): TCuboid;
 var
   vector: TVector2;
   corners: TVector3Array;
@@ -265,7 +241,6 @@ var
   arr: TPointArray;
 begin
   if not me.InRange(mapPoint, MM2MS.MAX_RENDER_DISTANCE) then Exit;
-  if radians = $FFFF then radians := Minimap.CompassRadians;
   vector := Self.Point2MMVec(me, mapPoint, radians);
   pt := vector.ToPoint();
 
@@ -277,6 +252,9 @@ begin
   h := h/4;
 
   currLoc := me + vector.ToPoint() - Minimap.Center;
+
+  size.X := size.X*2;
+  size.Y := size.Y*2;
 
   corners := [
     [vector.X-size.X, vector.Y-size.Y, Self.Height(currLoc - [1,3],  False) - h],
@@ -295,34 +273,32 @@ begin
   ];
 end;
 
-function TRSWalker.MM2Map(me, minimapPoint: TPoint; radians: Single = $FFFF): TPoint;
+function TRSWalker.MM2Map(me, minimapPoint: TPoint; radians: Single): TPoint;
 begin
   Result := me + minimapPoint - Minimap.Center;
-  if (radians = $FFFF) then
-    radians := Minimap.CompassRadians;
   Result := Result.Rotate(-radians, me);
 end;
 
 
-function TRSWalker.FindFlag(me: TPoint; out flag: TPoint; radians: Single = $FFFF): Boolean;
+function TRSWalker.FindFlag(me: TPoint; out flag: TPoint; radians: Single): Boolean;
 begin
   Result := Minimap.FindFlag(flag);
   if Result then
     flag := Self.MM2Map(me, flag, radians);
 end;
 
-function TRSWalker.WaitFlag(out flag: TPoint; radians: Single = $FFFF): Boolean;
+function TRSWalker.WaitFlag(out flag: TPoint; radians: Single): Boolean;
 begin
   Result := SleepUntil(Self.FindFlag(Self.Position(), flag, radians), 100, 600);
 end;
 
-function TRSWalker.FlagMoved(out flag: TPoint; radians: Single = $FFFF): Boolean;
+function TRSWalker.FlagMoved(out flag: TPoint; radians: Single): Boolean;
 var
   newFlag: TPoint;
 begin
-
   Result := SleepUntil(
-              Self.FindFlag(Self.Position(), newFlag, radians) and not newFlag.InRange(flag, 4),
+              Self.FindFlag(Self.Position(), newFlag, radians) and
+              not newFlag.InRange(flag, 4),
               100,
               600
             );
@@ -554,7 +530,6 @@ begin
 end;
 
 
-
 (*
 ## Walker.Click
 ```pascal
@@ -589,9 +564,10 @@ begin
     else
       pt := mapPoint.Random(-randomness, randomness);
 
-    if not me.InRange(pt, MM2MS.MAX_RENDER_DISTANCE) then Exit;
+    if not me.InRange(pt, MM2MS.MAX_RENDER_DISTANCE) then
+      Exit;
 
-    quad := Self.GetQuadMS(me, pt);
+    quad := Self.GetQuadMS(me, pt, [0.9,0.9], Minimap.CompassRadians);
 
     Mouse.Move(quad);
     upText := MainScreen.UpText;
@@ -656,7 +632,7 @@ begin
   if not Self.ScreenWalk then
     Exit(Minimap.Polygon.Expand(-1).Contains(mmPoint));
 
-  for corner in Self.GetQuadMS(me, mapPoint, radians).Expand(-8).Corners do
+  for corner in Self.GetQuadMS(me, mapPoint, [0.9,0.9], radians).Corners do
     if MainScreen.Bounds.Contains(corner) then
       Exit(True);
 end;
@@ -751,7 +727,7 @@ begin
 
   if shouldExit then Exit;
 
-  if Self.WaitFlag(flag) then
+  if Self.WaitFlag(flag, radians) then
     handleDoor := not me.InRange(flag, 12) and Self.FlagMoved(flag, radians)
   else
     handleDoor := True;
@@ -781,10 +757,14 @@ begin
 end;
 
 function TRSWalker.UseStairs(me: TPoint; index: Integer): Boolean;
+var
+  direction: String;
 begin
   if index = High(Self._Path) then
     raise GetDebugLn(Self.Name, 'Paths should not end at a stairs node.');
-  Result := me = me;
+
+  if Abs(Self._Path[index].Node.X - Self._Path[index+1].Node.X) < RSTranslator.MapWidth then
+  'Down';
 end;
 
 function TRSWalker.UseShortcut(me: TPoint; index: Integer): Boolean;

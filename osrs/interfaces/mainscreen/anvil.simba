@@ -114,7 +114,7 @@ begin
   for i := 0 to High(boxes) do
   begin
     Self.QuantityButtons[i].Bounds := boxes[i];
-    Self.QuantityButtons[i].EnabledColors := [[RSColors.TEXT_WHITE]];
+    Self.QuantityButtons[i].EnabledColors := [[RSFonts.WHITE]];
   end;
 end;
 
@@ -180,7 +180,7 @@ begin
     Exit(Self.QuantityButtons[0].Enable());
 
   for i := 1 to High(Self.QuantityButtons) do
-    if Target.HasColor(RSColors.TEXT_BLACK, 0,  1, Self.QuantityButtons[i].Bounds) then
+    if Target.HasColor(RSFonts.BLACK, 0,  1, Self.QuantityButtons[i].Bounds) then
       btns += Self.QuantityButtons[i];
 
   if btns = [] then Exit;

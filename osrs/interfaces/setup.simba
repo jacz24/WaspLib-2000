@@ -54,6 +54,7 @@ begin
   GrandExchangeHistory.SetupInterface();
   GrandExchangeChat.SetupInterface();
   GrandExchangeOffer.SetupInterface();
+  FairyRing.SetupInterface();
 
   {$IFDEF WL_DEBUG_INTERFACES}
   WriteLn GetDebugLn('RSClient', 'Interface setup took ' + ToStr(Time()-t) + ' ms to calculate.');
@@ -156,6 +157,7 @@ begin
   RSMouseZoom.ZoomLevel := -1;
   RSMouseZoom.Enabled := True;
   WorldSwitcher.Cooldown.Start(8000);
+  FairyRing.Setup();
 
   Antiban.Zoom.Max := 100;
 
