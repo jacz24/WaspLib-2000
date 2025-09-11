@@ -1,8 +1,7 @@
 (*
 # Minimap
-Methods to interact with the minimap.
+Methods to interact with the minimap interface:
 ```{figure} ../../images/minimap.png
-The minimap interface.
 ```
 *)
 
