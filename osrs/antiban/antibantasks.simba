@@ -83,7 +83,7 @@ end;
 procedure TAntiban.SmallCameraRotation();
 begin
   WriteLn GetDebugLn('Antiban', 'Small camera rotation');
-  Minimap.SetCompassAngle(Minimap.GetCompassAngle() + Random(-15,15));
+  Minimap.SetCompassAngle(Minimap.CompassDegrees + Random(-15,15));
 end;
 
 procedure TAntiban.LargeCameraRotation();
@@ -91,8 +91,8 @@ begin
   WriteLn GetDebugLn('Antiban', 'Large camera rotation');
 
   case RandomBoolean(0.5) of
-    True:  Minimap.SetCompassAngle(Minimap.GetCompassAngle() - GaussRand(30, 360));
-    False: Minimap.SetCompassAngle(Minimap.GetCompassAngle() + GaussRand(30, 360));
+    True:  Minimap.SetCompassAngle(Minimap.CompassDegrees - GaussRand(30, 360));
+    False: Minimap.SetCompassAngle(Minimap.CompassDegrees + GaussRand(30, 360));
   end;
 end;
 
@@ -506,7 +506,7 @@ var
 begin
   dots := Minimap.GetDots(dotType);
   if dots.Length < 1 then Exit;
-  a := Minimap.GetCompassAngle(False);
+  a := Minimap.CompassRadians;
   repeat
     Inc(tries);
     rDot := dots[Random(Low(dots),High(dots))];

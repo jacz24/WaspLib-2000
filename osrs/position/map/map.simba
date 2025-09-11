@@ -285,7 +285,7 @@ begin
   Self.Region := [];
   Self.Similarity := 0;
 
-  angle := Minimap.GetCompassAngle(False);
+  angle := Minimap.CompassRadians;
   clean := Minimap.GetCleanImage(angle, Self.Sample.Radius);
   results := Self.ScaledSearch(clean);
 
@@ -442,7 +442,7 @@ begin
     ' - Plane   : ' + ToStr(Self.Region.Plane),
     ' - Local   : ' + _BoxStr(Self.Region.Region),
     ' - Original: ' + _BoxStr(Self.Region.Original),
-    ' - Compass: '  + ToStr(Minimap.GetCompassAngle()),
+    ' - Compass: '  + ToStr(Minimap.CompassDegrees),
     '',
     'Certainty: '    + ToStr(Round(Self.Similarity, 3)),
     'Time: '         + ToStr(Round(time)) + ' ms'
@@ -462,9 +462,9 @@ begin
   with cleanMinimap.Center do
   begin
     if RSClient.Mode = ERSMode.FIXED then
-      p := Point(X, Y).Offset(0, 8).Rotate(-Minimap.GetCompassAngle(False), [X,Y])
+      p := Point(X, Y).Offset(0, 8).Rotate(-Minimap.CompassRadians, [X,Y])
     else
-      p := Point(X, Y).Offset(2, 1).Rotate(-Minimap.GetCompassAngle(False), [X,Y]);
+      p := Point(X, Y).Offset(2, 1).Rotate(-Minimap.CompassRadians, [X,Y]);
   end;
 
   cleanMinimap.DrawColor := $FFFFFF;
@@ -525,7 +525,7 @@ var
   angle, h: Single;
   img: TImage;
 begin
-  angle := Minimap.GetCompassAngle(False);
+  angle := Minimap.CompassRadians;
 
   img := Target.GetImage();
   img.DrawColor := $00FF00;
@@ -577,7 +577,7 @@ var
   currLoc: TPoint;
   arr: TPointArray;
 begin
-  if angle = $FFFF then angle := Minimap.GetCompassAngle(False);
+  if angle = $FFFF then angle := Minimap.CompassRadians;
   vector := Self.Walker.Point2MMVec(me, pt, angle);
   pt := vector.ToPoint();
 

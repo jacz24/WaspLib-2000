@@ -226,69 +226,22 @@ end;
 
 
 (*
-## Minimap.GetCompassAngle
+## Minimap.CompassRadians
 ```pascal
-function TRSMinimap.GetCompassAngle(asDegrees: Boolean = True): Single;
+property TRSMinimap.CompassRadians: Single;
 ```
-Returns the minimap compass angle either in radians or degrees.
-By default, degrees are used.
+Returns the minimap compass angle as radians.
 
 Credits: [slacky](https://slacky.one/)
 
 Example:
 ```pascal
-WriteLn Minimap.GetCompassAngle();
+WriteLn Minimap.CompassRadians;
 ```
-
 If you are not sure what the compass refers to, it refers to this:
 ```{figure} ../../images/compass.png
 ```
 *)
-function TRSMinimap.GetCompassAngle(asDegrees: Boolean = True): Single;
-var
-  center: TPoint;
-  bounds: TBox;
-  north,south,west,east: TPoint;
-  Nclr, dials, southArr, westArr, eastArr: TPointArray;
-  n,w,e,s,x,y: Single;
-begin
-  center := Self.Compass.Circle.Center;
-  bounds := Self.Compass.Circle.Bounds;
-
-  dials := Target.FindColor($26259C,  12, bounds);
-  Nclr  := Target.FindColor($1D2931, 0.6, bounds);
-
-  dials := dials.ExtractDist(center, 10, 20);
-  north := Nclr.ExtractDist(center, 0,20).Mean();
-
-  southArr := dials.ExtractDist(north, 21, 50);
-  south    := southArr.FurthestPoint(center);
-
-  dials  := dials.Difference(southArr);
-
-  for dials in dials.Cluster(3) do
-    if CrossProduct(dials.Mean(), north, south) > 0 then
-      westArr := dials
-    else
-      eastArr := dials;
-
-  west := westArr.FurthestPoint(eastArr.Mean()); //late edit: Should not this be middle, not eastarr.mean
-  east := eastArr.FurthestPoint(westArr.Mean()); //late edit: Should not this be middle, not westarr.mean
-
-  n := ArcTan2(north.y-center.y, north.x-center.x) + HALF_PI;
-  s := ArcTan2(south.y-center.y, south.x-center.x) - HALF_PI;
-  w := ArcTan2(west.y-center.y, west.x-center.x)+PI;
-  e := ArcTan2(east.y-center.y, east.x-center.x);
-
-  x := Cos(s) + Cos(e) + Cos(w) + Cos(n);
-  y := Sin(s) + Sin(e) + Sin(w) + Sin(n);
-
-  Result := ArcTan2(y/4, x/4);
-  if Result < 0 then Result := Result + PI*2;
-
-  if asDegrees then Result := RadToDeg(Result);
-end;
-
 property TRSMinimap.CompassRadians: Single;
 var
   center: TPoint;
@@ -335,11 +288,27 @@ begin
     Result := Result + TAU;
 end;
 
+(*
+## Minimap.CompassDegrees
+```pascal
+property TRSMinimap.CompassDegrees: Single;
+```
+Returns the minimap compass angle as radians.
+
+Credits: [slacky](https://slacky.one/)
+
+Example:
+```pascal
+WriteLn Minimap.CompassDegrees;
+```
+If you are not sure what the compass refers to, it refers to this:
+```{figure} ../../images/compass.png
+```
+*)
 property TRSMinimap.CompassDegrees: Single;
 begin
   Result := RadToDeg(Self.CompassRadians);
 end;
-
 
 
 (*
@@ -373,10 +342,10 @@ begin
   timeout := Time() + RandomMean(6000, 8000);
 
   repeat
-    remaining := Round(DeltaAngle(Self.GetCompassAngle(), degrees));
+    remaining := Round(DeltaAngle(Self.CompassDegrees, degrees));
     if Abs(remaining) <= accuracy then Exit(True);
 
-    pixels := Round(Abs(DeltaAngle(Self.GetCompassAngle(), degrees)) * DEG_PER_PIXEL);
+    pixels := Round(Abs(DeltaAngle(Self.CompassDegrees, degrees)) * DEG_PER_PIXEL);
     left2right := InRange(remaining, 1, 180) or (remaining < -180);
 
     if left2right then
@@ -404,11 +373,10 @@ begin
   until Time() > timeout;
 
   WriteLn GetDebugLn('Minimap', 'SetCompassAngle timed out.', ELogLevel.WARN);
-  //TODO:
-  //if not RSClient.IsLoggedIn() then
-  //  Login.LoginPlayer()
-  //else
-  //  Self.DebugLn('Make sure the setting "Middle mouse button controls the camera" is enabled in the game settings.');
+  if not RSClient.IsLoggedIn() then
+    Login.DoLogin()
+  else
+    WriteLn GetDebugLn('Minimap', 'Make sure the setting "Middle mouse button controls the camera" is enabled in the game settings.', ELogLevel.WARN);
 end;
 
 function TRSMinimap.SetCompassAngle(degrees: Single): Boolean;
@@ -897,7 +865,7 @@ var
   img, clean: TImage;
   center: TPoint;
 begin
-  if angle = $FFFF then angle := Self.GetCompassAngle(False);
+  if angle = $FFFF then angle := Self.CompassRadians;
 
   if radius = -1 then
     radius := Self.Radius;

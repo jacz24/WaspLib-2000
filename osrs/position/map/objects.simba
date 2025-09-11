@@ -188,7 +188,7 @@ var
   i: Integer;
   dist: Double;
 begin
-  if angle = $FFFF then angle := Minimap.GetCompassAngle(False);
+  if angle = $FFFF then angle := Minimap.CompassRadians;
 
   h := Self.Walker^.Height(me);
 
@@ -585,7 +585,7 @@ begin
 
     if attempt <> (attempts - 1) then Continue;
 
-    angle := Minimap.GetCompassAngle();
+    angle := Minimap.CompassDegrees;
     Minimap.SetCompassAngle(angle-50, angle+50);
   end;
 end;
@@ -713,7 +713,7 @@ begin
       Continue;
     end;
 
-    Minimap.SetCompassAngle(Minimap.GetCompassAngle(), 50);
+    Minimap.SetCompassAngle(Minimap.CompassDegrees, 50);
   end;
 end;
 

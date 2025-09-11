@@ -487,12 +487,6 @@ begin
     if position.Current <> position.Previous then
       countdown.Restart();
 
-    //if (Self._Node <> EGraphNode.NORMAL) and Self.FlagMoved(position.Current, Minimap.CompassRadians) then
-    begin
-      Self.Walking := False;
-      Break;
-    end;
-
     if @Self.OnWaitMovingEvent <> nil then
       Self.OnWaitMovingEvent(@Self, position.Current, destination);
 
@@ -728,35 +722,33 @@ begin
   if shouldExit then Exit;
 
   if Self.WaitFlag(flag, radians) then
-    handleDoor := not me.InRange(flag, 12) and Self.FlagMoved(flag, radians)
+    handleDoor := not me.InRange(flag, 8) and Self.FlagMoved(flag, radians)
   else
     handleDoor := True;
 
-  if not handleDoor then
-  begin
-    Self.WaitMoving(mapPt, 4);
-    if not Self.WebGraph^.WalkableClusters.InSameTPA(Self.Position(), mapPt) then
-      handleDoor := True;
-  end;
+  Self.WaitMoving(mapPt, 3);
 
-  me := Self.Position();
+  if not handleDoor and not Self.WebGraph^.WalkableClusters.InSameTPA(Self.Position(), mapPt) then
+    handleDoor := True;
 
   if handleDoor then
   begin
     for doorAttempts := 0 to 2 do
     begin
       WriteLn GetDebugLn(Self.Name, 'Attempt to open door number: ' + ToStr(doorAttempts+1));
-      cuboid := Self.GetCuboidMS(me, Self._Path[index].Node, [0.6,0.6,4], radians);
-      ShowOnTarget(cuboid);
+
+      cuboid := Self.GetCuboidMS(Self.Position(), Self._Path[index].Node, [0.6,0.6,4], radians);
       if MainScreen.Interact(cuboid.ShapeFill().RandomMean(), ['Open']) then
+      begin
+        Self.WaitMoving(Self._Path[index].Node, 3);
+        Sleep(600, 1200);
         Break;
+      end;
     end;
-    Self.WaitMoving(mapPt, 4);
-    Biometrics.Sleep(600, 800);
     WriteLn GetDebugLn(Self.Name, 'Door should now be open.');
   end;
 
-  Result := Self.CrossDoor(me, index, Dec(attempts));
+  Result := Self.CrossDoor(Self.Position(), index, Dec(attempts));
 end;
 
 function TRSWalker.UseStairs(me: TPoint; index: Integer): Boolean;
@@ -861,6 +853,8 @@ begin
 
   smallSteps := (Self.ScreenWalk or Self.AdaptiveWalk) and InRange(Options.GetZoomLevel(), 70, 100);
 
+  Self._Path += path.First;
+
   for i := 1 to High(path)-1 do
   begin
     line := TPointArray.CreateFromLine(path[i-1].Node, path[i].Node);
@@ -893,7 +887,6 @@ begin
     Self.AdaptiveWalkCheck(me);
   end;
 end;
-
 
 function TRSWalker._AdvancePath(out index: Integer; me: TPoint; angle: Double): Boolean;
 var
@@ -1000,9 +993,7 @@ begin
     me := Self.Position();
 
     fails := Self._WalkPathHelper(idx, angle, me, fails, debug);
-
-    if fails > 0 then
-      Continue;
+    if fails > 0 then Continue;
 
     case Self._Node of
       EGraphNode.NORMAL: if Self.WalkStep(me, idx, minDist) and (idx = High(Self._Path)) then Exit(True);

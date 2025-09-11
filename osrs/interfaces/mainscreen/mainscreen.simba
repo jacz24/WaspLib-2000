@@ -475,7 +475,8 @@ begin
   if Self.IsUpText(strings) then
   begin
     Mouse.Click(EMouseButton.LEFT);
-    Exit(Self.RedClicked());
+    if Self.RedClicked() then
+      Exit(True);
   end;
 
   if ChooseOption.Select(strings) then

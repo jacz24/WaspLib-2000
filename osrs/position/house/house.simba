@@ -238,7 +238,7 @@ var
 begin
   Self.Similarity := 0;
 
-  angle := Minimap.GetCompassAngle(False);
+  angle := Minimap.CompassRadians;
   clean := Minimap.GetCleanImage(angle, Self.Sample.Radius);
   results := Self.ScaledSearch(clean);
 
@@ -328,7 +328,7 @@ begin
   img.DrawImage(map, [10, 20]);
   with cleanMinimap.Center do
     if RSClient.Mode = ERSMode.FIXED then
-      p := Point(X, Y).Offset(0, 8).Rotate(-Minimap.GetCompassAngle(False), [X,Y]);
+      p := Point(X, Y).Offset(0, 8).Rotate(-Minimap.CompassRadians, [X,Y]);
 
   cleanMinimap.DrawColor := $FFFFFF;
   cleanMinimap.DrawBoxFilled([p.X - 1, p.Y - 1, p.X + 1, p.Y + 1]);

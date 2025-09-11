@@ -166,7 +166,7 @@ var
   i: Integer;
 begin
   if (angle = $FFFF) then
-    angle := Self.GetCompassAngle(False);
+    angle := Self.CompassRadians;
 
   SetLength(vectors, Length(points));
 
@@ -182,7 +182,7 @@ end;
 
 function TRSMinimap.Point2MS(pt: TPoint; angle: Single = $FFFF): TPoint;
 begin
-  if (angle = $FFFF) then angle := Self.GetCompassAngle(False);
+  if (angle = $FFFF) then angle := Self.CompassRadians;
   with Self.Normalize(pt, angle) do
     Result := MM2MS.Run([[X, Y, 0]], angle)[0];
 end;
@@ -192,7 +192,7 @@ var
   tpa: TPointArray;
 begin
   if angle = $FFFF then
-    angle := Self.GetCompassAngle(False);
+    angle := Self.CompassRadians;
   for tpa in atpa do
     Result += Self.Points2MS(tpa, angle);
 end;
@@ -246,7 +246,7 @@ end;
 
 function TRSMinimap.Point2MSQuad(pt: TPoint; size: TVector2 = [1,1]; angle: Single = $FFFF): TQuad;
 begin
-  if angle = $FFFF then angle := Self.GetCompassAngle(False);
+  if angle = $FFFF then angle := Self.CompassRadians;
   Result := Self.Vector2MSQuad(pt.ToVec3(), angle, size);
 end;
 
@@ -303,7 +303,7 @@ end;
 
 function TRSMinimap.Point2MSCuboid(pt: TPoint; size: TVector3; angle: Single = $FFFF): TCuboid;
 begin
-  if angle = $FFFF then angle := Self.GetCompassAngle(False);
+  if angle = $FFFF then angle := Self.CompassRadians;
   Result := Self.Vector2MSCuboid(pt.ToVec3(), size, angle);
 end;
 
@@ -644,7 +644,7 @@ var
   angle: Single;
   tpa: TPointArray;
 begin
-  angle := Self.GetCompassAngle(False);
+  angle := Self.CompassRadians;
 
   img := Target.GetImage();
   img.DrawColor := $00FF00;
@@ -702,7 +702,6 @@ begin
   end;
 end.
 ```
-
 ```{figure} ../../images/mm2ms_playerbox.gif
 ```
 *)
@@ -714,7 +713,7 @@ begin
   if MM2MS.PlayerBoxes[Options.GetZoomLevel()] <> [] then
     Exit(MM2MS.PlayerBoxes[Options.GetZoomLevel()]);
 
-  compassAngle := Minimap.GetCompassAngle(False);
+  compassAngle := Minimap.CompassRadians;
 
   vectors := [
     Minimap.Center.Offset(-2,0).ToVec3(9).Rotate(-compassAngle, Minimap.Center),
