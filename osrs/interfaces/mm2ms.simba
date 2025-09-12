@@ -447,11 +447,10 @@ begin
       Break;
   end;
 
-  if not Result then Exit;
+  if not Result then
+    Exit;
 
-  Self.SetCompassAngle(
-    Self.Center.AngleBetween(tpa[i]) - Self.Center.AngleBetween(pt) + randomness
-  );
+  Self.CompassDegrees := Self.Center.AngleBetween(tpa[i]) - Self.Center.AngleBetween(pt) + randomness;
 end;
 
 (*

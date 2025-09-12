@@ -542,7 +542,6 @@ var
   attempt, i: Integer;
   atpa: T2DPointArray;
   tpa: TPointArray;
-  angle: Double;
   coordinates: TPointArray;
 begin
   if ChooseOption.IsOpen() then
@@ -583,10 +582,10 @@ begin
 
     if MainScreen.IsUpText(Self.UpText + action) then Exit(True);
 
-    if attempt <> (attempts - 1) then Continue;
+    if attempt <> (attempts - 1) then
+      Continue;
 
-    angle := Minimap.CompassDegrees;
-    Minimap.SetCompassAngle(angle-50, angle+50);
+    Minimap.CompassRadians := Minimap.CompassRadians + PI/3.6 * Random(-1,1);
   end;
 end;
 
@@ -713,7 +712,7 @@ begin
       Continue;
     end;
 
-    Minimap.SetCompassAngle(Minimap.CompassDegrees, 50);
+    Minimap.CompassRadians := Minimap.CompassRadians + PI/3.6 * Random(-1,1);
   end;
 end;
 

@@ -152,6 +152,7 @@ begin
   MainScreen.UptextOCR.Tolerance := 25;
   MainScreen.UptextOCR.ShadowTolerance := 65;
   MainScreen.UptextOCR.Whitelist := ['a'..'z', 'A'..'Z', '0'..'9', '-', '>', '(', ')', '/'];
+  Minimap.Compass.Accuracy := 0.03*PI;
   Options.ZoomLevel := -1;
   MM2MS.Projector.RSZoom := -1;
   RSMouseZoom.ZoomLevel := -1;

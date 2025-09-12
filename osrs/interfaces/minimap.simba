@@ -48,8 +48,8 @@ Main record used to interact with the {ref}`Minimap`.
     Polygon: TPolygon;
 
     Compass: record
-      PreviousRadians: Single;
       Circle: TCircle;
+      Accuracy: Double;
     end;
 
     Mask: TPointArray;
@@ -224,22 +224,36 @@ begin
 end;
 
 
+(*
+## Minimap.Compass
+The minimap compass refers to the small compass on the top left corner of the
+minimap:
+```{figure} ../../images/compass.png
+```
+The following properties are used to read and set the compass angle as both
+radians and degrees as needed.
+*)
 
 (*
-## Minimap.CompassRadians
+### Minimap.CompassRadians
 ```pascal
 property TRSMinimap.CompassRadians: Single;
+property TRSMinimap.CompassRadians(radians: Single): Boolean;
+property TRSMinimap.CompassRadians(minRadians, maxRadians: Single): Boolean;
 ```
-Returns the minimap compass angle as radians.
+Returns or sets the minimap compass angle as radians.
+
+The accuracy can be controlled through the `Minimap.Compass.Accuracy` variable
+and it's value should be in radians. It's default is aproximately
+5º (`0.03*PI`).
 
 Credits: [slacky](https://slacky.one/)
 
 Example:
 ```pascal
 WriteLn Minimap.CompassRadians;
-```
-If you are not sure what the compass refers to, it refers to this:
-```{figure} ../../images/compass.png
+WriteLn Minimap.CompassRadians := PI;
+WriteLn Minimap.CompassRadians;
 ```
 *)
 property TRSMinimap.CompassRadians: Single;
@@ -288,108 +302,103 @@ begin
     Result := Result + TAU;
 end;
 
-(*
-## Minimap.CompassDegrees
-```pascal
-property TRSMinimap.CompassDegrees: Single;
-```
-Returns the minimap compass angle as radians.
-
-Credits: [slacky](https://slacky.one/)
-
-Example:
-```pascal
-WriteLn Minimap.CompassDegrees;
-```
-If you are not sure what the compass refers to, it refers to this:
-```{figure} ../../images/compass.png
-```
-*)
-property TRSMinimap.CompassDegrees: Single;
-begin
-  Result := RadToDeg(Self.CompassRadians);
-end;
-
-
-(*
-## Minimap.SetCompassAngle
-```pascal
-function TRSMinimap.SetCompassAngleEx(degrees, accuracy: Single): Boolean;
-function TRSMinimap.SetCompassAngle(degrees: Single): Boolean;
-function TRSMinimap.SetCompassAngle(minDegrees, maxDegrees: Single; accuracy: Single = 5): Boolean; overload;
-```
-Sets the current compass angle.
-If you specify a minimum and a maximum angle a gaussian distribution will be used.
-
-Example:
-```pascal
-Minimap.SetCompassAngle(180);
-```
-*)
-function TRSMinimap.SetCompassAngleEx(degrees, accuracy: Single): Boolean;
+property TRSMinimap.CompassRadians(radians: Double): Boolean;
 const
-  DEG_PER_PIXEL = 2.83;
+  RAD_PER_PIXEL: Double = 162.2004206;
 var
   available: TBox;
-  remaining: Integer;
-  left2right: Boolean;
+  remain, oneDeg: Double;
+  clockwise: Boolean;
   destination: TPoint;
   pixels: Integer;
   timeout: UInt64;
 begin
   available := RSClient.Bounds.Expand(-10);
-  degrees := DegNormalize(degrees);
+  radians := RadNormalize(radians);
   timeout := Time() + RandomMean(6000, 8000);
+  oneDeg := DegToRad(1);
 
   repeat
-    remaining := Round(DeltaAngle(Self.CompassDegrees, degrees));
-    if Abs(remaining) <= accuracy then Exit(True);
+    remain := DeltaAngle(Self.CompassRadians, radians, TAU);
+    if Abs(remain) <= Self.Compass.Accuracy then
+      Exit(True);
 
-    pixels := Round(Abs(DeltaAngle(Self.CompassDegrees, degrees)) * DEG_PER_PIXEL);
-    left2right := InRange(remaining, 1, 180) or (remaining < -180);
+    pixels := Round(Abs(remain) * RAD_PER_PIXEL);
+    clockwise := InRange(remain, oneDeg, PI) or (remain < -PI);
 
-    if left2right then
+    if clockwise then
     begin
       if (not available.Contains(Target.MouseXY)) or ((Target.MouseY + 200 > available.Y2) or (Target.MouseX + pixels > available.X2)) then
-        Target.MouseMove([available.X1, available.Y1, available.X1 + 200, available.Y1 + 200]);
+        Mouse.Move([available.X1, available.Y1, available.X1 + 200, available.Y1 + 200]);
 
       destination.X := Target.MouseX + pixels;
     end
     else
     begin
       if (not available.Contains(Target.MouseXY)) or ((Target.MouseY + 200 > available.Y2) or (Target.MouseX - pixels < available.X1)) then
-        Target.MouseMove([available.X2 - 200, available.Y1, available.X2, available.Y1 + 200]);
+        Mouse.Move([available.X2 - 200, available.Y1, available.X2, available.Y1 + 200]);
 
-      destination.X := Target.MouseX - Pixels;
+      destination.X := Target.MouseX - pixels;
     end;
 
     destination.Y := Random(Target.MouseY + 100, available.Y2);
 
-    Target.MouseDown(EMouseButton.MIDDLE);
-    Target.MouseMove(destination);
-    Target.MouseUp(EMouseButton.MIDDLE);
-
-    Sleep(100, 1000, ERandomDir.LEFT);
+    Mouse.Drag(destination, EMouseButton.MIDDLE);
+    Biometrics.Sleep(100, 1000, ERandomDir.LEFT);
   until Time() > timeout;
 
-  WriteLn GetDebugLn('Minimap', 'SetCompassAngle timed out.', ELogLevel.WARN);
+  WriteLn GetDebugLn('Minimap', 'Setting `CompassRadians` timed out.', ELogLevel.WARN);
+
   if not RSClient.IsLoggedIn() then
     Login.DoLogin()
   else
     WriteLn GetDebugLn('Minimap', 'Make sure the setting "Middle mouse button controls the camera" is enabled in the game settings.', ELogLevel.WARN);
 end;
 
-function TRSMinimap.SetCompassAngle(degrees: Single): Boolean;
+property TRSMinimap.CompassRadians(minRadians, maxRadians: Single): Boolean;
+var
+  radians: Single;
 begin
-  Result := Self.SetCompassAngleEx(degrees, 5);
+  radians := RandomMean(RadNormalize(minRadians), RadNormalize(maxRadians));
+  Result := Self.CompassRadians := radians;
 end;
 
-function TRSMinimap.SetCompassAngle(minDegrees, maxDegrees: Single; accuracy: Single = 5): Boolean; overload;
-var
-  degrees: Single;
+
+(*
+### Minimap.CompassDegrees
+```pascal
+property TRSMinimap.CompassDegrees: Single;
+property TRSMinimap.CompassDegrees(degrees: Single): Boolean;
+property TRSMinimap.CompassDegrees(minDegrees, maxDegrees: Single): Boolean;
+```
+Returns or sets the minimap compass angle as degrees.
+
+The accuracy can be controlled through the `Minimap.Compass.Accuracy` variable
+and it's value should be in radians. It's default is aproximately
+5º (`0.03*PI`).
+
+Example:
+```pascal
+WriteLn Minimap.CompassDegrees;
+WriteLn Minimap.CompassDegrees := 180;
+WriteLn Minimap.CompassDegrees;
+```
+If you are not sure what the compass refers to, check the image at the end of
+{ref}`Minimap.CompassRadians`.
+*)
+property TRSMinimap.CompassDegrees: Single;
 begin
-  degrees := RandomMean(DegNormalize(minDegrees), DegNormalize(maxDegrees));
-  Result := Self.SetCompassAngleEx(degrees, accuracy);
+  Result := RadToDeg(Self.CompassRadians);
+end;
+
+property TRSMinimap.CompassDegrees(degrees: Single): Boolean;
+begin
+  Result := Self.CompassRadians := DegToRad(degrees);
+end;
+
+property TRSMinimap.CompassDegrees(minDegrees, maxDegrees: Single): Boolean;
+begin
+  Result := Self.CompassRadians[DegToRad(minDegrees), DegToRad(maxDegrees)];
 end;
 
 
@@ -636,6 +645,66 @@ function TRSMinimap.WaitFlag(time: Integer = 600; interval: Integer = -1): Boole
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.HasFlag(), interval, time);
+end;
+
+
+(*
+## Minimap.CountColor
+```pascal
+function TRSMinimap.CountColor(color: TColor; tolerance: Single = 0): Integer;
+function TRSMinimap.CountColor(color: TColorTolerance): Integer; overload;
+```
+Counts the specified `color` on the {ref}`Minimap`.
+
+Example:
+```pascal
+WriteLn Minimap.CountColor($FFFFFF);
+```
+*)
+function TRSMinimap.CountColor(color: TColor; tolerance: Single = 0): Integer;
+var
+  tpa: TPointArray;
+begin
+  tpa := Target.FindColor(color, tolerance, Self.Bounds);
+  Result := tpa.ExtractPolygon(Self.Polygon).Length;
+end;
+
+function TRSMinimap.CountColor(color: TColorTolerance): Integer; overload;
+var
+  tpa: TPointArray;
+begin
+  tpa := Target.FindColor(color, Self.Bounds);
+  Result := tpa.ExtractPolygon(Self.Polygon).Length;
+end;
+
+
+(*
+## Minimap.ColorPercent
+```pascal
+function TRSMinimap.ColorPercent(color: TColor; tolerance: Single = 0): Single;
+function TRSMinimap.ColorPercent(color: TColorTolerance): Single; overload;
+```
+Counts the percentage of the specified `color` on the {ref}`Minimap`.
+
+Example:
+```pascal
+WriteLn Minimap.ColorPercent($FFFFFF);
+```
+*)
+function TRSMinimap.ColorPercent(color: TColor; tolerance: Single = 0): Single;
+var
+  count: Integer;
+begin
+  count := Self.CountColor(color, tolerance);
+  Result := count / Self.Polygon.Area;
+end;
+
+function TRSMinimap.ColorPercent(color: TColorTolerance): Single; overload;
+var
+  count: Integer;
+begin
+  count := Self.CountColor(color);
+  Result := count / Self.Polygon.Area;
 end;
 
 

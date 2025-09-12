@@ -451,6 +451,45 @@ end;
 
 
 (*
+## Mouse.Drag
+```pascal
+procedure TMouse.Drag(destination: TPoint; button: EMouseButton);
+procedure TMouse.Drag(circle: TCircle; button: EMouseButton); overload;
+procedure TMouse.Drag(box: TBox; button: EMouseButton); overload;
+procedure TMouse.Drag(quad: TQuad; button: EMouseButton); overload;
+```
+Press and hold `button` while the mouse is moved to the specified `destination`.
+*)
+procedure TMouse.Drag(destination: TPoint; button: EMouseButton);
+begin
+  Self.Hold(button);
+  Self.Move(destination);
+  Self.Release(button);
+end;
+
+procedure TMouse.Drag(circle: TCircle; button: EMouseButton); overload;
+begin
+  Self.Hold(button);
+  Self.Move(circle);
+  Self.Release(button);
+end;
+
+procedure TMouse.Drag(box: TBox; button: EMouseButton); overload;
+begin
+  Self.Hold(button);
+  Self.Move(box);
+  Self.Release(button);
+end;
+
+procedure TMouse.Drag(quad: TQuad; button: EMouseButton); overload;
+begin
+  Self.Hold(button);
+  Self.Move(quad);
+  Self.Release(button);
+end;
+
+
+(*
 ## Mouse.Scroll
 ```pascal
 procedure TMouse.Scroll(amount: Integer; down: Boolean);

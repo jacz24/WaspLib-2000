@@ -580,11 +580,12 @@ begin
         Exit(Self.RedClicked);
       end;
     end
-    else if not upText.ContainsAny(Self.WalkUpText) then
+    else
+    if not upText.ContainsAny(Self.WalkUpText) then
     begin
       if not ChooseOption.Open() then Exit;
       if not ChooseOption.Find(Self.TargetUpText, True, False) then
-        Exit(ChooseOption.Select(Self.WalkUpText));
+        Exit(ChooseOption.Select(Self.WalkUpText + ['Walk here']));
 
       if Self.ActionUpText <> [] then
         Self.RedClicked := ChooseOption.Select(Self.ActionUpText)
@@ -708,9 +709,13 @@ begin
   furthest := index;
 
   radians := Minimap.CompassRadians;
+
   while (furthest < High(Self._Path)) and Self.IsWalkable(Self._Path[furthest+1].Node, me, tmp, radians) do
-    if Self._Path[furthest+1].Typ = EGraphNode.NORMAL then
-      Inc(furthest);
+  begin
+    if Self._Path[furthest+1].Typ <> EGraphNode.NORMAL then
+      Break;
+    Inc(furthest);
+  end;
 
   if Biometrics.RandomBoolean(0.002) then
     furthest := Random(index, furthest);
@@ -923,14 +928,14 @@ begin
     index := Random(nearest, furthest);
 end;
 
-function TRSWalker._WalkPathHelper(out index: Integer; out angle: Double; me: TPoint; fails: Integer; debug: Boolean): Integer;
+function TRSWalker._WalkPathHelper(out index: Integer; out radians: Double; me: TPoint; fails: Integer; debug: Boolean): Integer;
 begin
   if debug then
     Self.DebugPath(index, me);
 
   Result := fails;
 
-  if Self._AdvancePath(index, me, angle) then
+  if Self._AdvancePath(index, me, radians) then
     Exit(0);
 
   //Likely haven't moved far enough to advance to next point
@@ -944,14 +949,14 @@ begin
   if Self.AdaptiveWalk and Self.ScreenWalk then
   begin
     Self.ScreenWalk := False;
-    if Self._AdvancePath(index, me, angle) then
+    if Self._AdvancePath(index, me, radians) then
       Exit(0);
   end;
 
   if (Result = 5) then
   begin
-    Minimap.SetCompassAngle(RadToDeg(angle) + RandomLeft(30, 360) * Random(-1,1));
-    angle := Minimap.CompassRadians;
+    Minimap.CompassRadians := radians + RandomLeft(PI/6, TAU) * Random(-1,1);
+    radians := Minimap.CompassRadians;
   end;
 
   if Result mod 2 = 0 then
