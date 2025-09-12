@@ -284,30 +284,25 @@ var
   tree: TKDPointTree;
   doors: T2DPointArray;
   connectMap: array of TIntegerMatrix;
-  doorMapA, doorMapB, doorMap: TIntegerMatrix;
-  skip, ignore: TBooleanArray;
-  left, right: Boolean;
+  doorMapA, doorMapB, matrix: TIntegerMatrix;
   connectA, connectB: TIntegerArray;
+  minRadius: Boolean;
 begin
+  minLen := Self.MinimumTiles * RSTranslator.TileArea;
+  maxSpacing := Self.Spacing * 2;
+  minSpacing := Self.Spacing div 2;
+
+  clusters := white.Cluster(1);
   doors := Self.FindDoors(red.Cluster(1.5), map);
 
-  SetLength(skip, Length(doors));
-  SetLength(ignore, Length(doors));
   SetLength(connectA, Length(doors));
   SetLength(connectB, Length(doors));
 
   with white.Bounds() do
   begin
-    SetLength(connectMap, Y2, X2);
-    SetLength(doorMap, Y2, X2);
+    SetLength(connectMap, Y2+1, X2+1);
+    SetLength(matrix, Y2+1, X2+1);
   end;
-
-  minLen := Self.MinimumTiles * RSTranslator.TileArea;
-
-  maxSpacing := Self.Spacing * 2;
-  minSpacing := Self.Spacing div 2;
-
-  clusters := white.Cluster(1);
 
   SetLength(doorMapA, Length(clusters));
   SetLength(doorMapB, Length(clusters));
@@ -317,64 +312,76 @@ begin
     if Length(clusters[i]) < minLen then
       Continue;
 
-    for j := 0 to High(doors) do
-    begin
-      if skip[j] or ignore[j] then Continue;
-      left  := clusters[i].Contains(doors[j,1]);
-      right := clusters[i].Contains(doors[j,2]);
-
-      if left and right then
-      begin
-        ignore[j] := True;
-        Continue;
-      end;
-
-      if left then
-      begin
-        connectA[j] := i;
-        doorMapA[i] += j;
-        skip[j] := connectB[j] <> 0;
-      end
-      else if right then
-      begin
-        connectB[j] := i;
-        doorMapB[i] += j;
-        skip[j] := connectA[j] <> 0;
-      end
-      else
-        Continue;
-
-      if not skip[j] then
-      begin
-        Result.Nodes += TGraphNode.Create(doors[j,0], EGraphNode.DOOR);
-        doorMap[doors[j,0].Y, doors[j,0].X] := High(Result.Nodes);
-        SetLength(Result.Paths, High(Result.Nodes));
-      end;
-    end;
+    for p in clusters[i] do
+      matrix[p.Y, p.X] := i;
   end;
+
+  for i := 0 to High(doors) do
+  begin
+    n  := matrix[doors[i,1].Y, doors[i,1].X];
+    l := matrix[doors[i,2].Y, doors[i,2].X];
+
+    if n = l then
+      Continue;
+
+    connectA[i] := n;
+    doorMapA[n] += i;
+
+    connectB[i] := l;
+    doorMapB[l] += i;
+
+    Result.Nodes += TGraphNode.Create(doors[i,0], EGraphNode.DOOR);
+    matrix[doors[i,0].Y, doors[i,0].X] := High(Result.Nodes);
+  end;
+
+  SetLength(Result.Paths, Length(Result.Nodes));
 
   for i := 0 to High(clusters) do
   begin
-    if Length(clusters[i]) < minLen then
-      Continue;
-
-    with clusters[i].Bounds() do
-      if Max(Width, Height) < Self.NodeRadius then
-      begin
-        Result.Nodes += TGraphNode.Create(clusters[i].Median());
-        hi := High(Result.Nodes);
-        SetLength(Result.Paths, hi+1);
-
-        for j in doorMapA[i] + doorMapB[i] do
-          if not ignore[j] and ((connectA[j] = i) or (connectB[j] = i)) then
-          begin
-            l := doorMap[doors[j,0].Y, doors[j,0].X];
-            ignore[j] := Result.Paths[l] <> [];
-            Result.Paths[l] += [hi];
-            Result.Paths[hi] += l;
-          end;
+    if not minRadius then
+    begin
+      if Length(clusters[i]) < minLen then
         Continue;
+      with clusters[i].Bounds() do
+      begin
+        if Max(Width, Height) >= Self.NodeRadius then
+          minRadius := True
+        else
+        begin
+          Result.Nodes += TGraphNode.Create(clusters[i].Median());
+          hi := High(Result.Nodes);
+          SetLength(Result.Paths, hi+1);
+
+          for n := High(doorMapA[i]) downto 0 do
+          begin
+            j := doorMapA[i,n];
+            if connectA[j] = i then
+            begin
+              l := matrix[doors[j,0].Y, doors[j,0].X];
+              if Result.Paths[l] <> [] then
+                Delete(doorMapA[i], i, 1);
+              Result.Paths[l] += [hi];
+              Result.Paths[hi] += l;
+            end;
+          end;
+
+          for n := High(doorMapB[i]) downto 0 do
+          begin
+            j := doorMapB[i,n];
+            if connectB[j] = i then
+            begin
+              l := matrix[doors[j,0].Y, doors[j,0].X];
+              if Result.Paths[l] <> [] then
+                Delete(doorMapA[i], i, 1);
+              Result.Paths[l] += [hi];
+              Result.Paths[hi] += l;
+            end;
+          end;
+
+          Continue;
+        end;
       end;
+    end;
 
     nodes := [];
     if Self.Skeletonize then
@@ -388,6 +395,8 @@ begin
       for tpa in clusters[i].Erode(1).Partition(Self.Spacing) do
         nodes += tpa.Cluster(1.5).Means();
     end;
+
+    if nodes = [] then Continue;
 
     tree := TKDPointTree.Create(nodes);
 
@@ -428,12 +437,10 @@ begin
       end;
     end;
 
-    for j in (doorMapA[i] + doorMapB[i]) do
+    for j in doorMapA[i] + doorMapB[i] do
     begin
-      if ignore[j] then Continue;
-
       p := doors[j,0];
-      l := doorMap[p.Y, p.X];
+      l := matrix[p.Y, p.X];
 
       tmp := clusters[i];
       tmp += p;

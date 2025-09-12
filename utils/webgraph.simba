@@ -9,7 +9,7 @@ but it was written from scratch by Torwent.
 {$DEFINE WL_WEBGRAPH_INCLUDED}
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
-{$R-}
+{$R+}
 type
 (*
 ## EGraphNode
