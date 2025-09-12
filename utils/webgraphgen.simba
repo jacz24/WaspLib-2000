@@ -24,6 +24,10 @@ Record responsible for generating webgraphs from collision map images.
     MaxDoorConnections: Integer;
     Skeletonize: Boolean;
     Disabled: Boolean;
+
+    WhiteClusters: T2DPointArray;
+    Doors: T2DPointArray;
+    Matrix: TIntegerMatrix;
   end;
 
 function TWebGraphGenerator.Hash(): String;
@@ -235,6 +239,156 @@ begin
 end;
 
 
+function TWebGraphGenerator.ProcessDoors(door: TPointArray; idx: Integer; out total: Integer; out mapA, mapB: TIntegerMatrix): TGraphNodeArray;
+var
+  a, b: Integer;
+begin
+  a := Self.Matrix[door[1].Y, door[1].X];
+  b := Self.Matrix[door[2].Y, door[2].X];
+  if a = b then Exit;
+
+  mapA[a] += idx;
+  mapB[b] += idx;
+
+  Result := [TGraphNode.Create(door[0], EGraphNode.DOOR)];
+  Self.Matrix[door[0].Y, door[0].X] := total;
+  total += 1;
+end;
+
+procedure TWebGraphGenerator.ProcessSmallCluster(out graph: TWebGraph; out minRadius: Boolean; out mapA, mapB: TIntegerArray; idx, minLength: Integer; connectA, connectB: TIntegerArray);
+var
+  bounds: TBox;
+  hi, n, j, l: Integer;
+begin
+  if Length(Self.WhiteClusters[idx]) < minLength then
+    Exit;
+
+  bounds := Self.WhiteClusters[idx].Bounds();
+
+  minRadius := Max(bounds.Width, bounds.Height) >= Self.NodeRadius;
+  if minRadius then
+    Exit;
+
+  graph.Nodes += TGraphNode.Create(Self.WhiteClusters[idx].Median());
+  hi := High(graph.Nodes);
+  SetLength(graph.Paths, hi+1);
+
+  for n := High(mapA) downto 0 do
+  begin
+    j := mapA[n];
+    if connectA[j] = idx then
+    begin
+      l := Self.Matrix[Self.Doors[j,0].Y, Self.Doors[j,0].X];
+      if graph.Paths[l] <> [] then
+        Delete(mapA, idx, 1);
+      graph.Paths[l] += [hi];
+      graph.Paths[hi] += l;
+    end;
+  end;
+
+  for n := High(mapB) downto 0 do
+  begin
+    j := mapB[n];
+    if connectB[j] = idx then
+    begin
+      l := Self.Matrix[Self.Doors[j,0].Y, Self.Doors[j,0].X];
+      if graph.Paths[l] <> [] then
+        Delete(mapB, idx, 1);
+      graph.Paths[l] += [hi];
+      graph.Paths[hi] += l;
+    end;
+  end;
+end;
+
+function TWebGraphGenerator.SplitNodes(idx: Integer): TPointArray;
+var
+  tpa: TPointArray;
+begin
+  tpa := Self.WhiteClusters[idx].Erode(1);
+
+  if Self.Skeletonize then
+    tpa := tpa.Skeleton(2, 6);
+
+  for tpa in tpa.Partition(Self.Spacing) do
+    Result += tpa.Cluster(1.5).Means();
+end;
+
+procedure TWebGraphGenerator.PreProcessCluster(constref tree: TKDPointTree; out connectMap: array of TIntegerMatrix; idx, treeIdx: Integer);
+var
+  p, q: TPoint;
+  tpa: TPointArray;
+  i: Integer;
+begin
+  p := tree.Data[treeIdx].Split;
+  for q in tree.KNearest(p, Self.MaxConnections*2, True) do
+  begin
+    if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > Self.Spacing * 2 then
+      Continue;
+
+    tpa := Self.WhiteClusters[idx].ExtractBox(TBox.Create(p, q).Expand(Self.Spacing div 2));
+    tpa := tpa.AStar(p, q, False);
+    if (tpa = []) or (Length(tpa) > 80) then
+      Continue;
+
+    connectMap[q.Y,q.X] += treeIdx;
+    if Inc(i) > Self.MaxConnections then
+      Break;
+  end;
+end;
+
+procedure TWebGraphGenerator.ProcessCluster(out graph: TWebGraph; constref tree: TKDPointTree; connectMap: array of TIntegerMatrix; idx, len: Integer);
+var
+  p, q: TPoint;
+  i, j, n: Integer;
+begin
+  p := tree.Data[idx].Split;
+  i := idx+len;
+
+  graph.Nodes[i] := TGraphNode.Create(p);
+  Self.Matrix[p.Y, p.X] := i;
+
+  for n in connectMap[p.Y,p.X] do
+  begin
+    q := tree.Data[n].Split;
+    j := n+len;
+    graph.Nodes[j] := TGraphNode.Create(q);
+    Self.Matrix[q.Y, q.X] := j;
+
+    if not graph.Paths[i].Contains(j) then
+      graph.Paths[i] += j;
+    if not graph.Paths[n].Contains(i) then
+      graph.Paths[j] += i;
+  end;
+end;
+
+function TWebGraphGenerator.ConnectLastDoors(out graph: TWebGraph; idx, door: Integer; constref tree: TKDPointTree): TGraphNodeArray;
+var
+  p, q: TPoint;
+  i, j: Integer;
+  cluster, tpa: TPointArray;
+begin
+  p := Self.Doors[door,0];
+  i := Self.Matrix[p.Y, p.X];
+
+  cluster := Self.WhiteClusters[idx] + [p];
+
+  for q in tree.KNearest(p, Self.MaxDoorConnections, True) do
+  begin
+    if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > Self.Spacing * 2 then
+      Continue;
+
+    tpa := cluster.ExtractBox(TBox.Create(p, q).Expand(Self.Spacing div 2));
+    tpa := tpa.AStar(p, q, False);
+    if (tpa = []) or (Length(tpa) > 80) then
+      Continue;
+
+    j := Self.Matrix[q.Y, q.X];
+    graph.Paths[i] += [j];
+    graph.Paths[j] += i;
+  end;
+end;
+
+
 (*
 ## WebGraphGenerator.BuildGraph
 ```pascal
@@ -277,126 +431,58 @@ As a bonus you can also see the resulting webgraph!
 *)
 function TWebGraphGenerator._BuildGraph(map: TImage; white, red: TPointArray): TWebGraph;
 var
-  i, j, l, n, hi, len, minLen, maxSpacing, minSpacing: Integer;
-  clusters: T2DPointArray;
-  skeleton, nodes, tpa, tmp: TPointArray;
-  p, q: TPoint;
+  i, j, n, len, minLen: Integer;
+  nodes: TPointArray;
+  pt: TPoint;
   tree: TKDPointTree;
-  doors: T2DPointArray;
   connectMap: array of TIntegerMatrix;
-  doorMapA, doorMapB, matrix: TIntegerMatrix;
+  doorMapA, doorMapB: TIntegerMatrix;
   connectA, connectB: TIntegerArray;
   minRadius: Boolean;
 begin
   minLen := Self.MinimumTiles * RSTranslator.TileArea;
-  maxSpacing := Self.Spacing * 2;
-  minSpacing := Self.Spacing div 2;
 
-  clusters := white.Cluster(1);
-  doors := Self.FindDoors(red.Cluster(1.5), map);
+  Self.WhiteClusters := white.Cluster(1);
+  Self.Doors := Self.FindDoors(red.Cluster(1.5), map);
 
-  SetLength(connectA, Length(doors));
-  SetLength(connectB, Length(doors));
+  SetLength(connectA, Length(Self.Doors));
+  SetLength(connectB, Length(Self.Doors));
 
   with white.Bounds() do
   begin
     SetLength(connectMap, Y2+1, X2+1);
-    SetLength(matrix, Y2+1, X2+1);
+    SetLength(Self.Matrix, Y2+1, X2+1);
   end;
 
-  SetLength(doorMapA, Length(clusters));
-  SetLength(doorMapB, Length(clusters));
+  SetLength(doorMapA, Length(Self.WhiteClusters));
+  SetLength(doorMapB, Length(Self.WhiteClusters));
 
-  for i := 0 to High(clusters) do
+  for i := 0 to High(Self.WhiteClusters) do
   begin
-    if Length(clusters[i]) < minLen then
+    if Length(Self.WhiteClusters[i]) < minLen then
       Continue;
 
-    for p in clusters[i] do
-      matrix[p.Y, p.X] := i;
+    for pt in Self.WhiteClusters[i] do
+      Self.Matrix[pt.Y, pt.X] := i;
   end;
 
-  for i := 0 to High(doors) do
-  begin
-    n  := matrix[doors[i,1].Y, doors[i,1].X];
-    l := matrix[doors[i,2].Y, doors[i,2].X];
-
-    if n = l then
-      Continue;
-
-    connectA[i] := n;
-    doorMapA[n] += i;
-
-    connectB[i] := l;
-    doorMapB[l] += i;
-
-    Result.Nodes += TGraphNode.Create(doors[i,0], EGraphNode.DOOR);
-    matrix[doors[i,0].Y, doors[i,0].X] := High(Result.Nodes);
-  end;
+  for i := 0 to High(Self.Doors) do
+    Result.Nodes += Self.ProcessDoors(Self.Doors[i], i, n, doorMapA, doorMapB);
 
   SetLength(Result.Paths, Length(Result.Nodes));
 
-  for i := 0 to High(clusters) do
+  for i := 0 to High(Self.WhiteClusters) do
   begin
     if not minRadius then
     begin
-      if Length(clusters[i]) < minLen then
+      Self.ProcessSmallCluster(Result, minRadius, doorMapA[i], doorMapB[i], i, minLen, connectA, connectB);
+      if not minRadius then
         Continue;
-      with clusters[i].Bounds() do
-      begin
-        if Max(Width, Height) >= Self.NodeRadius then
-          minRadius := True
-        else
-        begin
-          Result.Nodes += TGraphNode.Create(clusters[i].Median());
-          hi := High(Result.Nodes);
-          SetLength(Result.Paths, hi+1);
-
-          for n := High(doorMapA[i]) downto 0 do
-          begin
-            j := doorMapA[i,n];
-            if connectA[j] = i then
-            begin
-              l := matrix[doors[j,0].Y, doors[j,0].X];
-              if Result.Paths[l] <> [] then
-                Delete(doorMapA[i], i, 1);
-              Result.Paths[l] += [hi];
-              Result.Paths[hi] += l;
-            end;
-          end;
-
-          for n := High(doorMapB[i]) downto 0 do
-          begin
-            j := doorMapB[i,n];
-            if connectB[j] = i then
-            begin
-              l := matrix[doors[j,0].Y, doors[j,0].X];
-              if Result.Paths[l] <> [] then
-                Delete(doorMapA[i], i, 1);
-              Result.Paths[l] += [hi];
-              Result.Paths[hi] += l;
-            end;
-          end;
-
-          Continue;
-        end;
-      end;
     end;
 
-    nodes := [];
-    if Self.Skeletonize then
-    begin
-      skeleton := clusters[i].Erode(1).Skeleton(2, 6);
-      for tpa in skeleton.Partition(Self.Spacing) do
-        nodes += tpa.Cluster(1.5).Means();
-    end
-    else
-    begin
-      for tpa in clusters[i].Erode(1).Partition(Self.Spacing) do
-        nodes += tpa.Cluster(1.5).Means();
-    end;
-
-    if nodes = [] then Continue;
+    nodes := Self.SplitNodes(i);
+    if nodes = [] then
+      Continue;
 
     tree := TKDPointTree.Create(nodes);
 
@@ -405,68 +491,22 @@ begin
     SetLength(Result.Paths, Length(Result.Nodes));
 
     for j := 0 to High(tree.Data) do
-    begin
-      p := tree.Data[j].Split;
-      for q in tree.KNearest(p, Self.MaxConnections*2, True) do
-      begin
-        if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > maxSpacing then Continue;
-        tpa := clusters[i].ExtractBox(TBox.Create(p, q).Expand(minSpacing));
-        tpa := tpa.AStar(p, q, False);
-        if (tpa = []) or (Length(tpa) > 80) then
-          Continue;
-        connectMap[q.Y,q.X] += j;
-        if Inc(n) > Self.MaxConnections then
-          Break;
-      end;
-      n := 0;
-    end;
+      Self.PreProcessCluster(tree, connectMap, i, j);
 
     for j := 0 to High(tree.Data) do
-    begin
-      p := tree.Data[j].Split;
-      Result.Nodes[j+len] := TGraphNode.Create(p);
-      for n in connectMap[p.Y,p.X] do
-      begin
-        q := tree.Data[n].Split;
-        Result.Nodes[n+len] := TGraphNode.Create(q);
-
-        if not Result.Paths[j+len].Contains(n+len) then
-          Result.Paths[j+len] += n+len;
-        if not Result.Paths[n+len].Contains(j+len) then
-          Result.Paths[n+len] += j+len;
-      end;
-    end;
+      Self.ProcessCluster(Result, tree, connectMap, j, len);
 
     for j in doorMapA[i] + doorMapB[i] do
-    begin
-      p := doors[j,0];
-      l := matrix[p.Y, p.X];
-
-      tmp := clusters[i];
-      tmp += p;
-
-      for q in tree.KNearest(p, Self.MaxDoorConnections, True) do
-      begin
-        if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > maxSpacing then
-          Continue;
-
-        tpa := tmp.ExtractBox(TBox.Create(p, q).Expand(minSpacing));
-        tpa := tpa.AStar(p, q, False);
-        if (tpa = []) or (Length(tpa) > 80) then
-          Continue;
-
-        n := Result.Nodes.IndexOf(q);
-        Result.Paths[l] += [n];
-        Result.Paths[n] += l;
-      end;
-    end;
+      Self.ConnectLastDoors(Result, i, j, tree);
   end;
+
+  Self.Matrix := [];
 end;
 
 function TWebGraphGenerator.BuildGraph(name: String; map: TImage): TWebGraph;
 var
   white, red, gray, merged, graySubset: TPointArray;
-  whiteClusters, grayClusters, mergedClusters: T2DPointArray;
+  grayClusters, mergedClusters: T2DPointArray;
   i, j: Integer;
   t: UInt64;
 begin
@@ -480,19 +520,18 @@ begin
 
   gray := map.FindColor($333333, 0);
 
-  whiteClusters := white.Cluster(1);
   grayClusters := gray.Cluster(1);
 
-  for i := 0 to High(whiteClusters) do
+  for i := 0 to High(Self.WhiteClusters) do
   begin
-    if Length(whiteClusters[i]) <= 6 then Continue;
+    if Length(Self.WhiteClusters[i]) <= 6 then Continue;
 
-    graySubset := gray.ExtractBox(whiteclusters[i].Bounds().Expand(80));
-    merged := whiteclusters[i] + graySubset;
+    graySubset := gray.ExtractBox(Self.WhiteClusters[i].Bounds().Expand(80));
+    merged := Self.WhiteClusters[i] + graySubset;
     mergedClusters := merged.Cluster(1);
 
     for j := 0 to high(mergedClusters) do
-      if mergedClusters[j].Contains(whiteClusters[i][0]) then
+      if mergedClusters[j].Contains(Self.WhiteClusters[i][0]) then
       begin
         Result.WalkableClusters += mergedClusters[j];
         Break;
@@ -502,9 +541,9 @@ begin
   Result.WalkableSpace    := white + gray;
   Result.ObjectClusters   := grayClusters;
 
+  Self.WhiteClusters := [];
   WriteLn GetDebugLn('WebGraphGenerator', 'Generating webgraph took ' + ToStr(Round(((GetTimeRunning()-t)/1000), 2)) + ' seconds.', ELogLevel.SUCCESS);
 end;
-{$R+}
 
 var
 (*
@@ -512,3 +551,4 @@ var
 Global {ref}`TWebGraphGenerator` variable.
 *)
   WebGraphGenerator: TWebGraphGenerator;
+{$R+}
