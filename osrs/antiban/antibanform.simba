@@ -29,14 +29,17 @@ Do feel free to read the source code though if you so desire.
     PageControl: TLazPageControl;
 
     TaskCombobox: TLazComboBox;
-    TaskIntervalSpinner, TaskVariationSpinner: TLazFloatSpinEdit;
+    TaskIntervalSpinner: TLazFloatSpinEdit;
+    TaskVariationSpinner: TLazSpinEdit;
     TaskDelButton, TaskEditButton, TaskAddButton, TaskPresetButton: TLazButton;
 
-    BreakIntervalSpinner, BreakLengthSpinner, BreakVariationSpinner, BreakLogoutSpinner: TLazFloatSpinEdit;
+    BreakIntervalSpinner, BreakLengthSpinner: TLazFloatSpinEdit;
+    BreakVariationSpinner, BreakLogoutSpinner: TLazSpinEdit;
     BreakDelButton, BreakEditButton, BreakAddButton, BreakPresetButton: TLazButton;
 
     SleepTimeEdit: TLazTimeEdit;
-    SleepLengthSpinner, SleepVariationSpinner, SleepLogoutSpinner: TLazFloatSpinEdit;
+    SleepLengthSpinner: TLazFloatSpinEdit;
+    SleepVariationSpinner, SleepLogoutSpinner: TLazSpinEdit;
     SleepPresetButton: TLazButton;
 
     Config: TConfigJSON;
@@ -246,8 +249,8 @@ begin
 
   Self.SleepTimeEdit.Text          := Antiban.Sleeps[0].Time;
   Self.SleepLengthSpinner.Value    := len;
-  Self.SleepVariationSpinner.Value := Antiban.Sleeps[0].StdVar;
-  Self.SleepLogoutSpinner.Value    := Antiban.Sleeps[0].LogoutChance;
+  Self.SleepVariationSpinner.Value := Round(Antiban.Sleeps[0].StdVar * 100);
+  Self.SleepLogoutSpinner.Value    := Round(Antiban.Sleeps[0].LogoutChance * 100);
 
   Self.SleepTimeEdit.OnChange         := event;
   Self.SleepLengthSpinner.OnChange    := event;
@@ -361,8 +364,8 @@ begin
     Self.SleepCheckbox.SetChecked(obj.Item['enabled'].AsBool);
     Self.SleepTimeEdit.Text          := obj.Item['time'].AsString;
     Self.SleepLengthSpinner.Value    := obj.Item['length'].AsFloat;
-    Self.SleepVariationSpinner.Value := obj.Item['variation'].AsFloat;
-    Self.SleepLogoutSpinner.Value    := obj.Item['logout'].AsFloat;
+    Self.SleepVariationSpinner.Value := Round(obj.Item['variation'].AsFloat * 100);
+    Self.SleepLogoutSpinner.Value    := Round(obj.Item['logout'].AsFloat * 100);
 
     Self.SleepTimeEdit.OnChange         := event;
     Self.SleepLengthSpinner.OnChange    := event;
@@ -477,7 +480,7 @@ begin
 
   Self.TaskCombobox.ItemIndex     := Self.TaskCombobox.Items.IndexOf(strings[0].Trim());
   Self.TaskIntervalSpinner.Value  := Antiban.Tasks[i].Interval / ONE_MINUTE;
-  Self.TaskVariationSpinner.Value := Antiban.Tasks[i].StdVar;
+  Self.TaskVariationSpinner.Value := Round(Antiban.Tasks[i].StdVar * 100);
 end;
 
 procedure TAntibanFormHelper.OnTaskAdd(sender: TLazObject);
@@ -496,15 +499,16 @@ begin
   Self.TaskList.Items.Insert(
     idx,
     Self.GetTaskListString(
-      Self.TaskCombobox.Text, ToStr(Self.TaskIntervalSpinner.Value) + ' mins',
-      ToStr(Self.TaskVariationSpinner.Value * 100)  + '%'
+      Self.TaskCombobox.Text,
+      ToStr(Self.TaskIntervalSpinner.Value) + ' mins',
+      Self.TaskVariationSpinner.Text  + '%'
     )
   );
 
   Antiban.Tasks.Insert(Default(TAntibanTask), idx);
   Antiban._UpdateTask(
     idx, @ANTIBAN_TASKS[Self.TaskCombobox.ItemIndex].Method,
-    interval, Self.TaskVariationSpinner.Value
+    interval, Self.TaskVariationSpinner.Value / 100
   );
 
   Self.TaskList.ItemIndex := idx;
@@ -517,7 +521,7 @@ begin
   taskObj := new TJSONObject();
   taskObj.AddString('task', Self.TaskCombobox.Text);
   taskObj.AddFloat('interval', Self.TaskIntervalSpinner.Value);
-  taskObj.AddFloat('variation', Self.TaskVariationSpinner.Value);
+  taskObj.AddFloat('variation', Round(Self.TaskVariationSpinner.Value/100, 3));
   newArray.Add('task', taskObj);
 
   for i := idx+1 to oldArray.Count-1 do
@@ -584,8 +588,8 @@ begin
 
   Self.BreakIntervalSpinner.Value  := Antiban.Breaks[i].Interval / ONE_MINUTE;
   Self.BreakLengthSpinner.Value    := Antiban.Breaks[i].Length / ONE_MINUTE;
-  Self.BreakVariationSpinner.Value := Antiban.Breaks[i].StdVar;
-  Self.BreakLogoutSpinner.Value    := Antiban.Breaks[i].LogoutChance;
+  Self.BreakVariationSpinner.Value := Round(Antiban.Breaks[i].StdVar * 100);
+  Self.BreakLogoutSpinner.Value    := Round(Antiban.Breaks[i].LogoutChance * 100);
 end;
 
 procedure TAntibanFormHelper.OnBreakAdd(sender: TLazObject);
@@ -606,14 +610,16 @@ begin
     Self.GetBreakListString(                        
       ToStr(Self.BreakLengthSpinner.Value) + ' mins',
       ToStr(Self.BreakIntervalSpinner.Value) + ' mins',
-      ToStr(Self.BreakVariationSpinner.Value * 100) + '%',
-      ToStr(Self.BreakLogoutSpinner.Value * 100) + '%'
+      Self.BreakVariationSpinner.Text + '%',
+      Self.BreakLogoutSpinner.Text + '%'
     )
   );
 
   Antiban.Breaks.Insert(Default(TBreakTask), idx);
   Antiban._UpdateBreak(
-    idx, interval, Self.BreakLengthSpinner.Value * ONE_MINUTE, Self.BreakVariationSpinner.Value, Self.BreakLogoutSpinner.Value
+    idx, interval, Self.BreakLengthSpinner.Value * ONE_MINUTE,
+    Self.BreakVariationSpinner.Value / 100,
+    Self.BreakLogoutSpinner.Value / 100
   );
 
   Self.BreakList.ItemIndex := idx;
@@ -626,8 +632,8 @@ begin
   breakObj := new TJSONObject();
   breakObj.AddFloat('interval', Self.BreakIntervalSpinner.Value * ONE_MINUTE);
   breakObj.AddFloat('length', Self.BreakLengthSpinner.Value * ONE_MINUTE);
-  breakObj.AddFloat('variation', Self.BreakVariationSpinner.Value);
-  breakObj.AddFloat('logout', Self.BreakLogoutSpinner.Value);
+  breakObj.AddFloat('variation', Self.BreakVariationSpinner.Value / 100);
+  breakObj.AddFloat('logout', Self.BreakLogoutSpinner.Value / 100);
   newArray.Add('break', breakObj);
 
   for i := idx+1 to oldArray.Count-1 do
@@ -681,13 +687,13 @@ procedure TAntibanFormHelper.OnSleepChange(sender: TLazObject);
 begin
   Antiban._UpdateSleep(
     0, Self.SleepTimeEdit.Text, Self.SleepLengthSpinner.Value * ONE_HOUR,
-    Self.SleepVariationSpinner.Value, Self.SleepLogoutSpinner.Value
+    Self.SleepVariationSpinner.Value/100, Self.SleepLogoutSpinner.Value/100
   );
 
   Self.Config.Data.Item['sleep'].Item['time'].AsString     := Self.SleepTimeEdit.Text;
   Self.Config.Data.Item['sleep'].Item['length'].AsFloat    := Self.SleepLengthSpinner.Value;
-  Self.Config.Data.Item['sleep'].Item['variation'].AsFloat := Self.SleepVariationSpinner.Value;
-  Self.Config.Data.Item['sleep'].Item['logout'].AsFloat    := Self.SleepLogoutSpinner.Value;
+  Self.Config.Data.Item['sleep'].Item['variation'].AsFloat := Self.SleepVariationSpinner.Value/100;
+  Self.Config.Data.Item['sleep'].Item['logout'].AsFloat    := Self.SleepLogoutSpinner.Value/100;
   Self.Config.Save();
 end;
 
@@ -786,11 +792,12 @@ begin
   Self.TaskPresetButton.BorderSpacing.Around := 10;
 
 
-  Self.TaskVariationSpinner := TLazFloatSpinEdit.CreateEx(lPanel, '', 'Edit the currently selected task interval variation.');
-  Self.TaskVariationSpinner.Value := 0.33;
+  Self.TaskVariationSpinner := TLazSpinEdit.CreateEx(lPanel, '', 'Edit the currently selected task interval variation.');
+  Self.TaskVariationSpinner.Value := 33;
   Self.TaskVariationSpinner.MinValue := 0;
-  Self.TaskVariationSpinner.MaxValue := 1;
-  Self.TaskVariationSpinner.Increment := 0.05;
+  Self.TaskVariationSpinner.MaxValue := 100;
+  Self.TaskVariationSpinner.Increment := 5;
+  Self.TaskVariationSpinner.ValueEmpty := False;
   Self.TaskVariationSpinner.Align := ELazAlign.Top;
   Self.TaskVariationSpinner.BorderSpacing.Left := 10;
   Self.TaskVariationSpinner.BorderSpacing.Right := 10;
@@ -908,11 +915,12 @@ begin
   Self.BreakPresetButton.Align := ELazAlign.Bottom;
   Self.BreakPresetButton.BorderSpacing.Around := 10;
 
-  Self.BreakLogoutSpinner := TLazFloatSpinEdit.CreateEx(lPanel);
-  Self.BreakLogoutSpinner.MinValue  := 0.00;
-  Self.BreakLogoutSpinner.MaxValue  := 1.00;
-  Self.BreakLogoutSpinner.Increment := 0.10;
-  Self.BreakLogoutSpinner.Value := 0.05;
+  Self.BreakLogoutSpinner := TLazSpinEdit.CreateEx(lPanel);
+  Self.BreakLogoutSpinner.MinValue  := 0;
+  Self.BreakLogoutSpinner.MaxValue  := 100;
+  Self.BreakLogoutSpinner.Increment := 5;
+  Self.BreakLogoutSpinner.Value := 5;
+  Self.BreakLogoutSpinner.ValueEmpty := False;
   Self.BreakLogoutSpinner.Align := ELazAlign.Top;
   Self.BreakLogoutSpinner.BorderSpacing.Left := 10;
   Self.BreakLogoutSpinner.BorderSpacing.Right := 10;
@@ -924,11 +932,12 @@ begin
   lbl.BorderSpacing.Left := 10;
   lbl.BorderSpacing.Right := 10;
 
-  Self.BreakVariationSpinner := TLazFloatSpinEdit.CreateEx(lPanel);
-  Self.BreakVariationSpinner.Value := 0.33;
+  Self.BreakVariationSpinner := TLazSpinEdit.CreateEx(lPanel);
+  Self.BreakVariationSpinner.Value := 33;
   Self.BreakVariationSpinner.MinValue := 0;
-  Self.BreakVariationSpinner.MaxValue := 1;
-  Self.BreakVariationSpinner.Increment := 0.05;
+  Self.BreakVariationSpinner.MaxValue := 100;
+  Self.BreakVariationSpinner.Increment := 5;
+  Self.BreakVariationSpinner.ValueEmpty := False;
   Self.BreakVariationSpinner.Align := ELazAlign.Top;
   Self.BreakVariationSpinner.BorderSpacing.Left := 10;
   Self.BreakVariationSpinner.BorderSpacing.Right := 10;
@@ -991,17 +1000,21 @@ begin
   Self.SleepLengthSpinner.OnChange := @Self.OnSleepChange;
   Self.SleepLengthSpinner.AnchorHorizontally(Self.SleepTimeEdit, 60);
 
-  Self.SleepVariationSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Variation (%):', 'Edit the sleep variation.', 0, 0, 120);
-  Self.SleepVariationSpinner.MinValue  := 0.00;
-  Self.SleepVariationSpinner.MaxValue  := 0.30;
-  Self.SleepVariationSpinner.Increment := 0.03;
+  Self.SleepVariationSpinner := TLazSpinEdit.CreateEx(parent, 'Variation (%):', 'Edit the sleep variation.', 0, 0, 120);
+  Self.SleepVariationSpinner.Value := 10;
+  Self.SleepVariationSpinner.MinValue := 0;
+  Self.SleepVariationSpinner.MaxValue := 30;
+  Self.SleepVariationSpinner.Increment := 3;
+  Self.SleepVariationSpinner.ValueEmpty := False;
   Self.SleepVariationSpinner.OnChange := @Self.OnSleepChange;
   Self.SleepVariationSpinner.AnchorHorizontally(Self.SleepLengthSpinner, 60);
 
-  Self.SleepLogoutSpinner := TLazFloatSpinEdit.CreateEx(parent, 'Logout chance (%):', 'Edit the sleep logout chance.', 0, 0, 120);
-  Self.SleepLogoutSpinner.MinValue  := 0.00;
-  Self.SleepLogoutSpinner.MaxValue  := 1.00;
-  Self.SleepLogoutSpinner.Increment := 0.10;
+  Self.SleepLogoutSpinner := TLazSpinEdit.CreateEx(parent, 'Logout chance (%):', 'Edit the sleep logout chance.', 0, 0, 120);
+  Self.SleepLogoutSpinner.Value := 65;
+  Self.SleepLogoutSpinner.MinValue := 0;
+  Self.SleepLogoutSpinner.MaxValue := 100;
+  Self.SleepLogoutSpinner.Increment := 5;
+  Self.SleepLogoutSpinner.ValueEmpty := False;
   Self.SleepLogoutSpinner.OnChange := @Self.OnSleepChange;
   Self.SleepLogoutSpinner.AnchorHorizontally(Self.SleepVariationSpinner, 60);
 
