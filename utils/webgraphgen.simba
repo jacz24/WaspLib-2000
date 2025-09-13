@@ -361,7 +361,7 @@ begin
   end;
 end;
 
-function TWebGraphGenerator.ConnectLastDoors(out graph: TWebGraph; idx, door: Integer; constref tree: TKDPointTree): TGraphNodeArray;
+procedure TWebGraphGenerator.ConnectLastDoors(out graph: TWebGraph; idx, door: Integer; constref tree: TKDPointTree);
 var
   p, q: TPoint;
   i, j: Integer;
@@ -510,27 +510,26 @@ var
   i, j: Integer;
   t: UInt64;
 begin
+  WriteLn GetDebugLn('Generating webgraph for region: ' + name + ' this can take a few seconds.');
+  t := GetTimeRunning();
+
   white := map.FindColor($FFFFFF, 0);
   red := map.FindColor($0000FF, 0);
-
-  WriteLn GetDebugLn('Generating webgraph for region: ' + name);
-
-  t := GetTimeRunning();
-  Result := Self._BuildGraph(map, white, red);
-
   gray := map.FindColor($333333, 0);
 
+  Result := Self._BuildGraph(map, white, red);
   grayClusters := gray.Cluster(1);
 
   for i := 0 to High(Self.WhiteClusters) do
   begin
-    if Length(Self.WhiteClusters[i]) <= 6 then Continue;
+    if Length(Self.WhiteClusters[i]) <= 6 then
+      Continue;
 
     graySubset := gray.ExtractBox(Self.WhiteClusters[i].Bounds().Expand(80));
     merged := Self.WhiteClusters[i] + graySubset;
     mergedClusters := merged.Cluster(1);
 
-    for j := 0 to high(mergedClusters) do
+    for j := 0 to High(mergedClusters) do
       if mergedClusters[j].Contains(Self.WhiteClusters[i][0]) then
       begin
         Result.WalkableClusters += mergedClusters[j];
@@ -538,8 +537,8 @@ begin
       end;
   end;
 
-  Result.WalkableSpace    := white + gray;
-  Result.ObjectClusters   := grayClusters;
+  Result.WalkableSpace  := white + gray;
+  Result.ObjectClusters := grayClusters;
 
   Self.WhiteClusters := [];
   WriteLn GetDebugLn('WebGraphGenerator', 'Generating webgraph took ' + ToStr(Round(((GetTimeRunning()-t)/1000), 2)) + ' seconds.', ELogLevel.SUCCESS);

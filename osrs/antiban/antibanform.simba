@@ -787,7 +787,10 @@ begin
 
 
   Self.TaskVariationSpinner := TLazFloatSpinEdit.CreateEx(lPanel, '', 'Edit the currently selected task interval variation.');
-  Self.TaskVariationSpinner.Text := '3.3';
+  Self.TaskVariationSpinner.Value := 0.33;
+  Self.TaskVariationSpinner.MinValue := 0;
+  Self.TaskVariationSpinner.MaxValue := 1;
+  Self.TaskVariationSpinner.Increment := 0.05;
   Self.TaskVariationSpinner.Align := ELazAlign.Top;
   Self.TaskVariationSpinner.BorderSpacing.Left := 10;
   Self.TaskVariationSpinner.BorderSpacing.Right := 10;
@@ -909,7 +912,7 @@ begin
   Self.BreakLogoutSpinner.MinValue  := 0.00;
   Self.BreakLogoutSpinner.MaxValue  := 1.00;
   Self.BreakLogoutSpinner.Increment := 0.10;
-  Self.BreakLogoutSpinner.Text := '0.05';
+  Self.BreakLogoutSpinner.Value := 0.05;
   Self.BreakLogoutSpinner.Align := ELazAlign.Top;
   Self.BreakLogoutSpinner.BorderSpacing.Left := 10;
   Self.BreakLogoutSpinner.BorderSpacing.Right := 10;
@@ -922,7 +925,10 @@ begin
   lbl.BorderSpacing.Right := 10;
 
   Self.BreakVariationSpinner := TLazFloatSpinEdit.CreateEx(lPanel);
-  Self.BreakVariationSpinner.Text := '3.3';
+  Self.BreakVariationSpinner.Value := 0.33;
+  Self.BreakVariationSpinner.MinValue := 0;
+  Self.BreakVariationSpinner.MaxValue := 1;
+  Self.BreakVariationSpinner.Increment := 0.05;
   Self.BreakVariationSpinner.Align := ELazAlign.Top;
   Self.BreakVariationSpinner.BorderSpacing.Left := 10;
   Self.BreakVariationSpinner.BorderSpacing.Right := 10;
