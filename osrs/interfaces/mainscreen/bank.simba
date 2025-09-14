@@ -1134,37 +1134,45 @@ begin
   if Inventory.Items.Find(item, slot) then
     Result := Self._InteractionHelper(ERSBankInteraction.DEPOSIT, slot, 1, useQuantityButton);
 end;
+
 (*
-##Bank.DepositInventory
+## Bank.DepositInventory
 ```pascal
-function TRSbank.DepositInventory: Boolean;
+function TRSbank.DepositInventory(): Boolean;
 ```
-Deposits All Items In Inventory into the bank. Doesn't close bank after depositing.
+Deposits all items in the {ref}`inventory` into the bank.
+
 Example:
 ```pascal
-Procedure Test;
-
-begin
-  Map.Setup([ERSChunk.VARROCK]);
-  bank.DepositInventory;
-end;   
+WriteLn Bank.DepositInventory();
 ```
 *)
-
-function TRSBank.DepositInventory: Boolean;
+function TRSBank.DepositInventory(): Boolean;
+var
+  count: Integer;
 begin
-  begin
-    If bank.open Then
-      Bank.DynamicButtons[ERSBankDynamicButtons.DEPOSIT_INVENTORY].Click(EMouseButton.LEFT)
-        Else Bank.open;
-        Result:=True;
-  end;
-    begin
-      If not Inventory.slots.CountEmpty then
-        Bank.DynamicButtons[ERSBankDynamicButtons.DEPOSIT_INVENTORY].Click(EMouseButton.LEFT);
-        Result:=True;
-    end;
-end;                        
+  count := Inventory.Slots.Count();
+  Bank.DynamicButtons[ERSBankDynamicButtons.DEPOSIT_INVENTORY].Click(EMouseButton.LEFT);
+  Result := SleepUntil(Inventory.Slots.Count() < count, 200, 4*TICK);
+end;
+
+(*
+## Bank.DepositEquipment
+```pascal
+function TRSBank.DepositEquipment(): Boolean;
+```
+Deposits all items in the worn equipment into the bank.
+
+Example:
+```pascal
+WriteLn Bank.DepositEquipment();
+```
+*)
+function TRSBank.DepositEquipment(): Boolean;
+begin
+  Bank.DynamicButtons[ERSBankDynamicButtons.DEPOSIT_WORN].Click(EMouseButton.LEFT);
+  Result := True;
+end;
 
 
 (*
