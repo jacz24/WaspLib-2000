@@ -588,7 +588,7 @@ var
   timeout: UInt64;
 begin
   if profile = Default(TProfile) then
-    profile := Profiles[ProfileIndex];
+    profile := Profiles.Get();
 
   timeout := Time() + 40000;
 

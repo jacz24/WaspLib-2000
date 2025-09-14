@@ -48,6 +48,7 @@ unless specified otherwise.
     Name: String;
     Slots: TBoxArray;
     SlotsFunction: function (): TBoxArray of object;
+    CheckFunction: function (): Boolean of object;
   end;
 
 (*
@@ -85,11 +86,12 @@ Bank.Slots.Setup('Bank.Slots', Bank.SlotBoxes, @Bank.FindItemBoundaries);
 Just in case people would like to access the bank's static slots through it's
 `Slots` variable.
 *)
-procedure TRSSlotInterface.Setup(name: String; slots: TBoxArray; slotsFunction: function (): TBoxArray of object = nil);
+procedure TRSSlotInterface.Setup(name: String; slots: TBoxArray; slotsFunction: function (): TBoxArray of object = nil; checkFunc: function (): Boolean of object = nil);
 begin
   Self.Name := name;
   Self.Slots := slots;
   Self.SlotsFunction := @slotsFunction;
+  Self.CheckFunction := @checkFunc;
 end;
 
 (*
@@ -310,6 +312,8 @@ var
   slots: TBoxArray;
   i: Integer;
 begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
   slots := Self.Boxes();
   for i := 0 to High(slots) do
     if Target.HasColor(TRSItem.Border, 8.5, 1, slots[i]) or
@@ -342,6 +346,8 @@ var
   slots: TBoxArray;
   i: Integer;
 begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
   slots := Self.Boxes();
   for i := 0 to High(slots) do
     if not Target.HasColor(TRSItem.Border, 8.5, 1, slots[i]) and
@@ -368,12 +374,14 @@ end.
 *)
 function TRSSlotInterface.IsUsed(slot: TBox): Boolean;
 begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
   Result := TRSItem.InBounds(slot);
 end;
 
 function TRSSlotInterface.IsUsed(slot: Integer): Boolean; overload;
 begin
-  Result := TRSItem.InBounds(Self.Box(slot));
+  Result := Self.IsUsed(Self.Box(slot));
 end;
 
 (*
@@ -394,12 +402,14 @@ end.
 *)
 function TRSSlotInterface.IsEmpty(slot: TBox): Boolean;
 begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
   Result := not TRSItem.InBounds(slot);
 end;
 
 function TRSSlotInterface.IsEmpty(slot: Integer): Boolean; overload;
 begin
-  Result := not TRSItem.InBounds(Self.Box(slot));
+  Result := Self.IsEmpty(Self.Box(slot));
 end;
 
 
@@ -422,15 +432,16 @@ end.
 *)
 function TRSSlotInterface.IsFaded(slot: TBox): Boolean;
 begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
   Result := not TRSItem.InBounds(slot, 0) and TRSItem.InBounds(slot);
 end;
 
 function TRSSlotInterface.IsFaded(slot: Integer): Boolean; overload;
-var
-  b: TBox;
 begin
-  b := Self.Box(slot);
-  Result := not TRSItem.InBounds(b, 0) and TRSItem.InBounds(b);
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
+  Result := Self.IsFaded(Self.Box(slot));
 end;
 
 
@@ -452,7 +463,8 @@ end.
 *)
 function TRSSlotInterface.WaitFade(slot: TBox; time: Integer = 200): Boolean;
 begin
-  if not Self.IsFaded(slot) then Exit;
+  if not Self.IsFaded(slot) then
+    Exit;
   Result := SleepUntil(TRSItem.InBounds(slot, 0), 100, time);
 end;
 
@@ -550,12 +562,14 @@ end.
 *)
 function TRSSlotInterface.ReadStack(slot: TBox): Integer;
 begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
   Result := TRSItem.ReadStack(slot);
 end;
 
 function TRSSlotInterface.ReadStack(slot: Integer): Integer; overload;
 begin
-  Result := TRSItem.ReadStack(Self.Box(slot));
+  Result := Self.ReadStack(Self.Box(slot));
 end;
 
 
@@ -597,6 +611,8 @@ end.
 *)
 procedure TRSSlotInterface.Click(slot: Integer; button: EMouseButton = EMouseButton.LEFT);
 begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
   Self.Hover(slot);
   Target.MouseClick(button);
 end;
@@ -621,7 +637,11 @@ function TRSSlotInterface.Move(slot, destination: Integer): Boolean;
 var
   slots: TBoxArray;
 begin
-  if slot = destination then Exit(True);
+  if slot = destination then
+    Exit(True);
+
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
 
   slots := Self.Boxes([slot, destination]);
 
@@ -657,6 +677,8 @@ end.
 *)
 function TRSSlotInterface.Interact(slot: Integer; option: String = ''): Boolean;
 begin
+  if (@Self.CheckFunction <> nil) and not Self.CheckFunction() then
+    Exit;
   Self.Hover(slot);
 
   if (option <> '') and not MainScreen.IsUpText(option) then

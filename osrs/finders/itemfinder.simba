@@ -420,7 +420,6 @@ begin
   border := new TImage(36, 32);
   border.DrawColor := $FFFFFF;
   border.DrawTPA(tpa);
-  border.Show();
                                            //h*w*4=4608
   Result := HashData(EHashAlgo.CRC32, border.Data, 4608);
 end;
