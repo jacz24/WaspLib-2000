@@ -77,21 +77,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create $TAG_NAME --generate-notes
-          
-      - name: Discord notification
-        shell: bash
-        run: |
-            BODY=$(jq -nc \
-              --arg title "WaspLib Version $TAG_NAME" \
-              --arg desc "${{ github.event.workflow_run.head_commit.message }}\n\nDownload: https://github.com/WaspScripts/WaspLib/releases/tag/$TAG_NAME" \
-              --arg url  "https://github.com/WaspScripts/WaspLib/commit/${{ github.event.workflow_run.head_commit.id }}" \
-              --arg foot "Author: ${{ github.event.workflow_run.head_commit.author.name }}" \
-              --argjson color 16742912 \
-              '{embeds:[{title:$title,description:$desc,url:$url,color:$color,footer:{text:$foot}}]}')
-            curl \
-                -H "Content-Type: application/json" \
-                -d "$BODY" \
-                ${{ secrets.UPDATES_WEBHOOK }}
       
       - name: Create Uploaded Release
         run: |
@@ -112,3 +97,18 @@ jobs:
             -H "Authorization: Bearer $SUPABASE_KEY" \
             -H "Content-Type: application/zip" \
             --data-binary @"$ZIP_NAME"
+            
+      - name: Discord notification
+        shell: bash
+        run: |
+            BODY=$(jq -nc \
+              --arg title "WaspLib Version $TAG_NAME" \
+              --arg desc "${{ github.event.workflow_run.head_commit.message }}\n\nDownload: https://github.com/WaspScripts/WaspLib/releases/tag/$TAG_NAME" \
+              --arg url  "https://github.com/WaspScripts/WaspLib/commit/${{ github.event.workflow_run.head_commit.id }}" \
+              --arg foot "Author: ${{ github.event.workflow_run.head_commit.author.name }}" \
+              --argjson color 16742912 \
+              '{embeds:[{title:$title,description:$desc,url:$url,color:$color,footer:{text:$foot}}]}')
+            curl \
+                -H "Content-Type: application/json" \
+                -d "$BODY" \
+                ${{ secrets.UPDATES_WEBHOOK }}
