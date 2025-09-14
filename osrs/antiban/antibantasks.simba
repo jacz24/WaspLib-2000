@@ -64,7 +64,7 @@ begin
 
   b := RSClient.Bounds.Expand(150);
 
-  for i := 1 to Trunc(GaussRand(1, 6)) do
+  for i := 1 to Trunc(Abs(GaussRand(1, 6))) do
   begin
     if Random() < 0.30 then
       Mouse.Move(b, True, EMouseDistribution.GAUSS)
@@ -152,7 +152,7 @@ begin
     Exit;
   end;
 
-  Self.OpenSkill(Self.Skills.Random(), Trunc(GaussRand(1000, 10000)), RandomBoolean(0.5));
+  Self.OpenSkill(Self.Skills.Random(), Biometrics.RandomModeInteger(3000, 1000, 8000), RandomBoolean(0.5));
 end;
 
 

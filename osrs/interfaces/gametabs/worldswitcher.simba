@@ -149,7 +149,7 @@ WriteLn WorldSwitcher.IsLoading();
 *)
 function TRSWorldSwitcher.IsLoading(): Boolean;
 begin
-  Result := not Target.HasColor(RSFonts.ORANGE, 0, 1, Self.CurrentWorldBounds);
+  Result := not Target.HasColor(RSFonts.ORANGE, 0, 50, Self.CurrentWorldBounds);
 end;
 
 (*
@@ -189,9 +189,9 @@ WriteLn WorldSwitcher.Open();
 function TRSWorldSwitcher.Open(waitLoad: Boolean = True): Boolean;
 begin
   //overriden in TRSLogout.
-  Result := SleepUntil(not Self._IsOpen(), RandomMode(100, 50, 1500), 600);
+  Result := SleepUntil(not Self._IsOpen(), RandomMode(100, 50, 1500), TICK);
   if Result and waitLoad then
-    Self.WaitLoading();
+    Self.WaitLoading(4*TICK);
 end;
 
 
@@ -246,23 +246,6 @@ begin
   end;
 end;
 
-
-(*
-## WorldSwitcher.GetCurrentWorld
-```pascal
-function TRSWorldSwitcher.GetCurrentWorld(): Integer;
-```
-Returns the current world we are on.
-
-Example:
-```pascal
-WriteLn WorldSwitcher.GetCurrentWorld();
-```
-*)
-function TRSWorldSwitcher.GetCurrentWorld(): Integer;
-begin
-  Result := OCR.RecognizeNumber(Self.CurrentWorldBounds, RSFonts.BOLD, [RSFonts.ORANGE], 0);
-end;
 
 (*
 ## WorldSwitcher.GetWorlds
@@ -383,6 +366,102 @@ begin
   Result := SleepUntil(Self.IsSorted(), 50, 600);
 end;
 
+function TRSWorldSwitcher.WaitSwitch(world: Integer; failCooldown: Boolean = True): Boolean; forward;
+
+function TRSWorldSwitcher._Hop(next: Integer): Boolean;
+var
+  timeout: TCountDown;
+  available: TRSWorldArray;
+  world: TRSWorld;
+begin
+  if not Self.IsSorted() and not Self.Sort() then
+    Exit;
+
+  timeout.Start(20 * ONE_SECOND);
+
+  repeat
+    available := Self.GetWorlds();
+    if available = [] then Exit;
+
+    for world in available do
+      if world.Number = next then
+      begin
+        Mouse.Click(world.Bounds, EMouseButton.LEFT);
+        if Self.WaitSwitch(next) then
+          Exit(True);
+      end;
+
+    Self.Scroll.Scroll(Biometrics.RandomModeInteger(2,1,3), next > available[0].Number);
+  until not InRange(Self.Scroll.GetLevel(), 1, 99) or timeout.IsFinished;
+end;
+
+(*
+## WorldSwitcher.World
+```pascal
+property TRSWorldSwitcher.World: Integer;
+property TRSWorldSwitcher.World(world: Integer): Boolean;
+property TRSWorldSwitcher.World(worlds: TIntegerArray): Boolean;
+```
+Returns or sets the current world we are on.
+
+When setting, if there's multiple worlds available we will hop to the next on
+the list available.
+
+Setting a new world will only happen if `TRSWorldSwitcher.Cooldown` is finished,
+which is a cooldown that starts everytime you change worlds.
+
+Example:
+```pascal
+WriteLn WorldSwitcher.World;
+WorldSwitcher.World := 311;
+WriteLn WorldSwitcher.World;
+WorldSwitcher.World[[311,312,313]];
+WriteLn WorldSwitcher.World;
+```
+*)
+property TRSWorldSwitcher.World: Integer;
+begin
+  Result := OCR.RecognizeNumber(Self.CurrentWorldBounds, RSFonts.BOLD, [RSFonts.ORANGE], 0);
+end;
+
+property TRSWorldSwitcher.World(next: Integer): Boolean;
+var
+  current: Integer;
+begin
+  if not Self.Cooldown.IsFinished then
+    Exit;
+
+  if not Self.Open() then
+    Exit;
+
+  current := Self.World;
+  if next = current then
+    Exit(True);
+
+  Result := Self._Hop(next);
+end;
+
+property TRSWorldSwitcher.World(worlds: TIntegerArray): Boolean;
+var
+  current, next: Integer;
+begin
+  if not Self.Cooldown.IsFinished or not Self.Open() then
+    Exit;
+
+  if worlds = [] then
+    raise GetDebugLn('WorldSwitcher', 'worlds parameter is empty.');
+
+  current := Self.World;
+  if worlds = [current] then
+    Exit(True);
+
+  next := worlds.IndexOf(current) + 1;
+  if next > High(worlds) then
+    next := 0;
+
+  Result := Self._Hop(next);
+end;
+
 (*
 ## WorldSwitcher.WaitSwitch
 ```pascal
@@ -400,56 +479,9 @@ begin
     Exit;
   end;
 
-  Result := SleepUntil(Self.GetCurrentWorld() = world, 200, 10000);
+  Result := SleepUntil(Self.World = world, 200, 10000);
 end;
 
-(*
-## WorldSwitcher.Hop
-```pascal
-function TRSWorldSwitcher.Hop(worlds: TIntegerArray): Boolean;
-```
-Switches to a different world from the specified `worlds`. By default the
-world switcher will sort the worlds, you can change this by passing `False` to `sort`.
-If the `TRSWorldSwitcher.Cooldown` is still active the function will return `False`.
-
-Example:
-```pascal
-WriteLn WorldSwitcher.Hop([303, 304, 305]);
-```
-*)
-function TRSWorldSwitcher.Hop(worlds: TIntegerArray): Boolean;
-var
-  current, next: Integer;
-  available: TRSWorldArray;
-  world: TRSWorld;
-begin
-  if worlds = [] then
-    raise GetDebugLn('WorldSwitcher', 'worlds is empty.');
-  if not Self.Cooldown.IsFinished then Exit;
-  if not Self.Open() then Exit;
-
-  current := Self.GetCurrentWorld();
-  if worlds = [current] then Exit(True);
-  if not Self.IsSorted() and not Self.Sort() then Exit;
-
-  next := worlds.IndexOf(current) + 1;
-  if next > High(worlds) then next := 0;
-
-  repeat
-    available := Self.GetWorlds();
-    if available = [] then Exit;
-
-    for world in available do
-      if world.Number = next then
-      begin
-        Mouse.Click(world.Bounds, EMouseButton.LEFT);
-        if Self.WaitSwitch(next) then
-          Exit(True);
-      end;
-
-    Self.Scroll.Scroll(Biometrics.RandomModeInteger(2,1,3), next > available[0].Number);
-  until not InRange(Self.Scroll.GetLevel(), 1, 99);
-end;
 
 var
 (*

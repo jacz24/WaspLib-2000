@@ -236,6 +236,47 @@ begin
 end;
 
 (*
+## TRSItem.Spread
+```pascal
+function TRSItem.Spread(): TRSItemArray;
+```
+Checks if the `TRSItem` has `(a..b)` in it's name and will spread it into a
+`TRSItemArray`.
+
+Example:
+```pascal
+item := 'prayer potion(1..4)';
+WriteLn item.Spread(); ['prayer potion(1)', 'prayer potion(2)', 'prayer potion(3)'. 'prayer potion(4)']
+item := 'prayer potion(2..1)';
+WriteLn item.Spread(); ['prayer potion(2)', 'prayer potion(1)']
+```
+*)
+function TRSItem.Spread(): TRSItemArray;
+var
+  parts: TStringArray;
+  first, last, i: Integer;
+  name: String;
+begin
+  parts := Self.Split('..');
+  if Length(parts) <= 1 then
+    Exit([Self]);
+
+  first := StrToInt(parts[0].Last);
+  last :=  StrToInt(parts[1].First);
+  name := parts[0].CopyRange(1, parts[0].Length-1);
+
+  if first < last then
+  begin
+    for i := first to last do
+      Result += name + ToStr(i) + ')';
+    Exit;
+  end;
+
+  for i := first downto last do
+    Result += name + ToStr(i) + ')';
+end;
+
+(*
 ## TRSItem.SimplifyName
 ```pascal
 function TRSItem.SimplifyName(): String;

@@ -261,6 +261,7 @@ end;
 function TRSItemFinder.FindAll(items: TRSItemArray; boxes: TBoxArray; maxToFind: Integer = 0): TImageMatchArray;
 var
   item: TRSItem;
+  spread: TRSItemArray;
   img: TImage;
   i: Integer;
   skip: TBooleanArray;
@@ -268,9 +269,12 @@ var
 begin
   SetLength(skip, Length(boxes));
 
+  for item in items do
+    spread += item.Spread();
+
   Target.FreezeImage();
 
-  for item in items do
+  for item in spread do
   begin
     item := LowerCase(item);
     Self.ImageCompare.Filter := @Self.GetFilter(item);
@@ -301,6 +305,7 @@ end;
 function TRSItemFinder.FindAll(items: TRSItemArray; boxes: TBoxArray; out matches: TImageMatchArray): Boolean; overload;
 var
   item: TRSItem;
+  spread: TRSItemArray;
   results: TImageMatchArray;
   i: Integer;
   img: TImage;
@@ -309,9 +314,12 @@ var
 begin
   SetLength(skip, Length(boxes));
 
+  for item in items do
+    spread += item.Spread();
+
   Target.FreezeImage();
 
-  for item in items do
+  for item in spread do
   begin
     item := LowerCase(item);
     Self.ImageCompare.Filter := @Self.GetFilter(item);
@@ -352,6 +360,7 @@ end;
 function TRSItemFinder.Find(items: TRSItemArray; boxes: TBoxArray; out match: TImageMatch): Boolean;
 var
   item: TRSItem;
+  spread: TRSItemArray;
   img: TImage;
   i: Integer;
   similarity: Single;
@@ -361,6 +370,9 @@ begin
   Target.FreezeImage();
 
   for item in items do
+    spread += item.Spread();
+
+  for item in spread do
   begin
     item := LowerCase(item);
     Self.ImageCompare.Filter := @Self.GetFilter(item);

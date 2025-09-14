@@ -7,9 +7,9 @@ Time related misc functions and variables
 const
   TICK: Integer = 600;
   ONE_SECOND: Integer = 1000;
-  ONE_MINUTE: Integer = 6000;
-  ONE_HOUR: Integer   = 360000;
-  ONE_DAY: Integer    = 8640000;
+  ONE_MINUTE: Integer = 60000;
+  ONE_HOUR: Integer   = 3600000;
+  ONE_DAY: Integer    = 86400000;
   TIME_FORMAL: String = 'h \ho\ur\s, m \min\ute\s and s \second\s';
   MINUTES_FORMAL: String = 'm \min\ute\s and s \second\s';
   FILE_TIME_FORMAT: String = 'YYYY-MM-DD_hh-mm-ss-ms';
