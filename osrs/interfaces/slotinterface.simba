@@ -194,7 +194,7 @@ begin
   if removeSlot then
     slots.Remove(slot);
 
-  if Length(slots) = 0 then
+  if slots = [] then
     raise GetDebugLn(Self.Name, 'RandomSlotNearby: No slots to choose from');
 
   boxes := Self.Boxes();
@@ -237,6 +237,11 @@ var
   boxes: TBoxArray;
   center: TPoint;
 begin
+  case Length(slots) of
+    0: Exit;
+    1: Exit(slots.First);
+  end;
+
   near := Self.Near(slot, slots, maxDist, removeSlot);
 
   if distribution = ERandomDistribution.RANDOM then
