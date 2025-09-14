@@ -707,8 +707,7 @@ begin
   Result := Self.ClearSearch() and
             Chat.AnswerQuery('Show items', '', Random(2000, 2500));
 end;
-
-
+                       
 (*
 ## Bank.HasIncinerator
 ```pascal
@@ -1135,6 +1134,37 @@ begin
   if Inventory.Items.Find(item, slot) then
     Result := Self._InteractionHelper(ERSBankInteraction.DEPOSIT, slot, 1, useQuantityButton);
 end;
+(*
+##Bank.DepositInventory
+```pascal
+function TRSbank.DepositInventory: Boolean;
+```
+Deposits All Items In Inventory into the bank. Doesn't close bank after depositing.
+Example:
+```pascal
+Procedure Test;
+
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+  bank.DepositInventory;
+end;   
+```
+*)
+
+function TRSBank.DepositInventory: Boolean;
+begin
+  begin
+    If bank.open Then
+      Bank.DynamicButtons[ERSBankDynamicButtons.DEPOSIT_INVENTORY].Click(EMouseButton.LEFT)
+        Else Bank.open;
+        Result:=True;
+  end;
+    begin
+      If not Inventory.slots.CountEmpty then
+        Bank.DynamicButtons[ERSBankDynamicButtons.DEPOSIT_INVENTORY].Click(EMouseButton.LEFT);
+        Result:=True;
+    end;
+end;                        
 
 
 (*
