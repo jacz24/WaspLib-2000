@@ -1152,7 +1152,7 @@ var
   count: Integer;
 begin
   count := Inventory.Slots.Count();
-  Bank.DynamicButtons[ERSBankDynamicButtons.DEPOSIT_INVENTORY].Click(EMouseButton.LEFT);
+  Self.DynamicButtons[ERSBankDynamicButtons.DEPOSIT_INVENTORY].Click(EMouseButton.LEFT);
   Result := SleepUntil(Inventory.Slots.Count() < count, 200, 4*TICK);
 end;
 
@@ -1170,7 +1170,7 @@ WriteLn Bank.DepositEquipment();
 *)
 function TRSBank.DepositEquipment(): Boolean;
 begin
-  Bank.DynamicButtons[ERSBankDynamicButtons.DEPOSIT_WORN].Click(EMouseButton.LEFT);
+  Self.DynamicButtons[ERSBankDynamicButtons.DEPOSIT_WORN].Click(EMouseButton.LEFT);
   Result := True;
 end;
 
