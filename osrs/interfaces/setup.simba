@@ -157,7 +157,7 @@ begin
   MM2MS.Projector.RSZoom := -1;
   RSMouseZoom.ZoomLevel := -1;
   RSMouseZoom.Enabled := True;
-  WorldSwitcher.Cooldown.Start(8000);
+  WorldSwitcher.Setup();
   FairyRing.Setup();
 
   Antiban.Zoom.Max := 100;

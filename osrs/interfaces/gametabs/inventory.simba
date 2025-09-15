@@ -125,6 +125,7 @@ WriteLn Inventory.IsSelected('Vial');
 *)
 function TRSInventory.IsSelected(slot: TBox): Boolean;
 begin
+  if not Self.Open() then Exit;
   slot.Y1 += 8;
   Result := Target.HasColor(TRSItem.BorderWhite, 1, 1, slot);
 end;
@@ -150,6 +151,7 @@ function TRSInventory.GetSelected(): Integer;
 var
   slots: TBoxArray;
 begin
+  if not Self.Open() then Exit(-1);
   slots := Self.Slots.Boxes();
   for Result := 0 to High(slots) do
     if Self.IsSelected(slots[Result]) then
@@ -188,6 +190,7 @@ var
   boxes: TBoxArray;
   b, tmp: TBox;
 begin
+  if not Self.Open() then Exit;
   boxes := Self.Slots.Boxes();
   if slot > -1 then
   begin
@@ -214,6 +217,7 @@ var
   selected: Integer;
   slots: TIntegerArray;
 begin
+  if not Self.Open() then Exit;
   selected := Self.GetSelected();
   slots := Self.Items.IndicesOf([item]);
 
@@ -240,6 +244,7 @@ WriteLn Inventory.Combine('Coins', 'Asgarnian ale');
 *)
 function TRSInventory.Combine(slotA, slotB: Integer): Boolean;
 begin
+  if not Self.Open() then Exit;
   Result := Self.Select(slotA);
   if Result then
   begin
@@ -256,6 +261,7 @@ var
   centers: TPointArray;
   i, j: Integer;
 begin
+  if not Self.Open() then Exit;
   slotsA := Self.Items.IndicesOf([itemA]);
   if slotsA = [] then Exit;
 
@@ -360,6 +366,7 @@ var
   b: TBox;
   i: Integer;
 begin
+  if not Self.Open() then Exit;
   if Length(slots) = 0 then Exit(True);
 
   boxes := Self.Slots.Boxes();
@@ -389,6 +396,7 @@ function TRSInventory.Drop(items: TRSItemArray; pattern: TIntegerArray = []): Bo
 var
   slots: TIntegerArray;
 begin
+  if not Self.Open() then Exit;
   if pattern = [] then pattern := Self.RandomPattern();
   slots := Self.Items.IndicesOf(items);
   Result := (slots <> []) and Self.Drop(pattern.Intersection(slots));
@@ -417,6 +425,7 @@ var
   i: Integer;
 begin
   if Length(slots) = 0 then Exit(True);
+  if not Self.Open() then Exit;
 
   if not Self.ShiftEnabled then Exit(Self.Drop(slots));
 
@@ -466,6 +475,7 @@ function TRSInventory.ShiftDrop(items: TRSItemArray; pattern: TIntegerArray): Bo
 var
   slots: TIntegerArray;
 begin
+  if not Self.Open() then Exit;
   slots := Self.Items.IndicesOf(items);
   Result := (slots <> []) and Self.ShiftDrop(pattern.Intersection(slots));
 end;

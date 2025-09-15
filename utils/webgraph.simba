@@ -224,45 +224,6 @@ begin
   end;
 end;
 
-function TWebGraph.NearestWalkablePoint(p: TPoint): TPoint;
-var
-  pArea, obj, tpa, bestObj: TPointArray;
-  pAreaClusters: T2DPointArray;
-  i, bestLength, tempLength: Integer;
-begin
-  pArea := TPointArray.CreateFromCircle(p, 20, True).Intersection(Self.WalkableSpace);
-  pAreaClusters := pArea.Cluster(1);
-
-  if Self.ObjectClusters = [] then Exit(pArea.NearestPoint(p));
-
-  obj := [];
-  for i := 0 to High(Self.ObjectClusters) do
-  begin
-    if not Self.ObjectClusters[i].Bounds().Contains(p) then Continue;
-    if Self.ObjectClusters[i].Contains(p) then
-    begin
-      obj := Self.ObjectClusters[i];
-      {$IFDEF DEBUG_WALKER}
-      WriteLn('Point was inside object! with edges: ', obj);
-      {$ENDIF}
-      Break;
-    end;
-  end;
-
-  if obj = [] then Exit(pArea.NearestPoint(p));
-
-  for i := 0 to High(pAreaClusters) do
-  begin
-    tpa := pAreaClusters[i].Intersection(obj);
-    tempLength := Length(tpa);
-    if tempLength > bestLength then
-    begin
-      bestLength := tempLength;
-      bestObj := tpa;
-    end;
-  end;
-  Result := bestObj.NearestPoint(p);
-end;
 
 function TWebGraph.PathBetween(a, b: TPoint; rnd: Double = 0; attempts: Integer = 3): TGraphNodeArray;
 var

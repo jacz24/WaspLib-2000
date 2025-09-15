@@ -64,6 +64,26 @@ Main record that interacts with the {ref}`WorldSwitcher`.
   end;
 
 (*
+## TRSWorldSwitcher.Setup
+```pascal
+procedure TRSWorldSwitcher.Setup();
+```
+Interal method used to setup the {ref}`TRSWorldSwitcher` cooldown.
+
+This is automatically called for you on the {ref}`WorldSwitcher variable`.
+*)
+procedure TRSWorldSwitcher.Setup();
+var
+  t: Int64;
+begin
+  t := Time();
+  Self.Cooldown.FLength := 8000;
+  Self.Cooldown.FStartTime := t-8000;
+  Self.Cooldown.FFinishTime := t;
+  Self.Cooldown.FPauseTime := 0;
+end;
+
+(*
 ## TRSWorldSwitcher.SetupGameTab
 ```pascal
 procedure TRSWorldSwitcher.SetupGameTab();
@@ -428,16 +448,11 @@ property TRSWorldSwitcher.World(next: Integer): Boolean;
 var
   current: Integer;
 begin
-  if not Self.Cooldown.IsFinished then
+  if not Self.Cooldown.IsFinished or not Self.Open() then
     Exit;
-
-  if not Self.Open() then
-    Exit;
-
   current := Self.World;
   if next = current then
     Exit(True);
-
   Result := Self._Hop(next);
 end;
 
@@ -455,11 +470,11 @@ begin
   if worlds = [current] then
     Exit(True);
 
-  next := worlds.IndexOf(current) + 1;
-  if next > High(worlds) then
+  next := worlds.IndexOf(current);
+  if Inc(next) > High(worlds) then
     next := 0;
 
-  Result := Self._Hop(next);
+  Result := Self._Hop(worlds[next]);
 end;
 
 (*
@@ -473,9 +488,10 @@ the specified `world`
 *)
 function TRSWorldSwitcher.WaitSwitch(world: Integer; failCooldown: Boolean = True): Boolean;
 begin
-  if not SleepUntil(MainScreen.IsServerMessage('Please wait'), 50, 600) then
+  if not SleepUntil(MainScreen.IsServerMessage('Please wait'), 200, 3*TICK) then
   begin
-    if failCooldown then Self.Cooldown.Restart(0, 7000);
+    if failCooldown then
+      Self.Cooldown.Restart(0, 7000);
     Exit;
   end;
 
