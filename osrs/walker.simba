@@ -540,6 +540,7 @@ var
   upText: String;
   hoveringTarget: Boolean;
   quad: TQuad;
+  tile: TPointArray;
 begin
   Self.RedClicked := False;
   if MainScreen.IsUpText('>') and not Self.ActionUpText.AnyContains('>') then
@@ -562,8 +563,11 @@ begin
       Exit;
 
     quad := Self.GetQuadMS(me, pt, [0.9,0.9], Minimap.CompassRadians);
+    tile := quad.Corners.Connect().ShapeFill();
+    tile := tile.ExtractBox(MainScreen.Bounds);
+    if tile = [] then Exit;
 
-    Mouse.Move(quad);
+    Mouse.Move(tile.RandomMean());
     upText := MainScreen.UpText;
 
     hoveringTarget := upText.ContainsAny(Self.TargetUpText);
@@ -621,15 +625,20 @@ You will probably never need to call this directly.
 *)
 function TRSWalker.IsWalkable(mapPoint, me: TPoint; out mmPoint: TPoint; radians: Double): Boolean;
 var
-  corner: TPoint;
+  tile: TPointArray;
+  count: Integer;
 begin
   mmPoint := Self.Point2MM(me, mapPoint, radians);
   if not Self.ScreenWalk then
     Exit(Minimap.Polygon.Expand(-1).Contains(mmPoint));
 
-  for corner in Self.GetQuadMS(me, mapPoint, [0.9,0.9], radians).Corners do
-    if MainScreen.Bounds.Contains(corner) then
-      Exit(True);
+  tile := Self.GetQuadMS(me, mapPoint, [0.9,0.9], radians).Corners.Connect().ShapeFill();
+  count := Length(tile);
+
+  tile := tile.ExtractBox(MainScreen.Bounds);
+  if tile = [] then Exit;
+
+  Result := (Length(tile) / count * 100) > 50;
 end;
 
 function TRSWalker._WalkStepHelper(me, mapPoint: TPoint; randomness: Integer; out minimapPoint: TPoint; out shouldExit: Boolean): Boolean;
