@@ -141,7 +141,7 @@ end;
 
 function TWebGraph.NearNodesIndices(pt: TPoint; amount: Integer): TIntegerArray;
 var
-  i: Integer;
+  i, n: Integer;
   weights: TDoubleArray;
   tpa: TPointArray;
 begin
@@ -150,14 +150,18 @@ begin
   for i := 0 to High(tpa) do
     if Self.WalkableClusters.InSameTPA(pt, tpa[i]) then
     begin
-      Result += Self.Nodes.IndexOf(tpa[i]);
+      n := Self.Nodes.IndexOf(tpa[i]);
+      if n = -1 then Continue;
+      Result += n;
       weights += pt.DistanceTo(tpa[i]);
     end;
 
   if Result = [] then
     for i := 0 to High(tpa) do
     begin
-      Result += Self.Nodes.IndexOf(tpa[i]);
+      n := Self.Nodes.IndexOf(tpa[i]);
+      if n = -1 then Continue;
+      Result += n;
       weights += pt.DistanceTo(tpa[i]);
     end;
 
@@ -236,21 +240,29 @@ begin
 
   nodeA := [a, EGraphNode.NORMAL];
   nodeB := [b, EGraphNode.NORMAL];
+
   if nS[0] = nG[0] then
     Exit([nodeA, nodeB]);
 
+
   if (Length(nG) = 1) and (Self.Paths[nG[0]] = []) then
-    raise GetDebugLn('WebGraph', 'Points ' + ToStr(a) + ' and ' + ToStr(b) + ' don''t connect!');
+    raise GetDebugLn('WebGraph', 'Points ' + ToStr(a) + ' and ' + ToStr(b) + ' don''t connect! No paths available.');
 
   for i := 0 to High(nS) do
+  begin
+    if nS[i] = -1 then
+      Continue;
     for j := 0 to High(nG) do
     begin
-      if nS[i] = nG[j] then
+      if nG[j] = -1 then
         Continue;
+      if nS[i] = nG[j] then Continue;
+
       indices := Self.FindPath(nS[i],nG[j], rnd);
       if Length(indices) > 0 then
         Break(2);
     end;
+  end;
 
   if Length(indices) = 0 then
     raise GetDebugLn('WebGraph', 'Points ' + ToStr(a) + ' and ' + ToStr(b) + ' don''t connect!');
