@@ -98,7 +98,7 @@ jobs:
             -H "Content-Type: application/zip" \
             --data-binary @"$ZIP_NAME"
             
-      - name: Insert release metadata into Supabase
+      - name: Insert release metadata
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
@@ -108,7 +108,7 @@ jobs:
             -H "apikey: $SUPABASE_KEY" \
             -H "Authorization: Bearer $SUPABASE_KEY" \
             -H "Content-Type: application/json" \
-            -H "Accept-Profile: scripts" \
+            -H "Content-Profile: scripts" \
             -d "$DATA"
 
             
