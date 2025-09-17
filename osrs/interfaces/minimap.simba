@@ -861,64 +861,53 @@ end.
 *)
 function TRSMinimap.CleanImage(img: TImage; radius: Integer): TImage;
 
-  function _DotTPA(pt: TPoint): TPointArray;
+  function _DotTPA(pt: TPoint; bounds: TBox): TPointArray;
   var
     q: TPoint;
   begin
+    if bounds.Contains(pt) then
+      Exit([
+        pt.Offset(0,-1), pt.Offset(1,-1),
+        pt.Offset(-1,0), pt, pt.Offset(1,0), pt.Offset(2,0),
+        pt.Offset(-1,1), pt.Offset(0,1), pt.Offset(1,1), pt.Offset(2,1),
+        pt.Offset(0,2), pt.Offset(1,2)
+      ]);
+
     q := pt.Offset(0,-1);
-    if img.InImage(q.X, q.Y) then
-      Result += q;
-
+    if bounds.Contains(q) then Result += q;
     q := pt.Offset(1,-1);
-    if img.InImage(q.X, q.Y) then
-      Result += q;
-
+    if bounds.Contains(q) then Result += q;
     q := pt.Offset(-1,0);
-    if img.InImage(q.X, q.Y) then
-      Result += q;
+    if bounds.Contains(q) then Result += q;
 
-    if img.InImage(pt.X, pt.Y) then
-      Result += pt;
+    Result += pt;
 
     q := pt.Offset(1,0);
-    if img.InImage(q.X, q.Y) then
-      Result += q;
-
+    if bounds.Contains(q) then Result += q;
     q := pt.Offset(2,0);
-    if img.InImage(q.X, q.Y) then
-      Result += q;
-
+    if bounds.Contains(q) then Result += q;
     q := pt.Offset(-1,1);
-    if img.InImage(q.X, q.Y) then
-      Result += q;
-
+    if bounds.Contains(q) then Result += q;
     q := pt.Offset(0,1);
-    if img.InImage(q.X, q.Y) then
-      Result += q;
-
+    if bounds.Contains(q) then Result += q;
     q := pt.Offset(1,1);
-    if img.InImage(q.X, q.Y) then
-      Result += q;
-
+    if bounds.Contains(q) then Result += q;
     q := pt.Offset(2,1);
-    if img.InImage(q.X, q.Y) then
-      Result += q;
-
+    if bounds.Contains(q) then Result += q;
     q := pt.Offset(0,2);
-    if img.InImage(q.X, q.Y) then
-      Result += q;
-
+    if bounds.Contains(q) then Result += q;
     q := pt.Offset(1,2);
-    if img.InImage(q.X, q.Y) then
-      Result += q;
-   end;
+    if bounds.Contains(q) then Result += q;
+  end;
 
 var
   tpa: TPointArray;
   pt: TPoint;
+  bounds: TBox;
 begin
+  bounds := [1,1,img.Width-2, img.Height-2];
   for pt in Self._GetDots(img) do
-    tpa += _DotTPA(pt);
+    tpa += _DotTPA(pt, bounds);
 
   with img.Center do
   begin

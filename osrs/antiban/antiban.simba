@@ -73,12 +73,13 @@ var
   current, res: TDateTime;
 begin
   current := TDateTime.CreateFromSystem();
+  res := TDateTime.CreateFromISO(current.Date.ToString('YYYY-MM-DD') + 'T' + time);
 
-  res := (TDateTime.CreateFromISO(current.Date.ToString('YYYY-MM-DD') + 'T' + time)) - current;
+  res -= current;
   if res < 0 then res += 1;
 
   Result := GetTimeRunning() + UInt64(Trunc(res * ONE_DAY));
-  Result += Trunc(GaussRand(0, randomness * 10 * ONE_DAY));
+  Result += Trunc(Abs(GaussRand(0, randomness * 10 * ONE_DAY)));
   Result := Max(0, Result);
 end;
 
