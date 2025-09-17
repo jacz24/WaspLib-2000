@@ -98,6 +98,20 @@ jobs:
             -H "Content-Type: application/zip" \
             --data-binary @"$ZIP_NAME"
             
+      - name: Insert release metadata into Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          DATA=$(jq -nc --arg version "$TAG_NAME" '{version:$version}')
+          curl -X POST "$SUPABASE_URL/rest/v1/wasplib" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Accept-Profile: scripts" \
+            -d "$DATA"
+
+            
       - name: Discord notification
         shell: bash
         run: |
