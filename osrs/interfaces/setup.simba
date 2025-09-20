@@ -168,20 +168,22 @@ begin
 
   Profiles.Load();
 
-  while RSFonts.Unzipping or ItemFinder.Unzipping do
+  while RSFonts.Unzipping do
   begin
-    Sleep(1000);
-    if RSFonts.Timeout.IsFinished then
-    begin
-      DirDelete(RSFonts.PATH, True);
-      raise GetDebugLn('RSFonts', 'Timed out unzipping fonts.');
-    end;
+    Sleep(100);
+    if not RSFonts.Timeout.IsFinished then
+      Continue;
+    DirDelete(RSFonts.PATH, True);
+    raise GetDebugLn('RSFonts', 'Timed out unzipping fonts.');
+  end;
 
-    if ItemFinder.Timeout.IsFinished then
-    begin
-      DirDelete(ItemFinder.CacheDir, True);
-      raise GetDebugLn('ItemFinder', 'Timed out unzipping items.');
-    end;
+  while ItemFinder.Unzipping do
+  begin
+    Sleep(100);
+    if not ItemFinder.Timeout.IsFinished then
+      Continue;
+    DirDelete(ItemFinder.CacheDir, True);
+    raise GetDebugLn('ItemFinder', 'Timed out unzipping items.');
   end;
 
   RSClient.IsLoggedIn();

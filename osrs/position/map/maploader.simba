@@ -222,7 +222,7 @@ begin
     raise GetDebugLn('MapLoader', result.Exception);
   msg := 'Finished async unzip of ' +  PathExtractName(result.ZipFile) + ' in ' + ToStr(Round(result.TimeUsed, 2)) + 'ms.';
   WriteLn GetDebugLn('MapLoader', msg, ELogLevel.SUCCESS);
-  Self._UnzipQueue -= 1;
+  Dec(Self._UnzipQueue);
 end;
 
 procedure TRSMapLoader.Setup(downscale: Integer);
@@ -259,7 +259,7 @@ begin
     begin
       if not DirCreate(Self.CacheDir + path + PATH_SEP) then
         raise GetDebugLn('MapLoader', 'Failed to create cache directory: ' + Self.CacheDir + path);
-      Self._UnzipQueue += 1;
+      Inc(Self._UnzipQueue);
       Async.FileUnZip(Self.FILES + path + '.zip', Self.CacheDir + path, @Self.Unzipped, nil);
     end;
   end;
@@ -282,7 +282,7 @@ var
   created: Boolean;
 begin
   if Self._UnzipQueue > 0 then
-    if not SleepUntil(Self._UnzipQueue <= 0, 100, 30000) then
+    if not SleepUntil(Self._UnzipQueue <= 0, 200, Self._UnzipQueue * 60 * ONE_SECOND) then
       raise GetDebugLn('MapLoader', 'Unzipping files timed out.');
 
   filename := ToStr(chunk.X) + '-' + ToStr(chunk.Y);
