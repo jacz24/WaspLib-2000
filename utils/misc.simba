@@ -47,7 +47,7 @@ Example:
 function Level2XP(level: Integer): Integer;
 var
   total:Double;
-  i:Int32;
+  i:Integer;
 begin
   for i := 1 to level-1 do
     total += Floor(i + 300 * 2 ** (i / 7));
@@ -63,7 +63,7 @@ Converts XP to the respective level.
 
 Example:
 ```pascal
-  WriteLn XP2Level(100000);
+WriteLn XP2Level(100000);
 ```
 *)
 function XP2Level(xp: Integer): Integer;
@@ -75,6 +75,35 @@ begin
     Inc(Result);
     total += Floor(Result + 300 * 2 ** (Result / 7));
   end;
+end;
+
+
+(*
+## FormatNumber
+```pascal
+function FormatNumber(n: Double; dec: Byte = 3): String;
+```
+Truncates a number with a runescape like truncation.
+
+Example:
+```pascal
+WriteLn FormatNumber(100000); //100k
+```
+*)
+function FormatNumber(n: Double; dec: Byte = 3): String;
+const
+  SUFFIXES: TStringArray = ['', 'K', 'M', 'B', 'T'];
+var
+  i: Integer;
+  f: Double;
+begin
+  if n = 0 then
+    Exit('0');
+
+  i := Min(Trunc(Ln(Abs(n)) / Ln(1000)), 4);
+  f := n / Power(1000, i);
+
+  Result := FormatFloat('0.' + StringOfChar('#', dec), f) + Suffixes[i];
 end;
 
 
@@ -117,7 +146,7 @@ WriteLn arr.GetRarest();
 function TColorArray.GetRarest(): TColor;
 var
   weights: TIntegerArray;
-  i,L    : Int32;
+  i,L    : Integer;
 begin
   L := High(Self);
   if (L <= 0) then Exit;
@@ -174,7 +203,7 @@ end;
 //credits: Simba1400/Source/MML/simba.tpa.pas#L2440C10-L2440C21
 function TImage.ColorsInLine(start, stop: TPoint; colors: TIntegerArray): Boolean;
 var
-  Xinc, YInc: Int32;
+  Xinc, YInc: Integer;
   TwoDxAccumulatedError, TwoDyAccumulatedError: Integer;
   current, d, twoD: TPoint;
 begin
