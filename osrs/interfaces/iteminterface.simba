@@ -367,26 +367,45 @@ begin
 end;
 
 
-
-function TRSItemInterface._Discover(slot: Integer): TRSItemArray;
+function TRSItemInterface._GetShadowHash(slot: Integer): String;
 var
   b: TBox;
-  img: TImage;
-  hash: String;
 begin
-  b := Self.Slots^.Box(slot);
-  b.X1 += Self.DiscoverOffset.X;
-  b.Y1 += Self.DiscoverOffset.Y;
+  with Self.Slots^.Box(slot) do
+  begin
+    b.X1 := X1 + Self.DiscoverOffset.X;
+    b.Y1 := Y1 + Self.DiscoverOffset.Y;
+  end;
+
   b.X2 := b.X1 + 35;
   b.Y2 := b.Y1 + 31;
 
-  if (b.Width <> 36) or (b.Height <> 32) then
-    raise GetDebugLn(Self.Name, 'Discover box has to be 36x32. You passed w: ' + ToStr(b.Width) + ' h: ' + ToStr(b.Height));
+  Result := ItemFinder.GetBorderHash(Target.GetImage(b));
+end;
 
-  img := Target.GetImage(b);
-  hash := ItemFinder.GetHash(img);
-  if hash = '' then Exit;
-  Result := ItemFinder.GetHashItems(hash);
+function TRSItemInterface._GetHash(slot: Integer): String;
+var
+  b: TBox;
+begin
+  with Self.Slots^.Box(slot) do
+  begin
+    b.X1 := X1 + Self.DiscoverOffset.X;
+    b.Y1 := Y1 + Self.DiscoverOffset.Y;
+  end;
+
+  b.X2 := b.X1 + 35;
+  b.Y2 := b.Y1 + 31;
+
+  Result := ItemFinder.GetHash(Target.GetImage(b));
+end;
+
+function TRSItemInterface._Discover(slot: Integer): TRSItemArray;
+var
+  hash: String;
+begin
+  hash := Self._GetHash(slot);
+  if hash <> '' then
+    Result := ItemFinder.GetHashItems(hash);
 end;
 
 function TRSItemInterface.Discover(slot: Integer): TRSItemArray;

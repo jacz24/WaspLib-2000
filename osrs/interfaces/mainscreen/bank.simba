@@ -1191,13 +1191,21 @@ function TRSBank.DepositDifferent(items: TRSItemArray; useQuantityButton: Boolea
 var
   slots: TIntegerArray;
   slot: Integer;
+  hash: String;
+  deposited: TStringArray;
 begin
   slots := Inventory.Items.FindDifferent(items);
   if slots = [] then Exit(True);
 
   for slot in slots do
-    if not Self._InteractionHelper(ERSBankInteraction.DEPOSIT, Inventory.Slots.Box(slot), 1, useQuantityButton) then
+  begin
+    hash := Inventory.Items._GetHash(slot);
+    if deposited.Contains(hash) then
+      Continue;
+    deposited += hash;
+    if not Self._InteractionHelper(ERSBankInteraction.DEPOSIT, Inventory.Slots.Box(slot), QUANTITY_ALL, useQuantityButton) then
       Exit;
+  end;
   Result := True;
 end;
 

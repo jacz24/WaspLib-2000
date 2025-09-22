@@ -722,7 +722,7 @@ position on the minimap at 0º.
 Example:
 ```pascal
 pt := Minimap.RandomPoint(Minimap.Center, 30);
-angle := Minimap.GetCompassAngle(False);
+angle := Minimap.CompassRadians;
 pt := Minimap.Normalize(pt, angle);
 ShowOnTarget(TCircle.Create(pt.X, pt.Y, 6));
 ```
