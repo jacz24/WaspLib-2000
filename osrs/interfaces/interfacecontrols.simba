@@ -374,7 +374,10 @@ WriteLn Chat.Scroll.CanScroll();
 *)
 function TRSScrollBar.CanScroll(): Boolean;
 begin
-  Result := Self.IsVisible() and (Self.Slider <> Self.Bounds);
+  if not Self.IsVisible() then
+    Exit;
+
+  Result := (Abs(Self.Slider.Y1 - Self.Bounds.Y1) > 0) or (Abs(Self.Slider.Y2 - Self.Bounds.Y2) > 0);
 end;
 
 

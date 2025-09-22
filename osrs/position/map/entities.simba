@@ -18,6 +18,8 @@ these do not have a rotation field.
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
+  ENPCData = enum(ID, NAME, LEVEL, CATEGORY, MINIMAPDOT, ACTIONS, SIZE, COORDINATES, COLORS);
+
 (*
 ## TRSEntity
 Main type to handle {ref}`RSEntity`.
@@ -44,7 +46,7 @@ Array of {ref}`TRSEntity`.
 ## RSEntity.Create
 ```pascal
 function TRSEntity.Create(walker: PRSWalker; size: TVector3; coordinates: TPointArray; uptext: TStringArray = []; dots: ERSMinimapDots = []): TRSEntity; static;
-function TRSEntity.Create(json: TJSONItem): TRSEntity; static; overload;
+function TRSEntity.Create(json: TJSONObject): TRSEntity; static; overload;
 ```
 Createors to create your {ref}`TRSEntity`.
 
@@ -95,7 +97,7 @@ begin
     Result.Filter += TRSDotFilter.Create([], TCircle.Create(pt.X, pt.Y, radius), True);
 end;
 
-function TRSEntity.Create(json: TJSONItem): TRSEntity; static; overload;
+function TRSEntity.Create(json: TJSONObject): TRSEntity; static; overload;
 var
   i: Integer;
   colors: TColorArray;
@@ -105,29 +107,34 @@ begin
   if json.Typ <> EJSONType.OBJ then
     raise GetDebugLn('TRSEntity', 'JSON Object expected, got ' + ToStr(json.Typ) + '.');
 
-  if json.Item[1].AsString <> 'null' then
-    Result.UpText := [json.Item[1].AsString];
-  if json.Item[4].AsBool then //4 is minimapdot key in TRSMap jsons
+  with json.Item[Ord(ENPCData.NAME)] do
+    if AsString <> 'null' then
+      Result.UpText := [AsString];
+
+  if json.Item[Ord(ENPCData.MINIMAPDOT)].AsBool then
     Result.MinimapDots := [ERSMinimapDot.NPC];
 
-  //6 is size key in TRSMap jsons
-  Result.Size.X := Round(json.Item[6].Item[0].AsInt * 0.8, 2);
-  Result.Size.Y := Round(json.Item[6].Item[1].AsInt * 0.8, 2);
-  Result.Size.Z := Round(json.Item[6].Item[2].AsInt / 40, 2);
+  with json.Item[Ord(ENPCData.SIZE)] do
+  begin
+    Result.Size.X := Item[0].AsInt * 0.8;
+    Result.Size.Y := Item[1].AsInt * 0.8;
+    Result.Size.Z := Item[2].AsInt / 40;
+  end;
 
-  if Result.Size.Z = 0.0 then
+  if Abs(Result.Size.Z) < 0.05 then
     Result.Size.Z := 3.0;
 
-  //7 is coordinates key in TRSMap jsons
-  for i := 0 to json.Item[7].Count-1 do
-  begin
-    coord := json.Item[7].Item[i];
-    Result.Coordinates += [coord.Item[0].AsInt, coord.Item[1].AsInt];
-    Result.Filter += TRSDotFilter.Create([], TCircle.Create(coord.Item[0].AsInt, coord.Item[1].AsInt, 40), True);
-  end;
-  //8 is colors key in TRSMap jsons
-  for i := 0 to json.Item[8].Count-1 do
-    colors += json.Item[8].Item[i].AsInt;
+  with json.Item[Ord(ENPCData.COORDINATES)] do
+    for i := 0 to Count-1 do
+    begin
+      coord := Item[i];
+      Result.Coordinates += [coord.Item[0].AsInt, coord.Item[1].AsInt];
+      Result.Filter += TRSDotFilter.Create([], TCircle.Create(coord.Item[0].AsInt, coord.Item[1].AsInt, 40), True);
+    end;
+
+  with json.Item[Ord(ENPCData.COLORS)] do
+    for i := 0 to Count-1 do
+      colors += Item[i].AsInt;
 
   if colors <> [] then
   begin
@@ -138,7 +145,29 @@ begin
   Result.Walker := @Map.Walker;
 end;
 
-function TRSEntityArray.Create(json: TJSONItem): TRSEntityArray; static;
+(*
+## RSEntityArray.Create
+```pascal
+function TRSEntityArray.Create(json: TJSONArray): TRSEntityArray; static;
+```
+Create function to build your {ref}`TRSObjectArray`.
+
+This only accepts a `json` array and it expects a specific json structure which is
+the one that {ref}`Map JSONs` provide.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+
+var
+  objs: TRSObjectArray;
+begin
+  Map.Setup([ERSChunk.VARROCK]);
+  objs := TRSObject.Create(ObjectsJSON.GetByName('bank'));
+end;
+```
+*)
+function TRSEntityArray.Create(json: TJSONArray): TRSEntityArray; static;
 var
   i: Integer;
 begin

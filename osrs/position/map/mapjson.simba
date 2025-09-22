@@ -109,15 +109,17 @@ end;
 
 
 (*
-## ObjectsJSON.Get
+## ObjectsJSON.GetByName
 ```pascal
-function TMapObjectJSON.Get(name: String; amount: Integer = 0): TJSONItem;
+function TMapObjectJSON.GetByName(name: String; amount: Integer = 0): TJSONArray;
 ```
-Returns a `TJSONItem` JSON array of a map object that matches the specified `name`.
-By default you get all objects that match the `name`, however,
-if you want you can specify how many you want through `amount`.
+Returns a `TJSONArray` of JSON Objects of a map object that matches the
+specified `name`.
+
+By default you get all objects that match the `name`, however, if you want you
+can specify how many you want through `amount`.
 *)
-function TMapObjectJSON.GetByName(name: String; amount: Integer = 0): TJSONItem;
+function TMapObjectJSON.GetByName(name: String; amount: Integer = 0): TJSONArray;
 var
   i, found: Integer;
 begin
@@ -138,11 +140,11 @@ end;
 (*
 ## ObjectsJSON.GetByID
 ```pascal
-function TMapObjectJSON.GetByID(id: Integer): TJSONItem;
+function TMapObjectJSON.GetByID(id: Integer): TJSONObject;
 ```
-Returns a `TJSONItem` JSON object of a map object that matches the specified `id`.
+Returns a `TJSONObject` of a map object that matches the specified `id`.
 *)
-function TMapObjectJSON.GetByID(id: Integer): TJSONItem;
+function TMapObjectJSON.GetByID(id: Integer): TJSONObject;
 var
   i: Integer;
 begin
@@ -157,14 +159,14 @@ end;
 (*
 ## ObjectsJSON.GetByAction
 ```pascal
-function TMapObjectJSON.GetByAction(action: String; amount: Integer = 0): TJSONItem;
+function TMapObjectJSON.GetByAction(action: String; amount: Integer = 0): TJSONArray;
 ```
-Returns a `TJSONItem` JSON array of a map object that has an action that matches
-the specified `action`.
+Returns a `TJSONArray` of JSON Objects of a map object that has an action that
+matches the specified `action`.
 By default you get all objects that match the `action`, however, if you want
 you can specify how many you want through `amount`.
 *)
-function TMapObjectJSON.GetByAction(action: String; amount: Integer = 0): TJSONItem;
+function TMapObjectJSON.GetByAction(action: String; amount: Integer = 0): TJSONArray;
 var
   i, j, found: Integer;
 begin
@@ -176,7 +178,8 @@ begin
       if Self.Data.Item[i].Item[4].Item[j].AsString = action then
       begin
         Result.AddObject('', Self.Data.Item[i].Clone());
-        if Inc(found) = amount then Exit;
+        if Inc(found) = amount then
+          Exit;
         Continue(2);
       end;
 

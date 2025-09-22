@@ -1054,31 +1054,44 @@ end;
 (*
 ## TRSWalker.GetClosestPoint
 ```pascal
-function TRSWalker.GetClosestPointEx(me: TPoint; destinations: TPointArray): TPoint;
-function TRSWalker.GetClosestPoint(destinations: TPointArray): TPoint;
+function TRSWalker.GetClosestPoint(me: TPoint; destinations: TPointArray; out path: TGraphNodeArray): TPoint;
 ```
-Method used to get the closest Point to the Player out of a TPA.
+Method used to get the closest `destination` point to `me`.
 *)
-function TRSWalker.GetClosestPoint(me: TPoint; destinations: TPointArray; out path: TGraphNodeArray): TPoint; overload;
+function TRSWalker.GetClosestPoint(me: TPoint; destinations: TPointArray; out path: TGraphNodeArray): TPoint;
 var
   shortPaths: array of TGraphNodeArray;
-  best, dist: Integer;
+  best, dist, i: Integer;
   destination: TPoint;
+  pathDist: Double;
 begin
   me := Self.Position();
   best := $FFFFFF;
 
   for destination in destinations do
   begin
+    if not me.InRange(destination, best) then
+      Continue;
+
     try
       path := Self.WebGraph^.PathBetween(me, destination, 0, 4);
     except
       Continue;
     end;
 
-    if path = [] then Continue;
+    if path = [] then
+      Continue;
 
-    dist := Floor(path.PolylineLength());
+    pathDist := 0;
+    for i := 0 to High(path)-1 do
+    begin
+      pathDist += path[i].Node.DistanceTo(path[i+1].Node);
+      if pathDist > best then
+        Continue;
+    end;
+
+    dist := Floor(pathDist);
+
     if dist < best then
     begin
       shortPaths := [path];
