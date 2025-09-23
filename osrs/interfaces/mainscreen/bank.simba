@@ -76,8 +76,6 @@ Record responsible to handle the {ref}`Bank` interface.
     Title: TRSInterfaceTitle;
     Scroll: TRSScrollBar;
 
-    CachedQuantity: Integer;
-
     Incenerator, PotionStorage, SlotsArea: TBox;
 
     Tabs, SlotBoxes: TBoxArray;
@@ -943,7 +941,7 @@ if Bank.Items.Find('Abyssal whip', slot) the
 function TRSBank._InteractionHelper(mode: ERSBankInteraction; slot: TBox; amount: Integer; useQuantityButton: Boolean): Boolean;
 var
   quantity: ERSItemQuantity;
-  amountStr, modeStr: String;
+  amountStr, modeStr, upText: String;
 begin
   amountStr := ToString(amount);
   quantity := ERSItemQuantity.Integer2Quantity(amount);
@@ -955,7 +953,8 @@ begin
 
   if useQuantityButton then
   begin
-    if not Self.SetQuantity(quantity) then Exit;
+    if not Self.SetQuantity(quantity) then
+      Exit;
 
     Mouse.Move(slot);
     if quantity <> ERSItemQuantity.CUSTOM then
@@ -964,14 +963,34 @@ begin
       Exit(True);
     end;
 
-    if MainScreen.IsUpText(modeStr + amountStr) then
+    if Self._Cache.Quantity = amount then
     begin
       Mouse.Click(EMouseButton.LEFT);
       Exit(True);
     end;
 
-    if not ChooseOption.Select(modeStr + 'X') then Exit;
-    Exit(Chat.AnswerQuery('Enter amount', amountStr, RandomLeft(1400, 2400)));
+    upText := MainScreen.UpText;
+    if not upText.Contains(modeStr) then
+      Exit;
+
+    upText := upText.Between(modeStr, ' ');
+
+    if upText = amountStr then
+    begin
+      Self._Cache.Quantity := amount;
+      Mouse.Click(EMouseButton.LEFT);
+      Exit(True);
+    end;
+
+    if not ChooseOption.Select(modeStr + 'X') then
+      Exit;
+    if Chat.AnswerQuery('Enter amount', amountStr, RandomLeft(1400, 2400)) then
+    begin
+      Self._Cache.Quantity := amount;
+      Exit(True);
+    end
+    else
+      Exit;
   end;
 
   Mouse.Move(slot);

@@ -180,6 +180,7 @@ function TRSMainScreen.IsUpText(strings: TStringArray; caseSensitive: Boolean = 
   var
     upText, str, tmp: String;
     i: Integer;
+    match: Double;
   begin
     if caseSensitive then
       upText := Self.UpText
@@ -194,8 +195,14 @@ function TRSMainScreen.IsUpText(strings: TStringArray; caseSensitive: Boolean = 
       for i := 1 to Length(upText)-Length(str) do
       begin
         tmp := Copy(upText, i, Length(str));
-        if str.Similarity(tmp) >= similarity then
+        match := str.Similarity(tmp);
+        if match >= similarity then
+        begin
+          {$IFDEF WL_DEBUG_UPTEXT}
+          WriteLn GetDebugLn('MainScreen', 'IsUpText Similarity: ' + ToStr(match));
+          {$ENDIF}
           Exit(True);
+        end;
       end;
     end;
   end;
