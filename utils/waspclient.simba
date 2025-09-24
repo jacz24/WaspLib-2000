@@ -59,6 +59,9 @@ begin
 
   Self.Client.RequestHeader['Authorization'] := 'Bearer ' + json.Item['access_token'].AsString;
   Self.User.RefreshToken := json.Item['refresh_token'].AsString;
+  {$IFDEF WASP_REFRESH_TOKEN}
+  WriteLn GetDebugLn('WaspClient', 'Refresh token was refreshed: ' + Self.User.RefreshToken);
+  {$ENDIF}
   with json.Item['user'] do
   begin
     Self.User.ID := Item['id'].AsString;
@@ -75,14 +78,16 @@ begin
     WriteLn GetDebugLn('WaspClient', 'Failed to connect to https://api.waspscripts.dev/ to get the database connection info. Falling back to default settings.', ELogLevel.WARN);
     Self.Server := 'https://db.waspscripts.dev/';
     Self.APIKey := 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc1MTA0MTIwMCwiZXhwIjo0OTA2NzE0ODAwLCJyb2xlIjoiYW5vbiJ9.C_KW5x45BpIyOQrnZc7CKYKjHe0yxB4l-fTSC4z_kYY';
+  end
+  else
+  begin
+    json := new TJSONParser();
+    json.Parse(result.Data);
+
+    if not json.GetString('url', Self.Server) then Exit;
+    if not json.GetString('anon_key', Self.APIKey) then Exit;
+    if not Self.Server.EndsWith('/') then Self.Server += '/';
   end;
-
-  json := new TJSONParser();
-  json.Parse(result.Data);
-
-  if not json.GetString('url', Self.Server) then Exit;
-  if not json.GetString('anon_key', Self.APIKey) then Exit;
-  if not Self.Server.EndsWith('/') then Self.Server += '/';
 
   Self.Client := new THTTPClient();
   Self.Client.RequestHeader['Content-Type'] := 'application/json';
