@@ -44,6 +44,9 @@ var
 begin
   payload := '{"refresh_token": "' + Self.User.RefreshToken + '"}';
 
+  WriteLn Self.Client = nil;
+  WriteLn Self.Server + 'auth/v1/token?grant_type=refresh_token';
+  WriteLn payload;
   response := Self.Client.Post(
     Self.Server + 'auth/v1/token?grant_type=refresh_token', payload
   );
@@ -69,25 +72,11 @@ begin
   end;
 end;
 
-procedure TWaspClient.Setup(constref result: TASyncHTTPResult);
-var
-  json: TJSONParser;
+procedure TWaspClient.Setup();
 begin
-  if result.Response <> EHTTPStatus.OK then
-  begin
-    WriteLn GetDebugLn('WaspClient', 'Failed to connect to https://api.waspscripts.dev/ to get the database connection info. Falling back to default settings.', ELogLevel.WARN);
-    Self.Server := 'https://db.waspscripts.dev/';
-    Self.APIKey := 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc1MTA0MTIwMCwiZXhwIjo0OTA2NzE0ODAwLCJyb2xlIjoiYW5vbiJ9.C_KW5x45BpIyOQrnZc7CKYKjHe0yxB4l-fTSC4z_kYY';
-  end
-  else
-  begin
-    json := new TJSONParser();
-    json.Parse(result.Data);
-
-    if not json.GetString('url', Self.Server) then Exit;
-    if not json.GetString('anon_key', Self.APIKey) then Exit;
-    if not Self.Server.EndsWith('/') then Self.Server += '/';
-  end;
+  Exit;
+  Self.Server := 'https://db.waspscripts.dev/';
+  Self.APIKey := 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc1MTA0MTIwMCwiZXhwIjo0OTA2NzE0ODAwLCJyb2xlIjoiYW5vbiJ9.C_KW5x45BpIyOQrnZc7CKYKjHe0yxB4l-fTSC4z_kYY';
 
   Self.Client := new THTTPClient();
   Self.Client.RequestHeader['Content-Type'] := 'application/json';
@@ -124,6 +113,12 @@ begin
     Self.Client.RequestHeader['Accept-Profile'] := ''
   else
     Self.Client.RequestHeader['Accept-Profile'] := schema;
+end;
+
+procedure TWaspClient.WaitSetup();
+begin
+  while Self.Client = nil do
+    Sleep(50);
 end;
 
 function TWaspClient.CheckScriptAccess(): Boolean;
