@@ -433,7 +433,7 @@ function TRSObject.PreHover(me: TPoint; attempts: Integer = 2): Boolean;
 ```
 To understand what this does it's recommended to read {ref}`RSObject.FindFrom`.
 
-This method basically uses {ref}`RSObject.FindFrom` and asynchronously moves the
+This method basically uses {ref}`RSObject.FindFrom` and moves the
 mouse to one of the matches.
 *)
 function TRSObject.PreHover(me: TPoint; attempts: Integer = 2): Boolean;
@@ -444,7 +444,7 @@ begin
   for attempt := 0 to attempts do
   begin
     if not Self.FindFrom(me, atpa) then Continue;
-    AsyncMouse.Move(atpa.Random().Random());
+    Mouse.Move(atpa.Random().Random());
     Exit(True);
   end;
 end;

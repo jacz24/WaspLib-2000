@@ -152,22 +152,15 @@ WriteLn Prayer.CloseInfo();
 function TRSPrayer.CloseInfo(): Boolean;
 var
   destination: TPoint;
-  timeout: UInt64;
 begin
-  if not Self.InfoIsOpen then
+  if not Self.InfoIsOpen() then
     Exit(True);
 
   destination := GameTab.Bounds.Expand(10).NearestEdge(Target.MouseXY);
+
   AsyncMouse.Move(destination);
-
-  timeout := Time() + 3000;
-
-  while Self.InfoIsOpen() or (Time() > timeout) do
-    Sleep(20, 100, ERandomDir.LEFT);
-
+  Result := SleepUntil(not Self.InfoIsOpen(), 35, 3000);
   AsyncMouse.Stop();
-
-  Result := not Self.InfoIsOpen();
 end;
 
 (*

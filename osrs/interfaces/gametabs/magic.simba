@@ -207,37 +207,23 @@ WriteLn Magic.CloseInfo();
 function TRSMagic.CloseInfo(): Boolean;
 var
   destination: TPoint;
-  timeout: UInt64;
 begin
   destination := GameTab.Bounds.Expand(10).NearestEdge(Target.MouseXY);
-  AsyncMouse.Move(destination);
 
-  timeout := Time() + 3000;
-
-  while Self.InfoIsOpen() or (Time() > timeout) do
-    Sleep(20, 100, ERandomDir.LEFT);
-
-  AsyncMouse.Stop();
-
-  Result := not Self.InfoIsOpen();
+  ASyncMouse.Move(destination);
+  Result := SleepUntil(not Self.InfoIsOpen(), 35, 3000);
+  ASyncMouse.Stop();
 end;
 
-function TRSMagic.CloseInfo({$H-}spell: ERSSpell): Boolean; overload; {$H+}
+function TRSMagic.CloseInfo(spell: ERSSpell): Boolean; overload;
 var
   destination: TPoint;
-  timeout: UInt64;
 begin
-  destination := GameTab.Bounds.Expand(10).NearestEdge(Target.MouseXY);
-  AsyncMouse.Move(destination);
+  destination := Self.SpellCache[spell].Box.RandomPointCenter();
 
-  timeout := Time() + 3000;
-
-  while Self.InfoIsOpen() or (Time() > timeout) do
-    Sleep(20, 100, ERandomDir.LEFT);
-
-  AsyncMouse.Stop();
-
-  Result := not Self.InfoIsOpen();
+  ASyncMouse.Move(destination);
+  Result := SleepUntil(not Self.InfoIsOpen(), 35, 3000);
+  ASyncMouse.Stop();
 end;
 
 

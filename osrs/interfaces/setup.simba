@@ -132,7 +132,7 @@ begin
 
   Mouse.Setup();
   Keyboard.Setup();
-  AsyncMouse := new TASyncMouse(Target);
+  ASyncMouse := new TASyncMouse(Target);
 
   RSCacheParser.Setup();
 
