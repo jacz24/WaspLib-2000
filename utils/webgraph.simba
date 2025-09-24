@@ -220,8 +220,10 @@ begin
         q := Self.Nodes[pathIdx].Node;
         node.Indices := current.Indices + pathIdx;
 
-        hyp := Hypot(p.x-q.x, p.y-q.y);
-        node.Score   := current.Score + hyp + (hyp*Random()*Rnd-Rnd/2);
+        hyp := Hypot(p.X-q.X, p.Y-q.Y);
+        node.Score := current.Score + hyp + (hyp*Random()*Rnd-Rnd/2);
+        if Self.Nodes[pathIdx].Typ <> EGraphNode.NORMAL then
+          node.Score += 10;
         queue += node;
       end;
     end;
