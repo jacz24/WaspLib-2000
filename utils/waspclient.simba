@@ -1,6 +1,39 @@
 (*
 # WaspClient
-Client to interact with https://waspscripts.com
+Client to interact with the WaspScripts API and database.
+
+The following compiler directives are available and are useful for local
+development:
+```pascal
+{$DEFINE WASP_LOCAL_DEVELOPMENT}
+{$DEFINE WASP_REFRESH_TOKEN := 'refresh_token'}
+{$DEFINE SCRIPT_ID := 'script_uuid'}
+{$DEFINE SCRIPT_REVISION := 'script_revision'}
+```
+`WASP_LOCAL_DEVELOPMENT` is meant to be used with local server running the
+(wasp-api)[https://github.com/WaspScripts/wasp-api], by default this server
+runs on [http://localhost:3000/]
+
+As for the others, you can get values for them by running Simba through
+(wasp-launcher)[https://github.com/WaspScripts/wasp-launcher] and running
+something like this:
+```pascal
+begin
+  WriteLn GetEnvVar('WASP_REFRESH_TOKEN');
+  WriteLn GetEnvVar('SCRIPT_ID');
+  WriteLn GetEnvVar('SCRIPT_REVISION');
+end.
+```
+Simply open a new tab and run that.
+
+Things to keep in mind:
+- The `WASP_REFRESH_TOKEN` you get may expire from time to time.
+WaspLib automatically renews it every 5 mins and if you are using
+`{$DEFINE WASP_REFRESH_TOKEN := 'refresh_token'}` you will get the new one
+printed.
+- You only get a `SCRIPT_ID` and `SCRIPT_REVISION` if you run a script through
+(wasp-launcher)[https://github.com/WaspScripts/wasp-launcher]. Simply using it
+to open a dev environment won't get those.
 *)
 
 {$DEFINE WL_WASPCLIENT_INCLUDED}
@@ -18,7 +51,7 @@ type
     end;
 
     Client: THTTPClient;
-    Server, APIKey, Schema: String;
+    Server, Database, APIKey, Schema: String;
 
     User: record
       ID: String;
@@ -26,6 +59,7 @@ type
       RefreshToken: String;
     end;
 
+    Payload: TJSONObject;
     Lock: TLock;
     IsSetup: Boolean;
   end;
@@ -47,7 +81,7 @@ begin
   payload := '{"refresh_token": "' + Self.User.RefreshToken + '"}';
 
   response := Self.Client.Post(
-    Self.Server + 'auth/v1/token?grant_type=refresh_token', payload
+    Self.Database + 'auth/v1/token?grant_type=refresh_token', payload
   );
 
   if Self.Client.ResponseStatus <> EHTTPStatus.OK then
@@ -63,6 +97,7 @@ begin
 
   Self.Client.RequestHeader['Authorization'] := 'Bearer ' + json.Item['access_token'].AsString;
   Self.User.RefreshToken := json.Item['refresh_token'].AsString;
+  Self.Client.RequestHeader['RefreshToken'] := Self.User.RefreshToken;
 
   {$IFDEF WASP_REFRESH_TOKEN}
   WriteLn GetDebugLn('WaspClient', 'Refresh token was refreshed: ' + Self.User.RefreshToken);
@@ -78,7 +113,13 @@ end;
 
 procedure TWaspClient.Setup();
 begin
-  Self.Server := 'https://db.waspscripts.dev/';
+  {$IFDEF WASP_LOCAL_DEVELOPMENT}
+  Self.Server := 'http://localhost:3000/';
+  {$ELSE}
+  Self.Server := 'https://api.waspscripts.dev/';
+  {$ENDIF}
+
+  Self.Database := 'https://db.waspscripts.dev/';
   Self.APIKey := 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc1MTA0MTIwMCwiZXhwIjo0OTA2NzE0ODAwLCJyb2xlIjoiYW5vbiJ9.C_KW5x45BpIyOQrnZc7CKYKjHe0yxB4l-fTSC4z_kYY';
 
   Self.Client := new THTTPClient();
@@ -86,24 +127,30 @@ begin
   Self.Client.RequestHeader['apikey'] := Self.APIKey;
 
   {$IFDEF WASP_REFRESH_TOKEN}
-    Self.User.RefreshToken := {$MACRO WASP_REFRESH_TOKEN};
+  Self.User.RefreshToken := {$MACRO WASP_REFRESH_TOKEN};
   {$ELSE}
-    Self.User.RefreshToken := GetEnvVar('WASP_REFRESH_TOKEN');
+  Self.User.RefreshToken := GetEnvVar('WASP_REFRESH_TOKEN');
   {$ENDIF}
 
   {$IFDEF SCRIPT_ID}
-    Self.Script.ID := {$MACRO SCRIPT_ID};
+  Self.Script.ID := {$MACRO SCRIPT_ID};
   {$ELSE}
-    Self.Script.ID := GetEnvVar('SCRIPT_ID');
+  Self.Script.ID := GetEnvVar('SCRIPT_ID');
   {$ENDIF}
 
   {$IFDEF SCRIPT_REVISION}
-    Self.Script.Revision := StrToInt({$MACRO SCRIPT_REVISION}, 0);
+  Self.Script.Revision := StrToInt({$MACRO SCRIPT_REVISION}, 0);
   {$ELSE}
-    Self.Script.Revision := StrToInt(GetEnvVar('SCRIPT_REVISION'), 0);
+  Self.Script.Revision := StrToInt(GetEnvVar('SCRIPT_REVISION'), 0);
   {$ENDIF}
 
-  if Self.User.RefreshToken = '' then Exit;
+  if Self.User.RefreshToken = '' then
+    Exit;
+
+  Self.Payload := new TJSONObject();
+  Self.Payload.AddInt('experience', 0);
+  Self.Payload.AddInt('gold', 0);
+  Self.Payload.AddInt('runtime', 0);
 
   Self.Lock := TLock.Create();
   Self.IsSetup := True;
@@ -130,11 +177,70 @@ begin
   if not Self.Lock.TryEnter() then Exit;
   if not Self.Script.ID.IsUUID() then Exit;
 
-  url := Self.Server + 'storage/v1/object/authenticated/scripts/' +
+  url := Self.Database + 'storage/v1/object/authenticated/scripts/' +
          Self.Script.ID + '/000000001/script.simba';
 
   Result := Self.Client.Head(url) = EHTTPStatus.OK;
   Self.Lock.Leave();
+end;
+
+
+procedure TWaspClient.ResetPayload();
+begin
+  if not Self.Lock.TryEnter() or not Self.IsSetup then
+    Exit;
+
+  Self.Payload.Item['experience'].AsInt := 0;
+  Self.Payload.Item['gold'].AsInt := 0;
+  Self.Payload.Item['runtime'].AsInt := 0;
+  Self.Lock.Leave();
+end;
+
+procedure TWaspClient.UpdatePayload(xp, gp, time: Integer);
+var
+  item: TJSONItem;
+begin
+  if not Self.Lock.TryEnter() or not Self.IsSetup then
+    Exit;
+
+  item := Self.Payload.Item['experience'];
+  item.AsInt := item.AsInt + xp;
+  item := Self.Payload.Item['gold'];
+  item.AsInt := item.AsInt + gp;
+  item := Self.Payload.Item['runtime'];
+  item.AsInt := item.AsInt + time;
+  Self.Lock.Leave();
+end;
+
+
+procedure TWaspClient._SubmitStats();
+var
+  response: String;
+  status: Integer;
+begin
+  if not Self.Lock.TryEnter() then
+    Exit;
+  Self.Client.RequestHeader['Accept-Profile'] := 'stats';
+
+  WriteLn(Self.Server + 'stats/' + Self.Script.ID);
+
+  response := Self.Client.Post(
+                Self.Server + 'stats/' + Self.Script.ID + '/', Self.Payload.Format()
+              );
+  status := Self.Client.ResponseStatus.AsInteger;
+  Self.Lock.Leave();
+
+  WriteLn GetDebugLn('WaspClient', '[' + ToStr(status) + ']: ' + response);
+
+  if InRange(status, 200, 299) then
+    Self.ResetPayload();
+
+  Self.RefreshSession();
+end;
+
+procedure TWaspClient.SubmitStats();
+begin
+  RunInThread(@Self._SubmitStats);
 end;
 
 var

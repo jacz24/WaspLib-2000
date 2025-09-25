@@ -19,11 +19,33 @@ less confusing way.
 {$DEFINE WL_DEBUG_INTERFACES}
 {$DEFINE WL_GENERATE_GRAPH_ALWAYS}
 ```
-This are the compiler directives available in the library.
-
-Add them **before** including the library to use them.
+These are the main compiler directives available in the library.
 
 They should be self-explanatory.
+
+You also have the following to override versions, for more information read {ref}`Version`
+```pascal
+{$DEFINE SCRIPT_SIMBA_VERSION := 'version_hash'}
+{$DEFINE SCRIPT_WASPLIB_VERSION := 'version_hash'}
+```
+
+For the {ref}`WaspClient` you also have the following:
+```pascal
+{$DEFINE WASP_LOCAL_DEVELOPMENT}
+{$DEFINE WASP_REFRESH_TOKEN := 'refresh_token'}
+{$DEFINE SCRIPT_ID := 'script_UUID'}
+{$DEFINE SCRIPT_REVISION := 'script_revision'}
+```
+They also should be self-explanatory but you can read more about them in
+{ref}`WaspClient`.
+
+All of the directives above must be added **before** including the library to
+use them, for example:
+```pascal
+{$DEFINE WL_DISABLE_FAKE_INPUT}
+{$I WaspLib/osrs.simba}
+```
+Otherwise WaspLib won't be aware of them.
 *)
 
 {$INCLUDE_ONCE version.simba}
