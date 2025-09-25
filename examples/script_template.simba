@@ -32,9 +32,9 @@ end;
 
 procedure TTemplate.Init();
 begin
-  Logger.Setup('Wasp Cooker');
+  Logger.Setup('Template');
   ProgressReport.Setup(
-    'Wasp Cooker',
+    'Template',
     ['Script runtime', 'Botting runtime', 'Antiban runtime', 'Actions'],
     @Self.GetReportValues
   );
