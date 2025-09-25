@@ -15,14 +15,29 @@ type
   end;
 
 function TTemplate.GetReportValues(): TStringArray;
+var
+  actionsStr: String;
 begin
-  Result := [ToStr(Self.Actions)];
+  actionsStr := ToStr(Self.Actions);
+  if Self.MaxActions <> 0 then
+    actionsStr += '/' + ToStr(Self.MaxActions);
+
+  Result := [
+    FormatMilliseconds(GetTimeRunning(), 'u'),
+    Logger.TimeRunning.ElapsedFmt(),
+    Antiban.TimeRunning.ElapsedFmt(),
+    actionsStr
+  ];
 end;
 
 procedure TTemplate.Init();
 begin
   Logger.Setup('Wasp Cooker');
-  ProgressReport.Setup('Wasp Cooker', ['Actions'], @Self.GetReportValues);
+  ProgressReport.Setup(
+    'Wasp Cooker',
+    ['Script runtime', 'Botting runtime', 'Antiban runtime', 'Actions'],
+    @Self.GetReportValues
+  );
 
   Map.Setup([ERSChunk.VARROCK]);
 

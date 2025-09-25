@@ -66,6 +66,7 @@ Main record to handle the built-in WaspLib antiban.
 
     OnBreaking: procedure(task: PBreakTask; var countdown: TCountdown) of object;
     OnSleeping: procedure(task: PSleepTask; var countdown: TCountdown) of object;
+    TimeRunning: TStopwatch;
   end;
 
 function TAntiban.TimeRunningAtClock(time: String; randomness: Double = 0.10): Int64;
@@ -486,8 +487,12 @@ begin
     Exit;
 
   Self.DoingAntiban := True;
+
+  WaspClient.Timer.Pause();
+  WaspClient.TimeRunning.Pause();
   Logger.TimeRunning.Pause();
   Activity.Pause();
+  Self.TimeRunning.Start();
 
   if checkTasks  and Self.DoTask()  then Result := True;
   if checkBreaks and Self.DoBreak() then Result := True;
@@ -497,8 +502,12 @@ begin
     Login.DoLogin();
 
   Self.DoingAntiban := False;
-  Logger.TimeRunning.Start();
+
+  WaspClient.Timer.Resume();
+  WaspClient.TimeRunning.Resume();
+  Logger.TimeRunning.Resume();
   Activity.Resume();
+  Self.TimeRunning.Pause();
 end;
 
 

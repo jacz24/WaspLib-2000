@@ -77,10 +77,6 @@ begin
   FileAppend(Self.Path, line + LINE_SEP);
 end;
 
-function TLogger.GetTimeRunning(): String;
-begin
-  Result := Self.TimeRunning.ElapsedFmt();
-end;
 
 var
   Logger: TLogger;
