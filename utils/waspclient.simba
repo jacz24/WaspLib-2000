@@ -31,6 +31,11 @@ Things to keep in mind:
 WaspLib automatically renews it every 5 mins and if you are using
 `{$DEFINE WASP_REFRESH_TOKEN := 'refresh_token'}` you will get the new one
 printed.
+- Once you've done this once, your last refreshed token gets saved in a config
+file, so you don't have keep refreshing tokens manually
+between script runs you can set `{$DEFINE WASP_REFRESH_TOKEN := 'file'}` to load
+the last one saved. Once it expires you will have to go get another one from the
+launcher.
 - You only get a `SCRIPT_ID` and `SCRIPT_REVISION` if you run a script through
 (wasp-launcher)[https://github.com/WaspScripts/wasp-launcher]. Simply using it
 to open a dev environment won't get those.
@@ -100,6 +105,7 @@ begin
   Self.Client.RequestHeader['RefreshToken'] := Self.User.RefreshToken;
 
   {$IFDEF WASP_REFRESH_TOKEN}
+  FileWrite(WLEnv.ConfigsDir + 'refresh_token.txt', Self.User.RefreshToken);
   WriteLn GetDebugLn('WaspClient', 'Refresh token was refreshed: ' + Self.User.RefreshToken);
   {$ENDIF}
 
@@ -128,6 +134,8 @@ begin
 
   {$IFDEF WASP_REFRESH_TOKEN}
   Self.User.RefreshToken := {$MACRO WASP_REFRESH_TOKEN};
+  if Self.User.RefreshToken = 'file' then
+    Self.User.RefreshToken := FileRead(WLEnv.ConfigsDir + 'refresh_token.txt');
   {$ELSE}
   Self.User.RefreshToken := GetEnvVar('WASP_REFRESH_TOKEN');
   {$ENDIF}
@@ -217,6 +225,7 @@ procedure TWaspClient._SubmitStats();
 var
   response: String;
   status: Integer;
+  logLevel: ELogLevel;
 begin
   if not Self.Lock.TryEnter() then
     Exit;
@@ -230,12 +239,12 @@ begin
   status := Self.Client.ResponseStatus.AsInteger;
   Self.Lock.Leave();
 
-  WriteLn GetDebugLn('WaspClient', '[' + ToStr(status) + ']: ' + response);
+  if status > 299 then
+    logLevel := ELogLevel.WARN;
+  WriteLn GetDebugLn('WaspClient', '[' + ToStr(status) + ']: ' + response, logLevel);
 
   if InRange(status, 200, 299) then
     Self.ResetPayload();
-
-  Self.RefreshSession();
 end;
 
 procedure TWaspClient.SubmitStats();
