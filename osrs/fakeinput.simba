@@ -46,18 +46,35 @@ Internal method used to setup {ref}`TRemoteInput`.
 This is automatically called for you on the {ref}`RemoteInput variable`.
 *)
 procedure TRemoteInput.Setup();
-const
-  TIMEOUT: UInt64 := GetTimeRunning() + 2000;
+var
+  timer: TCountDown;
 begin
   if GetSimbaTargetWindow().GetClassName() <> 'SunAwtCanvas' then Exit;
 
-  RIInject(GetSimbaTargetPID());
+  try
+    RIInject(GetSimbaTargetPID());
+  except
+    if GetExceptionMessage() = 'Access violation' then
+      raise GetDebugLn('RemoteInput', 'A different RemoteInput has already been paired with this client. Please open a new one.')
+    else
+      raise GetExceptionMessage();
+  end;
 
+  timer.Start(2000);
   repeat
-    Self.Target := EIOS_PairClient(GetSimbaTargetPID());
-    if Self.Target <> nil then Break;
+    try
+      Self.Target := EIOS_PairClient(GetSimbaTargetPID());
+    except
+      if GetExceptionMessage() = 'Access violation' then
+        raise GetDebugLn('RemoteInput', 'A different RemoteInput has already been paired with this client. Please open a new one.')
+      else
+        raise GetExceptionMessage();
+    end;
+
+    if Self.Target <> nil then
+      Break;
     Sleep(100);
-  until GetTimeRunning() > TIMEOUT;
+  until timer.IsFinished;
 
   if Self.Target = nil then
   begin
@@ -65,7 +82,14 @@ begin
     Exit;
   end;
 
-  Target.SetPlugin({$MACRO LOADEDLIB(libremoteinput)}, ToStr(GetSimbaTargetPID()), RSClient.Canvas);
+  try
+    Target.SetPlugin({$MACRO LOADEDLIB(libremoteinput)}, ToStr(GetSimbaTargetPID()), RSClient.Canvas);
+  except
+    if GetExceptionMessage() = 'Access violation' then
+      raise GetDebugLn('RemoteInput', 'A different RemoteInput has already been paired with this client. Please open a new one.')
+    else
+      raise GetExceptionMessage();
+  end;
 end;
 
 var
