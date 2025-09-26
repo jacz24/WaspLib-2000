@@ -23,7 +23,7 @@ begin
     actionsStr += '/' + ToStr(Self.MaxActions);
 
   if Antiban.Sleeps = [] then
-    sleepInfo := '00:00:00'
+    sleepInfo := 'No sleep'
   else
     sleepInfo := Antiban.TimeUntilSleep(Antiban.Sleeps.First, TIME_SHORT);
 

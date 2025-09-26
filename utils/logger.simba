@@ -117,10 +117,10 @@ var
   formatted: String;
 begin
   formatted := Format(text, vars);
-  Self.AddLine(Format('[Info] : %s', [formatted]));
+  Self.AddLine(Format('%s:[Info]: %s', [GetTimeStamp(), formatted]));
   if not Self.RepeatedMessages and (Self.PreviousMessage = formatted) then
     Exit;
-  WriteLn(GetDebugLn(Self.Name, formatted, True));
+  WriteLn(GetDebugLn(Self.Name, formatted, False));
   Self.PreviousMessage := formatted;
 end;
 
@@ -129,8 +129,8 @@ var
   formatted: String;
 begin
   formatted := Format(text, vars);
-  Self.AddLine(Format('[Success] : %s', [formatted]));
-  WriteLn(GetDebugLn(Self.Name, formatted, ELogLevel.SUCCESS, True));
+  Self.AddLine(Format('%s:[Success]: %s', [GetTimeStamp(), formatted]));
+  WriteLn(GetDebugLn(Self.Name, formatted, ELogLevel.SUCCESS, False));
 end;
 
 procedure TLogger.Warn(text: String; vars: TVariantArray = []);
@@ -138,8 +138,8 @@ var
   formatted: String;
 begin
   formatted := Format(text, vars);
-  Self.AddLine(Format('[Warn] : %s', [formatted]));
-  WriteLn(GetDebugLn(Self.Name, formatted, ELogLevel.WARN, True));
+  Self.AddLine(Format('%s:[Warn]: %s', [GetTimeStamp(), formatted]));
+  WriteLn(GetDebugLn(Self.Name, formatted, ELogLevel.WARN, False));
 end;
 
 procedure TLogger.Error(text: String; vars: TVariantArray = []);
@@ -147,8 +147,8 @@ var
   formatted: String;
 begin
   formatted := Format(text, vars);
-  Self.AddLine(Format('[ERROR] : %s', [formatted]));
-  WriteLn(GetDebugLn(Self.Name, formatted, ELogLevel.ERROR, True));
+  Self.AddLine(Format('%s:[ERROR]: %s', [GetTimeStamp(), formatted]));
+  WriteLn(GetDebugLn(Self.Name, formatted, ELogLevel.ERROR, False));
 end;
 
 procedure TLogger.Exception(text: String; vars: TVariantArray = []);
@@ -156,6 +156,6 @@ var
   formatted: String;
 begin
   formatted := Format(text, vars);
-  Self.AddLine(Format('[ERROR] : %s', [formatted]));
-  raise GetDebugLn(Self.Name, formatted, ELogLevel.ERROR, True);
+  Self.AddLine(Format('%s:[ERROR]: %s', [GetTimeStamp(), formatted]));
+  raise GetDebugLn(Self.Name, formatted, False);
 end;
