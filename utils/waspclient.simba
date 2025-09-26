@@ -202,8 +202,8 @@ end;
 
 procedure TWaspClient.ResetPayload();
 begin
-  if not Self.Lock.TryEnter() or not Self.IsSetup then
-    Exit;
+  if not Self.IsSetup then Exit;
+  if not Self.Lock.TryEnter() then Exit;
 
   Self.Payload.Item['experience'].AsInt := 0;
   Self.Payload.Item['gold'].AsInt := 0;
@@ -215,8 +215,8 @@ procedure TWaspClient.UpdatePayload(xp, gp: Integer);
 var
   item: TJSONItem;
 begin
-  if not Self.Lock.TryEnter() or not Self.IsSetup then
-    Exit;
+  if not Self.IsSetup then Exit;
+  if not Self.Lock.TryEnter() then Exit;
 
   item := Self.Payload.Item['experience'];
   item.AsInt := item.AsInt + xp;
@@ -232,8 +232,9 @@ var
   status: Integer;
   logLevel: ELogLevel;
 begin
-  if not Self.Lock.TryEnter() then
-    Exit;
+  if not Self.IsSetup then Exit;
+  if not Self.Lock.TryEnter() then Exit;
+
   Self.Client.RequestHeader['Accept-Profile'] := 'stats';
 
   with Self.Payload.Item['runtime'] do

@@ -16,16 +16,22 @@ type
 
 function TTemplate.GetReportValues(): TStringArray;
 var
-  actionsStr: String;
+  actionsStr, sleepInfo: String;
 begin
   actionsStr := ToStr(Self.Actions);
   if Self.MaxActions <> 0 then
     actionsStr += '/' + ToStr(Self.MaxActions);
 
+  if Antiban.Sleeps = [] then
+    sleepInfo := '00:00:00'
+  else
+    sleepInfo := Antiban.TimeUntilSleep(Antiban.Sleeps.First, TIME_SHORT);
+
   Result := [
     GetTimeStamp(TIME_SHORT),
     Logger.TimeRunning.ElapsedFmt(TIME_SHORT),
     Antiban.TimeRunning.ElapsedFmt(TIME_SHORT),
+    sleepInfo,
     actionsStr
   ];
 end;
@@ -35,7 +41,10 @@ begin
   Logger.Setup('Template');
   ProgressReport.Setup(
     'Template',
-    ['Script runtime', 'Botting runtime', 'Antiban runtime', 'Actions'],
+    [
+      'Script runtime:', 'Botting runtime:', 'Antiban runtime:', 'Next sleep:',
+      'Actions:'
+    ],
     @Self.GetReportValues
   );
 
@@ -81,6 +90,7 @@ begin
     state := Self.GetState();
     Logger.Info(ToStr(state));
     ProgressReport.Print();
+    WaspClient.SubmitStats();
 
     case state of
       ETemplateState.LOGIN: Login.DoLogin();

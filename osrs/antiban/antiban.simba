@@ -80,8 +80,7 @@ begin
   if res < 0 then res += 1;
 
   Result := GetTimeRunning() + UInt64(Trunc(res * ONE_DAY));
-  Result += Trunc(Abs(GaussRand(0, randomness * 10 * ONE_DAY)));
-  Result := Max(0, Result);
+  Result += Trunc(Abs(GaussRand(0, randomness * ONE_DAY / 2)));
 end;
 
 
@@ -119,7 +118,7 @@ begin
   Self.Sleeps[idx].Length := length;
   Self.Sleeps[idx].StdVar := randomness;
   Self.Sleeps[idx].LogoutChance := logoutChance;
-  Self.Sleeps[idx].Next := Self.TimeRunningAtClock(Self.Sleeps[idx].Time, Self.Sleeps[idx].StdVar);
+  Self.Sleeps[idx].Next := Self.TimeRunningAtClock(time, randomness);
 end;
 
 
@@ -198,6 +197,8 @@ in a "bare" time format (00:00:00).
 
 `randomness` is self explanatory, gives variance to the time our script will
 sleep at and it's length too.
+One thing to keep in mind is that randomness only affects time past `time`.
+In other words, you will never sleep before `time`.
 
 `logoutChance` is the probability of logging out for the sleep break or to
 simply afk and logout from inactivity.
@@ -514,25 +515,25 @@ end;
 (*
 ## Antiban.TimeUntilBreak
 ```pascal
-function TAntiban.TimeUntilBreak(task: TBreakTask): String;
+function TAntiban.TimeUntilBreak(constref task: TBreakTask; fmt: String = TIME_FORMAL): String;
 ```
 Check how much time is left until the specified break `task` should be taken.
 *)
-function TAntiban.TimeUntilBreak(task: TBreakTask): String;
+function TAntiban.TimeUntilBreak(constref task: TBreakTask; fmt: String = TIME_FORMAL): String;
 begin
-  Result := FormatMilliseconds(Max(0, Round(task.Next - GetTimeRunning())), True);
+  Result := FormatMilliseconds(Max(0, Round(task.Next - GetTimeRunning())), fmt);
 end;
 
 (*
 ## Antiban.TimeUntilSleep
 ```pascal
-function TAntiban.TimeUntilSleep(task: TSleepTask): String;
+function TAntiban.TimeUntilSleep(constref task: TSleepTask; fmt: String = TIME_FORMAL): String;
 ```
 Check how much time is left until the specified sleep break `task` should be taken.
 *)
-function TAntiban.TimeUntilSleep(task: TSleepTask): String;
+function TAntiban.TimeUntilSleep(constref task: TSleepTask; fmt: String = TIME_FORMAL): String;
 begin
-  Result := FormatMilliseconds(Max(0, Round(task.Next - GetTimeRunning())), True);
+  Result := FormatMilliseconds(Max(0, Round(task.Next - GetTimeRunning())), fmt);
 end;
 
 (*
