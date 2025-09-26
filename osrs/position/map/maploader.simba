@@ -73,7 +73,9 @@ This is an internal type. Don't use it if you don't know what you are doing.
     CacheDir: String;
     const FILES: String = WLEnv.AssetsDir + 'map' + PATH_SEP;
     const ZIPS: TStringArray = ['map', 'heightmap', 'collision', 'objects', 'npcs'];
-    _UnzipQueue: Integer;
+
+    Queue: TStringArray;
+    Timeout: TCountDown;
   end;
 
 (*
@@ -216,16 +218,17 @@ end;
 
 procedure TRSMapLoader.Unzipped(constref result: TASyncUnzipResult);
 var
-  msg: String;
+  name, msg: String;
 begin
   if not result.Success then
     raise GetDebugLn('MapLoader', result.Exception);
-  msg := 'Finished async unzip of ' +  PathExtractName(result.ZipFile) + ' in ' + ToStr(Round(result.TimeUsed, 2)) + 'ms.';
+  name := PathExtractName(result.ZipFile);
+  msg := 'Finished async unzip of ' +  name + ' in ' + ToStr(Round(result.TimeUsed, 2)) + 'ms.';
   WriteLn GetDebugLn('MapLoader', msg, ELogLevel.SUCCESS);
-  Dec(Self._UnzipQueue);
+  Delete(Self.Queue, Self.Queue.IndexOf(name), 1);
 end;
 
-procedure TRSMapLoader.Setup(downscale: Integer);
+procedure TRSMapLoader.Init();
 var
   path, tmp: String;
 begin
@@ -249,22 +252,46 @@ begin
   if not DirCreate(Self.CacheDir) then
     raise GetDebugLn('MapLoader', 'Failed to create cache directory: ' + Self.CacheDir);
 
-  Self.Downscale := downscale;
-  AddOnTerminate(@Self.Free);
-
-
+  Self.Timeout.Start(100);
   for path in Self.ZIPS do
   begin
     if not DirExists(Self.CacheDir + path + PATH_SEP) then
     begin
       if not DirCreate(Self.CacheDir + path + PATH_SEP) then
         raise GetDebugLn('MapLoader', 'Failed to create cache directory: ' + Self.CacheDir + path);
-      Inc(Self._UnzipQueue);
+
+      Self.Queue += path + '.zip';
+      Self.Timeout.Extend(ONE_MINUTE);
       Async.FileUnZip(Self.FILES + path + '.zip', Self.CacheDir + path, @Self.Unzipped, nil);
     end;
   end;
 end;
 
+procedure TRSMapLoader.Setup(downscale: Integer);
+var
+  timer: TCountDown;
+begin
+  Self.Downscale := downscale;
+  AddOnTerminate(@Self.Free);
+
+  timer.Start(8 * ONE_SECOND);
+  while Length(Self.Queue) > 0 do
+  begin
+    Sleep(100);
+    if timer.IsFinished then
+    begin
+      WriteLn GetDebugLn('MapLoader', 'Unzipping files. ' + ToStr(Length(Self.Queue)) + ' files left, please wait.');
+      WriteLn GetDebugLn('MapLoader', 'Files left: ' + ToStr(Self.Queue));
+      timer.Restart();
+    end;
+
+    if Self.Timeout.IsFinished then
+    begin
+      DirDelete(Self.CacheDir, False);
+      raise GetDebugLn('MapLoader', 'Timed out unzipping maps: ' + ToStr(Self.Queue));
+    end;
+  end;
+end;
 
 
 (*
@@ -281,10 +308,6 @@ var
   filename, cachename: String;
   created: Boolean;
 begin
-  if Self._UnzipQueue > 0 then
-    if not SleepUntil(Self._UnzipQueue <= 0, 200, Self._UnzipQueue * 60 * ONE_SECOND) then
-      raise GetDebugLn('MapLoader', 'Unzipping files timed out.');
-
   filename := ToStr(chunk.X) + '-' + ToStr(chunk.Y);
   Result := new TImage();
 

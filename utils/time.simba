@@ -10,7 +10,11 @@ const
   ONE_MINUTE: Integer = 60000;
   ONE_HOUR: Integer   = 3600000;
   ONE_DAY: Integer    = 86400000;
+  DATE_FORMAL: String = 'y \year\s, M \month\s and d \day\s';
+  DATE_SHORT: String = 'DD/MM/YYYY';
+  DATE_SHORT_R: String = 'YYY/MM/DD';
   TIME_FORMAL: String = 'h \ho\ur\s, m \min\ute\s and s \second\s';
+  TIME_SHORT: String = 'hh:mm:ss';
   MINUTES_FORMAL: String = 'm \min\ute\s and s \second\s';
   FILE_TIME_FORMAT: String = 'YYYY-MM-DD_hh-mm-ss-ms';
 

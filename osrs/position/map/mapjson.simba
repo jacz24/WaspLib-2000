@@ -21,10 +21,6 @@ function TMapObjectJSON.GetFile(chunk: TPoint; plane: Integer): TJSONParser;
 var
   filename, cachename: String;
 begin
-  if Map.Loader._UnzipQueue > 0 then
-    if not SleepUntil(Map.Loader._UnzipQueue <= 0, 100, 30000) then
-      raise GetDebugLn('MapJSON', 'Unzipping files timed out.');
-
   filename := PATH_SEP + ToStr(chunk.X) + '-' + ToStr(chunk.Y) + '.json';
   cachename := Map.Loader.CacheDir + 'objects' + PATH_SEP + ToStr(plane) + filename;
 
@@ -215,10 +211,6 @@ function TMapNPCJSON.GetFile(chunk: TPoint; plane: Integer): TJSONParser;
 var
   filename, cachename: String;
 begin
-  if Map.Loader._UnzipQueue > 0 then
-    if not SleepUntil(Map.Loader._UnzipQueue <= 0, 100, 30000) then
-      raise GetDebugLn('MapJSON', 'Unzipping files timed out.');
-
   filename := PATH_SEP + ToStr(chunk.X) + '-' + ToStr(chunk.Y) + '.json';
   cachename := Map.Loader.CacheDir + 'npcs' + PATH_SEP + ToStr(plane) + filename;
 

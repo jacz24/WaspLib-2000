@@ -105,6 +105,7 @@ end;
 procedure TWLAssets.Update();
 var
   i: Integer;
+  timer: TCountDown;
 begin
   Self.Timeout.Start(100);
   HTTPClient.ConnectTimeout := 8000;
@@ -281,9 +282,17 @@ begin
 
 
   //wait downloads
+  timer.Start(8 * ONE_SECOND);
   while Length(Self.Queue) > 0 do
   begin
     Sleep(100);
+
+    if timer.IsFinished then
+    begin
+      WriteLn GetDebugLn('WLAssets', 'Downloading files. ' + ToStr(Length(Self.Queue)) + ' files left, please wait.');
+      WriteLn GetDebugLn('WLAssets', 'Files left: ' + ToStr(Self.Queue));
+      timer.Restart();
+    end;
 
     if Self.Timeout.IsFinished then
     begin

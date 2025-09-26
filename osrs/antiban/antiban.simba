@@ -492,7 +492,7 @@ begin
   WaspClient.TimeRunning.Pause();
   Logger.TimeRunning.Pause();
   Activity.Pause();
-  Self.TimeRunning.Start();
+  Self.TimeRunning.Resume();
 
   if checkTasks  and Self.DoTask()  then Result := True;
   if checkBreaks and Self.DoBreak() then Result := True;

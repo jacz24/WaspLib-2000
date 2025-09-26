@@ -342,6 +342,7 @@ begin
 
   if Result then
   begin
+    WaspClient.UpdatePayload(Self.Tracker.Current-Self.Tracker.Previous, 0);
     Self.Tracker.Previous := Self.Tracker.Current;
     Activity.Restart();
   end;

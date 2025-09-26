@@ -110,12 +110,13 @@ begin
 
   WLAssets.Setup();
   WLAssets.Update();
+  Map.Loader.Init();
 
   WaspClient.Setup();
   Target.AddEvent(ETargetEvent.TARGET_RESIZE, @TargetResized);
   FormUtils.Setup();
   RSFonts.Setup();
-  Logger.Setup();
+  Logger.Init();
   WebGraphGenerator.Setup(18, 4, 50, 6, 3, True);
 
   {$IFDEF WL_TEST}
@@ -160,6 +161,8 @@ begin
   WorldSwitcher.Setup();
   FairyRing.Setup();
 
+  Antiban.TimeRunning.Start();
+  Antiban.TimeRunning.Pause();
   Antiban.Zoom.Max := 100;
 
   ItemData.Setup();
@@ -168,23 +171,9 @@ begin
 
   Profiles.Load();
 
-  while RSFonts.Unzipping do
-  begin
-    Sleep(100);
-    if not RSFonts.Timeout.IsFinished then
-      Continue;
-    DirDelete(RSFonts.PATH, True);
-    raise GetDebugLn('RSFonts', 'Timed out unzipping fonts.');
-  end;
+  RSFonts.WaitUnzipping();
 
-  while ItemFinder.Unzipping do
-  begin
-    Sleep(100);
-    if not ItemFinder.Timeout.IsFinished then
-      Continue;
-    DirDelete(ItemFinder.CacheDir, True);
-    raise GetDebugLn('ItemFinder', 'Timed out unzipping items.');
-  end;
+  ItemFinder.WaitUnzipping();
 
   RSClient.IsLoggedIn();
   if RSClient.Mode = ERSMode.UNKNOWN then

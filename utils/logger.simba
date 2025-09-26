@@ -10,7 +10,7 @@ type
     IsSetup, RepeatedMessages: Boolean;
   end;
 
-procedure TLogger._Setup();
+procedure TLogger.Init();
 var
   files: TStringArray;
   i: Integer;
@@ -32,7 +32,7 @@ begin
       end;
     end;
 
-    if not FileDelete(filename) then
+    if FileExists(filename) and not FileDelete(filename) then
       raise GetTimeStamp() + ':[Logger]: Failed to delete old log: ' + PathExtractName(filename);
   end;
 

@@ -23,9 +23,9 @@ begin
     actionsStr += '/' + ToStr(Self.MaxActions);
 
   Result := [
-    FormatMilliseconds(GetTimeRunning(), 'u'),
-    Logger.TimeRunning.ElapsedFmt(),
-    Antiban.TimeRunning.ElapsedFmt(),
+    GetTimeStamp(TIME_SHORT),
+    Logger.TimeRunning.ElapsedFmt(TIME_SHORT),
+    Antiban.TimeRunning.ElapsedFmt(TIME_SHORT),
     actionsStr
   ];
 end;

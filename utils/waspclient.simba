@@ -142,20 +142,23 @@ begin
   Self.User.RefreshToken := GetEnvVar('WASP_REFRESH_TOKEN');
   {$ENDIF}
 
+  if Self.User.RefreshToken = '' then
+    Exit;
+
   {$IFDEF SCRIPT_ID}
   Self.Script.ID := {$MACRO SCRIPT_ID};
   {$ELSE}
   Self.Script.ID := GetEnvVar('SCRIPT_ID');
   {$ENDIF}
 
+  if Self.Script.ID = '' then
+    Exit;
+
   {$IFDEF SCRIPT_REVISION}
   Self.Script.Revision := StrToInt({$MACRO SCRIPT_REVISION}, 0);
   {$ELSE}
   Self.Script.Revision := StrToInt(GetEnvVar('SCRIPT_REVISION'), 0);
   {$ENDIF}
-
-  if Self.User.RefreshToken = '' then
-    Exit;
 
   Self.Payload := new TJSONObject();
   Self.Payload.AddInt('experience', 0);

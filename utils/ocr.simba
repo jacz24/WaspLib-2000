@@ -1,7 +1,8 @@
 (*
-OCR
-===
+# OCR
+This page is about WaspLib's OCR.
 *)
+
 {$DEFINE WL_OCR_INCLUDED}
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
@@ -135,6 +136,18 @@ begin
 
   Self.Load();
   Self.Unzipping := False;
+end;
+
+procedure TRSFonts.WaitUnzipping();
+begin
+  while Self.Unzipping do
+  begin
+    Sleep(100);
+    if not Self.Timeout.IsFinished then
+      Continue;
+    DirDelete(Self.PATH, True);
+    raise GetDebugLn('RSFonts', 'Timed out unzipping fonts.');
+  end;
 end;
 
 procedure TRSFonts.Setup();
