@@ -698,7 +698,7 @@ begin
 
   Self.WaitMoving(mapPt, minDist);
   if index = High(Self._Path) then
-    Result := Self.Position().InRange(mapPt, Max(minDist, 3));
+    Result := Self.Position().InRange(mapPt, minDist);
 end;
 
 function TRSWalker.CrossDoor(me: TPoint; index: Integer; attempts: Integer = 3): Boolean;
@@ -913,7 +913,7 @@ begin
   nearest := Self._Path.NearestIndex(me);
   Self._Index := nearest;
 
-  while (nearest < High(Self._Path)) and (not Self.IsWalkable(Self._Path[nearest+1].Node, me, tmp, angle)) do
+  while (nearest < High(Self._Path)) and not Self.IsWalkable(Self._Path[nearest+1].Node, me, tmp, angle) do
     Inc(nearest);
 
   furthest := nearest;
@@ -933,19 +933,27 @@ begin
 
   Result := index > previous;
 
-  if Biometrics.RandomBoolean(0.002) then
+  if not Result then
+  begin
+    WriteLn(' idx: ', index, ' prev: ', previous, ' near: ', nearest, ' far: ', furthest, ' hi: ', High(Self._Path));
+  end;
+
+  if Result and Biometrics.RandomBoolean(0.002) then
     index := Random(nearest, furthest);
 end;
 
-function TRSWalker._WalkPathHelper(out index: Integer; out radians: Double; me: TPoint; fails: Integer; debug: Boolean): Integer;
+function TRSWalker.GetNextStep(out index: Integer; out radians: Double; me: TPoint; fails: Integer; debug: Boolean): Integer;
 begin
   if debug then
     Self.DebugPath(index, me);
 
-  Result := fails;
+  if index = High(Self._Path) then
+    Exit(0);
 
   if Self._AdvancePath(index, me, radians) then
     Exit(0);
+
+  Result := fails;
 
   //Likely haven't moved far enough to advance to next point
   if Inc(Result) < 5 then
@@ -997,17 +1005,20 @@ function TRSWalker.WalkPath(path: TGraphNodeArray; minDist: Integer = 0; debug: 
 var
   me: TPoint;
   idx, fails: Integer;
-  angle: Double;
+  radians: Double;
 begin
   Self._WalkPathSetup(path);
 
-  angle := Minimap.CompassRadians;
+  radians := Minimap.CompassRadians;
+  minDist := Min(minDist, Max(minDist, 3));
+
   while Self.Walking and (fails < 10) do
   begin
     me := Self.Position();
 
-    fails := Self._WalkPathHelper(idx, angle, me, fails, debug);
-    if fails > 0 then Continue;
+    fails := Self.GetNextStep(idx, radians, me, fails, debug);
+    if fails > 0 then
+      Continue;
 
     case Self._Node of
       EGraphNode.NORMAL: if Self.WalkStep(me, idx, minDist) and (idx = High(Self._Path)) then Exit(True);
