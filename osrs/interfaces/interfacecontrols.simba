@@ -325,9 +325,9 @@ WriteLn Bank.Scroll.IsVisible();
 *)
 function TRSScrollBar.IsVisible(): Boolean;
 begin
-  Result := Target.HasColor(ColorTolerance($16091C, 16.971, EColorSpace.HSV, [0.277, 0.671, 2.054]), 1, Self.Up)
+  Result := Target.HasColor(ColorTolerance($16091C, 16.971, EColorSpace.HSV, [0.277, 0.671, 2.054]), 100, Self.Up)
             and
-            Target.HasColor(ColorTolerance($16091C, 16.971, EColorSpace.HSV, [0.277, 0.671, 2.054]), 1, Self.Down);
+            Target.HasColor(ColorTolerance($16091C, 16.971, EColorSpace.HSV, [0.277, 0.671, 2.054]), 100, Self.Down);
 end;
 
 (*
@@ -438,6 +438,7 @@ var
   old, scrolls: Integer;
   direction: Boolean;
   area: TBox;
+  timeout: TCountDown;
 begin
   if not Self.CanScroll() then Exit;
   value := EnsureRange(value, 0, 100);
@@ -449,7 +450,8 @@ begin
   direction := old > value;
   area := Self.ScrollArea;
 
-  while (old <> value) and (direction = (old > value)) do
+  timeout.Start(15 * ONE_SECOND);
+  while (old <> value) and (direction = (old > value)) and not timeout.IsFinished do
   begin
     Mouse.Move(area);
     scrolls := Random(1, 3);

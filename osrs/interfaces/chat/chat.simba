@@ -87,7 +87,7 @@ begin
 
   Self.Scroll.Setup();
 
-  Self.Colors := [RSFonts.BLACK, $7F0000, $FF0000, $7F007F, $2010EF, RSFonts.RED, RSFonts.WHITE, $FF9090, RSFonts.DARK_BLUE, $005F00];
+  Self.Colors := [RSFonts.BLACK, $7F0000, RSFonts.BLUE, $7F007F, $2010EF, RSFonts.RED, RSFonts.WHITE, $FF9090, RSFonts.DARK_BLUE, $005F00];
 end;
 
 (*

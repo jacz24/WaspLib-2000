@@ -107,6 +107,7 @@ type
     const GREEN: TColor        = $0DC10D;
     const YELLOW: TColor       = $00FFFF;
     const RED: TColor          = $0000FF;
+    const BLUE: TColor         = $FF0000;
     const DARK_BLUE: TColor    = $800000;
     const LIGHT_ORANGE: TColor = $3FB8FF;
     const LIGHT_YELLOW: TColor = $A2D8E4;

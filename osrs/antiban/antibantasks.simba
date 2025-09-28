@@ -156,6 +156,18 @@ begin
 end;
 
 
+
+//Make antiban
+procedure TAntiban.HoverMakeItem();
+var
+  boxes: TBoxArray;
+begin
+  if not Bank.IsOpen() then Exit;
+  WriteLn GetDebugLn('Antiban', 'Hovering a random make item button');
+  boxes := Make.GetItemBoxes();
+  Mouse.Move(boxes.Random());
+end;
+
 //Chatbox antiban
 procedure TAntiban.ChatScrolling();
 begin
@@ -183,6 +195,31 @@ begin
   Self.RandomChatTab();
   Biometrics.Sleep(3000, 5000);
   Chat.Tabs.Open(current);
+end;
+
+procedure TAntiban.RightClickChatMessage();
+var
+  b: TBox;
+  tpa: TPointArray;
+begin
+  WriteLn GetDebugLn('Antiban', 'Toggling chat buttons');
+  if Chat.Tabs.Open(ERSChatTab.PUBLIC_) then
+  begin
+    for b in Chat.MessageLines do
+    begin
+      tpa := Target.FindColor(RSFonts.BLUE, 0, b);
+      if tpa <> [] then
+      begin
+        Mouse.Move(tpa.Bounds());
+        if ChooseOption.Open() then
+        begin
+          Biometrics.Sleep(2*TICK, 4*TICK, ERandomDir.LEFT);
+          ChooseOption.Close();
+        end;
+        Break;
+      end;
+    end;
+  end;
 end;
 
 procedure TAntiban.RandomChatTabState();
@@ -794,9 +831,11 @@ const
     ['LoseFocus',             @RSClient.LoseFocus],
     ['HoverSkills',           @Antiban.HoverSkills],
     ['OpenSkills',            @Antiban.OpenSkills],
+    ['HoverMakeItem',         @Antiban.HoverMakeItem],
     ['ChatScrolling',         @Antiban.ChatScrolling],
     ['RandomChatTab',         @Antiban.RandomChatTab],
     ['ToggleChatTab',         @Antiban.ToggleChatTab],
+    ['RightClickChatMessage', @Antiban.RightClickChatMessage],
     ['RandomChatTabState',    @Antiban.RandomChatTabState],
     ['RandomTab',             @Antiban.RandomTab],
     ['ToggleTab',             @Antiban.ToggleTab],
