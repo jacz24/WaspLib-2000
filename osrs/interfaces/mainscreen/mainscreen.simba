@@ -191,19 +191,25 @@ function TRSMainScreen.IsUpText(strings: TStringArray; caseSensitive: Boolean = 
     begin
       if not caseSensitive then str := LowerCase(str);
 
-      //shift string until best match is found.
-      for i := 1 to Length(upText)-Length(str) do
+      if upText.Length = str.Length then
       begin
-        tmp := Copy(upText, i, Length(str));
-        match := str.Similarity(tmp);
-        if match >= similarity then
+        match := str.Similarity(upText);
+        Result := match > similarity;
+      end else
+      begin
+        //shift string until best match is found.
+        for i := 1 to upText.Length-str.Length do
         begin
-          {$IFDEF WL_DEBUG_UPTEXT}
-          WriteLn GetDebugLn('MainScreen', 'IsUpText Similarity: ' + ToStr(match));
-          {$ENDIF}
-          Exit(True);
+          match := str.Similarity(Copy(upText, i, Length(str)));
+          Result := match > similarity;
+          if Result then Break;
         end;
       end;
+
+      {$IFDEF WL_DEBUG_UPTEXT}
+      if Result then
+        WriteLn GetDebugLn('MainScreen', 'IsUpText Similarity: ' + ToStr(match));
+      {$ENDIF}
     end;
   end;
 
