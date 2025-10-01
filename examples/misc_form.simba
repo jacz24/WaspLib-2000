@@ -1,0 +1,11 @@
+{$I WaspLib/osrs.simba}
+
+var
+  form: TScriptForm;
+  tab: TLazTabSheet;
+begin
+  form.Setup();
+  tab := form.CreateTab('My Settings');
+  form.CreateAntibanTab();
+  form.Run();
+end.

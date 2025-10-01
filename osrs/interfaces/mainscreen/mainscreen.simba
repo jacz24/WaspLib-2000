@@ -178,7 +178,7 @@ if MainScreen.IsUpText('Walk here') then
 function TRSMainScreen.IsUpText(strings: TStringArray; caseSensitive: Boolean = True; similarity: Single = 0.85; timeout: Integer = -1): Boolean;
   function _IsUpText(): Boolean;
   var
-    upText, str, tmp: String;
+    upText, str: String;
     i: Integer;
     match: Double;
   begin

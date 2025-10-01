@@ -1,0 +1,68 @@
+(*
+# Misc Form
+This page is about {ref}`Misc` dedicated `TLazForm` utilities.
+
+This is meant to be used with {ref}`TScriptForm` with
+{ref}`TScriptForm.CreateMiscTab` and will setup a a `TLazTabSheet` on it
+with several controls to configure {ref}`Misc`:
+```{figure} ../../images/miscform.png
+```
+*)
+{$DEFINE WL_MISC_FORM_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+(*
+## TMiscFormHelper
+The `TMiscFormHelper` type is, as it's name implies a helper type for the
+`Misc Form`.
+
+It has a lot of methods and callbacks that are hidden by default and won't be
+mentioned on this page because they are internal methods you shouldn't touch.
+
+Do feel free to read the source code though if you so desire.
+*)
+  TMiscFormHelper = record
+    Config: TConfigJSON;
+  end;
+
+procedure TMiscFormHelper.Setup();
+begin
+  Self.Config.Setup('misc' + PATH_SEP + ToStr(ProfileIndex));
+end;
+
+var
+(*
+## MiscForm variable
+Global {ref}`TMiscFormHelper` variable.
+*)
+  MiscForm: TMiscFormHelper;
+
+(*
+## ScriptForm CreateInventoryTab
+```pascal
+function TScriptForm.CreateInventoryTab(): TLazTabSheet;
+```
+Sets up a `TLazTabSheet` on your `TScriptForm` to configure your `Inventory Layouts`.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  form: TScriptForm;
+begin
+  form.Setup();
+  form.CreateInventoryTab();
+  form.Run();
+end.
+```
+```{figure} ../../images/inventoryform.gif
+```
+For a more complete example check out the file `Simba/Includes/WaspLib/examples/inventory_form.simba`.
+*)
+function TScriptForm.CreateMiscTab(): TLazTabSheet;
+begin
+  Result := Self.CreateTab('Misc');
+
+  MiscForm.Setup();
+end;

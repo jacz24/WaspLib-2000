@@ -36,6 +36,8 @@ Constant of all the login messages the login screen can handle.
     'Error connecting to server',
     'Your account has not logged out',
     'Login server offline',
+    'The game servers are currently being updated',
+    'RuneScape has been updated!',
     'Error loading your profile',
     'Connection timed out',
     'You were disconnected',
@@ -67,8 +69,8 @@ Enums representing various aspects of the login screen.
   ERSLoginMessage = enum(
     UNKNOWN,
     WELCOME, CONNECTING, INVALID, INCORRECT, SKILL_TOTAL, ENTER_CREDENTIALS,
-    ERROR_CONNECTING, profile_ONLINE, SERVER_OFFLINE, ERROR_LOADING, TIMED_OUT,
-    DISCONNECTED,
+    ERROR_CONNECTING, ACCOUNT_ONLINE, SERVER_OFFLINE, BEING_UPDATED,
+    GAME_UPDATED, ERROR_LOADING, TIMED_OUT, DISCONNECTED,
 
     LIMIT_EXCEEDED, WORLD_FULL, BANNED, NOT_MEMBER, ON_MEMBER_AREA,
     ON_MEMBER_AREA2,
@@ -551,12 +553,14 @@ begin
 
     ERSLoginMessage.ERROR_CONNECTING,
     ERSLoginMessage.LIMIT_EXCEEDED,
-    ERSLoginMessage.profile_ONLINE,
+    ERSLoginMessage.ACCOUNT_ONLINE,
     ERSLoginMessage.WORLD_FULL,
     ERSLoginMessage.TIMED_OUT:         Result := Self.HandleError(msg);
 
     ERSLoginMessage.SKILL_TOTAL:       raise GetDebugLn('Login', 'We are trying to login into a total level world you can''t login to.');
     ERSLoginMessage.SERVER_OFFLINE:    raise GetDebugLn('Login', 'Login server offline. The game is/was probably updated.');
+    ERSLoginMessage.BEING_UPDATED:     raise GetDebugLn('Login', 'The game is being updated.');
+    ERSLoginMessage.GAME_UPDATED:      raise GetDebugLn('Login', 'The game was updated.');
     ERSLoginMessage.ERROR_LOADING:     raise GetDebugLn('Login', 'Game loading error. It was probably updated.');
     ERSLoginMessage.BANNED:            raise GetDebugLn('Login', 'profile seems to be banned or disabled.');
     ERSLoginMessage.NOT_MEMBER:        raise GetDebugLn('Login', 'profile is not members and we are trying to login into a P2P world.');

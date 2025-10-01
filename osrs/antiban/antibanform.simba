@@ -713,7 +713,6 @@ begin
   else
     Self.OnBreakRemove(sender);
 end;
-
 {$H+}
 
 
@@ -1027,7 +1026,7 @@ end;
 var
 (*
 ## AntibanForm variable
-Global {ref}`TInventoryFormHelper` variable.
+Global {ref}`TAntibanFormHelper` variable.
 *)
   AntibanForm: TAntibanFormHelper;
 

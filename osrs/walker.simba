@@ -733,7 +733,8 @@ begin
   if not Self._WalkStepHelper(me, mapPt, 0, minimapPt, shouldExit) then
     Exit;
 
-  if shouldExit then Exit;
+  if shouldExit then
+    Exit;
 
   if Self.WaitFlag(flag, radians) then
     handleDoor := not me.InRange(flag, 8) and Self.FlagMoved(flag, radians)
@@ -778,25 +779,12 @@ begin
   Result := me = me; //todo...
 end;
 
-function TRSWalker.UseShortcut(me: TPoint; index: Integer): Boolean;
-begin
-  if index = High(Self._Path) then
-    raise GetDebugLn(Self.Name, 'Paths should not end at a shortcut node.');
-  Result := me = me;
-end;
 
-function TRSWalker.UseTransport(me: TPoint; index: Integer): Boolean;
+function TRSWalker.UseNodeCallback(index: Integer): Boolean;
 begin
   if index = High(Self._Path) then
-    raise GetDebugLn(Self.Name, 'Paths should not end at a transport node.');
-  Result := me = me;
-end;
-
-function TRSWalker.HandleObstacle(me: TPoint; index: Integer): Boolean;
-begin
-  if index = High(Self._Path) then
-    raise GetDebugLn(Self.Name, 'Paths should not end at a obstacle node.');
-  Result := me = me;
+    raise GetDebugLn(Self.Name, 'Paths should not end at a ' + ToStr(Self._Node) + ' node.');
+  Result := Self._Path[index].Handle();
 end;
 
 function TRSWalker.UseFairyRing(me: TPoint; index: Integer): Boolean;
@@ -1024,9 +1012,8 @@ begin
       EGraphNode.NORMAL: if Self.WalkStep(me, idx, minDist) and (idx = High(Self._Path)) then Exit(True);
       EGraphNode.DOOR: Self.CrossDoor(me, idx);
       EGraphNode.STAIRS: Self.UseStairs(me, idx);
-      EGraphNode.OBSTACLE: Self.HandleObstacle(me, idx);
-      EGraphNode.SHORTCUT: Self.UseShortcut(me, idx);
-      EGraphNode.TRANSPORT: Self.UseTransport(me, idx);
+      EGraphNode.OBSTACLE, EGraphNode.SHORTCUT, EGraphNode.TRANSPORT,
+      EGraphNode.TELEPORT: Self.UseNodeCallback(idx);
       EGraphNode.FAIRYRING: Self.UseFairyRing(me, idx);
     end;
   end;

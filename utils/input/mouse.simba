@@ -14,7 +14,7 @@ compiler directive before you include WaspLib:
 
 {.$DEFINE WL_DEBUG_MOUSE}
 
-{$IFDEF SIMBAHEADLESS}{$UNDEF WaspLib_DEBUG_MOUSE}{$ENDIF}
+{$IFDEF SIMBAHEADLESS}{$UNDEF WL_DEBUG_MOUSE}{$ENDIF}
 
 (*
 ## EMouseDistribution
@@ -33,7 +33,7 @@ type
   EMouseDistribution = enum(DEFAULT, RANDOM, GAUSS, SKEWED, ROWP);
 
 (*
-## TMouse
+## Mouse
 ```pascal
 TMouse = record(TSRLBaseRecord)
   Speed: Double;                     // Overall mouse speed (Default: 12)
@@ -55,15 +55,15 @@ end;
 
     MissChance: Double;
     IdleInterval, IdleProgress, IdleGoal: Double;
-    CanIdle: Boolean;
+    CanIdle, UseTeleport: Boolean;
 
-    {$IFDEF WaspLib_DEBUG_MOUSE}
+    {$IFDEF WL_DEBUG_MOUSE}
     DebugMovement: TSingleMatrix;
     DebugClicks: TSingleMatrix;
     {$ENDIF}
   end;
 
-{$IFDEF WaspLib_DEBUG_MOUSE}
+{$IFDEF WL_DEBUG_MOUSE}
 procedure TMouse._Debug();
 var
   p: TPoint;
@@ -158,10 +158,231 @@ begin
   Self.Distribution := EMouseDistribution.GAUSS;
   Self.CanIdle := True;
 
-  {$IFDEF WaspLib_DEBUG_MOUSE}
+  {$IFDEF WL_DEBUG_MOUSE}
   Self.OnTeleport := @Self._DebugCallback;
   {$ENDIF}
 end;
+
+(*
+## Mouse variables and properties
+The following are some of the variables and properties that `TMouse` has
+available to control it's behaviour.
+*)
+
+(*
+### Mouse.Distribution
+```pascal
+TMouse.Distribution: EMouseDistribution;
+```
+Variable used to set the type of click {ref}`EMouseDistribution` distrubution
+you want the `Mouse` to use.
+
+The default value is `EMouseDistribution.GAUSS`.
+
+You can view what the distributions look like by running the script in
+`Simba/Includes/WaspLib/tools/distribution_viewer.simba`.
+*)
+
+(*
+### Mouse.MissChance
+```pascal
+TMouse.MissChance: Double;
+```
+Variable used to control the miss chance of the `Mouse`.
+*)
+
+(*
+### Mouse.CanIdle
+```pascal
+TMouse.CanIdle: Boolean;
+```
+Variable used to control the whether the `Mouse` can randomly idle while
+traveling. The default is `True`.
+*)
+
+(*
+### Mouse.UseTeleport
+```pascal
+TMouse.UseTeleport: Boolean;
+```
+Variable used to control the whether the `Mouse` will teleport instead of
+traveling to it's destinations. The default is `False`.
+
+Setting this to `True` will make all the above variables and the below
+properties irrelevant as they will not be used.
+*)
+
+(*
+### Mouse.Wind
+```pascal
+property TMouse.Wind: Double;
+property TMouse.Wind(value: Double);
+```
+Get/Set `TMouse` wind value.
+
+To understand what this does it might be worth reading
+[BenLand's blog](https://ben.land/post/2021/04/25/windmouse-human-mouse-movement/)
+about it as he is the original creator of the wind mouse algorithm.
+
+You can imagine `Wind` as the tendency the `Mouse` will have to spiral.
+The default value is `5`. Especially if it's increased.
+The value you set should be balanced with {ref}`Mouse.Gravity` and {ref}`Mouse.Speed`.
+
+Keep in mind that adjusting this without understanding what you are doing can
+cause the mouse to do some very weird movements, even spin forever or until
+`TMouse.Timeout` is reached.
+*)
+property TMouse.Wind: Double;
+begin
+  Result := Target.Options.MouseWind;
+end;
+
+property TMouse.Wind(value: Double);
+begin
+  Target.Options.MouseWind := value;
+end;
+
+
+(*
+### Mouse.Speed
+```pascal
+property TMouse.Speed: Double;
+property TMouse.Speed(value: Double);
+```
+Get/Set `TMouse` speed value.
+
+To understand what this does it might be worth reading
+[BenLand's blog](https://ben.land/post/2021/04/25/windmouse-human-mouse-movement/)
+about it as he is the original creator of the wind mouse algorithm.
+
+This should be self explanatory, basically speeds up the mouse.
+The default value is `12`.
+
+Keep in mind that adjusting this without understanding what you are doing can
+cause the mouse to do some very weird movements, even spin forever or until
+`TMouse.Timeout` is reached. Especially if it's increased.
+The value you set should be balanced with {ref}`Mouse.Wind` and {ref}`Mouse.Gravity`
+and this basically amplifies their effects.
+
+Also, despite what value you add here, there's 2 hard limits to how fast the
+mouse can travel:
+- The first is your computer speed, there's a limit to how fast your computer
+can calculate the path and/or the next pixel to move and also how fast it can
+actually move the mouse from one pixel to another.
+- The second one is that the mouse always travels pixel by pixel. When you are
+this already at your computer speed limit, increasing speed won't do anything
+the only way to make it faster would be to make it jump pixels.
+*)
+property TMouse.Speed: Double;
+begin
+  Result := Target.Options.MouseSpeed;
+end;
+
+property TMouse.Speed(value: Double);
+begin
+  Target.Options.MouseSpeed := value;
+end;
+
+
+(*
+### Mouse.Timeout
+```pascal
+property TMouse.Timeout: Integer;
+property TMouse.Timeout(value: Integer);
+```
+Get/Set `TMouse` timeout value.
+
+This is basically a failsafe that stops the mouse from moving if it's taking too
+long to reach it's destination.
+*)
+property TMouse.Timeout: Integer;
+begin
+  Result := Target.Options.MouseTimeout;
+end;
+
+property TMouse.Timeout(value: Integer);
+begin
+  Target.Options.MouseTimeout := value;
+end;
+
+
+(*
+### Mouse.Gravity
+```pascal
+property TMouse.Gravity: Double;
+property TMouse.Gravity(value: Double);
+```
+Get/Set `TMouse` gravity value.
+
+To understand what this does it might be worth reading
+[BenLand's blog](https://ben.land/post/2021/04/25/windmouse-human-mouse-movement/)
+about it as he is the original creator of the wind mouse algorithm.
+
+You can imagine this as a force that pulls the mouse towards it's destination.
+The default value is `9`.
+
+Keep in mind that adjusting this without understanding what you are doing can
+cause the mouse to do some very weird movements, even spin forever or until
+`TMouse.Timeout` is reached. Especially if it's decreased.
+The value you set should be balanced with {ref}`Mouse.Wind` and {ref}`Mouse.Speed`.
+*)
+property TMouse.Gravity: Double;
+begin
+  Result := Target.Options.MouseGravity;
+end;
+
+property TMouse.Gravity(value: Double);
+begin
+  Target.Options.MouseGravity := value;
+end;
+
+
+(*
+### Mouse.PressMin
+```pascal
+property TMouse.PressMin: Integer;
+property TMouse.PressMin(value: Integer);
+```
+Get/Set `TMouse` PressMin value.
+
+Basically the minimum time the `TMouse` buttons will be held when clicking.
+
+When clicking the mouse buttons the mouse button will be held a random time
+between {ref}`TMouse.PressMin` and {ref}`TMouse.PressMax`.
+*)
+property TMouse.PressMin: Integer;
+begin
+  Result := Target.Options.MousePressMin;
+end;
+
+property TMouse.PressMin(value: Integer);
+begin
+  Target.Options.MousePressMin := value;
+end;
+
+(*
+### Mouse.PressMax
+```pascal
+property TMouse.PressMax: Integer;
+property TMouse.PressMax(value: Integer);
+```
+Get/Set `TMouse` PressMax value.
+
+Basically the maximum time the `TMouse` buttons will be held when clicking.
+
+When clicking the mouse buttons the mouse button will be held a random time
+between {ref}`TMouse.PressMin` and {ref}`TMouse.PressMax`.
+*)
+property TMouse.PressMax: Integer;
+begin
+  Result := Target.Options.MousePressMax;
+end;
+
+property TMouse.PressMax(value: Integer);
+begin
+  Target.Options.MousePressMax := value;
+end;
+
 
 (*
 ## Mouse.Teleport
@@ -202,7 +423,10 @@ end;
 
 property TMouse.Position(value: TPoint);
 begin
-  Target.MouseMove(value);
+  if Self.UseTeleport then
+    Target.MouseTeleport(value)
+  else
+    Target.MouseMove(value);
 end;
 
 (*
@@ -272,7 +496,7 @@ function TMouse.Miss(destination: TPoint): TPoint;
 var
   range: Integer;
   miss: Double;
-  Temp: Double := Self.MissChance;
+  tmp: Double := Self.MissChance;
 begin
   Self.MissChance := 0; // prevent recursion
 
@@ -284,7 +508,7 @@ begin
 
     Result := Result.Random(range);
   finally
-    Self.MissChance := Temp;
+    Self.MissChance := tmp;
   end;
 end;
 
@@ -314,6 +538,12 @@ var
   start: TPoint;
   w, h: Integer;
 begin
+  if Self.UseTeleport then
+  begin
+    Target.MouseTeleport(destination);
+    Exit;
+  end;
+
   if Self.CanIdle and (Self.IdleInterval > 0) then
   begin
     start := Target.MouseXY;
@@ -362,7 +592,7 @@ begin
     EMouseDistribution.RANDOM: Self.Move(circle.RandomPoint());
     EMouseDistribution.GAUSS:  Self.Move(circle.RandomPointCenter());
     EMouseDistribution.SKEWED: Self.Move(circle.RandomSkewedPoint(Self.Position));
-    EMouseDistribution.ROWP:   Self.Position := circle.RandomWeightedPoint(Self.Position);
+    EMouseDistribution.ROWP:   Self.Move(circle.RandomWeightedPoint(Self.Position));
   end;
 end;
 
@@ -529,7 +759,6 @@ begin
   Self.Move(box, forceMove);
   Self.Scroll(amount, down);
 end;
-
 
 var
 (*

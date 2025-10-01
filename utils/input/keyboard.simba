@@ -34,6 +34,59 @@ begin
   Target.Options.KeyPressMax := 60;
 end;
 
+
+(*
+## Keyboard properties
+The following are some of the properties that `TKeyboard` has available to
+control it's behaviour.
+*)
+
+(*
+### Keyboard.PressMin
+```pascal
+property TKeyboard.PressMin: Integer;
+property TKeyboard.PressMin(value: Integer);
+```
+Get/Set `TKeyboard` PressMin value.
+
+Basically the minimum time the `TKeyboard` keys will be held when typing.
+
+When typing the keys will be held a random time between {ref}`TKeyboard.PressMin`
+and {ref}`TKeyboard.PressMax`.
+*)
+property TKeyboard.PressMin: Integer;
+begin
+  Result := Target.Options.KeyPressMin;
+end;
+
+property TKeyboard.PressMin(value: Integer);
+begin
+  Target.Options.KeyPressMin := value;
+end;
+
+(*
+### Keyboard.PressMax
+```pascal
+property TKeyboard.PressMax: Integer;
+property TKeyboard.PressMax(value: Integer);
+```
+Get/Set `TKeyboard` PressMax value.
+
+Basically the minimum time the `TKeyboard` keys will be held when typing.
+
+When typing the keys will be held a random time between {ref}`TKeyboard.PressMin`
+and {ref}`TKeyboard.PressMax`.
+*)
+property TKeyboard.PressMax: Integer;
+begin
+  Result := Target.Options.KeyPressMax;
+end;
+
+property TKeyboard.PressMax(value: Integer);
+begin
+  Target.Options.KeyPressMax := value;
+end;
+
 (*
 ## Keyboard.KeyDown
 ```pascal

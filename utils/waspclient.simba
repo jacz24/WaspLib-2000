@@ -86,8 +86,12 @@ begin
   Self.Client.RequestHeader['Authorization'] := 'Bearer ' + accessToken;
   Self.Client.RequestHeader['RefreshToken'] := refreshToken;
 
-  response := Self.Client.Get(Self.Server + 'session');
-  WriteLn response;
+  try
+    response := Self.Client.Get(Self.Server + 'session');
+  except
+    WriteLn GetDebugLn('WaspClient', GetExceptionMessage());
+    Exit;
+  end;
 
   Result := InRange(Self.Client.ResponseStatus.AsInteger, 200, 299);
   if not Result then
@@ -136,8 +140,8 @@ begin
   {$ENDIF}
 
   {$IFDEF WASP_REFRESH_TOKEN}
-  FileWrite(WLEnv.ConfigsDir + 'refresh_token.txt', Self.User.RefreshToken);
-  WriteLn GetDebugLn('WaspClient', 'Refresh token was refreshed: ' + Self.User.RefreshToken);
+  FileWrite(WLEnv.ConfigsDir + 'refresh_token.txt', json.Item['refresh_token'].AsString);
+  WriteLn GetDebugLn('WaspClient', 'Refresh token was refreshed: ' + json.Item['refresh_token'].AsString);
   {$ENDIF}
 
   with json.Item['user'] do
