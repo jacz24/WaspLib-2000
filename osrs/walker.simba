@@ -329,9 +329,9 @@ end;
 
 
 (*
-## Walker.CheckRunEnergy
+## Walker.CheckEnergy
 ```pascal
-procedure TRSWalker.CheckRunEnergy();
+procedure TRSWalker.CheckEnergy();
 ```
 Internal method used to check and enable the player run.
 You will probably never need to call this directly.
@@ -344,23 +344,17 @@ you shouldn't do this, you should add randomness to it!
 
 Example:
 ```pascal
-procedure TRSWalker.CheckRunEnergy(); override;
-begin
-  if Minimap.RunEnabled() then Exit;
-  if Minimap.GetLevel(ERSMinimapOrb.ENERGY) < Self.MinEnergy then Exit;
-
-  Self.MinEnergy := 50;
-  Minimap.Toggle(ERSMinimapOrb.ENERGY);
-end;
+Map.Walker.MinEnergy := 10;
+Map.Walker.CheckEnergy();
 ```
 *)
-procedure TRSWalker.CheckRunEnergy();
+procedure TRSWalker.CheckEnergy();
 begin
-  if Minimap.RunEnabled() then Exit;
+  if Minimap.EnergyEnabled() then Exit;
   if Minimap.GetLevel(ERSMinimapOrb.ENERGY) < Self.MinEnergy then Exit;
 
   Self.MinEnergy := RandomMode(40, 10, 100);
-  Minimap.Toggle(ERSMinimapOrb.ENERGY);
+  Minimap.EnableEnergy();
 end;
 
 (*
@@ -480,7 +474,7 @@ begin
   // - Been walking for over 20 seconds
   // - Within `minDist` to the destination
   repeat
-    Self.CheckRunEnergy();
+    Self.CheckEnergy();
 
     position.Previous := position.Current;
     position.Current := Self.Position();
@@ -550,7 +544,7 @@ begin
   end;
 
   Result := True;
-  Self.CheckRunEnergy();
+  Self.CheckEnergy();
 
   if Self.ScreenWalk then
   begin

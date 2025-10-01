@@ -459,7 +459,7 @@ end;
 ```pascal
 function TRSMinimap.Poisoned(): Boolean;
 function TRSMinimap.Envenomed(): Boolean;
-function TRSMinimap.RunEnabled(): Boolean;
+function TRSMinimap.EnergyEnabled(): Boolean;
 function TRSMinimap.HasStamina(): Boolean;
 function TRSMinimap.PrayerEnabled(): Boolean;
 function TRSMinimap.SpecialEnabled(): Boolean;
@@ -482,7 +482,7 @@ begin
   Result := Target.HasColor(ColorTolerance($283818, 0.637, EColorSpace.HSL, [1.885, 0.891, 0.226]), 1, Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle.Bounds);
 end;
 
-function TRSMinimap.RunEnabled(): Boolean;
+function TRSMinimap.EnergyEnabled(): Boolean;
 begin
   Result := Target.HasColor(ColorTolerance($0E567F, 8.845, EColorSpace.HSV, [1.295, 1.247, 0.459]), 1, Self.Orbs[ERSMinimapOrb.ENERGY].Circle.Bounds);
 end;
@@ -567,7 +567,7 @@ begin
   case orb of
     ERSMinimapOrb.HITPOINTS: Exit;
     ERSMinimapOrb.PRAYER:  state := Self.PrayerEnabled();
-    ERSMinimapOrb.ENERGY:  state := Self.RunEnabled();
+    ERSMinimapOrb.ENERGY:  state := Self.EnergyEnabled();
     ERSMinimapOrb.SPECIAL:
       if not Self.HasSpecialWeapon() then
         Exit
@@ -580,10 +580,152 @@ begin
   case orb of
     ERSMinimapOrb.HITPOINTS: Exit;
     ERSMinimapOrb.PRAYER:  Result := Self.PrayerEnabled() <> state;
-    ERSMinimapOrb.ENERGY:  Result := Self.RunEnabled() <> state;
+    ERSMinimapOrb.ENERGY:  Result := Self.EnergyEnabled() <> state;
     ERSMinimapOrb.SPECIAL: Result := Self.SpecialEnabled() <> state;
   end;
 end;
+
+
+(*
+## Minimap.EnablePrayer
+```pascal
+function TRSMinimap.EnablePrayer(): Boolean;
+```
+Enable the quick prayer orb.
+*)
+function TRSMinimap.EnablePrayer(): Boolean;
+begin
+  if Self.PrayerEnabled() then
+    Exit(True);
+
+  if Self.GetLevel(ERSMinimapOrb.PRAYER) <= 1 then
+    Exit;
+
+  Mouse.Click(Self.Orbs[ERSMinimapOrb.PRAYER].Circle, EMouseButton.LEFT, True);
+  Result := SleepUntil(Self.PrayerEnabled(), 200, 2*TICK);
+end;
+
+(*
+## Minimap.DisablePrayer
+```pascal
+function TRSMinimap.DisablePrayer(): Boolean;
+```
+Disable the quick prayer orb.
+*)
+function TRSMinimap.DisablePrayer(): Boolean;
+begin
+  if not Self.PrayerEnabled() then
+    Exit(True);
+
+  if Self.GetLevel(ERSMinimapOrb.PRAYER) <= 1 then
+    Exit(True);
+
+  Mouse.Click(Self.Orbs[ERSMinimapOrb.PRAYER].Circle, EMouseButton.LEFT, True);
+  Result := SleepUntil(not Self.PrayerEnabled(), 200, 2*TICK);
+end;
+
+
+(*
+## Minimap.CurePoison
+```pascal
+function TRSMinimap.CurePoison(): Boolean;
+```
+Clicks the health orb.
+
+This cures poison and venom assuming you have potions for
+it in your {ref}`Inventory`.
+*)
+function TRSMinimap.CurePoison(): Boolean;
+begin
+  if Self.Envenomed() then
+  begin
+    Mouse.Click(Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle, EMouseButton.LEFT, True);
+    Exit(SleepUntil(not Self.Envenomed(), 200, 2*TICK));
+  end;
+
+  if not Self.Poisoned() then
+    Exit(True);
+
+  Mouse.Click(Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle, EMouseButton.LEFT, True);
+  Result := SleepUntil(not Self.Poisoned(), 200, 2*TICK);
+end;
+
+
+(*
+## Minimap.EnableEnergy
+```pascal
+function TRSMinimap.EnableEnergy(): Boolean;
+```
+Enable the energy orb.
+*)
+function TRSMinimap.EnableEnergy(): Boolean;
+begin
+  if Self.EnergyEnabled() then
+    Exit(True);
+
+  if Self.GetLevel(ERSMinimapOrb.ENERGY) <= 1 then
+    Exit;
+
+  Mouse.Click(Self.Orbs[ERSMinimapOrb.ENERGY].Circle, EMouseButton.LEFT, True);
+  Result := SleepUntil(Self.EnergyEnabled(), 200, 2*TICK);
+end;
+
+(*
+## Minimap.DisableEnergy
+```pascal
+function TRSMinimap.DisableEnergy(): Boolean;
+```
+Disable the energy orb.
+*)
+function TRSMinimap.DisableEnergy(): Boolean;
+begin
+  if not Self.EnergyEnabled() then
+    Exit(True);
+
+  if Self.GetLevel(ERSMinimapOrb.ENERGY) <= 1 then
+    Exit(True);
+
+  Mouse.Click(Self.Orbs[ERSMinimapOrb.ENERGY].Circle, EMouseButton.LEFT, True);
+  Result := SleepUntil(not Self.EnergyEnabled(), 200, 2*TICK);
+end;
+
+
+
+(*
+## Minimap.EnableSpecial
+```pascal
+function TRSMinimap.EnableSpecial(level: Integer): Boolean;
+```
+Enabled the special attack orb.
+*)
+function TRSMinimap.EnableSpecial(level: Integer): Boolean;
+begin
+  if Self.SpecialEnabled() then
+    Exit(True);
+
+  if Self.HasSpecialWeapon() and (Self.GetLevel(ERSMinimapOrb.SPECIAL) >= level) then
+  begin
+    Mouse.Click(Self.Orbs[ERSMinimapOrb.SPECIAL].Circle, EMouseButton.LEFT, True);
+    Result := SleepUntil(Self.SpecialEnabled(), 200, 2*TICK);
+  end;
+end;
+
+(*
+## Minimap.DisableSpecial
+```pascal
+function TRSMinimap.DisableSpecial(): Boolean;
+```
+Disable the special attack orb.
+*)
+function TRSMinimap.DisableSpecial(): Boolean;
+begin
+  if not Self.SpecialEnabled() or Self.HasSpecialWeapon() then
+    Exit(True);
+
+  Mouse.Click(Self.Orbs[ERSMinimapOrb.SPECIAL].Circle, EMouseButton.LEFT, True);
+  Result := SleepUntil(not Self.SpecialEnabled(), 200, 2*TICK);
+end;
+
 
 
 (*
