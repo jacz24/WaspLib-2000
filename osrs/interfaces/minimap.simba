@@ -455,57 +455,168 @@ end;
 
 
 (*
-## Minimap Orb Status
+## Minimap Orbs Statuses and States
+The following are methods to interact and read information from the
+{ref}`Minimap` {ref}`ERSMinimapOrb` orbs.
+*)
+
+(*
+### Minimap Status
+Methods to retrieve {ref}`Minimap` {ref}`ERSMinimapOrb` orbs statuses.
+*)
+
+(*
+#### Minimap.HasPoison
 ```pascal
-function TRSMinimap.Poisoned(): Boolean;
-function TRSMinimap.Envenomed(): Boolean;
-function TRSMinimap.EnergyEnabled(): Boolean;
-function TRSMinimap.HasStamina(): Boolean;
-function TRSMinimap.PrayerEnabled(): Boolean;
-function TRSMinimap.SpecialEnabled(): Boolean;
-function TRSMinimap.HasSpecialWeapon(): Boolean;
+function TRSMinimap.HasPoison(): Boolean;
 ```
-Returns a status from a minimap orb.
+Returns whether the `ERSMinimapOrb.HITPOINTS` has the poison status.
 
 Example:
 ```pascal
-WriteLn Minimap.Poisoned();
+WriteLn Minimap.HasPoison();
 ```
 *)
-function TRSMinimap.Poisoned(): Boolean;
+function TRSMinimap.HasPoison(): Boolean;
+var
+  b: TBox;
 begin
-  Result := Target.HasColor(16391, 3, 1, Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle.Bounds);
+  with Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle.Bounds do
+    b := [X1+3, Y2-4, X2-3, Y2+1];
+  ShowOnTarget(b);
+  Result := Target.HasColor($004007, 8, 1, b);
 end;
 
-function TRSMinimap.Envenomed(): Boolean;
+(*
+#### Minimap.HasVenom
+```pascal
+function TRSMinimap.HasVenom(): Boolean;
+```
+Returns whether the `ERSMinimapOrb.HITPOINTS` has the venom status.
+
+Example:
+```pascal
+WriteLn Minimap.HasVenom();
+```
+*)
+function TRSMinimap.HasVenom(): Boolean;
+var
+  b: TBox;
 begin
-  Result := Target.HasColor(ColorTolerance($283818, 0.637, EColorSpace.HSL, [1.885, 0.891, 0.226]), 1, Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle.Bounds);
+  with Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle.Bounds do
+    b := [X1+3, Y2-4, X2-3, Y2+1];
+  Result := Target.HasColor([$2D351B, 8.330, EColorSpace.HSV, [0.882, 1.148, 0.971]], 1, b);
 end;
 
-function TRSMinimap.EnergyEnabled(): Boolean;
-begin
-  Result := Target.HasColor(ColorTolerance($0E567F, 8.845, EColorSpace.HSV, [1.295, 1.247, 0.459]), 1, Self.Orbs[ERSMinimapOrb.ENERGY].Circle.Bounds);
-end;
-
+(*
+#### Minimap.HasStamina
+```pascal
 function TRSMinimap.HasStamina(): Boolean;
+```
+Returns whether the `ERSMinimapOrb.ENERGY` has the stamina status.
+
+Example:
+```pascal
+WriteLn Minimap.HasStamina();
+```
+*)
+function TRSMinimap.HasStamina(): Boolean;
+var
+  b: TBox;
 begin
-  Result := Target.HasColor(ColorTolerance($2D61C1, 1.475, EColorSpace.HSV, [2.455, 0.300, 0.247]), 1, Self.Orbs[ERSMinimapOrb.ENERGY].Circle.Bounds);
+  with Self.Orbs[ERSMinimapOrb.ENERGY].Circle.Center do
+    b := TBox.Create([X,Y], 4, 4);
+  Result := Target.HasColor([$2D61C1, 1.475, EColorSpace.HSV, [2.455, 0.300, 0.247]], 1, b);
 end;
 
+(*
+#### Minimap.HasSpecial
+```pascal
+function TRSMinimap.HasSpecial(): Boolean;
+```
+Returns whether the `ERSMinimapOrb.SPECIAL` has the special status, in other
+words, whether the current weapon is a special attack weapon or not.
+
+Example:
+```pascal
+WriteLn Minimap.HasSpecial();
+```
+*)
+function TRSMinimap.HasSpecial(): Boolean;
+var
+  b: TBox;
+begin
+  with Self.Orbs[ERSMinimapOrb.SPECIAL].Circle.Bounds do
+    b := [X1+3, Y2-4, X2-3, Y2];
+  Result := Target.HasColor([$6A6330, 12.309, EColorSpace.HSV, [1.620, 0.532, 0.850]], 1, b);
+end;
+
+
+(*
+### Minimap States
+Methods to retrieve {ref}`Minimap` {ref}`ERSMinimapOrb` orbs states.
+*)
+
+(*
+#### Minimap.PrayerEnabled
+```pascal
+function TRSMinimap.PrayerEnabled(): Boolean;
+```
+Returns whether the `ERSMinimapOrb.PRAYER` is enabled or not.
+
+Example:
+```pascal
+WriteLn Minimap.PrayerEnabled();
+```
+*)
 function TRSMinimap.PrayerEnabled(): Boolean;
 begin
-  Result := Target.HasColor(ColorTolerance($2188AB, 10.980, EColorSpace.HSV, [1.317, 1.076, 0.609]), 1, Self.Orbs[ERSMinimapOrb.PRAYER].Circle.Bounds);
+  Result := Target.HasColor(ColorTolerance($2188AB, 10.980, EColorSpace.HSV, [1.317, 1.076, 0.609]), 8, Self.Orbs[ERSMinimapOrb.PRAYER].Circle.Bounds);
 end;
 
+(*
+#### Minimap.EnergyEnabled
+```pascal
+function TRSMinimap.EnergyEnabled(): Boolean;
+```
+Returns whether the `ERSMinimapOrb.ENERGY` is enabled or not.
+
+Example:
+```pascal
+WriteLn Minimap.EnergyEnabled();
+```
+*)
+function TRSMinimap.EnergyEnabled(): Boolean;
+var
+  b: TBox;
+begin
+  with Self.Orbs[ERSMinimapOrb.ENERGY].Circle.Bounds do
+    b := [X1+3, Y2-3, X2-3, Y2];
+  ShowOnTarget(b);
+  Result := Target.HasColor([$2A6C8E, 9.954, EColorSpace.HSV, [1.771, 0.726, 0.505]], 8, b);
+end;
+
+(*
+#### Minimap.SpecialEnabled
+```pascal
 function TRSMinimap.SpecialEnabled(): Boolean;
+```
+Returns whether the `ERSMinimapOrb.SPECIAL` is enabled or not.
+
+Example:
+```pascal
+WriteLn Minimap.SpecialEnabled();
+```
+*)
+function TRSMinimap.SpecialEnabled(): Boolean;
+var
+  b: TBox;
 begin
-  Result := Target.HasColor(ColorTolerance($999273, 1.308, EColorSpace.RGB, [0.122, 0.640, 2.240]), 1, Self.Orbs[ERSMinimapOrb.SPECIAL].Circle.Bounds);
+  with Self.Orbs[ERSMinimapOrb.SPECIAL].Circle.Bounds do
+    b := [X1+3, Y2-4, X2-3, Y2];
+  Result := Target.HasColor([$718B63, 8.414, EColorSpace.HSV, [0.258, 0.495, 2.249]], 8, b);
 end;
 
-function TRSMinimap.HasSpecialWeapon(): Boolean;
-begin
-  Result := Target.HasColor(ColorTolerance($A68F56, 5.999, EColorSpace.RGB, [0.270, 1.494, 1.237]), 1, Self.Orbs[ERSMinimapOrb.SPECIAL].Bounds);
-end;
 
 (*
 ## Minimap.GetPercent
@@ -528,8 +639,8 @@ begin
     ERSMinimapOrb.HITPOINTS:
     begin
       col := ColorTolerance($030575, 1.242, EColorSpace.RGB, [0.064, 1.068, 1.869]);
-      if Self.Poisoned  then col := ColorTolerance($02851C, 1.688, EColorSpace.LCH, [0.201, 0.166, 2.635]);
-      if Self.Envenomed then col := ColorTolerance($27361A, 0.983, EColorSpace.LCH, [0.227, 0.346, 2.428]);
+      if Self.HasPoison  then col := ColorTolerance($02851C, 1.688, EColorSpace.LCH, [0.201, 0.166, 2.635]);
+      if Self.HasVenom then col := ColorTolerance($27361A, 0.983, EColorSpace.LCH, [0.227, 0.346, 2.428]);
     end;
     ERSMinimapOrb.PRAYER:
     begin
@@ -569,7 +680,7 @@ begin
     ERSMinimapOrb.PRAYER:  state := Self.PrayerEnabled();
     ERSMinimapOrb.ENERGY:  state := Self.EnergyEnabled();
     ERSMinimapOrb.SPECIAL:
-      if not Self.HasSpecialWeapon() then
+      if not Self.HasSpecial() then
         Exit
       else
         state := Self.SpecialEnabled();
@@ -632,22 +743,34 @@ function TRSMinimap.CurePoison(): Boolean;
 ```
 Clicks the health orb.
 
-This cures poison and venom assuming you have potions for
-it in your {ref}`Inventory`.
+This cures poison assuming you have potions for it in your {ref}`Inventory`.
 *)
 function TRSMinimap.CurePoison(): Boolean;
 begin
-  if Self.Envenomed() then
-  begin
-    Mouse.Click(Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle, EMouseButton.LEFT, True);
-    Exit(SleepUntil(not Self.Envenomed(), 200, 2*TICK));
-  end;
-
-  if not Self.Poisoned() then
+  if not Self.HasPoison() then
     Exit(True);
 
   Mouse.Click(Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle, EMouseButton.LEFT, True);
-  Result := SleepUntil(not Self.Poisoned(), 200, 2*TICK);
+  Result := SleepUntil(not Self.HasPoison(), 200, 2*TICK);
+end;
+
+(*
+## Minimap.CureVenom
+```pascal
+function TRSMinimap.CureVenom(): Boolean;
+```
+Clicks the health orb.
+
+This cures venom assuming you have potions for
+it in your {ref}`Inventory`.
+*)
+function TRSMinimap.CureVenom(): Boolean;
+begin
+  if not Self.HasVenom() then
+    Exit(True);
+
+  Mouse.Click(Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle, EMouseButton.LEFT, True);
+  Result := SleepUntil(not Self.HasVenom(), 200, 2*TICK);
 end;
 
 
@@ -703,7 +826,7 @@ begin
   if Self.SpecialEnabled() then
     Exit(True);
 
-  if Self.HasSpecialWeapon() and (Self.GetLevel(ERSMinimapOrb.SPECIAL) >= level) then
+  if Self.HasSpecial() and (Self.GetLevel(ERSMinimapOrb.SPECIAL) >= level) then
   begin
     Mouse.Click(Self.Orbs[ERSMinimapOrb.SPECIAL].Circle, EMouseButton.LEFT, True);
     Result := SleepUntil(Self.SpecialEnabled(), 200, 2*TICK);
@@ -719,7 +842,7 @@ Disable the special attack orb.
 *)
 function TRSMinimap.DisableSpecial(): Boolean;
 begin
-  if not Self.SpecialEnabled() or Self.HasSpecialWeapon() then
+  if not Self.SpecialEnabled() or Self.HasSpecial() then
     Exit(True);
 
   Mouse.Click(Self.Orbs[ERSMinimapOrb.SPECIAL].Circle, EMouseButton.LEFT, True);
