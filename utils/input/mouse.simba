@@ -16,20 +16,25 @@ compiler directive before you include WaspLib:
 
 {$IFDEF SIMBAHEADLESS}{$UNDEF WL_DEBUG_MOUSE}{$ENDIF}
 
+type
 (*
 ## EMouseDistribution
 ```pascal
-EMouseDistribution = enum(
-  DEFAULT, // Use Mouse.Distribution
-  RANDOM,  // Completely random point
-  GAUSS,   // Weighted towards the center
-  SKEWED,  // Weighted torwards current mouse position
-  ROWP     // Weighted torwards current mouse position but more "rounded" compared to SKEWED
-);
-The available distributions used to generate a point in a box.
+EMouseDistribution = enum(DEFAULT, RANDOM, GAUSS, SKEWED, ROWP);
+```
+The available distributions used to generate a point in a shape.
+
+- `EMouseDistribution.DEFAULT`: Uses whatever is set for {ref}`TMouse.Distribution`,
+which is `EMouseDistribution.GAUSS` by default.
+- `EMouseDistribution.RANDOM`: Completely random point
+- `EMouseDistribution.GAUSS`: Weighted towards the center of the shape
+- `EMouseDistribution.SKEWED`: Weighted torwards current mouse position
+- `EMouseDistribution.ROWP`: Weighted torwards current mouse position but more "rounded" compared to SKEWED
+
+You can view what the distributions look like by running the {ref}`Distribution Viewer`:
+```{figure} ../../images/distribution_viewer.gif
 ```
 *)
-type
   EMouseDistribution = enum(DEFAULT, RANDOM, GAUSS, SKEWED, ROWP);
 
 (*
@@ -179,8 +184,7 @@ you want the `Mouse` to use.
 
 The default value is `EMouseDistribution.GAUSS`.
 
-You can view what the distributions look like by running the script in
-`Simba/Includes/WaspLib/tools/distribution_viewer.simba`.
+Read {ref}`EMouseDistribution` for more information about it.
 *)
 
 (*

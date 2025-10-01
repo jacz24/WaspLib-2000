@@ -1,12 +1,16 @@
 (*
+(Distribution Viewer)=
 # Tool: Distribution Viewer
 Tool to visually see random distributions available in the library in multiple shapes.
+
+```{figure} ../../images/distribution_viewer.gif
+```
 *)
 {$I WaspLib/osrs.simba}
 
 const DEFAULT_SHAPE: Integer = 0;
-const DEFAULT_DISTR: Integer = 3;
-const PT_AMOUNT: Integer = 3000;
+const DEFAULT_DISTR: Integer = 1;
+const PT_AMOUNT: Integer = 6000;
 const PT_WEIGHT: Single = 0.2;
 
 type
@@ -71,7 +75,7 @@ begin
 end;
 
 
-procedure TDistributionViewer.CreateShape(sender: TObject);
+procedure TDistributionViewer.CreateShape(sender: TLazObject);
 var
   center: TPoint;
   tpa: TPointArray;
@@ -360,7 +364,7 @@ begin
   Async.ScheduleStop('Repaint');
 end;
 
-procedure TDistributionViewer.OnShow(sender: TObject);
+procedure TDistributionViewer.OnShow(sender: TLazObject);
 begin
   Async.ScheduleEvery('Repaint', @Self.Repaint, 5); //force repainting lol
   AddOnTerminate(@Self.Terminate);
@@ -399,7 +403,7 @@ begin
   Self.Distribution.Items.Add('Gauss');
   Self.Distribution.Items.Add('Skewed');
   Self.Distribution.Items.Add('Weighted');
-  Self.Distribution.Style := ELazComboBoxStyle.csDropDownList;
+  Self.Distribution.Style := ELazComboBoxStyle.DropDownList;
   Self.Distribution.Align := ELazAlign.Left;
   Self.Distribution.BorderSpacing.Around := 10;
   Self.Distribution.ItemIndex := DEFAULT_DISTR;
@@ -419,7 +423,7 @@ begin
   Self.Shape.Items.Add('Polygon');
   Self.Shape.Items.Add('Quad');
   Self.Shape.Items.Add('Box');
-  Self.Shape.Style := ELazComboBoxStyle.csDropDownList;
+  Self.Shape.Style := ELazComboBoxStyle.DropDownList;
   Self.Shape.ItemIndex := 0;
   Self.Shape.Align := ELazAlign.Left;
   Self.Shape.BorderSpacing.Around := 10;
