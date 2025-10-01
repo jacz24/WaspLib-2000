@@ -55,19 +55,16 @@ end;
 
 function TRSItemFinder.Align(image, template: TImage): Boolean;
 var
-  tBorder, bBorder, wBorder: TPointArray;
+  tBorder, bBorder: TPointArray;
   bounds: TBox;
   align: TPoint;
 begin
   tBorder := image.FindColor(TRSItem.Border, 0).ExcludeBox([0,0,image.Width,8]);
   bBorder := template.FindColor(TRSItem.Border, 0).ExcludeBox([0,0,template.Width,8]);
-  wBorder := template.FindColor(TRSItem.BorderWhite, 0);
 
   if tBorder = [] then
     Exit;
-
-  if not Self._AlignHelper(image, tBorder, bBorder, align) and
-     not Self._AlignHelper(image, tBorder, wBorder, align) then
+  if not Self._AlignHelper(image, tBorder, bBorder, align) then
     Exit;
 
   bounds := tBorder.Bounds;

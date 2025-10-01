@@ -245,6 +245,8 @@ begin
   end;
 
   near := Self.Near(slot, slots, maxDist, removeSlot);
+  if near = [] then
+    Exit;
 
   if distribution = ERandomDistribution.RANDOM then
     Exit(near.Random());

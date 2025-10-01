@@ -273,7 +273,7 @@ begin
   path += TDateTime.CreateFromSystem().ToString(FILE_TIME_FORMAT);
 
   img := Target.GetImage(bounds);
-  if img.Save(path, True) then
+  if img.Save(path + '.png', True) then
     Result := path;
 end;
 

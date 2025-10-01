@@ -114,7 +114,6 @@ end;
 ```pascal
 function TRSInventory.IsSelected(slot: TBox): Boolean;
 function TRSInventory.IsSelected(slot: Integer): Boolean; overload;
-function TRSInventory.IsSelected(item: TRSItem): Boolean; overload;
 ```
 Returns true/false if the specified `slot` or `item` is currently selected.
 
@@ -157,17 +156,6 @@ begin
     if Self.IsSelected(slots[Result]) then
       Exit;
   Result := -1;
-end;
-
-function TRSInventory.IsSelected(item: TRSItem): Boolean; overload;
-var
-  selected: Integer;
-  slots: TIntegerArray;
-begin
-  selected := Self.GetSelected();
-  if selected = -1 then Exit;
-  slots := Self.Items.IndicesOf([item]);
-  Result := slots.Contains(selected);
 end;
 
 
