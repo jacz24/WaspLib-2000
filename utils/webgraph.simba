@@ -29,12 +29,14 @@ Enum representing the type of nodes in a `TWebGraph`.
   TGraphNode = record
     Node: TPoint;
     Typ: EGraphNode;
+    Handle: function (): Boolean;
   end;
 
-function TGraphNode.Create(pt: TPoint; typ: EGraphNode = EGraphNode.NORMAL): TGraphNode; static;
+function TGraphNode.Create(pt: TPoint; typ: EGraphNode = EGraphNode.NORMAL; handle: function (): Boolean = nil): TGraphNode; static;
 begin
   Result.Node := pt;
   Result.Typ := typ;
+  Result.Handle := @handle;
 end;
 
 type
@@ -312,7 +314,7 @@ begin
   i := Length(Self.Nodes);
   SetLength(Self.Nodes, i+1);
   SetLength(Self.Paths, i+1);
-  Self.Nodes[i] := [pt, typ];
+  Self.Nodes[i] := [pt, typ, nil];
 
   Self.Paths[fromNode] += i;
   Self.Paths[i] += fromNode;
@@ -320,22 +322,15 @@ begin
 end;
 
 
-function TWebGraph.ConnectNodes(a,b: Integer): Boolean;
+procedure TWebGraph.ConnectNodes(a,b: Integer);
 begin
-  if b in Self.Paths[a] then
-  begin
-    Self.Paths[a].Remove(b);
-    Self.Paths[b].Remove(a);
-  end else
-  begin
+  if not Self.Paths[a].Contains(b) then
     Self.Paths[a] += b;
+  if not Self.Paths[b].Contains(a) then
     Self.Paths[b] += a;
-  end;
-
-  Result := True;
 end;
 
-function TWebGraph.ConnectNodes(a,b: TPoint): Boolean; overload;
+procedure TWebGraph.ConnectNodes(a,b: TPoint); overload;
 var
   i, j: Integer;
 begin
@@ -345,26 +340,26 @@ begin
   j := Self.Nodes.IndexOf(b);
   if j = -1 then Exit;
 
-  Result := Self.ConnectNodes(i,j);
+  Self.ConnectNodes(i,j);
 end;
 
-function TWebGraph.ConnectNodes(a: Integer; b: TPoint): Boolean; overload;
+procedure TWebGraph.ConnectNodes(a: Integer; b: TPoint); overload;
 var
   i: Integer;
 begin
   i := Self.Nodes.IndexOf(b);
   if i = -1 then Exit;
 
-  Result := Self.ConnectNodes(a, i);
+  Self.ConnectNodes(a, i);
 end;
 
-function TWebGraph.ConnectNodesEx(a,b: TPoint): Boolean;
+procedure TWebGraph.ConnectNodesEx(a,b: TPoint);
 var
   i, j: Integer;
 begin
   i := Self.NearestNodeIndex(a);
   j := Self.NearestNodeIndex(b);
-  Result := Self.ConnectNodes(i,j);
+  Self.ConnectNodes(i,j);
 end;
 
 
@@ -409,6 +404,174 @@ begin
       Self.DeleteNode(i);
 end;
 
+
+procedure TWebGraph.AddLink(a, b: TPoint; typ: EGraphNode; handle: function (): Boolean);
+var
+  i, j, n: Integer;
+  tpa: TPointArray;
+begin
+  i := Length(Self.Nodes);
+  SetLength(Self.Nodes, i+2);
+  SetLength(Self.Paths, i+2);
+
+  Self.Nodes[i]   := TGraphNode.Create(a, typ, @handle);
+  Self.Nodes[i+1] := TGraphNode.Create(b, typ, @handle);
+  Self.ConnectNodes(i, i+1);
+
+  tpa := Self.Tree.KNearest(a, 8);
+  for j := 0 to High(tpa) do
+  begin
+    if tpa[j] = b then Continue;
+    if not Self.WalkableClusters.InSameTPA(a, tpa[j]) then Continue;
+
+    n := Self.Nodes.IndexOf(tpa[j]);
+    if n = -1 then Continue;
+    Self.Paths[i] += n;
+    Self.Paths[n] += i;
+  end;
+
+  tpa := Self.Tree.KNearest(b, 8);
+  for j := 0 to High(tpa) do
+  begin
+    if tpa[j] = a then Continue;
+    if not Self.WalkableClusters.InSameTPA(b, tpa[j]) then Continue;
+
+    n := Self.Nodes.IndexOf(tpa[j]);
+    if n = -1 then Continue;
+    Self.Paths[i+1] += n;
+    Self.Paths[n] += i+1;
+  end;
+end;
+
+procedure TWebGraph.AddLink(a, b: TPoint; typ: EGraphNode; handleA, handleB: function (): Boolean); overload;
+var
+  i, j, n: Integer;
+  tpa: TPointArray;
+begin
+  i := Length(Self.Nodes);
+  SetLength(Self.Nodes, i+2);
+  SetLength(Self.Paths, i+2);
+
+  Self.Nodes[i]   := TGraphNode.Create(a, typ, @handleA);
+  Self.Nodes[i+1] := TGraphNode.Create(b, typ, @handleB);
+  Self.ConnectNodes(i, i+1);
+
+  tpa := Self.Tree.KNearest(a, 8);
+  for j := 0 to High(tpa) do
+  begin
+    if tpa[j] = b then Continue;
+    if not Self.WalkableClusters.InSameTPA(a, tpa[j]) then Continue;
+
+    n := Self.Nodes.IndexOf(tpa[j]);
+    if n = -1 then Continue;
+    Self.Paths[i] += n;
+    Self.Paths[n] += i;
+  end;
+
+  tpa := Self.Tree.KNearest(b, 8);
+  for j := 0 to High(tpa) do
+  begin
+    if tpa[j] = a then Continue;
+    if not Self.WalkableClusters.InSameTPA(b, tpa[j]) then Continue;
+
+    n := Self.Nodes.IndexOf(tpa[j]);
+    if n = -1 then Continue;
+    Self.Paths[i+1] += n;
+    Self.Paths[n] += i+1;
+  end;
+end;
+
+procedure TWebGraph.AddLink(pt, a, b: TPoint; typ: EGraphNode; handle: function (): Boolean); overload;
+var
+  i, j, n: Integer;
+  tpa: TPointArray;
+begin
+  i := Length(Self.Nodes);
+  SetLength(Self.Nodes, i+1);
+  SetLength(Self.Paths, i+1);
+
+  tpa := Self.Tree.KNearest(b, 8);
+  for j := 0 to High(tpa) do
+  begin
+    if tpa[j] = b then Continue;
+    if not Self.WalkableClusters.InSameTPA(a, tpa[j]) then Continue;
+
+    n := Self.Nodes.IndexOf(tpa[j]);
+    if n = -1 then Continue;
+    Self.Paths[i] += n;
+    Self.Paths[n] += i;
+  end;
+
+  tpa := Self.Tree.KNearest(b, 8);
+  for j := 0 to High(tpa) do
+  begin
+    if tpa[j] = a then Continue;
+    if not Self.WalkableClusters.InSameTPA(b, tpa[j]) then Continue;
+
+    n := Self.Nodes.IndexOf(tpa[j]);
+    if n = -1 then Continue;
+    Self.Paths[i] += n;
+    Self.Paths[n] += i;
+  end;
+
+  Self.Nodes[i] := TGraphNode.Create(pt, typ, @handle);
+end;
+
+procedure TWebGraph.AddTeleport(pt: TPoint; handle: function (): Boolean);
+var
+  i, j, n: Integer;
+  tpa: TPointArray;
+begin
+  i := Length(Self.Nodes);
+  Self.Nodes += [pt, EGraphNode.TELEPORT, @handle];
+
+  tpa := Self.Tree.KNearest(pt, 12);
+  for j := 0 to High(tpa) do
+  begin
+    if not Self.WalkableClusters.InSameTPA(pt, tpa[j]) then
+      Continue;
+
+    n := Self.Nodes.IndexOf(tpa[j]);
+    if n = -1 then Continue;
+    Self.Paths[i] += n;
+    Self.Paths[n] += i;
+  end;
+
+  for j := 0 to High(Self.Nodes)-1 do
+  begin
+    if Self.Nodes[i].Node.InRange(Self.Nodes[j].Node, 120) then
+      Continue;
+    Self.Paths[j] += i;
+  end;
+end;
+
+procedure TWebGraph.AddFairyRing(pt: TPoint);
+var
+  i, j, n: Integer;
+  tpa: TPointArray;
+begin
+  i := Length(Self.Nodes);
+  Self.Nodes += [pt, EGraphNode.FAIRYRING, nil];
+
+  tpa := Self.Tree.KNearest(pt, 8);
+  for j := 0 to High(tpa) do
+  begin
+    if not Self.WalkableClusters.InSameTPA(pt, tpa[j]) then
+      Continue;
+
+    n := Self.Nodes.IndexOf(tpa[j]);
+    if n = -1 then Continue;
+    Self.Paths[i] += n;
+    Self.Paths[n] += i;
+  end;
+
+  for j := 0 to High(Self.Nodes) do
+    if Self.Nodes[j].Typ = EGraphNode.FAIRYRING then
+    begin
+      Self.Paths[j] += i;
+      Self.Paths[i] += j;
+    end;
+end;
 
 
 procedure TWebGraph.Merge(graph: TWebGraph);
