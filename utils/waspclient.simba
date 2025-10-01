@@ -168,12 +168,14 @@ begin
   Self.Script.Revision := StrToInt(GetEnvVar('SCRIPT_REVISION'), 0);
   {$ENDIF}
 
+  Self.IsSetup := True;
   Self.Payload := new TJSONObject();
   Self.Payload.AddInt('experience', 0);
   Self.Payload.AddInt('gold', 0);
   Self.Payload.AddInt('runtime', 0);
 
   Self.Lock := TLock.Create();
+  Self.Client.RequestHeader['RefreshToken'] := refreshToken;
   Async.ScheduleEvery('WaspClient-RefreshToken', @Self.RefreshSession, 5 * ONE_MINUTE);
   AddOnTerminate(@Self.Free);
   AddOnTerminate(@Self.Lock.Free);
