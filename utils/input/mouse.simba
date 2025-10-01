@@ -38,23 +38,9 @@ You can view what the distributions look like by running the {ref}`Distribution 
   EMouseDistribution = enum(DEFAULT, RANDOM, GAUSS, SKEWED, ROWP);
 
 (*
-## Mouse
-```pascal
-TMouse = record(TSRLBaseRecord)
-  Speed: Double;                     // Overall mouse speed (Default: 12)
-  Gravity, Wind: Double;             // Gravity & Wind for generating mouse path (Default: 9 & 5)
-  Distribution: EMouseDistribution;  // Default distribution to use (Default: MOUSE_DISTRIBUTION_ROWP)
-  MissChance: Double;                // Percentage chance to "Miss" the mouse (Default: 10)
-  IdleInterval: Double;              // Distance to travel before calling Mouse.Idle() (Default: 0)
-  IdleProgress: Double;
-  IdleGoal: Double;
-  OnMoving: TMouseMovingEvent;       // Callback while mouse is being moved
-  OnTeleport: TMouseTeleportEvent;   // Callback when mouse is teleported
-end;
-```
+## TMouse
+Main record used to interact with the {ref}`Mouse`.
 *)
-  PMouse = ^TMouse;
-
   TMouse = record
     Distribution: EMouseDistribution;
 
@@ -67,6 +53,8 @@ end;
     DebugClicks: TSingleMatrix;
     {$ENDIF}
   end;
+
+  PMouse = ^TMouse;
 
 {$IFDEF WL_DEBUG_MOUSE}
 procedure TMouse._Debug();
@@ -214,6 +202,9 @@ traveling to it's destinations. The default is `False`.
 
 Setting this to `True` will make all the above variables and the below
 properties irrelevant as they will not be used.
+
+It will also make all of the {ref}`Mouse.Move` methods use {ref}`Mouse.Teleport`
+instead.
 *)
 
 (*

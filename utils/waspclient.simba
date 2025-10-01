@@ -6,7 +6,6 @@ The following compiler directives are available and are useful for local
 development:
 ```pascal
 {$DEFINE WASP_LOCAL_DEVELOPMENT}
-{$DEFINE WASP_ACCESS_TOKEN := 'access_token'}
 {$DEFINE WASP_REFRESH_TOKEN := 'refresh_token'}
 {$DEFINE SCRIPT_ID := 'script_uuid'}
 {$DEFINE SCRIPT_REVISION := 'script_revision'}
@@ -19,8 +18,7 @@ As for the others, you can get values for them by running Simba through
 (wasp-launcher)[https://github.com/WaspScripts/wasp-launcher] and running
 something like this:
 ```pascal
-begin      
-  WriteLn GetEnvVar('WASP_ACCESS_TOKEN');
+begin
   WriteLn GetEnvVar('WASP_REFRESH_TOKEN');
   WriteLn GetEnvVar('SCRIPT_ID');
   WriteLn GetEnvVar('SCRIPT_REVISION');
@@ -78,34 +76,6 @@ begin
   Async.ScheduleStop('WaspClient-RefreshToken');
 end;
 
-function TWaspClient.CreateSession(accessToken, refreshToken: String): Boolean;
-var
-  response: String;
-  json: TJSONParser;
-begin
-  Self.Client.RequestHeader['Authorization'] := 'Bearer ' + accessToken;
-  Self.Client.RequestHeader['RefreshToken'] := refreshToken;
-
-  try
-    response := Self.Client.Get(Self.Server + 'session');
-  except
-    WriteLn GetDebugLn('WaspClient', GetExceptionMessage());
-    Exit;
-  end;
-
-  Result := InRange(Self.Client.ResponseStatus.AsInteger, 200, 299);
-  if not Result then
-  begin
-    WriteLn GetDebugLn('WaspClient', response);
-    Exit;
-  end;
-
-  json := new TJSONParser();
-  json.Parse(response);
-
-  Self.Client.RequestHeader['Authorization'] := 'Bearer ' + json.Item['access_token'].AsString;
-  Self.Client.RequestHeader['RefreshToken'] := json.Item['refresh_token'].AsString;
-end;
 
 procedure TWaspClient.RefreshSession();
 var
@@ -117,9 +87,16 @@ begin
 
   payload := '{"refresh_token": "' + Self.Client.RequestHeader['RefreshToken'] + '"}';
 
-  response := Self.Client.Post(
-    Self.Database + 'auth/v1/token?grant_type=refresh_token', payload
-  );
+  try
+    response := Self.Client.Post(
+      Self.Database + 'auth/v1/token?grant_type=refresh_token', payload
+    );
+  except
+    WriteLn GetDebugLn('WaspClient', GetExceptionMessage());
+    Self.IsSetup := False;
+    Self.Lock.Leave();
+    Exit;
+  end;
 
   if not InRange(Self.Client.ResponseStatus.AsInteger, 200, 299) then
   begin
@@ -134,10 +111,6 @@ begin
 
   Self.Client.RequestHeader['Authorization'] := 'Bearer ' + json.Item['access_token'].AsString;
   Self.Client.RequestHeader['RefreshToken'] := json.Item['refresh_token'].AsString;
-
-  {$IFDEF WASP_ACCESS_TOKEN}
-  FileWrite(WLEnv.ConfigsDir + 'access_token.txt', json.Item['access_token'].AsString);
-  {$ENDIF}
 
   {$IFDEF WASP_REFRESH_TOKEN}
   FileWrite(WLEnv.ConfigsDir + 'refresh_token.txt', json.Item['refresh_token'].AsString);
@@ -154,7 +127,7 @@ end;
 
 procedure TWaspClient.Setup();
 var
-  accessToken, refreshToken: String;
+  refreshToken: String;
 begin
   {$IFDEF WASP_LOCAL_DEVELOPMENT}
   Self.Server := 'http://localhost:3000/';
@@ -168,16 +141,6 @@ begin
   Self.Client := new THTTPClient();
   Self.Client.RequestHeader['Content-Type'] := 'application/json';
   Self.Client.RequestHeader['apikey'] := Self.APIKey;
-
-  {$IFDEF WASP_ACCESS_TOKEN}
-  accessToken := {$MACRO WASP_ACCESS_TOKEN};
-  if accessToken = 'file' then
-    accessToken := FileRead(WLEnv.ConfigsDir + 'access_token.txt');
-  {$ELSE}
-  accessToken := GetEnvVar('WASP_ACCESS_TOKEN');
-  {$ENDIF}
-  if accessToken = '' then
-    Exit;
 
   {$IFDEF WASP_REFRESH_TOKEN}
   refreshToken := {$MACRO WASP_REFRESH_TOKEN};
@@ -204,10 +167,6 @@ begin
   {$ELSE}
   Self.Script.Revision := StrToInt(GetEnvVar('SCRIPT_REVISION'), 0);
   {$ENDIF}
-
-  Self.IsSetup := Self.CreateSession(accessToken, refreshToken);
-  if not Self.IsSetup then
-    Exit;
 
   Self.Payload := new TJSONObject();
   Self.Payload.AddInt('experience', 0);
