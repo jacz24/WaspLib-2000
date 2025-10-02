@@ -350,7 +350,7 @@ var
   tpa: TPointArray;
 begin
   p.X := Self.Bounds.X1 + Self.Width div 2;
-  tpa := Target.FindColor(RSColors.INTERFACE_BORDER, 0, [p.X, Self.Bounds.Y1, p.X + 1, Self.Bounds.Y2]);
+  tpa := Target.FindColor(TRSInterface.BORDER, 0, [p.X, Self.Bounds.Y1, p.X + 1, Self.Bounds.Y2]);
   if tpa = [] then Exit;
   Result.X1 := Self.Bounds.X1+1;
   Result.Y1 := tpa.First.Y;

@@ -153,12 +153,63 @@ begin
 end;
 
 
+(*
+### MainScreen._IsUpText
+```pascal
+function TRSMainScreen._IsUpText(strings: TStringArray; caseSensitive: Boolean; similarity: Single): Boolean;
+```
+Internal helper method used in {ref}`MainScreen.IsUpText`.
+
+`strings` casing must be lower case if `caseSensitive` is `False`.
+
+You probably won't ever need to call this method directly.
+*)
+function TRSMainScreen._IsUpText(strings: TStringArray; caseSensitive: Boolean; similarity: Single): Boolean;
+var
+  upText, str: String;
+  i: Integer;
+  match: Double;
+begin
+  if caseSensitive then
+    upText := Self.UpText
+  else
+    upText := LowerCase(Self.UpText);
+
+  for str in strings do
+  begin
+    if Length(upText) = Length(str) then
+    begin
+      match := str.Similarity(upText);
+      Result := match > similarity;
+    end
+    else
+    begin
+      //shift string until best match is found.
+      for i := 1 to Length(upText)-Length(str) do
+      begin
+        match := str.Similarity(Copy(upText, i, Length(str)));
+        Result := match > similarity;
+        if Result then
+          Break;
+      end;
+    end;
+
+    if Result then
+    begin
+      {$IFDEF WL_DEBUG_UPTEXT}
+      WriteLn GetDebugLn('MainScreen', 'IsUpText Similarity: ' + ToStr(match));
+      {$ENDIF}
+      Break;
+    end;
+  end;
+end;
+
 
 (*
 ### MainScreen.IsUpText
 ```pascal
-function TRSMainScreen.IsUpText(text: String; caseSensitive: Boolean = True; similarity: Single = 0.85; timeout: Integer = -1): Boolean
-function TRSMainScreen.IsUpText(strings: TStringArray; caseSensitive: Boolean = True; similarity: Single = 0.85; timeout: Integer = -1): Boolean; overload;;
+function TRSMainScreen.IsUpText(strings: TStringArray; caseSensitive: Boolean = True; similarity: Single = 0.85; time: Integer = -1): Boolean;
+function TRSMainScreen.IsUpText(text: String; caseSensitive: Boolean = True; similarity: Single = 0.85; time: Integer = -1): Boolean; overload;
 ```
 Compares `text` or `strings` with the {ref}`uptext` on the mainscreen.
 Returns True if the match above the threshold `similarity`.
@@ -175,67 +226,40 @@ if MainScreen.IsUpText('Walk here') then
   Mouse.Click(EMouseButton.LEFT);
 ```
 *)
-function TRSMainScreen.IsUpText(strings: TStringArray; caseSensitive: Boolean = True; similarity: Single = 0.85; timeout: Integer = -1): Boolean;
-  function _IsUpText(): Boolean;
-  var
-    upText, str: String;
-    i: Integer;
-    match: Double;
+function TRSMainScreen.IsUpText(strings: TStringArray; caseSensitive: Boolean = True; similarity: Single = 0.85; time: Integer = -1): Boolean;
+var
+  timeout: TCountDown;
+  strs: TStringArray;
+  str: String;
+begin
+  if time = -1 then
+    time := Round(RandomMode(100, 85, 250));
+
+  timeout.Start(time);
+
+  if caseSensitive then
+    strs := Copy(strings)
+  else
   begin
-    if caseSensitive then
-      upText := Self.UpText
-    else
-      upText := LowerCase(Self.UpText);
-
     for str in strings do
-    begin
-      if not caseSensitive then str := LowerCase(str);
-
-      if upText.Length = str.Length then
-      begin
-        match := str.Similarity(upText);
-        Result := match > similarity;
-      end else
-      begin
-        //shift string until best match is found.
-        for i := 1 to upText.Length-str.Length do
-        begin
-          match := str.Similarity(Copy(upText, i, Length(str)));
-          Result := match > similarity;
-          if Result then Break;
-        end;
-      end;
-
-      {$IFDEF WL_DEBUG_UPTEXT}
-      if Result then
-        WriteLn GetDebugLn('MainScreen', 'IsUpText Similarity: ' + ToStr(match));
-      {$ENDIF}
-    end;
+      strs += LowerCase(str);
   end;
 
-var
-  t: UInt64;
-begin
-  if (timeout = -1) then
-    timeout := Round(RandomMode(100, 85, 250));
-
-  t := Time() + timeout;
-
   repeat
-    if _IsUpText() then
+    if Self._IsUpText(strings, caseSensitive, similarity) then
     begin
       Sleep(50);
-      if _IsUpText() then
+      if Self._IsUpText(strings, caseSensitive, similarity) then
         Exit(True);
     end;
 
     Sleep(25);
-  until Time() >= t;
+  until timeout.IsFinished;
 end;
 
-function TRSMainScreen.IsUpText(text: String; caseSensitive: Boolean = True; similarity: Single = 0.85; timeout: Integer = -1): Boolean; overload;
+function TRSMainScreen.IsUpText(text: String; caseSensitive: Boolean = True; similarity: Single = 0.85; time: Integer = -1): Boolean; overload;
 begin
-  Result := Self.IsUpText([text], caseSensitive, similarity, timeout);
+  Result := Self.IsUpText([text], caseSensitive, similarity, time);
 end;
 
 

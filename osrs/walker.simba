@@ -1050,7 +1050,6 @@ var
   destination: TPoint;
   pathDist: Double;
 begin
-  me := Self.Position();
   best := $FFFFFF;
 
   for destination in destinations do
@@ -1072,7 +1071,7 @@ begin
     begin
       pathDist += path[i].Node.DistanceTo(path[i+1].Node);
       if pathDist > best then
-        Continue;
+        Continue(2);
     end;
 
     dist := Floor(pathDist);

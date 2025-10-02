@@ -5,33 +5,6 @@ Misc functions and methods that don't really fit in a single place at the moment
 {$DEFINE WL_MISC_INCLUDED}
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
-type
-(*
-## RSColors
-```pascal
-TRSItem.Shadow
-TRSItem.Shadow_GRAY
-TRSItem.Border
-RSColors.INTERFACE_BORDER
-TRSItem.BorderWhite
-RSColors.STACK_YELLOW
-RSColors.STACK_WHITE
-RSColors.STACK_GREEN
-RSColors.STACK_COLORS
-RSColors.TEXT_WHITE
-RSColors.TEXT_ORANGE
-RSColors.TEXT_GREY
-RSColors.TEXT_GREEN
-RSColors.TEXT_YELLOW
-RSColors.TEXT_RED
-RSColors.TEXT_LIGHT_YELLOW
-```
-Record holding a collection of constant colors used throughout the game.
-*)
-  RSColors = record
-    const INTERFACE_BORDER: TColor = $010000;
-  end;
-
 (*
 ## Level2XP
 ```pascal

@@ -77,9 +77,53 @@ begin
 end;
 
 
-function TRSInterfaceArea.GetCloseButton(): TRSButton;
+function TRSInterfaceArea.GetCloseButton(): TBox;
+var
+  tpa: TPointArray;
+  atpa: T2DPointArray;
+  b: TBox;
+  circularity: Double;
+  boxes: TBoxArray;
+  weights: TIntegerArray;
 begin
-  Result := [];
+  with Self.Bounds do
+    tpa := Target.FindColor(TRSInterface.BORDER, 0, [X2-Width div 3, Y1, X2, Y1 + Height div 3]);
+
+  if tpa.IsEmpty then
+    Exit;
+
+  atpa := tpa.Cluster(1.5);
+
+  for tpa in atpa do
+  begin
+    if Length(tpa) < 50 then
+      Continue;
+
+    b := tpa.Bounds();
+    case b.Height of
+      21,23:;
+      else Continue;
+    end;
+
+    case b.Width of
+      21,24:;
+      else Continue;
+    end;
+
+    circularity := tpa.Circularity();
+
+    if InRange(circularity, 0.443, 0.445) or InRange(circularity, 0.471, 0.473) then
+    begin
+      boxes += b;
+      with b.Center do
+        weights += X*100 - Y;
+    end;
+  end;
+
+  if boxes.IsEmpty then
+    Exit;
+
+  Result := boxes.SortFrom(Self.TopRight).First;
 end;
 
 
@@ -89,8 +133,8 @@ begin
     Exit(True);
 
   case escape of
-    False: Self.GetCloseButton().Click();
-    True:  Target.KeyPress(EKeyCode.ESCAPE);
+    False: Mouse.Click(Self.GetCloseButton(), EMouseButton.LEFT);
+    True:  Keyboard.KeyPress(EKeyCode.ESCAPE);
   end;
 
   Result := SleepUntil(not Self.IsOpen(), 50, 600);

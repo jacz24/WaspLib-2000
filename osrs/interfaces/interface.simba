@@ -16,6 +16,7 @@ Core record for `Interfaces` with a lot of interface coordinate data.
     Width, Height: Integer;
     Center, TopLeft, TopRight, BottomRight, BottomLeft: TPoint;
     Quad: TQuad;
+    const BORDER: TColor = $010000;
   end;
 
   PRSInterface = ^TRSInterface;
@@ -36,7 +37,7 @@ type
 
 function TRSInterfaceTitle._IsOpen(): Boolean;
 begin
-  Result := Target.HasColor(RSColors.INTERFACE_BORDER, 0, 80, Self.CloseButton);
+  Result := Target.HasColor(TRSInterface.BORDER, 0, 80, Self.CloseButton);
 end;
 
 procedure TRSInterfaceTitle.Setup(bounds: TBox);
