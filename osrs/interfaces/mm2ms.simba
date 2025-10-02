@@ -125,84 +125,85 @@ You usually only need the `TRSMinimap` and `TRSMainScreen` extensions below.
 (*
 ## Minimap Vectors To MainScreen
 ```pascal
-function TRSMinimap.Vectors2MS(vectors: TVector3Array; angle: Single): TPointArray;
-function TRSMinimap.Vector2MS(vector: TVector3; angle: Single): TPoint;
+function TRSMinimap.Vectors2MS(vectors: TVector3Array; radians: Single): TPointArray;
+function TRSMinimap.Vector2MS(vector: TVector3; radians: Single): TPoint;
 ```
 Converts a minimap `vector` or `vectors` to the mainscreen with the help of `MM2MS`.
 *)
-function TRSMinimap.Vectors2MS(vectors: TVector3Array; angle: Single): TPointArray;
+function TRSMinimap.Vectors2MS(vectors: TVector3Array; radians: Single): TPointArray;
 var
   i: Integer;
 begin
   for i := 0 to High(vectors) do
-    with Self.NormalizeEx([vectors[i].X, vectors[i].Y], angle) do
+    with Self.NormalizeEx([vectors[i].X, vectors[i].Y], radians) do
     begin
       vectors[i].X := X;
       vectors[i].Y := Y;
     end;
 
-  Result := MM2MS.Run(vectors, angle);
+  Result := MM2MS.Run(vectors, radians);
 end;
 
-function TRSMinimap.Vector2MS(vector: TVector3; angle: Single): TPoint;
+function TRSMinimap.Vector2MS(vector: TVector3; radians: Single): TPoint;
 begin
-  with Self.NormalizeEx([vector.X, vector.Y], angle) do
-    Result := MM2MS.Run([[X, Y, vector.Z]], angle)[0];
+  with Self.NormalizeEx([vector.X, vector.Y], radians) do
+    Result := MM2MS.Run([[X, Y, vector.Z]], radians)[0];
 end;
 
 
 (*
 ## Minimap Points To MainScreen
 ```pascal
-function TRSMinimap.Points2MS(points: TPointArray; angle: Single = $FFFF): TPointArray;
-function TRSMinimap.Point2MS(pt: TPoint; angle: Single = $FFFF): TPoint;
-function TRSMinimap.ATPA2MS(atpa: T2DPointArray; angle: Single = $FFFF): T2DPointArray; overload;
+function TRSMinimap.Points2MS(points: TPointArray; radians: Single = $FFFF): TPointArray;
+function TRSMinimap.Point2MS(pt: TPoint; radians: Single = $FFFF): TPoint;
+function TRSMinimap.ATPA2MS(atpa: T2DPointArray; radians: Single = $FFFF): T2DPointArray; overload;
 ```
 Converts minimap `points` to the mainscreen with the help of `MM2MS`.
 *)
-function TRSMinimap.Points2MS(points: TPointArray; angle: Single = $FFFF): TPointArray;
+function TRSMinimap.Points2MS(points: TPointArray; radians: Single = $FFFF): TPointArray;
 var
   vectors: TVector3Array;
   i: Integer;
 begin
-  if (angle = $FFFF) then
-    angle := Self.CompassRadians;
+  if radians = $FFFF then
+    radians := Self.CompassRadians;
 
   SetLength(vectors, Length(points));
 
   for i := 0 to High(points) do
-    with Self.Normalize(points[i], angle) do
+    with Self.Normalize(points[i], radians) do
     begin
       vectors[i].X := X;
       vectors[i].Y := Y;
     end;
 
-  Result := MM2MS.Run(vectors, angle);
+  Result := MM2MS.Run(vectors, radians);
 end;
 
-function TRSMinimap.Point2MS(pt: TPoint; angle: Single = $FFFF): TPoint;
+function TRSMinimap.Point2MS(pt: TPoint; radians: Single = $FFFF): TPoint;
 begin
-  if (angle = $FFFF) then angle := Self.CompassRadians;
-  with Self.Normalize(pt, angle) do
-    Result := MM2MS.Run([[X, Y, 0]], angle)[0];
+  if radians = $FFFF then
+    radians := Self.CompassRadians;
+  with Self.Normalize(pt, radians) do
+    Result := MM2MS.Run([[X, Y, 0]], radians)[0];
 end;
 
-function TRSMinimap.ATPA2MS(atpa: T2DPointArray; angle: Single = $FFFF): T2DPointArray; overload;
+function TRSMinimap.ATPA2MS(atpa: T2DPointArray; radians: Single = $FFFF): T2DPointArray; overload;
 var
   tpa: TPointArray;
 begin
-  if angle = $FFFF then
-    angle := Self.CompassRadians;
+  if radians = $FFFF then
+    radians := Self.CompassRadians;
   for tpa in atpa do
-    Result += Self.Points2MS(tpa, angle);
+    Result += Self.Points2MS(tpa, radians);
 end;
 
 
 (*
 ## Minimap Points To MainScreen Quads
 ```pascal
-function TRSMinimap.Vector2MSQuad(vector: TVector3; angle: Single; size: TVector2 = [1,1]; offset: TVector3 = [0,0,0]): TQuad;
-function TRSMinimap.Point2MSQuad(pt: TPoint; size: TVector2 = [1,1]; angle: Single = $FFFF): TQuad;
+function TRSMinimap.Vector2MSQuad(vector: TVector3; radians: Single; size: TVector2 = [1,1]; offset: TVector3 = [0,0,0]): TQuad;
+function TRSMinimap.Point2MSQuad(pt: TPoint; size: TVector2 = [1,1]; radians: Single = $FFFF): TQuad;
 ```
 Converts a minimap point `pt` or `vector` to a mainscreen `TQuad` with the help of `MM2MS`.
 
@@ -215,7 +216,7 @@ begin
 end;
 ```
 *)
-function TRSMinimap.Vector2MSQuad(vector: TVector3; angle: Single; size: TVector2 = [1,1]; offset: TVector3 = [0,0,0]): TQuad;
+function TRSMinimap.Vector2MSQuad(vector: TVector3; radians: Single; size: TVector2 = [1,1]; offset: TVector3 = [0,0,0]): TQuad;
 var
   v1, v2: TVector2;
   arr: TPointArray;
@@ -227,7 +228,7 @@ begin
   vector.Y += offset.Y;
   vector.Z += offset.Z;
 
-  with Self.NormalizeEx([vector.X, vector.Y], angle) do
+  with Self.NormalizeEx([vector.X, vector.Y], radians) do
   begin
     vector.X := X;
     vector.Y := Y;
@@ -239,23 +240,24 @@ begin
   arr := MM2MS.Run([[v1.X, v1.Y, vector.Z],
                     [v2.X, v1.Y, vector.Z],
                     [v2.X, v2.Y, vector.Z],
-                    [v1.X, v2.Y, vector.Z]], angle);
+                    [v1.X, v2.Y, vector.Z]], radians);
 
   Result := [arr[0], arr[1], arr[2], arr[3]];
 end;
 
-function TRSMinimap.Point2MSQuad(pt: TPoint; size: TVector2 = [1,1]; angle: Single = $FFFF): TQuad;
+function TRSMinimap.Point2MSQuad(pt: TPoint; size: TVector2 = [1,1]; radians: Single = $FFFF): TQuad;
 begin
-  if angle = $FFFF then angle := Self.CompassRadians;
-  Result := Self.Vector2MSQuad(pt.ToVec3(), angle, size);
+  if radians = $FFFF then
+    radians := Self.CompassRadians;
+  Result := Self.Vector2MSQuad(pt.ToVec3(), radians, size);
 end;
 
 
 (*
 ## Minimap Points To MainScreen Cuboids
 ```pascal
-function TRSMinimap.Vector2MSCuboid(vector, size: TVector3; angle: Single; offset: TVector3 = [0,0,0]): TCuboid;
-function TRSMinimap.Point2MSCuboid(pt: TPoint; size: TVector3; angle: Single = $FFFF): TCuboid;
+function TRSMinimap.Vector2MSCuboid(vector, size: TVector3; radians: Single; offset: TVector3 = [0,0,0]): TCuboid;
+function TRSMinimap.Point2MSCuboid(pt: TPoint; size: TVector3; radians: Single = $FFFF): TCuboid;
 ```
 Converts a minimap point `pt` or `vector` to a mainscreen `TCuboid` with the help of `MM2MS`.
 
@@ -268,7 +270,7 @@ begin
 end;
 ```
 *)
-function TRSMinimap.Vector2MSCuboid(vector, size: TVector3; angle: Single; offset: TVector3 = [0,0,0]): TCuboid;
+function TRSMinimap.Vector2MSCuboid(vector, size: TVector3; radians: Single; offset: TVector3 = [0,0,0]): TCuboid;
 var
   v1, v2: TVector2;
   arr: TPointArray;
@@ -280,7 +282,7 @@ begin
   vector.Y += offset.Y;
   vector.Z += offset.Z;
 
-  with Self.NormalizeEx([vector.X, vector.Y], angle) do
+  with Self.NormalizeEx([vector.X, vector.Y], radians) do
   begin
     vector.X := X;
     vector.Y := Y;
@@ -295,23 +297,24 @@ begin
 
                 [v1.X, v1.Y, vector.Z], [v2.X, v1.Y, vector.Z],
                 [v2.X, v2.Y, vector.Z], [v1.X, v2.Y, vector.Z]
-         ], angle);
+         ], radians);
 
   Result.Top := [arr[0], arr[1], arr[2], arr[3]];
   Result.Bottom := [arr[4], arr[5], arr[6], arr[7]];
 end;
 
-function TRSMinimap.Point2MSCuboid(pt: TPoint; size: TVector3; angle: Single = $FFFF): TCuboid;
+function TRSMinimap.Point2MSCuboid(pt: TPoint; size: TVector3; radians: Single = $FFFF): TCuboid;
 begin
-  if angle = $FFFF then angle := Self.CompassRadians;
-  Result := Self.Vector2MSCuboid(pt.ToVec3(), size, angle);
+  if radians = $FFFF then
+    radians := Self.CompassRadians;
+  Result := Self.Vector2MSCuboid(pt.ToVec3(), size, radians);
 end;
 
 
 (*
 ## MainScreen.Point2MM
 ```pascal
-function TRSMainScreen.Point2MM(pt: TPoint; height: Integer; angle: Single): TVector3;
+function TRSMainScreen.Point2MM(pt: TPoint; height: Integer; radians: Single): TVector3;
 ```
 Converts a mainscreen point `pt` to a minimap `TPoint` with the help of `MM2MS`.
 This is not an exact reversion of what `MM2MS` does but it's very accurate.
@@ -640,10 +643,10 @@ var
   vector: TVector3;
   quad: TQuad;
   dot: ERSMinimapDot;
-  angle: Single;
+  radians: Single;
   tpa: TPointArray;
 begin
-  angle := Self.CompassRadians;
+  radians := Self.CompassRadians;
 
   img := Target.GetImage();
   img.DrawColor := $00FF00;
@@ -651,9 +654,9 @@ begin
   for p.X := Self.Center.X - 100 to Self.Center.X + 100 with 4 do
     for p.Y := Self.Center.Y - 100 to Self.Center.Y + 100 with 4 do
     begin
-      vector := p.ToVec3().Rotate(angle, Self.Center);
+      vector := p.ToVec3().Rotate(radians, Self.Center);
       if not Self.PointOnZoomQuad(vector.ToPoint()) then Continue;
-      quad := Self.Vector2MSQuad(vector, angle, [1,1]);
+      quad := Self.Vector2MSQuad(vector, radians, [1,1]);
       tpa := quad.Corners.Connect().ExtractBox(MainScreen.Bounds);
       img.DrawTPA(tpa);
     end;
@@ -665,7 +668,7 @@ begin
     begin
       vector := p.ToVec3();
       if not Self.PointOnZoomQuad(vector.ToPoint()) then Continue;
-      quad := Self.Vector2MSQuad(vector, angle, [1,1]);
+      quad := Self.Vector2MSQuad(vector, radians, [1,1]);
       tpa := quad.Corners.Connect().ExtractBox(MainScreen.Bounds);
       img.DrawTPA(tpa);
     end;
@@ -673,7 +676,7 @@ begin
 
   img.DrawColor := $FF0000;
   vector := Self.Center.ToVec3();
-  quad := Self.Vector2MSQuad(vector, angle, [1,1]);
+  quad := Self.Vector2MSQuad(vector, radians, [1,1]);
   tpa := quad.Corners.Connect().Grow(1);
   img.DrawTPA(tpa);
 
@@ -706,19 +709,19 @@ end.
 *)
 property TRSMainScreen.PlayerBox: TBox;
 var
-  compassAngle: Double;
+  radians: Double;
   vectors: TVector3Array;
 begin
   if MM2MS.PlayerBoxes[Options.GetZoomLevel()] <> [] then
     Exit(MM2MS.PlayerBoxes[Options.GetZoomLevel()]);
 
-  compassAngle := Minimap.CompassRadians;
+  radians := Minimap.CompassRadians;
 
   vectors := [
-    Minimap.Center.Offset(-2,0).ToVec3(9).Rotate(-compassAngle, Minimap.Center),
-    Minimap.Center.Offset(2,0).ToVec3(-3).Rotate(-compassAngle, Minimap.Center)
+    Minimap.Center.Offset(-2,0).ToVec3(9).Rotate(-radians, Minimap.Center),
+    Minimap.Center.Offset(2,0).ToVec3(-3).Rotate(-radians, Minimap.Center)
   ];
 
-  Result := MM2MS.Run(vectors, compassAngle).Bounds;
+  Result := MM2MS.Run(vectors, radians).Bounds;
   MM2MS.PlayerBoxes[Options.GetZoomLevel()] := Result;
 end;

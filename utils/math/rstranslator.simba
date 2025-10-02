@@ -154,12 +154,12 @@ end;
 //This normalizes to the nearest tile rather than the tile the current point is on. So if the coordinate gived would be on the fourth column, it returns the tile to the right of it rather that the tile the coordinate is on
 //This should be used whenever you expect that there can be deviations to any side of the coordinate you want and want to prevent that if you go one pixel to the left, you end up with the tile to the left of the one you want
 
-function TRSTranslator.NormalizeNearestTile(p: TPoint): TPoint;
+function TRSTranslator.NormalizeNearestTile(pt: TPoint): TPoint;
 begin
-  if (p.X mod Self.TileSize) = 3 then
-    Result := [p.X - (p.X mod Self.TileSize) + 4, p.Y - (p.Y mod Self.TileSize) + (Self.TileSize div 2)]
+  if (pt.X mod Self.TileSize) = 3 then
+    Result := [pt.X - (pt.X mod Self.TileSize) + 4, pt.Y - (pt.Y mod Self.TileSize) + (Self.TileSize div 2)]
   else
-    Result := [p.X - (p.X mod Self.TileSize), p.Y - (p.Y mod Self.TileSize) + (Self.TileSize div 2)];
+    Result := [pt.X - (pt.X mod Self.TileSize), pt.Y - (pt.Y mod Self.TileSize) + (Self.TileSize div 2)];
 end;
 
 

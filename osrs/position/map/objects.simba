@@ -157,6 +157,76 @@ begin
     Result[i] := TRSObject.Create(json.Item[i]);
 end;
 
+(*
+## RSObject.Rotation
+```pascal
+TRSObject.Rotations: TIntegerArray;
+```
+`Rotations` allows you to customize the rotation of a `TRSObject`.
+By default unless you used {ref}`ObjectsJSON` to create your object they will
+no rotation set, AKA `0`.
+
+It's very important that `Rotations` is the same length as `Coordinates` as they
+complement each other, each coordinate needs to have a rotation value.
+
+The rotation you want o set should be the respective angle of the object rotated
+on it's center:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  furnace: TRSObject;
+begin
+  Map.Setup([ERSChunk.FALADOR]);
+  furnace := TRSObject.Create(@Map.Walker, [2, 3, 6], [[7810, 36954]], ['Furnace']);
+  while True do
+  begin
+    furnace.Rotations[0] += 1;
+    ShowOnTarget(furnace);
+  end;
+end.
+```
+```{figure} ../../images/obj_rotation.gif
+```
+*)
+
+
+(*
+## RSObject._GetCuboid
+```pascal
+function TRSObject._GetCuboid(me: TPoint; vector: TVector2; size: TVector3; height, radians: Single): TCuboid;
+```
+Internal helper function for {ref}`TRSObject.GetCuboidArray`.
+*)
+function TRSObject._GetCuboid(me: TPoint; vector: TVector2; size: TVector3; height, radians, rotation: Single): TCuboid;
+var
+  corners: TVector3Array;
+  pt, currLoc: TPoint;
+  arr: TPointArray;
+begin
+  currLoc := me + vector.ToPoint() - Minimap.Center;
+
+  size.X := size.X*2;
+  size.Y := size.Y*2;
+
+  corners := [
+    [vector.X-size.X, vector.Y-size.Y, Self.Walker^.Height(currLoc - [1,3],  False) - height],
+    [vector.X+size.X, vector.Y-size.Y, Self.Walker^.Height(currLoc + [3,-3], False) - height],
+    [vector.X+size.X, vector.Y+size.Y, Self.Walker^.Height(currLoc + [3,1],  False) - height],
+    [vector.X-size.X, vector.Y+size.Y, Self.Walker^.Height(currLoc - [1,1],  False) - height],
+    [vector.X-size.X, vector.Y-size.Y, Self.Walker^.Height(currLoc - [1,3],  False) - height+size.Z],
+    [vector.X+size.X, vector.Y-size.Y, Self.Walker^.Height(currLoc + [3,-3], False) - height+size.Z],
+    [vector.X+size.X, vector.Y+size.Y, Self.Walker^.Height(currLoc + [3,1],  False) - height+size.Z],
+    [vector.X-size.X, vector.Y+size.Y, Self.Walker^.Height(currLoc - [1,1],  False) - height+size.Z]
+  ];
+
+  arr := MM2MS.Run(corners, radians);
+  Result := [
+    [arr[4], arr[5], arr[6], arr[7]], [arr[0], arr[1], arr[2], arr[3]]
+  ];
+
+  Result.Bottom := Result.Bottom.Rotate(rotation);
+  Result.Top := Result.Top.Rotate(rotation);
+end;
 
 (*
 ## RSObject.GetCuboidArray
@@ -184,30 +254,40 @@ end.
 ```{figure} ../../images/objs_cuboids.png
 ```
 *)
-function TRSObject.GetCuboidArray(me: TPoint; out coordinates: TPointArray; angle: Single = $FFFF): TCuboidArray;
+function TRSObject.GetCuboidArray(me: TPoint; out coordinates: TPointArray; radians: Single = $FFFF): TCuboidArray;
 var
   weights: TDoubleArray;
-  pt: TPoint;
+  meLocal, pt: TPoint;
   h, diff: Single;
   i: Integer;
   dist: Double;
+  vector: TVector2;
 begin
-  if angle = $FFFF then angle := Minimap.CompassRadians;
+  coordinates := [];
+  if radians = $FFFF then
+    radians := Minimap.CompassRadians;
 
-  h := Self.Walker^.Height(me);
+  meLocal := Self.Walker^.GetLocal(me);
+
+  h := Self.Walker^.Height(meLocal - [1,3], False) + Self.Walker^.Height(meLocal + [3,-3], False) +
+       Self.Walker^.Height(meLocal + [3,1], False) + Self.Walker^.Height(meLocal - [1,1], False);
+  h := h/4;
 
   for i := 0 to High(Self.Coordinates) do
   begin
     pt := Self.Coordinates[i];
     dist := me.DistanceTo(pt);
-    if dist <= 85 then
-    begin
-      weights += dist;
-      diff := -(h-Self.Walker^.Height(pt));
-      coordinates += pt;
-      with Self.Walker^.Point2MMVec(me, pt, angle) do
-        Result += Minimap.Vector2MSCuboid([X + 0.15*diff, Y + 0.11*diff, 0], Self.Size, angle - DegToRad(Self.Rotations[i]),  [0,0,diff]);
-    end;
+    if dist > 85 then
+      Continue;
+
+    weights += dist;
+    coordinates += pt;
+
+    vector := Self.Walker^.Point2MMVec(me, pt, radians);
+    pt := vector.ToPoint();
+    vector := vector.Rotate(-radians, Minimap.Center);
+
+    Result += Self._GetCuboid(meLocal, vector, Self.Size, h, radians, DegToRad(Self.Rotations[i]));
   end;
 
   if Result <> [] then
@@ -216,6 +296,7 @@ begin
     coordinates.Sort(weights, True);
   end;
 end;
+
 
 (*
 ## RSObject.FindOnMainScreen
@@ -419,7 +500,7 @@ begin
     Exit;
   end;
 
-  if (Self.UpText <> []) and text.ContainsAny(Self.UpText) then
+  if not Self.UpText.IsEmpty and text.ContainsAny(Self.UpText) then
     Exit(True);
 
   shouldExit := False;
@@ -566,7 +647,8 @@ begin
   //if not Self.Walker^.MakePointVisible(Self.Coordinates) then Exit;
 
   Result := Self._UpTextCheck(shouldExit);
-  if shouldExit then Exit;
+  if shouldExit then
+    Exit;
 
   for attempt := 0 to attempts do
   begin
