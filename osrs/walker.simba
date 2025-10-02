@@ -849,16 +849,15 @@ begin
 
   smallSteps := (Self.ScreenWalk or Self.AdaptiveWalk) and InRange(Options.GetZoomLevel(), 70, 100);
 
-  Self._Path += path.First;
-
-  for i := 1 to High(path)-1 do
+  //Self._Path += path.First;
+  for i := 0 to High(path)-1 do
   begin
-    line := TPointArray.CreateFromLine(path[i-1].Node, path[i].Node);
+    line := TPointArray.CreateFromLine(path[i].Node, path[i+1].Node);
 
-    if path[i-1].Typ <> EGraphNode.NORMAL then
+    if path[i].Typ <> EGraphNode.NORMAL then
     begin
       j := Random(1, 4);
-      Self._Path += path[i-1];
+      Self._Path += path[i];
     end
     else
       j := 0;
@@ -878,8 +877,7 @@ begin
 
   if Self.AdaptiveWalk then
   begin
-    Self.AdaptiveToggleDistances.X := Self.AdaptiveDistance.X + Random(-6,6);
-    Self.AdaptiveToggleDistances.Y := Self.AdaptiveDistance.Y + Random(-16,16);
+    Self.AdaptiveToggleDistances := Self.AdaptiveDistance.Offset(Random(-6,6), Random(-16,16));
     Self.AdaptiveWalkCheck(me);
   end;
 end;
@@ -914,11 +912,6 @@ begin
   index := furthest;
 
   Result := index > previous;
-
-  if not Result then
-  begin
-    WriteLn(' idx: ', index, ' prev: ', previous, ' near: ', nearest, ' far: ', furthest, ' hi: ', High(Self._Path));
-  end;
 
   if Result and Biometrics.RandomBoolean(0.002) then
     index := Random(nearest, furthest);

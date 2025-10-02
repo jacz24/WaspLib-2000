@@ -483,7 +483,7 @@ var
 begin
   with Self.Orbs[ERSMinimapOrb.HITPOINTS].Circle.Bounds do
     b := [X1+3, Y2-4, X2-3, Y2+1];
-  ShowOnTarget(b);
+
   Result := Target.HasColor($004007, 8, 1, b);
 end;
 
@@ -592,7 +592,7 @@ var
 begin
   with Self.Orbs[ERSMinimapOrb.ENERGY].Circle.Bounds do
     b := [X1+3, Y2-3, X2-3, Y2];
-  ShowOnTarget(b);
+
   Result := Target.HasColor([$2A6C8E, 9.954, EColorSpace.HSV, [1.771, 0.726, 0.505]], 8, b);
 end;
 
