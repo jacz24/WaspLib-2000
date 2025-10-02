@@ -40,7 +40,7 @@ WaspLib version.
 *)
   WL_VERSION_YEAR: Integer = 2025;
   WL_VERSION_MONTH: Integer = 10;
-  WL_VERSION_DAY: Integer = 01;
+  WL_VERSION_DAY: Integer = 02;
 (*
 ## Commit Hash Constants
 ```pascal
@@ -49,7 +49,7 @@ WL_VERSION_COMMIT_HASH
 Should be self explanatory but holds the shortened hash of the commit that has
 created the current WaspLib version.
 *)
-  WL_VERSION_COMMIT_HASH: String = '99f0026';
+  WL_VERSION_COMMIT_HASH: String = 'c7a2b72';
 
 
 (*
