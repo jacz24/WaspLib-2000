@@ -30,27 +30,9 @@ jobs:
  
       - name: Strip multi-line comments
         run: find . -name "*.simba" -type f -exec perl -0777 -i -pe 's/\(\*.*?\*\)//gs' {} +
-      
-      - name: Strip single-line comments
-        run: find . -name "*.simba" -type f -exec perl -0777 -i -pe 's{//.*$}{}gm' {} +
-          
-      - name: Trim multiple empty lines in .simba files
-        run: find . -name "*.simba" -type f -exec perl -0777 -i -pe 's/\n[ \t]*(\n[ \t]*)+/\n/g' {} +
         
       - name: Commit and push to release
         run: |
           git add .
           git commit -m "Sync release with main and strip comments" || echo "No changes to commit"
           git push origin release --force
-          
-      - name: Check release branch size
-        run: |
-          echo "Release branch size:"
-          du -sh .
-          
-      - name: Check main branch size
-        run: |
-          git fetch origin main
-          git checkout -b temp-main origin/main
-          echo "Main branch size:"
-          du -sh .
