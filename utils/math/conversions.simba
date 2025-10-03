@@ -67,7 +67,8 @@ var
 begin
   len := Length(bytes);
   if len = 0 then Exit;
-  size := SizeOf(Integer);
+
+  size := SizeOf(Int32);
   Move(bytes[0], len, size);
   SetLength(Result, len);
   offset := size;

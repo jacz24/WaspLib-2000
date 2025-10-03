@@ -200,23 +200,23 @@ Internal helper function for {ref}`TRSObject.GetCuboidArray`.
 function TRSObject._GetCuboid(me: TPoint; vector: TVector2; size: TVector3; height, radians, rotation: Single): TCuboid;
 var
   corners: TVector3Array;
-  pt, currLoc: TPoint;
+  pt: TPoint;
   arr: TPointArray;
 begin
-  currLoc := me + vector.ToPoint() - Minimap.Center;
+  pt := me + vector.ToPoint() - Minimap.Center;
 
   size.X := size.X*2;
   size.Y := size.Y*2;
 
   corners := [
-    [vector.X-size.X, vector.Y-size.Y, Self.Walker^.Height(currLoc - [1,3],  False) - height],
-    [vector.X+size.X, vector.Y-size.Y, Self.Walker^.Height(currLoc + [3,-3], False) - height],
-    [vector.X+size.X, vector.Y+size.Y, Self.Walker^.Height(currLoc + [3,1],  False) - height],
-    [vector.X-size.X, vector.Y+size.Y, Self.Walker^.Height(currLoc - [1,1],  False) - height],
-    [vector.X-size.X, vector.Y-size.Y, Self.Walker^.Height(currLoc - [1,3],  False) - height+size.Z],
-    [vector.X+size.X, vector.Y-size.Y, Self.Walker^.Height(currLoc + [3,-3], False) - height+size.Z],
-    [vector.X+size.X, vector.Y+size.Y, Self.Walker^.Height(currLoc + [3,1],  False) - height+size.Z],
-    [vector.X-size.X, vector.Y+size.Y, Self.Walker^.Height(currLoc - [1,1],  False) - height+size.Z]
+    [vector.X-size.X, vector.Y-size.Y, Self.Walker^.Height(pt - [1,3],  False) - height],
+    [vector.X+size.X, vector.Y-size.Y, Self.Walker^.Height(pt + [3,-3], False) - height],
+    [vector.X+size.X, vector.Y+size.Y, Self.Walker^.Height(pt + [3,1],  False) - height],
+    [vector.X-size.X, vector.Y+size.Y, Self.Walker^.Height(pt - [1,1],  False) - height],
+    [vector.X-size.X, vector.Y-size.Y, Self.Walker^.Height(pt - [1,3],  False) - height+size.Z],
+    [vector.X+size.X, vector.Y-size.Y, Self.Walker^.Height(pt + [3,-3], False) - height+size.Z],
+    [vector.X+size.X, vector.Y+size.Y, Self.Walker^.Height(pt + [3,1],  False) - height+size.Z],
+    [vector.X-size.X, vector.Y+size.Y, Self.Walker^.Height(pt - [1,1],  False) - height+size.Z]
   ];
 
   arr := MM2MS.Run(corners, radians);
@@ -258,9 +258,8 @@ function TRSObject.GetCuboidArray(me: TPoint; out coordinates: TPointArray; radi
 var
   weights: TDoubleArray;
   meLocal, pt: TPoint;
-  h, diff: Single;
   i: Integer;
-  dist: Double;
+  h, dist: Double;
   vector: TVector2;
 begin
   coordinates := [];

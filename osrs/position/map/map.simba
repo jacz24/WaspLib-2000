@@ -86,10 +86,20 @@ begin
   if Self.Sample.Radius = 0 then Self.Sample.Radius := -1;
 
   if Minimap.Radius = 0 then
-    raise GetDebugLn('Minimap.Radius is set to 0, did you target the client?');
-  img := new TImage(Minimap.Radius*2+1,Minimap.Radius*2+1);
-  img.ReplaceColor($0, $FFFFFF);
-  sample := Minimap.ScaleMinimap(img, Self.Loader.Downscale, Self.Sample.Radius);
+  begin
+    WriteLn GetDebugLn('Map', 'Minimap.Radius is 0, did you target the client? Using 65 for now.', ELogLevel.WARN);
+    WriteLn GetDebugLn('Map', 'If you are botting focus the client and restart or you will have issues.', ELogLevel.WARN);
+    img := new TImage(131,131);
+    img.ReplaceColor($0, $FFFFFF);
+    sample := Minimap.ScaleMinimap(img, Self.Loader.Downscale, 65);
+  end
+  else
+  begin
+    i := Minimap.Radius*2+1;
+    img := new TImage(i,i);
+    img.ReplaceColor($0, $FFFFFF);
+    sample := Minimap.ScaleMinimap(img, Self.Loader.Downscale, Self.Sample.Radius);
+  end;
 
   Self.Cache.MatchTemplate := TMatchTemplateCache.Create(Self.Loader.DownscaledMap, sample, ETMFormula.TM_CCOEFF_NORMED);
   Self.Cache.MatchTemplate.FreeOnTerminate := True;

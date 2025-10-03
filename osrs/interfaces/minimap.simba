@@ -111,8 +111,6 @@ begin
     end;
   end;
 
-  SetLength(Self.Orbs, Ord(High(ERSMinimapOrb))+1);
-
   with Self.Bounds do
     case RSClient.Mode of
       ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
