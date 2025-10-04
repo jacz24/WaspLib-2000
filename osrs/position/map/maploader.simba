@@ -382,6 +382,71 @@ end;
 
 
 (*
+## MapLoader.CacheGraph
+```pascal
+procedure TRSMapLoader.CacheGraph(constref graph: TWebGraph);
+```
+Caches a {ref}`TWebGraph` for future uses so we don't need to regenerate it.
+
+```{note}
+This is an internal method. Don't use it if you don't know what you are doing.
+```
+*)
+procedure TRSMapLoader.CacheGraph(constref graph: TWebGraph; path: String);
+begin
+  if graph.Nodes.IsEmpty then
+    raise GetDebugLn('MapLoader', 'Graph has no nodes for some reason.');
+  if graph.Paths.IsEmpty then
+    raise GetDebugLn('MapLoader', 'Graph has no paths for some reason.');
+
+  if not FileWriteBytes(path + 'nodes.txt', CompressBytes(ECompressAlgo.ZLIB, graph.Nodes.ToBytes())) then
+    raise GetDebugLn('MapLoader', 'Failed to create cache for graph nodes: ' + path);
+
+  if not FileWriteBytes(path + 'paths.txt', CompressBytes(ECompressAlgo.ZLIB, graph.Paths.ToBytes())) then
+    raise GetDebugLn('MapLoader', 'Failed to create cache for graph paths: ' + path);
+
+  if not graph.WalkableSpace.IsEmpty then
+    if not FileWriteBytes(path + 'walkablespace.txt', CompressBytes(ECompressAlgo.ZLIB, graph.WalkableSpace.ToBytes())) then
+      raise GetDebugLn('MapLoader', 'Failed to create cache for graph WalkableSpace: ' + path);
+
+  if not graph.WalkableClusters.IsEmpty then
+    if not FileWriteBytes(path + 'walkableclusters.txt', CompressBytes(ECompressAlgo.ZLIB, graph.WalkableClusters.ToBytes())) then
+      raise GetDebugLn('MapLoader', 'Failed to create cache for graph WalkableClusters: ' + path);
+
+  if not graph.ObjectClusters.IsEmpty then
+    if not FileWriteBytes(path + 'objectclusters.txt', CompressBytes(ECompressAlgo.ZLIB, graph.ObjectClusters.ToBytes())) then
+      raise GetDebugLn('MapLoader', 'Failed to create cache for graph ObjectClusters: ' + path);
+end;
+
+(*
+## MapLoader.GetGraph
+```pascal
+function TRSMapLoader.GraphFromCache(path: String): TWebGraph;
+```
+Loads a previously cached {ref}`TWebGraph`.
+
+```{note}
+This is an internal method. Don't use it if you don't know what you are doing.
+```
+*)
+function TRSMapLoader.GraphFromCache(path: String): TWebGraph;
+begin
+  if FileExists(path + 'nodes.txt') then
+    Result.Nodes := TGraphNodeArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'nodes.txt')));
+  if FileExists(path + 'paths.txt') then
+    Result.Paths := T2DIntegerArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'paths.txt')));
+
+  if FileExists(path + 'walkablespace.txt') then
+    Result.WalkableSpace := TPointArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'walkablespace.txt')));
+  if FileExists(path + 'walkableclusters.txt') then
+    Result.WalkableClusters := T2DPointArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'walkableclusters.txt')));
+  if FileExists(path + 'objectclusters.txt') then
+    Result.ObjectClusters := T2DPointArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'objectclusters.txt')));
+
+  SetLength(Result.Paths, Length(Result.Nodes));
+end;
+
+(*
 ## MapLoader.GetGraph
 ```pascal
 function TRSMapLoader.GetGraph(name: String; plane: Integer; map: TImage): TWebGraph;
@@ -415,40 +480,11 @@ begin
       raise GetDebugLn('MapLoader', 'Failed to create cache directory: ' + path);
 
     Result := WebGraphGenerator.BuildGraph(name, map);
-
-    if (Result.Nodes <> []) then
-      if not FileWriteBytes(path + 'nodes.txt', CompressBytes(ECompressAlgo.ZLIB, Result.Nodes.ToBytes())) then
-        raise GetDebugLn('MapLoader', 'Failed to create cache for graph nodes: ' + path);
-
-    if (Result.Paths <> []) then
-      if not FileWriteBytes(path + 'paths.txt', CompressBytes(ECompressAlgo.ZLIB, Result.Paths.ToBytes())) then
-        raise GetDebugLn('MapLoader', 'Failed to create cache for graph paths: ' + path);
-
-    if (Result.WalkableSpace <> []) then
-      if not FileWriteBytes(path + 'walkablespace.txt', CompressBytes(ECompressAlgo.ZLIB, Result.WalkableSpace.ToBytes())) then
-        raise GetDebugLn('MapLoader', 'Failed to create cache for graph WalkableSpace: ' + path);
-    if (Result.WalkableClusters <> []) then
-      if not FileWriteBytes(path + 'walkableclusters.txt', CompressBytes(ECompressAlgo.ZLIB, Result.WalkableClusters.ToBytes())) then
-        raise GetDebugLn('MapLoader', 'Failed to create cache for graph WalkableClusters: ' + path);
-    if (Result.ObjectClusters <> []) then
-      if not FileWriteBytes(path + 'objectclusters.txt', CompressBytes(ECompressAlgo.ZLIB, Result.ObjectClusters.ToBytes())) then
-        raise GetDebugLn('MapLoader', 'Failed to create cache for graph ObjectClusters: ' + path);
+    Self.CacheGraph(Result, path);
     Exit;
   end;
 
-  if FileExists(path + 'nodes.txt') then
-    Result.Nodes := TGraphNodeArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'nodes.txt')));
-  if FileExists(path + 'paths.txt') then
-    Result.Paths := T2DIntegerArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'paths.txt')));
-
-  if FileExists(path + 'walkablespace.txt') then
-    Result.WalkableSpace := TPointArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'walkablespace.txt')));
-  if FileExists(path + 'walkableclusters.txt') then
-    Result.WalkableClusters := T2DPointArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'walkableclusters.txt')));
-  if FileExists(path + 'objectclusters.txt') then
-    Result.ObjectClusters := T2DPointArray.CreateFromBytes(DecompressBytes(ECompressAlgo.ZLIB, FileReadBytes(path + 'objectclusters.txt')));
-
-  SetLength(Result.Paths, Length(Result.Nodes));
+  Result := Self.GraphFromCache(path);
 end;
 
 
