@@ -150,9 +150,6 @@ begin
   refreshToken := GetEnvVar('WASP_REFRESH_TOKEN');
   {$ENDIF}
 
-  Self.Lock := TLock.Create();
-  AddOnTerminate(@Self.Lock.Free);
-
   if refreshToken = '' then
     Exit;
 
@@ -177,6 +174,8 @@ begin
   Self.Payload.AddInt('gold', 0);
   Self.Payload.AddInt('runtime', 0);
 
+  Self.Lock := TLock.Create();
+  AddOnTerminate(@Self.Lock.Free);
   Self.Client.RequestHeader['RefreshToken'] := refreshToken;
   Async.ScheduleEvery('WaspClient-RefreshToken', @Self.RefreshSession, 5 * ONE_MINUTE);
   AddOnTerminate(@Self.Free);
