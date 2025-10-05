@@ -144,8 +144,12 @@ var
   path, tmp: String;
 begin
   if Self.IsSetup then Exit;
-  Self.Version := WLAssets.ItemFinder[3].Hash;
-  Self.Database.Setup('ItemFinder', ['id', 'item', 'hash'], WLAssets.ITEMFINDER_DATA, Self.Version);
+  Self.Version := WLAssets.JSON.Item['finders\items\items.zip'].AsString;
+  Self.Database.Setup(
+    'ItemFinder', ['id', 'item', 'hash'],
+    WLEnv.AssetsDir + 'finders' + PATH_SEP + 'items' + PATH_SEP + 'data' + PATH_SEP,
+    Self.Version
+  );
 
   Self.CacheDir := WLEnv.CacheDir + 'itemfinder' + PATH_SEP;
 
@@ -179,7 +183,10 @@ begin
 
   Self.Unzipping := True;
   Self.Timeout.Start(60 * ONE_SECOND);
-  Async.FileUnZip(WLAssets.ItemFinder[3].Path, Self.CacheDir, @Self._UnzipFinished);
+  Async.FileUnZip(
+    WLEnv.AssetsDir + 'finders' + PATH_SEP + 'items' + PATH_SEP + 'items.zip',
+    Self.CacheDir, @Self._UnzipFinished
+  );
 end;
 
 

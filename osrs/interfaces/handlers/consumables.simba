@@ -267,12 +267,12 @@ begin
     Self.CooldownTimers[consumableType].Start(0);
 
   json := new TJSONParser();
-  json.Load(WLAssets.Consumables.Path);
+  json.Load(WLEnv.AssetsDir + 'jsons' + PATH_SEP + 'consumables.json');
 
   Self.Consumables := Self.LoadFromJSON(json);
   if Length(Self.Consumables) = 0 then
   begin
-    FileDelete(WLEnv.AssetsDir + 'consumables' + PATH_SEP + 'consumables.json');
+    FileDelete(WLEnv.AssetsDir + 'jsons' + PATH_SEP + 'consumables.json');
     Logger.Exception('Failed to parse consumables configuration');
   end;
 

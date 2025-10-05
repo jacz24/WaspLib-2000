@@ -56,7 +56,7 @@ begin
   Self.Config.Setup('gearlayouts' + PATH_SEP + ToStr(ProfileIndex));
   SetLength(Self.Sets, Self.Config.Data.Count);
 
-  Self.BackgroundImg := new TImage(WLAssets.Images[1].Path);
+  Self.BackgroundImg := new TImage(WLEnv.AssetsDir + 'images' + PATH_SEP + 'equipment.png');
 
   try
     for i := 0 to Self.Config.Data.Count-1 do

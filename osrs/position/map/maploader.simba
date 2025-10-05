@@ -232,10 +232,12 @@ procedure TRSMapLoader.Init();
 var
   path, tmp: String;
 begin
-  Self.Version := HashString(EHashAlgo.CRC32,
-    WLAssets.Map[0].Hash + WLAssets.Map[1].Hash + WLAssets.Map[2].Hash +
-    WLAssets.Map[3].Hash + WLAssets.Map[4].Hash
-  );
+  with WLAssets.JSON do
+    Self.Version := HashString(EHashAlgo.CRC32,
+      Item['map\map.zip'].AsString + Item['map\heightmap.zip'].AsString +
+      Item['map\collision.zip'].AsString + Item['map\objects.zip'].AsString +
+      Item['map\npcs.zip'].AsString
+    );
 
   Self.CacheDir := WLEnv.CacheDir + 'map' + PATH_SEP;
 

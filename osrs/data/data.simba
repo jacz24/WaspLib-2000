@@ -179,7 +179,7 @@ begin
   path := Self.CacheDir  + 'items' + PATH_SEP;
   filename := path + itemID + '.json';
   if not FileExists(filename) then
-    if not ZipExtractEntry(WLAssets.ItemDefinitions.Path, itemID +'.json', path) then
+    if not ZipExtractEntry(WLEnv.AssetsDir + 'jsons' + PATH_SEP + 'item-definitions.zip', itemID +'.json', path) then
       raise  GetDebugLn('ItemData', 'Couldn''t find ' + itemID + '.json');
 
   Result := new TJSONParser();
@@ -376,7 +376,7 @@ procedure TGearData.Setup();
 begin
   if Self.Data <> nil then Exit;
   Self.Data := new TJSONParser();
-  TJSONParser(Self.Data).Load(WLAssets.Gear.Path);
+  TJSONParser(Self.Data).Load(WLEnv.AssetsDir + 'jsons' + PATH_SEP + 'gear.json');
 end;
 
 (*

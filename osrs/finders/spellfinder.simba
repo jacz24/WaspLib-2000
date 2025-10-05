@@ -33,7 +33,7 @@ procedure TRSSpellFinder.Setup();
 var
   path, tmp: String;
 begin
-  Self.Version := WLAssets.SpellFinder.Hash;
+  Self.Version := WLAssets.JSON.Item['finders\spells.zip'].AsString;
   Self.CacheDir := WLEnv.CacheDir + 'spellfinder' + PATH_SEP;
 
   //Delete old cache files if they exist
@@ -70,7 +70,7 @@ begin
     path := Self.CacheDir + name;
 
     if not FileExists(path) then
-      ZipExtractEntry(WLAssets.SpellFinder.Path, name, Self.CacheDir);
+      ZipExtractEntry(WLEnv.AssetsDir + 'finders' + PATH_SEP + 'spells.zip', name, Self.CacheDir);
 
     Self.SpellImages[spell][i] := new TImage(path);
   end;

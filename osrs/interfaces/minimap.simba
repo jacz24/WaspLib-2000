@@ -80,7 +80,7 @@ begin
   case RSClient.Mode of
     ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
     begin
-      img := new TImage(WLAssets.Images[3].Path);
+      img := new TImage(WLEnv.AssetsDir + 'images' + PATH_SEP + 'mm_resizable_mask.png');
       Self.Mask := img.FindColor($0, 0).Invert().Grow(3).ExtractBox([0, 0, img.Width-1, img.Height-1]);
 
       with RSClient.Bounds do
@@ -96,7 +96,7 @@ begin
 
     ERSMode.FIXED:
     begin
-      img := new TImage(WLAssets.Images[2].Path);
+      img := new TImage(WLEnv.AssetsDir + 'images' + PATH_SEP + 'mm_fixed_mask.png');
       Self.Mask := img.FindColor($0, 0).Invert().Grow(3).ExtractBox([0, 0, img.Width-1, img.Height-1]);
 
       with RSClient.Bounds do

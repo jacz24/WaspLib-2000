@@ -164,7 +164,7 @@ begin
 
   Self.Unzipping := True;
   Self.Timeout.Start(60 * ONE_SECOND);
-  Async.FileUnZip(WLAssets.Fonts.Path, Self.PATH, @Self._UnzipFinished);
+  Async.FileUnZip(WLEnv.AssetsDir + 'fonts' + PATH_SEP + 'fonts.zip', Self.PATH, @Self._UnzipFinished);
 end;
 
 var

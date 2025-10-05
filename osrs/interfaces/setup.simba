@@ -108,11 +108,10 @@ begin
   if not DirCreate(WLEnv.AssetsDir) then
     raise GetDebugLn('WaspLib', 'Failed to create path: ' + WLEnv.AssetsDir);
 
-  WLAssets.Setup();
+  WaspClient.Setup();
   WLAssets.Update();
   Map.Loader.Init();
 
-  WaspClient.Setup();
   Target.AddEvent(ETargetEvent.TARGET_RESIZE, @TargetResized);
   FormUtils.Setup();
   RSFonts.Setup();
