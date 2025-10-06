@@ -63,7 +63,14 @@ begin
   with GetSimbaTargetWindow() do
   begin
     case GetClassName() of
-      'JagRenderView', 'JagWindow': Exit(ERSClient.OFFICIAL);
+      'JagRenderView', 'JagWindow':
+      begin
+        ITEM_SHADOW := $323232;
+        ITEM_SHADOW_GRAY := $323232;
+        ITEM_BORDER := $000000;
+        ITEM_BORDER_WHITE := $FEFEFE;
+        Exit(ERSClient.OFFICIAL);
+      end;
     end;
 
     case GetRootWindow().GetTitle() of

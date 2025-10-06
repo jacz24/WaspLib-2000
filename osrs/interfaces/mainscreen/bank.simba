@@ -134,7 +134,7 @@ var
   b: TBox;
   stack: ERSStack;
 begin
-  final := Target.FindColor(TRSItem.Border, 1, Self.SlotsArea);
+  final := Target.FindColor(ITEM_BORDER, 1, Self.SlotsArea);
   if final = [] then Exit;
 
   for stack := Low(ERSStack) to High(ERSStack) do
@@ -439,7 +439,7 @@ var
   i: Integer;
 begin
   for i := 9 downto 1 do
-    if Target.HasColor(TRSItem.Border, 0, 1, Self.Tabs[i]) then
+    if Target.HasColor(ITEM_BORDER, 0, 1, Self.Tabs[i]) then
       Exit(i);
 end;
 

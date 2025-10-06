@@ -378,7 +378,7 @@ Internal method used to count the available tabs on the {ref}`Achievements` game
 *)
 function TRSAchievements.CountTabs(): Integer;
 begin
-  Result := Length(Target.FindColor(TRSItem.Border, 0, Self.TabsArea).Cluster(1.5));
+  Result := Length(Target.FindColor(TRSInterface.Border, 0, Self.TabsArea).Cluster(1.5));
 end;
 
 (*

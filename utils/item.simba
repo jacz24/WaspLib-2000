@@ -18,6 +18,70 @@ specify "all" quantities of items, e.g. the {ref}`bank` interface.
   QUANTITY_ALL = 0;
   QUANTITY_ALL_BUT_ONE = -1;
 
+var
+(*
+## ITEM_SHADOW
+```pascal
+ITEM_SHADOW: TColor = $202030;
+```
+`TColor` of an item gray shadow. This shadow value will change between clients
+(check {ref}`ERSClient`) and depending on the client certain interfaces being
+open will also change it to {ref}`ITEM_SHADOW_GRAY`, e.g. the {ref}`Bank`
+with Legacy or RuneLite.
+
+Example:
+```pascal
+WriteLn ITEM_SHADOW; //$202030
+```
+*)
+  ITEM_SHADOW: TColor = $202030;
+
+(*
+## ITEM_SHADOW_GRAY
+```pascal
+ITEM_SHADOW_GRAY: TColor = $333333;
+```
+`TColor` of an item gray shadow. This shadow value will change between clients
+(check {ref}`ERSClient`) and depending on the client certain interfaces being
+open will also change it, e.g. the {ref}`Bank` with Legacy or RuneLite.
+
+Example:
+```pascal
+WriteLn ITEM_SHADOW; //$333333
+```
+*)
+  ITEM_SHADOW_GRAY: TColor = $333333;
+
+(*
+## ITEM_BORDER
+```pascal
+ITEM_BORDER: TColor = $010000;
+```
+`TColor` of an item border. This value will change between clients
+(check {ref}`ERSClient`).
+
+Example:
+```pascal
+WriteLn ITEM_BORDER; //$010000
+```
+*)
+  ITEM_BORDER: TColor = $010000;
+
+(*
+## ITEM_BORDER_WHITE
+```pascal
+ITEM_BORDER_WHITE: TColor = $FFFFFF;
+```
+`TColor` of a selected item border. This value will change between clients
+(check {ref}`ERSClient`).
+
+Example:
+```pascal
+WriteLn ITEM_BORDER_WHITE; //$FFFFFF
+```
+*)
+  ITEM_BORDER_WHITE: TColor = $FFFFFF;
+
 type
 (*
 ## ERSItemQuantity
@@ -126,77 +190,6 @@ Array type of `TRSItem`.
 *)
   TRSItemArray = array of TRSItem;
 
-(*
-## TRSItem.Shadow
-```pascal
-property TRSItem.Shadow: TColor; static;
-```
-Returns a `TColor` of an item shadow.
-
-Example:
-```pascal
-WriteLn TRSItem.Shadow; //$202030
-```
-*)
-property TRSItem.Shadow: TColor; static;
-begin
-  Result := $202030;
-end;
-
-(*
-## TRSItem.ShadowGray
-```pascal
-property TRSItem.ShadowGray: TColor; static;
-```
-Returns a `TColor` of an item gray shadow. This is a shadow you will see with
-certain interfaces open, e.g. the {ref}`Bank`.
-
-Example:
-```pascal
-WriteLn TRSItem.ShadowGray; //$333333
-```
-*)
-property TRSItem.ShadowGray: TColor; static;
-begin
-  Result := $333333;
-end;
-
-
-(*
-## TRSItem.BorderWhite
-```pascal
-property TRSItem.BorderWhite: TColor; static;
-```
-Returns a `TColor` of an item border when the item is selected. This pretty
-much only happens in the {ref}`Inventory` {ref}`GameTab`.
-
-Example:
-```pascal
-WriteLn TRSItem.BorderWhite; //$FFFFFF
-```
-*)
-property TRSItem.BorderWhite: TColor; static;
-begin
-  Result := $FFFFFF;
-end;
-
-(*
-## TRSItem.Border
-```pascal
-property TRSItem.Border: TColor; static;
-```
-Returns a `TColor` of an item border.
-
-Example:
-```pascal
-WriteLn TRSItem.Border; //$010000
-```
-*)
-property TRSItem.Border: TColor; static;
-begin
-  Result := $010000;
-end;
-
 
 (*
 ## TRSItem.InBounds
@@ -212,8 +205,8 @@ WriteLn TRSItem.InBounds(Inventory.Slots.Box(0));
 *)
 function TRSItem.InBounds(bounds: TBox; fadeTolerance: Single = 8.5): Boolean; static;
 begin
-  Result := Target.HasColor(TRSItem.Border, fadeTolerance, 1, bounds) or
-            Target.HasColor(TRSItem.BorderWhite, 0, 1, bounds);
+  Result := Target.HasColor(ITEM_BORDER, fadeTolerance, 1, bounds) or
+            Target.HasColor(ITEM_BORDER_WHITE, 0, 1, bounds);
 end;
 
 

@@ -318,8 +318,8 @@ begin
     Exit;
   slots := Self.Boxes();
   for i := 0 to High(slots) do
-    if Target.HasColor(TRSItem.Border, 8.5, 1, slots[i]) or
-       Target.HasColor(TRSItem.BorderWhite, 0, 1, slots[i]) then
+    if Target.HasColor(ITEM_BORDER, 8.5, 1, slots[i]) or
+       Target.HasColor(ITEM_BORDER_WHITE, 0, 1, slots[i]) then
       Result += i;
 end;
 
@@ -352,8 +352,8 @@ begin
     Exit;
   slots := Self.Boxes();
   for i := 0 to High(slots) do
-    if not Target.HasColor(TRSItem.Border, 8.5, 1, slots[i]) and
-       not Target.HasColor(TRSItem.BorderWhite, 0, 1, slots[i]) then
+    if not Target.HasColor(ITEM_BORDER, 8.5, 1, slots[i]) and
+       not Target.HasColor(ITEM_BORDER_WHITE, 0, 1, slots[i]) then
       Result += i;
 end;
 

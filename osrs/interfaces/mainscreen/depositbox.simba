@@ -37,7 +37,7 @@ var
   b: TBox;
   stack: ERSStack;
 begin
-  final := Target.FindColor(TRSItem.Border, 1, Self.SlotsArea);
+  final := Target.FindColor(ITEM_BORDER, 1, Self.SlotsArea);
   if final = [] then Exit;
 
   for stack := Low(ERSStack) to High(ERSStack) do

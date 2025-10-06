@@ -126,7 +126,7 @@ function TRSInventory.IsSelected(slot: TBox): Boolean;
 begin
   if not Self.Open() then Exit;
   slot.Y1 += 8;
-  Result := Target.HasColor(TRSItem.BorderWhite, 1, 1, slot);
+  Result := Target.HasColor(ITEM_BORDER_WHITE, 1, 1, slot);
 end;
 
 function TRSInventory.IsSelected(slot: Integer): Boolean; overload;

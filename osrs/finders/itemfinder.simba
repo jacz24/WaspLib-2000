@@ -38,15 +38,13 @@ begin
   align := tBorder.Last - border.Last;
   border := border.Offset(align);
 
-  color := TRSItem.Border;
-
   for pt in border do
   begin
     if pt.Y <= 8 then
       Continue; //stack number... Don't compare.
     if not img.InImage(pt.X, pt.Y) then
       Exit;
-    if img.Pixel[pt.X, pt.Y] <> color then
+    if img.Pixel[pt.X, pt.Y] <> $010000 then
       Exit;
   end;
 
@@ -59,11 +57,18 @@ var
   bounds: TBox;
   align: TPoint;
 begin
-  tBorder := image.FindColor(TRSItem.Border, 0).ExcludeBox([0,0,image.Width,8]);
-  bBorder := template.FindColor(TRSItem.Border, 0).ExcludeBox([0,0,template.Width,8]);
+  tBorder := image.FindColor($010000, 0).ExcludeBox([0,0,image.Width,8]);
+  bBorder := template.FindColor(ITEM_BORDER, 0).ExcludeBox([0,0,template.Width,8]);
+
+  if ITEM_BORDER <> $010000 then
+  begin
+    template.DrawColor := $010000;
+    template.DrawTPA(bBorder);
+  end;
 
   if tBorder = [] then
     Exit;
+
   if not Self._AlignHelper(image, tBorder, bBorder, align) then
     Exit;
 
@@ -83,11 +88,11 @@ begin
 
   template.DrawTPA(image.FindColor($0, 0));
 
-  tpa := image.FindColor(TRSItem.Shadow, 0);
+  tpa := image.FindColor($202030, 0);
   for stack := Low(ERSStack) to High(ERSStack) do
     tpa += template.FindColor(stack.Color, 0);
 
-  tpa += template.FindColor(TRSItem.Border, 0);
+  tpa += template.FindColor($010000, 0);
   image.DrawTPA(tpa);
   template.DrawTPA(tpa);
 end;
@@ -443,7 +448,7 @@ var
   tpa: TPointArray;
   border: TImage;
 begin
-  tpa := img.FindColor(TRSItem.Border, 0, [0, 9, 35, 31]);
+  tpa := img.FindColor(ITEM_BORDER, 0, [0, 9, 35, 31]);
   if tpa = [] then Exit;
   border := new TImage(36, 32);
   border.DrawColor := $FFFFFF;
@@ -460,11 +465,20 @@ begin
   hash := Self.GetBorderHash(img);
   if hash = '' then Exit;
 
-  bg := Self.GetMask(hash).FindColor($0, 0);
+  bg := Self.GetMask(hash).FindColor(Colors.BLACK, 0);
 
-  img.DrawColor := $0;
+  if ITEM_BORDER <> $010000 then
+  begin
+    img.DrawColor := $010000;
+    img.DrawAlpha := $FF;
+    img.DrawTPA(img.FindColor(ITEM_BORDER, 0));
+  end;
+
+  img.DrawColor := Colors.BLACK;
   img.DrawTPA(bg);
+
   Result := HashData(EHashAlgo.CRC32, img.Data, 4608);
+  WriteLn Result;
 end;
 
 var
