@@ -59,6 +59,19 @@ Main record responsible with interacting with the {ref}`Options` gametab.
     MaxBrightness, RoofsHidden: Boolean;
   end;
 
+procedure TRSOptions.Setup();
+begin
+  case RSClient.Client of
+    ERSClient.OFFICIAL:
+      Self.Sliders[ERSOptionsSlider.BRIGHTNESS].Color := $202328;
+    ERSClient.LEGACY, ERSClient.RUNELITE:
+      Self.Sliders[ERSOptionsSlider.BRIGHTNESS].Color := $1F2227;
+  end;
+
+  Self.Sliders[ERSOptionsSlider.ZOOM].Color := $202328;
+  Self.ZoomLevel := -1;
+end;
+
 (*
 ## Options.SetupGameTab
 ```pascal
@@ -81,7 +94,6 @@ begin
     Bounds.Y1 := GameTab.Bounds.Y1 + 72;
     Bounds.X2 := Bounds.X1 + 96;
     Bounds.Y2 := Bounds.Y1 + 9;
-    Color := 2040359;
     Width := Bounds.Width - 1;
   end;
 
@@ -91,7 +103,6 @@ begin
     Bounds.Y1 := GameTab.Bounds.Y1 + 109;
     Bounds.X2 := Self.Sliders[ERSOptionsSlider.BRIGHTNESS].Bounds.X2;
     Bounds.Y2 := Bounds.Y1 + 9;
-    Color := 2106152;
     Width := Bounds.Width - 1;
   end;
 

@@ -156,7 +156,7 @@ begin
   Minimap.Compass.Accuracy := 0.03*PI;
   SetLength(Minimap.Orbs, Ord(High(ERSMinimapOrb))+1);
 
-  Options.ZoomLevel := -1;
+  Options.Setup();
   MM2MS.Projector.RSZoom := -1;
   RSMouseZoom.ZoomLevel := -1;
   RSMouseZoom.Enabled := True;
