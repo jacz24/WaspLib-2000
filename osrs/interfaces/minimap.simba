@@ -1133,7 +1133,8 @@ function TRSMinimap.CleanImage(img: TImage; radius: Integer): TImage;
         pt.Offset(0,-1), pt.Offset(1,-1),
         pt.Offset(-1,0), pt, pt.Offset(1,0), pt.Offset(2,0),
         pt.Offset(-1,1), pt.Offset(0,1), pt.Offset(1,1), pt.Offset(2,1),
-        pt.Offset(0,2), pt.Offset(1,2)
+        pt.Offset(0,2), pt.Offset(1,2),
+        pt.Offset(-1,2), pt.Offset(2,2), pt.Offset(0,3), pt.Offset(1,3)
       ]);
 
     q := pt.Offset(0,-1);
@@ -1160,6 +1161,15 @@ function TRSMinimap.CleanImage(img: TImage; radius: Integer): TImage;
     q := pt.Offset(0,2);
     if bounds.Contains(q) then Result += q;
     q := pt.Offset(1,2);
+    if bounds.Contains(q) then Result += q;
+
+    q := pt.Offset(-1,2);
+    if bounds.Contains(q) then Result += q;
+    q := pt.Offset(2,2);
+    if bounds.Contains(q) then Result += q;
+    q := pt.Offset(0,3);
+    if bounds.Contains(q) then Result += q;
+    q := pt.Offset(1,3);
     if bounds.Contains(q) then Result += q;
   end;
 
@@ -1189,7 +1199,7 @@ begin
   tpa += img.FindColor($0456C6, 0); //idk ask slacky/olly
   tpa += img.FindColor($11335D, 0); //idk ask slacky/olly
 
-  tpa += img.FindColor($010000, 0);
+  tpa += img.FindColor($010000, 0); //replaced black
   tpa := tpa.SortFrom(img.Center);
 
   Result := img.Blend(tpa, 6);
@@ -1234,7 +1244,8 @@ begin
     radius := Self.Radius;
 
   img := Target.GetImage(Self.Bounds);
-  img.ReplaceColor($0, $1);
+  img.ReplaceColor($0, $1, 0.23);
+
   clean := Self.CleanImage(img, radius);
 
   center := clean.Center;
