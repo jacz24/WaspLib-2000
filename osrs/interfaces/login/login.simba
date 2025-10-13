@@ -371,13 +371,13 @@ begin
   begin
     if Self.FindButton(ERSLoginButton.EXISTING_USER) then
     begin
-      WriteLn GetDebugLn('Login', 'Legacy client mode detected.', ELogLevel.SUCCESS);
+      WriteLn GetDebugLn('Login', 'Legacy client mode detected.');
       Exit(ERSLoginMode.LEGACY);
     end;
 
     if Self.FindButton(ERSLoginButton.LAUNCHER) then
     begin
-      WriteLn GetDebugLn('Login', 'Launcher client mode detected.', ELogLevel.SUCCESS);
+      WriteLn GetDebugLn('Login', 'Launcher client mode detected.');
       Exit(ERSLoginMode.LAUNCHER);
     end;
   end;

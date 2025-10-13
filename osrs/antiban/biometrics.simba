@@ -86,7 +86,7 @@ begin
   end;
 
   hashStr := HashString(EHashAlgo.SHA1, Profiles[ProfileIndex].Name + Profiles[ProfileIndex].Username);
-  WriteLn GetDebugLn('Biometrics', 'Current profile seed: ' + hashStr, ELogLevel.SUCCESS);
+  WriteLn GetDebugLn('Biometrics', 'Current profile seed: ' + hashStr);
 
   Self.Index := ProfileIndex;
   Self._Hash := hashStr.ToBytes();

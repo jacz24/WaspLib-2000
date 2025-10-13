@@ -30,7 +30,6 @@ type
 
 function TRSItemFinder._AlignHelper(img: TImage; tBorder, border: TPointArray; out align: TPoint): Boolean;
 var
-  color: TColor;
   pt: TPoint;
 begin
   if border = [] then Exit;
@@ -478,7 +477,6 @@ begin
   img.DrawTPA(bg);
 
   Result := HashData(EHashAlgo.CRC32, img.Data, 4608);
-  WriteLn Result;
 end;
 
 var
