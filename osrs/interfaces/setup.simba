@@ -64,7 +64,8 @@ end;
 {$H-}
 procedure TargetResized(sender: TTarget; data: TTargetEventData);
 begin
-  WriteLn(GetDebugLn('RSClient', 'Client was resized, updating coordinates.', ELogLevel.SUCCESS));
+  WriteLn(GetDebugLn('RSClient', 'Client was resized, updating coordinates.'));
+  RSClient.Mode := ERSMode.UNKNOWN;
 
   {$IFNDEF WL_DISABLE_FAKE_INPUT}
   RSClient.Canvas.Clear();
@@ -73,7 +74,10 @@ begin
   Lobby.Setup();
   Login.Setup();
 
-  if RSClient.Mode = ERSMode.UNKNOWN then Exit;
+  Sleep(80);
+  RSClient.IsLoggedIn();
+  if RSClient.Mode = ERSMode.UNKNOWN then
+    RSClient.Mode := ERSMode.FIXED;
   SetupInterfaces();
 end;
 {$H+}

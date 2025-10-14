@@ -657,21 +657,24 @@ begin
       vector := p.ToVec3().Rotate(radians, Self.Center);
       if not Self.PointOnZoomQuad(vector.ToPoint()) then Continue;
       quad := Self.Vector2MSQuad(vector, radians, [1,1]);
-      tpa := quad.Corners.Connect().ExtractBox(MainScreen.Bounds);
-      img.DrawTPA(tpa);
+      tpa += quad.Corners.Connect();
     end;
+
+  img.DrawTPA(MainScreen.Filter(tpa));
 
   for dot in dots do
   begin
-    img.DrawColor := DOT_COLORS[dot];
+    tpa := [];
     for p in Self.GetDots(dot) do
     begin
       vector := p.ToVec3();
       if not Self.PointOnZoomQuad(vector.ToPoint()) then Continue;
       quad := Self.Vector2MSQuad(vector, radians, [1,1]);
-      tpa := quad.Corners.Connect().ExtractBox(MainScreen.Bounds);
-      img.DrawTPA(tpa);
+      tpa += quad.Corners.Connect();
     end;
+
+    img.DrawColor := DOT_COLORS[dot];
+    img.DrawTPA(MainScreen.Filter(tpa));
   end;
 
   img.DrawColor := $FF0000;

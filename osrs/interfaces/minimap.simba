@@ -77,6 +77,8 @@ var
   tpa: TPointArray;
   i: Integer;
 begin
+  MainScreen.Mask.DrawColor := $FFFFFF;
+
   case RSClient.Mode of
     ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
     begin
@@ -134,30 +136,28 @@ begin
       end;
     end;
 
-  MainScreen.AddMask(Self.Compass.Circle.Expand(4));
-  MainScreen.AddMask(TPointArray.CreateFromCircle(Self.Center, 82, True));
+  MainScreen.Mask.DrawCircleFilled(Self.Compass.Circle.Expand(4));
 
   for i := 0 to High(Self.Orbs) do
+  begin
     with Self.Orbs[i].Circle do
-    begin
       Self.Orbs[i].Bounds := TBox.Create(X-35, Y-1, X-15, Y+9);
-      MainScreen.AddMask(TPointArray.CreateFromCircle(Center, Radius+5, True));
-    end;
+    MainScreen.Mask.DrawCircleFilled(Self.Orbs[i].Circle.Expand(6));
+  end;
 
   with Self.Orbs[ERSMinimapOrb.HITPOINTS].Bounds do
-    MainScreen.AddMask([X1 - 5, Y1 - 5, X2 + 7, Y2 + 6]);
-
+    MainScreen.Mask.DrawBoxFilled([X1 - 5, Y1 - 6, X2 + 7, Y2 + 5]);
   with Self.Orbs[ERSMinimapOrb.PRAYER].Bounds do
-    MainScreen.AddMask([X1 - 5, Y1 - 6, X2 + 7, Y2 + 5]);
-
+    MainScreen.Mask.DrawBoxFilled([X1 - 4, Y1 - 5, X2 + 7, Y2 + 6]);
   with Self.Orbs[ERSMinimapOrb.ENERGY].Bounds do
-    MainScreen.AddMask([X1 - 5, Y1 - 5, X2 + 7, Y2 + 6]);
-
+    MainScreen.Mask.DrawBoxFilled([X1 - 5, Y1 - 6, X2 + 7, Y2 + 5]);
   with Self.Orbs[ERSMinimapOrb.SPECIAL].Bounds do
-    MainScreen.AddMask([X1 - 5, Y1 - 7, X2 + 7, Y2 + 4]);
+    MainScreen.Mask.DrawBoxFilled([X1 - 4, Y1 - 6, X2 + 7, Y2 + 5]);
 
   Self.Center := Self.Bounds.Center;
   Self.Polygon := tpa.Offset(Self.Center);
+  MainScreen.Mask.DrawPolygonFilled(Self.Polygon.Expand(9));
+  MainScreen.Mask.DrawCircleFilled(Self.Center.Offset(63,56), 14);
 end;
 
 (*

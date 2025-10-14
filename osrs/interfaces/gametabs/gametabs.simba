@@ -65,6 +65,8 @@ begin
   bounds := RSClient.Bounds;
   Self.Bounds.Y2 := bounds.Y2;
 
+  MainScreen.Mask.DrawColor := $FFFFFF;
+
   case RSClient.Mode of
     ERSMode.FIXED:
     begin
@@ -72,6 +74,7 @@ begin
       Self.Bounds.X2 := bounds.X2 - 2;
       Self.Bounds.Y1 := bounds.Y2 - 334;
       Self.Tabs := TBoxArray.Create(Self.Bounds.TopLeft.Offset(6,1), 7, 2, 30, 33, [3, 265]);
+      MainScreen.Mask.DrawBoxFilled(Self.Bounds);
     end;
 
     ERSMode.RESIZABLE:
@@ -80,6 +83,7 @@ begin
       Self.Bounds.X2 := bounds.X2;
       Self.Bounds.Y1 := bounds.Y2 - 334;
       Self.Tabs := TBoxArray.Create(Self.Bounds.TopLeft.Offset(6,1), 7, 2, 30, 33, [3, 265]);
+      MainScreen.Mask.DrawBoxFilled(Self.Bounds);
     end;
 
     ERSMode.MODERN_COMPACT:
@@ -95,6 +99,8 @@ begin
       Self.Tabs[10].Y1 := bounds.Y1 + 9;
       Self.Tabs[10].X2 := bounds.X2 - 10;
       Self.Tabs[10].Y2 := bounds.Y1 + 18;
+      MainScreen.Mask.DrawBoxFilled(Self.Bounds);
+      MainScreen.Mask.DrawBoxFilled(Self.Tabs[10].Expand(8));
     end;
 
     ERSMode.MODERN_WIDE:
@@ -113,8 +119,11 @@ begin
       Self.Tabs[10].Y1 := bounds.Y1 + 9;
       Self.Tabs[10].X2 := bounds.X2 - 10;
       Self.Tabs[10].Y2 := bounds.Y1 + 18;
+      MainScreen.Mask.DrawBoxFilled(Self.Bounds);
+      MainScreen.Mask.DrawBoxFilled(Self.Tabs[10].Expand(8));
     end;
   end;
+
 end;
 
 (*
@@ -334,6 +343,9 @@ begin
         Self.Bounds.X2 := X2 - 10;
         Self.Bounds.Y1 := GameTabs.Bounds.Y1 - 269;
         Self.Bounds.Y2 := GameTabs.Bounds.Y1 - 7;
+
+        MainScreen.Mask.DrawColor := $00FFFF;
+        MainScreen.Mask.DrawBoxFilled(Self.Bounds.Expand(10, 6));
       end;
   end;
 

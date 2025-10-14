@@ -88,6 +88,8 @@ begin
   Self.Scroll.Setup();
 
   Self.Colors := [RSFonts.BLACK, $7F0000, RSFonts.BLUE, $7F007F, $2010EF, RSFonts.RED, RSFonts.WHITE, $FF9090, RSFonts.DARK_BLUE, $005F00];
+  MainScreen.Mask.DrawColor := $0000FF;
+  MainScreen.Mask.DrawBoxFilled(Self.Bounds);
 end;
 
 (*

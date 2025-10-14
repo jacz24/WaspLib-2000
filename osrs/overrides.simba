@@ -175,35 +175,55 @@ begin
   Result := inherited;
 end;
 
-
+{$R-}
 function TRSMainScreen.IsVisible(pt: TPoint): Boolean; override;
 begin
-  Result := Self.Bounds.Contains(pt) and Self.Mask[pt.Y, pt.X];
+  Result := Self._IsVisible(pt, GameTabs.GetCurrent() = ERSGameTab.NONE, not XPBar.IsOpen(), not Chat.IsOpen());
+end;
 
-  if Result and (RSClient.Mode = ERSMode.FIXED) then Exit;
+function TRSMainScreen.AnyVisible(tpa: TPointArray): Boolean; override;
+var
+  i: Integer;
+  tabNone, xpbarClosed, chatClosed: Boolean;
+begin
+  tabNone := GameTabs.GetCurrent() = ERSGameTab.NONE;
+  xpbarClosed := not XPBar.IsOpen();
+  chatClosed := not Chat.IsOpen();
 
-  if Chat.IsOpen() and Chat.Bounds.Contains(pt) then Exit(False);
-  if not GameTabs.IsOpen(ERSGameTab.NONE) and GameTab.Bounds.Contains(pt) then Exit(False);
-  if Bank.IsOpen() and Bank.Bounds.Contains(pt) then Exit(False);
+  for i := 0 to High(tpa) do
+    if Self._IsVisible(tpa[i], tabNone, xpbarClosed, chatClosed) then
+      Exit(True);
+end;
+
+function TRSMainScreen.AllVisible(tpa: TPointArray): Boolean; override;
+var
+  i: Integer;
+  tabNone, xpbarClosed, chatClosed: Boolean;
+begin
+  tabNone := GameTabs.GetCurrent() = ERSGameTab.NONE;
+  xpbarClosed := not XPBar.IsOpen();
+  chatClosed := not Chat.IsOpen();
+
+  Result := True;
+  for i := 0 to High(tpa) do
+    if not Self._IsVisible(tpa[i], tabNone, xpbarClosed, chatClosed) then
+      Exit(False);
 end;
 
 function TRSMainScreen.Filter(tpa: TPointArray): TPointArray; override;
 var
-  pt: TPoint;
+  i: Integer;
+  tabNone, xpbarClosed, chatClosed: Boolean;
 begin
-  for pt in tpa do
-    if Self.Bounds.Contains(pt) and Self.Mask[pt.Y, pt.X] then
-      Result += pt;
+  tabNone := GameTabs.GetCurrent() = ERSGameTab.NONE;
+  xpbarClosed := not XPBar.IsOpen();
+  chatClosed := not Chat.IsOpen();
 
-  if Chat.IsOpen() then
-    Result := Result.ExcludeBox(Chat.Bounds);
-
-  if not GameTabs.IsOpen(ERSGameTab.NONE) then
-    Result := Result.ExcludeBox(GameTab.Bounds);
-
-  if Bank.IsOpen() then
-    Result := Result.ExcludeBox(Bank.Bounds);
+  for i := 0 to High(tpa) do
+    if Self._IsVisible(tpa[i], tabNone, xpbarClosed, chatClosed) then
+      Result += tpa[i];
 end;
+{$R+}
 
 procedure TAntiban.WalkingTasks(); override;
 begin

@@ -88,8 +88,9 @@ begin
   if Self.Position <> ERSXPBarPosition.UNKNOWN then
     Self.Bounds := Self.AvailableBounds[Self.Position-1];
 
+  MainScreen.Mask.DrawColor := $00FF00;
   with Self.Bounds do
-    MainScreen.AddMask([X1, Y1, X2, Y2+1]);
+    MainScreen.Mask.DrawBoxFilled([X1, Y1, X2, Y2+1]);
 end;
 
 (*
@@ -106,15 +107,14 @@ begin
   case RSClient.Mode of
     ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
       Self.Button := [Minimap.Bounds.X1 - 40, Minimap.Bounds.Y1 + 32,  11];
-
     ERSMode.FIXED:
       Self.Button := [Minimap.Bounds.X1 - 40, Minimap.Bounds.Y1 + 26,  11];
   end;
 
-  MainScreen.AddMask(TPointArray.CreateFromCircle(Self.Button.Center, Self.Button.Radius + 2, True));
+  MainScreen.Mask.DrawColor := $FFFFFF;
+  MainScreen.Mask.DrawCircleFilled(Self.Button.Expand(2));
 
   SetLength(Self.AvailableBounds, 3);
-
   with Self.AvailableBounds[ERSXPBarPosition.LEFT-1] do
   begin
     X1 := MainScreen.Bounds.X1 + 2;

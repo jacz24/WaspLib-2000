@@ -22,7 +22,7 @@ Main record to handle the mainscreen and methods relating to it.
 
     HighestPitch: Boolean;
 
-    Mask: TBooleanMatrix;
+    Mask: TImage;
   end;
 
 (*
@@ -36,8 +36,6 @@ coordinates.
 This is called automatically for you on the {ref}`MainScreen variable`.
 *)
 procedure TRSMainScreen.SetupInterface();
-var
-  y, x: Integer;
 begin
   case RSClient.Mode of
     ERSMode.FIXED:
@@ -74,42 +72,13 @@ begin
   Self.ServerMsgBounds.X2 := Self.ServerMsgBounds.X1 + 129;
   Self.ServerMsgBounds.Y2 := Self.ServerMsgBounds.Y1 + 20;
 
-  Self.Mask := [];
-  SetLength(Self.Mask, Self.Bounds.Y2+1, Self.Bounds.X2+1);
-  for y := Self.Bounds.Y1 to Self.Bounds.Y2 do
-    for x := Self.Bounds.X1 to Self.Bounds.X2 do
-      Self.Mask[y,x] := True;
-end;
-
-
-(*
-## MainScreen.AddMask
-```pascal
-procedure TRSMainScreen.AddMask(tpa: TPointArray);
-procedure TRSMainScreen.AddMask(box: TBox); overload;
-procedure TRSMainScreen.AddMask(circle: TCircle); overload;
-```
-Helper methods to help building the `TRSMainScreen.Mask`.
-`TRSMainScreen.Mask` is a helper variable used by {ref}`MainScreen.IsVisible`
-and {ref}`MainScreen.Filter` to reduce computation it would require without a mask.
-This is only useful for resizable modes.
-*)
-procedure TRSMainScreen.AddMask(tpa: TPointArray);
-var
-  pt: TPoint;
-begin
-  for pt in tpa.ExtractBox(Self.Bounds) do
-    Self.Mask[pt.Y, pt.X] := False;
-end;
-
-procedure TRSMainScreen.AddMask(box: TBox); overload;
-begin
-  Self.AddMask(TPointArray.CreateFromBox(box, True));
-end;
-
-procedure TRSMainScreen.AddMask(circle: TCircle); overload;
-begin
-  Self.AddMask(TPointArray.CreateFromCircle(circle.Center, circle.Radius, True));
+  Self.Mask := new TImage(Target.Width+1, Target.Height+1);
+  Self.Mask.Fill($FFFFFF);
+  Self.Mask.DrawColor := $0;
+  Self.Mask.DrawBoxFilled(Self.Bounds);
+  Self.Mask.SetAlphas(TPointArray.CreateFromBox(Self.Bounds, True), $0);
+  Self.Mask.DrawColor := $FFFFFF;
+  Self.Mask.DrawAlpha := $FF;
 end;
 
 
@@ -354,12 +323,31 @@ begin
   Self.HighestPitch := True;
 end;
 
+{$R-}
+function TRSMainScreen._IsVisible(pt: TPoint; tabNone, xpbarClosed, chatClose: Boolean): Boolean;
+var
+  color: TColor;
+begin
+  if not Self.Bounds.Contains(pt) then
+    Exit;
+  color := Self.Mask.Pixel[pt.X, pt.Y];
+
+  case color of
+    $0: Exit(True);
+    $00FFFF: Exit(tabNone);
+    $00FF00: Exit(xpbarClosed);
+    $0000FF: Exit(chatClose);
+    $FFFFFF: Exit;
+    else Exit;
+  end;
+end;
 
 (*
 ## MainScreen.IsVisible
 ```pascal
 function TRSMainScreen.IsVisible(pt: TPoint): Boolean;
-function TRSMainScreen.IsVisible(tpa: TPointArray): Boolean; overload;
+function TRSMainScreen.AnyVisible(tpa: TPointArray): Boolean;
+function TRSMainScreen.AllVisible(tpa: TPointArray): Boolean;
 ```
 Returns `True` if a point `pt` is visible on the mainscreen.
 This also checks for open interfaces to check if the point is not behind them.
@@ -371,16 +359,17 @@ WriteLn MainScreen.IsVisible([100,100]);
 *)
 function TRSMainScreen.IsVisible(pt: TPoint): Boolean;
 begin
-  Result := pt <> pt;
+  Result := pt <> pt; //overriden, check overrides.
 end;
 
-function TRSMainScreen.IsVisible(tpa: TPointArray): Boolean; overload;
-var
-  pt: TPoint;
+function TRSMainScreen.AnyVisible(tpa: TPointArray): Boolean;
 begin
-  for pt in tpa do
-    if Self.IsVisible(pt) then
-      Exit(True);
+  Result := tpa <> tpa; //overriden, check overrides.
+end;
+
+function TRSMainScreen.AllVisible(tpa: TPointArray): Boolean;
+begin
+  Result := tpa <> tpa; //overriden, check overrides.
 end;
 
 
@@ -394,9 +383,9 @@ This also checks for open interfaces to check if the points are not behind them.
 *)
 function TRSMainScreen.Filter(tpa: TPointArray): TPointArray;
 begin
-  Result := tpa;
+  Result := tpa.Copy(); //overriden, check overrides.
 end;
-
+{$R+}
 
 function TRSMainScreen._RedClicked(area: TBox): Boolean;
 begin

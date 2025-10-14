@@ -81,7 +81,8 @@ begin
       Self.Tabs[i].Button.Bounds := Box(X1 + 3 + (i * 62), Y1, X1 + 58 + (i * 62), Y2 - 1);
     end;
 
-  MainScreen.AddMask(Self.Bounds);
+  MainScreen.Mask.DrawColor := $FFFFFF;
+  MainScreen.Mask.DrawBoxFilled(Self.Bounds);
 end;
 
 (*
