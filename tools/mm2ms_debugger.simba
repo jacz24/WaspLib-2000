@@ -1,0 +1,129 @@
+{.$DEFINE WL_DISABLE_FAKE_INPUT}
+{$I WaspLib/osrs.simba}
+
+type
+  TMM2MSDebugger = record
+    Form: TLazForm;
+    Image: TImage;
+    ImgBox: TImageBox;
+    UseHeight: Boolean;
+    OldChunks, NewChunks: TRSMapChunkArray;
+    ChunkEdit: TLazEdit;
+    ClientInfo: TLazLabel;
+    OriginalTarget: TTarget;
+    OriginalPID: TProcessID;
+    OriginalWindow: TWindowHandle;
+  end;
+
+procedure TMM2MSDebugger.LoadFromClient(sender: TLazObject);
+var
+  z: Integer;
+  tpa: TPointArray;
+begin
+  Target := Self.OriginalTarget;
+  z := Options.GetZoomLevel(False);
+  RSClient.Mode := RSClient.GetMode();
+  Self.Image := Target.GetImage();
+
+  if Chat.IsOpen() then
+  begin
+    Self.Image.DrawColor := $809CAB;
+    Self.Image.DrawBoxFilled(Chat.GetDisplayNameBox());
+  end;
+
+  if XPBar.IsOpen() then
+  begin
+    tpa := Self.Image.FindColor($FFFFFF, 0, XPBar.Bounds);
+    if tpa <> [] then
+    begin
+      Self.Image.DrawColor := $FFFFFF;
+      Self.Image.DrawBoxFilled(tpa.Bounds.Expand(1));
+    end;
+  end;
+
+  if Self.Image = nil then
+    raise GetDebugLn('MM2MS Debugger', 'Please target the client.');
+
+  Self.ImgBox.SetImage(Self.Image);
+  Self.ClientInfo.Caption := 'Zoom: ' + ToStr(z).PadLeft(3, ' ') + ' Mode: ' + ToStr(RSClient.Mode);
+  Target := new TTarget();
+  Target.SetImage(Self.Image);
+end;
+
+procedure TMM2MSDebugger.OnHeightChange(sender: TLazObject);
+begin
+  Self.UseHeight := TLazCheckBox(sender).IsChecked();
+  Self.ImgBox.Repaint();
+end;
+
+procedure TMM2MSDebugger.OnChunkChange(sender: TLazObject);
+var
+  chunks: TRSMapChunkArray;
+begin
+  chunks := TRSMapChunkArray.CreateFromString(TLazEdit(sender).Text);
+  if chunks = [] then Exit;
+
+  if chunks = Self.OldChunks then
+    Exit;
+
+  WriteLn GetDebugLn('MM2MS Debugger', 'Setting up make with ' + ToStr(chunks));
+  Map.Loader.Free();
+  Map.Setup(chunks);
+  Self.ImgBox.Repaint();
+end;
+
+procedure TMM2MSDebugger.OnPaint(sender: TImageBox; canvas: TImageBoxCanvas; r: TLazRect);
+begin
+
+end;
+
+var
+  MM2MSDebugger: TMM2MSDebugger;
+  panel: TLazPanel;
+  loadBtn: TLazButton;
+  useHeight: TLazCheckBox;
+  hLbl, cLbl: TLazLabel;
+begin
+  WebGraphGenerator.Disabled := True;
+  MM2MSDebugger.OriginalTarget := Target;
+  MM2MSDebugger.OriginalWindow := GetSimbaTargetWindow();
+  MM2MSDebugger.OriginalPID := GetSimbaTargetPID();
+
+  MM2MSDebugger.Form := TLazForm.Create(nil);
+  MM2MSDebugger.Form.Color := $242322;
+  MM2MSDebugger.Form.Width := 770;
+  MM2MSDebugger.Form.Height := 508;
+  MM2MSDebugger.Form.Position := ELazFormPosition.ScreenCenter;
+
+  panel := TLazPanel.CreateEx(MM2MSDebugger.Form);
+  panel.BevelWidth := 0;
+  panel.Align := ELazAlign.Top;
+
+  MM2MSDebugger.ClientInfo := TLazLabel.CreateEx(panel, 'Zoom:  -1 Mode: ' + ToStr(RSClient.Mode));
+  MM2MSDebugger.ClientInfo.Font.Color := $FFFFFF;
+  MM2MSDebugger.ClientInfo.Align := ELazAlign.Right;
+
+  loadBtn := TLazButton.CreateEx(panel, 'Load Client Image', 'Load and image from the client.', 0, 0, 160);
+  loadBtn.OnClick := @MM2MSDebugger.LoadFromClient;
+  loadBtn.Align := ELazAlign.Right;
+  loadBtn.BorderSpacing.Around := 10;
+
+  useHeight := TLazCheckBox.CreateEx(panel);
+  useHeight.OnChange := @MM2MSDebugger.OnHeightChange;
+  hLbl := TLazLabel.CreateEx(panel, 'Use heightmap');
+  hLbl.Font.Color := $FFFFFF;
+  hLbl.AnchorHorizontally(useHeight, 2);
+
+  cLbl := TLazLabel.CreateEx(panel, 'Chunk:');
+  cLbl.Font.Color := $FFFFFF;
+  cLbl.AnchorHorizontally(hLbl, 6);
+
+  MM2MSDebugger.ChunkEdit := TLazEdit.CreateEx(panel, '','', 0, 0, 200);
+  MM2MSDebugger.ChunkEdit.OnChange := @MM2MSDebugger.OnChunkChange;
+  MM2MSDebugger.ChunkEdit.AnchorHorizontally(cLbl,2);
+
+  MM2MSDebugger.Imgbox := TImageBox.CreateEx(MM2MSDebugger.Form);
+  MM2MSDebugger.Imgbox.OnImgPaint := @MM2MSDebugger.OnPaint;
+  MM2MSDebugger.Imgbox.Align := ELazAlign.Client;
+  MM2MSDebugger.Form.ShowModal();
+end.

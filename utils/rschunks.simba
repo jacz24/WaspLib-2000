@@ -15,6 +15,14 @@ Helper record to store chunk data with a name associated with.
   end;
   TRSMapChunkArray = array of TRSMapChunk;
 
+(*
+### Chunk
+```pascal
+function Chunk(b: TBox; planes: TIntegerArray): TRSMapChunk;
+function Chunk(b: TBox; plane: Integer): TRSMapChunk; overload;
+```
+Helper functions to create {ref}`TRSMapChunk`s.
+*)
 function Chunk(b: TBox; planes: TIntegerArray): TRSMapChunk;
 begin
   Result.Chunk := b;
@@ -24,6 +32,110 @@ end;
 function Chunk(b: TBox; plane: Integer): TRSMapChunk; overload;
 begin
   Result := Chunk(b, [plane]);
+end;
+
+
+(*
+### TRSMapChunkArray.CreateFromString
+```pascal
+function TRSMapChunkArray.CreateFromString(str: String): TRSMapChunkArray; static;
+```
+Creates a `TRSMapChunkArray` from a string. This is quite tolerant but extects
+the string to have a certain format.
+
+Some example of valid strings this will be able to handle are:
+```
+Map.Setup([Chunk(Box(45,51,46,50), 0)]);
+Map.Setup([[[45,51,46,50], 0]]);
+Map.Setup([[[45,51,46,50], [0,2]]]);
+Map.Setup([[[45,51,46,50], [0,2]], Chunk([45,51,46,50], [0]);
+Map.SetupChunk(Chunk([45,51,46,50], 0));
+[[[45,51,46,50], [0,2]]
+[[[45,51,46,50], 2]
+45,51,46,50 - 0
+```
+To put it simply, it will try it's best to parse the string and look for the box
+coordinates first and then plane numbers.
+
+It can also handle multiple chunks in a string.
+
+```{note}
+While it's very flexible, it does not validate anything. If what you pass in is
+not a valid chunk your script will probably crash.
+
+E.G. plane 55 which doesn't exist.
+```
+*)
+function TRSMapChunkArray.CreateFromString(str: String): TRSMapChunkArray; static;
+var
+  i, j: Integer;
+  boxCoords, planes: TIntegerArray;
+begin
+  str := str.Replace(' ', '');
+  i := 1;
+
+  while i < Length(str) do
+  begin
+    for i to Length(str) do
+      if str[i].IsNumeric then
+        Break;
+
+    if i = Length(str) then
+      Exit;
+
+    boxCoords := [];
+    while Length(boxCoords) < 4 do
+    begin
+      for j := i to Length(str) do
+        if not str[j].IsNumeric then
+        begin
+          boxCoords += StrToInt(str.CopyRange(i, j-1));
+          i := j+1;
+          if i = Length(str) then
+            Exit;
+          Break;
+        end;
+      if j >= Length(str) then
+        Exit;
+    end;
+
+    planes := [];
+    for i to Length(str) do
+    begin
+      if str[i] = '[' then
+      begin
+        for j := Inc(i) to Length(str) do
+        begin
+          WriteLn str[j];
+          if not str[j].IsNumeric then
+          begin
+            planes += StrToInt(str.CopyRange(i, j-1));
+            i := j+1;
+            if str[j] = ']' then
+              Break(2);
+
+          end;
+        end;
+        Break;
+      end;
+
+      if str[i].IsNumeric then
+      begin
+        for j := i to Length(str) do
+        begin
+          if not str[j].IsNumeric then
+          begin
+            planes += StrToInt(str.CopyRange(i, j-1));
+            i := j+1;
+            Break;
+          end;
+        end;
+        Break;
+      end;
+    end;
+
+    Result += [[boxCoords[0], boxCoords[1], boxCoords[2], boxCoords[3]], planes.Sorted()];
+  end;
 end;
 
 type

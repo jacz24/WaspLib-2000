@@ -213,7 +213,15 @@ end;
 
 procedure TRSMapLoader.Free();
 begin
+  Self.Map := nil;
+  Self.Collision := nil;
+  Self.Heightmap := nil;
+  Self.DownscaledMap := nil;
+  Self.MapBox := [];
   Self.Graph := [];
+  Self.Regions := [];
+  Self.Padding := 0;
+  Self.Downscale := 0;
 end;
 
 procedure TRSMapLoader.Unzipped(constref result: TASyncUnzipResult);

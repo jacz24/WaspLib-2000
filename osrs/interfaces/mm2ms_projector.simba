@@ -180,14 +180,11 @@ end;
 
 property TMM2MSProjector.InvertedWorld(rotation: TVector3): TMatrix4;
 var
-  tx, ty, tz: Single;
+  vector: TVector3;
   matrix: TMatrix4;
 begin
   matrix := Self.World[rotation];
-  // Extract translation
-  tx := matrix.M41;
-  ty := matrix.M42;
-  tz := matrix.M43;
+  vector := [matrix.M41, matrix.M42, matrix.M43];
 
   // Transpose rotation into the result’s upper‐left
   Result.M11 := matrix.M11;
@@ -204,9 +201,9 @@ begin
   Result.M34 := 0.0;
 
   // Compute inverse translation = -R^T * T
-  Result.M41 := -(matrix.M11*tx + matrix.M21*ty + matrix.M31*tz);
-  Result.M42 := -(matrix.M12*tx + matrix.M22*ty + matrix.M32*tz);
-  Result.M43 := -(matrix.M13*tx + matrix.M23*ty + matrix.M33*tz);
+  Result.M41 := -(matrix.M11*vector.X + matrix.M21*vector.Y + matrix.M31*vector.Z);
+  Result.M42 := -(matrix.M12*vector.X + matrix.M22*vector.Y + matrix.M32*vector.Z);
+  Result.M43 := -(matrix.M13*vector.X + matrix.M23*vector.Y + matrix.M33*vector.Z);
 
   // Bottom‐right stays 1
   Result.M44 := 1.0;

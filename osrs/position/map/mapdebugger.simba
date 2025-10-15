@@ -353,19 +353,23 @@ begin
   Self.GetGlobal := @loader^.GetGlobal;
   Self.GetLocal  := @loader^.GetLocal;
 
+  Self.Graph.Nodes := [];
   for node in loader^.Graph.Nodes do
     Self.Graph.Nodes += TGraphNode.Create(Self.GetLocal(node.Node), node.Typ);
 
-  Self.Graph.Paths    := Copy(loader^.Graph.Paths);
+  Self.Graph.Paths := Copy(loader^.Graph.Paths);
 
+  Self.Graph.WalkableSpace := [];
   for p in loader^.Graph.WalkableSpace do
     Self.Graph.WalkableSpace += Self.GetLocal(p);
 
+  Self.Graph.WalkableClusters := [];
   SetLength(Self.Graph.WalkableClusters, loader^.Graph.WalkableClusters.Length);
   for i := 0 to High(loader^.Graph.WalkableClusters) do
     for p in loader^.Graph.WalkableClusters[i] do
       Self.Graph.WalkableClusters[i] += Self.GetLocal(p);
 
+  Self.Graph.ObjectClusters := [];
   SetLength(Self.Graph.ObjectClusters, loader^.Graph.ObjectClusters.Length);
   for i := 0 to High(loader^.Graph.ObjectClusters) do
     for p in loader^.Graph.ObjectClusters[i] do
