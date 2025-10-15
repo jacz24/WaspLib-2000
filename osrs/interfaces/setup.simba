@@ -78,6 +78,10 @@ begin
   RSClient.IsLoggedIn();
   if RSClient.Mode = ERSMode.UNKNOWN then
     RSClient.Mode := ERSMode.FIXED;
+
+  MM2MS.Projector.SetupProjection(RSClient.Mode);
+  if Options.ZoomLevel > -1 then
+    MM2MS.Projector.UpdateZoom(Options.ZoomLevel);
   SetupInterfaces();
 end;
 {$H+}

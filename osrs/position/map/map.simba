@@ -504,7 +504,8 @@ end;
 (*
 ## Map.DebugHeight
 ```pascal
-procedure TRSMap.DebugHeight();
+procedure TRSMap.DebugHeight(img: TImage; dots: ERSMinimapDots);
+procedure TRSMap.DebugHeight(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER..ERSMinimapDot.ITEM]); overload;
 ```
 Debugs the heightmap with {ref}`MM2MS`.
 
@@ -524,20 +525,21 @@ end.
 ```{figure} ../../images/mm2ms_height.gif
 ```
 *)
-procedure TRSMap.DebugHeight();
+procedure TRSMap.DebugHeight(img: TImage; dots: ERSMinimapDots);
+const
+  DOT_COLORS: TColorArray = [$FFFFFF, $00FFFF, $0000FF];
 var
   quad: TQuad;
   arr, tpa: TPointArray;
-  pt, loc, currLoc: TPoint;
+  pt, q, loc, currLoc: TPoint;
   x,y: Integer;
   vector: TVector3;
   corners: TVector3Array;
   angle, h: Single;
-  img: TImage;
+  dot: ERSMinimapDot;
 begin
   angle := Minimap.CompassRadians;
 
-  img := Target.GetImage();
   img.DrawColor := $00FF00;
   img.DrawAlpha := $77;
 
@@ -572,10 +574,52 @@ begin
 
       arr := MM2MS.Run(corners, angle);
       quad := [arr[0], arr[1], arr[2], arr[3]];
-      tpa := quad.Corners.Connect().ExtractBox(MainScreen.Bounds);
-      img.DrawTPA(tpa);
+      tpa += quad.Corners.Connect();
     end;
 
+  img.DrawTPA(MainScreen.Filter(tpa));
+
+  for dot in dots do
+  begin
+    tpa := [];
+    for q in Minimap.GetDots(dot) do
+    begin
+      vector := q.ToVec3();
+      pt := vector.ToPoint();
+
+      if not Minimap.PointOnZoomQuad(pt) then Continue;
+
+      with Minimap.NormalizeEx([vector.X, vector.Y], angle) do
+      begin
+        vector.X := X;
+        vector.Y := Y;
+      end;
+
+      currLoc := loc + q - Minimap.Center;
+
+      corners := [
+        [vector.X-2, vector.Y-2, Self.Height(currLoc - [1,3],  False) - h],
+        [vector.X+2, vector.Y-2, Self.Height(currLoc + [3,-3], False) - h],
+        [vector.X+2, vector.Y+2, Self.Height(currLoc + [3,1],  False) - h],
+        [vector.X-2, vector.Y+2, Self.Height(currLoc - [1,1],  False) - h]
+      ];
+
+      arr := MM2MS.Run(corners, angle);
+      quad := [arr[0], arr[1], arr[2], arr[3]];
+      tpa += quad.Corners.Connect();
+    end;
+
+    img.DrawColor := DOT_COLORS[dot];
+    img.DrawTPA(MainScreen.Filter(tpa).Grow(1));
+  end;
+end;
+
+procedure TRSMap.DebugHeight(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER..ERSMinimapDot.ITEM]); overload;
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  Self.DebugHeight(img, dots);
   img.Show();
 end;
 

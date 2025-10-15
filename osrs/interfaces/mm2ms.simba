@@ -622,7 +622,8 @@ end;
 (*
 ## Minimap.DebugTiles
 ```pascal
-procedure TRSMinimap.DebugTiles(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER, ERSMinimapDot.NPC, ERSMinimapDot.ITEM]);
+procedure TRSMinimap.DebugTiles(img: TImage; dots: ERSMinimapDots);
+procedure TRSMinimap.DebugTiles(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER..ERSMinimapDot.ITEM]); overload;
 ```
 Simply meant for debugging purposes.
 Will draw a grid of tiles on the mainscreen with the help of `MM2MS`.
@@ -635,11 +636,11 @@ Example:
 Minimap.DebugTiles();
 ```
 *)
-procedure TRSMinimap.DebugTiles(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER, ERSMinimapDot.NPC, ERSMinimapDot.ITEM]);
-const DOT_COLORS: TColorArray = [$FFFFFF, $00FFFF, $0000FF];
+procedure TRSMinimap.DebugTiles(img: TImage; dots: ERSMinimapDots);
+const
+  DOT_COLORS: TColorArray = [$FFFFFF, $00FFFF, $0000FF];
 var
-  img: TImage;
-  p: TPoint;
+  pt: TPoint;
   vector: TVector3;
   quad: TQuad;
   dot: ERSMinimapDot;
@@ -647,14 +648,12 @@ var
   tpa: TPointArray;
 begin
   radians := Self.CompassRadians;
-
-  img := Target.GetImage();
   img.DrawColor := $00FF00;
 
-  for p.X := Self.Center.X - 100 to Self.Center.X + 100 with 4 do
-    for p.Y := Self.Center.Y - 100 to Self.Center.Y + 100 with 4 do
+  for pt.X := Self.Center.X - 100 to Self.Center.X + 100 with 4 do
+    for pt.Y := Self.Center.Y - 100 to Self.Center.Y + 100 with 4 do
     begin
-      vector := p.ToVec3().Rotate(radians, Self.Center);
+      vector := pt.ToVec3().Rotate(radians, Self.Center);
       if not Self.PointOnZoomQuad(vector.ToPoint()) then Continue;
       quad := Self.Vector2MSQuad(vector, radians, [1,1]);
       tpa += quad.Corners.Connect();
@@ -665,9 +664,9 @@ begin
   for dot in dots do
   begin
     tpa := [];
-    for p in Self.GetDots(dot) do
+    for pt in Self.GetDots(dot) do
     begin
-      vector := p.ToVec3();
+      vector := pt.ToVec3();
       if not Self.PointOnZoomQuad(vector.ToPoint()) then Continue;
       quad := Self.Vector2MSQuad(vector, radians, [1,1]);
       tpa += quad.Corners.Connect();
@@ -682,7 +681,14 @@ begin
   quad := Self.Vector2MSQuad(vector, radians, [1,1]);
   tpa := quad.Corners.Connect().Grow(1);
   img.DrawTPA(tpa);
+end;
 
+procedure TRSMinimap.DebugTiles(dots: ERSMinimapDots = [ERSMinimapDot.PLAYER..ERSMinimapDot.ITEM]); overload;
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  Self.DebugTiles(img, dots);
   img.Show();
 end;
 

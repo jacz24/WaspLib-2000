@@ -52,11 +52,13 @@ Main record responsible for {ref}`MM2MS` projection.
 *)
   TMM2MSProjector = record
     RSZoom: Single;
+    Mode: ERSMode;
     ScaleMin, ScaleMax: Single;
     View, Projection, InvertedView, InvertedProjection: TMatrix4;
     Transformer: TVector3;
 
     ViewEye, ViewTarget, ViewUp: TVector3;
+    ProjectionHeight, ProjectionWidth: Integer;
   end;
 
 (*
@@ -211,22 +213,25 @@ end;
 
 procedure TMM2MSProjector.SetupProjection(mode: ERSMode);
 begin
+  // fixed client width & height
+  if Self.ProjectionWidth = 0 then Self.ProjectionWidth := 765;
+  if Self.ProjectionHeight = 0 then Self.ProjectionHeight := 503;
+
   case mode of
     ERSMode.FIXED:
     begin
-      Self.ScaleMin := 0.83 * MainScreen.Bounds.Height / 503; // fixed client height
-      Self.ScaleMax := 6.32 * MainScreen.Bounds.Height / 503; // fixed client height
+      Self.ScaleMin := 0.83 * MainScreen.Bounds.Height / Self.ProjectionHeight;
+      Self.ScaleMax := 6.32 * MainScreen.Bounds.Height / Self.ProjectionHeight;
     end;
 
     ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
     begin
-      Self.ScaleMin := 0.635 * MainScreen.Bounds.Height / 503; // fixed client height
-      Self.ScaleMax := 4.90 * MainScreen.Bounds.Height / 503; // fixed client height
+      Self.ScaleMin := 0.635 * MainScreen.Bounds.Height / Self.ProjectionHeight;
+      Self.ScaleMax := 4.90 * MainScreen.Bounds.Height / Self.ProjectionHeight;
     end;
   end;
 
-  // fixed client width & height
-  Self.Projection := TMatrix4.PerspectiveFovRH(Sqrt(2), 765 / 503 * 1.03, 0.01, 1.0);
+  Self.Projection := TMatrix4.PerspectiveFovRH(Sqrt(2), Self.ProjectionWidth / Self.ProjectionHeight, 0.01, 1.0);
   Self.InvertedProjection := Self._InvertProjection(Self.Projection);
 
   Self.ViewTarget := [0.0, 0.0, 1.0];
@@ -242,6 +247,7 @@ begin
       Self.ViewEye := [0, EYE_Y_RESIZABLE[zoom], EYE_Z_RESIZABLE[zoom]];
   end;
 
+  Self.Mode := mode;
   Self.View := TMatrix4.LookAtRH(Self.ViewEye, Self.ViewTarget, Self.ViewUp);
   Self.InvertedView := Self._InvertView(Self.View);
 end;
@@ -251,7 +257,7 @@ procedure TMM2MSProjector.UpdateZoom(zoom: Integer);
 var
   scale: Double;
 begin
-  if Self.RSZoom = ZOOM2RSZOOM[zoom] then
+  if (Self.RSZoom = ZOOM2RSZOOM[zoom]) and (RSClient.Mode = Self.mode) then
     Exit;
 
   Self.RSZoom := ZOOM2RSZOOM[zoom];
