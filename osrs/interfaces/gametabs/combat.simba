@@ -4,13 +4,40 @@
 type
   TRSCombat = record
     AttackStyles: TBoxArray;
-    Category: TBox;
+
+    Boxes:record
+      TopLeftBox,BottomLeftBox,TopRightBox,BottomRightBox,CategoryBox,CombatLvlBox, AutoRetaliateBox:TBox;
+    end;
   end;
 
 procedure TRSCombat.SetupGameTab();
 begin
-  //TODO...
+  with Gametab.TopLeft do
+  Self.Boxes.TopLeftBox:= [X+20, Y+45, X+85, Y+90];
+
+  with Gametab.topleft do
+  Self.Boxes.TopRightBox:= [X+95, Y+45, X+165, Y+90];
+
+  with Gametab.topleft do
+  Self.Boxes.BottomLeftBox:=[X+20, Y+100, X+85, Y+146];
+
+  with Gametab.topleft do
+  Self.Boxes.BottomRightBox:= [X+95, Y+100, X+165, Y+146];
+
+  with GameTab.topleft do
+  Self.Boxes.CombatLvlBox:= [X+45, Y+25, X+135, Y+40];
+
+  with GameTab.Bounds do
+  Self.Boxes.AutoRetaliateBox:=[X1+20,Y1+155,X2-15,Y2-60];
+
+  with GameTab.Bounds do
+  Self.Boxes.CategoryBox:=[X1+45,Y1+225,X2-45,Y2];
+
+  Self.AttackStyles :=[Self.boxes.topleftbox, Self.Boxes.TopRightbox,Self.Boxes.BottomLeftbox,  Self.Boxes.BottomRightbox];
+  showontarget (Self.attackstyles);
 end;
+
 
 var
   Combat: TRSCombat;
+
