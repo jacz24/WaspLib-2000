@@ -650,8 +650,8 @@ begin
   radians := Self.CompassRadians;
   img.DrawColor := $00FF00;
 
-  for pt.X := Self.Center.X - 100 to Self.Center.X + 100 with 4 do
-    for pt.Y := Self.Center.Y - 100 to Self.Center.Y + 100 with 4 do
+  for pt.X := Self.Center.X - 120 to Self.Center.X + 120 with 4 do
+    for pt.Y := Self.Center.Y - 120 to Self.Center.Y + 120 with 4 do
     begin
       vector := pt.ToVec3().Rotate(radians, Self.Center);
       if not Self.PointOnZoomQuad(vector.ToPoint()) then Continue;
@@ -679,7 +679,7 @@ begin
   img.DrawColor := $FF0000;
   vector := Self.Center.ToVec3();
   quad := Self.Vector2MSQuad(vector, radians, [1,1]);
-  tpa := quad.Corners.Connect().Grow(1);
+  tpa := quad.Corners.Connect();
   img.DrawTPA(tpa);
 end;
 

@@ -549,8 +549,8 @@ begin
        Self.Height(loc + [3,1], False) + Self.Height(loc - [1,1], False);
   h := h/4;
 
-  for x := Minimap.Center.X - 100 to Minimap.Center.X + 100 with 4 do
-    for y := Minimap.Center.Y - 100 to Minimap.Center.Y + 100 with 4 do
+  for x := Minimap.Center.X - 120 to Minimap.Center.X + 120 with 4 do
+    for y := Minimap.Center.Y - 120 to Minimap.Center.Y + 120 with 4 do
     begin
       vector := Point(x,y).ToVec3().Rotate(angle, Minimap.Center);
       pt := vector.ToPoint();
@@ -610,7 +610,7 @@ begin
     end;
 
     img.DrawColor := DOT_COLORS[dot];
-    img.DrawTPA(MainScreen.Filter(tpa).Grow(1));
+    img.DrawTPA(MainScreen.Filter(tpa));
   end;
 end;
 

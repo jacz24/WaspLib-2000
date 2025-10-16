@@ -57,8 +57,9 @@ Main record responsible for {ref}`MM2MS` projection.
     View, Projection, InvertedView, InvertedProjection: TMatrix4;
     Transformer: TVector3;
 
-    ViewEye, ViewTarget, ViewUp: TVector3;
+    ViewEye, CustomEye, ViewTarget, ViewUp: TVector3;
     ProjectionHeight, ProjectionWidth: Integer;
+    MinScaleMultiplier, MaxScaleMultiplier, FOV, ZNear, ZFar: Double;
   end;
 
 (*
@@ -220,18 +221,25 @@ begin
   case mode of
     ERSMode.FIXED:
     begin
-      Self.ScaleMin := 0.83 * MainScreen.Bounds.Height / Self.ProjectionHeight;
-      Self.ScaleMax := 6.32 * MainScreen.Bounds.Height / Self.ProjectionHeight;
+      if Self.MinScaleMultiplier = 0 then Self.MinScaleMultiplier := 0.8;
+      if Self.MaxScaleMultiplier = 0 then Self.MaxScaleMultiplier := 6.32;
     end;
 
     ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
     begin
-      Self.ScaleMin := 0.635 * MainScreen.Bounds.Height / Self.ProjectionHeight;
-      Self.ScaleMax := 4.90 * MainScreen.Bounds.Height / Self.ProjectionHeight;
+      if Self.MinScaleMultiplier = 0 then Self.MinScaleMultiplier := 0.635;
+      if Self.MaxScaleMultiplier = 0 then Self.MaxScaleMultiplier := 4.90;
     end;
   end;
 
-  Self.Projection := TMatrix4.PerspectiveFovRH(Sqrt(2), Self.ProjectionWidth / Self.ProjectionHeight, 0.01, 1.0);
+  Self.ScaleMin := Self.MinScaleMultiplier * MainScreen.Bounds.Height / Self.ProjectionHeight;
+  Self.ScaleMax := Self.MaxScaleMultiplier * MainScreen.Bounds.Height / Self.ProjectionHeight;
+
+  if Self.FOV = 0 then Self.FOV := Sqrt(2);
+  if Self.ZNear = 0 then Self.ZNear := 0.0;
+  if Self.ZFar = 0 then Self.ZFar := 1.0;
+
+  Self.Projection := TMatrix4.PerspectiveFovRH(Self.FOV, Self.ProjectionWidth / Self.ProjectionHeight, 0.01, 1.0);
   Self.InvertedProjection := Self._InvertProjection(Self.Projection);
 
   Self.ViewTarget := [0.0, 0.0, 1.0];
