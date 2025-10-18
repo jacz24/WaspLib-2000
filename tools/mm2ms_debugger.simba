@@ -15,7 +15,12 @@ type
     Target: TTarget;
 
     ProjectionWidth, ProjectionHeight: TLazSpinEdit;
-    MinScaleMultiplier, MaxScaleMultiplier, FOV, ZNear,ZFar, EyeX, EyeY, EyeZ: TLazFloatSpinEdit;
+    MinScaleMultiplier, MaxScaleMultiplier, FOV, ZNear,ZFar: TLazFloatSpinEdit;
+
+    ViewTarget, ViewUp, Eye: record
+      X, Y, Z: TLazFloatSpinEdit;
+    end;
+
     MMDots: ERSMinimapDots;
   end;
 
@@ -46,8 +51,8 @@ begin
   end;
 
   Self.Image := Target.GetImage();
-  Self.Form.Width := Min(800, Self.Image.Width+14);
-  Self.Form.Height := Min(700, Self.Image.Height+90);
+  Self.Form.Width := Max(Min(800, Self.Image.Width+14), Self.Form.Width);
+  Self.Form.Height := Max(Min(700, Self.Image.Height+90), Self.Form.Height);
 
   if Self.Image = nil then
     raise GetDebugLn('MM2MS Debugger', 'Please target or load the client.');
@@ -112,103 +117,45 @@ begin
 end;
 
 
-procedure TMM2MSDebugger.OnProjWidthChange(sender: TLazObject);
+procedure TMM2MSDebugger.OnProjectionSizeChange(sender: TLazObject);
+var
+  ptr: ^Integer;
 begin
-  MM2MS.Projector.ProjectionWidth := TLazSpinEdit(sender).Value;
-  Self.LoadFromClient(sender);
-  TLazSpinEdit(sender).Value := MM2MS.Projector.ProjectionWidth;
-end;
-
-procedure TMM2MSDebugger.OnProjHeightChange(sender: TLazObject);
-begin
-  MM2MS.Projector.ProjectionHeight := TLazSpinEdit(sender).Value;
-  Self.LoadFromClient(sender);
-  TLazSpinEdit(sender).Value := MM2MS.Projector.ProjectionHeight;
-end;
-
-
-procedure TMM2MSDebugger.OnMaxMultiplierChange(sender: TLazObject);
-begin
-  MM2MS.Projector.MaxScaleMultiplier := TLazFloatSpinEdit(sender).Value;
-  Self.LoadFromClient(sender);
-  TLazFloatSpinEdit(sender).Value := MM2MS.Projector.MaxScaleMultiplier;
-end;
-
-procedure TMM2MSDebugger.OnMinMultiplierChange(sender: TLazObject);
-begin
-  MM2MS.Projector.MinScaleMultiplier := TLazFloatSpinEdit(sender).Value;
-  Self.LoadFromClient(sender);
-  TLazFloatSpinEdit(sender).Value := MM2MS.Projector.MinScaleMultiplier;
-end;
-
-
-procedure TMM2MSDebugger.OnFOVChange(sender: TLazObject);
-begin
-  MM2MS.Projector.FOV := TLazFloatSpinEdit(sender).Value;
-  Self.LoadFromClient(sender);
-  TLazFloatSpinEdit(sender).Value := MM2MS.Projector.FOV;
-end;
-
-procedure TMM2MSDebugger.OnZNearChange(sender: TLazObject);
-begin
-  MM2MS.Projector.ZNear := TLazFloatSpinEdit(sender).Value;
-  Self.LoadFromClient(sender);
-  TLazFloatSpinEdit(sender).Value := MM2MS.Projector.ZNear;
-end;
-
-procedure TMM2MSDebugger.OnZFarChange(sender: TLazObject);
-begin
-  MM2MS.Projector.ZFar := TLazFloatSpinEdit(sender).Value;
-  Self.LoadFromClient(sender);
-  TLazFloatSpinEdit(sender).Value := MM2MS.Projector.ZFar;
-end;
-
-
-procedure TMM2MSDebugger.OnEyeXChange(sender: TLazObject);
-begin
-  MM2MS.Projector.ViewEye.X := TLazFloatSpinEdit(sender).Value;
-  Self.LoadFromClient(sender);
-  TLazFloatSpinEdit(sender).Value := MM2MS.Projector.ViewEye.X;
-end;
-
-procedure TMM2MSDebugger.OnEyeYChange(sender: TLazObject);
-begin
-  case RSClient.Mode of
-    ERSMode.FIXED:
-    begin
-      EYE_Y_FIXED[Options.GetZoomLevel(False)] := TLazFloatSpinEdit(sender).Value;
-      Self.LoadFromClient(sender);
-      TLazFloatSpinEdit(sender).Value := EYE_Y_FIXED[Options.GetZoomLevel(False)];
-    end;
-    else
-    begin
-      EYE_Y_RESIZABLE[Options.GetZoomLevel(False)] := TLazFloatSpinEdit(sender).Value;
-      Self.LoadFromClient(sender);
-      TLazFloatSpinEdit(sender).Value := EYE_Y_RESIZABLE[Options.GetZoomLevel(False)];
-    end;
+  case TLazSpinEdit(sender).Name of
+    'width': ptr := @MM2MS.Projector.ProjectionWidth;
+    'height': ptr := @MM2MS.Projector.ProjectionHeight;
   end;
+
+  ptr^ := TLazSpinEdit(sender).Value;
+  Self.LoadFromClient(sender);
+  TLazSpinEdit(sender).Value := ptr^;
 end;
 
-procedure TMM2MSDebugger.OnEyeZChange(sender: TLazObject);
+procedure TMM2MSDebugger.OnProjectionChange(sender: TLazObject);
+var
+  ptr: ^Single;
 begin
-  case RSClient.Mode of
-    ERSMode.FIXED:
-    begin
-      EYE_Z_FIXED[Options.GetZoomLevel(False)] := TLazFloatSpinEdit(sender).Value;
-      Self.LoadFromClient(sender);
-      TLazFloatSpinEdit(sender).Value := EYE_Z_FIXED[Options.GetZoomLevel(False)];
-    end;
-    else
-    begin
-      EYE_Z_RESIZABLE[Options.GetZoomLevel(False)] := TLazFloatSpinEdit(sender).Value;
-      Self.LoadFromClient(sender);
-      TLazFloatSpinEdit(sender).Value := EYE_Z_RESIZABLE[Options.GetZoomLevel(False)];
-    end;
+  case TLazFloatSpinEdit(sender).Name of
+    'fov': ptr := @MM2MS.Projector.FOV;
+    'znear': ptr := @MM2MS.Projector.ZNear;
+    'zfar': ptr := @MM2MS.Projector.ZFar;
+    'max_scale_multi': ptr := @MM2MS.Projector.MaxScaleMultiplier;
+    'min_scale_multi': ptr := @MM2MS.Projector.MinScaleMultiplier;
+    'target_x': ptr := @MM2MS.Projector.ViewTarget.X;
+    'target_y': ptr := @MM2MS.Projector.ViewTarget.Y;
+    'target_z': ptr := @MM2MS.Projector.ViewTarget.Z;
+    'eye_x': ptr := @MM2MS.Projector.ViewEye.X;
+    'eye_y': ptr := @MM2MS.Projector.ViewEye.Y;
+    'eye_z': ptr := @MM2MS.Projector.ViewEye.Z;
+    'up_x': ptr := @MM2MS.Projector.ViewUp.X;
+    'up_y': ptr := @MM2MS.Projector.ViewUp.Y;
+    'up_z': ptr := @MM2MS.Projector.ViewUp.Z;
   end;
+
+  ptr^ := TLazFloatSpinEdit(sender).Value;
+  Self.LoadFromClient(sender);
+  TLazFloatSpinEdit(sender).Value := ptr^;
 end;
-
-
-
 
 
 {$H-}
@@ -236,17 +183,95 @@ begin
   MM2MSDebugger.Form.Position := ELazFormPosition.ScreenCenter;
 
 
+
   panel := TLazPanel.CreateEx(MM2MSDebugger.Form, 0, 0, 0, 38);
   panel.BevelWidth := 0;
   panel.Align := ELazAlign.Top;
 
-  MM2MSDebugger.FOV := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 80);
+  MM2MSDebugger.ViewTarget.Z := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 70);
+  MM2MSDebugger.ViewTarget.Z.Name := 'target_z';
+  MM2MSDebugger.ViewTarget.Z.Value := MM2MS.Projector.ViewTarget.Z;
+  MM2MSDebugger.ViewTarget.Z.Increment := 0.01;
+  MM2MSDebugger.ViewTarget.Z.DecimalPlaces := 4;
+  MM2MSDebugger.ViewTarget.Z.Align := ELazAlign.Left;
+  MM2MSDebugger.ViewTarget.Z.BorderSpacing.Around := 8;
+  MM2MSDebugger.ViewTarget.Z.OnChange := @MM2MSDebugger.OnProjectionChange;
+
+  MM2MSDebugger.ViewTarget.Y := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 70);
+  MM2MSDebugger.ViewTarget.Y.Name := 'target_y';
+  MM2MSDebugger.ViewTarget.Y.Value := MM2MS.Projector.ViewTarget.Y;
+  MM2MSDebugger.ViewTarget.Y.Increment := 0.01;
+  MM2MSDebugger.ViewTarget.Y.DecimalPlaces := 4;
+  MM2MSDebugger.ViewTarget.Y.Align := ELazAlign.Left;
+  MM2MSDebugger.ViewTarget.Y.BorderSpacing.Around := 8;
+  MM2MSDebugger.ViewTarget.Y.OnChange := @MM2MSDebugger.OnProjectionChange;
+
+  MM2MSDebugger.ViewTarget.X := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 70);
+  MM2MSDebugger.ViewTarget.X.Name := 'target_x';
+  MM2MSDebugger.ViewTarget.X.Value := MM2MS.Projector.ViewTarget.X;
+  MM2MSDebugger.ViewTarget.X.Increment := 0.5;
+  MM2MSDebugger.ViewTarget.X.DecimalPlaces := 4;
+  MM2MSDebugger.ViewTarget.X.Align := ELazAlign.Left;
+  MM2MSDebugger.ViewTarget.X.BorderSpacing.Around := 8;
+  MM2MSDebugger.ViewTarget.X.OnChange := @MM2MSDebugger.OnProjectionChange;
+
+  lbl1 := TLazLabel.CreateEx(panel, 'ViewTarget:');
+  lbl1.Font.Color := $FFFFFF;
+  lbl1.Align := ELazAlign.Left;
+  lbl1.BorderSpacing.Top := 10;
+  lbl1.BorderSpacing.Bottom := 10;
+  lbl1.BorderSpacing.Left := 10;
+
+
+  MM2MSDebugger.ViewUp.Z := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 70);
+  MM2MSDebugger.ViewUp.Z.Name := 'up_z';
+  MM2MSDebugger.ViewUp.Z.Value := MM2MS.Projector.ViewUp.Z;
+  MM2MSDebugger.ViewUp.Z.Increment := 0.01;
+  MM2MSDebugger.ViewUp.Z.DecimalPlaces := 4;
+  MM2MSDebugger.ViewUp.Z.Align := ELazAlign.Left;
+  MM2MSDebugger.ViewUp.Z.BorderSpacing.Around := 8;
+  MM2MSDebugger.ViewUp.Z.OnChange := @MM2MSDebugger.OnProjectionChange;
+
+  MM2MSDebugger.ViewUp.Y := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 70);
+  MM2MSDebugger.ViewUp.Y.Name := 'up_y';
+  MM2MSDebugger.ViewUp.Y.Value := MM2MS.Projector.ViewUp.Y;
+  MM2MSDebugger.ViewUp.Y.Increment := 0.01;
+  MM2MSDebugger.ViewUp.Y.DecimalPlaces := 4;
+  MM2MSDebugger.ViewUp.Y.Align := ELazAlign.Left;
+  MM2MSDebugger.ViewUp.Y.BorderSpacing.Around := 8;
+  MM2MSDebugger.ViewUp.Y.OnChange := @MM2MSDebugger.OnProjectionChange;
+
+  MM2MSDebugger.ViewUp.X := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 70);
+  MM2MSDebugger.ViewUp.X.Name := 'up_x';
+  MM2MSDebugger.ViewUp.X.Value := MM2MS.Projector.ViewUp.X;
+  MM2MSDebugger.ViewUp.X.Increment := 0.5;
+  MM2MSDebugger.ViewUp.X.DecimalPlaces := 4;
+  MM2MSDebugger.ViewUp.X.Align := ELazAlign.Left;
+  MM2MSDebugger.ViewUp.X.BorderSpacing.Around := 8;
+  MM2MSDebugger.ViewUp.X.OnChange := @MM2MSDebugger.OnProjectionChange;
+
+  lbl1 := TLazLabel.CreateEx(panel, 'ViewUp:');
+  lbl1.Font.Color := $FFFFFF;
+  lbl1.Align := ELazAlign.Left;
+  lbl1.BorderSpacing.Top := 10;
+  lbl1.BorderSpacing.Bottom := 10;
+  lbl1.BorderSpacing.Left := 10;
+
+
+
+
+  panel := TLazPanel.CreateEx(MM2MSDebugger.Form, 0, 0, 0, 38);
+  panel.BevelWidth := 0;
+  panel.Align := ELazAlign.Top;
+
+  MM2MSDebugger.FOV := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 70);
+  MM2MSDebugger.FOV.Name := 'fov';
   MM2MSDebugger.FOV.Value := MM2MS.Projector.FOV;
   MM2MSDebugger.FOV.Increment := 0.01;
   MM2MSDebugger.FOV.DecimalPlaces := 4;
   MM2MSDebugger.FOV.Align := ELazAlign.Left;
   MM2MSDebugger.FOV.BorderSpacing.Around := 8;
-  MM2MSDebugger.FOV.OnChange := @MM2MSDebugger.OnFOVChange;
+  MM2MSDebugger.FOV.OnChange := @MM2MSDebugger.OnProjectionChange;
 
   lbl1 := TLazLabel.CreateEx(panel, 'FOV:');
   lbl1.Font.Color := $FFFFFF;
@@ -255,12 +280,13 @@ begin
   lbl1.BorderSpacing.Bottom := 10;
   lbl1.BorderSpacing.Left := 10;
 
-  MM2MSDebugger.ZNear := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 80);
+  MM2MSDebugger.ZNear := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 70);
+  MM2MSDebugger.ZNear.Name := 'znear';
   MM2MSDebugger.ZNear.Value := MM2MS.Projector.ZNear;
   MM2MSDebugger.ZNear.DecimalPlaces := 4;
   MM2MSDebugger.ZNear.Align := ELazAlign.Left;
   MM2MSDebugger.ZNear.BorderSpacing.Around := 8;
-  MM2MSDebugger.ZNear.OnChange := @MM2MSDebugger.OnZNearChange;
+  MM2MSDebugger.ZNear.OnChange := @MM2MSDebugger.OnProjectionChange;
 
   lbl1 := TLazLabel.CreateEx(panel, 'ZNear:');
   lbl1.Font.Color := $FFFFFF;
@@ -269,12 +295,13 @@ begin
   lbl1.BorderSpacing.Bottom := 10;
   lbl1.BorderSpacing.Left := 10;
 
-  MM2MSDebugger.ZFar := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 80);
+  MM2MSDebugger.ZFar := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 70);
+  MM2MSDebugger.ZFar.Name := 'zfar';
   MM2MSDebugger.ZFar.Value := MM2MS.Projector.ZFar;
   MM2MSDebugger.ZFar.DecimalPlaces := 4;
   MM2MSDebugger.ZFar.Align := ELazAlign.Left;
   MM2MSDebugger.ZFar.BorderSpacing.Around := 8;
-  MM2MSDebugger.ZFar.OnChange := @MM2MSDebugger.OnZFarChange;
+  MM2MSDebugger.ZFar.OnChange := @MM2MSDebugger.OnProjectionChange;
 
   lbl1 := TLazLabel.CreateEx(panel, 'ZFar:');
   lbl1.Font.Color := $FFFFFF;
@@ -284,89 +311,75 @@ begin
   lbl1.BorderSpacing.Left := 10;
 
 
-  MM2MSDebugger.EyeX := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 80);
-  MM2MSDebugger.EyeX.Value := MM2MS.Projector.ViewEye.X;
-  MM2MSDebugger.EyeX.Increment := 0.5;
-  MM2MSDebugger.EyeX.DecimalPlaces := 5;
-  MM2MSDebugger.EyeX.Align := ELazAlign.Left;
-  MM2MSDebugger.EyeX.BorderSpacing.Around := 8;
-  MM2MSDebugger.EyeX.OnChange := @MM2MSDebugger.OnEyeXChange;
+  MM2MSDebugger.Eye.Z := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 70);
+  MM2MSDebugger.Eye.Z.Name := 'eye_z';
+  MM2MSDebugger.Eye.Z.Value := MM2MS.Projector.ViewEye.Z;
+  MM2MSDebugger.Eye.Z.Increment := 0.05;
+  MM2MSDebugger.Eye.Z.DecimalPlaces := 4;
+  MM2MSDebugger.Eye.Z.Align := ELazAlign.Left;
+  MM2MSDebugger.Eye.Z.BorderSpacing.Around := 8;
+  MM2MSDebugger.Eye.Z.OnChange := @MM2MSDebugger.OnProjectionChange;
 
-  lbl1 := TLazLabel.CreateEx(panel, 'EyeX:');
+  MM2MSDebugger.Eye.Y := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 70);
+  MM2MSDebugger.Eye.Y.Name := 'eye_y';
+  MM2MSDebugger.Eye.Y.Value := MM2MS.Projector.ViewEye.Y;
+  MM2MSDebugger.Eye.Y.Increment := 0.01;
+  MM2MSDebugger.Eye.Y.DecimalPlaces := 4;
+  MM2MSDebugger.Eye.Y.Align := ELazAlign.Left;
+  MM2MSDebugger.Eye.Y.BorderSpacing.Around := 8;
+  MM2MSDebugger.Eye.Y.OnChange := @MM2MSDebugger.OnProjectionChange;
+
+  MM2MSDebugger.Eye.X := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 70);
+  MM2MSDebugger.Eye.X.Name := 'eye_x';
+  MM2MSDebugger.Eye.X.Value := MM2MS.Projector.ViewEye.X;
+  MM2MSDebugger.Eye.X.Increment := 0.5;
+  MM2MSDebugger.Eye.X.DecimalPlaces := 4;
+  MM2MSDebugger.Eye.X.Align := ELazAlign.Left;
+  MM2MSDebugger.Eye.X.BorderSpacing.Around := 8;
+  MM2MSDebugger.Eye.X.OnChange := @MM2MSDebugger.OnProjectionChange;
+
+  lbl1 := TLazLabel.CreateEx(panel, 'ViewEye:');
   lbl1.Font.Color := $FFFFFF;
   lbl1.Align := ELazAlign.Left;
   lbl1.BorderSpacing.Top := 10;
   lbl1.BorderSpacing.Bottom := 10;
   lbl1.BorderSpacing.Left := 10;
 
-  MM2MSDebugger.EyeY := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 80);
-  MM2MSDebugger.EyeY.Value := MM2MS.Projector.ViewEye.Y;
-  MM2MSDebugger.EyeY.Increment := 0.01;
-  MM2MSDebugger.EyeY.DecimalPlaces := 4;
-  MM2MSDebugger.EyeY.Align := ELazAlign.Left;
-  MM2MSDebugger.EyeY.BorderSpacing.Around := 8;
-  MM2MSDebugger.EyeY.OnChange := @MM2MSDebugger.OnEyeYChange;
-
-  lbl1 := TLazLabel.CreateEx(panel, 'EyeY:');
-  lbl1.Font.Color := $FFFFFF;
-  lbl1.Align := ELazAlign.Left;
-  lbl1.BorderSpacing.Top := 10;
-  lbl1.BorderSpacing.Bottom := 10;
-  lbl1.BorderSpacing.Left := 10;
-
-  MM2MSDebugger.EyeZ := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 80);
-  MM2MSDebugger.EyeZ.Value := MM2MS.Projector.ViewEye.Z;
-  MM2MSDebugger.EyeZ.Increment := 0.01;
-  MM2MSDebugger.EyeZ.DecimalPlaces := 4;
-  MM2MSDebugger.EyeZ.Align := ELazAlign.Left;
-  MM2MSDebugger.EyeZ.BorderSpacing.Around := 8;
-  MM2MSDebugger.EyeZ.OnChange := @MM2MSDebugger.OnEyeZChange;
-
-  lbl1 := TLazLabel.CreateEx(panel, 'EyeZ:');
-  lbl1.Font.Color := $FFFFFF;
-  lbl1.Align := ELazAlign.Left;
-  lbl1.BorderSpacing.Top := 10;
-  lbl1.BorderSpacing.Bottom := 10;
-  lbl1.BorderSpacing.Left := 10;
 
 
   panel := TLazPanel.CreateEx(MM2MSDebugger.Form, 0, 0, 0, 38);
   panel.BevelWidth := 0;
   panel.Align := ELazAlign.Top;
 
-  MM2MSDebugger.ProjectionHeight := TLazSpinEdit.CreateEx(panel);
+  MM2MSDebugger.ProjectionHeight := TLazSpinEdit.CreateEx(panel);    
+  MM2MSDebugger.ProjectionHeight.Name := 'height';
   MM2MSDebugger.ProjectionHeight.Value := MM2MS.Projector.ProjectionHeight;
   MM2MSDebugger.ProjectionHeight.Align := ELazAlign.Left;
   MM2MSDebugger.ProjectionHeight.BorderSpacing.Around := 8;
-  MM2MSDebugger.ProjectionHeight.OnChange := @MM2MSDebugger.OnProjHeightChange;
-
-  lbl1 := TLazLabel.CreateEx(panel, 'Projection Height:');
-  lbl1.Font.Color := $FFFFFF;
-  lbl1.Align := ELazAlign.Left;
-  lbl1.BorderSpacing.Top := 10;
-  lbl1.BorderSpacing.Bottom := 10;
-  lbl1.BorderSpacing.Left := 10;
+  MM2MSDebugger.ProjectionHeight.OnChange := @MM2MSDebugger.OnProjectionSizeChange;
 
   MM2MSDebugger.ProjectionWidth := TLazSpinEdit.CreateEx(panel);
+  MM2MSDebugger.ProjectionWidth.Name := 'width';
   MM2MSDebugger.ProjectionWidth.Value := MM2MS.Projector.ProjectionWidth;
   MM2MSDebugger.ProjectionWidth.Align := ELazAlign.Left;
   MM2MSDebugger.ProjectionWidth.BorderSpacing.Around := 8;
-  MM2MSDebugger.ProjectionWidth.OnChange := @MM2MSDebugger.OnProjWidthChange;
+  MM2MSDebugger.ProjectionWidth.OnChange := @MM2MSDebugger.OnProjectionSizeChange;
 
-  lbl1 := TLazLabel.CreateEx(panel, 'Projection Width:');
+  lbl1 := TLazLabel.CreateEx(panel, 'Projection Size:');
   lbl1.Font.Color := $FFFFFF;
   lbl1.Align := ELazAlign.Left;
   lbl1.BorderSpacing.Top := 10;
   lbl1.BorderSpacing.Bottom := 10;
   lbl1.BorderSpacing.Left := 10;
 
-  MM2MSDebugger.MaxScaleMultiplier := TLazFloatSpinEdit.CreateEx(panel);
+  MM2MSDebugger.MaxScaleMultiplier := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 70);
+  MM2MSDebugger.MaxScaleMultiplier.Name := 'max_scale_multi';
   MM2MSDebugger.MaxScaleMultiplier.Value := MM2MS.Projector.MaxScaleMultiplier;
   MM2MSDebugger.MaxScaleMultiplier.DecimalPlaces := 4;
   MM2MSDebugger.MaxScaleMultiplier.Increment := 0.01;
   MM2MSDebugger.MaxScaleMultiplier.Align := ELazAlign.Left;
   MM2MSDebugger.MaxScaleMultiplier.BorderSpacing.Around := 8;
-  MM2MSDebugger.MaxScaleMultiplier.OnChange := @MM2MSDebugger.OnMaxMultiplierChange;
+  MM2MSDebugger.MaxScaleMultiplier.OnChange := @MM2MSDebugger.OnProjectionChange;
 
   lbl1 := TLazLabel.CreateEx(panel, 'MaxScale Multiplier:');
   lbl1.Font.Color := $FFFFFF;
@@ -375,13 +388,14 @@ begin
   lbl1.BorderSpacing.Bottom := 10;
   lbl1.BorderSpacing.Left := 10;
 
-  MM2MSDebugger.MinScaleMultiplier := TLazFloatSpinEdit.CreateEx(panel);
+  MM2MSDebugger.MinScaleMultiplier := TLazFloatSpinEdit.CreateEx(panel, '', '', 0, 0, 70);
+  MM2MSDebugger.MinScaleMultiplier.Name := 'min_scale_multi';
   MM2MSDebugger.MinScaleMultiplier.Value := MM2MS.Projector.MinScaleMultiplier;
   MM2MSDebugger.MinScaleMultiplier.Increment := 0.002;
-  MM2MSDebugger.MinScaleMultiplier.DecimalPlaces := 5;
+  MM2MSDebugger.MinScaleMultiplier.DecimalPlaces := 4;
   MM2MSDebugger.MinScaleMultiplier.Align := ELazAlign.Left;
   MM2MSDebugger.MinScaleMultiplier.BorderSpacing.Around := 8;
-  MM2MSDebugger.MinScaleMultiplier.OnChange := @MM2MSDebugger.OnMinMultiplierChange;
+  MM2MSDebugger.MinScaleMultiplier.OnChange := @MM2MSDebugger.OnProjectionChange;
 
   lbl1 := TLazLabel.CreateEx(panel, 'MinScale Multiplier:');
   lbl1.Font.Color := $FFFFFF;

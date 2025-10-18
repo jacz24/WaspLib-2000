@@ -33,6 +33,7 @@ begin
   Music.SetupGameTab();
 
   MM2MS.Setup();
+  RSCamera.Setup();
 
   Chat.SetupInterface();
   Make.SetupInterface();
