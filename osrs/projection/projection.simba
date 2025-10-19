@@ -61,7 +61,7 @@ end.
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
-  EProjector = enum(MM2MS, CAMERA);
+  EProjector = enum(CAMERA, MM2MS);
 (*
 ## TProjection
 Main record responsible for projection.
@@ -121,7 +121,7 @@ begin
   end;
 end;
 
-function TProjection.InvertedRun(arr: TVector3Array): TPointArray;
+function TProjection.ReverseRun(arr: TVector3Array): TPointArray;
 var
   v: TVector2;
 begin
@@ -252,12 +252,8 @@ var
   v1, v2: TVector2;
   arr: TPointArray;
 begin
-  size.X := 2 * size.X;
-  size.Y := 2 * size.Y;
-
-  vector.X += offset.X;
-  vector.Y += offset.Y;
-  vector.Z += offset.Z;
+  size.X := 2 * size.X; size.Y := 2 * size.Y;
+  vector.X += offset.X; vector.Y += offset.Y; vector.Z += offset.Z;
 
   with Self.NormalizeEx([vector.X, vector.Y], radians) do
   begin
@@ -352,7 +348,7 @@ This is not an exact reversion of what `MM2MS` does but it's very accurate.
 *)
 function TRSMainScreen.Point2MM(pt: TPoint; height: Single): TPoint;
 begin
-  Result := Projection.InvertedRun([[pt.X, pt.Y, height]])[0];
+  Result := Projection.ReverseRun([[pt.X, pt.Y, height]])[0];
 end;
 
 
@@ -387,7 +383,7 @@ begin
   if Projection.ZoomQuads[Options.GetZoomLevel(True)] <> Default(TQuad) then
     Exit(Projection.ZoomQuads[Options.ZoomLevel]);
 
-  tpa := Projection.InvertedRun([
+  tpa := Projection.ReverseRun([
            MainScreen.TopLeft.ToVec3(),
            MainScreen.TopRight.ToVec3(),
            MainScreen.BottomRight.ToVec3(),
@@ -699,6 +695,7 @@ begin
   for pt.X := Self.Center.X - 120 to Self.Center.X + 120 with 4 do
     for pt.Y := Self.Center.Y - 120 to Self.Center.Y + 120 with 4 do
     begin
+      //if not Self.PointOnZoomQuad(pt) then Continue;
       vector := pt.ToVec3().Rotate(radians, Self.Center);
       quad := Self.Vector2MSQuad(vector, radians, [1,1]);
       tpa += quad.Corners.Connect();

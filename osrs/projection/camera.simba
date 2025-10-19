@@ -13,6 +13,7 @@ Record responsible of handling projection, similar to {ref}`MM2MS`.
     X, Y, Z, Pitch, Yaw, Scale, MinScale, MaxScale, ZOffset: Integer;
     Player, Center, Camera, Offset, ViewportOffset, Origin: TPoint;
     Sines, Cosines: array [0..2047] of Int32;
+    ZoomScale, Radians: Single;
     const MIN_PITCH: Integer = 128;
     const MAX_PITCH: Integer = 383;
   end;
@@ -22,6 +23,9 @@ var
   i: Integer;
   percent: Double;
 begin
+  Self.ZoomScale := -1;
+  Self.Radians := -1;
+
   Self.Pitch := 383;
 
   for i := 0 to 2047 do
@@ -71,19 +75,27 @@ begin
   Self.Y := Self.Player.Y - 674 - Round(235 * (Self.MAX_PITCH - value) / (Self.MAX_PITCH - Self.MIN_PITCH));
 end;
 
-procedure TRSCamera.Update(zoom: Integer; rads: Double);
+procedure TRSCamera.Update(zoom: Integer; rads: Single);
 begin
-  Self.Z := Self.ZOffset + Round(1237 * (Self.MAX_PITCH - Self.Pitch) / (Self.MAX_PITCH - Self.MIN_PITCH) - (zoom/100) * 75);
-  Self.Yaw := Trunc((rads / TAU) * 2047);
-  Self.Scale := Round(Self.MinScale + ZOOM2RSZOOM[zoom] * (Self.MaxScale-Self.MinScale));
+  if Self.ZoomScale <> ZOOM2RSZOOM[zoom] then
+  begin
+    Self.Z := Self.ZOffset + Round(1237 * (Self.MAX_PITCH - Self.Pitch) / (Self.MAX_PITCH - Self.MIN_PITCH) - (zoom/100) * 75);
+    Self.ZoomScale := ZOOM2RSZOOM[zoom];
+    Self.Scale := Round(Self.MinScale + Self.ZoomScale * (Self.MaxScale-Self.MinScale));
+  end;
 
-  Self.Camera.X := Round(Self.Center.X + Cos(rads) * (Self.X - Self.Center.X) - Sin(rads) * (Self.Y - Self.Center.Y));
-  Self.Camera.Y := Round(Self.Center.Y + Sin(rads) * (Self.X - Self.Center.X) + Cos(rads) * (Self.Y - Self.Center.Y));
-  Self.Origin.X := Self.Camera.X - Self.Player.X;
-  Self.Origin.Y := Self.Camera.Y - Self.Player.Y;
+  if Self.Radians <> rads then
+  begin
+    Self.Yaw := Trunc((rads / TAU) * 2047);
+    Self.Camera.X := Round(Self.Center.X + Cos(rads) * (Self.X - Self.Center.X) - Sin(rads) * (Self.Y - Self.Center.Y));
+    Self.Camera.Y := Round(Self.Center.Y + Sin(rads) * (Self.X - Self.Center.X) + Cos(rads) * (Self.Y - Self.Center.Y));
+    Self.Origin.X := Self.Camera.X - Self.Player.X;
+    Self.Origin.Y := Self.Camera.Y - Self.Player.Y;
+    Self.Radians := rads;
+  end;
 end;
 
-
+//MM2MS
 function TRSCamera.MinimapOffset(constref coordinate: TVector3): TVector3;
 begin
   Result.X := (coordinate.X-Minimap.Center.X)/4*128 - Self.Origin.X;
@@ -103,8 +115,8 @@ begin
   y1 := Sar(y * Self.Cosines[Self.Yaw] - x * Self.Sines[Self.Yaw], 16);
   z1 := Sar(y1 * Self.Cosines[Self.Pitch] + z * Self.Sines[Self.Pitch], 16);
 
-  if z1 < 50 then
-    Exit;
+  //if z1 < 50 then Exit;
+  if z1 = 0 then z1 := 1;
 
   x1 := Sar(x * Self.Cosines[Self.Yaw] + y * Self.Sines[Self.Yaw], 16);
   y2 := Sar(z * Self.Cosines[Self.Pitch] - y1 * Self.Sines[Self.Pitch], 16);
@@ -136,6 +148,7 @@ begin
 end;
 
 
+//MS2MM not working
 function TRSCamera.ReverseMinimapOffset(constref transformed: TVector3): TVector3;
 begin
   Result.X := (transformed.X + Self.Origin.X)*4/128 + Minimap.Center.X;
