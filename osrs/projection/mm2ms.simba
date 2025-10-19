@@ -1,12 +1,12 @@
 (*
-# MM2MS Projector
+# MM2MS
 Originally created by [slacky](https://slacky.one/).
 
 MM2MS inversion originally created by Bootje.
 
 This is basically the same thing with some pre-calculated math
 
-The MM2MS Projector is usually used through {ref}`MM2MS`, but can be used by
+The MM2MS projector is usually used through {ref}`MM2MS`, but can be used by
 itself if you want and know what you are doing.
 
 By itself, the projector is basically a 3D engine, very similar to what the game
@@ -42,15 +42,15 @@ below, with vertical lines creating Z axis intersections.
 
 That's what a 3D grid is.
 *)
-{$DEFINE WL_MM2MS_PROJECTOR_INCLUDED}
+{$DEFINE WL_MM2MS_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*
-## TMM2MSProjector
+## TMM2MS
 Main record responsible for {ref}`MM2MS` projection.
 *)
-  TMM2MSProjector = record
+  TMM2MS = record
     RSZoom: Single;
     Mode: ERSMode;
     ScaleMin, ScaleMax: Single;
@@ -64,8 +64,8 @@ Main record responsible for {ref}`MM2MS` projection.
 
 (*
 If you want to play with this and understand it better, you may need to override
-some functions like `TMM2MSProjector.UpdateViewMatrix` and
-`TMM2MSProjector.SetupProjection`.
+some functions like `TMM2MS.UpdateViewMatrix` and
+`TMM2MS.SetupProjection`.
 
 A good strategy is to create overrides and/or link some of the fields availble
 to the keyboard so you can edit them and see how the projection is affected in
@@ -112,7 +112,7 @@ var
   EYE_Y_RESIZABLE: array [0..100] of Single = [-18,-22,-22,-20,-22,-22,-22,-22,-22,-22,-22,-17,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-19,-15,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22,-22];
   EYE_Z_RESIZABLE: array [0..100] of Single = [53,59,59,53,59,59,59,59,59,59,59,68,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,60,67,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59,59];
 
-function TMM2MSProjector._InvertProjection(matrix: TMatrix4): TMatrix4;
+function TMM2MS._InvertProjection(matrix: TMatrix4): TMatrix4;
 begin
   // 1) undo X/Y scale
   Result.M11 := 1.0 / matrix.M11;
@@ -137,7 +137,7 @@ begin
   Result.M42 := 0.0;
 end;
 
-function TMM2MSProjector._InvertView(matrix: TMatrix4): TMatrix4;
+function TMM2MS._InvertView(matrix: TMatrix4): TMatrix4;
 var
   t1,t2,t3: Single;
 begin
@@ -169,7 +169,7 @@ begin
 end;
 
 
-property TMM2MSProjector.World(rotation: TVector3): TMatrix4;
+property TMM2MS.World(rotation: TVector3): TMatrix4;
 const
   MATRIX_IDENTITY: TMatrix4 = [
     1.0, 0.0, 0.0, 0.0,
@@ -181,7 +181,7 @@ begin
   Result := TMatrix4.RotationYawPitchRoll(rotation.Y, rotation.X, rotation.Z) * MATRIX_IDENTITY;
 end;
 
-property TMM2MSProjector.InvertedWorld(rotation: TVector3): TMatrix4;
+property TMM2MS.InvertedWorld(rotation: TVector3): TMatrix4;
 var
   vector: TVector3;
   matrix: TMatrix4;
@@ -212,7 +212,7 @@ begin
   Result.M44 := 1.0;
 end;
 
-procedure TMM2MSProjector.SetupProjection(mode: ERSMode);
+procedure TMM2MS.SetupProjection(mode: ERSMode);
 begin
   // fixed client width & height
   if Self.ProjectionWidth = 0 then Self.ProjectionWidth := 765;
@@ -246,7 +246,7 @@ begin
   Self.ViewUp     := [0.0, 1.0, 0.0];
 end;
 
-procedure TMM2MSProjector.UpdateViewMatrix(mode: ERSMode; zoom: Integer);
+procedure TMM2MS.UpdateViewMatrix(mode: ERSMode; zoom: Integer);
 begin
   case mode of
     ERSMode.FIXED: Self.ViewEye := [0, EYE_Y_FIXED[zoom], EYE_Z_FIXED[zoom]];
@@ -261,7 +261,7 @@ begin
 end;
 
 
-procedure TMM2MSProjector.UpdateZoom(zoom: Integer);
+procedure TMM2MS.UpdateZoom(zoom: Integer);
 var
   scale: Double;
 begin
@@ -279,7 +279,7 @@ begin
 end;
 
 
-function TMM2MSProjector.Transform(coord: TVector3; matrix: TMatrix4): TVector3;
+function TMM2MS.Transform(coord: TVector3; matrix: TMatrix4): TVector3;
 begin
   with coord.Transform(matrix) do
   begin
@@ -288,7 +288,7 @@ begin
   end;
 end;
 
-function TMM2MSProjector.InvertedTransform(coord: TVector3; matrix: TMatrix4): TVector3;
+function TMM2MS.InvertedTransform(coord: TVector3; matrix: TMatrix4): TVector3;
 var
   ndcX, ndcY, scale, yOff: Double;
   nearNDC, farNDC, worldNear, worldFar: TVector3;
@@ -313,7 +313,7 @@ begin
 end;
 
 
-function TMM2MSProjector.Run(coords: TVector3Array; rotation: TVector3): TVector2Array;
+function TMM2MS.Run(coords: TVector3Array; rotation: TVector3): TVector2Array;
 var
   i: Integer;
   transformMatrix: TMatrix4;
@@ -324,7 +324,7 @@ begin
     Result += Self.Transform(coords[i], transformMatrix).ToVec2();
 end;
 
-function TMM2MSProjector.InvertRun(coords: TVector3Array; rotation: TVector3): TVector2Array;
+function TMM2MS.InvertRun(coords: TVector3Array; rotation: TVector3): TVector2Array;
 var
   i: Integer;
   transformMatrix: TMatrix4;

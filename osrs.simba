@@ -114,9 +114,9 @@ Summary: It includes this file until the current file is reached.
 {$IFNDEF WL_DOTFILTERS_INCLUDED}            {$INCLUDE_ONCE osrs/dotfilters.simba}
 
 
-{$IFNDEF WL_MM2MS_PROJECTOR_INCLUDED}       {$INCLUDE_ONCE osrs/interfaces/mm2ms_projector.simba}
-{$IFNDEF WL_CAMERA_INCLUDED}                {$INCLUDE_ONCE osrs/camera.simba}
-{$IFNDEF WL_MM2MS_INCLUDED}                 {$INCLUDE_ONCE osrs/interfaces/mm2ms.simba}
+{$IFNDEF WL_MM2MS_INCLUDED}                 {$INCLUDE_ONCE osrs/projection/mm2ms.simba}
+{$IFNDEF WL_CAMERA_INCLUDED}                {$INCLUDE_ONCE osrs/projection/camera.simba}
+{$IFNDEF WL_PROJECTION_INCLUDED}            {$INCLUDE_ONCE osrs/projection/projection.simba}
 
 {$IFNDEF WL_ANTIBAN_INCLUDED}               {$INCLUDE_ONCE osrs/antiban/antiban.simba}
 

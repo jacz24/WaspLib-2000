@@ -1,19 +1,25 @@
 (*
-# MM2MS
+# Projection
 The core for our minimap to mainscreen projection.
+
 Supports rotation, and zoom, and resizable client.
+In the case of `TRSCamera` it also supports different pitch levels.
 
-MM2MS extends the Minimap interface as well as the mainscreen interface with
-functionality to convert coordinates to & from the minimap to the mainscreen (mm2ms).
+Projection extends the {ref}`Minimap` and {ref}`MainScreen` interfaces with
+functionality to convert coordinates to & from one to the other, usually refered
+to as `MM2MS` or `MS2MM`.
 
-Original work done by [slacky](https://slacky.one/).
+There's 2 systems of projection:
+- MM2MS, original work done by [slacky](https://slacky.one/).
+- RSCamera, a reverse engineered projection from the client itself.
 
-It's thanks to {ref}`MM2MS` that we can have the following grid:
+It's thanks to these that we can project the following grid, in this example
+{ref}`MM2MS` is being used:
 ```{figure} ../../images/mm2ms.png
 ```
 
-MM2MS by itself is just a 3D grid with infinite cross sections in all axis
-(read {ref}`MM2MS Projector` for more information).
+Projection by itself is just a 3D space, sort of like a grid with infinite cross
+sections in all axis (read {ref}`MM2MS Projector` for more information).
 
 It's up to you to give it coordinates you want to be converted, for example:
 ```pascal
@@ -23,7 +29,7 @@ begin
   while True do
   begin
     Options.GetZoomLevel(False);
-    Minimap.DebugTiles([]);
+    Minimap.DebugTiles();
   end;
 end.
 ```
@@ -51,34 +57,41 @@ end.
 ```
 *)
 
-{$DEFINE WL_MM2MS_INCLUDED}
+{$DEFINE WL_PROJECTION_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
+  EProjector = enum(MM2MS, CAMERA);
 (*
-## TRSMM2MS
-Main record responsible for minimap to mainscreen ({ref}`MM2MS`) conversion.
+## TProjection
+Main record responsible for projection.
 *)
-  TRSMM2MS = record
-    {%codetools off}
+  TProjection = record
+    System: EProjector;
     ZoomQuads: array [0..100] of TQuad;
     PlayerBoxes: array [0..100] of TBox;
-    {%codetools on}
-    Projector, Normalizer: TMM2MSProjector;
-    const MAX_RENDER_DISTANCE: Integer = 80; //roughly 20 tiles
+    MM2MSProjector, MM2MSNormalizer: TMM2MS;
+    CameraProjector, CameraNormalizer: TRSCamera;
+    RENDER_DISTANCE: Integer;
   end;
 
-procedure TRSMM2MS.Setup();
+procedure TProjection.Setup();
 begin
-  Self.Projector.SetupProjection(RSClient.Mode);
-  Self.Normalizer.SetupProjection(ERSMode.FIXED);
-  Self.Normalizer.UpdateZoom(50);
+  Self.CameraProjector.Setup();
+  Self.CameraNormalizer.Setup();
+  Self.CameraNormalizer.Update(50, 0);
+  Self.MM2MSProjector.SetupProjection(RSClient.Mode);
+  Self.MM2MSNormalizer.SetupProjection(ERSMode.FIXED);
+  Self.MM2MSNormalizer.UpdateZoom(50);
+
+  if Self.RENDER_DISTANCE = 0 then
+    Self.RENDER_DISTANCE := 90;
 end;
 
 (*
-## MM2MS.Run
+## Projection.Run
 ```pascal
-function TRSMM2MS.Run(arr: TVector3Array; roll: Single): TPointArray;
+function TProjection.Run(arr: TVector3Array; roll: Single): TPointArray;
 ```
 Core method that will run the `TMM2MSProjector` to convert points from the
 minimap to the mainscreen.
@@ -86,41 +99,59 @@ minimap to the mainscreen.
 You will likely not need to use this directly and will only interact with the
 `TRSMinimap` and `TRSMainScreen` extensions below.
 *)
-function TRSMM2MS.Run(arr: TVector3Array; roll: Single): TPointArray;
+function TProjection.Run(arr: TVector3Array; roll: Single): TPointArray;
 var
   i: Integer;
   normed: TVector3Array;
 begin
-  Self.Projector.UpdateZoom(Options.GetZoomLevel(True));
-  with Minimap.Center do
-    for i := 0 to High(arr) do
-      normed += [arr[i].X - X, Y - arr[i].Y, arr[i].Z];
-
-  Result := Self.Projector.Run(normed, [0, 0, TAU - roll]).ToPoints();
+  case Self.System of
+    EProjector.CAMERA:
+    begin
+      Self.CameraProjector.Update(Options.GetZoomLevel(True), roll);
+      Result := Self.CameraProjector.Run(arr);
+    end;
+    EProjector.MM2MS:
+    begin
+      with Minimap.Center do
+        for i := 0 to High(arr) do
+          normed += [arr[i].X - X, Y - arr[i].Y, arr[i].Z];
+      Self.MM2MSProjector.UpdateZoom(Options.GetZoomLevel(True));
+      Result := Self.MM2MSProjector.Run(normed, [0, 0, TAU - roll]).ToPoints();
+    end;
+  end;
 end;
 
-function TRSMM2MS.InvertedRun(arr: TVector3Array): TPointArray;
+function TProjection.InvertedRun(arr: TVector3Array): TPointArray;
 var
   v: TVector2;
 begin
-  Self.Projector.UpdateZoom(Options.GetZoomLevel(True));
-
-  with Minimap.Center do
-    for v in Self.Projector.InvertRun(arr, [0.0, 0.0, 0.0]) do
-      Result += [Round(v.X) + X, Y - Round(v.Y)];
+  case Self.System of
+    EProjector.CAMERA:
+    begin
+      Self.CameraProjector.Update(Options.GetZoomLevel(True), Minimap.CompassRadians);
+      Result := Self.CameraProjector.ReverseRun(arr);
+    end;
+    EProjector.MM2MS:
+    begin
+      Self.MM2MSProjector.UpdateZoom(Options.GetZoomLevel(True));
+      with Minimap.Center do
+        for v in Self.MM2MSProjector.InvertRun(arr, [0.0, 0.0, 0.0]) do
+          Result += [Round(v.X) + X, Y - Round(v.Y)];
+    end;
+  end;
 end;
 
 
 var
 (*
 ## MM2MS variable
-Global {ref}`TRSMM2MS` variable.
+Global {ref}`TProjection` variable.
 
 It's unlikely you need to use this directly.
 
 You usually only need the `TRSMinimap` and `TRSMainScreen` extensions below.
 *)
-  MM2MS: TRSMM2MS;
+  Projection: TProjection;
 
 (*
 ## Minimap Vectors To MainScreen
@@ -141,13 +172,13 @@ begin
       vectors[i].Y := Y;
     end;
 
-  Result := MM2MS.Run(vectors, radians);
+  Result := Projection.Run(vectors, radians);
 end;
 
 function TRSMinimap.Vector2MS(vector: TVector3; radians: Single): TPoint;
 begin
   with Self.NormalizeEx([vector.X, vector.Y], radians) do
-    Result := MM2MS.Run([[X, Y, vector.Z]], radians)[0];
+    Result := Projection.Run([[X, Y, vector.Z]], radians)[0];
 end;
 
 
@@ -177,7 +208,7 @@ begin
       vectors[i].Y := Y;
     end;
 
-  Result := MM2MS.Run(vectors, radians);
+  Result := Projection.Run(vectors, radians);
 end;
 
 function TRSMinimap.Point2MS(pt: TPoint; radians: Single = $FFFF): TPoint;
@@ -185,7 +216,7 @@ begin
   if radians = $FFFF then
     radians := Self.CompassRadians;
   with Self.Normalize(pt, radians) do
-    Result := MM2MS.Run([[X, Y, 0]], radians)[0];
+    Result := Projection.Run([[X, Y, 0]], radians)[0];
 end;
 
 function TRSMinimap.ATPA2MS(atpa: T2DPointArray; radians: Single = $FFFF): T2DPointArray; overload;
@@ -237,10 +268,10 @@ begin
   v1 := [vector.X-size.X, vector.Y-size.Y];
   v2 := [vector.X+size.X, vector.Y+size.Y];
 
-  arr := MM2MS.Run([[v1.X, v1.Y, vector.Z],
-                    [v2.X, v1.Y, vector.Z],
-                    [v2.X, v2.Y, vector.Z],
-                    [v1.X, v2.Y, vector.Z]], radians);
+  arr := Projection.Run([[v1.X, v1.Y, vector.Z],
+                        [v2.X, v1.Y, vector.Z],
+                        [v2.X, v2.Y, vector.Z],
+                        [v1.X, v2.Y, vector.Z]], radians);
 
   Result := [arr[0], arr[1], arr[2], arr[3]];
 end;
@@ -291,7 +322,7 @@ begin
   v1 := [vector.X-size.X, vector.Y-size.Y];
   v2 := [vector.X+size.X, vector.Y+size.Y];
 
-  arr := MM2MS.Run([
+  arr := Projection.Run([
                 [v1.X, v1.Y, vector.Z+size.Z], [v2.X, v1.Y, vector.Z+size.Z],
                 [v2.X, v2.Y, vector.Z+size.Z], [v1.X, v2.Y, vector.Z+size.Z],
 
@@ -321,7 +352,7 @@ This is not an exact reversion of what `MM2MS` does but it's very accurate.
 *)
 function TRSMainScreen.Point2MM(pt: TPoint; height: Single): TPoint;
 begin
-  Result := MM2MS.InvertedRun([[pt.X, pt.Y, height]])[0];
+  Result := Projection.InvertedRun([[pt.X, pt.Y, height]])[0];
 end;
 
 
@@ -353,10 +384,10 @@ property TRSMinimap.ZoomQuad: TQuad;
 var
   tpa: TPointArray;
 begin
-  if MM2MS.ZoomQuads[Options.GetZoomLevel(True)] <> [] then
-    Exit(MM2MS.ZoomQuads[Options.ZoomLevel]);
+  if Projection.ZoomQuads[Options.GetZoomLevel(True)] <> Default(TQuad) then
+    Exit(Projection.ZoomQuads[Options.ZoomLevel]);
 
-  tpa := MM2MS.InvertedRun([
+  tpa := Projection.InvertedRun([
            MainScreen.TopLeft.ToVec3(),
            MainScreen.TopRight.ToVec3(),
            MainScreen.BottomRight.ToVec3(),
@@ -365,7 +396,7 @@ begin
 
   Result := [tpa[0],tpa[1],tpa[2],tpa[3]];
 
-  MM2MS.ZoomQuads[Options.ZoomLevel] := Result;
+  Projection.ZoomQuads[Options.ZoomLevel] := Result;
 end;
 
 (*
@@ -504,12 +535,27 @@ var
   arr: TVector2Array;
 begin
   if dist = 0 then Exit;
-  MM2MS.Projector.UpdateZoom(Options.GetZoomLevel(True));
+  case Projection.System of
+    EProjector.CAMERA:
+    begin
+      Projection.CameraNormalizer.Update(Options.GetZoomLevel(True), 0);
 
-  with MainScreen.Center do
-    arr := MM2MS.Normalizer.InvertRun([[X,Y,0], [X,Y-dist,0]], [0,0,0]);
-  arr := MM2MS.Projector.Run([arr[0].ToVec3(0), arr[1].ToVec3(0)], [0,0,0]);
-  Result := Round(arr[0].Distance(arr[1]));
+      with MainScreen.Center do
+        arr := Projection.CameraNormalizer.ReverseRunEx([[X,Y,0], [X,Y-dist,0]]);
+      arr := Projection.CameraProjector.RunEx([arr[0].ToVec3(0), arr[1].ToVec3(0)]);
+      Result := Round(arr[0].Distance(arr[1]));
+    end;
+
+    EProjector.MM2MS:
+    begin
+      Projection.MM2MSProjector.UpdateZoom(Options.GetZoomLevel(True));
+
+      with MainScreen.Center do
+        arr := Projection.MM2MSNormalizer.InvertRun([[X,Y,0], [X,Y-dist,0]], [0,0,0]);
+      arr := Projection.MM2MSProjector.Run([arr[0].ToVec3(0), arr[1].ToVec3(0)], [0,0,0]);
+      Result := Round(arr[0].Distance(arr[1]));
+    end;
+  end;
 end;
 
 
@@ -654,7 +700,6 @@ begin
     for pt.Y := Self.Center.Y - 120 to Self.Center.Y + 120 with 4 do
     begin
       vector := pt.ToVec3().Rotate(radians, Self.Center);
-      if not Self.PointOnZoomQuad(vector.ToPoint()) then Continue;
       quad := Self.Vector2MSQuad(vector, radians, [1,1]);
       tpa += quad.Corners.Connect();
     end;
@@ -721,8 +766,8 @@ var
   radians: Double;
   vectors: TVector3Array;
 begin
-  if MM2MS.PlayerBoxes[Options.GetZoomLevel()] <> [] then
-    Exit(MM2MS.PlayerBoxes[Options.GetZoomLevel()]);
+  if Projection.PlayerBoxes[Options.GetZoomLevel()] <> [] then
+    Exit(Projection.PlayerBoxes[Options.GetZoomLevel()]);
 
   radians := Minimap.CompassRadians;
 
@@ -731,6 +776,6 @@ begin
     Minimap.Center.Offset(2,0).ToVec3(-3).Rotate(-radians, Minimap.Center)
   ];
 
-  Result := MM2MS.Run(vectors, radians).Bounds;
-  MM2MS.PlayerBoxes[Options.GetZoomLevel()] := Result;
+  Result := Projection.Run(vectors, radians).Bounds;
+  Projection.PlayerBoxes[Options.GetZoomLevel()] := Result;
 end;

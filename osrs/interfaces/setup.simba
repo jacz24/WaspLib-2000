@@ -32,8 +32,7 @@ begin
   Emotes.SetupGameTab();
   Music.SetupGameTab();
 
-  MM2MS.Setup();
-  RSCamera.Setup();
+  Projection.Setup();
 
   Chat.SetupInterface();
   Make.SetupInterface();
@@ -80,9 +79,9 @@ begin
   if RSClient.Mode = ERSMode.UNKNOWN then
     RSClient.Mode := ERSMode.FIXED;
 
-  MM2MS.Projector.SetupProjection(RSClient.Mode);
+  Projection.MM2MSProjector.SetupProjection(RSClient.Mode);
   if Options.ZoomLevel > -1 then
-    MM2MS.Projector.UpdateZoom(Options.ZoomLevel);
+    Projection.MM2MSProjector.UpdateZoom(Options.ZoomLevel);
   SetupInterfaces();
 end;
 {$H+}
@@ -166,7 +165,7 @@ begin
   SetLength(Minimap.Orbs, Ord(High(ERSMinimapOrb))+1);
 
   Options.Setup();
-  MM2MS.Projector.RSZoom := -1;
+  Projection.MM2MSProjector.RSZoom := -1;
   RSMouseZoom.ZoomLevel := -1;
   RSMouseZoom.Enabled := True;
   WorldSwitcher.Setup();

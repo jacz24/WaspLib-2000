@@ -204,7 +204,7 @@ var
   pt, currLoc: TPoint;
   arr: TPointArray;
 begin
-  if not me.InRange(mapPoint, MM2MS.MAX_RENDER_DISTANCE) then
+  if not me.InRange(mapPoint, Projection.RENDER_DISTANCE) then
     Exit;
   vector := Self.Point2MMVec(me, mapPoint, radians);
   pt := vector.ToPoint();
@@ -228,7 +228,7 @@ begin
     [vector.X-size.X, vector.Y+size.Y, Self.Height(currLoc - [1,1],  False) - h]
   ];
 
-  arr := MM2MS.Run(corners, radians);
+  arr := Projection.Run(corners, radians);
   Result := [arr[0], arr[1], arr[2], arr[3]];
 end;
 
@@ -240,7 +240,7 @@ var
   pt, currLoc: TPoint;
   arr: TPointArray;
 begin
-  if not me.InRange(mapPoint, MM2MS.MAX_RENDER_DISTANCE) then Exit;
+  if not me.InRange(mapPoint, Projection.RENDER_DISTANCE) then Exit;
   vector := Self.Point2MMVec(me, mapPoint, radians);
   pt := vector.ToPoint();
 
@@ -267,7 +267,7 @@ begin
     [vector.X-size.X, vector.Y+size.Y, Self.Height(currLoc - [1,1],  False) - h+size.Z]
   ];
 
-  arr := MM2MS.Run(corners, radians);
+  arr := Projection.Run(corners, radians);
   Result := [
     [arr[4], arr[5], arr[6], arr[7]], [arr[0], arr[1], arr[2], arr[3]]
   ];
@@ -553,7 +553,7 @@ begin
     else
       pt := mapPoint.Random(-randomness, randomness);
 
-    if not me.InRange(pt, MM2MS.MAX_RENDER_DISTANCE) then
+    if not me.InRange(pt, Projection.RENDER_DISTANCE) then
       Exit;
 
     quad := Self.GetQuadMS(me, pt, [0.9,0.9], Minimap.CompassRadians);

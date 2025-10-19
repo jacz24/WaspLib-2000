@@ -25,20 +25,20 @@ begin
     response := HTTPClient.Get(Self.URL + 'hashes.json');
   except
     WriteLn GetDebugLn('WLAssets', GetExceptionMessage(), ELogLevel.WARN);
-    Exit;
+    Exit(nil);
   end;
 
   if not InRange(HTTPClient.ResponseStatus.AsInteger, 200, 299) then
   begin
     WriteLn GetDebugLn('WLAssets', response, ELogLevel.WARN);
-    Exit;
+    Exit(nil);
   end;
 
   try
     parser.Parse(response);
   except
     WriteLn GetDebugLn('WLAssets', GetExceptionMessage(), ELogLevel.WARN);
-    Exit;
+    Exit(nil);
   end;
 
   Result := parser;
@@ -85,8 +85,10 @@ var
   key, path: String;
 begin
   Self.JSON := Self.GetJSON('https://db.waspscripts.dev/storage/v1/object/public/data/');
+
   if Self.JSON = nil then
     Self.JSON := Self.GetJSON('https://raw.githubusercontent.com/WaspScripts/wasp-data/refs/heads/main/');
+
   if Self.JSON = nil then
   begin
     Self.JSON := Self.LoadJSON();
