@@ -79,9 +79,9 @@ begin
   if RSClient.Mode = ERSMode.UNKNOWN then
     RSClient.Mode := ERSMode.FIXED;
 
-  Projection.MM2MSProjector.SetupProjection(RSClient.Mode);
+  MM2MS.Setup(RSClient.Mode);
   if Options.ZoomLevel > -1 then
-    Projection.MM2MSProjector.UpdateZoom(Options.ZoomLevel);
+    MM2MS.Update(Options.ZoomLevel, Minimap.CompassRadians);
   SetupInterfaces();
 end;
 {$H+}
@@ -165,7 +165,6 @@ begin
   SetLength(Minimap.Orbs, Ord(High(ERSMinimapOrb))+1);
 
   Options.Setup();
-  Projection.MM2MSProjector.RSZoom := -1;
   RSMouseZoom.ZoomLevel := -1;
   RSMouseZoom.Enabled := True;
   WorldSwitcher.Setup();

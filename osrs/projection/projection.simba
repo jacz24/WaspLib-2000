@@ -70,19 +70,16 @@ Main record responsible for projection.
     System: EProjector;
     ZoomQuads: array [0..100] of TQuad;
     PlayerBoxes: array [0..100] of TBox;
-    MM2MSProjector, MM2MSNormalizer: TMM2MS;
-    CameraProjector, CameraNormalizer: TRSCamera;
+    Normalizer: TMM2MS;
     RENDER_DISTANCE: Integer;
   end;
 
 procedure TProjection.Setup();
 begin
-  Self.CameraProjector.Setup();
-  Self.CameraNormalizer.Setup();
-  Self.CameraNormalizer.Update(50, 0);
-  Self.MM2MSProjector.SetupProjection(RSClient.Mode);
-  Self.MM2MSNormalizer.SetupProjection(ERSMode.FIXED);
-  Self.MM2MSNormalizer.UpdateZoom(50);
+  RSCamera.Setup();
+  MM2MS.Setup(RSClient.Mode);
+  Self.Normalizer.Setup(ERSMode.FIXED);
+  Self.Normalizer.Update(50, 0);
 
   if Self.RENDER_DISTANCE = 0 then
     Self.RENDER_DISTANCE := 90;
@@ -100,45 +97,26 @@ You will likely not need to use this directly and will only interact with the
 `TRSMinimap` and `TRSMainScreen` extensions below.
 *)
 function TProjection.Run(arr: TVector3Array; roll: Single): TPointArray;
-var
-  i: Integer;
-  normed: TVector3Array;
 begin
   case Self.System of
     EProjector.CAMERA:
     begin
-      Self.CameraProjector.Update(Options.GetZoomLevel(True), roll);
-      Result := Self.CameraProjector.Run(arr);
+      WriteLn 'HERE';
+      RSCamera.Update(Options.GetZoomLevel(True), roll);
+      Result := RSCamera.Run(arr);
     end;
     EProjector.MM2MS:
     begin
-      with Minimap.Center do
-        for i := 0 to High(arr) do
-          normed += [arr[i].X - X, Y - arr[i].Y, arr[i].Z];
-      Self.MM2MSProjector.UpdateZoom(Options.GetZoomLevel(True));
-      Result := Self.MM2MSProjector.Run(normed, [0, 0, TAU - roll]).ToPoints();
+      MM2MS.Update(Options.GetZoomLevel(True), roll);
+      Result := MM2MS.Run(arr);
     end;
   end;
 end;
 
 function TProjection.ReverseRun(arr: TVector3Array): TPointArray;
-var
-  v: TVector2;
 begin
-  case Self.System of
-    EProjector.CAMERA:
-    begin
-      Self.CameraProjector.Update(Options.GetZoomLevel(True), Minimap.CompassRadians);
-      Result := Self.CameraProjector.ReverseRun(arr);
-    end;
-    EProjector.MM2MS:
-    begin
-      Self.MM2MSProjector.UpdateZoom(Options.GetZoomLevel(True));
-      with Minimap.Center do
-        for v in Self.MM2MSProjector.InvertRun(arr, [0.0, 0.0, 0.0]) do
-          Result += [Round(v.X) + X, Y - Round(v.Y)];
-    end;
-  end;
+  MM2MS.Update(Options.GetZoomLevel(True), 0);
+  Result := MM2MS.ReverseRun(arr);
 end;
 
 
@@ -531,27 +509,13 @@ var
   arr: TVector2Array;
 begin
   if dist = 0 then Exit;
-  case Projection.System of
-    EProjector.CAMERA:
-    begin
-      Projection.CameraNormalizer.Update(Options.GetZoomLevel(True), 0);
 
-      with MainScreen.Center do
-        arr := Projection.CameraNormalizer.ReverseRunEx([[X,Y,0], [X,Y-dist,0]]);
-      arr := Projection.CameraProjector.RunEx([arr[0].ToVec3(0), arr[1].ToVec3(0)]);
-      Result := Round(arr[0].Distance(arr[1]));
-    end;
+  MM2MS.Update(Options.GetZoomLevel(True), 0);
 
-    EProjector.MM2MS:
-    begin
-      Projection.MM2MSProjector.UpdateZoom(Options.GetZoomLevel(True));
-
-      with MainScreen.Center do
-        arr := Projection.MM2MSNormalizer.InvertRun([[X,Y,0], [X,Y-dist,0]], [0,0,0]);
-      arr := Projection.MM2MSProjector.Run([arr[0].ToVec3(0), arr[1].ToVec3(0)], [0,0,0]);
-      Result := Round(arr[0].Distance(arr[1]));
-    end;
-  end;
+  with MainScreen.Center do
+    arr := Projection.Normalizer.ReverseRun([[X,Y,0], [X,Y-dist,0]]);
+  arr := MM2MS.Run([arr[0].ToVec3(0), arr[1].ToVec3(0)]);
+  Result := Round(arr[0].Distance(arr[1]));
 end;
 
 
@@ -695,7 +659,8 @@ begin
   for pt.X := Self.Center.X - 120 to Self.Center.X + 120 with 4 do
     for pt.Y := Self.Center.Y - 120 to Self.Center.Y + 120 with 4 do
     begin
-      //if not Self.PointOnZoomQuad(pt) then Continue;
+      if not Self.PointOnZoomQuad(pt) then
+        Continue;
       vector := pt.ToVec3().Rotate(radians, Self.Center);
       quad := Self.Vector2MSQuad(vector, radians, [1,1]);
       tpa += quad.Corners.Connect();

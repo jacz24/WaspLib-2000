@@ -51,10 +51,10 @@ type
 Main record responsible for {ref}`MM2MS` projection.
 *)
   TMM2MS = record
-    RSZoom: Single;
     Mode: ERSMode;
-    ScaleMin, ScaleMax: Single;
-    View, Projection, InvertedView, InvertedProjection: TMatrix4;
+    RSZoom, Radians, ScaleMin, ScaleMax: Single;
+    View, Projection, InvertedView, InvertedProjection,
+    TransformMatrix, InvertedTransformMatrix: TMatrix4;
     Transformer: TVector3;
 
     ViewEye, CustomEye, ViewTarget, ViewUp: TVector3;
@@ -181,39 +181,39 @@ begin
   Result := TMatrix4.RotationYawPitchRoll(rotation.Y, rotation.X, rotation.Z) * MATRIX_IDENTITY;
 end;
 
-property TMM2MS.InvertedWorld(rotation: TVector3): TMatrix4;
+property TMM2MS.InvertedWorld(constref world: TMatrix4): TMatrix4;
 var
   vector: TVector3;
-  matrix: TMatrix4;
 begin
-  matrix := Self.World[rotation];
-  vector := [matrix.M41, matrix.M42, matrix.M43];
+  vector := [world.M41, world.M42, world.M43];
 
   // Transpose rotation into the result’s upper‐left
-  Result.M11 := matrix.M11;
-  Result.M12 := matrix.M21;
-  Result.M13 := matrix.M31;
+  Result.M11 := world.M11;
+  Result.M12 := world.M21;
+  Result.M13 := world.M31;
   Result.M14 := 0.0;
-  Result.M21 := matrix.M12;
-  Result.M22 := matrix.M22;
-  Result.M23 := matrix.M32;
+  Result.M21 := world.M12;
+  Result.M22 := world.M22;
+  Result.M23 := world.M32;
   Result.M24 := 0.0;
-  Result.M31 := matrix.M13;
-  Result.M32 := matrix.M23;
-  Result.M33 := matrix.M33;
+  Result.M31 := world.M13;
+  Result.M32 := world.M23;
+  Result.M33 := world.M33;
   Result.M34 := 0.0;
 
   // Compute inverse translation = -R^T * T
-  Result.M41 := -(matrix.M11*vector.X + matrix.M21*vector.Y + matrix.M31*vector.Z);
-  Result.M42 := -(matrix.M12*vector.X + matrix.M22*vector.Y + matrix.M32*vector.Z);
-  Result.M43 := -(matrix.M13*vector.X + matrix.M23*vector.Y + matrix.M33*vector.Z);
+  Result.M41 := -(world.M11*vector.X + world.M21*vector.Y + world.M31*vector.Z);
+  Result.M42 := -(world.M12*vector.X + world.M22*vector.Y + world.M32*vector.Z);
+  Result.M43 := -(world.M13*vector.X + world.M23*vector.Y + world.M33*vector.Z);
 
   // Bottom‐right stays 1
   Result.M44 := 1.0;
 end;
 
-procedure TMM2MS.SetupProjection(mode: ERSMode);
+procedure TMM2MS.Setup(mode: ERSMode);
 begin
+  Self.RSZoom := -1;
+  Self.Radians := -1;
   // fixed client width & height
   if Self.ProjectionWidth = 0 then Self.ProjectionWidth := 765;
   if Self.ProjectionHeight = 0 then Self.ProjectionHeight := 503;
@@ -261,25 +261,38 @@ begin
 end;
 
 
-procedure TMM2MS.UpdateZoom(zoom: Integer);
+procedure TMM2MS.Update(zoom: Integer; rads: Single);
 var
   scale: Double;
+  world: TMatrix4;
 begin
-  if (Self.RSZoom = ZOOM2RSZOOM[zoom]) and (RSClient.Mode = Self.mode) then
-    Exit;
+  if (Self.RSZoom <> ZOOM2RSZOOM[zoom]) or (RSClient.Mode <> Self.mode) then
+  begin
+    Self.RSZoom := ZOOM2RSZOOM[zoom];
+    scale := Self.ScaleMin + Self.RSZoom * (Self.ScaleMax - Self.ScaleMin);
 
-  Self.RSZoom := ZOOM2RSZOOM[zoom];
+    Self.Transformer.X := 513 * scale;
+    Self.Transformer.Y := 335 * scale;
+    Self.Transformer.Z := MainScreen.Center.Y + (Self.RSZoom * 24);
+    Self.UpdateViewMatrix(RSClient.Mode, zoom);
+  end;
 
-  scale := Self.ScaleMin + Self.RSZoom * (Self.ScaleMax - Self.ScaleMin);
-
-  Self.Transformer.X := 513 * scale;
-  Self.Transformer.Y := 335 * scale;
-  Self.Transformer.Z := MainScreen.Center.Y + (Self.RSZoom * 24);
-  Self.UpdateViewMatrix(RSClient.Mode, zoom);
+  if (Self.Radians <> rads) or (RSClient.Mode <> Self.mode) then
+  begin
+    Self.Radians := rads;
+    world := Self.World[[0,0,TAU-rads]];
+    Self.TransformMatrix := world * Self.View * Self.Projection;
+    Self.InvertedTransformMatrix := Self.InvertedProjection * Self.InvertedView * Self.InvertedWorld[world];
+  end;
 end;
 
+function TMM2MS.MinimapOffset(constref coordinate: TVector3): TVector3;
+begin
+  with Minimap.Center do
+    Result := [coordinate.X - X, Y - coordinate.Y, coordinate.Z];
+end;
 
-function TMM2MS.Transform(coord: TVector3; matrix: TMatrix4): TVector3;
+function TMM2MS.Transform(constref coord: TVector3; constref matrix: TMatrix4): TVector3;
 begin
   with coord.Transform(matrix) do
   begin
@@ -288,7 +301,30 @@ begin
   end;
 end;
 
-function TMM2MS.InvertedTransform(coord: TVector3; matrix: TMatrix4): TVector3;
+function TMM2MS.Run(constref coords: TVector3Array): TVector2Array;
+var
+  i: Integer;
+begin
+  for i := 0 to High(coords) do
+    Result += Self.Transform(Self.MinimapOffset(coords[i]), Self.TransformMatrix).ToVec2();
+end;
+
+function TMM2MS.Run(constref coords: TVector3Array): TPointArray; overload;
+var
+  i: Integer;
+begin
+  for i := 0 to High(coords) do
+    Result += Self.Transform(Self.MinimapOffset(coords[i]), Self.TransformMatrix).ToPoint();
+end;
+
+
+function TMM2MS.ReverseMinimapOffset(constref coordinate: TVector3): TVector2;
+begin
+  with Minimap.Center do
+    Result := [Round(coordinate.X) + X, Y - Round(coordinate.Y)];
+end;
+
+function TMM2MS.ReverseTransform(constref coord: TVector3; matrix: TMatrix4): TVector3;
 var
   ndcX, ndcY, scale, yOff: Double;
   nearNDC, farNDC, worldNear, worldFar: TVector3;
@@ -312,26 +348,25 @@ begin
   Result.Z := 0.0;
 end;
 
-
-function TMM2MS.Run(coords: TVector3Array; rotation: TVector3): TVector2Array;
+function TMM2MS.ReverseRun(constref coords: TVector3Array): TVector2Array;
 var
   i: Integer;
-  transformMatrix: TMatrix4;
 begin
-  transformMatrix := Self.World[rotation] * Self.View * Self.Projection;
-
   for i := 0 to High(coords) do
-    Result += Self.Transform(coords[i], transformMatrix).ToVec2();
+    Result += Self.ReverseMinimapOffset(Self.ReverseTransform(coords[i], Self.InvertedTransformMatrix));
 end;
 
-function TMM2MS.InvertRun(coords: TVector3Array; rotation: TVector3): TVector2Array;
+function TMM2MS.ReverseRun(constref coords: TVector3Array): TPointArray; overload;
 var
   i: Integer;
-  transformMatrix: TMatrix4;
 begin
-  transformMatrix := Self.InvertedProjection * Self.InvertedView * Self.InvertedWorld[rotation];
-
   for i := 0 to High(coords) do
-    Result += Self.InvertedTransform(coords[i], transformMatrix).ToVec2();
+    Result += Self.ReverseMinimapOffset(Self.ReverseTransform(coords[i], Self.InvertedTransformMatrix)).ToPoint();
 end;
 
+var
+(*
+## MM2MS variable
+Global {ref}`TMM2MS` variable.
+*)
+  MM2MS: TMM2MS;
