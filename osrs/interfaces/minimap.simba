@@ -451,6 +451,73 @@ begin
   Result := Self.GetLevel(orb) > level;
 end;
 
+(*
+## Minimap.GetRunEnergy
+```pascal
+function TRSMinimap.GetRunEnergy(): Integer;
+```
+Returns the remaining run energy.
+
+Example:
+```pascal
+WriteLn Minimap.GetRunEnergy();
+```
+*)
+function TRSMinimap.GetRunEnergy(): Integer;
+begin
+  Result := Self.GetLevel(ERSMinimapOrb.ENERGY);
+end;
+
+(*
+## Minimap.GetHPLevel
+```pascal
+function TRSMinimap.GetHPLevel(): Integer;
+```
+Returns the remaining hitpoints.
+
+Example:
+```pascal
+WriteLn Minimap.GetHPLevel();
+```
+*)
+function TRSMinimap.GetHPLevel(): Integer;
+begin
+  Result := Self.GetLevel(ERSMinimapOrb.HITPOINTS);
+end;
+
+(*
+## Minimap.GetPrayerLevel
+```pascal
+function TRSMinimap.GetPrayerLevel(): Integer;
+```
+Returns the remaining prayer points.
+
+Example:
+```pascal
+WriteLn Minimap.GetPrayerLevel();
+```
+*)
+function TRSMinimap.GetPrayerLevel(): Integer;
+begin
+  Result := Self.GetLevel(ERSMinimapOrb.PRAYER);
+end;
+
+(*
+## Minimap.GetSpecLevel
+```pascal
+function TRSMinimap.GetSpecLevel(): Integer;
+```
+Returns the remaining special attack level.
+
+Example:
+```pascal
+WriteLn Minimap.GetSpecLevel();
+```
+*)
+function TRSMinimap.GetSpecLevel(): Integer;
+begin
+  Result := Self.GetLevel(ERSMinimapOrb.SPECIAL);
+end;
 
 (*
 ## Minimap Orbs Statuses and States
@@ -655,7 +722,6 @@ begin
   Result := Round(((tpa[High(TPA)].Y-tpa[0].Y)/25)*100);
 end;
 
-
 (*
 ## Minimap.GetHPPercent
 ```pascal
@@ -668,8 +734,6 @@ Example:
 WriteLn Minimap.GetHPPercent();
 ```
 *)
-
-
 function TRSMinimap.GetHPPercent(): Integer;
 begin
   Result := Self.GetPercent(ERSMinimapOrb.HITPOINTS);
@@ -687,7 +751,6 @@ Example:
 WriteLn Minimap.GetPrayerPercent();
 ```
 *)
-
 function TRSMinimap.GetPrayerPercent(): Integer;
 begin
   Result := Self.GetPercent(ERSMinimapOrb.PRAYER);
