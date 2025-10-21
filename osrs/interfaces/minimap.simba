@@ -657,6 +657,43 @@ end;
 
 
 (*
+## Minimap.GetHPPercent
+```pascal
+function TRSMinimap.GetHPPercent(): Integer;
+```
+Returns the percent remaining of hp.
+
+Example:
+```pascal
+WriteLn Minimap.GetHPPercent();
+```
+*)
+
+
+function TRSMinimap.GetHPPercent(): Integer;
+begin
+  Result := Self.GetPercent(ERSMinimapOrb.HITPOINTS);
+end;
+
+(*
+## Minimap.GetPrayerPercent
+```pascal
+function TRSMinimap.GetHPPercent(): Integer;
+```
+Returns the percent remaining of prayer.
+
+Example:
+```pascal
+WriteLn Minimap.GetPrayerPercent();
+```
+*)
+
+function TRSMinimap.GetPrayerPercent(): Integer;
+begin
+  Result := Self.GetPercent(ERSMinimapOrb.PRAYER);
+end;
+
+(*
 ## Minimap.Toggle
 ```pascal
 function TRSMinimap.Toggle(orb: ERSMinimapOrb): Boolean;
