@@ -684,13 +684,16 @@ end;
 
 
 procedure TAntibanFormHelper.OnSleepChange(sender: TLazObject);
+var
+  time: String;
 begin
+  time := Self.SleepTimeEdit.Text.Trim().PadLeft(5, '0');
   Antiban._UpdateSleep(
-    0, Self.SleepTimeEdit.Text, Self.SleepLengthSpinner.Value * ONE_HOUR,
+    0, time, Self.SleepLengthSpinner.Value * ONE_HOUR,
     Self.SleepVariationSpinner.Value/100, Self.SleepLogoutSpinner.Value/100
   );
 
-  Self.Config.Data.Item['sleep'].Item['time'].AsString     := Self.SleepTimeEdit.Text;
+  Self.Config.Data.Item['sleep'].Item['time'].AsString     := time;
   Self.Config.Data.Item['sleep'].Item['length'].AsFloat    := Self.SleepLengthSpinner.Value;
   Self.Config.Data.Item['sleep'].Item['variation'].AsFloat := Self.SleepVariationSpinner.Value/100;
   Self.Config.Data.Item['sleep'].Item['logout'].AsFloat    := Self.SleepLogoutSpinner.Value/100;
