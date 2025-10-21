@@ -630,8 +630,8 @@ begin
     newArray.Add('break', oldArray.Item[i].Clone());
 
   breakObj := new TJSONObject();
-  breakObj.AddFloat('interval', Self.BreakIntervalSpinner.Value * ONE_MINUTE);
-  breakObj.AddFloat('length', Self.BreakLengthSpinner.Value * ONE_MINUTE);
+  breakObj.AddFloat('interval', Self.BreakIntervalSpinner.Value);
+  breakObj.AddFloat('length', Self.BreakLengthSpinner.Value);
   breakObj.AddFloat('variation', Self.BreakVariationSpinner.Value / 100);
   breakObj.AddFloat('logout', Self.BreakLogoutSpinner.Value / 100);
   newArray.Add('break', breakObj);
