@@ -366,8 +366,10 @@ begin
     Self.Slots[i]._Setup(tba[i]);
 
   with Self.Bounds do
+  begin
     Self.HistoryButton := [X1+7, Y1+7, X1+53, Y1+26];
-    Self.ConfirmButton := [X1+391, Y1+40, X1+473, Y1+59];
+    Self.CollectButton := [X1+391, Y1+40, X1+473, Y1+59];
+  end;
 end;
 
 (*
@@ -518,6 +520,27 @@ begin
     Result := Self.Slots[slot];
 end;
 
+(*
+## TRSGrandExchange.Collect
+```pascal
+function TRSGrandExchange.Collect(): Boolean;
+```
+Attempts to Collect from the Grand Exchange.
+
+In case of failure, returns False.
+
+Example:
+```pascal
+WriteLn GrandExchange.Collect();
+```
+*)
+function TRSGrandExchange.Collect(): Boolean;
+begin
+  if OCR.Locate(Self.CollectButton, 'Collect', [RSFonts.WHITE], 0, RSFonts.PLAIN_11) < 0.85 then
+    Exit(False);
+  Mouse.Click(Self.CollectButton, EMouseButton.LEFT);
+  Result := SleepUntil(OCR.Locate(Self.CollectButton, 'Collect', [RSFonts.WHITE], 0, RSFonts.PLAIN_11) = 0,200, 2000);
+end; 
 
 var
 (*
