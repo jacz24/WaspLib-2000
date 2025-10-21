@@ -367,7 +367,7 @@ begin
 
   with Self.Bounds do
     Self.HistoryButton := [X1+7, Y1+7, X1+53, Y1+26];
-    Self.ConfirmButton := [X1+391, Y1+40, X1+473, Y1+59];
+    Self.CollectButton := [X1+391, Y1+40, X1+473, Y1+59];
 end;
 
 (*
