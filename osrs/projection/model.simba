@@ -1,0 +1,209 @@
+{$DEFINE WL_MODEL_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+  TModelFace = object
+    Vertices: TIntegerArray;
+    Material: Int32;
+  end;
+
+  TModel = object
+    Vertices: TVector3Array;
+    Faces: array of TModelFace;
+    Materials: TColorArray;
+    Alphas: TByteArray;
+  end;
+
+procedure TModel.LoadMTL(fileName: string);
+var
+  strings: TLazStringList;
+  line: string;
+  parts: TStringArray;
+  color: TColorRGB;
+  i: Integer;
+begin
+  strings := TLazStringList.Create();
+
+  try
+    strings.LoadFromFile(fileName);
+    for i := 0 to strings.Count - 1 do
+    begin
+      line := strings.Strings[i].Trim();
+      if (line = '') or (line[1] = '#') then Continue;
+
+      if line.StartsWith('Kd ', False) then
+      begin
+        parts := line.Split(' ', True);
+        if Length(parts) >= 4 then
+        begin
+          color.R := Round(StrToFloat(parts[1]) * 255);
+          color.G := Round(StrToFloat(parts[2]) * 255);
+          color.B := Round(StrToFloat(parts[3]) * 255);
+
+          Self.Materials += color.ToColor();
+          Self.Alphas += $FF;
+        end;
+      end;
+
+      if line.StartsWith('d ', False) then
+      begin
+        parts := line.Split(' ', True);
+        if Length(parts) = 2 then
+          Self.Alphas[High(Self.Alphas)] := Round(StrToFloat(parts[1], 1.0) * 255);
+      end;
+    end;
+  finally
+    strings.Free();
+  end;
+end;
+
+procedure TModel.LoadOBJ(fileName: String);
+var
+  strings: TLazStringList;
+  parts: TStringArray;
+  line: String;
+  vertex: TVector3;
+  face: TModelFace;
+  i, j: Integer;
+  idx: Integer = -1;
+begin
+  strings := TLazStringList.Create();
+  try
+    strings.LoadFromFile(fileName);
+    for i := 0 to strings.Count-1 do
+    begin
+      line := strings.Strings[i].Trim();
+      if (line = '') or (line[1] = '#') then Continue;
+
+      if line.StartsWith('usemtl ', False) then  //which material to use line
+      begin
+        idx := line.ExtractInteger(-1);
+        Continue;
+      end;
+
+      if line.StartsWith('v ', False) then //vertices line
+      begin
+        parts := line.Split(' ', False);
+        if Length(parts) >= 4 then
+        begin
+          vertex.X := StrToFloat(parts[1])*4/128;
+          vertex.Y := StrToFloat(parts[3])*4/128;
+          vertex.Z := StrToFloat(parts[2])*4/128;
+          Self.Vertices += vertex;
+        end;
+        Continue;
+      end;
+
+      if line.StartsWith('f ', False) then //face line
+      begin
+        parts := line.Split(' ', True);
+        if Length(parts) >= 4 then
+        begin
+          face := new TModelFace();
+          for j := 0 to 2 do
+            face.Vertices += StrToInt64(parts[j+1].Split('/')[0], 0) - 1;
+
+          if InRange(idx, 0, High(Self.Materials)) then
+            face.Material := idx;
+          Self.Faces += face;
+        end;
+      end;
+    end;
+  finally
+    strings.Free();
+  end;
+end;
+
+
+function TModel.Contruct(objFile: String; mtlFile: String = ''): TModel; static;
+begin
+  if mtlFile <> '' then
+    Result.LoadMTL(mtlFile);
+  Result.LoadOBJ(objFile);
+end;
+
+function TModel.Contruct(size: TVector3): TModel; static; overload;
+var
+  face: TModelFace;
+begin
+  size.X := 2 * size.X;
+  size.Y := 2 * size.Y;
+
+  Result.Vertices := [
+    [-size.X,-size.Y,size.Z], [size.X,-size.Y,size.Z], [size.X,size.Y,size.Z], [-size.X,size.Y,size.Z], //top quad
+    [-size.X,-size.Y,0], [size.X,-size.Y,0], [size.X,size.Y,0], [-size.X,size.Y,0] //btm quad
+  ];
+
+  //top face
+  face := new TModelFace();
+  face.Vertices := [0,1,2,3];
+  face.Material := 0;
+  Result.Faces += face;
+
+  //bottom face
+  face := new TModelFace();
+  face.Vertices := [4,5,6,7];
+  face.Material := 0;
+  Result.Faces += face;
+
+  //front face
+  face := new TModelFace();
+  face.Vertices := [0,1,5,4];
+  face.Material := 0;
+  Result.Faces += face;
+
+  //right face
+  face := new TModelFace();
+  face.Vertices := [1,2,6,5];
+  face.Material := 0;
+  Result.Faces += face;
+
+  //back face
+  face := new TModelFace();
+  face.Vertices := [2,3,7,6];
+  face.Material := 0;
+  Result.Faces += face;
+
+  //left face
+  face := new TModelFace();
+  face.Vertices := [3,0,4,7];
+  face.Material := 0;
+  Result.Faces += face;
+end;
+
+
+function TModel.Project(minimapCoord: TVector3; rotation, radians: Single): TPointArray;
+begin
+  with minimapCoord do
+    Result := Projection.Run(Self.Vertices.Offset([X,Y,Z]).Rotate(rotation,X,Y), radians);
+end;
+
+
+procedure TModel.DrawModel(img: TImage; projection: TPointArray);
+var
+  i, j: Integer;
+  polygon: TPolygon;
+begin
+  if Self.Materials <> [] then
+  begin
+    for i := High(Self.Faces) downto 0 do
+    begin
+      for j := 0 to High(Self.Faces[i].Vertices) do
+        polygon += projection[Self.Faces[i].Vertices[j]];
+
+      img.DrawAlpha := Self.Alphas[Self.Faces[i].Material];
+      img.DrawColor := Self.Materials[Self.Faces[i].Material];
+      img.DrawPolygonFilled(polygon);
+      polygon := [];
+    end;
+    Exit;
+  end;
+
+  for i := High(Self.Faces) downto 0 do
+    begin
+      for j := 0 to High(Self.Faces[i].Vertices) do
+        polygon += projection[Self.Faces[i].Vertices[j]];
+      img.DrawPolygon(polygon);
+      polygon := [];
+    end;
+end;

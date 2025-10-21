@@ -45,7 +45,7 @@ begin
   {$IFNDEF WL_TEST}
   if Result then
   begin
-    if not MainScreen.HighestPitch then
+    if not MainScreen.HighestPitch and (RSCamera.Pitch = RSCamera.MAX_PITCH) then
       MainScreen.SetHighestPitch();
 
     if not Options.MaxBrightness then

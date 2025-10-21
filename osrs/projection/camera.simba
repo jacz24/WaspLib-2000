@@ -128,7 +128,6 @@ begin
   y1 := Sar(y * Self.Cosines[Self.Yaw] - x * Self.Sines[Self.Yaw], 16);
   z1 := Sar(y1 * Self.Cosines[Self.Pitch] + z * Self.Sines[Self.Pitch], 16);
 
-  WriteLn z1;
   if z1 = 0 then z1 := 1;
 
   x1 := Sar(x * Self.Cosines[Self.Yaw] + y * Self.Sines[Self.Yaw], 16);

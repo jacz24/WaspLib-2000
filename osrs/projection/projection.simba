@@ -101,7 +101,6 @@ begin
   case Self.System of
     EProjector.CAMERA:
     begin
-      WriteLn 'HERE';
       RSCamera.Update(Options.GetZoomLevel(True), roll);
       Result := RSCamera.Run(arr);
     end;
