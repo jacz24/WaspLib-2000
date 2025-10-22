@@ -132,8 +132,10 @@ begin
   RSClient.Client := RSClient.GetClient();
   {$IFNDEF WL_DISABLE_FAKE_INPUT}
   case RSClient.Client of
-    ERSClient.LEGACY, ERSClient.RUNELITE: RemoteInput.Setup();
+    {$IFDEF WINDOWS}
     ERSClient.OFFICIAL: WaspInput.Setup();
+    {$ENDIF}
+    ERSClient.LEGACY, ERSClient.RUNELITE: RemoteInput.Setup();
   end;
   {$ENDIF}
   {$ENDIF}

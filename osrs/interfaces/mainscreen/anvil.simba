@@ -283,6 +283,7 @@ end;
 (*
 ## Anvil.Open
 ```pascal
+function TRSAnvil.Open(constref obj: TRSObject; walk: Boolean = True): Boolean;
 function TRSAnvil.Open(walk: Boolean = True): Boolean;
 ```
 Opens the anvil for you.
@@ -308,6 +309,20 @@ end.
 ```{figure} ../../images/anvilopen.gif
 ```
 *)
+function TRSAnvil.Open(constref obj: TRSObject; walk: Boolean = True): Boolean;
+begin
+  if walk then
+    Result := obj.WalkInteract(['Smith', 'nvil'])
+  else
+    Result := obj.Interact(['Smith', 'nvil']);
+
+  if not Result and not MainScreen.Interact(['Smith']) then
+    Exit;
+
+  obj.Walker^.WaitMoving();
+  Result := Self.WaitOpen(3000);
+end;
+
 function TRSAnvil.Open(walk: Boolean = True): Boolean; overload;
 var
   obj: TRSObject;
@@ -323,17 +338,7 @@ begin
     Self.Anvils := TRSObjectArray.Create(ObjectsJSON.GetByAction('Smith'));
 
   obj := Self.Anvils[Self.Anvils.ClosestIndex(Map.Position())];
-
-  if walk then
-    Result := obj.WalkInteract(['nvil'])
-  else
-    Result := obj.Interact(['nvil']);
-
-  if not Result and not MainScreen.Interact(['Smith']) then
-    Exit;
-
-  obj.Walker^.WaitMoving();
-  Result := Self.WaitOpen(3000);
+  Result := Self.Open(obj, walk);
 end;
 
 var

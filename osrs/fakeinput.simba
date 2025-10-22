@@ -26,7 +26,6 @@ You can find remote input source code here: https://github.com/Brandon-T/RemoteI
 {$IFNDEF WL_DISABLE_FAKE_INPUT}
 
 {$loadlib Plugins/wasp-plugins/libremoteinput/libremoteinput}
-{$loadlib Plugins/wasp-plugins/waspinput/waspinput}
 
 type
 (*
@@ -99,6 +98,9 @@ Global {ref}`TRemoteInput` variable.
 *)
   RemoteInput: TRemoteInput;
 
+{$IFDEF WINDOWS}
+{$loadlib Plugins/wasp-plugins/waspinput/waspinput}
+
 type
 (*
 ## TWaspInput
@@ -131,6 +133,7 @@ end;
 var
   WaspInput: TWaspInput;
 {$ENDIF}
+{$ENDIF}
 
 
 (*
@@ -150,6 +153,7 @@ var
 begin
   {$IFNDEF WL_DISABLE_FAKE_INPUT}
   case RSClient.Client of
+    {$IFDEF WINDOWS}
     ERSClient.OFFICIAL:
       if WaspInput.Target <> nil then
       begin
@@ -159,6 +163,7 @@ begin
         WriteLn(GetDebugLn('RSClient', 'LoseFocus method is not implemented for WaspInput yet.', ELogLevel.WARN));
         Exit;
       end;
+    {$ENDIF}
     ERSClient.LEGACY, ERSClient.RUNELITE:
       if RemoteInput.Target <> nil then
       begin
@@ -198,9 +203,9 @@ function TRSClient.IsInputEnabled(): Boolean;
 begin
   {$IFNDEF WL_DISABLE_FAKE_INPUT}
   case RSClient.Client of
-    ERSClient.OFFICIAL:
-      if WaspInput.Target <> nil then
-        Exit(GetInputState());
+    {$IFDEF WINDOWS}
+    ERSClient.OFFICIAL: if WaspInput.Target <> nil then Exit(GetInputState());
+    {$ENDIF}
     ERSClient.LEGACY, ERSClient.RUNELITE:
       if RemoteInput.Target <> nil then
         Exit(EIOS_IsMouseInputEnabled(RemoteInput.Target) and EIOS_IsKeyboardInputEnabled(RemoteInput.Target));
@@ -227,12 +232,14 @@ procedure TRSClient.DisableRealInput();
 begin
   {$IFNDEF WL_DISABLE_FAKE_INPUT}
   case RSClient.Client of
+    {$IFDEF WINDOWS}
     ERSClient.OFFICIAL:
       if WaspInput.Target <> nil then
       begin
         SetInputState(False);
         Exit;
       end;
+    {$ENDIF}
     ERSClient.LEGACY, ERSClient.RUNELITE:
       if RemoteInput.Target <> nil then
       begin
@@ -261,12 +268,14 @@ procedure TRSClient.EnableRealInput();
 begin
   {$IFNDEF WL_DISABLE_FAKE_INPUT}
   case RSClient.Client of
+    {$IFDEF WINDOWS}
     ERSClient.OFFICIAL:
       if WaspInput.Target <> nil then
       begin
         SetInputState(True);
         Exit;
       end;
+    {$ENDIF}
     ERSClient.LEGACY, ERSClient.RUNELITE:
       if RemoteInput.Target <> nil then
       begin
