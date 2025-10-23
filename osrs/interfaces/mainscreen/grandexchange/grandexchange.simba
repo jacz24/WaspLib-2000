@@ -520,6 +520,27 @@ begin
     Result := Self.Slots[slot];
 end;
 
+(*
+## TRSGrandExchange.Collect
+```pascal
+function TRSGrandExchange.Collect(): Boolean;
+```
+Attempts to Collect from the Grand Exchange.
+
+In case of failure, returns False.
+
+Example:
+```pascal
+WriteLn GrandExchange.Collect();
+```
+*)
+function TRSGrandExchange.Collect(): Boolean;
+begin
+  if OCR.Locate(Self.CollectButton, 'Collect', [RSFonts.WHITE], 0, RSFonts.PLAIN_11) < 0.85 then
+    Exit(False);
+  Mouse.Click(Self.CollectButton, EMouseButton.LEFT);
+  Result := SleepUntil(OCR.Locate(Self.CollectButton, 'Collect', [RSFonts.WHITE], 0, RSFonts.PLAIN_11) = 0,200, 2000);
+end; 
 
 var
 (*
