@@ -115,14 +115,14 @@ begin
 end;
 
 
-function TModel.Contruct(objFile: String; mtlFile: String = ''): TModel; static;
+function TModel.Construct(objFile: String; mtlFile: String = ''): TModel; static;
 begin
   if mtlFile <> '' then
     Result.LoadMTL(mtlFile);
   Result.LoadOBJ(objFile);
 end;
 
-function TModel.Contruct(size: TVector3): TModel; static; overload;
+function TModel.Construct(size: TVector3): TModel; static; overload;
 var
   face: TModelFace;
 begin
