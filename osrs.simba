@@ -152,7 +152,7 @@ Summary: It includes this file until the current file is reached.
 {$IFNDEF WL_GRANDEXCHANGE_HISTORY_INCLUDED} {$INCLUDE_ONCE osrs/interfaces/mainscreen/grandexchange/grandexchange_history.simba}
 {$IFNDEF WL_GRANDEXCHANGE_CHAT_INCLUDED}    {$INCLUDE_ONCE osrs/interfaces/mainscreen/grandexchange/grandexchange_chat.simba}
 {$IFNDEF WL_GRANDEXCHANGE_OFFER_INCLUDED}   {$INCLUDE_ONCE osrs/interfaces/mainscreen/grandexchange/grandexchange_offer.simba}
-
+{$IFNDEF WL_SHOP_INCLUDED}                  {$INCLUDE_ONCE osrs/interfaces/mainscreen/shop.simba}
 
 {$IFNDEF WL_HITSPLATS_INCLUDED}             {$INCLUDE_ONCE osrs/interfaces/mainscreen/finders/hitsplats.simba}
 {$IFNDEF WL_HPBARS_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/mainscreen/finders/hpbars.simba}
@@ -181,3 +181,4 @@ Summary: It includes this file until the current file is reached.
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
+{$ENDIF}

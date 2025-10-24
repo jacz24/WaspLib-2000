@@ -1,0 +1,479 @@
+(*
+# Shop
+Methods to interact with the shop interface.
+```{figure} ../../images/shop_interface.png
+```
+*)
+
+{$DEFINE WL_SHOP_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+(*
+## ERSShopQuantity
+```pascal
+ERSShopQuantity = enum(ONE, FIVE, TEN, FIFTY);
+```
+Enum representing the shop quantity buttons.
+*)
+  ERSShopQuantity = enum(ONE, FIVE, TEN, FIFTY);
+(*
+## TRSShop
+Main record to interact with the {ref}`Shop` interface.
+*)
+  TRSShop = record
+    Title: TRSInterfaceTitle;
+    Slots: TRSSlotInterface;
+    Items: TRSItemInterface;
+
+    InventorySlots: TRSSlotInterface;
+    InventoryItems: TRSItemInterface;
+
+    Bounds, SlotsArea, InfoBox: TBox;
+    SlotBoxes, InventorySlotBoxes: TBoxArray;
+
+    QuantityButtons: array [ERSShopQuantity] of TRSButton;
+    ValueButton: TRSButton;
+
+    Shops: TRSObjectArray;
+    Merchants: TRSEntityArray;
+  end;
+
+(*
+## Bank.FindItemBoundaries
+```pascal
+function TRSShop.FindItemBoundaries(): TBoxArray;
+```
+Finds item boundaries and returns them as a TBoxArray.
+
+You have 2 ways of getting the shop item slots, a static one:
+```pascal
+ShowOnTarget(Shop.SlotBoxes);
+```
+
+
+And a dynamic one:
+```pascal
+ShowOnTarget(Shop.FindItemBoundaries());
+```
+
+There are use cases for both, internally, `Shop.FindItemBoundaries` is usually used.
+
+*)
+function TRSShop.FindItemBoundaries(): TBoxArray;
+var
+  tpa, final: TPointArray;
+  atpa: T2DPointArray;
+  b: TBox;
+  stack: ERSStack;
+begin
+  final := Target.FindColor(ITEM_BORDER, 1, Self.SlotsArea);
+  if final = [] then Exit;
+
+  for stack := Low(ERSStack) to High(ERSStack) do
+  begin
+    tpa := Target.FindColor(stack.Color, 0, Self.SlotsArea);
+    if tpa <> [] then
+      final += tpa;
+  end;
+
+  atpa := final.Cluster(200, 3);
+
+  for tpa in atpa do
+  begin
+    b := tpa.Bounds();
+    if b.Height <= 5 then Continue;
+
+    Result += TBoxArray.Create([Self.SlotsArea.X1, b.Y1], 8, 1, 31, Min(Self.SlotsArea.Y2-b.Y1, 31), [16, 1]);
+  end;
+end;
+
+function TRSShop.IsOpen(): Boolean; forward;
+
+(*
+## Shop.SetupInterface
+```pascal
+procedure TRSShop.SetupInterface();
+```
+Internal method used to setup the {ref}`TRSShop` coordinates.
+This is automatically called for you on the {ref}`Shop variable`.
+*)
+procedure TRSShop.SetupInterface();
+var
+  i: Integer;
+  boxes: TBoxArray;
+  quantity: ERSShopQuantity;
+begin
+  case RSClient.Mode of
+    ERSMode.FIXED: Self.Bounds := MSInterface.CreateBounds([0, 3, 1, 3], 488, 300);
+    ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
+      Self.Bounds := MSInterface.CreateBounds([-1, 1, 0, 4], 488, 300);
+  end;
+
+  Self.Title.Setup(Self.Bounds);
+
+  with Self.Bounds do
+  begin
+    Self.InfoBox := TBox.Create(X1 + 30, Y2 - 35, X1 + 100, Y2 - 12);
+    Self.ValueButton.Bounds := TBox.Create(X1 + 110, Y2 - 37, X1 + 139, Y2 - 8);
+  end;
+  Self.ValueButton.EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
+
+  Self.SlotBoxes := TBoxArray.Create(Self.Bounds.TopLeft.Offset(61, 40), 8, 5, 35, 32, [12,15]);
+  Self.SlotsArea := Self.SlotBoxes.Merge();
+  //Self.SlotBoxes := TBoxArray.Create(Self.SlotsArea.TopLeft, 4, 2, 47, 47, [4, 4]);
+  Self.Slots.Setup('Shop.Slots', Self.SlotBoxes, @Self.FindItemBoundaries);
+  Self.Items.Setup('Shop.Items', @Self.Slots, [0, 1], @Self.IsOpen);
+
+  for i := 0 to 3 do
+    begin
+      Self.QuantityButtons[i].EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
+    end;
+
+  with Self.Bounds do
+    boxes := TBoxArray.Create([X2-196, Y2-37], 4, 1, 29, 29, [11,0]); // This is the whole button
+    //boxes := TBoxArray.Create([X2-192, Y2-33], 4, 1, 21, 21, [19,0]); // This is just for the inside of the button;
+
+  for quantity := Low(ERSShopQuantity) to High(ERSShopQuantity) do
+    begin
+      Self.QuantityButtons[quantity].Bounds := boxes[Ord(quantity)];
+    end;
+end;
+
+(*
+## Shop.IsOpen
+```pascal
+function TRSShop.IsOpen(): Boolean;
+```
+Returns true if the shop interface is open.
+
+Example:
+```pascal
+WriteLn Shop.IsOpen();
+```
+*)
+function TRSShop.IsOpen(): Boolean;
+begin
+  Result := OCR.Recognize(Self.InfoBox, RSFonts.PLAIN_12, [RSFonts.ORANGE], 0).ContainsAny(['Value','check'], True);
+end;
+
+(*
+## Shop.WaitOpen
+```pascal
+function TRSShop.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
+```
+Returns true if the shop opens within `time` milliseconds.
+
+Example:
+```pascal
+WriteLn Shop.WaitOpen();
+```
+*)
+function TRSShop.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
+begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsOpen(), interval, time);
+end;
+
+(*
+## Shop.Close
+```pascal
+function TRSShop.Close(escape: Boolean): Boolean;
+function TRSShop.Close(escapeProbability: Double = BioHash): Boolean; overload;
+```
+Closes the {ref}`Shop` interface, depending on `escape` the function will either
+press escape or click the close button.
+
+Example:
+```pascal
+WriteLn Shop.Close();
+```
+*)
+function TRSShop.Close(escape: Boolean): Boolean;
+begin
+  Result := Self.Title.Close(escape);
+end;
+
+function TRSShop.Close(escapeProbability: Single = -1): Boolean; overload;
+begin
+  Result := Self.Title.Close(escapeProbability);
+end;
+
+(*
+## Shop.Buy
+```pascal
+function TRSShop.Buy(item: TRSItem; quantity: ERSShopQuantity = ERSShopQuantity.ONE): Boolean;
+```
+Attempts to buy the specified item from the shop.
+With the proper quantity button enabled.
+
+Example:
+```pascal
+WriteLn Shop.Buy('Gold ore', ERSShopQuantity.FIFTY);
+```
+*)
+function TRSShop.Buy(item: TRSItem; quantity: ERSShopQuantity = ERSShopQuantity.ONE): Boolean;
+var
+  i: Integer;
+begin
+  Result := False;
+  if not Self.IsOpen() then Exit;
+  if not Self.Items.Contains(item) then Exit;
+
+
+  if not Self.QuantityButtons[quantity].Enabled then
+    Self.SetQuantity(quantity);
+
+  case quantity of
+    ERSShopQuantity.ONE: Self.Items.Interact(item, 'Buy 1');
+    ERSShopQuantity.FIVE: Self.Items.Interact(item, 'Buy 5');
+    ERSShopQuantity.TEN: Self.Items.Interact(item, 'Buy 10');
+    ERSShopQuantity.FIFTY: Self.Items.Interact(item, 'Buy 50');
+  end;
+
+
+  // TODO Maybe add Count tracking to see if sale was successful
+  Sleep(200, 300);
+  Result := True;
+end;
+
+(*
+## Shop.BuyItemValue
+```pascal
+function TRSShop.BuyItemValue(item: TRSItem; quantity: Integer; price: Integer): Boolean;
+```
+Attempts to buy the specified item from the shop at a specific price using the value option.
+
+Example:
+```pascal
+WriteLn Shop.BuyItemValue('Coins', 10, 100);
+```
+*)
+function TRSShop.BuyAtValue(item: TRSItem; quantity: Integer; price: Integer): Boolean;
+var
+  slot, i: Integer;
+begin
+  // TODO
+  if not Self.IsOpen() then Exit;
+  if not Self.Items.Contains(item) then Exit;
+
+  Self.Items.Interact(item, 'Value');
+  Biometrics.Sleep(50, 200);
+
+  Result := True;
+end;
+
+(*
+## Shop.Sell
+```pascal
+function TRSShop.Sell(item: TRSItem; quantity: ERSShopQuantity = ERSShopQuantity.ONE): Boolean;
+```
+Attempts to sell the specified item to the shop from your inventory.
+With the proper quantity button enabled.
+
+Example:
+```pascal
+WriteLn Shop.Sell('Bones', ERSShopQuantity.FIVE);
+```
+*)
+function TRSShop.Sell(item: TRSItem; quantity: ERSShopQuantity = ERSShopQuantity.ONE): Boolean;
+begin
+  Result := False;
+  if not Self.IsOpen() then Exit;
+  if not Inventory.Items.Contains(item) then Exit;
+
+  if not Self.QuantityButtons[quantity].Enabled then
+    Self.SetQuantity(quantity);
+
+  case quantity of
+    ERSShopQuantity.ONE: Inventory.Items.Interact(item, 'Sell 1');
+    ERSShopQuantity.FIVE: Inventory.Items.Interact(item, 'Sell 5');
+    ERSShopQuantity.TEN: Inventory.Items.Interact(item, 'Sell 10');
+    ERSShopQuantity.FIFTY: Inventory.Items.Interact(item, 'Sell 50');
+  end;
+
+  // TODO Maybe add Count tracking to see if sale was successful
+  Sleep(200, 300);
+  Result := True;
+end;
+
+(*
+## Shop.GetPrice
+```pascal
+function TRSShop.GetPrice(item: TRSItem): Integer;
+```
+Returns the price of an item in the shop by examining it.
+
+Example:
+```pascal
+WriteLn Shop.GetPrice('Coins');
+```
+*)
+function TRSShop.GetPrice(item: TRSItem): Integer;
+var
+  slot: Integer;
+begin
+  if not Self.IsOpen() then Exit;
+  if not Self.Items.Contains(item) then Exit;
+
+  if not Self.ValueButton.Enabled then
+    Self.ValueButton.Enable();
+
+  Sleep(600, 800);
+
+  if Self.Items.Interact(item, 'Value') then
+  begin
+    Biometrics.Sleep(100, 300);
+    // TODO: Implement price reading from chat or interface
+    Result := 0;
+  end;
+end;
+
+(*
+## Shop.SetQuantity
+```pascal
+function TRSShop.SetQuantity(quantity: ERSShopQuantity): Boolean;
+```
+Sets the shop quantity button (1, 5, 10, or 50).
+
+Example:
+```pascal
+WriteLn Shop.SetQuantity(ERSShopQuantity.TEN);
+```
+*)
+function TRSShop.SetQuantity(quantity: ERSShopQuantity): Boolean;
+begin
+  if Self.QuantityButtons[quantity].Enabled() then Exit(True);
+  Result := Self.QuantityButtons[quantity].Enable();
+  if Result then Sleep(600, 800);
+end;
+
+procedure TRSShop._SetupMapObjects();
+begin
+  Self.Shops     := TRSObjectArray.Create(ObjectsJSON.GetByAction('Buy-food'));
+  Self.Merchants := TRSEntityArray.Create(NPCsJSON.GetByAction('Trade'));
+end;
+
+(*
+## Shop.Hover
+```pascal
+function TRSShop.Hover(obj: TRSObject; walk: Boolean = True): Boolean;
+function TRSShop.Hover(npc: TRSEntity; walk: Boolean = True): Boolean; overload;
+```
+This assumes that {ref}`Map` is being used and setup.
+It's possible to use this with other systems but you need to configure it all
+manually.
+
+If you are too far, it will attempt to walk closer to it.
+*)
+
+function TRSShop.Hover(obj: TRSObject; walk: Boolean = True): Boolean;
+begin
+  if walk then
+    Exit(obj.WalkHover());
+  Result := obj.Hover();
+end;
+
+function TRSShop.Hover(npc: TRSEntity; walk: Boolean = True): Boolean; overload;
+begin
+  if walk then
+    Exit(npc.WalkHover());
+  Result := npc.Hover();
+end;
+
+(*
+## Shop.Open
+```pascal
+function TRSShop.Open(obj: TRSObject; walk: Boolean = True): Boolean;
+function TRSShop.Open(npc: TRSEntity; walk: Boolean = True): Boolean; overload;
+```
+Opens the shop for you.
+This assumes that {ref}`Map` is being used and setup.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+begin
+  Map.Setup([Map.Setup([ERSChunk.BLAST_FURNACE]));
+  Shop.Open(TRSEntity.Create(NPCsJSON.GetByName('Ordan', 1).Item[0]));
+end.
+```
+*)
+function TRSShop.Open(obj: TRSObject; walk: Boolean = True): Boolean;
+begin
+  if walk then
+    Result := obj.WalkInteract(['Trade'])
+  else
+    Result := obj.Interact(['Trade']);
+
+  if not Result then
+    if not MainScreen.IsUpText('Trade') or not ChooseOption.Select(['Trade']) then
+      Exit;
+
+  obj.Walker^.WaitMoving();
+  Result := Self.WaitOpen(3000);
+end;
+
+function TRSShop.Open(npc: TRSEntity; walk: Boolean = True): Boolean; overload;
+begin
+  if walk then
+    Result := npc.WalkInteract(['Trade', 'Trade'])
+  else
+    Result := npc.Interact(['Trade']);
+
+  if not Result and not MainScreen.Interact(['Trade']) then
+    Exit;
+
+  npc.Walker^.WaitMoving();
+  Result := Self.WaitOpen(3000);
+end;
+
+procedure TRSShop.Draw(img: TImage);
+var
+  i: Integer;
+begin
+  if not Self.IsOpen() then Exit;
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
+
+  img.DrawColor := $0000FF;
+  img.DrawBox(Self.SlotsArea);
+  img.DrawBox(Self.InfoBox);
+
+  img.DrawColor := Colors.AQUA;
+  img.DrawBox(Self.ValueButton.Bounds);
+
+  img.DrawColor := $FFFFFF;
+  img.DrawBoxArray(Self.SlotBoxes, False);
+
+  img.DrawColor := $00FF00;
+  img.DrawBoxArray(Self.FindItemBoundaries(), False);
+
+  for i := 0 to High(Self.QuantityButtons) do
+    Self.QuantityButtons[i].Draw(img);
+end;
+
+procedure TRSShop.ShowOnTarget();
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  Self.Draw(img);
+  img.Show();
+end;
+
+var
+(*
+## Shop variable
+Global {ref}`TRSShop` variable.
+*)
+  Shop: TRSShop;
+
+
+function TRSGameTabs.GetCurrent(): ERSGameTab; override;
+begin
+  Result := inherited;
+  if (Result = ERSGameTab.NONE) and Shop.IsOpen() then
+    Result := ERSGameTab.INVENTORY;
+end;
