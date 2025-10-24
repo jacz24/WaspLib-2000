@@ -40,7 +40,7 @@ Main record to interact with the {ref}`Shop` interface.
   end;
 
 (*
-## Bank.FindItemBoundaries
+## Shop.FindItemBoundaries
 ```pascal
 function TRSShop.FindItemBoundaries(): TBoxArray;
 ```
@@ -238,15 +238,15 @@ begin
 end;
 
 (*
-## Shop.BuyItemValue
+## Shop.BuyAtValue
 ```pascal
-function TRSShop.BuyItemValue(item: TRSItem; quantity: Integer; price: Integer): Boolean;
+function TRSShop.BuyAtValue(item: TRSItem; quantity: Integer; price: Integer): Boolean;
 ```
 Attempts to buy the specified item from the shop at a specific price using the value option.
 
 Example:
 ```pascal
-WriteLn Shop.BuyItemValue('Coins', 10, 100);
+WriteLn Shop.BuyAtValue('Gold ore', 10, 100);
 ```
 *)
 function TRSShop.BuyAtValue(item: TRSItem; quantity: Integer; price: Integer): Boolean;
@@ -306,7 +306,7 @@ Returns the price of an item in the shop by examining it.
 
 Example:
 ```pascal
-WriteLn Shop.GetPrice('Coins');
+WriteLn Shop.GetPrice('Gold ore');
 ```
 *)
 function TRSShop.GetPrice(item: TRSItem): Integer;
