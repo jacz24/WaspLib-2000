@@ -55,6 +55,7 @@ begin
   GrandExchangeChat.SetupInterface();
   GrandExchangeOffer.SetupInterface();
   FairyRing.SetupInterface();
+  Shop.SetupInterface();
 
   {$IFDEF WL_DEBUG_INTERFACES}
   WriteLn GetDebugLn('RSClient', 'Interface setup took ' + ToStr(Time()-t) + ' ms to calculate.');
