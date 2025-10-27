@@ -1,0 +1,25 @@
+(*
+# Giant Foundry Refinement
+Methods to interact with the Giants' Foundry Refinement interface.
+```{figure} ../../images/refinement_interface.png
+```
+*)
+
+{$DEFINE WL_GIANTFOUNDRY_REFINEMENT_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+
+
+  TRSGiantsFoundryRefinement = record
+    Title: TRSInterfaceTitle;
+
+
+
+
+var
+(*
+## GiantsFoundryRefinement variable
+Global {ref}`TRSGiantsFoundryRefinement` variable.
+*)
+  GiantsFoundryRefinement: TRSGiantsFoundryRefinement
