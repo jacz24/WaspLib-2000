@@ -1,0 +1,22 @@
+(*
+# GiantsFoundry
+Methods to interact with the GiantsFoundry interface:
+
+The {ref}`GrandExchange` is a very complex interface, probably the most complex
+available in OldSchool RuneScape and for that reason, the functionality to
+fully interact with it is split into multiple files and records:
+- {ref}`GiantsFoundry`, the main grand exchange screen and what this page is about.
+- {ref}`GiantsFoundrySetup`, the history screen of the grand exchange.
+- {ref}`GiantsFoundryRefinement`, the chat interface of the grand exchange when you are setting up a buy offer.
+*)
+
+{$DEFINE WL_GIANTFOUNDRY_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+
+var
+(*
+## GiantsFoundry variable
+Global {ref}`TRSGiantsFoundry` variable.
+*)
+  GiantsFoundry: TRSGiantsFoundry;
