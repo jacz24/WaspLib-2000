@@ -3,7 +3,7 @@
 Interface for handling the Giants' Foundry mould selection and setup.
 This interface allows automatic selection of optimal moulds based on
 Kovac's commission requirements.
-```{figure} ../../images/shop_interface.png
+```{figure} ../../images/giantsfoundrysetup_interface.png
 ```
 *)
 
@@ -11,32 +11,22 @@ Kovac's commission requirements.
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
-  (*
-## ERSFoundryAttribute
-```pascal
-ERSFoundryAttribute = (HEAVY, LIGHT, BROAD, NARROW, FLAT, SPIKED);
-```
-Enum representing the different mould attributes in Giants' Foundry.
-Each commission from Kovac requires two of these attributes.
-*)
-  ERSFoundryAttribute = (HEAVY, LIGHT, BROAD, NARROW, FLAT, SPIKED);
-
 (*
-## ERSFoundryMouldType
+## ERSGiantsFoundryMouldType
 ```pascal
-ERSFoundryMouldType = (FORTE, BLADE, TIP);
+ERSGiantsFoundryMouldType = (FORTE, BLADE, TIP);
 ```
 Enum representing the possible mould types
 *)
-  ERSFoundryMouldType = enum(FORTE, BLADE, TIP);
+  ERSGiantsFoundryMouldType = enum(FORTE, BLADE, TIP);
 
 (*
 ## TRSFoundryMould
 Record representing a single mould piece with its attributes and scores.
 *)
-  TRSFoundryMould = record
+  TRSGiantsFoundryMould = record
     Name: String;
-    MouldType: ERSFoundryMouldType;
+    MouldType: ERSGiantsFoundryMouldType;
     Heavy: Int32;
     Light: Int32;
     Broad: Int32;
@@ -47,19 +37,10 @@ Record representing a single mould piece with its attributes and scores.
     IsDefault: Boolean;
   end;
 
-(*
-## TRSGiantsFoundryCommission
-Record representing Kovac's commission requirements.
-*)
-  TRSGiantsFoundryCommission = record
-    Attribute1: ERSFoundryAttribute;
-    Attribute2: ERSFoundryAttribute;
-  end;
-
 
   TRSGiantFoundrySetupAttribute = record
     Bounds: TBox;
-    Attribute: ERSFoundryAttribute;
+    Attribute: ERSGiantsFoundryAttribute;
     AttributeTotalScore: Integer;
   end;
 
@@ -68,11 +49,17 @@ Record representing Kovac's commission requirements.
 Record representing a complete mould setup (Forte, Blade, Tip).
 *)
   TRSGiantsFoundryMouldSelection = record
-    Forte: TRSFoundryMould;
-    Blade: TRSFoundryMould;
-    Tip: TRSFoundryMould;
-    TotalScore: Integer;
+    Forte: TRSGiantsFoundryMould;
+    Blade: TRSGiantsFoundryMould;
+    Tip: TRSGiantsFoundryMould;
+    TotalScore: TRSGiantFoundrySetupAttribute;
   end;
+
+(*
+## TRSGiantsFoundrySetup
+Record responsible to handle the {ref}`GiantsFoundrySetup` interface.
+This relates to the
+*)
 
   TRSGiantsFoundrySetup = record
     Title: TRSInterfaceTitle;
@@ -81,58 +68,38 @@ Record representing a complete mould setup (Forte, Blade, Tip).
     Bounds, MouldsArea, CommissionArea: TBox;
     MouldSlots: TBoxArray;
     SetMouldButton, ResetMouldButton: TRSButton;
-    MouldTypeButtons: array [ERSFoundryMouldType] of TRSButton;
-    AvailableMoulds: array of TRSFoundryMould;
+    MouldTypeButtons: array [ERSGiantsFoundryMouldType] of TRSButton;
+    AvailableMoulds: array of TRSGiantsFoundryMould;
 
     Atrribute1, Atrribute2: TRSGiantFoundrySetupAttribute;
   end;
 
-
 (*
-## GiantsFoundrySetup._AttributeToString
+## GiantsFoundrySetup.FindItemBoundaries
 ```pascal
-function TRSGiantsFoundrySetup._AttributeToString(attr: ERSFoundryAttribute): String;
+function TRSGiantsFoundrySetup.FindMouldBoundaries(): TBoxArray;
 ```
-Internal helper function to convert an attribute enum to its string representation.
-*)
-function AttributeToString(attr: ERSFoundryAttribute): String;
-begin
-  case attr of
-    ERSFoundryAttribute.HEAVY:  Result := 'Heavy';
-    ERSFoundryAttribute.LIGHT:  Result := 'Light';
-    ERSFoundryAttribute.BROAD:  Result := 'Broad';
-    ERSFoundryAttribute.NARROW: Result := 'Narrow';
-    ERSFoundryAttribute.FLAT:   Result := 'Flat';
-    ERSFoundryAttribute.SPIKED: Result := 'Spiked';
-  end;
-end;
+Finds mould boundaries and returns them as a TBoxArray.
 
-(*
-## GiantsFoundrySetup._StringToAttribute
+You have 2 ways of getting the mould slots, a static one:
 ```pascal
-function TRSGiantsFoundrySetup._StringToAttribute(s: String): ERSFoundryAttribute;
+ShowOnTarget(GiantsFoundrySetup.MouldSlots);
 ```
-Internal helper function to convert a string to an attribute enum.
+
+
+And a dynamic one:
+```pascal
+ShowOnTarget(GiantsFoundrySetup.FindMouldBoundaries());
+```
+
+There are use cases for both, internally, `GiantsFoundrySetup.FindItemBoundaries` is usually used.
+
 *)
-function TRSGiantsFoundrySetup._StringToAttribute(s: String): ERSFoundryAttribute;
-var
-  attributes: TStringArray;
-  idx: Int32;
-begin
-  s := LowerCase(Trim(s));
-  attributes := ['heavy', 'light', 'broad', 'narrow', 'flat', 'spiked'];
-
-  for idx := 0 to High(attributes) do
-    if s.Contains(attributes[idx]) then
-      Exit(ERSFoundryAttribute(idx));
-end;
-
 function TRSGiantsFoundrySetup.FindMouldBoundaries(): TBoxArray;
 var
   tpa, final: TPointArray;
   atpa: T2DPointArray;
   b: TBox;
-  stack: ERSStack;
 begin
   // All white[$CBCFD1, 0.000, EColorSpace.RGB, [1.000, 1.000, 1.000]]
   // the brick[$9BA8AD, 0.000, EColorSpace.RGB, [1.000, 1.000, 1.000]]
@@ -161,7 +128,7 @@ This is automatically called for you on the {ref}`GiantsFoundry` variable.
 procedure TRSGiantsFoundrySetup.SetupInterface();
 var
   boxes: TBoxArray;
-  mouldtype: ERSFoundryMouldType;
+  mouldtype: ERSGiantsFoundryMouldType;
 begin
   case RSClient.Mode of
     ERSMode.FIXED:
@@ -190,14 +157,20 @@ begin
   Self.Scroll.Setup();
   Self.Title.Setup(Self.Bounds);
 
-
   Self.SetMouldButton.EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
-  for mouldtype := Low(ERSFoundryMouldType) to High(ERSFoundryMouldType) do
+  for mouldtype := Low(ERSGiantsFoundryMouldType) to High(ERSGiantsFoundryMouldType) do
   begin
     Self.MouldTypeButtons[mouldtype].Bounds := boxes[Ord(mouldtype)];
     Self.MouldTypeButtons[mouldtype].EnabledColors := [[$344049, 0.000], [$333E48, 0.000]];
   end;
 
+end;
+
+function TRSGiantsFoundrySetup.SelectMouldType(mouldtype: ERSGiantsFoundryMouldType): Boolean;
+begin
+  if Self.MouldTypeButtons[mouldtype].Enabled then Exit(True);
+
+  Result := Self.MouldTypeButtons[mouldtype].Enable;
 end;
 
 (*
@@ -211,70 +184,111 @@ This is automatically called for you.
 
 procedure TRSGiantsFoundrySetup._SetupMoulds();
 var
-  m: TRSFoundryMould;
+  m: TRSGiantsFoundryMould;
 begin
   // DEFAULT FORTES
-  m := ['Chopper Forte', ERSFoundryMouldType.FORTE, 8, 0, 0, 0, 8, 0, 1, True];
+  m := ['Chopper Forte', ERSGiantsFoundryMouldType.FORTE, 8, 0, 0, 0, 8, 0, 1, True];
   Self.AvailableMoulds += m;
 
-  m := ['Dagger Forte', ERSFoundryMouldType.FORTE, 0, 8, 0, 0, 0, 8, 1, True];
+  m := ['Dagger Forte', ERSGiantsFoundryMouldType.FORTE, 0, 8, 0, 0, 0, 8, 1, True];
   Self.AvailableMoulds += m;
 
   // PURCHASABLE FORTES
-  m := ['Choppa!', ERSFoundryMouldType.FORTE, 10, 0, 8, 0, 0, 0, 30, False];
+  m := ['Choppa!', ERSGiantsFoundryMouldType.FORTE, 10, 0, 8, 0, 0, 0, 30, False];
   Self.AvailableMoulds += m;
 
-  m := ['Medius', ERSFoundryMouldType.FORTE, 0, 10, 0, 8, 0, 0, 45, False];
+  m := ['Medius', ERSGiantsFoundryMouldType.FORTE, 0, 10, 0, 8, 0, 0, 45, False];
   Self.AvailableMoulds += m;
 
-  m := ['Juggernaut Forte', ERSFoundryMouldType.FORTE, 10, 0, 0, 0, 10, 0, 65, False];
+  m := ['Juggernaut Forte', ERSGiantsFoundryMouldType.FORTE, 10, 0, 0, 0, 10, 0, 65, False];
   Self.AvailableMoulds += m;
 
   // DEFAULT BLADES
-  m := ['Broad Blade', ERSFoundryMouldType.BLADE, 0, 0, 8, 0, 8, 0, 1, True];
+  m := ['Broad Blade', ERSGiantsFoundryMouldType.BLADE, 0, 0, 8, 0, 8, 0, 1, True];
   Self.AvailableMoulds += m;
 
-  m := ['Narrow Blade', ERSFoundryMouldType.BLADE, 0, 0, 0, 8, 0, 8, 1, True];
+  m := ['Narrow Blade', ERSGiantsFoundryMouldType.BLADE, 0, 0, 0, 8, 0, 8, 1, True];
   Self.AvailableMoulds += m;
 
   // PURCHASABLE BLADES
-  m := ['Razor Blade', ERSFoundryMouldType.BLADE, 0, 0, 0, 10, 0, 10, 35, False];
+  m := ['Razor Blade', ERSGiantsFoundryMouldType.BLADE, 0, 0, 0, 10, 0, 10, 35, False];
   Self.AvailableMoulds += m;
 
-  m := ['Defender Base', ERSFoundryMouldType.BLADE, 10, 0, 10, 0, 10, 0, 50, False];
+  m := ['Defender Base', ERSGiantsFoundryMouldType.BLADE, 10, 0, 10, 0, 10, 0, 50, False];
   Self.AvailableMoulds += m;
 
   // DEFAULT TIPS
-  m := ['Saw Tip', ERSFoundryMouldType.TIP, 0, 0, 0, 0, 0, 8, 1, True];
+  m := ['Saw Tip', ERSGiantsFoundryMouldType.TIP, 0, 0, 0, 0, 0, 8, 1, True];
   Self.AvailableMoulds += m;
 
-  m := ['Flat Tip', ERSFoundryMouldType.TIP, 0, 0, 0, 0, 8, 0, 1, True];
+  m := ['Flat Tip', ERSGiantsFoundryMouldType.TIP, 0, 0, 0, 0, 8, 0, 1, True];
   Self.AvailableMoulds += m;
 
   // PURCHASABLE TIPS
-  m := ['Spiker!', ERSFoundryMouldType.TIP, 8, 0, 0, 0, 0, 10, 40, False];
+  m := ['Spiker!', ERSGiantsFoundryMouldType.TIP, 8, 0, 0, 0, 0, 10, 40, False];
   Self.AvailableMoulds += m;
 
-  m := ['Corrupted Point', ERSFoundryMouldType.TIP, 0, 10, 0, 8, 0, 0, 55, False];
+  m := ['Corrupted Point', ERSGiantsFoundryMouldType.TIP, 0, 10, 0, 8, 0, 0, 55, False];
   Self.AvailableMoulds += m;
 
-  m := ['Serrated Tip', ERSFoundryMouldType.TIP, 0, 0, 0, 10, 0, 10, 60, False];
+  m := ['Serrated Tip', ERSGiantsFoundryMouldType.TIP, 0, 0, 0, 10, 0, 10, 60, False];
   Self.AvailableMoulds += m;
 
-  m := ['The Point!', ERSFoundryMouldType.TIP, 0, 0, 10, 0, 10, 0, 70, False];
+  m := ['The Point!', ERSGiantsFoundryMouldType.TIP, 0, 0, 10, 0, 10, 0, 70, False];
   Self.AvailableMoulds += m;
 end;
+
+(*
+## GiantsFoundrySetup.IsOpen
+```pascal
+function TRSGiantsFoundrySetup.IsOpen(): Boolean;
+```
+Returns true if the mould setup interface is open.
+
+Example:
+```pascal
+WriteLn GiantsFoundrySetup.IsOpen();
+```
+*)
 
 function TRSGiantsFoundrySetup.IsOpen(): Boolean;
 begin
   Result := Self.Title.GetTitle().Contains('Foundry Mould Setup', True);
 end;
 
+(*
+## GiantsFoundrySetup.WaitOpen
+```pascal
 function TRSGiantsFoundrySetup.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
+```
+Returns true if the mould setup opens within `time` milliseconds.
+
+Example:
+```pascal
+WriteLn GiantsFoundrySetup.WaitOpen();
+```
+*)
+
+function TRSGiantsFoundrySetup.WaitOpen(time: Integer; interval: Integer = -1): Boolean;
 begin
   if interval < 0 then interval := RandomMode(100, 50, 1500);
   Result := SleepUntil(Self.IsOpen(), interval, time);
 end;
+
+(*
+## GiantsFoundrySetup.Close
+```pascal
+function TRSGiantsFoundrySetup.Close(escape: Boolean): Boolean;
+function TRSGiantsFoundrySetup.Close(escapeProbability: Double = BioHash): Boolean; overload;
+```
+Closes the {ref}`GiantsFoundrySetup` interface, depending on `escape` the function will either
+press escape or click the close button.
+
+Example:
+```pascal
+WriteLn GiantsFoundrySetup.Close();
+```
+*)
 
 function TRSGiantsFoundrySetup.Close(escape: Boolean): Boolean;
 begin
@@ -286,19 +300,71 @@ begin
   Result := Self.Title.Close(escapeProbability);
 end;
 
+function TRSGiantsFoundrySetup.Find(mould: TRSGiantsFoundryMould): Boolean;
+var
+  mouldbox: TBox;
+begin
+  for mouldbox in Self.FindMouldBoundaries do
+  begin
+    Writeln(mouldbox);
+    if OCR.Recognize(mouldbox, RSFonts.PLAIN_12, [RSFonts.ORANGE], 0).Contains(mould.Name) then
+    begin
+      Writeln('Found Mould!!');
+      Result := True;
+    end;
+  end;
+end;
+
+function TRSGiantsFoundrySetup.FindScroll(mould: TRSGiantsFoundryMould): Integer;
+var
+  next: Integer;
+  down: Boolean;
+begin
+  if not Self.Scroll.CanScroll() then Exit(-1);
+
+  if not Self.SelectMouldType(mould.MouldType) then Exit(-1);
+
+  Result := Self.Scroll.GetLevel();
+  down := (Result > 0) or RandomBoolean(0.5);
+
+  if Self.Find(mould) then Exit;
+
+  repeat
+    if down then next := Result - 5
+    else next := Result + 5;
+
+    Result := Self.Scroll.SetLevel(next);
+    if Self.Find(mould) then Exit;
+
+    if not Self.IsOpen() then Exit(-1); //failsafe
+  until not InRange(Result, 1, 99);
+
+  down := not down;
+  repeat
+    if down then next := Result - 5
+    else next := Result + 5;
+
+    Result := Self.Scroll.SetLevel(next);
+    if Self.Find(mould) then Exit;
+
+    if not Self.IsOpen() then Exit(-1);
+  until not InRange(Result, 1, 99);
+
+  Result := -1;
+end;
 
 (*
 ## GiantsFoundry.SetupMoulds
 ```pascal
-function TRSGiantsFoundry.SetupMoulds(commission: TRSFoundryCommission;): Boolean;
+function TRSGiantsFoundry.SetupMoulds(commission: TRSGiantsFoundryCommission): Boolean;
 ```
 Automatically selects the optimal moulds for the current commission.
 
 Example:
 ```pascal
-var commission: TRSFoundryCommission;
+var commission: TRSGiantsFoundryCommission;
 begin
-  commission := GiantsFoundry.ReadCommission();
+  commission := GiantsFoundry.GetCommission();
 
   if GiantsFoundry.SetupMoulds(commission, 75) then
     WriteLn('Successfully configured optimal moulds');
@@ -306,19 +372,24 @@ end;
 ```
 *)
 
+function TRSGiantsFoundry.SetupMoulds(commission: TRSGiantsFoundryCommission): Boolean;
+begin
+
+end;
+
 (*
 ## GiantsFoundrySetup.GetCommission
 ```pascal
 function TRSGiantsFoundrySetup.GetCommission(): TRSGiantsFoundryCommission;
 ```
 Attempts to read the commision section in the bottom left
-to determine what commision we have and return it.
+of the mould setup interface to determine what commision we have and return it.
 *)
 
-function TRSGiantsFoundrySetup.GetCommision: TRSGiantsFoundryCommission;
+function TRSGiantsFoundrySetup.GetCommision(): TRSGiantsFoundryCommission;
 begin
-  Result.Attribute1 := Self._StringToAttribute(OCR.Recognize(Self.Atrribute1.Bounds, RSFonts.PLAIN_12, [RSFonts.ORANGE], 0));
-  Result.Attribute2 := Self._StringToAttribute(OCR.Recognize(Self.Atrribute2.Bounds, RSFonts.PLAIN_12, [RSFonts.ORANGE], 0));
+  Result.Attribute1 := GiantsFoundry._StringToAttribute(OCR.Recognize(Self.Atrribute1.Bounds, RSFonts.PLAIN_12, [RSFonts.ORANGE], 0));
+  Result.Attribute2 := GiantsFoundry._StringToAttribute(OCR.Recognize(Self.Atrribute2.Bounds, RSFonts.PLAIN_12, [RSFonts.ORANGE], 0));
 end;
 
 (*
@@ -326,7 +397,7 @@ end;
 ```pascal
 function TRSGiantsFoundrySetup.GetAttributeScore():
 ```
-Attempts to read the commision section in the bottom left
+Attempts to read the a attribute from the commision section in the bottom left
 to determine what commision we have and return it.
 *)
 
@@ -335,11 +406,13 @@ begin
   Result := OCR.Recognize(attribute.Bounds, RSFonts.PLAIN_12, [RSFonts.ORANGE], 0).ExtractInteger();
 end;
 
+
+
 procedure TRSGiantsFoundrySetup.Draw(img: TImage);
 var
   i: Integer;
 begin
-  //if not Self.IsOpen() then Exit;
+  if not Self.IsOpen() then Exit;
 
   img.DrawColor := $00FFFF;
   img.DrawBox(Self.Bounds);

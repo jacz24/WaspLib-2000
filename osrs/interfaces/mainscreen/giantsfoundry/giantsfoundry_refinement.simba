@@ -10,16 +10,15 @@ Methods to interact with the Giants' Foundry Refinement interface.
 
 type
 
-
   TRSGiantsFoundryRefinement = record
     Title: TRSInterfaceTitle;
 
 
-
+  end;
 
 var
 (*
 ## GiantsFoundryRefinement variable
 Global {ref}`TRSGiantsFoundryRefinement` variable.
 *)
-  GiantsFoundryRefinement: TRSGiantsFoundryRefinement
+  GiantsFoundryRefinement: TRSGiantsFoundryRefinement;

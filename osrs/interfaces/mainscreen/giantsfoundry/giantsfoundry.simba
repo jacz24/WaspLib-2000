@@ -2,17 +2,97 @@
 # GiantsFoundry
 Methods to interact with the GiantsFoundry interface:
 
-The {ref}`GrandExchange` is a very complex interface, probably the most complex
-available in OldSchool RuneScape and for that reason, the functionality to
+The {ref}`GiantsFoundry` is a very complex interface, the functionality to
 fully interact with it is split into multiple files and records:
-- {ref}`GiantsFoundry`, the main grand exchange screen and what this page is about.
-- {ref}`GiantsFoundrySetup`, the history screen of the grand exchange.
-- {ref}`GiantsFoundryRefinement`, the chat interface of the grand exchange when you are setting up a buy offer.
+- {ref}`GiantsFoundry`, a sort of handler to handle chat and helper functions.
+- {ref}`GiantsFoundrySetup`, the mould setup interface for making a sword.
+- {ref}`GiantsFoundryRefinement`, the refinement interface while playing the minigame.
 *)
 
-{$DEFINE WL_GIANTFOUNDRY_INCLUDED}
+{$DEFINE WL_GIANTSFOUNDRY_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
+type
+(*
+## ERSGiantsFoundryAttribute
+```pascal
+ERSGiantsFoundryAttribute = enum(HEAVY, LIGHT, BROAD, NARROW, FLAT, SPIKED);
+```
+Enum representing the different mould attributes in Giants' Foundry.
+Each commission from Kovac requires two of these attributes.
+*)
+  ERSGiantsFoundryAttribute = enum(HEAVY, LIGHT, BROAD, NARROW, FLAT, SPIKED);
+(*
+## TRSGiantsFoundryCommission
+Record representing Kovac's commission requirements.
+*)
+  TRSGiantsFoundryCommission = record
+    Attribute1: ERSGiantsFoundryAttribute;
+    Attribute2: ERSGiantsFoundryAttribute;
+  end;
+
+  TRSGiantsFoundry = record
+    Commission: TRSGiantsFoundryCommission;
+  end;
+
+(*
+## GiantsFoundrySetup._AttributeToString
+```pascal
+function TRSGiantsFoundrySetup._AttributeToString(attr: ERSGiantsFoundryAttribute): String;
+```
+Internal helper function to convert an attribute enum to its string representation.
+*)
+function TRSGiantsFoundry._AttributeToString(attr: ERSGiantsFoundryAttribute): String;
+begin
+  case attr of
+    ERSGiantsFoundryAttribute.HEAVY:  Result := 'Heavy';
+    ERSGiantsFoundryAttribute.LIGHT:  Result := 'Light';
+    ERSGiantsFoundryAttribute.BROAD:  Result := 'Broad';
+    ERSGiantsFoundryAttribute.NARROW: Result := 'Narrow';
+    ERSGiantsFoundryAttribute.FLAT:   Result := 'Flat';
+    ERSGiantsFoundryAttribute.SPIKED: Result := 'Spiked';
+  end;
+end;
+
+(*
+## GiantsFoundrySetup._StringToAttribute
+```pascal
+function TRSGiantsFoundrySetup._StringToAttribute(s: String): ERSGiantsFoundryAttribute;
+```
+Internal helper function to convert a string to an attribute enum.
+*)
+function TRSGiantsFoundry._StringToAttribute(s: String): ERSGiantsFoundryAttribute;
+var
+  attributes: TStringArray;
+  idx: Int32;
+begin
+  s := LowerCase(Trim(s));
+  attributes := ['heavy', 'light', 'broad', 'narrow', 'flat', 'spiked'];
+
+  for idx := 0 to High(attributes) do
+    if s.Contains(attributes[idx]) then
+      Exit(ERSGiantsFoundryAttribute(idx));
+end;
+
+function TRSGiantsFoundry.IsKovicOpen(): Boolean;
+begin
+  Result := Chat.GetTitle.Contains('Kovac', False);
+end;
+
+function TRSGiantsFoundry.GetCommission(): TRSGiantsFoundryCommission;
+var
+  request: TRSChatOption;
+  tmp: TStringArray;
+begin
+  Writeln('Getting Commission From Kovic');
+  if not Self.IsKovicOpen then Exit;
+
+  for request in Chat.GetOptions(Chat.GetColors([ERSChatColor.RED])) do
+    tmp += request.Text;
+
+  Writeln(tmp);
+  //Result := tmp;
+end;
 
 var
 (*
