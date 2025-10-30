@@ -1,5 +1,5 @@
 (*
-# Giants' Foundry Mould Interface
+# Giants' Foundry Mould Setup Interface
 Interface for handling the Giants' Foundry mould selection and setup.
 This interface allows automatic selection of optimal moulds based on
 Kovac's commission requirements.
@@ -7,7 +7,7 @@ Kovac's commission requirements.
 ```
 *)
 
-{$DEFINE WL_GIANTFOUNDRY_MOULD_INCLUDED}
+{$DEFINE WL_GIANTFOUNDRY_SETUP_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
@@ -112,7 +112,8 @@ begin
   begin
     b := tpa.Bounds();
     if b.Height <= 28 then Continue;
-    Result += TBoxArray.Create([Self.MouldsArea.X1, b.Y1-5], 1, 1, 300, Min(Self.MouldsArea.Y2-b.Y1, 38), [0, 17]);
+    Writeln(Self.MouldsArea);
+    Result += TBoxArray.Create([Self.MouldsArea.X1 + 2, b.Y1-5], 1, 1, Self.MouldsArea.X2 - Self.MouldsArea.X1 - 9, Min(Self.MouldsArea.Y2-b.Y1, 39), [0, 17]);
 
   end;
 end;
@@ -134,13 +135,28 @@ begin
     ERSMode.FIXED:
       Self.Bounds := MSInterface.CreateBounds([0, 0, 0, 0], 480, 314);
     ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
-      Self.Bounds := MSInterface.CreateBounds([0, 0, 0, 0], 480, 314); //846, 800 // TODO fix dynamic adjusting?
+      begin
+      if (MSInterface.Bounds.X2 < 640) or (MSInterface.Bounds.Y2 < 481) then
+        Self.Bounds := MSInterface.CreateBounds([0, -1, 0, 0], 480, 314);
+
+      if (MSInterface.Bounds.X2 >= 640) and (MSInterface.Bounds.Y2 >= 481)  then
+        Self.Bounds := MSInterface.CreateBounds([0, -1, 0, 0], 600, 392);
+
+      if (MSInterface.Bounds.X2 >= 800) and (MSInterface.Bounds.Y2 >= 601) then
+        Self.Bounds := MSInterface.CreateBounds([0, -1, 0, 0], 720, 470);
+
+      if (MSInterface.Bounds.X2 >= 1024) and (MSInterface.Bounds.Y2 >= 769) then
+        Self.Bounds := MSInterface.CreateBounds([0, -1, 0, 0], 850, 556);
+      //xx //846, 800 // TODO fix dynamic adjusting?
+
+      end;
+
   end;
-
-
 
   with Self.Bounds do
   begin
+
+
     Self.MouldsArea := TBox.Create(X1 + 134, Y1 + 129, X2-36, Y2-20);
 
     Self.CommissionArea := TBox.Create(X1 + 9, Y1 + 240, X2-360, Y2-9);
@@ -151,6 +167,46 @@ begin
     Self.ResetMouldButton.Bounds := TBox.Create(X1 + 345, Y1 + 38, X2 - 9, Y2 - 239);
     boxes := TBoxArray.Create([X1 + 9,Y1 + 118], 1, 3, 114, 37, [0, 4]);
     Self.MouldSlots := TBoxArray.Create([X1 + 135,Y1 + 130], 1, 4, 300, 42, [0, -2]);
+
+    if (MSInterface.Bounds.X2 >= 640) and (MSInterface.Bounds.Y2 >= 481) then
+    begin
+      Self.MouldsArea := TBox.Create(X1 + 134, Y1 + 131, X2-36, Y2-20);
+      boxes := TBoxArray.Create([X1 + 9,Y1 + 120], 1, 3, 114, 39, [0, 4]);
+      Self.MouldSlots := TBoxArray.Create([X1 + 135,Y1 + 132], 1, 6, 300, 44, [0, -2]);
+      Self.SetMouldButton.Bounds := TBox.Create(X1 + 465, Y1 + 80, X2 - 9, Y2 - 275);
+      Self.ResetMouldButton.Bounds := TBox.Create(X1 + 465, Y1 + 40, X2 - 9, Y2 - 315);
+
+      Self.CommissionArea := TBox.Create(X1 + 9, Y1 + 40, X2-474, Y2-275);
+      Self.Atrribute1.Bounds := TBox.Create(Self.CommissionArea.X1 + 6, Self.CommissionArea.Y1 + 30, Self.CommissionArea.X2-9, Self.CommissionArea.Y2 - 30);
+      Self.Atrribute2.Bounds := TBox.Create(Self.CommissionArea.X1 + 6, Self.CommissionArea.Y1 + 50, Self.CommissionArea.X2-9, Self.CommissionArea.Y2 - 9);
+    end;
+
+    if (MSInterface.Bounds.X2 >= 800) and (MSInterface.Bounds.Y2 >= 601)  then
+    begin
+      Self.MouldsArea := TBox.Create(X1 + 134, Y1 + 131, X2-36, Y2-20);
+      boxes := TBoxArray.Create([X1 + 9,Y1 + 120], 1, 3, 114, 39, [0, 4]);
+      Self.MouldSlots := TBoxArray.Create([X1 + 135,Y1 + 132], 1, 6, 300, 44, [0, -2]);
+      Self.SetMouldButton.Bounds := TBox.Create(X1 + 585, Y1 + 80, X2 - 9, Y2 - 353);
+      Self.ResetMouldButton.Bounds := TBox.Create(X1 + 585, Y1 + 40, X2 - 9, Y2 - 393);
+
+      Self.CommissionArea := TBox.Create(X1 + 9, Y1 + 40, X2-585, Y2-353);
+      Self.Atrribute1.Bounds := TBox.Create(Self.CommissionArea.X1 + 6, Self.CommissionArea.Y1 + 30, Self.CommissionArea.X2-9, Self.CommissionArea.Y2 - 30);
+      Self.Atrribute2.Bounds := TBox.Create(Self.CommissionArea.X1 + 6, Self.CommissionArea.Y1 + 50, Self.CommissionArea.X2-9, Self.CommissionArea.Y2 - 9);
+    end;
+
+    if (MSInterface.Bounds.X2 >= 1024) and (MSInterface.Bounds.Y2 >= 769) then
+    begin
+      Self.MouldsArea := TBox.Create(X1 + 134, Y1 + 133, X2-36, Y2-20);
+      boxes := TBoxArray.Create([X1 + 9,Y1 + 122], 1, 3, 114, 44, [0, 5]);
+      Self.MouldSlots := TBoxArray.Create([X1 + 135,Y1 + 132], 1, 6, 300, 44, [0, -2]);
+      Self.SetMouldButton.Bounds := TBox.Create(X1 + 715, Y1 + 82, X2 - 9, Y2 - 437);
+      Self.ResetMouldButton.Bounds := TBox.Create(X1 + 715, Y1 + 42, X2 - 9, Y2 - 477);
+
+      Self.CommissionArea := TBox.Create(X1 + 9, Y1 + 42, X2-715, Y2-437);
+      Self.Atrribute1.Bounds := TBox.Create(Self.CommissionArea.X1 + 6, Self.CommissionArea.Y1 + 30, Self.CommissionArea.X2-9, Self.CommissionArea.Y2 - 30);
+      Self.Atrribute2.Bounds := TBox.Create(Self.CommissionArea.X1 + 6, Self.CommissionArea.Y1 + 50, Self.CommissionArea.X2-9, Self.CommissionArea.Y2 - 9);
+
+    end;
   end;
 
   Self.Scroll.Area := Self.MouldsArea;
@@ -412,23 +468,25 @@ procedure TRSGiantsFoundrySetup.Draw(img: TImage);
 var
   i: Integer;
 begin
-  if not Self.IsOpen() then Exit;
+  //if not Self.IsOpen() then Exit;
 
   img.DrawColor := $00FFFF;
   img.DrawBox(Self.Bounds);
-  img.DrawBox(Self.MouldsArea);
-  img.DrawBox(Self.CommissionArea);
+  //img.DrawBoxArray(Self.MouldSlots, False);
+  img.DrawBoxArray(Self.FindMouldBoundaries, False);
   img.DrawBox(Self.SetMouldButton.Bounds);
   img.DrawBox(Self.ResetMouldButton.Bounds);
-
+  img.DrawBox(Self.CommissionArea);
+  img.DrawBox(Self.MouldsArea);
   img.DrawColor := $854F31;
-  //img.DrawBoxArray(Self.MouldSlots, False);
+
   img.DrawBox(Self.Atrribute1.Bounds);
   img.DrawBox(Self.Atrribute2.Bounds);
-  img.DrawBoxArray(Self.FindMouldBoundaries, False);
+
   Self.Scroll.Draw(img);
   for i := 0 to High(Self.MouldTypeButtons) do
     Self.MouldTypeButtons[i].Draw(img);
+
 end;
 
 procedure TRSGiantsFoundrySetup.ShowOnTarget();
