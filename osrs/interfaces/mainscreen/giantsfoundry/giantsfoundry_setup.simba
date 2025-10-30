@@ -27,13 +27,13 @@ Record representing a single mould piece with its attributes and scores.
   TRSGiantsFoundryMould = record
     Name: String;
     MouldType: ERSGiantsFoundryMouldType;
-    Heavy: Int32;
-    Light: Int32;
-    Broad: Int32;
-    Narrow: Int32;
-    Flat: Int32;
-    Spiked: Int32;
-    LevelRequired: Int32;
+    Broad: Integer;
+    Narrow: Integer;
+    Heavy: Integer;
+    Light: Integer;
+    Spiked: Integer;
+    Flat: Integer;
+    LevelRequired: Integer;
     IsDefault: Boolean;
   end;
 
@@ -243,54 +243,108 @@ var
   m: TRSGiantsFoundryMould;
 begin
   // DEFAULT FORTES
-  m := ['Chopper Forte', ERSGiantsFoundryMouldType.FORTE, 8, 0, 0, 0, 8, 0, 1, True];
+  m := ['Chopper Forte', ERSGiantsFoundryMouldType.FORTE, 4, 0, 0, 4, 0, 4, 1, True];
   Self.AvailableMoulds += m;
 
-  m := ['Dagger Forte', ERSGiantsFoundryMouldType.FORTE, 0, 8, 0, 0, 0, 8, 1, True];
+  m := ['Gladius Ricasso', ERSGiantsFoundryMouldType.FORTE, 4, 0, 4, 0, 0, 4, 1, True];
+  Self.AvailableMoulds += m;
+
+  m := ['Disarming Forte', ERSGiantsFoundryMouldType.FORTE, 0, 4, 0, 4, 4, 0, 1, True];
+  Self.AvailableMoulds += m;
+
+  m := ['Medusa Ricasso', ERSGiantsFoundryMouldType.FORTE, 8, 0, 6, 0, 0, 8, 1, True];
+  Self.AvailableMoulds += m;
+
+  m := ['Serpent Ricasso', ERSGiantsFoundryMouldType.FORTE, 0, 6, 0, 8, 0, 8, 1, True];
+  Self.AvailableMoulds += m;
+
+  m := ['Serrated Forte', ERSGiantsFoundryMouldType.FORTE, 0, 8, 8, 0, 6, 0, 1, True];
   Self.AvailableMoulds += m;
 
   // PURCHASABLE FORTES
-  m := ['Choppa!', ERSGiantsFoundryMouldType.FORTE, 10, 0, 8, 0, 0, 0, 30, False];
+  m := ['Stiletto Forte', ERSGiantsFoundryMouldType.FORTE, 0, 8, 0, 10, 0, 8, 50, False];
   Self.AvailableMoulds += m;
 
-  m := ['Medius', ERSGiantsFoundryMouldType.FORTE, 0, 10, 0, 8, 0, 0, 45, False];
+  m := ['Defender Base', ERSGiantsFoundryMouldType.FORTE, 8, 0, 10, 0, 0, 8, 51, False];
   Self.AvailableMoulds += m;
 
-  m := ['Juggernaut Forte', ERSGiantsFoundryMouldType.FORTE, 10, 0, 0, 0, 10, 0, 65, False];
+  m := ['Juggernaut Forte', ERSGiantsFoundryMouldType.FORTE, 4, 0, 4, 0, 16, 0, 61, False];
+  Self.AvailableMoulds += m;
+
+  m := ['Chopper Forte +1', ERSGiantsFoundryMouldType.FORTE, 3, 0, 0, 4, 0, 18, 70, False];
+  Self.AvailableMoulds += m;
+
+  m := ['Spiker!', ERSGiantsFoundryMouldType.FORTE, 0, 1, 2, 0, 22, 0, 79, False];
   Self.AvailableMoulds += m;
 
   // DEFAULT BLADES
-  m := ['Broad Blade', ERSGiantsFoundryMouldType.BLADE, 0, 0, 8, 0, 8, 0, 1, True];
+  m := ['Saw Blade', ERSGiantsFoundryMouldType.BLADE, 4, 0, 0, 4, 4, 0, 1, True];
   Self.AvailableMoulds += m;
 
-  m := ['Narrow Blade', ERSGiantsFoundryMouldType.BLADE, 0, 0, 0, 8, 0, 8, 1, True];
+  m := ['Defenders Edge', ERSGiantsFoundryMouldType.BLADE, 4, 0, 4, 0, 4, 0, 1, True];
+  Self.AvailableMoulds += m;
+
+  m := ['Fish Blade', ERSGiantsFoundryMouldType.BLADE, 0, 4, 0, 4, 0, 4, 1, True];
+  Self.AvailableMoulds += m;
+
+  m := ['Medusa Blade', ERSGiantsFoundryMouldType.BLADE, 8, 0, 8, 0, 0, 6, 1, True];
+  Self.AvailableMoulds += m;
+
+  m := ['Stiletto Blade', ERSGiantsFoundryMouldType.BLADE, 0, 8, 0, 6, 0, 8, 1, True];
+  Self.AvailableMoulds += m;
+
+  m := ['Gladius Edge', ERSGiantsFoundryMouldType.BLADE, 0, 6, 8, 0, 0, 8, 1, True];
   Self.AvailableMoulds += m;
 
   // PURCHASABLE BLADES
-  m := ['Razor Blade', ERSGiantsFoundryMouldType.BLADE, 0, 0, 0, 10, 0, 10, 35, False];
+  m := ['Flamberge Blade', ERSGiantsFoundryMouldType.BLADE, 0, 8, 0, 8, 10, 0, 48, False];
   Self.AvailableMoulds += m;
 
-  m := ['Defender Base', ERSGiantsFoundryMouldType.BLADE, 10, 0, 10, 0, 10, 0, 50, False];
+  m := ['Serpent Blade', ERSGiantsFoundryMouldType.BLADE, 0, 10, 0, 8, 0, 8, 50, False];
+  Self.AvailableMoulds += m;
+
+  m := ['Claymore Blade', ERSGiantsFoundryMouldType.BLADE, 16, 0, 4, 0, 0, 4, 59, False];
+  Self.AvailableMoulds += m;
+
+  m := ['Fleur de Blade', ERSGiantsFoundryMouldType.BLADE, 4, 0, 18, 0, 1, 0, 71, False];
+  Self.AvailableMoulds += m;
+
+  m := ['Choppa!', ERSGiantsFoundryMouldType.BLADE, 1, 0, 0, 22, 0, 2, 80, False];
   Self.AvailableMoulds += m;
 
   // DEFAULT TIPS
-  m := ['Saw Tip', ERSGiantsFoundryMouldType.TIP, 0, 0, 0, 0, 0, 8, 1, True];
+  m := ['People Poker Point', ERSGiantsFoundryMouldType.TIP, 0, 4, 4, 0, 0, 4, 1, True];
   Self.AvailableMoulds += m;
 
-  m := ['Flat Tip', ERSGiantsFoundryMouldType.TIP, 0, 0, 0, 0, 8, 0, 1, True];
+  m := ['Chopper Tip', ERSGiantsFoundryMouldType.TIP, 4, 0, 0, 4, 4, 0, 1, True];
+  Self.AvailableMoulds += m;
+
+  m := ['Medusa''s Head', ERSGiantsFoundryMouldType.TIP, 4, 0, 4, 0, 4, 0, 1, True];
+  Self.AvailableMoulds += m;
+
+  m := ['Serpent''s Fang', ERSGiantsFoundryMouldType.TIP, 0, 8, 0, 6, 8, 0, 1, True];
+  Self.AvailableMoulds += m;
+
+  m := ['Gladius Point', ERSGiantsFoundryMouldType.TIP, 0, 8, 8, 0, 0, 6, 1, True];
+  Self.AvailableMoulds += m;
+
+  m := ['Saw Tip', ERSGiantsFoundryMouldType.TIP, 6, 0, 8, 0, 8, 0, 1, True];
   Self.AvailableMoulds += m;
 
   // PURCHASABLE TIPS
-  m := ['Spiker!', ERSGiantsFoundryMouldType.TIP, 8, 0, 0, 0, 0, 10, 40, False];
+  m := ['Corrupted Point', ERSGiantsFoundryMouldType.TIP, 0, 8, 0, 10, 8, 0, 49, False];
   Self.AvailableMoulds += m;
 
-  m := ['Corrupted Point', ERSGiantsFoundryMouldType.TIP, 0, 10, 0, 8, 0, 0, 55, False];
+  m := ['Defenders Tip', ERSGiantsFoundryMouldType.TIP, 10, 0, 8, 0, 8, 0, 52, False];
   Self.AvailableMoulds += m;
 
-  m := ['Serrated Tip', ERSGiantsFoundryMouldType.TIP, 0, 0, 0, 10, 0, 10, 60, False];
+  m := ['Serrated Tip', ERSGiantsFoundryMouldType.TIP, 0, 4, 0, 16, 4, 0, 60, False];
   Self.AvailableMoulds += m;
 
-  m := ['The Point!', ERSGiantsFoundryMouldType.TIP, 0, 0, 10, 0, 10, 0, 70, False];
+  m := ['Needle Point', ERSGiantsFoundryMouldType.TIP, 0, 18, 0, 3, 0, 4, 69, False];
+  Self.AvailableMoulds += m;
+
+  m := ['The Point!', ERSGiantsFoundryMouldType.TIP, 2, 0, 0, 1, 0, 22, 81, False];
   Self.AvailableMoulds += m;
 end;
 
