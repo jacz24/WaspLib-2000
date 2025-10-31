@@ -146,8 +146,9 @@ begin
 
   Self.PageControl := TLazPageControl.CreateEx(Self.Form);
   Self.PageControl.Align := ELazAlign.Client;
-  Self.PageControl.Width := 800;
-  Self.PageControl.Height := 570;
+
+  Self.PageControl.Width := Self.Form.Width;
+  Self.PageControl.Height := Self.Form.Height - 40;
 
   panel := TLazPanel.CreateEx(Self.Form);
   panel.Align := ELazAlign.Bottom;
@@ -156,7 +157,7 @@ begin
   ProfileForm.SetupUI(panel);
 
   // Start button
-  Self.Start := TLazButton.CreateEx(panel, 'Start', '', 0, 0, Floor(80 * FormUtils.Scale));
+  Self.Start := TLazButton.CreateEx(panel, 'Start', '', 0, 0, 80, 30);
   Self.Start.Align := ELazAlign.Right;
   Self.Start.OnClick := @Self.OnStart;
   Self.Start.BorderSpacing.Top    := 3;
@@ -194,16 +195,11 @@ end.
 ```
 *)
 function TScriptForm.CreateTab(caption: String): TLazTabSheet;
-var
-  w, h: Integer;
 begin
-  w := Round(Self.PageControl.Width / FormUtils.Scale);
-  h := Round(Self.PageControl.Height / FormUtils.Scale);
-
   Result := Self.PageControl.AddTab();
   Result.Caption := caption;
-  Result.Width := w;
-  Result.Height := h;
+  Result.Width := Self.PageControl.Width;
+  Result.Height := Self.PageControl.Height;
 
   Self.PageControl.ActiveTabIndex := 0;
 end;
