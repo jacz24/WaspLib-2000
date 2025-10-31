@@ -3,7 +3,7 @@
 
 type
   TModelFace = object
-    Vertices: TIntegerArray;
+    Vertices: array [0..2] of Int32;
     Material: Int32;
   end;
 
@@ -12,6 +12,7 @@ type
     Faces: array of TModelFace;
     Materials: TColorArray;
     Alphas: TByteArray;
+    Width, Depth, Height: Single;
   end;
 
 procedure TModel.LoadMTL(fileName: string);
@@ -66,10 +67,16 @@ var
   face: TModelFace;
   i, j: Integer;
   idx: Integer = -1;
+  x1, y1, x2, y2, z1, z2: Single;
 begin
   strings := TLazStringList.Create();
   try
     strings.LoadFromFile(fileName);
+
+    x1 := $FFFFFF;
+    y1 := $FFFFFF;
+    z1 := $FFFFFF;
+
     for i := 0 to strings.Count-1 do
     begin
       line := strings.Strings[i].Trim();
@@ -90,6 +97,10 @@ begin
           vertex.Y := StrToFloat(parts[3])*4/128;
           vertex.Z := StrToFloat(parts[2])*4/128;
           Self.Vertices += vertex;
+
+          x1 := Min(vertex.X, x1); x2 := Max(vertex.X, x2);
+          y1 := Min(vertex.Y, y1); y2 := Max(vertex.Y, y2);
+          z1 := Min(vertex.Z, z1); z2 := Max(vertex.Z, z2);
         end;
         Continue;
       end;
@@ -101,7 +112,7 @@ begin
         begin
           face := new TModelFace();
           for j := 0 to 2 do
-            face.Vertices += StrToInt64(parts[j+1].Split('/')[0], 0) - 1;
+            face.Vertices[j] := StrToInt64(parts[j+1].Split('/')[0], 0) - 1;
 
           if InRange(idx, 0, High(Self.Materials)) then
             face.Material := idx;
@@ -112,6 +123,10 @@ begin
   finally
     strings.Free();
   end;
+
+  Self.Width := x2-x1;
+  Self.Depth := y2-y1;
+  Self.Height := z2-z1;
 end;
 
 
@@ -122,55 +137,46 @@ begin
   Result.LoadOBJ(objFile);
 end;
 
-function TModel.Construct(size: TVector3): TModel; static; overload;
+
+function TModel.ProjectEx(minimapCoord: TVector3; heights: array [0..3] of Single; rotation, radians: Single): TPointArray;
 var
-  face: TModelFace;
+  i: Integer;
+  vertices: TVector3Array;
+  width, depth: Single;
 begin
-  size.X := 2 * size.X;
-  size.Y := 2 * size.Y;
+  width := Self.Width/2;
+  depth := Self.Depth/2;
 
-  Result.Vertices := [
-    [-size.X,-size.Y,size.Z], [size.X,-size.Y,size.Z], [size.X,size.Y,size.Z], [-size.X,size.Y,size.Z], //top quad
-    [-size.X,-size.Y,0], [size.X,-size.Y,0], [size.X,size.Y,0], [-size.X,size.Y,0] //btm quad
-  ];
+  for i := 0 to High(Self.Vertices) do
+  begin
+    vertices += Self.Vertices[i].Rotate(rotation, minimapCoord.X, minimapCoord.Y);
 
-  //top face
-  face := new TModelFace();
-  face.Vertices := [0,1,2,3];
-  face.Material := 0;
-  Result.Faces += face;
+    if vertices[i].X < width then
+    begin
+      if vertices[i].Y < depth then vertices[i].Z += heights[0]
+      else if vertices[i].Y > depth then vertices[i].Z += heights[2]
+      else vertices[i].Z += (heights[0] + heights[2]) / 2;
+    end
+    else if vertices[i].X > width then
+    begin
+      if vertices[i].Y < depth then vertices[i].Z += heights[1]
+      else if vertices[i].Y > depth then vertices[i].Z += heights[3]
+      else vertices[i].Z += (heights[1] + heights[3]) / 2;
+    end
+    else
+    begin
+      if vertices[i].Y < depth then vertices[i].Z += (heights[0]+heights[1]) / 2
+      else if vertices[i].Y > depth then vertices[i].Z += (heights[2]+heights[3]) / 2
+      else vertices[i].Z += (heights[0] + heights[1] + heights[2] + heights[3]) / 4;
+    end;
 
-  //bottom face
-  face := new TModelFace();
-  face.Vertices := [4,5,6,7];
-  face.Material := 0;
-  Result.Faces += face;
+    vertices[i].X += minimapCoord.X;
+    vertices[i].Y += minimapCoord.Y;
+    vertices[i].Z += minimapCoord.Z;
+  end;
 
-  //front face
-  face := new TModelFace();
-  face.Vertices := [0,1,5,4];
-  face.Material := 0;
-  Result.Faces += face;
-
-  //right face
-  face := new TModelFace();
-  face.Vertices := [1,2,6,5];
-  face.Material := 0;
-  Result.Faces += face;
-
-  //back face
-  face := new TModelFace();
-  face.Vertices := [2,3,7,6];
-  face.Material := 0;
-  Result.Faces += face;
-
-  //left face
-  face := new TModelFace();
-  face.Vertices := [3,0,4,7];
-  face.Material := 0;
-  Result.Faces += face;
+  Result := Projection.Run(vertices, radians);
 end;
-
 
 function TModel.Project(minimapCoord: TVector3; rotation, radians: Single): TPointArray;
 begin
@@ -178,11 +184,30 @@ begin
     Result := Projection.Run(Self.Vertices.Offset([X,Y,Z]).Rotate(rotation,X,Y), radians);
 end;
 
-
-procedure TModel.DrawModel(img: TImage; projection: TPointArray);
+function TModel.GetArea(projection: TPointArray): TPointArray;
 var
   i, j: Integer;
   polygon: TPolygon;
+begin
+  for i := High(Self.Faces) downto 0 do
+  begin
+    for j := 0 to 2 do
+      polygon += projection[Self.Faces[i].Vertices[j]];
+    Result += polygon.Connect().ShapeFill();
+    polygon := [];
+  end;
+end;
+
+function TModel.GetEdges(projection: TPointArray): TPointArray;
+begin
+  Result := Self.GetArea(projection).Edges();
+end;
+
+procedure TModel.DrawModel(img: TImage; projection: TPointArray; outline: Boolean = True);
+var
+  i, j: Integer;
+  polygon: TPolygon;
+  triangle, triangles, edge: TPointArray;
 begin
   if Self.Materials <> [] then
   begin
@@ -190,11 +215,16 @@ begin
     begin
       for j := 0 to High(Self.Faces[i].Vertices) do
         polygon += projection[Self.Faces[i].Vertices[j]];
-
       img.DrawAlpha := Self.Alphas[Self.Faces[i].Material];
       img.DrawColor := Self.Materials[Self.Faces[i].Material];
       img.DrawPolygonFilled(polygon);
+      edge += polygon.Connect().ShapeFill();
       polygon := [];
+    end;
+    if outline then
+    begin
+      img.DrawColor := $FFFFFF;
+      img.DrawTPA(edge.Edges());
     end;
     Exit;
   end;
@@ -203,7 +233,18 @@ begin
     begin
       for j := 0 to High(Self.Faces[i].Vertices) do
         polygon += projection[Self.Faces[i].Vertices[j]];
-      img.DrawPolygon(polygon);
+      triangle := polygon.Connect();
+      triangles += triangle;
+      edge += triangle.ShapeFill();
       polygon := [];
+    end;
+
+
+    img.DrawColor := $00FFFF;
+    img.DrawTPA(triangles);
+    if outline then
+    begin
+      img.DrawColor := $FFFFFF;
+      img.DrawTPA(edge.Edges());
     end;
 end;

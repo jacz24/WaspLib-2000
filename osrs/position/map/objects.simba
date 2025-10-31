@@ -17,6 +17,7 @@ Main type to handle {ref}`RSObjects`.
   TRSObject = record
     UpText: TStringArray;
     Size: TVector3;
+    Model: TModel;
     Coordinates: TPointArray;
     LastCoordinate: TPoint;
     Rotations: TIntegerArray;
@@ -79,8 +80,9 @@ end;
 
 function TRSObject.Create(json: TJSONObject): TRSObject; static; overload;
 var
-  i: Integer;
-  colors: TColorArray;
+  i, j, l: Integer;
+  unique: array of TColorArray;
+  color: TColor;
   best: TBestColor;
 begin
   if json.Typ <> EJSONType.OBJ then
@@ -110,14 +112,28 @@ begin
 
   SetLength(Result.Rotations, Length(Result.Coordinates));
 
-  with json.Item[Ord(EObjectData.ROTATIONS)] do
+  with json.Item[Ord(EObjectData.COLORS)] do
     for i := 0 to Count-1 do
-      colors += Item[i].AsInt;
+    begin
+      color := Item[i].AsInt;
 
-  if colors <> [] then
+      for j := 0 to High(unique) do
+      begin
+        for l := 0 to High(unique[j]) do
+          if ColorDistance(color, unique[j, l], EColorSpace.HSL, [1.5, 1.5, 1.5]) < 15 then
+          begin
+            unique[j] += color;
+            Continue(3);
+          end;
+      end;
+
+      unique += [color];
+    end;
+
+  for i := 0 to High(unique) do
   begin
-    best := GetBestColor(EColorSpace.HSV, colors);
-    Result.Finder.Colors += [best.Color, best.Tolerance, EColorSpace.HSV, best.Mods];
+    best := GetBestColor(EColorSpace.HSL, unique[i]);
+    Result.Finder.Colors += [best.Color, best.Tolerance*1.5, EColorSpace.HSL, [best.Mods[0]*1.5, best.Mods[1]*1.5, best.Mods[2]*1.5]];
   end;
 
   Result.Walker := @Map.Walker;
@@ -191,19 +207,20 @@ end.
 
 
 (*
-## RSObject._GetCuboid
+## RSObject._GetBounds
 ```pascal
-function TRSObject._GetCuboid(me: TPoint; vector: TVector2; size: TVector3; height, radians: Single): TCuboid;
+function TRSObject._GetBounds(me: TPoint; vector: TVector2; size: TVector3; height, radians: Single): TCuboid;
 ```
-Internal helper function for {ref}`TRSObject.GetCuboidArray`.
+Internal helper function for {ref}`TRSObject.GetBoundsArray`.
 *)
-function TRSObject._GetCuboid(me: TPoint; vector: TVector2; size: TVector3; height, radians, rotation: Single): TCuboid;
+function TRSObject._GetBounds(me: TPoint; vector: TVector2; size: TVector3; height, radians, rotation: Single): TPolygon;
 var
   corners: TVector3Array;
   pt: TPoint;
-  arr: TPointArray;
 begin
   pt := me + vector.ToPoint() - Minimap.Center;
+  if Self.Model <> nil then
+    Exit(Self.Model.GetArea(Self.Model.Project(vector.ToVec3(Self.Walker^.Height(pt, False) - height), rotation, radians)));
 
   size.X := size.X*2;
   size.Y := size.Y*2;
@@ -219,19 +236,13 @@ begin
     [vector.X-size.X, vector.Y+size.Y, Self.Walker^.Height(pt - [1,1],  False) - height+size.Z]
   ];
 
-  arr := Projection.Run(corners, radians);
-  Result := [
-    [arr[4], arr[5], arr[6], arr[7]], [arr[0], arr[1], arr[2], arr[3]]
-  ];
-
-  Result.Bottom := Result.Bottom.Rotate(rotation);
-  Result.Top := Result.Top.Rotate(rotation);
+  Result := Projection.Run(corners, radians).ConvexHull();
 end;
 
 (*
-## RSObject.GetCuboidArray
+## RSObject.GetBoundsArray
 ```pascal
-function TRSObject.GetCuboidArray(me: TPoint; angle: Single = $FFFF): TCuboidArray;
+function TRSObject.GetBoundsArray(me: TPoint; angle: Single = $FFFF): TCuboidArray;
 ```
 Internal function that returns an array of cuboids of the object if it's
 coordinates are visible on the {ref}`MainScreen`.
@@ -246,7 +257,7 @@ var
 begin
   Map.Setup([ERSChunk.VARROCK]);
   objs := TRSObjectArray.Create(ObjectsJSON.GetByAction('Bank'));
-  cuboids := objs[1].GetCuboidArray(Map.Position());
+  cuboids := objs[1].GetBoundsArray(Map.Position());
   ShowOnTarget(cuboids);
 end.
 ```
@@ -254,7 +265,7 @@ end.
 ```{figure} ../../images/objs_cuboids.png
 ```
 *)
-function TRSObject.GetCuboidArray(me: TPoint; out coordinates: TPointArray; radians: Single = $FFFF): TCuboidArray;
+function TRSObject.GetBoundsArray(me: TPoint; out coordinates: TPointArray; radians: Single): TPolygonArray;
 var
   weights: TDoubleArray;
   meLocal, pt: TPoint;
@@ -263,9 +274,6 @@ var
   vector: TVector2;
 begin
   coordinates := [];
-  if radians = $FFFF then
-    radians := Minimap.CompassRadians;
-
   meLocal := Self.Walker^.GetLocal(me);
 
   h := Self.Walker^.Height(meLocal - [1,3], False) + Self.Walker^.Height(meLocal + [3,-3], False) +
@@ -286,12 +294,12 @@ begin
     pt := vector.ToPoint();
     vector := vector.Rotate(-radians, Minimap.Center);
 
-    Result += Self._GetCuboid(meLocal, vector, Self.Size, h, radians, DegToRad(Self.Rotations[i]));
+    Result += Self._GetBounds(meLocal, vector, Self.Size, h, radians, DegToRad(Self.Rotations[i]));
   end;
 
   if Result <> [] then
   begin
-    Result.Sort(weights, True);
+    Sort(Result, weights, True);
     coordinates.Sort(weights, True);
   end;
 end;
@@ -305,19 +313,19 @@ function TRSObject.FindOnMainScreen(cuboidArray: TCuboidArray): T2DPointArray;
 Internal TRSObject method responsible for filtering a TCuboidArray by what's
 visible in the mainscren.
 
-This is meant to filter {ref}`TRSObject.GetCuboidArray` so targets that are
+This is meant to filter {ref}`TRSObject.GetBoundsArray` so targets that are
 outside of the mainscreen are filtered out.
 
 You will probably never need to use this directly.
 *)
-function TRSObject.FindOnMainScreen(out coordinates: TPointArray; cuboidArray: TCuboidArray): T2DPointArray;
+function TRSObject.FindOnMainScreen(out coordinates: TPointArray; boundsArray: TPolygonArray): T2DPointArray;
 var
   i: Integer;
   found: TBooleanArray;
 begin
   if Self.Finder <> Default(TColorFinder) then
   begin
-    Self.Finder.FindEx(Result, found, cuboidArray);
+    Self.Finder.FindEx(Result, found, boundsArray, Self.Model = nil);
 
     for i := High(found) downto 0 do
       if not found[i] then
@@ -326,9 +334,10 @@ begin
     Exit;
   end;
 
-  for i := 0 to High(cuboidArray) do
-    Result += cuboidArray[i].ShapeFill();
+  for i := 0 to High(boundsArray) do
+    Result += TPointArray(boundsArray[i]).ShapeFill();
 end;
+
 
 (*
 ## RSObject.FindEx
@@ -364,7 +373,7 @@ end.
 ```
 
 As you can see, this image is very similar to the one in
-{ref}`RSObject.GetCuboidArray`, they differ however in the fact that this one,
+{ref}`RSObject.GetBoundsArray`, they differ however in the fact that this one,
 aside from the cuboids also shows the object colors that were found within
 the cuboids.
 
@@ -389,11 +398,11 @@ end.
 ```{figure} ../../images/objs_nofinder.png
 ```
 *)
-function TRSObject.FindEx(me: TPoint; out cuboids: TCuboidArray; out coordinates: TPointArray; out atpa: T2DPointArray): Boolean;
+function TRSObject.FindEx(me: TPoint; out boundsArray: TPolygonArray; out coordinates: TPointArray; out atpa: T2DPointArray): Boolean;
 begin
-  cuboids := Self.GetCuboidArray(me, coordinates);
-  if cuboids = [] then Exit;
-  atpa := Self.FindOnMainScreen(coordinates, cuboids);
+  boundsArray := Self.GetBoundsArray(me, coordinates, Minimap.CompassRadians);
+  if boundsArray = [] then Exit;
+  atpa := Self.FindOnMainScreen(coordinates, boundsArray);
   Result := atpa <> [];
 end;
 
@@ -412,9 +421,9 @@ function but is user within this one and will go into more detail.
 *)
 function TRSObject.Find(out coordinates: TPointArray; out atpa: T2DPointArray): Boolean;
 var
-  cuboids: TCuboidArray;
+  boundsArray: TPolygonArray;
 begin
-  Result := Self.FindEx(Self.Walker^.Position(), cuboids, coordinates, atpa);
+  Result := Self.FindEx(Self.Walker^.Position(), boundsArray, coordinates, atpa);
 end;
 
 (*
@@ -464,10 +473,10 @@ only match when you are at the right position.
 *)
 function TRSObject.FindFrom(position: TPoint; out atpa: T2DPointArray): Boolean;
 var
-  cuboids: TCuboidArray; 
+  boundsArray: TPolygonArray;
   coordinates: TPointArray;
 begin
-  Result := Self.FindEx(position, cuboids, coordinates, atpa);
+  Result := Self.FindEx(position, boundsArray, coordinates, atpa);
 end;
 
 (*
@@ -1024,25 +1033,26 @@ Helper method to debug TRSObjects.
 procedure TImage.DrawObject(obj: TRSObject);
 var
   atpa: T2DPointArray;
-  cuboids: TCuboidArray;
+  boundsArray: TPolygonArray;
   i: Integer;
   coordinates: TPointArray;
 begin
-  if not obj.FindEx(obj.Walker^.Position(), cuboids, coordinates, atpa) then Exit;
-
-  Self.DrawColor := $00FFFF;
-  for i := 0 to High(cuboids) do
+  if obj.FindEx(obj.Walker^.Position(), boundsArray, coordinates, atpa) then
   begin
-    Self.DrawTPA(cuboids[i].Bottom.Corners.Connect().Grow(1));
-    Self.DrawTPA(cuboids[i].Top.Corners.Connect().Grow(1));
+    Self.DrawColor := TColor.Random();
+    Self.DrawATPA(atpa);
   end;
 
-  Self.DrawColor := TColor.Random();
-  Self.DrawATPA(atpa);
-
   Self.DrawColor := $FFFFFF;
-  for i := 0 to High(cuboids) do
-    Self.DrawTPA(cuboids[i].Edges());
+  if obj.Model = nil then
+  begin
+    for i := 0 to High(boundsArray) do
+      Self.DrawTPA(boundsArray[i].Connect());
+    Exit;
+  end;
+
+  for i := 0 to High(boundsArray) do
+    Self.DrawTPA(TPointArray(boundsArray[i]).Edges());
 end;
 
 (*

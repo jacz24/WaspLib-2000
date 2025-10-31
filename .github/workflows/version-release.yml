@@ -117,7 +117,9 @@ jobs:
         run: |
             BODY=$(jq -nc \
               --arg title "WaspLib Version $TAG_NAME" \
-              --arg desc "${{ github.event.workflow_run.head_commit.message }}\n\nDownload: https://github.com/WaspScripts/WaspLib/releases/tag/$TAG_NAME" \
+              --arg desc "${{ github.event.workflow_run.head_commit.message }}
+              
+              Download: https://github.com/WaspScripts/WaspLib/releases/tag/$TAG_NAME" \
               --arg url  "https://github.com/WaspScripts/WaspLib/commit/${{ github.event.workflow_run.head_commit.id }}" \
               --arg foot "Author: ${{ github.event.workflow_run.head_commit.author.name }}" \
               --argjson color 16742912 \
