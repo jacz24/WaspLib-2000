@@ -320,10 +320,10 @@ begin
   Result := atpa <> [];
 end;
 
-function TColorFinder.Find(out atpa: T2DPointArray; areas: TPolygonArray): Boolean; overload;
+function TColorFinder.Find(out atpa: T2DPointArray; areas: T2DPointArray; polygon: Boolean): Boolean; overload;
 var
   transformer: TColorFinderTransformer;
-  area: TPolygon;
+  area: TPointArray;
   tpa, tmp: TPointArray;
 begin
   transformer := Self.Transformer.Normalize();
@@ -332,27 +332,10 @@ begin
   begin
     tmp := Self._FindHelper(area.Bounds());
     if tmp = [] then Continue;
-    tpa += tmp.ExtractPolygon(area);
-    tmp := [];
-  end;
-
-  atpa := transformer.Process(tpa);
-  Result := atpa <> [];
-end;
-
-function TColorFinder.Find(out atpa: T2DPointArray; areas: TCuboidArray): Boolean; overload;
-var
-  transformer: TColorFinderTransformer;
-  area: TCuboid;
-  tpa, tmp: TPointArray;
-begin
-  transformer := Self.Transformer.Normalize();
-
-  for area in areas do
-  begin
-    tmp := Self._FindHelper(area.Bounds());
-    if tmp = [] then Continue;
-    tpa += tmp.ExtractPolygon(area.Polygon());
+    if polygon then
+      tpa += tmp.ExtractPolygon(area)
+    else
+      tpa += tmp.Intersection(area);
     tmp := [];
   end;
 
@@ -385,7 +368,7 @@ begin
   Result := atpa <> [];
 end;
 
-function TColorFinder.FindEx(out atpa: T2DPointArray; out found: TBooleanArray; areas: TPolygonArray): Boolean; overload;
+function TColorFinder.FindEx(out atpa: T2DPointArray; out found: TBooleanArray; areas: T2DPointArray; polygon: Boolean): Boolean; overload;
 var
   transformer: TColorFinderTransformer;
   i: Integer;
@@ -394,36 +377,32 @@ begin
   transformer := Self.Transformer.Normalize();
 
   SetLength(found, Length(areas));
-  for i := 0 to High(areas) do
-  begin
-    tpa := Self._FindHelper(areas[i].Bounds());
-    if tpa = [] then Continue;
-    tpa := transformer.Process(tpa.ExtractPolygon(areas[i])).Merge();
-    if tpa = [] then Continue;
 
-    found[i] := True;
-    atpa += tpa;
-    tpa := [];
+  if polygon then
+  begin
+    for i := 0 to High(areas) do
+    begin
+      tpa := Self._FindHelper(areas[i].Bounds());
+      if tpa = [] then Continue;
+
+      tpa := tpa.ExtractPolygon(areas[i]);
+      tpa := transformer.Process(tpa).Merge();
+      if tpa = [] then Continue;
+
+      found[i] := True;
+      atpa += tpa;
+      tpa := [];
+    end;
+
+    Exit(atpa <> []);
   end;
 
-  Result := atpa <> [];
-end;
-
-function TColorFinder.FindEx(out atpa: T2DPointArray; out found: TBooleanArray; areas: TCuboidArray): Boolean; overload;
-var
-  transformer: TColorFinderTransformer;
-  i: Integer;
-  tpa: TPointArray;
-begin
-  transformer := Self.Transformer.Normalize();
-
-  SetLength(found, Length(areas));
   for i := 0 to High(areas) do
   begin
     tpa := Self._FindHelper(areas[i].Bounds());
-
     if tpa = [] then Continue;
-    tpa := transformer.Process(tpa.ExtractPolygon(areas[i].Polygon())).Merge();
+    tpa := tpa.Intersection(areas[i]);
+    tpa := transformer.Process(tpa).Merge();
     if tpa = [] then Continue;
 
     found[i] := True;

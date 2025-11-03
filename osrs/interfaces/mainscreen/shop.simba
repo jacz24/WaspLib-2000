@@ -213,8 +213,6 @@ WriteLn Shop.Buy('Gold ore', ERSShopQuantity.FIFTY);
 ```
 *)
 function TRSShop.Buy(item: TRSItem; quantity: ERSShopQuantity = ERSShopQuantity.ONE): Boolean;
-var
-  i: Integer;
 begin
   Result := False;
   if not Self.IsOpen() then Exit;
@@ -234,32 +232,6 @@ begin
 
   // TODO Maybe add Count tracking to see if sale was successful
   Sleep(200, 300);
-  Result := True;
-end;
-
-(*
-## Shop.BuyAtValue
-```pascal
-function TRSShop.BuyAtValue(item: TRSItem; quantity: Integer; price: Integer): Boolean;
-```
-Attempts to buy the specified item from the shop at a specific price using the value option.
-
-Example:
-```pascal
-WriteLn Shop.BuyAtValue('Gold ore', 10, 100);
-```
-*)
-function TRSShop.BuyAtValue(item: TRSItem; quantity: Integer; price: Integer): Boolean;
-var
-  slot, i: Integer;
-begin
-  // TODO
-  if not Self.IsOpen() then Exit;
-  if not Self.Items.Contains(item) then Exit;
-
-  Self.Items.Interact(item, 'Value');
-  Biometrics.Sleep(50, 200);
-
   Result := True;
 end;
 
@@ -310,8 +282,6 @@ WriteLn Shop.GetPrice('Gold ore');
 ```
 *)
 function TRSShop.GetPrice(item: TRSItem): Integer;
-var
-  slot: Integer;
 begin
   if not Self.IsOpen() then Exit;
   if not Self.Items.Contains(item) then Exit;

@@ -537,6 +537,7 @@ var
   tile: TPointArray;
 begin
   Self.RedClicked := False;
+
   if MainScreen.IsUpText('>') and not Self.ActionUpText.AnyContains('>') then
   begin
     ChooseOption.Select('Cancel');

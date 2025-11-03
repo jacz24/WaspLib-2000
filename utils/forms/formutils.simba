@@ -176,32 +176,94 @@ begin
   Lapify(checkbox.OnChange)(checkbox);
 end;
 
-
-
-
 var
   FormUtils: TFormUtils;
-
 
 property TLazControl.Left(value: Integer); override;
 begin
   inherited(Round(value * FormUtils.Scale));
 end;
 
+property TLazControl.Left: Integer; override;
+begin
+  Result := Round(inherited / FormUtils.Scale);
+end;
+
+
 property TLazControl.Top(value: Integer); override;
 begin
   inherited(Round(value * FormUtils.Scale));
 end;
+
+property TLazControl.Top: Integer; override;
+begin
+  Result := Round(inherited / FormUtils.Scale);
+end;
+
 
 property TLazControl.Width(value: Integer); override;
 begin
   inherited(Round(value * FormUtils.Scale));
 end;
 
+property TLazControl.Width: Integer; override;
+begin
+  Result := Round(inherited / FormUtils.Scale);
+end;
+
 property TLazControl.Height(value: Integer); override;
 begin
   inherited(Round(value * FormUtils.Scale));
 end;
+
+property TLazControl.Height: Integer; override;
+begin
+  Result := Round(inherited / FormUtils.Scale);
+end;
+
+
+
+property TLazSizeConstraints.MinWidth(value: Integer); override;
+begin
+  inherited(Round(value * FormUtils.Scale));
+end;
+
+property TLazSizeConstraints.MinWidth: Integer; override;
+begin
+  Result := Round(inherited / FormUtils.Scale);
+end;
+
+property TLazSizeConstraints.MaxWidth(value: Integer); override;
+begin
+  inherited(Round(value * FormUtils.Scale));
+end;
+
+property TLazSizeConstraints.MaxWidth: Integer; override;
+begin
+  Result := Round(inherited / FormUtils.Scale);
+end;
+
+
+property TLazSizeConstraints.MinHeight(value: Integer); override;
+begin
+  inherited(Round(value * FormUtils.Scale));
+end;
+
+property TLazSizeConstraints.MinHeight: Integer; override;
+begin
+  Result := Round(inherited / FormUtils.Scale);
+end;
+
+property TLazSizeConstraints.MaxHeight(value: Integer); override;
+begin
+  inherited(Round(value * FormUtils.Scale));
+end;
+
+property TLazSizeConstraints.MaxHeight: Integer; override;
+begin
+  Result := Round(inherited / FormUtils.Scale);
+end;
+
 
 
 property TLazControlBorderSpacing.Left(value: Integer); override;
@@ -810,6 +872,41 @@ var
   lbl: TLazLabel;
 begin
   Result := TLazTrackBar.CreateEx(owner);
+
+  if left > 0 then Result.Left := left;
+  if top > 0 then Result.Top := top;
+  if width > 0 then Result.Width := width;
+  if height > 0 then Result.Height := height;
+
+  if caption <> '' then
+  begin
+    lbl := TLazLabel.CreateEx(owner, caption, hint);
+    lbl.AnchorSideBottom.Control := Result;
+    lbl.AnchorSideBottom.Side := ELazAnchorSideReference.Top;
+    lbl.AnchorSideLeft.Control := Result;
+    lbl.AnchorSideLeft.Side := ELazAnchorSideReference.Top;
+    lbl.Anchors := [ELazAnchorKind.Bottom, ELazAnchorKind.Left];
+  end;
+
+  if hint <> '' then
+  begin
+    Result.Hint := hint;
+    Result.ShowHint := True;
+  end;
+end;
+
+
+function TLazImage.CreateEx(owner: Pointer): TLazImage; static;
+begin
+  Result := TLazImage.Create(TLazControl(owner));
+  Result.Parent := TLazComponent(owner);
+end;
+
+function TLazImage.CreateEx(owner: Pointer; caption: String; hint: String = ''; left, top, width, height: Integer = 0): TLazImage; static; overload;
+var
+  lbl: TLazLabel;
+begin
+  Result := TLazImage.CreateEx(owner);
 
   if left > 0 then Result.Left := left;
   if top > 0 then Result.Top := top;

@@ -133,13 +133,6 @@ begin
       Self.Nodes[i].Typ := EGraphNode.BLOCKED;
 end;
 
-function TWebGraph.NearestNodeIndex(pt: TPoint): Integer;
-var
-  q: TPoint;
-begin
-  q := Self.Tree.Nearest(pt, False);
-  Result := Self.Nodes.IndexOf(q);
-end;
 
 function TWebGraph.NearNodesIndices(pt: TPoint; amount: Integer): TIntegerArray;
 var
@@ -332,15 +325,26 @@ end;
 
 procedure TWebGraph.ConnectNodes(a,b: TPoint); overload;
 var
-  i, j: Integer;
+  i, idxA, idxB: Integer;
 begin
-  i := Self.Nodes.IndexOf(a);
-  if i = -1 then Exit;
+  idxA := -1;
+  idxB := -1;
 
-  j := Self.Nodes.IndexOf(b);
-  if j = -1 then Exit;
+  for i := 0 to High(Self.Nodes) do
+  begin
+    if Self.Nodes[i].Node = a then
+    begin
+      idxA := i;
+      if idxB > -1 then Break;
+    end;
+    if Self.Nodes[i].Node = b then
+    begin
+      idxB := i;
+      if idxA > -1 then Break;
+    end;
+  end;
 
-  Self.ConnectNodes(i,j);
+  Self.ConnectNodes(idxA,idxB);
 end;
 
 procedure TWebGraph.ConnectNodes(a: Integer; b: TPoint); overload;
@@ -355,11 +359,11 @@ end;
 
 procedure TWebGraph.ConnectNodesEx(a,b: TPoint);
 var
-  i, j: Integer;
+  p, q: TPoint;
 begin
-  i := Self.NearestNodeIndex(a);
-  j := Self.NearestNodeIndex(b);
-  Self.ConnectNodes(i,j);
+  p := Self.Tree.Nearest(a, False);
+  q := Self.Tree.Nearest(b, False);
+  Self.ConnectNodes(p,q);
 end;
 
 

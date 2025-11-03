@@ -39,7 +39,7 @@ begin
     Self.Spacing, Self.MinimumTiles, Self.NodeRadius, Self.MaxConnections,
     Self.MaxDoorConnections, Int32(Self.Skeletonize)
   ];
-  Result := HashData(EHashAlgo.CRC32, @data[0], Length(data));
+  Result := HashData(EHashAlgo.CRC32, @data[0], Length(data) * SizeOf(Int32));
 end;
 
 (*
@@ -50,7 +50,7 @@ procedure TWebGraphGenerator.Setup(spacing, minimumTiles, nodeRadius, maxConnect
 Sets up the `TWebGraphGenerator` with the following settings which are the
 defaults:
 ```pascal
-WebGraphGenerator.Setup(18, 4, 50, 6, 3);
+WebGraphGenerator.Setup(18, 4, 50, 6, 3, True);
 ```
 
 Parameters explanation

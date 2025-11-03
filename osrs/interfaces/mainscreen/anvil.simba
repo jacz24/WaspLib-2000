@@ -213,6 +213,30 @@ begin
       Exit(btns[i].Enable());
 end;
 
+
+(*
+## Anvil.CanSmith
+```pascal
+function TRSAnvil.CanSmith(item: TRSItem): Boolean;
+```
+Checks if the specified `item` is currently available to smith.
+
+## Example:
+```pascal
+WriteLn Anvil.CanSmith('Rune 2h sword');
+```
+*)
+function TRSAnvil.CanSmith(item: TRSItem): Boolean;
+var
+  slot: Integer;
+begin
+  slot := Self.Items.IndexOf([item]);
+  if slot = -1 then Exit;
+
+  Result := Target.HasColor($00FF00, 0, 1, Self.Slots.Box(slot));
+end;
+
+
 (*
 ## Anvil.Smith
 ```pascal
