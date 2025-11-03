@@ -2,7 +2,6 @@
 # OCR
 This page is about WaspLib's OCR.
 *)
-
 {$DEFINE WL_OCR_INCLUDED}
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
@@ -97,6 +96,9 @@ type
     BOLD_SHADOW:    TPixelFont;
     QUILL_8:        TPixelFont;
     QUILL:          TPixelFont;
+    VERDANA_13:     TPixelFont;
+    VERDANA_13_Bold:TPixelFont;
+    VERDANA_15:     TPixelFont;
     Unzipping: Boolean;
     Timeout: TCountDown;
 
@@ -125,6 +127,10 @@ begin
 
   Self.QUILL_8 := OCR.Engine.LoadFont(Self.PATH + 'Quill 8', 4);
   Self.QUILL   := OCR.Engine.LoadFont(Self.PATH + 'Quill', 4);
+
+  Self.VERDANA_13        := OCR.Engine.LoadFont(Self.PATH + 'Verdana 13', 4);
+  Self.VERDANA_13_Bold   := OCR.Engine.LoadFont(Self.PATH + 'Verdana 13 Bold', 4);
+  Self.VERDANA_15        := OCR.Engine.LoadFont(Self.PATH + 'Verdana 15', 4);
 end;
 
 procedure TRSFonts._UnzipFinished(constref result: TASyncUnzipResult);

@@ -70,7 +70,7 @@ begin
   attributes := ['heavy', 'light', 'broad', 'narrow', 'flat', 'spiked'];
 
   for idx := 0 to High(attributes) do
-    if s.Contains(attributes[idx]) then
+    if s.Contains(attributes[idx], False) then
       Exit(ERSGiantsFoundryAttribute(idx));
 end;
 
@@ -91,6 +91,8 @@ begin
     tmp += request.Text;
 
   Writeln(tmp);
+  Result.Attribute1 := Self._StringToAttribute(tmp[0]);
+  Result.Attribute2 := Self._StringToAttribute(tmp[1]);
   //Result := tmp;
 end;
 
