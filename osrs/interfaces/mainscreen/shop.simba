@@ -26,9 +26,6 @@ Main record to interact with the {ref}`Shop` interface.
     Slots: TRSSlotInterface;
     Items: TRSItemInterface;
 
-    InventorySlots: TRSSlotInterface;
-    InventoryItems: TRSItemInterface;
-
     Bounds, SlotsArea, InfoBox: TBox;
     SlotBoxes, InventorySlotBoxes: TBoxArray;
 
