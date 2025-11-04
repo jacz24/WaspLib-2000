@@ -271,13 +271,13 @@ begin
   begin
     for i := 0 to tasks.Count-1 do
     begin
-      taskName := tasks.Item[i].Item[0].AsString;
+      taskName := tasks.Item[i].Item['task'].AsString;
 
       Self.TaskList.Items.Add(
         Self.GetTaskListString(
           taskName,
-          ToStr(tasks.Item[i].Item[1].AsFloat) + ' mins',
-          ToStr(tasks.Item[i].Item[2].AsFloat * 100) + '%'
+          ToStr(tasks.Item[i].Item['interval'].AsFloat) + ' mins',
+          ToStr(tasks.Item[i].Item['variation'].AsFloat * 100) + '%'
         )
       );
 
@@ -285,7 +285,7 @@ begin
         if ANTIBAN_TASKS[j].Name = taskName then
           Break;
 
-      Antiban.AddTask(@ANTIBAN_TASKS[j].Method, tasks.Item[i].Item[1].AsFloat * ONE_MINUTE, tasks.Item[i].Item[2].AsFloat);
+      Antiban.AddTask(@ANTIBAN_TASKS[j].Method, tasks.Item[i].Item['interval'].AsFloat * ONE_MINUTE, tasks.Item[i].Item['variation'].AsFloat);
     end;
 
     Self.TasksCheckbox.SetChecked(obj.Item['enabled'].AsBool);
@@ -294,13 +294,13 @@ begin
 
   for i := 0 to tasks.Count-1 do
   begin
-    taskName := tasks.Item[i].Item[0].AsString;
+    taskName := tasks.Item[i].Item['task'].AsString;
     for j := 0 to High(ANTIBAN_TASKS) do
       if ANTIBAN_TASKS[j].Name = taskName then
         Break;
 
     Antiban.AddTask(
-      @ANTIBAN_TASKS[j].Method, tasks.Item[i].Item[1].AsFloat * ONE_MINUTE, tasks.Item[i].Item[2].AsFloat
+      @ANTIBAN_TASKS[j].Method, tasks.Item[i].Item['interval'].AsFloat * ONE_MINUTE, tasks.Item[i].Item['variation'].AsFloat
     );
   end;
 end;
