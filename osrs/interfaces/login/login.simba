@@ -44,7 +44,7 @@ Constant of all the login messages the login screen can handle.
     'Login limit exceeded',
     'This world is full',
     'Your account has been',
-    'You need a members account',
+    'You need a members'' account',
     'You are standing in a members-only area',
     'move your character to a non-members area',
     'Authenticator'
