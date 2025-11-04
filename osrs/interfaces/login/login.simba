@@ -604,6 +604,9 @@ begin
       Exit;
     end;
 
+    if (profile.Worlds.Length > 0) and not profile.Worlds.Contains(LoginWorldSwitcher.GetCurrent()) then
+      LoginWorldSwitcher.Switch(profile.Worlds.Random());
+
     if not Self.HandleMessage(Self.GetMessage(), profile.Username, profile.Password) then Exit;
     Sleep(600, 1200);
   end;
