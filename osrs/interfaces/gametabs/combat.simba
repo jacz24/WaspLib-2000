@@ -38,7 +38,7 @@ end;
 (*
 ## ChangeAttackStyle
 ```pascal
-function TRSCombat.ChangeAttackStyle(Box:TBox):Boolean;
+procedure TRSCombat.ChangeAttackStyle(Box:TBox);
 ```
 Changes attack styles. Uses parameters stored in Combat.Boxes. To call just use ```Combat.Boxes.TopLeftBox```
 The last prefix can be switched out for TopRightBox, BottomLeftBox or BottomRightBox.
@@ -62,15 +62,14 @@ begin
 end;
 ```
 *)
-function TRSCombat.ChangeAttackStyle(Box:TBox):Boolean;
+procedure TRSCombat.ChangeAttackStyle(Box:TBox);
 begin
-  Mouse.Click(Box,EMouseButton.LEFT,True,EMouseDistribution.SKEWED);
-  result:=True;
+  Mouse.Click(Box,EMouseButton.LEFT,True,EMouseDistribution.DEFAULT);
 end;
 (*
 ## ToggleAutoRetaliate
 ```pascal
-function TRSCombat.ToggleAutoRetaliate:Boolean;
+procedure TRSCombat.ToggleAutoRetaliate;
 ```
 Toggles the Auto-Retaliate feature.
 
@@ -84,13 +83,12 @@ begin
 end;
 ```
 *)
-function TRSCombat.ToggleAutoRetaliate:Boolean;
+procedure TRSCombat.ToggleAutoRetaliate;
 var
 b:TBox;
 begin
   b:= self.Boxes.AutoRetaliateBox;
-  Mouse.Click(b,EMouseButton.LEFT,True,EMouseDistribution.SKEWED);
-  result:=True;
+  Mouse.Click(b,EMouseButton.LEFT,True,EMouseDistribution.DEFAULT);
 end; 
 
 var
