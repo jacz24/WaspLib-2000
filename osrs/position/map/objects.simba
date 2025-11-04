@@ -1071,6 +1071,23 @@ begin
   img.Show();
 end;
 
+(*
+## ShowOnTarget TRSObjectArray
+```pascal
+procedure ShowOnTarget(objs: TRSObjectArray); overload;
+```
+Shows an image of the target with the `TRSObjectArray` drawn on it.
+*)
+procedure ShowOnTarget(objs: TRSObjectArray); overload;
+var
+  img: TImage;
+  i: Integer;
+begin
+  img := Target.GetImage();
+  for i := 0 to High(objs) do
+    img.DrawObject(objs[i]);
+  img.Show();
+end;
 
 function ToString(constref obj: TRSObject): String; override;
 begin
