@@ -177,10 +177,10 @@ Example:
 {$I WaspLib/osrs.simba}
 
 var
-  objs: TRSObjectArray;
+  entities: TRSEntityArray;
 begin
   Map.Setup([ERSChunk.VARROCK]);
-  objs := TRSObject.Create(ObjectsJSON.GetByName('bank'));
+  entities := TRSEntityArray.Create(NPCsJSON.GetByName('Banker')); 
 end;
 ```
 *)
