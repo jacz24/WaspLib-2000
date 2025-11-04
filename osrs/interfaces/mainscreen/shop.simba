@@ -26,8 +26,8 @@ Main record to interact with the {ref}`Shop` interface.
     Slots: TRSSlotInterface;
     Items: TRSItemInterface;
 
-    Bounds, SlotsArea, InfoBox: TBox;
-    SlotBoxes, InventorySlotBoxes: TBoxArray;
+    Bounds, SlotsArea, _IsOpenHelper: TBox;
+    SlotBoxes: TBoxArray;
 
     QuantityButtons: array [ERSShopQuantity] of TRSButton;
     ValueButton: TRSButton;
@@ -111,7 +111,7 @@ begin
 
   with Self.Bounds do
   begin
-    Self.InfoBox := TBox.Create(X1 + 30, Y2 - 35, X1 + 100, Y2 - 12);
+    Self._IsOpenHelper := TBox.Create(X1 + 30, Y2 - 35, X1 + 100, Y2 - 12);
     Self.ValueButton.Bounds := TBox.Create(X1 + 110, Y2 - 37, X1 + 139, Y2 - 8);
   end;
   Self.ValueButton.EnabledColors := [[$0F1043, 0], [$23269F, 0.227]];
@@ -151,7 +151,7 @@ WriteLn Shop.IsOpen();
 *)
 function TRSShop.IsOpen(): Boolean;
 begin
-  Result := OCR.Recognize(Self.InfoBox, RSFonts.PLAIN_12, [RSFonts.ORANGE], 0).ContainsAny(['Value','check'], True);
+  Result := OCR.Recognize(Self._IsOpenHelper, RSFonts.PLAIN_12, [RSFonts.ORANGE], 0).ContainsAny(['Value','check'], True);
 end;
 
 (*
@@ -406,7 +406,7 @@ begin
 
   img.DrawColor := $0000FF;
   img.DrawBox(Self.SlotsArea);
-  img.DrawBox(Self.InfoBox);
+  img.DrawBox(Self._IsOpenHelper);
 
   img.DrawColor := Colors.AQUA;
   img.DrawBox(Self.ValueButton.Bounds);
