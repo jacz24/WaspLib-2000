@@ -318,18 +318,18 @@ begin
     begin
       Self.BreakList.Items.Add(
         Self.GetBreakListString(
-          ToStr(breaks.Item[i].Item[0].AsFloat) + ' mins',
-          ToStr(breaks.Item[i].Item[1].AsFloat) + ' mins',
-          ToStr(breaks.Item[i].Item[2].AsFloat * 100) + '%',
-          ToStr(breaks.Item[i].Item[3].AsFloat * 100) + '%'
+          ToStr(breaks.Item[i].Item['length'].AsFloat) + ' mins',
+          ToStr(breaks.Item[i].Item['interval'].AsFloat) + ' mins',
+          ToStr(breaks.Item[i].Item['variation'].AsFloat * 100) + '%',
+          ToStr(breaks.Item[i].Item['logout'].AsFloat * 100) + '%'
         )
       );
 
       Antiban.AddBreak(
-        breaks.Item[i].Item[0].AsFloat*ONE_MINUTE,
-        breaks.Item[i].Item[1].AsFloat*ONE_MINUTE,
-        breaks.Item[i].Item[2].AsFloat,
-        breaks.Item[i].Item[3].AsFloat
+        breaks.Item[i].Item['interval'].AsFloat*ONE_MINUTE,
+        breaks.Item[i].Item['length'].AsFloat*ONE_MINUTE,
+        breaks.Item[i].Item['variation'].AsFloat,
+        breaks.Item[i].Item['logout'].AsFloat
       );
     end;
 
@@ -339,8 +339,8 @@ begin
 
   for i := 0 to breaks.Count-1 do
     Antiban.AddBreak(
-      breaks.Item[i].Item[0].AsFloat*ONE_MINUTE, breaks.Item[i].Item[1].AsFloat*ONE_MINUTE,
-      breaks.Item[i].Item[2].AsFloat, breaks.Item[i].Item[3].AsFloat
+      breaks.Item[i].Item['interval'].AsFloat*ONE_MINUTE, breaks.Item[i].Item['length'].AsFloat*ONE_MINUTE,
+      breaks.Item[i].Item['variation'].AsFloat, breaks.Item[i].Item['logout'].AsFloat
     );
 end;
 
