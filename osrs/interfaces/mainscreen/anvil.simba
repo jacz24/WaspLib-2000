@@ -183,7 +183,8 @@ begin
     if Target.HasColor(RSFonts.BLACK, 0,  1, Self.QuantityButtons[i].Bounds) then
       btns += Self.QuantityButtons[i];
 
-  if btns = [] then Exit;
+  if btns = [] then
+    Exit;
 
   case value of
     -1, 0: str := 'All';
@@ -344,7 +345,7 @@ begin
     Exit;
 
   obj.Walker^.WaitMoving();
-  Result := Self.WaitOpen(3000);
+  Result := Self.WaitOpen(6*TICK);
 end;
 
 function TRSAnvil.Open(walk: Boolean = True): Boolean; overload;

@@ -67,7 +67,7 @@ begin
     for i := 0 to High(Self.Graph.ObjectClusters) do
       canvas.DrawPoints(Self.Graph.ObjectClusters[i], Self.ColorArray[i]);
 
-  if Self.ShowGraph then
+  if Self.ShowGraph and (Self.Graph.Nodes <> []) then
   begin
     Self.Graph.Draw(canvas);
     if Self.Selected > -1 then
@@ -126,7 +126,7 @@ begin
 
   Self.Selected := Self.Graph.Nodes.NearestIndex(pt);
 
-  if pt.InRange(Self.Graph.Nodes[Self.Selected].Node, 4) then
+  if (Self.Graph.Nodes <> []) and pt.InRange(Self.Graph.Nodes[Self.Selected].Node, 4) then
   begin
     g := Self.GetGlobal(Self.Graph.Nodes[Self.Selected].Node);
 

@@ -54,8 +54,8 @@ var
   colors: TColorArray;
 begin
   img := Target.GetImage(bounds);
-  shadows := img.FindColor(0, 2.5, [1, 1, img.Width - 1, img.Height - 1]);
-  shadows := Shadows.Offset([-1,-1]).ExcludePoints(shadows);
+  shadows := img.FindColor($0, 2.5, [1, 1, img.Width - 1, img.Height - 1]);
+  shadows := shadows.Offset([-1,-1]).ExcludePoints(shadows);
 
   colors := img.GetColors(shadows).Unique();
   img.ReplaceColorBinary(False, colors, tolerance);

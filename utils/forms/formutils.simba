@@ -222,6 +222,17 @@ begin
 end;
 
 
+property TLazControl.Right: Integer;
+begin
+  Result := Self.Left+Self.Width;
+end;
+
+property TLazControl.Bottom: Integer;
+begin
+  Result := Self.Top+Self.Height;
+end;
+
+
 
 property TLazSizeConstraints.MinWidth(value: Integer); override;
 begin
