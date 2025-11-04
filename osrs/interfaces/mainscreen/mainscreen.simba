@@ -312,13 +312,12 @@ procedure TRSMainScreen.SetHighestPitch();
 var
   i, area: Integer;
 begin
-  Keyboard.KeyDown(EKeyCode.UP);
-
   area := Self.Bounds.Area * 100;
+  Keyboard.KeyDown(EKeyCode.UP);
+  Sleep(30);
   for i := 1 to 10 do // 2500ms timeout
     if (Target.GetPixelDifference(250, Self.Bounds).Length / area) < 10 then // less than 10% of the screen changed in 250ms
       Break;
-
   Keyboard.KeyUp(EKeyCode.UP);
   Self.HighestPitch := True;
 end;
