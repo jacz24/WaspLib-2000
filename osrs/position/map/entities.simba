@@ -853,12 +853,38 @@ begin
     Self.DrawTPA(boundsArray[i].Connect());
 end;
 
+(*
+## ShowOnTarget TRSEntity
+```pascal
+procedure ShowOnTarget(entity: TRSEntity); overload;
+```
+Shows an image of the target with the `TRSEntity` drawn on it.
+*)
 procedure ShowOnTarget(entity: TRSEntity); overload;
 var
   img: TImage;
 begin
   img := Target.GetImage();
   img.DrawEntity(entity);
+  img.Show();
+end;
+
+(*
+## ShowOnTarget TRSEntityArray
+```pascal
+procedure ShowOnTarget(entities: TRSEntityArray); overload;
+```
+Shows an image of the target with the `TRSEntityArray` drawn on it.
+*)
+
+procedure ShowOnTarget(entities: TRSEntityArray); overload;
+var
+  img: TImage;
+  i: Integer;
+begin
+  img := Target.GetImage();
+  for i := 0 to High(entities) do
+    img.DrawEntity(entities[i]);
   img.Show();
 end;
 
