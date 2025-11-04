@@ -605,7 +605,10 @@ begin
     end;
 
     if (profile.Worlds.Length > 0) and not profile.Worlds.Contains(LoginWorldSwitcher.GetCurrent()) then
-      LoginWorldSwitcher.Switch(profile.Worlds.Random());
+    begin
+      if not LoginWorldSwitcher.Switch(profile.Worlds.Random()) then
+        raise GetDebugLn('Login', 'Failed to switch to a valid world from the profile list.');
+    end;
 
     if not Self.HandleMessage(Self.GetMessage(), profile.Username, profile.Password) then Exit;
     Sleep(600, 1200);
