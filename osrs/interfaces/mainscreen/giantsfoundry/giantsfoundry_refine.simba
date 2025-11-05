@@ -86,37 +86,87 @@ begin
 end;
 
 
-// [$559B58, 10.433, EColorSpace.RGB, [0.638, 0.583, 1.781]]
-//[$468540, 0.000, EColorSpace.RGB, [1.000, 1.000, 1.000]]
-function TRSGiantsFoundryRefinement.FindPolishTaskBoundaries(): TBoxArray;
+
+//Red bar: 2969828, 9617142, 1975224, 3810928
+//Green bar: 11266515, 6737800, 4621632, 4482857
+//Yellow bar: 6148603, 763374, 1927902, 11398142
+//White Outline: 16777215
+
+
+function TRSGiantsFoundryRefinement.FindTaskBoundaries(): TBoxArray;
 var
-  tpa, final: TPointArray;
+  tpa, redPoints, greenPoints, yellowPoints, whitePoints, final, line: TPointArray;
   atpa: T2DPointArray;
   b, searchBox: TBox;
   x, y: Integer;
+  colour: TColor;
+  // Color arrays for each bar type
+  redColours: TIntegerArray = [2969828, 9617142, 1975224, 3810928];
+  greenColours: TIntegerArray = [11266515, 6737800, 4621632, 4482857];
+  yellowColours: TIntegerArray = [6148603, 763374, 1927902, 11398142];
+  whiteColour: Integer = 16777215;
+
+  // Helper function to check if white points exist at position
+  function HasWhiteAt(xPos, yPos: Integer): Boolean;
+  var
+    pt: TPoint;
+  begin
+    Result := False;
+    for pt in whitePoints do
+      if (pt.X = xPos) and (pt.Y = yPos) then
+        Exit(True);
+  end;
 begin
-  final := Target.FindColor($468540, 0.000, TBox.Create(Self.TaskBar.Bounds.X1, Self.TaskBar.Bounds.Y1, Self.TaskBar.Bounds.X2,Self.TaskBar.Bounds.Y1+4));
-  searchBox := TBox.Create(Self.TaskBar.Bounds.X1, Self.TaskBar.Bounds.Y1+1, Self.TaskBar.Bounds.X2,Self.TaskBar.Bounds.Y1+3);
+
+  searchBox := TBox.Create(Self.TaskBar.Bounds.X1+1, Self.TaskBar.Bounds.Y1+2, Self.TaskBar.Bounds.X2-1,Self.TaskBar.Bounds.Y1+2);
 
   // Iterate through each pixel in the search box
   for y := searchBox.Y1 to searchBox.Y2 do
     for x := searchBox.X1 to searchBox.X2 do
     begin
-      WriteLn Target.GetColor([x,y]);
+      line += [x,y];
+      colour := Target.GetColor([x,y]);
+
+      // Check red colors
+      if redColours.Contains(colour) then
+        redPoints += Point(x, y)
+      // Check green colors
+      else if greenColours.Contains(colour) then
+        greenPoints += Point(x, y)
+      // Check yellow colors
+      else if yellowColours.Contains(colour) then
+        yellowPoints += Point(x, y)
+      // Check white outline
+      else if colour = whiteColour then
+        whitePoints += Point(x, y);
+
     end;
 
-  ShowOnTarget(searchBox);
-  Writeln final;
+  //final := yellowPoints;
+  final := greenPoints;
   if final = [] then Exit;
-  atpa := final.Cluster(25, 5);
+
+  atpa := final.Cluster(3, 1);
+
   for tpa in atpa do
   begin
     b := tpa.Bounds();
-    writeln b;
-    if b.Width <= 24 then Continue;
-    //Writeln(b);
-    Result += [b.X1,b.Y1,b.X2,b.Y2];
-    //Result += [b.X1,Self.TaskBar.Bounds.Y1,b.X2,Self.TaskBar.Bounds.Y2];
+    Writeln(b);
+
+    if HasWhiteAt(b.X1 - 1, searchBox.Y1) then
+      b.X1 := b.X1 - 1;
+
+    if HasWhiteAt(b.X2 + 1, searchBox.Y1) then
+      b.X2 := b.X2 + 1;
+
+    Result += [b.X1,Self.TaskBar.Bounds.Y1,b.X2,Self.TaskBar.Bounds.Y2];
+    ShowOnTarget(Result);
+  //ShowOnTarget(line);
+  //ShowOnTarget(searchBox);
+  //ShowOnTarget(redPoints);
+  //ShowOnTarget(greenPoints);
+  //ShowOnTarget(yellowPoints);
+  //ShowOnTarget(whitePoints);
   end;
 end;
 
