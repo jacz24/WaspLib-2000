@@ -5,16 +5,192 @@ Methods to interact with the Giants' Foundry Refinement interface.
 ```
 *)
 
-{$DEFINE WL_GIANTFOUNDRY_REFINEMENT_INCLUDED}
+{$DEFINE WL_GIANTFOUNDRY_REFINE_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 
-  TRSGiantsFoundryRefinement = record
-    Title: TRSInterfaceTitle;
+  ERSProgressState = enum(WHEEL, STONE, HAMMER, NOTFOUND);
+  ERSTemperatureState = enum(COLD, MEDIUM, HOT, USELESS);
 
+  TRSRefinementQualityBar = record
+    Bounds: TBox;
 
   end;
+
+
+
+  TRSRefinementTemperatureBar = record
+    Bounds: TBox;
+
+  end;
+
+  TRSRefinementTaskBar = record
+    Bounds: TBox;
+
+  end;
+
+  TRSGiantsFoundryRefinement = record
+    Bounds: TBox;
+
+    QualityBar: TRSRefinementQualityBar;
+    TemperatureBar: TRSRefinementTemperatureBar;
+    TaskBar: TRSRefinementTaskBar;
+
+  end;
+
+// IsActuve Colour: [$FFFFFF, 0.000, EColorSpace.RGB, [1.000, 1.000, 1.000]]
+// USELESS SPACE COLOUR: [$2A2A2A, 0.000, EColorSpace.RGB, [1.000, 1.000, 1.000]]
+
+//TripHammerTask: [$333BAA, 4.308, EColorSpace.RGB, [0.237, 0.654, 2.111]]
+// PolishTask: [$559B58, 10.433, EColorSpace.RGB, [0.638, 0.583, 1.781]]
+// GrindTask: [$349DEC, 9.110, EColorSpace.RGB, [1.835, 0.517, 0.649]]
+// [$5CAAEE, 10.386, EColorSpace.RGB, [2.076, 0.515, 0.410]]
+// trip: [$2C39AA, 7.525, EColorSpace.RGB, [0.389, 1.002, 1.610]]
+function TRSGiantsFoundryRefinement.FindTripTaskBoundaries(): TBoxArray;
+var
+  tpa, final: TPointArray;
+  atpa: T2DPointArray;
+  b: TBox;
+begin
+  //final := Target.FindColor($2C39AA, 7.525, Self.TaskBar.Bounds);
+  final := Target.FindColor($FFFFFF, 0.000, Self.TaskBar.Bounds);
+  if final = [] then Exit;
+  atpa := final.Cluster(25, 5);
+  for tpa in atpa do
+  begin
+    b := tpa.Bounds();
+    if b.Width <= 24 then Continue;
+    Writeln(b);
+    Result += [b.X1,Self.TaskBar.Bounds.Y1,b.X2,Self.TaskBar.Bounds.Y2];
+  end;
+end;
+
+function TRSGiantsFoundryRefinement.FindGrindTaskBoundaries(): TBoxArray;
+var
+  tpa, final: TPointArray;
+  atpa: T2DPointArray;
+  b: TBox;
+begin
+  final := Target.FindColor($5CAAEE, 10.386, Self.TaskBar.Bounds);
+  Writeln(final);
+  if final = [] then Exit;
+  atpa := final.Cluster(25, 5);
+  for tpa in atpa do
+  begin
+    b := tpa.Bounds();
+    if b.Width <= 24 then Continue;
+    Writeln(b);
+    Result += [b.X1,Self.TaskBar.Bounds.Y1,b.X2,Self.TaskBar.Bounds.Y2];
+  end;
+end;
+
+
+// [$559B58, 10.433, EColorSpace.RGB, [0.638, 0.583, 1.781]]
+//[$468540, 0.000, EColorSpace.RGB, [1.000, 1.000, 1.000]]
+function TRSGiantsFoundryRefinement.FindPolishTaskBoundaries(): TBoxArray;
+var
+  tpa, final: TPointArray;
+  atpa: T2DPointArray;
+  b, searchBox: TBox;
+  x, y: Integer;
+begin
+  final := Target.FindColor($468540, 0.000, TBox.Create(Self.TaskBar.Bounds.X1, Self.TaskBar.Bounds.Y1, Self.TaskBar.Bounds.X2,Self.TaskBar.Bounds.Y1+4));
+  searchBox := TBox.Create(Self.TaskBar.Bounds.X1, Self.TaskBar.Bounds.Y1+1, Self.TaskBar.Bounds.X2,Self.TaskBar.Bounds.Y1+3);
+
+  // Iterate through each pixel in the search box
+  for y := searchBox.Y1 to searchBox.Y2 do
+    for x := searchBox.X1 to searchBox.X2 do
+    begin
+      WriteLn Target.GetColor([x,y]);
+    end;
+
+  ShowOnTarget(searchBox);
+  Writeln final;
+  if final = [] then Exit;
+  atpa := final.Cluster(25, 5);
+  for tpa in atpa do
+  begin
+    b := tpa.Bounds();
+    writeln b;
+    if b.Width <= 24 then Continue;
+    //Writeln(b);
+    Result += [b.X1,b.Y1,b.X2,b.Y2];
+    //Result += [b.X1,Self.TaskBar.Bounds.Y1,b.X2,Self.TaskBar.Bounds.Y2];
+  end;
+end;
+
+procedure TRSGiantsFoundryRefinement.SetupInterface();
+begin
+  case RSClient.Mode of
+    ERSMode.FIXED:
+      Self.Bounds := MSInterface.CreateBounds([0, -195, 0, 0], 480, 74);
+    ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
+      begin
+        if (MSInterface.Bounds.X2 < 640) or (MSInterface.Bounds.Y2 < 481) then
+          Self.Bounds := MSInterface.CreateBounds([0, -200, 0, 339 - MSInterface.Height], 480, 74);
+
+        if (MSInterface.Bounds.X2 >= 640) and (MSInterface.Bounds.Y2 >= 481)  then
+          Self.Bounds := MSInterface.CreateBounds([0, -196, 0, 339 - MSInterface.Height], 600, 78);
+
+        if (MSInterface.Bounds.X2 >= 800) and (MSInterface.Bounds.Y2 >= 601) then
+          Self.Bounds := MSInterface.CreateBounds([0, -196, 0, 339 - MSInterface.Height], 720, 78);
+
+        if (MSInterface.Bounds.X2 >= 1024) and (MSInterface.Bounds.Y2 >= 769) then
+          Self.Bounds := MSInterface.CreateBounds([0, -186, 0, 339 - MSInterface.Height], 850, 88);
+
+      end;
+
+  end;
+
+  with Self.Bounds do
+  begin
+    if (MSInterface.Bounds.X2 < 640) or (MSInterface.Bounds.Y2 < 481) then
+    begin
+      Self.QualityBar.Bounds := TBox.Create(X1+32, Y1+6, X2-6, Y2-53);
+      Self.TemperatureBar.Bounds := TBox.Create(X1+32, Y1+27, X2-6, Y2-32);
+      Self.TaskBar.Bounds := TBox.Create(X1+32, Y1+48, X2-6, Y2-6);
+    end;
+    if (MSInterface.Bounds.X2 >= 640) and (MSInterface.Bounds.Y2 >= 481) then
+    begin
+      Self.QualityBar.Bounds := TBox.Create(X1+32, Y1+6, X2-6, Y2-55);
+      Self.TemperatureBar.Bounds := TBox.Create(X1+32, Y1+29, X2-6, Y2-32);
+      Self.TaskBar.Bounds := TBox.Create(X1+32, Y1+52, X2-6, Y2-6);
+    end;
+    if (MSInterface.Bounds.X2 >= 1024) and (MSInterface.Bounds.Y2 >= 769) then
+    begin
+      Self.QualityBar.Bounds := TBox.Create(X1+36, Y1+6, X2-6, Y2-62);
+      Self.TemperatureBar.Bounds := TBox.Create(X1+36, Y1+32, X2-6, Y2-36);
+      Self.TaskBar.Bounds := TBox.Create(X1+36, Y1+58, X2-6, Y2-6);
+    end;
+  end;
+end;
+
+procedure TRSGiantsFoundryRefinement.Draw(img: TImage);
+begin
+  //if not Self.IsOpen() then Exit;
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
+
+  img.DrawBox(Self.QualityBar.Bounds);
+  img.DrawBox(Self.TemperatureBar.Bounds);
+  img.DrawBox(Self.TaskBar.Bounds);
+
+  img.DrawColor := $854F31;
+  img.DrawBoxArray(Self.FindTripTaskBoundaries, False);
+  img.DrawBoxArray(Self.FindPolishTaskBoundaries, False);
+  img.DrawBoxArray(Self.FindGrindTaskBoundaries, False);
+end;
+
+procedure TRSGiantsFoundryRefinement.ShowOnTarget();
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  Self.Draw(img);
+  img.Show();
+end;
 
 var
 (*
