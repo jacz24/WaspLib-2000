@@ -44,7 +44,7 @@ Constant of all the login messages the login screen can handle.
     'Login limit exceeded',
     'This world is full',
     'Your account has been',
-    'You need a members account',
+    'You need a members'' account',
     'You are standing in a members-only area',
     'move your character to a non-members area',
     'Authenticator'
@@ -574,6 +574,34 @@ begin
 end;
 
 (*
+## Login.SwitchToProfileWorld
+```pascal
+function TRSLogin.SwitchToProfileWorld(worlds : TIntegerArray): Boolean;
+```
+Ensures we are on a world declared in the profile, retrying transient failures
+before giving up. Returns `True` when the current world matches one from the
+profile list.
+*)
+function TRSLogin.SwitchToProfileWorld(worlds : TIntegerArray): Boolean;
+var
+  attempt, time: Integer;
+begin
+  if (worlds.Length = 0) or worlds.Contains(LoginWorldSwitcher.GetCurrent()) then
+    Exit(True) ;
+
+  for attempt := 0 to 4 do
+  begin
+    if LoginWorldSwitcher.Switch(worlds.Random()) then
+      Exit(True);
+
+    if attempt < 4 then
+      Sleep(Random(10000, 20000) * (1 + attempt));
+  end;
+
+  raise GetDebugLn('Login', 'Failed to switch to a valid world from the profile list after 5 attempts.');
+end;
+
+(*
 ## Login.DoLogin
 ```pascal
 function TRSLogin.DoLogin(profile: TProfile): Boolean;
@@ -603,6 +631,8 @@ begin
       WriteLn GetDebugLn('Login', 'Timed out trying to login.', ELogLevel.ERROR);
       Exit;
     end;
+
+    if not Self.SwitchToProfileWorld(profile.Worlds) then Exit;
 
     if not Self.HandleMessage(Self.GetMessage(), profile.Username, profile.Password) then Exit;
     Sleep(600, 1200);
