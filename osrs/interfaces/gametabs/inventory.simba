@@ -183,7 +183,8 @@ begin
   if slot > -1 then
   begin
     b := boxes[slot];
-    if Self.IsSelected(b) then Exit(True);
+    if Self.IsSelected(b) then
+      Exit(True);
     Delete(boxes, slot, 1);
   end;
 
@@ -191,7 +192,8 @@ begin
     if Self.IsSelected(tmp) then
     begin
       Mouse.Click(tmp, EMouseButton.LEFT);
-      if slot = -1 then Exit(True);
+      if slot = -1 then
+        Exit(True);
       Break;
     end;
 
@@ -244,12 +246,25 @@ end;
 function TRSInventory.Combine(itemA, itemB: TRSItem): Boolean; overload;
 var
   slotsA, slotsB: TIntegerArray;
-  bestA, bestB: Integer;
+  selected, bestA, bestB: Integer;
   dist, best: Double;
   centers: TPointArray;
   i, j: Integer;
 begin
-  if not Self.Open() then Exit;
+  if not Self.Open() then
+    Exit;
+
+  selected := Self.GetSelected();
+  if selected > -1 then
+  begin
+    Mouse.Click(Self.Slots.Box(selected), EMouseButton.LEFT);
+    if not SleepUntil(
+      Target.HasColor(ITEM_BORDER, 0, 1, Self.Slots.Box(selected)) and
+      not Target.HasColor(ITEM_BORDER_WHITE, 0, 1, Self.Slots.Box(selected)), 200, 2*TICK
+    ) then
+      Exit;
+  end;
+
   slotsA := Self.Items.IndicesOf([itemA]);
   if slotsA = [] then Exit;
 
