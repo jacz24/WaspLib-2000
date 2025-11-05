@@ -35,7 +35,61 @@ begin
 
   Self.AttackStyles :=[Self.boxes.topleftbox, Self.Boxes.TopRightbox,Self.Boxes.BottomLeftbox,  Self.Boxes.BottomRightbox];
 end;
+(*
+## ChangeAttackStyle
+```pascal
+procedure TRSCombat.ChangeAttackStyle(Box:TBox);
+```
+Changes attack styles. Uses parameters stored in Combat.Boxes. To call just use ```Combat.Boxes.TopLeftBox```
+The last prefix can be switched out for TopRightBox, BottomLeftBox or BottomRightBox.
 
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+
+begin
+  Combat.SetupGameTab;
+  Combat.ChangeAttackStyle(Combat.Boxes.TopLeftBox);
+end;
+```
+Or Example2:
+```pascal
+{$I WaspLib/osrs.simba}
+
+begin
+  Combat.SetupGameTab;
+  Combat.ChangeAttackStyle(Combat.Boxes.BottomRightBox);
+end;
+```
+*)
+procedure TRSCombat.ChangeAttackStyle(Box:TBox);
+begin
+  Mouse.Click(Box,EMouseButton.LEFT,True,EMouseDistribution.DEFAULT);
+end;
+(*
+## ToggleAutoRetaliate
+```pascal
+procedure TRSCombat.ToggleAutoRetaliate;
+```
+Toggles the Auto-Retaliate feature.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+
+begin
+  Combat.SetupGameTab;
+  Combat.ToggleAutoRetaliate;
+end;
+```
+*)
+procedure TRSCombat.ToggleAutoRetaliate;
+var
+b:TBox;
+begin
+  b:= self.Boxes.AutoRetaliateBox;
+  Mouse.Click(b,EMouseButton.LEFT,True,EMouseDistribution.DEFAULT);
+end; 
 
 var
   Combat: TRSCombat;
