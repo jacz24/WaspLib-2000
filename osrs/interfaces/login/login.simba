@@ -583,7 +583,7 @@ before giving up.
 *)
 procedure TRSLogin.SwitchWorld(worlds: TIntegerArray);
 var
-  attempt, time: Integer;
+  attempt: Integer;
 begin
   for attempt := 0 to 4 do
   begin

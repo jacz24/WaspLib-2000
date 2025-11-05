@@ -323,25 +323,27 @@ begin
     Exit;
   end;
 
+  if Self.Model <> nil then
+    Exit(boundsArray);
+
   for i := 0 to High(boundsArray) do
-    Result += TPointArray(boundsArray[i]).ShapeFill();
+    Result += TPointArray(boundsArray[i]).Connect().ShapeFill();
 end;
 
 (*
-## TRSEntityV2.Find
+## TRSEntity.FindEx
 ```pascal
-function TRSEntityV2.FindEx(out cuboids: TCuboidArray; out atpa: T2DPointArray): Boolean;
-function TRSEntityV2.Find(out atpa: T2DPointArray): Boolean;
-function TRSEntityV2.FindFromPosition(me: TPoint; out atpa: T2DPointArray): Boolean;
+function TRSEntity.FindEx(me: TPoint; out boundsArray: TPolygonArray; out coordinates: TPointArray; out atpa: T2DPointArray): Boolean;
 ```
-TRSEntityV2 method used to find a {ref}`TRSEntityV2`. If found returns true, if not returns false.
-The "extended" method in particular is mostly meant for debugging and is the one used when you call `Debug(TRSEntity)`.
+Internal {ref}`TRSEntity` method used to find a {ref}`RSEntity`.
 
-Example:
-```pascal
-WriteLn RSObjects.GEBank.Find(atpa); //Be in ge and with a walker setup there.
-Debug(atpa);
-```
+You also have {ref}`RSEntity.Find` to find entities, this version of the method
+is internal because it returns extra information about the found entities for
+internal use, like it's `cuboids` for example.
+
+This also returns an `atpa` containing the colors of the object that were found
+assuming the object has a {ref}`TColorFinder` setup.
+If not, the cuboids area are returned as the match.
 *)
 function TRSEntity.FindEx(me: TPoint; out boundsArray: TPolygonArray; out coordinates: TPointArray; out atpa: T2DPointArray): Boolean;
 begin
@@ -353,12 +355,34 @@ begin
 end;
 
 
+(*
+## RSEntity.Find
+```pascal
+function TRSEntity.Find(out coordinates: TPointArray; out atpa: T2DPointArray): Boolean;
+function TRSEntity.Find(out atpa: T2DPointArray): Boolean; overload;
+```
+{ref}`TRSEntity` method used to find a {ref}`RSEntity`.
+This returns True/False if the entity was found and it's `atpa` which cointains
+the colors of it that were found.
+
+For more information on this refer to {ref}`TRSEntity.FindEx`, it's an internal
+function but is used within this one and will go into more detail.
+*)
 function TRSEntity.Find(out coordinates: TPointArray; out atpa: T2DPointArray): Boolean;
 var
   boundsArray: TPolygonArray;
 begin
   Result := Self.FindEx(Self.Walker^.Position(), boundsArray, coordinates, atpa);
 end;
+
+function TRSEntity.Find(out atpa: T2DPointArray): Boolean; overload;
+var
+  coordinates: TPointArray;
+  boundsArray: TPolygonArray;
+begin
+  Result := Self.FindEx(Self.Walker^.Position(), boundsArray, coordinates, atpa);
+end;
+
 
 function TRSEntity.FindFrom(position: TPoint; out atpa: T2DPointArray): Boolean;
 var

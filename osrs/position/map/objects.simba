@@ -334,15 +334,18 @@ begin
     Exit;
   end;
 
+  if Self.Model <> nil then
+    Exit(boundsArray);
+
   for i := 0 to High(boundsArray) do
-    Result += TPointArray(boundsArray[i]).ShapeFill();
+    Result += TPointArray(boundsArray[i]).Connect().ShapeFill();
 end;
 
 
 (*
 ## RSObject.FindEx
 ```pascal
-function TRSObject.FindEx(me: TPoint; out cuboids: TCuboidArray; out atpa: T2DPointArray): Boolean;
+function TRSObject.FindEx(me: TPoint; out boundsArray: TPolygonArray; out coordinates: TPointArray; out atpa: T2DPointArray): Boolean;
 ```
 Internal {ref}`TRSObject` method used to find a {ref}`RSObject`.
 If found returns true, if not returns false.
@@ -410,14 +413,15 @@ end;
 (*
 ## RSObject.Find
 ```pascal
-function TRSObject.Find(out atpa: T2DPointArray): Boolean;
+function TRSObject.Find(out coordinates: TPointArray; out atpa: T2DPointArray): Boolean;
+function TRSObject.Find(out atpa: T2DPointArray): Boolean; overload;
 ```
 {ref}`TRSObject` method used to find a {ref}`RSObject`.
 This returns True/False if the object was found and it's `atpa` which cointains
 the colors of it that were found.
 
 For more information on this refer to {ref}`RSObject.FindEx`, it's an internal
-function but is user within this one and will go into more detail.
+function but is used within this one and will go into more detail.
 *)
 function TRSObject.Find(out coordinates: TPointArray; out atpa: T2DPointArray): Boolean;
 var
@@ -425,6 +429,15 @@ var
 begin
   Result := Self.FindEx(Self.Walker^.Position(), boundsArray, coordinates, atpa);
 end;
+
+function TRSObject.Find(out atpa: T2DPointArray): Boolean; overload;
+var
+  coordinates: TPointArray;
+  boundsArray: TPolygonArray;
+begin
+  Result := Self.FindEx(Self.Walker^.Position(), boundsArray, coordinates, atpa);
+end;
+
 
 (*
 ## RSObject.FindFrom
