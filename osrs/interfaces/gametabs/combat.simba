@@ -1,44 +1,48 @@
+(*
+# Combat
+Methods to interact with the inventory gametab.
+*)
 {$DEFINE WL_COMBAT_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
+(*
+## TRSCombat
+Main record responsible with handling the combat gametab.
+*)
   TRSCombat = record
     AttackStyles: TBoxArray;
 
     Boxes:record
-      TopLeftBox,BottomLeftBox,TopRightBox,BottomRightBox,CategoryBox,CombatLvlBox, AutoRetaliateBox:TBox;
+      TopLeftBox, BottomLeftBox, TopRightBox, BottomRightBox,
+      CategoryBox, CombatLvlBox, AutoRetaliateBox:TBox;
     end;
   end;
 
 procedure TRSCombat.SetupGameTab();
 begin
   with Gametab.TopLeft do
-  Self.Boxes.TopLeftBox:= [X+20, Y+45, X+85, Y+90];
-
-  with Gametab.TopLeft do
-  Self.Boxes.TopRightBox:= [X+95, Y+45, X+165, Y+90];
-
-  with Gametab.TopLeft do
-  Self.Boxes.BottomLeftBox:=[X+20, Y+100, X+85, Y+146];
-
-  with Gametab.TopLeft do
-  Self.Boxes.BottomRightBox:= [X+95, Y+100, X+165, Y+146];
-
-  with GameTab.TopLeft do
-  Self.Boxes.CombatLvlBox:= [X+45, Y+25, X+135, Y+40];
+  begin
+    Self.Boxes.TopLeftBox := [X+20, Y+45, X+85, Y+90];
+    Self.Boxes.TopRightBox := [X+95, Y+45, X+165, Y+90];
+    Self.Boxes.BottomLeftBox :=[X+20, Y+100, X+85, Y+146];
+    Self.Boxes.BottomRightBox := [X+95, Y+100, X+165, Y+146];
+    Self.Boxes.CombatLvlBox := [X+45, Y+25, X+135, Y+40];
+  end;
 
   with GameTab.Bounds do
-  Self.Boxes.AutoRetaliateBox:=[X1+20,Y1+155,X2-15,Y2-60];
+  begin
+    Self.Boxes.AutoRetaliateBox := [X1+20,Y1+155,X2-15,Y2-60];
+    Self.Boxes.CategoryBox := [X1+45,Y1+225,X2-45,Y2];
+  end;
 
-  with GameTab.Bounds do
-  Self.Boxes.CategoryBox:=[X1+45,Y1+225,X2-45,Y2];
-
-  Self.AttackStyles :=[Self.boxes.topleftbox, Self.Boxes.TopRightbox,Self.Boxes.BottomLeftbox,  Self.Boxes.BottomRightbox];
+  Self.AttackStyles :=[Self.boxes.TopLeftBox, Self.Boxes.TopRightBox,Self.Boxes.BottomLeftBox, Self.Boxes.BottomRightBox];
 end;
+
 (*
 ## ChangeAttackStyle
 ```pascal
-procedure TRSCombat.ChangeAttackStyle(Box:TBox);
+procedure TRSCombat.ChangeAttackStyle(b: TBox);
 ```
 Changes attack styles. Uses parameters stored in Combat.Boxes. To call just use ```Combat.Boxes.TopLeftBox```
 The last prefix can be switched out for TopRightBox, BottomLeftBox or BottomRightBox.
@@ -62,14 +66,15 @@ begin
 end;
 ```
 *)
-procedure TRSCombat.ChangeAttackStyle(Box:TBox);
+procedure TRSCombat.ChangeAttackStyle(b:TBox);
 begin
-  Mouse.Click(Box,EMouseButton.LEFT,True,EMouseDistribution.DEFAULT);
+  Mouse.Click(b, EMouseButton.LEFT,True,EMouseDistribution.DEFAULT);
 end;
+
 (*
 ## ToggleAutoRetaliate
 ```pascal
-procedure TRSCombat.ToggleAutoRetaliate;
+procedure TRSCombat.ToggleAutoRetaliate();
 ```
 Toggles the Auto-Retaliate feature.
 
@@ -83,14 +88,14 @@ begin
 end;
 ```
 *)
-procedure TRSCombat.ToggleAutoRetaliate;
-var
-b:TBox;
+procedure TRSCombat.ToggleAutoRetaliate();
 begin
-  b:= self.Boxes.AutoRetaliateBox;
-  Mouse.Click(b,EMouseButton.LEFT,True,EMouseDistribution.DEFAULT);
+  Mouse.Click(Self.Boxes.AutoRetaliateBox, EMouseButton.LEFT);
 end; 
 
 var
+(*
+## Combat variable
+Global {ref}`TRSCombat` variable.
+*)
   Combat: TRSCombat;
-
