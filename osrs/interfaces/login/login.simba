@@ -574,25 +574,21 @@ begin
 end;
 
 (*
-## Login.SwitchToProfileWorld
+## Login.SwitchWorld
 ```pascal
-function TRSLogin.SwitchToProfileWorld(worlds : TIntegerArray): Boolean;
+procedure TRSLogin.SwitchWorld(worlds: TIntegerArray);
 ```
 Ensures we are on a world declared in the profile, retrying transient failures
-before giving up. Returns `True` when the current world matches one from the
-profile list.
+before giving up.
 *)
-function TRSLogin.SwitchToProfileWorld(worlds : TIntegerArray): Boolean;
+procedure TRSLogin.SwitchWorld(worlds: TIntegerArray);
 var
   attempt, time: Integer;
 begin
-  if (worlds.Length = 0) or worlds.Contains(LoginWorldSwitcher.GetCurrent()) then
-    Exit(True) ;
-
   for attempt := 0 to 4 do
   begin
     if LoginWorldSwitcher.Switch(worlds.Random()) then
-      Exit(True);
+      Exit;
 
     if attempt < 4 then
       Sleep(Random(10000, 20000) * (1 + attempt));
@@ -618,6 +614,7 @@ WriteLn Login.DoLogin(profile);
 function TRSLogin.DoLogin(profile: TProfile = Default(TProfile)): Boolean;
 var
   timeout: UInt64;
+  switched: Boolean;
 begin
   if profile = Default(TProfile) then
     profile := Profiles.Get();
@@ -632,9 +629,15 @@ begin
       Exit;
     end;
 
-    if not Self.SwitchToProfileWorld(profile.Worlds) then Exit;
+    if not switched and (profile.Worlds <> []) and
+       not profile.Worlds.Contains(LoginWorldSwitcher.GetCurrent()) then
+    begin
+      Self.SwitchWorld(profile.Worlds);
+      switched := True;
+    end;
 
-    if not Self.HandleMessage(Self.GetMessage(), profile.Username, profile.Password) then Exit;
+    if not Self.HandleMessage(Self.GetMessage(), profile.Username, profile.Password) then
+      Exit;
     Sleep(600, 1200);
   end;
 
