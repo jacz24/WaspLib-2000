@@ -648,7 +648,7 @@ begin
   if not Self.Walking or not Self.IsWalkable(mapPoint, me, minimapPoint, Minimap.CompassRadians) then
     Exit(not Self.Walking);
 
-  if Minimap.Center.InRange(minimapPoint, 4) then
+  if Minimap.Center.InRange(minimapPoint, 3) then
     Exit(True);
 
   shouldExit := False;
