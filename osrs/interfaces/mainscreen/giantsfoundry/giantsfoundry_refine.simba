@@ -48,21 +48,14 @@ type
 
   end;
 
-// IsActuve Colour: [$FFFFFF, 0.000, EColorSpace.RGB, [1.000, 1.000, 1.000]]
-// USELESS SPACE COLOUR: [$2A2A2A, 0.000, EColorSpace.RGB, [1.000, 1.000, 1.000]]
 
-//TripHammerTask: [$333BAA, 4.308, EColorSpace.RGB, [0.237, 0.654, 2.111]]
-// PolishTask: [$559B58, 10.433, EColorSpace.RGB, [0.638, 0.583, 1.781]]
-// GrindTask: [$349DEC, 9.110, EColorSpace.RGB, [1.835, 0.517, 0.649]]
-// [$5CAAEE, 10.386, EColorSpace.RGB, [2.076, 0.515, 0.410]]
-// trip: [$2C39AA, 7.525, EColorSpace.RGB, [0.389, 1.002, 1.610]]
-
-
-
-//Red bar: 2969828, 9617142, 1975224, 3810928
-//Green bar: 11266515, 6737800, 4621632, 4482857
-//Yellow bar: 6148603, 763374, 1927902, 11398142
-//White Outline: 16777215
+const
+  // Color arrays for each bar type
+  RedColours: TIntegerArray = [2969828, 9617142, 1975224, 3810928];
+  GreenColours: TIntegerArray = [11266515, 6737800, 4621632, 4482857];
+  YellowColours: TIntegerArray = [6148603, 763374, 1927902, 11398142];
+  WhiteColour: Integer = 16777215;
+  BlackColour: Integer = 65536;
 
 procedure TRSGiantsFoundryRefinement.SortTasksByX1(var Tasks: TRefineTaskBarArray);
 var
@@ -80,21 +73,66 @@ begin
 end;
 
 
-function TRSGiantsFoundryRefinement.FindTaskBoundaries(): TRefineTaskBarArray;
+function TRSGiantsFoundryRefinement.FindCursor(): TBox;
 var
-  tpa, redPoints, greenPoints, yellowPoints, whitePoints, final, line: TPointArray;
+  tpa, line, blackPoints: TPointArray;
   atpa: T2DPointArray;
   b, searchBox: TBox;
-  i, j: Integer;
-  tempBox: TBox;
   x, y: Integer;
   colour: TColor;
+begin
+  searchBox := TBox.Create(Self.TaskBar.Bounds.X1+1, Self.TaskBar.Bounds.Y2-2, Self.TaskBar.Bounds.X2-1,Self.TaskBar.Bounds.Y2-2);
+
+
+  // Iterate through each pixel in the search box
+  for y := searchBox.Y1 to searchBox.Y2 do
+    for x := searchBox.X1 to searchBox.X2 do
+    begin
+      line += [x,y];
+      colour := Target.GetColor([x,y]);
+      if colour = BlackColour then
+        blackPoints += Point(x, y);
+    end;
+
+
+
+  if blackPoints <> [] then
+  begin
+    atpa := blackPoints.Cluster(12, 1);
+    for tpa in atpa do
+    begin
+      b := tpa.Bounds();
+      Result := TBox.Create(b.X1, Self.TaskBar.Bounds.Y1, b.X2, Self.TaskBar.Bounds.Y2);
+      ShowOnTarget(Result);
+    end;
+  end;
+end;
+
+function TRSGiantsFoundryRefinement.FindActiveTask(): TRefineTask;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self.TaskBar.Tasks) do
+  begin
+    Self.TaskBar.Tasks[i].Active := False;
+    if Target.GetColor(Self.TaskBar.Tasks[i].TaskBounds.TopLeft.Offset(0,1)) = WhiteColour then
+    begin
+      Self.TaskBar.Tasks[i].Active := True;
+    end;
+  end;
+end;
+
+
+
+function TRSGiantsFoundryRefinement.FindTaskBoundaries(): TRefineTaskBarArray;
+var
+  tpa, redPoints, greenPoints, yellowPoints, whitePoints, line: TPointArray;
+  atpa: T2DPointArray;
+  b, searchBox, tempBox: TBox;
+  i, x, y: Integer;
+  colour: TColor;
   temptask: TRefineTask;
-  // Color arrays for each bar type
-  redColours: TIntegerArray = [2969828, 9617142, 1975224, 3810928];
-  greenColours: TIntegerArray = [11266515, 6737800, 4621632, 4482857];
-  yellowColours: TIntegerArray = [6148603, 763374, 1927902, 11398142];
-  whiteColour: Integer = 16777215;
+
 
   // Helper function to check if white points exist at position
   function HasWhiteAt(xPos, yPos: Integer): Boolean;
@@ -118,16 +156,16 @@ begin
       colour := Target.GetColor([x,y]);
 
       // Check red colors
-      if redColours.Contains(colour) then
+      if RedColours.Contains(colour) then
         redPoints += Point(x, y)
       // Check green colors
-      else if greenColours.Contains(colour) then
+      else if GreenColours.Contains(colour) then
         greenPoints += Point(x, y)
       // Check yellow colors
-      else if yellowColours.Contains(colour) then
+      else if YellowColours.Contains(colour) then
         yellowPoints += Point(x, y)
       // Check white outline
-      else if colour = whiteColour then
+      else if colour = WhiteColour then
         whitePoints += Point(x, y);
 
     end;
@@ -190,6 +228,11 @@ begin
   end;
 
   Self.SortTasksByX1(Result);
+  for i := 0 to High(Result) do
+  begin
+    Result[i].Idx := i;
+  end;
+  Self.TaskBar.Tasks := Result;
 end;
 
 procedure TRSGiantsFoundryRefinement.SetupInterface();
