@@ -10,8 +10,8 @@ Methods to interact with the Giants' Foundry Refinement interface.
 
 type
 
-  ERSProgressState = enum(WHEEL, STONE, HAMMER, NOTFOUND);
-  ERSTemperatureState = enum(COLD, MEDIUM, HOT, USELESS);
+  ETaskState = enum(WHEEL, STONE, HAMMER, COMPLETE, NOTFOUND);
+  ETemperatureState = enum(COLD, MEDIUM, HOT, USELESS);
 
   TRSRefinementQualityBar = record
     Bounds: TBox;
@@ -25,9 +25,18 @@ type
 
   end;
 
+  TRefineTask = record
+    TaskBounds: TBox;
+    Refining: ETaskState;
+    Active: Boolean;
+    Idx: Int32;
+  end;
+
+  TRefineTaskBarArray = array of TRefineTask;
+
   TRSRefinementTaskBar = record
     Bounds: TBox;
-
+    Tasks: TRefineTaskBarArray;
   end;
 
   TRSGiantsFoundryRefinement = record
@@ -47,43 +56,6 @@ type
 // GrindTask: [$349DEC, 9.110, EColorSpace.RGB, [1.835, 0.517, 0.649]]
 // [$5CAAEE, 10.386, EColorSpace.RGB, [2.076, 0.515, 0.410]]
 // trip: [$2C39AA, 7.525, EColorSpace.RGB, [0.389, 1.002, 1.610]]
-function TRSGiantsFoundryRefinement.FindTripTaskBoundaries(): TBoxArray;
-var
-  tpa, final: TPointArray;
-  atpa: T2DPointArray;
-  b: TBox;
-begin
-  //final := Target.FindColor($2C39AA, 7.525, Self.TaskBar.Bounds);
-  final := Target.FindColor($FFFFFF, 0.000, Self.TaskBar.Bounds);
-  if final = [] then Exit;
-  atpa := final.Cluster(25, 5);
-  for tpa in atpa do
-  begin
-    b := tpa.Bounds();
-    if b.Width <= 24 then Continue;
-    Writeln(b);
-    Result += [b.X1,Self.TaskBar.Bounds.Y1,b.X2,Self.TaskBar.Bounds.Y2];
-  end;
-end;
-
-function TRSGiantsFoundryRefinement.FindGrindTaskBoundaries(): TBoxArray;
-var
-  tpa, final: TPointArray;
-  atpa: T2DPointArray;
-  b: TBox;
-begin
-  final := Target.FindColor($5CAAEE, 10.386, Self.TaskBar.Bounds);
-  Writeln(final);
-  if final = [] then Exit;
-  atpa := final.Cluster(25, 5);
-  for tpa in atpa do
-  begin
-    b := tpa.Bounds();
-    if b.Width <= 24 then Continue;
-    Writeln(b);
-    Result += [b.X1,Self.TaskBar.Bounds.Y1,b.X2,Self.TaskBar.Bounds.Y2];
-  end;
-end;
 
 
 
@@ -92,14 +64,32 @@ end;
 //Yellow bar: 6148603, 763374, 1927902, 11398142
 //White Outline: 16777215
 
+procedure TRSGiantsFoundryRefinement.SortTasksByX1(var Tasks: TRefineTaskBarArray);
+var
+  i, j: Integer;
+  temp: TRefineTask;
+begin
+  for i := 0 to High(Tasks) - 1 do
+    for j := 0 to High(Tasks) - i - 1 do
+      if Tasks[j].TaskBounds.X1 > Tasks[j + 1].TaskBounds.X1 then
+      begin
+        temp := Tasks[j];
+        Tasks[j] := Tasks[j + 1];
+        Tasks[j + 1] := temp;
+      end;
+end;
 
-function TRSGiantsFoundryRefinement.FindTaskBoundaries(): TBoxArray;
+
+function TRSGiantsFoundryRefinement.FindTaskBoundaries(): TRefineTaskBarArray;
 var
   tpa, redPoints, greenPoints, yellowPoints, whitePoints, final, line: TPointArray;
   atpa: T2DPointArray;
   b, searchBox: TBox;
+  i, j: Integer;
+  tempBox: TBox;
   x, y: Integer;
   colour: TColor;
+  temptask: TRefineTask;
   // Color arrays for each bar type
   redColours: TIntegerArray = [2969828, 9617142, 1975224, 3810928];
   greenColours: TIntegerArray = [11266515, 6737800, 4621632, 4482857];
@@ -142,32 +132,64 @@ begin
 
     end;
 
-  //final := yellowPoints;
-  final := greenPoints;
-  if final = [] then Exit;
-
-  atpa := final.Cluster(3, 1);
-
-  for tpa in atpa do
+  // Process green points
+  if greenPoints <> [] then
   begin
-    b := tpa.Bounds();
-    Writeln(b);
-
-    if HasWhiteAt(b.X1 - 1, searchBox.Y1) then
-      b.X1 := b.X1 - 1;
-
-    if HasWhiteAt(b.X2 + 1, searchBox.Y1) then
-      b.X2 := b.X2 + 1;
-
-    Result += [b.X1,Self.TaskBar.Bounds.Y1,b.X2,Self.TaskBar.Bounds.Y2];
-    ShowOnTarget(Result);
-  //ShowOnTarget(line);
-  //ShowOnTarget(searchBox);
-  //ShowOnTarget(redPoints);
-  //ShowOnTarget(greenPoints);
-  //ShowOnTarget(yellowPoints);
-  //ShowOnTarget(whitePoints);
+    atpa := greenPoints.Cluster(3, 1);
+    for tpa in atpa do
+    begin
+      b := tpa.Bounds();
+      //Writeln('Green boundary: ', b);
+      if HasWhiteAt(b.X1 - 1, searchBox.Y1) and HasWhiteAt(b.X2 + 1, searchBox.Y1)then
+      begin
+        b.X1 := b.X1 - 1;
+        b.X2 := b.X2 + 1;
+      end;
+      temptask.Refining := ETaskState.WHEEL;
+      temptask.TaskBounds := [b.X1, Self.TaskBar.Bounds.Y1, b.X2, Self.TaskBar.Bounds.Y2];
+      Result += temptask;//[b.X1, Self.TaskBar.Bounds.Y1, b.X2, Self.TaskBar.Bounds.Y2];
+    end;
   end;
+
+  // Process yellow points
+  if yellowPoints <> [] then
+  begin
+    atpa := yellowPoints.Cluster(3, 1);
+    for tpa in atpa do
+    begin
+      b := tpa.Bounds();
+      //Writeln('Yellow boundary: ', b);
+      if HasWhiteAt(b.X1 - 1, searchBox.Y1) and HasWhiteAt(b.X2 + 1, searchBox.Y1)then
+      begin
+        b.X1 := b.X1 - 1;
+        b.X2 := b.X2 + 1;
+      end;
+      temptask.Refining := ETaskState.STONE;
+      temptask.TaskBounds := [b.X1, Self.TaskBar.Bounds.Y1, b.X2, Self.TaskBar.Bounds.Y2];
+      Result += temptask;
+    end;
+  end;
+
+  // Process red points
+  if redPoints <> [] then
+  begin
+    atpa := redPoints.Cluster(3, 1);
+    for tpa in atpa do
+    begin
+      b := tpa.Bounds();
+      //Writeln('Red boundary: ', b);
+      if HasWhiteAt(b.X1 - 1, searchBox.Y1) and HasWhiteAt(b.X2 + 1, searchBox.Y1)then
+      begin
+        b.X1 := b.X1 - 1;
+        b.X2 := b.X2 + 1;
+      end;
+      temptask.Refining := ETaskState.HAMMER;
+      temptask.TaskBounds := [b.X1, Self.TaskBar.Bounds.Y1, b.X2, Self.TaskBar.Bounds.Y2];
+      Result += temptask;
+    end;
+  end;
+
+  Self.SortTasksByX1(Result);
 end;
 
 procedure TRSGiantsFoundryRefinement.SetupInterface();
@@ -228,9 +250,6 @@ begin
   img.DrawBox(Self.TaskBar.Bounds);
 
   img.DrawColor := $854F31;
-  img.DrawBoxArray(Self.FindTripTaskBoundaries, False);
-  img.DrawBoxArray(Self.FindPolishTaskBoundaries, False);
-  img.DrawBoxArray(Self.FindGrindTaskBoundaries, False);
 end;
 
 procedure TRSGiantsFoundryRefinement.ShowOnTarget();
