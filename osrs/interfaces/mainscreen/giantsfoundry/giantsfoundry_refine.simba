@@ -13,18 +13,54 @@ type
   ETaskState = enum(WHEEL, STONE, HAMMER, COMPLETE, NOTFOUND);
   ETemperatureState = enum(COLD, MEDIUM, HOT, USELESS);
 
-  TRSRefinementQualityBar = record
-    Bounds: TBox;
+  ECursorDirection = (cdLeft, cdRight, cdStationary, cdUnknown);
 
+  TRSRefinementCursor = record
+    Bounds: TBox;
+    Position: TPoint;
+
+    Direction: ECursorDirection;
+    Speed: Double;
+    PreviousPosition: TPoint;
+    LastUpdateTime: Integer;
+
+    CurrentZoneIdx: Integer;
+    ZoneBounds: TBox;
+    DistanceToNextZone: Integer;
+    IsInTargetZone: Boolean;
+
+    ProgressPercent: Double;
+    BarBounds: TBox;
+
+    PositionHistory: array [0..4] of Integer;
+    TimeHistory: array [0..4] of Integer;
+    HistoryIndex: Integer;
   end;
 
+  // Quality Records
+  TRSRefinementQualityBar = record
+    Bounds: TBox;
+    Cursor: TRSRefinementCursor;
+  end;
 
+  // Temperature Records
+  TRefineTemperature = record
+    TemperatureBounds: TBox;
+    Temperature: ETemperatureState;
+    Active: Boolean;
+    Idx: Int32;
+  end;
+
+  TRefineTemperatureBarArray = array of TRefineTemperature;
 
   TRSRefinementTemperatureBar = record
     Bounds: TBox;
-
+    Temperatures: TRefineTemperatureBarArray;
+    NextTemperature, CurrentTemperature, PreviousTemperature: TRefineTemperature;
+    Cursor: TRSRefinementCursor;
   end;
 
+  // Task Records
   TRefineTask = record
     TaskBounds: TBox;
     Refining: ETaskState;
@@ -37,8 +73,12 @@ type
   TRSRefinementTaskBar = record
     Bounds: TBox;
     Tasks: TRefineTaskBarArray;
+    NextTask, CurrentTask: TRefineTask;
+    Cursor: TRSRefinementCursor;
   end;
 
+
+  // General Refinement Record
   TRSGiantsFoundryRefinement = record
     Bounds: TBox;
 
@@ -56,8 +96,210 @@ const
   YellowColours: TIntegerArray = [6148603, 763374, 1927902, 11398142];
   WhiteColour: Integer = 16777215;
   BlackColour: Integer = 65536;
+  GreyColour: Integer = 2763306;
 
-procedure TRSGiantsFoundryRefinement.SortTasksByX1(var Tasks: TRefineTaskBarArray);
+
+function TRSGiantsFoundryRefinement.FindCursor(cursor: TRSRefinementCursor): TBox;
+var
+  tpa, line, blackPoints: TPointArray;
+  atpa: T2DPointArray;
+  b, searchBox: TBox;
+  x, y: Integer;
+  colour: TColor;
+begin
+  searchBox := TBox.Create(cursor.BarBounds.X1+1, cursor.BarBounds.Y2-2, cursor.BarBounds.X2-1, cursor.BarBounds.Y2-2);
+
+
+  // Iterate through each pixel in the search box
+  for y := searchBox.Y1 to searchBox.Y2 do
+    for x := searchBox.X1 to searchBox.X2 do
+    begin
+      line += [x,y];
+      colour := Target.GetColor([x,y]);
+      if colour = BlackColour then
+        blackPoints += Point(x, y);
+    end;
+
+  if blackPoints <> [] then
+  begin
+    atpa := blackPoints.Cluster(12, 1);
+    for tpa in atpa do
+    begin
+      b := tpa.Bounds();
+      Result := TBox.Create(b.X1, cursor.BarBounds.Y1, b.X2, cursor.BarBounds.Y2);
+    end;
+  end;
+end;
+
+// Temperature Specific Functions
+
+procedure TRSGiantsFoundryRefinement.SortTemperaturesByX1(Temperatures: TRefineTemperatureBarArray);
+var
+  i, j: Integer;
+  temp: TRefineTemperature;
+begin
+  for i := 0 to High(Temperatures) - 1 do
+    for j := 0 to High(Temperatures) - i - 1 do
+      if Temperatures[j].TemperatureBounds.X1 > Temperatures[j + 1].TemperatureBounds.X1 then
+      begin
+        temp := Temperatures[j];
+        Temperatures[j] := Temperatures[j + 1];
+        Temperatures[j + 1] := temp;
+      end;
+end;
+
+function TRSGiantsFoundryRefinement.FindTemperatureBoundaries(): TRefineTemperatureBarArray;
+var
+  tpa, redPoints, greenPoints, yellowPoints, whitePoints, greyPoints, line: TPointArray;
+  atpa: T2DPointArray;
+  b, searchBox, tempBox: TBox;
+  i, x, y: Integer;
+  colour: TColor;
+  temptemperature: TRefineTemperature;
+
+
+  // Helper function to check if white points exist at position
+  function HasWhiteAt(xPos, yPos: Integer): Boolean;
+  var
+    pt: TPoint;
+  begin
+    Result := False;
+    for pt in whitePoints do
+      if (pt.X = xPos) and (pt.Y = yPos) then
+        Exit(True);
+  end;
+begin
+
+  searchBox := TBox.Create(Self.TemperatureBar.Bounds.X1+1, Self.TemperatureBar.Bounds.Y1+2, Self.TemperatureBar.Bounds.X2-1, Self.TemperatureBar.Bounds.Y1+2);
+
+  // Iterate through each pixel in the search box
+  for y := searchBox.Y1 to searchBox.Y2 do
+    for x := searchBox.X1 to searchBox.X2 do
+    begin
+      line += [x,y];
+      colour := Target.GetColor([x,y]);
+
+
+      // Check red colours
+      if RedColours.Contains(colour) then
+        redPoints += Point(x, y)
+      // Check green colours
+      else if GreenColours.Contains(colour) then
+        greenPoints += Point(x, y)
+      // Check yellow colours
+      else if YellowColours.Contains(colour) then
+        yellowPoints += Point(x, y)
+      // Check white outline
+      else if colour = WhiteColour then
+        whitePoints += Point(x, y)
+      // Check grey colours
+      else if colour = GreyColour then
+        greyPoints += Point(x, y);
+    end;
+
+  // Process green points
+  if greenPoints <> [] then
+  begin
+    atpa := greenPoints.Cluster(3, 1);
+    for tpa in atpa do
+    begin
+      b := tpa.Bounds();
+      //Writeln('Green boundary: ', b);
+      if HasWhiteAt(b.X1 - 1, searchBox.Y1) and HasWhiteAt(b.X2 + 1, searchBox.Y1)then
+      begin
+        b.X1 := b.X1 - 1;
+        b.X2 := b.X2 + 1;
+      end;
+      temptemperature.Temperature := ETemperatureState.COLD;
+      temptemperature.TemperatureBounds := [b.X1, Self.TemperatureBar.Bounds.Y1, b.X2, Self.TemperatureBar.Bounds.Y2];
+      Result += temptemperature;//[b.X1, Self.TaskBar.Bounds.Y1, b.X2, Self.TaskBar.Bounds.Y2];
+    end;
+  end;
+
+  // Process yellow points
+  if yellowPoints <> [] then
+  begin
+    atpa := yellowPoints.Cluster(3, 1);
+    for tpa in atpa do
+    begin
+      b := tpa.Bounds();
+      //Writeln('Yellow boundary: ', b);
+      if HasWhiteAt(b.X1 - 1, searchBox.Y1) and HasWhiteAt(b.X2 + 1, searchBox.Y1)then
+      begin
+        b.X1 := b.X1 - 1;
+        b.X2 := b.X2 + 1;
+      end;
+      temptemperature.Temperature := ETemperatureState.MEDIUM;
+      temptemperature.TemperatureBounds := [b.X1, Self.TemperatureBar.Bounds.Y1, b.X2, Self.TemperatureBar.Bounds.Y2];
+      Result += temptemperature;
+    end;
+  end;
+
+  // Process red points
+  if redPoints <> [] then
+  begin
+    atpa := redPoints.Cluster(3, 1);
+    for tpa in atpa do
+    begin
+      b := tpa.Bounds();
+      //Writeln('Red boundary: ', b);
+      if HasWhiteAt(b.X1 - 1, searchBox.Y1) and HasWhiteAt(b.X2 + 1, searchBox.Y1)then
+      begin
+        b.X1 := b.X1 - 1;
+        b.X2 := b.X2 + 1;
+      end;
+      temptemperature.Temperature := ETemperatureState.HOT;
+      temptemperature.TemperatureBounds := [b.X1, Self.TemperatureBar.Bounds.Y1, b.X2, Self.TemperatureBar.Bounds.Y2];
+      Result += temptemperature;
+    end;
+  end;
+
+  // Process grey points
+  if greyPoints <> [] then
+  begin
+    atpa := greyPoints.Cluster(3, 1);
+    for tpa in atpa do
+    begin
+      b := tpa.Bounds();
+      //Writeln('Red boundary: ', b);
+      if HasWhiteAt(b.X1 - 1, searchBox.Y1) and HasWhiteAt(b.X2 + 1, searchBox.Y1)then
+      begin
+        b.X1 := b.X1 - 1;
+        b.X2 := b.X2 + 1;
+      end;
+      temptemperature.Temperature := ETemperatureState.USELESS;
+      temptemperature.TemperatureBounds := [b.X1, Self.TemperatureBar.Bounds.Y1, b.X2, Self.TemperatureBar.Bounds.Y2];
+      Result += temptemperature;
+    end;
+  end;
+
+  Self.SortTemperaturesByX1(Result);
+  for i := 0 to High(Result) do
+  begin
+    Result[i].Idx := i;
+  end;
+  Self.TemperatureBar.Temperatures := Result;
+end;
+
+function TRSGiantsFoundryRefinement.FindCurrentTemperature(): TRefineTemperature;
+begin
+
+end;
+
+procedure TRSGiantsFoundryRefinement.InitTemperatureBar();
+begin
+  Self.FindTemperatureBoundaries();
+  Self.FindCurrentTemperature();
+
+  // Cursor Init
+  Self.TemperatureBar.Cursor.BarBounds := Self.TemperatureBar.Bounds;
+  Self.TemperatureBar.Cursor.Bounds := Self.FindCursor(Self.TemperatureBar.Cursor);
+end;
+
+
+// Task Specfic functions
+
+procedure TRSGiantsFoundryRefinement.SortTasksByX1(Tasks: TRefineTaskBarArray);
 var
   i, j: Integer;
   temp: TRefineTask;
@@ -72,43 +314,53 @@ begin
       end;
 end;
 
-
-function TRSGiantsFoundryRefinement.FindCursor(): TBox;
+function TRSGiantsFoundryRefinement.FindNextTask(): TRefineTask;
 var
-  tpa, line, blackPoints: TPointArray;
-  atpa: T2DPointArray;
-  b, searchBox: TBox;
-  x, y: Integer;
-  colour: TColor;
+  i, currentIdx: Integer;
+  currentTask: TRefineTask;
+  hasCurrentTask: Boolean;
 begin
-  searchBox := TBox.Create(Self.TaskBar.Bounds.X1+1, Self.TaskBar.Bounds.Y2-2, Self.TaskBar.Bounds.X2-1,Self.TaskBar.Bounds.Y2-2);
+  // Initialize result with empty task
+  Result.Refining := ETaskState.NOTFOUND;
+  Result.Active := False;
 
+  // First find the current active task
+  currentTask := Self.FindCurrentTask();
 
-  // Iterate through each pixel in the search box
-  for y := searchBox.Y1 to searchBox.Y2 do
-    for x := searchBox.X1 to searchBox.X2 do
+  // Check if we found an active task
+  hasCurrentTask := currentTask.Active;
+
+  if hasCurrentTask then
+  begin
+    currentIdx := currentTask.Idx;
+
+    // Look for the next task in sequence
+    for i := 0 to High(Self.TaskBar.Tasks) do
     begin
-      line += [x,y];
-      colour := Target.GetColor([x,y]);
-      if colour = BlackColour then
-        blackPoints += Point(x, y);
+      if Self.TaskBar.Tasks[i].Idx = (currentIdx + 1) then
+      begin
+        Result := Self.TaskBar.Tasks[i];
+        Self.TaskBar.NextTask := Result;
+        Exit;
+      end;
     end;
 
-
-
-  if blackPoints <> [] then
+    // If we reached here, current task is the last one
+    // Mark as COMPLETE
+    Result.Refining := ETaskState.COMPLETE;
+  end
+  else
   begin
-    atpa := blackPoints.Cluster(12, 1);
-    for tpa in atpa do
+    // No active task found - return the first task if it exists
+    if Length(Self.TaskBar.Tasks) > 0 then
     begin
-      b := tpa.Bounds();
-      Result := TBox.Create(b.X1, Self.TaskBar.Bounds.Y1, b.X2, Self.TaskBar.Bounds.Y2);
-      ShowOnTarget(Result);
+      Result := Self.TaskBar.Tasks[0];
+      Self.TaskBar.NextTask := Result;
     end;
   end;
 end;
 
-function TRSGiantsFoundryRefinement.FindActiveTask(): TRefineTask;
+function TRSGiantsFoundryRefinement.FindCurrentTask(): TRefineTask;
 var
   i: Integer;
 begin
@@ -118,6 +370,8 @@ begin
     if Target.GetColor(Self.TaskBar.Tasks[i].TaskBounds.TopLeft.Offset(0,1)) = WhiteColour then
     begin
       Self.TaskBar.Tasks[i].Active := True;
+      Result := Self.TaskBar.Tasks[i];
+      Self.TaskBar.CurrentTask := Result;
     end;
   end;
 end;
@@ -235,6 +489,19 @@ begin
   Self.TaskBar.Tasks := Result;
 end;
 
+procedure TRSGiantsFoundryRefinement.InitTaskBar();
+begin
+  Self.FindTaskBoundaries();
+  Self.FindCurrentTask();
+  Self.FindNextTask();
+
+  // Cursor Init
+  Self.TaskBar.Cursor.BarBounds := Self.TaskBar.Bounds;
+  Self.TaskBar.Cursor.Bounds := Self.FindCursor(Self.TaskBar.Cursor);
+end;
+
+
+
 procedure TRSGiantsFoundryRefinement.SetupInterface();
 begin
   case RSClient.Mode of
@@ -282,6 +549,8 @@ begin
 end;
 
 procedure TRSGiantsFoundryRefinement.Draw(img: TImage);
+var
+  i: Integer;
 begin
   //if not Self.IsOpen() then Exit;
 
@@ -292,7 +561,16 @@ begin
   img.DrawBox(Self.TemperatureBar.Bounds);
   img.DrawBox(Self.TaskBar.Bounds);
 
+  img.DrawColor := Colors.CHOCOLATE;
+  img.DrawBox(Self.TemperatureBar.Cursor.Bounds);
+  img.DrawBox(Self.TaskBar.Cursor.Bounds);
+
   img.DrawColor := $854F31;
+  for i := 0 to High(Self.TemperatureBar.Temperatures) do
+    img.DrawBox(Self.TemperatureBar.Temperatures[i].TemperatureBounds);
+
+  for i := 0 to High(Self.TaskBar.Tasks) do
+    img.DrawBox(Self.TaskBar.Tasks[i].TaskBounds);
 end;
 
 procedure TRSGiantsFoundryRefinement.ShowOnTarget();
