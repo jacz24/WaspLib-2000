@@ -15,6 +15,8 @@ type
 
   ECursorDirection = (cdLeft, cdRight, cdStationary, cdUnknown);
 
+  ECursorMovement = (cmIncreasing, cmDecreasing);
+
   TRSRefinementCursor = record
     Bounds: TBox;
     Position: TPoint;
@@ -88,6 +90,25 @@ type
 
   end;
 
+  TTemperatureIncrement = record
+    StepNumber: Integer;
+    StartPercent: Double;
+    EndPercent: Double;
+    IncrementSize: Double;
+    TimeStamp: Int64;
+    Predicted: Boolean;  // Was this predicted or actually observed
+  end;
+
+  TTemperatureTracker = record
+    Increments: array of TTemperatureIncrement;
+    LastPercent: Double;
+    LastUpdateTime: Int64;
+    CurrentStep: Integer;
+    IsTracking: Boolean;
+  end;
+
+var
+  TemperatureTracker: TTemperatureTracker;
 
 const
   // Color arrays for each bar type
@@ -98,6 +119,261 @@ const
   BlackColour: Integer = 65536;
   GreyColour: Integer = 2763306;
 
+
+// Initialize the temperature tracker
+procedure TRSGiantsFoundryRefinement.InitTemperatureTracker();
+begin
+  TemperatureTracker.LastPercent := Self.GetTemperaturePercent();
+  TemperatureTracker.LastUpdateTime := GetTimeRunning;
+  TemperatureTracker.CurrentStep := 0;
+  TemperatureTracker.IsTracking := True;
+  SetLength(TemperatureTracker.Increments, 0);
+
+  WriteLn('[Tracker] Initialized at ', TemperatureTracker.LastPercent, '%');
+end;
+
+// Formula-based prediction of increment size
+function TRSGiantsFoundryRefinement.CalculateIncrementFormula(stepNumber: Integer): Double;
+begin
+  // Special cases for early steps based on observed pattern
+  case stepNumber of
+    0, 1: Result := 0.680;
+    2: Result := 0.907;
+    3, 4: Result := 1.134;
+    5: Result := 1.361;
+    6, 7: Result := 1.814;
+    else
+      // General formula: increment ≈ 0.227n + 0.453
+      Result := 0.227 * stepNumber + 0.453;
+  end;
+
+  // Cap at maximum observed increment (~6.8% for 60 pixels on ~882 pixel bar)
+  if Result > 6.8 then
+    Result := 6.8;
+end;
+
+// Track when an increment occurs
+procedure TRSGiantsFoundryRefinement.TrackTemperatureIncrement();
+var
+  currentPercent, percentChange: Double;
+  currentTime: Int64;
+  increment: TTemperatureIncrement;
+  timeDiff: Integer;
+begin
+  if not TemperatureTracker.IsTracking then
+    Exit;
+
+  currentPercent := Self.GetTemperaturePercent();
+  currentTime := GetTimeRunning;
+
+  // Check if there was a significant change (threshold of 0.3%)
+  percentChange := Abs(currentPercent - TemperatureTracker.LastPercent);
+
+  if percentChange > 0.3 then
+  begin
+    timeDiff := currentTime - TemperatureTracker.LastUpdateTime;
+
+    // Record the increment
+    increment.StepNumber := TemperatureTracker.CurrentStep;
+    increment.StartPercent := TemperatureTracker.LastPercent;
+    increment.EndPercent := currentPercent;
+    increment.IncrementSize := currentPercent - TemperatureTracker.LastPercent;
+    increment.TimeStamp := currentTime;
+    increment.Predicted := False;  // This is observed, not predicted
+
+    // Add to history
+    SetLength(TemperatureTracker.Increments, Length(TemperatureTracker.Increments) + 1);
+    TemperatureTracker.Increments[High(TemperatureTracker.Increments)] := increment;
+
+    // Check if increment was positive (heating) or negative (cooling)
+    if increment.IncrementSize > 0 then
+      WriteLn('[Tracker] Step ', increment.StepNumber, ': +',
+              increment.IncrementSize, '% (', increment.EndPercent,
+              '%) - Time: ', timeDiff, 'ms')
+    else
+      WriteLn('[Tracker] Cooling: ', increment.IncrementSize,
+              '% (', increment.EndPercent, '%)');
+
+    // Update tracking variables
+    TemperatureTracker.LastPercent := currentPercent;
+    TemperatureTracker.LastUpdateTime := currentTime;
+    Inc(TemperatureTracker.CurrentStep);
+  end;
+end;
+
+// Predict movements needed using formula and tracking data
+function TRSGiantsFoundryRefinement.PredictMovementsToPercent(targetPercent: Double): Integer;
+var
+  currentPercent, predictedPercent: Double;
+  step: Integer;
+  nextIncrement: Double;
+  useObserved: Boolean;
+  i: Integer;
+begin
+  Result := 0;
+  currentPercent := Self.GetTemperaturePercent();
+
+  // Already at or past target
+  if currentPercent >= targetPercent then
+    Exit(0);
+
+  // Determine starting step based on tracking history
+  step := TemperatureTracker.CurrentStep;
+  predictedPercent := currentPercent;
+
+  WriteLn('[Predict] Starting at ', predictedPercent, '%, target: ', targetPercent, '%');
+
+  while predictedPercent < targetPercent do
+  begin
+    // Check if we have observed data for this step
+    useObserved := False;
+    for i := 0 to High(TemperatureTracker.Increments) do
+    begin
+      if (TemperatureTracker.Increments[i].StepNumber = step) and
+         (not TemperatureTracker.Increments[i].Predicted) then
+      begin
+        nextIncrement := TemperatureTracker.Increments[i].IncrementSize;
+        useObserved := True;
+        Break;
+      end;
+    end;
+
+    // If no observed data, use formula
+    if not useObserved then
+      nextIncrement := Self.CalculateIncrementFormula(step);
+
+    // Check if we'd reach target
+    if predictedPercent + nextIncrement >= targetPercent then
+    begin
+      Inc(Result);
+      WriteLn('[Predict] Will reach ', targetPercent, '% in ', Result, ' movements');
+      Break;
+    end;
+
+    predictedPercent := predictedPercent + nextIncrement;
+    Inc(Result);
+    Inc(step);
+
+    // Safety check
+    if Result > 50 then
+    begin
+      WriteLn('[Predict] Max movements reached');
+      Break;
+    end;
+  end;
+end;
+
+// Self-calibrating function that adjusts formula based on observations
+function TRSGiantsFoundryRefinement.GetCalibratedIncrement(stepNumber: Integer): Double;
+var
+  i, observedCount: Integer;
+  sumDifference: Double;
+  adjustmentFactor: Double;
+begin
+  // Start with formula prediction
+  Result := Self.CalculateIncrementFormula(stepNumber);
+
+  // Check if we have observed data to calibrate with
+  observedCount := 0;
+  sumDifference := 0;
+
+  for i := 0 to High(TemperatureTracker.Increments) do
+  begin
+    if not TemperatureTracker.Increments[i].Predicted then
+    begin
+      // Compare observed to what formula would predict
+      sumDifference += TemperatureTracker.Increments[i].IncrementSize -
+                      Self.CalculateIncrementFormula(TemperatureTracker.Increments[i].StepNumber);
+      Inc(observedCount);
+    end;
+  end;
+
+  // Apply calibration if we have enough data
+  if observedCount >= 3 then
+  begin
+    adjustmentFactor := sumDifference / observedCount;
+    Result := Result + adjustmentFactor * 0.5; // Apply 50% of average difference
+    WriteLn('[Calibrate] Adjusted increment for step ', stepNumber,
+            ': ', Result, '% (adjustment: ', adjustmentFactor*0.5, '%)');
+  end;
+end;
+
+// Main monitoring function to be called regularly
+procedure TRSGiantsFoundryRefinement.MonitorTemperature();
+begin
+  // Track any changes
+  Self.TrackTemperatureIncrement();
+
+  // You can add additional monitoring logic here
+end;
+
+// Get detailed tracking report
+function TRSGiantsFoundryRefinement.GetTrackingReport(): String;
+var
+  i: Integer;
+  avgError, totalError: Double;
+  observedCount: Integer;
+begin
+  Result := 'Temperature Tracking Report:';
+  Result += '=============================';
+  Result += 'Current: ' + FloatToStr(Self.GetTemperaturePercent()) + '%';
+  Result += 'Steps tracked: ' + IntToStr(Length(TemperatureTracker.Increments));
+
+  // Calculate accuracy
+  observedCount := 0;
+  totalError := 0;
+
+  for i := 0 to High(TemperatureTracker.Increments) do
+  begin
+    if not TemperatureTracker.Increments[i].Predicted then
+    begin
+      totalError += Abs(TemperatureTracker.Increments[i].IncrementSize -
+                       Self.CalculateIncrementFormula(TemperatureTracker.Increments[i].StepNumber));
+      Inc(observedCount);
+    end;
+  end;
+
+  if observedCount > 0 then
+  begin
+    avgError := totalError / observedCount;
+    Result += 'Formula accuracy: ' + FloatToStr(100 - avgError*10) + '%';
+  end;
+end;
+
+// Reset tracker (useful when starting new sword)
+procedure TRSGiantsFoundryRefinement.ResetTemperatureTracker();
+begin
+  SetLength(TemperatureTracker.Increments, 0);
+  TemperatureTracker.CurrentStep := 0;
+  TemperatureTracker.LastPercent := Self.GetTemperaturePercent();
+  TemperatureTracker.LastUpdateTime := GetTimeRunning;
+  WriteLn('[Tracker] Reset');
+end;
+
+// Example usage in main loop
+procedure TRSGiantsFoundryRefinement.TestPredictiveTracking();
+var
+  movementsNeeded: Integer;
+  targetPercent: Double;
+begin
+  // Initialize everything
+  Self.SetupInterface();
+  Self.InitTemperatureBar();
+  Self.InitTemperatureTracker();
+
+  // Set a target
+  targetPercent := 75.0;
+
+  // Predict movements needed
+  movementsNeeded := Self.PredictMovementsToPercent(targetPercent);
+  WriteLn('Predicted movements to ', targetPercent, '%: ', movementsNeeded);
+
+  // In your main loop, call this regularly:
+  // Self.MonitorTemperature();
+
+  // Get report
+  WriteLn(Self.GetTrackingReport());
+end;
 
 function TRSGiantsFoundryRefinement.FindCursor(cursor: TRSRefinementCursor): TBox;
 var
@@ -281,19 +557,206 @@ begin
   Self.TemperatureBar.Temperatures := Result;
 end;
 
-function TRSGiantsFoundryRefinement.FindCurrentTemperature(): TRefineTemperature;
+function TRSGiantsFoundryRefinement.GetTemperaturePercent(): Double;
+var
+  currentX, minX, maxX: Integer;
+  barWidth: Integer;
 begin
+  // Update cursor position
+  Self.UpdateTemperatureCursor();
+
+  // Get bar boundaries
+  minX := Self.TemperatureBar.Bounds.X1;
+  maxX := Self.TemperatureBar.Bounds.X2;
+
+  // Get current cursor position (using middle of cursor)
+  currentX := Self.TemperatureBar.Cursor.Bounds.Center.X;
+
+  // Calculate bar width
+  barWidth := maxX - minX;
+
+  // Safety check
+  if barWidth <= 0 then
+  begin
+    Result := 0.0;
+    Exit;
+  end;
+
+  // Calculate percentage
+  Result := ((currentX - minX) / barWidth) * 100;
+
+  // Clamp to 0-100 range
+  if Result < 0 then Result := 0
+  else if Result > 100 then Result := 100;
+end;
+
+
+// Function to get temperature as integer percentage (0-100)
+function TRSGiantsFoundryRefinement.GetTemperaturePercentInt(): Integer;
+begin
+  Result := Round(Self.GetTemperaturePercent());
+end;
+
+// Function to convert a specific X position to percentage
+function TRSGiantsFoundryRefinement.XPositionToPercent(xPos: Integer): Double;
+var
+  minX, maxX: Integer;
+  barWidth: Integer;
+begin
+  minX := Self.TemperatureBar.Bounds.X1;
+  maxX := Self.TemperatureBar.Bounds.X2;
+  barWidth := maxX - minX;
+
+  if barWidth <= 0 then
+  begin
+    Result := 0.0;
+    Exit;
+  end;
+
+  Result := ((xPos - minX) / barWidth) * 100;
+
+  // Clamp to 0-100 range
+  if Result < 0 then Result := 0
+  else if Result > 100 then Result := 100;
+end;
+
+// Function to convert percentage back to X position
+function TRSGiantsFoundryRefinement.PercentToXPosition(percent: Double): Integer;
+var
+  minX, maxX: Integer;
+  barWidth: Integer;
+begin
+  minX := Self.TemperatureBar.Bounds.X1;
+  maxX := Self.TemperatureBar.Bounds.X2;
+  barWidth := maxX - minX;
+
+  // Clamp percentage to valid range
+  if percent < 0 then percent := 0
+  else if percent > 100 then percent := 100;
+
+  Result := Round(minX + (barWidth * percent / 100));
+end;
+
+// Function to get the percentage range of a temperature zone
+function TRSGiantsFoundryRefinement.GetTemperatureZonePercent(zone: ETemperatureState): TDoubleArray;
+var
+  i: Integer;
+  startPercent, endPercent: Double;
+begin
+  SetLength(Result, 0);
+
+  for i := 0 to High(Self.TemperatureBar.Temperatures) do
+  begin
+    if Self.TemperatureBar.Temperatures[i].Temperature = zone then
+    begin
+      startPercent := Self.XPositionToPercent(Self.TemperatureBar.Temperatures[i].TemperatureBounds.X1);
+      endPercent := Self.XPositionToPercent(Self.TemperatureBar.Temperatures[i].TemperatureBounds.X2);
+      Result := [startPercent, endPercent];
+      Exit;
+    end;
+  end;
+end;
+
+// Function to determine which temperature zone a percentage falls into
+function TRSGiantsFoundryRefinement.GetTemperatureAtPercent(percent: Double): ETemperatureState;
+var
+  xPos: Integer;
+  i: Integer;
+begin
+  Result := ETemperatureState.USELESS; // Default
+
+  xPos := Self.PercentToXPosition(percent);
+
+  for i := 0 to High(Self.TemperatureBar.Temperatures) do
+  begin
+    if Self.TemperatureBar.Temperatures[i].TemperatureBounds.Contains(Point(xPos, Self.TemperatureBar.Bounds.Center.Y)) then
+    begin
+      Result := Self.TemperatureBar.Temperatures[i].Temperature;
+      Exit;
+    end;
+  end;
+end;
+
+// Helper function to display current temperature status
+function TRSGiantsFoundryRefinement.GetTemperatureStatus(): String;
+var
+  percent: Double;
+  currentTemp: ETemperatureState;
+  tempStr: String;
+begin
+  percent := Self.GetTemperaturePercent();
+  currentTemp := Self.FindCurrentTemperature().Temperature;
+
+  case currentTemp of
+    ETemperatureState.COLD: tempStr := 'COLD';
+    ETemperatureState.MEDIUM: tempStr := 'MEDIUM';
+    ETemperatureState.HOT: tempStr := 'HOT';
+    ETemperatureState.USELESS: tempStr := 'USELESS';
+  end;
+
+  Result := Format('Temperature: %s (%.1f%%)', [tempStr, percent]);
+end;
+
+  //movementsNeeded := Self.MovementsToPercent(90.0);
+  //WriteLn('Movements needed to reach Hot Sweetspot%: ', movementsNeeded);
+
+
+  //movementsNeeded := Self.MovementsToPercent(42.0);
+  //WriteLn('Movements needed to reach Medium Sweetspot%: ', movementsNeeded);
+
+  //movementsNeeded := Self.MovementsToPercent(25.0);
+  //WriteLn('Movements needed to reach Cold Sweetspot%: ', movementsNeeded);
+
+procedure TRSGiantsFoundryRefinement.UpdateTemperatureCursor();
+begin
+  Self.TemperatureBar.Cursor.Bounds := Self.FindCursor(Self.TemperatureBar.Cursor);
+  Self.TemperatureBar.Cursor.Position := Self.TemperatureBar.Cursor.Bounds.Center;
+end;
+
+function TRSGiantsFoundryRefinement.FindCurrentTemperature(): TRefineTemperature;
+var
+  i: Integer;
+begin
+  // If a bar has white outline then its the active temperature
+  for i := 0 to High(Self.TemperatureBar.Temperatures) do
+  begin
+    Self.TemperatureBar.Temperatures[i].Active := False;
+    if Target.GetColor(Self.TemperatureBar.Temperatures[i].TemperatureBounds.TopLeft.Offset(0,1)) = WhiteColour then
+    begin
+      Self.TemperatureBar.Temperatures[i].Active := True;
+      Result := Self.TemperatureBar.Temperatures[i];
+      Self.TemperatureBar.CurrentTemperature := Result;
+      Exit;
+    end;
+  end;
+
+  // If no bar has white outline then the active bar is a useless one
+  for i := 0 to High(Self.TemperatureBar.Temperatures) do
+  begin
+    Self.UpdateTemperatureCursor();
+    Self.TemperatureBar.Temperatures[i].Active := False;
+    if Self.TemperatureBar.Temperatures[i].Temperature = ETemperatureState.USELESS then
+      if Self.TemperatureBar.Temperatures[i].TemperatureBounds.Overlap(Self.TemperatureBar.Cursor.Bounds) then
+      begin
+        Self.TemperatureBar.Temperatures[i].Active := True;
+        Result := Self.TemperatureBar.Temperatures[i];
+        Self.TemperatureBar.CurrentTemperature := Result;
+        Exit;
+      end;
+  end;
 
 end;
 
 procedure TRSGiantsFoundryRefinement.InitTemperatureBar();
 begin
   Self.FindTemperatureBoundaries();
-  Self.FindCurrentTemperature();
-
+  //writeln(Self.TemperatureBar.Temperatures);
   // Cursor Init
   Self.TemperatureBar.Cursor.BarBounds := Self.TemperatureBar.Bounds;
-  Self.TemperatureBar.Cursor.Bounds := Self.FindCursor(Self.TemperatureBar.Cursor);
+  Self.UpdateTemperatureCursor;
+  writeln Self.FindCurrentTemperature();
+
+
 end;
 
 
