@@ -62,6 +62,11 @@ type
     IsTracking: Boolean;
   end;
 
+  TQuadraticCoefficients = record
+    a, b, c: Double;  // For ax² + bx + c
+    R2: Double;       // R-squared value (goodness of fit)
+  end;
+
   TRefineTemperature = record
     TemperatureBounds: TBox;
     Temperature: ETemperatureState;
@@ -115,6 +120,62 @@ const
   WhiteColour: Integer = 16777215;
   BlackColour: Integer = 65536;
   GreyColour: Integer = 2763306;
+
+function TRSGiantsFoundryRefinement.GetCoolingQuadratic(): TQuadraticCoefficients;
+begin
+  // Coefficients derived from least squares regression
+  Result.a := -0.0128;  // x² coefficient
+  Result.b := -0.1502;  // x coefficient
+  Result.c := -0.4245;  // constant term
+  Result.R2 := 0.9426; // R² = 94.26% (very good fit)
+end;
+
+
+
+function TRSGiantsFoundryRefinement.StepsToTargetTemperature(targetTemperature: Double): Integer;
+var
+  currentTemp, increment: Double;
+  step, maxsteps: Integer;
+  coeffs: TQuadraticCoefficients;
+  heating: Boolean;
+begin
+  currentTemp := Self.GetTemperaturePercent();
+
+  // Get coefficients based on direction
+  coeffs := Self.GetCoolingQuadratic();
+  if targetTemperature > currentTemp then
+  begin
+    heating := True;
+    // Flip signs for heating
+    coeffs.a := -coeffs.a;
+    coeffs.b := -coeffs.b;
+    coeffs.c := -coeffs.c;
+  end;
+
+  step := 0;
+  maxSteps := 100; // Safety limit
+
+  while (step < maxsteps) do
+  begin
+    Inc(step);
+
+    increment := coeffs.a * Sqr(step) + coeffs.b * step + coeffs.c;
+    currentTemp := currentTemp + increment;
+
+    if not heating then
+    begin
+      if currentTemp <= targetTemperature then
+        Break;
+    end else
+    begin
+      if currentTemp >= targetTemperature then
+        Break;
+    end;
+  end;
+
+  Result := step;
+
+end;
 
 function TRSGiantsFoundryRefinement.FindCursor(cursor: TRSRefinementCursor): TBox;
 var
@@ -337,15 +398,29 @@ begin
               increment.IncrementSize, '% (', increment.EndPercent,
               '%) - Time: ', timeDiff, 'ms')
     else
-      WriteLn('[Tracker] Cooling: ', increment.IncrementSize,
-              '% (', increment.EndPercent, '%)');
+      WriteLn('[Tracker] Cooling: ', increment.StepNumber, ': +',
+              increment.IncrementSize, '% (', increment.EndPercent,
+              '%) - Time: ', timeDiff, 'ms');
 
     // Update tracking variables
     Self.TemperatureBar.Tracker.LastPercent := currentPercent;
     Self.TemperatureBar.Tracker.LastUpdateTime := currentTime;
     Inc(Self.TemperatureBar.Tracker.CurrentStep);
   end;
+
+  if (Self.TemperatureBar.Tracker.LastUpdateTime + 1000 < currentTime) and (Length(Self.TemperatureBar.Tracker.Increments) > 0) then
+    Self.ResetTemperatureTracker();
+
   Self.TemperatureBar.Tracker.LastPercent := currentPercent;
+end;
+
+procedure TRSGiantsFoundryRefinement.ResetTemperatureTracker();
+begin
+  SetLength(Self.TemperatureBar.Tracker.Increments, 0);
+  Self.TemperatureBar.Tracker.CurrentStep := 0;
+  Self.TemperatureBar.Tracker.LastPercent := Self.GetTemperaturePercent();
+  Self.TemperatureBar.Tracker.LastUpdateTime := GetTimeRunning;
+  WriteLn('[Tracker] Reset');
 end;
 
 function TRSGiantsFoundryRefinement.GetTemperaturePercent(): Double;
