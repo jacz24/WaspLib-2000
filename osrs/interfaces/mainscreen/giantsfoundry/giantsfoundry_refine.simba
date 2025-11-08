@@ -18,6 +18,7 @@ type
     Position: TPoint;
     PositionPercent: Double;
     CurrentZoneIdx, DistanceToNextZone: Integer;
+    LastUpdateTime: Int64;
   end;
 
   // Quality Records
@@ -28,39 +29,15 @@ type
 
   // Temperature Records
 
-  TStepPrediction = record
-    StepsNeeded: Integer;
-    FinalTemperature: Double;
-    TotalChange: Double;
-    ReachesTarget: Boolean;
-    Overshoots: Boolean;
-  end;
-
-  TTemperatureIncrement = record
-    StepNumber: Integer;
-    StartPercent: Double;
-    EndPercent: Double;
-    IncrementSize: Double;
-    TimeStamp: Int64;
-    Predicted: Boolean;  // Was this predicted or actually observed
-  end;
-
-  TTemperatureTracker = record
-    Increments: array of TTemperatureIncrement;
-    LastPercent: Double;
-    LastUpdateTime: Int64;
-    CurrentStep: Integer;
-    IsTracking: Boolean;
-  end;
-
   TQuadraticCoefficients = record
     a, b, c: Double;  // For ax² + bx + c
     R2: Double;       // R-squared value
   end;
 
   TTemperatureTarget = record
-    TargetTemperaturePercent: Double;
-    ActionsNeeded: Integer;
+    TargetTemperaturePercent, TemperatureChange, ActionChange: Double;
+    ActionsNeeded, CurrentAction: Integer;
+
   end;
 
   TRefineTemperature = record
@@ -79,8 +56,8 @@ type
     NextTemperature, CurrentTemperature, PreviousTemperature: TRefineTemperature;
 
     Target: TTemperatureTarget;
-    Predictor: TStepPrediction;
-    Tracker: TTemperatureTracker;
+    //Predictor: TStepPrediction;
+    //Tracker: TTemperatureTracker;
   end;
 
   // Task Records
@@ -353,7 +330,7 @@ begin
         Break;
     end;
   end;
-
+  Self.TemperatureBar.Target.ActionsNeeded := step;
   Result := step;
 
 end;
@@ -363,62 +340,47 @@ procedure TRSGiantsFoundryRefinement.TrackTemperatureIncrement();
 var
   currentPercent, percentChange: Double;
   currentTime: Int64;
-  increment: TTemperatureIncrement;
   timeDiff: Integer;
 begin
-  if not Self.TemperatureBar.Tracker.IsTracking then
-    Exit;
 
   currentPercent := Self.GetTemperaturePercent();
   currentTime := GetTimeRunning;
-
   // Check if there was a significant change (threshold of 0.3%)
-  percentChange := Abs(currentPercent - Self.TemperatureBar.Tracker.LastPercent);
-
+  percentChange := Abs(currentPercent - Self.TemperatureBar.Cursor.PositionPercent);
   if percentChange > 0.3 then
   begin
-    timeDiff := currentTime - Self.TemperatureBar.Tracker.LastUpdateTime;
+    timeDiff := currentTime - Self.TemperatureBar.Cursor.LastUpdateTime;
+    Self.TemperatureBar.Target.ActionChange := currentPercent - Self.TemperatureBar.Cursor.PositionPercent;
 
-    // Record the increment
-    increment.StepNumber := Self.TemperatureBar.Tracker.CurrentStep;
-    increment.StartPercent := Self.TemperatureBar.Tracker.LastPercent;
-    increment.EndPercent := currentPercent;
-    increment.IncrementSize := currentPercent - Self.TemperatureBar.Tracker.LastPercent;
-    increment.TimeStamp := currentTime;
-    increment.Predicted := False;  // This is observed, not predicted
-
-    // Add to history
-    SetLength(Self.TemperatureBar.Tracker.Increments, Length(Self.TemperatureBar.Tracker.Increments) + 1);
-    Self.TemperatureBar.Tracker.Increments[High(Self.TemperatureBar.Tracker.Increments)] := increment;
-
-    // Check if increment was positive (heating) or negative (cooling)
-    if increment.IncrementSize > 0 then
-      WriteLn('[Tracker] Heating ', increment.StepNumber, ': +',
-              increment.IncrementSize, '% (', increment.EndPercent,
+    // Check if change was positive (heating) or negative (cooling)
+    if Self.TemperatureBar.Target.ActionChange > 0 then
+      WriteLn('[Tracker] Heating ', Self.TemperatureBar.Target.CurrentAction, ': +',
+              Self.TemperatureBar.Target.ActionsNeeded, ': +',
+              Self.TemperatureBar.Target.ActionChange, '% (', currentPercent,
               '%) - Time: ', timeDiff, 'ms')
     else
-      WriteLn('[Tracker] Cooling: ', increment.StepNumber, ': +',
-              increment.IncrementSize, '% (', increment.EndPercent,
+      WriteLn('[Tracker] Cooling: ', Self.TemperatureBar.Target.CurrentAction, ': +',
+              Self.TemperatureBar.Target.ActionsNeeded, ': +',
+              Self.TemperatureBar.Target.ActionChange, '% (', currentPercent,
               '%) - Time: ', timeDiff, 'ms');
 
     // Update tracking variables
-    Self.TemperatureBar.Tracker.LastPercent := currentPercent;
-    Self.TemperatureBar.Tracker.LastUpdateTime := currentTime;
-    Inc(Self.TemperatureBar.Tracker.CurrentStep);
+    Self.TemperatureBar.Cursor.PositionPercent := currentPercent;
+    Self.TemperatureBar.Cursor.LastUpdateTime := currentTime;
+    Inc(Self.TemperatureBar.Target.CurrentAction);
   end;
 
-  if (Self.TemperatureBar.Tracker.LastUpdateTime + 1000 < currentTime) and (Length(Self.TemperatureBar.Tracker.Increments) > 0) then
+  if (Self.TemperatureBar.Cursor.LastUpdateTime + 2000 < currentTime) and (Self.TemperatureBar.Target.CurrentAction > 0) then
     Self.ResetTemperatureTracker();
 
-  Self.TemperatureBar.Tracker.LastPercent := currentPercent;
+  Self.TemperatureBar.Cursor.PositionPercent := currentPercent;
 end;
 
 procedure TRSGiantsFoundryRefinement.ResetTemperatureTracker();
 begin
-  SetLength(Self.TemperatureBar.Tracker.Increments, 0);
-  Self.TemperatureBar.Tracker.CurrentStep := 0;
-  Self.TemperatureBar.Tracker.LastPercent := Self.GetTemperaturePercent();
-  Self.TemperatureBar.Tracker.LastUpdateTime := GetTimeRunning;
+  Self.TemperatureBar.Target.CurrentAction := 0;
+  Self.TemperatureBar.Cursor.PositionPercent := Self.GetTemperaturePercent();
+  Self.TemperatureBar.Cursor.LastUpdateTime := GetTimeRunning;
   WriteLn('[Tracker] Reset');
 end;
 
@@ -577,13 +539,11 @@ end;
 // Initialize the temperature tracker
 procedure TRSGiantsFoundryRefinement.InitTemperatureTracker();
 begin
-  Self.TemperatureBar.Tracker.LastPercent := Self.GetTemperaturePercent();
-  Self.TemperatureBar.Tracker.LastUpdateTime := GetTimeRunning;
-  Self.TemperatureBar.Tracker.CurrentStep := 0;
-  Self.TemperatureBar.Tracker.IsTracking := True;
-  SetLength(Self.TemperatureBar.Tracker.Increments, 0);
+  Self.TemperatureBar.Cursor.PositionPercent := Self.GetTemperaturePercent();
+  Self.TemperatureBar.Cursor.LastUpdateTime := GetTimeRunning;
+  Self.TemperatureBar.Target.CurrentAction := 0;
 
-  WriteLn('[Tracker] Initialized at ', Self.TemperatureBar.Tracker.LastPercent, '%');
+  WriteLn('[Tracker] Initialized at ', Self.TemperatureBar.Cursor.PositionPercent, '%');
 end;
 
 procedure TRSGiantsFoundryRefinement.InitTemperatureBar();
