@@ -2,13 +2,110 @@
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
+  ERSEmote = (
+    YES, NO, BOW, ANGRY,
+    THINK, WAVE, SHRUG, CHEER,
+    BECKON, LAUGH, JUMP_FOR_JOY, YAWN,
+    DANCE, JIG, SPIN, HEADBANG,
+    CRY, BLOW_KISS, PANIC, RASPBERRY,
+    CLAP, SALUTE, GOBLIN_BOW, GOBLIN_SALUTE,
+    GLASS_BOX, CLIMB_ROPE, LEAN, GLASS_WALL,
+    IDEA, STAMP, FLAP, SLAP_HEAD,
+    ZOMBIE_WALK, ZOMBIE_DANCE, SCARED, RABBIT_HOP,
+    SIT_UP, PUSH_UP, STAR_JUMP, JOG,
+    FLEX, ZOMBIE_HAND, HYPERMOBILE_DRINKER, SKILL_CAPE,
+    AIR_GUITAR, URI_TRANSFORM, SMOOTH_DANCE, CRAZY_DANCE,
+    PREMIER_SHIELD, EXPLORE, RELIC_UNLOCK, PARTY,
+    TRICK, FORTIS_SALUTE, SIT_DOWN, CRAB_DANCE
+  );
+
   TRSEmotes = record
+    Scroll: TRSScrollBar;
     Slots: TBoxArray;
   end;
 
 procedure TRSEmotes.SetupGameTab();
+var
+  i: Integer;
 begin
-  //TODO...
+  with GameTab.Bounds do
+  begin
+    Self.Scroll.Area.X1 := X1;
+    Self.Scroll.Area.Y1 := Y1 + 1;
+    Self.Scroll.Area.X2 := X2-14;
+    Self.Scroll.Area.Y2 := Y2;
+  end;
+
+  Self.Scroll.Setup();
+
+  Self.Slots := TBoxArray.Create(GameTab.TopLeft.Offset(0, 5), 4, 14, 40, 47, [1,2]);
+end;
+
+(*
+## Emotes.IsOpen
+```pascal
+function TRSEmotes.IsOpen(): Boolean;
+```
+Returns true if the Emotes tab is open.
+
+Example:
+```pascal
+WriteLn Emotes.IsOpen();
+```
+*)
+function TRSEmotes.IsOpen(): Boolean;
+begin
+  Result := GameTabs.IsOpen(ERSGameTab.EMOTES);
+end;
+
+(*
+## Magic.Open
+```pascal
+function TRSEmotes.Open(): Boolean;
+```
+Attempts to open the magic tab.
+
+Example:
+```pascal
+Emotes.Open();
+```
+*)
+function TRSEmotes.Open(): Boolean;
+begin
+  Result := GameTabs.Open(ERSGameTab.EMOTES);
+end;
+
+function TRSEmotes._GetOffset(): Integer;
+begin
+  Result := -Round(Self.Scroll.GetLevel() * 4.3);
+end;
+
+function TRSEmotes.GetSlots(): TBoxArray;
+var
+  i: Integer;
+begin
+  Result := Self.Slots.Offset([0, Self._GetOffset()]);
+
+  for i := High(Result) downto 0 do
+  begin
+    if Self.Scroll.Area.Contains([Result[i].X1, Result[i].Y1]) or
+       Self.Scroll.Area.Contains([Result[i].X2, Result[i].Y2]) then
+    begin
+      Self.Scroll.Area.Clip(Result[i]);
+      Continue;
+    end;
+
+    Delete(Result, i, 1);
+  end;
+end;
+
+function TRSEmotes.Find(emote: ERSEmote; out bounds: TBox): Boolean;
+begin
+  bounds := Self.GetSlots[emote];
+  Result := Self.Scroll.Area.Contains([bounds.X1, bounds.Y1]) or
+            Self.Scroll.Area.Contains([bounds.X2, bounds.Y2]);
+
+  if Result then bounds.Clip(Self.Scroll.Area);
 end;
 
 var
