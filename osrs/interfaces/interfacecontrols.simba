@@ -502,7 +502,7 @@ begin
       False: if Self.GetLevel() = 0   then Exit;
     end;
 
-    Mouse.Scroll(Random(1,3), False);
+    Mouse.Scroll(Random(1,3), down);
   end;
 end;
 
