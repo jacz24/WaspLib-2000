@@ -1,7 +1,30 @@
 {$DEFINE WL_EMOTES_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
+const
+  ERSEmoteUpText: TStringArray =[ 
+    'Yes','No','Bow','Angry',
+    'Think','Wave','Shrug','Cheer',
+    'Beckon','Laugh','Jump for Joy','Yawn',
+    'Dance','Jig','Spin','Headbang',
+    'Cry','Blow Kiss','Panic','Raspberry',
+    'Clap','Salute','Goblin Bow','Goblin Salute',
+    'Glass Box','Climb Rope','Lean','Glass Wall',
+    'Idea','Stamp','Flap','Slap Head',
+    'Zombie Walk','Zombie Dance','Scared','Rabbit Hop',
+    'Sit up','Push up','Star jump','Jog',
+    'Flex','Zombie Hand','Hypermobile Drinker','Skill Cape',
+    'Air Guitar','Uri transform','Smooth dance','Crazy dance',
+    'Premier Shield','Explore','Relic unlock','Party',
+    'Trick','Fortis Salute','Sit down','Crab dance'
+  ];
+
 type
+  TRSEmotes = record
+    Scroll: TRSScrollBar;
+    Slots: TBoxArray;
+  end;
+
   ERSEmote = (
     YES, NO, BOW, ANGRY,
     THINK, WAVE, SHRUG, CHEER,
@@ -19,11 +42,6 @@ type
     TRICK, FORTIS_SALUTE, SIT_DOWN, CRAB_DANCE
   );
 
-  TRSEmotes = record
-    Scroll: TRSScrollBar;
-    Slots: TBoxArray;
-  end;
-
 procedure TRSEmotes.SetupGameTab();
 var
   i: Integer;
@@ -36,9 +54,11 @@ begin
     Self.Scroll.Area.Y2 := Y2;
   end;
 
-  Self.Scroll.Setup();
-
   Self.Slots := TBoxArray.Create(GameTab.TopLeft.Offset(0, 5), 4, 14, 40, 47, [1,2]);
+  for i := 0 to High(Self.Slots) do
+    Self.Slots[i] := Self.Slots[i].Expand(-5); //shrink boxes because calculating scrolling is not linear.
+
+  Self.Scroll.Setup();
 end;
 
 (*
@@ -59,11 +79,11 @@ begin
 end;
 
 (*
-## Magic.Open
+## Emotes.Open
 ```pascal
 function TRSEmotes.Open(): Boolean;
 ```
-Attempts to open the magic tab.
+Attempts to open the emotes tab.
 
 Example:
 ```pascal
@@ -75,37 +95,61 @@ begin
   Result := GameTabs.Open(ERSGameTab.EMOTES);
 end;
 
-function TRSEmotes._GetOffset(): Integer;
-begin
-  Result := -Round(Self.Scroll.GetLevel() * 4.3);
-end;
+(*
+## Emotes.UseEmote
+```pascal
+function TRSEmotes.UseEmote(emote: ERSEmote): Boolean;
+```
+Attempts to use the specified emote. Returns true if we succeed.
 
-function TRSEmotes.GetSlots(): TBoxArray;
+Example:
+```pascal
+WriteLn Emotes.UseEmote(ERSEmote.DANCE);
+```
+*)
+function TRSEmotes.UseEmote(emote: ERSEmote): Boolean;
 var
-  i: Integer;
+  scrollLevel: Integer;
+  box: TBox;
+  upText: String;
+  attempts: Integer;
 begin
-  Result := Self.Slots.Offset([0, Self._GetOffset()]);
+  Result := False;
+  if not Self.Open() then Exit;
 
-  for i := High(Result) downto 0 do
+  upText := ERSEmoteUpText[emote];
+  if upText = '' then Exit;
+
+  scrollLevel := Round((Ord(emote) div 4) / 13.0 * 100);
+  if scrollLevel > 100 then scrollLevel := 100;
+
+  attempts := 0;
+  while (attempts < 5) and (not Result) do
   begin
-    if Self.Scroll.Area.Contains([Result[i].X1, Result[i].Y1]) or
-       Self.Scroll.Area.Contains([Result[i].X2, Result[i].Y2]) then
+    Self.Scroll.SetLevel(scrollLevel);
+    Biometrics.Sleep(40, 60);
+
+    box := Self.Slots[emote].Offset([0, -Round(Self.Scroll.GetLevel() * 4.3)]);
+
+    if Self.Scroll.Area.Contains([box.X1, box.Y1]) or
+       Self.Scroll.Area.Contains([box.X2, box.Y2]) then
     begin
-      Self.Scroll.Area.Clip(Result[i]);
-      Continue;
+      box.Clip(Self.Scroll.Area);
+      if Target.HasColor($27383F, 0, 1, box) then
+        Exit;
+
+      Mouse.Move(box, True);
+      if MainScreen.IsUpText(upText) then
+      begin
+        Mouse.Click(box, EMouseButton.LEFT);
+        Result := True;
+        Break;
+      end;
     end;
 
-    Delete(Result, i, 1);
+    Inc(attempts);
+    Biometrics.Sleep(120, 180);
   end;
-end;
-
-function TRSEmotes.Find(emote: ERSEmote; out bounds: TBox): Boolean;
-begin
-  bounds := Self.GetSlots[emote];
-  Result := Self.Scroll.Area.Contains([bounds.X1, bounds.Y1]) or
-            Self.Scroll.Area.Contains([bounds.X2, bounds.Y2]);
-
-  if Result then bounds.Clip(Self.Scroll.Area);
 end;
 
 var
