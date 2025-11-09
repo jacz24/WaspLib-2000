@@ -249,8 +249,10 @@ begin
     Result := ChooseOption.Select('Delete ' + friend.Name);
   end
   else
+  begin
     Self.Buttons[ERSFriendsButton.DEL].Click(EMouseButton.LEFT);
     Result := Chat.AnswerQuery('Enter name of friend to delete from list', name, 2000, 250);
+  end;
 end;
 
 (*
@@ -333,8 +335,10 @@ begin
     Result := ChooseOption.Select('Delete ' + friend.Name);
   end
   else
+  begin
     Self.Buttons[ERSFriendsButton.DEL].Click(EMouseButton.LEFT);
     Result := Chat.AnswerQuery('Enter name of player to delete from list', name, 2000, 250);
+  end;
 end;
 
 var
