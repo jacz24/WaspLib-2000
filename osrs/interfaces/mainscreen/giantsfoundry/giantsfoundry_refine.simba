@@ -12,6 +12,7 @@ type
 
   ETaskState = enum(WHEEL, STONE, HAMMER, COMPLETE, NOTFOUND);
   ETemperatureState = enum(COLD, MEDIUM, HOT, USELESS);
+  ETemperatureDirection = enum(COOL, HEAT);
 
   TRSRefinementCursor = record
     Bounds, BarBounds, ZoneBounds: TBox;
@@ -35,16 +36,18 @@ type
   end;
 
   TTemperatureTarget = record
-    TargetTemperaturePercent, TemperatureChange, ActionChange: Double;
+    TargetTemperaturePercent, TemperatureChange, ActionChange,
+    StartPercent: Double;
     ActionsNeeded, CurrentAction: Integer;
-
+    Direction: ETemperatureDirection;
+    Forumula: TQuadraticCoefficients;
   end;
 
   TRefineTemperature = record
     TemperatureBounds: TBox;
     Temperature: ETemperatureState;
     Active: Boolean;
-    Idx: Int32;
+    Idx: Integer;
   end;
 
   TRefineTemperatureBarArray = array of TRefineTemperature;
@@ -279,6 +282,7 @@ begin
   Self.TemperatureBar.Temperatures := Result;
 end;
 
+
 function TRSGiantsFoundryRefinement.GetCoolingQuadratic(): TQuadraticCoefficients;
 begin
   // Coefficients derived from least squares regression
@@ -288,27 +292,37 @@ begin
   Result.R2 := 0.9426; // R² = 94.26% (very good fit)
 end;
 
+function TRSGiantsFoundryRefinement.GetHeatingQuadratic(): TQuadraticCoefficients;
+begin
+  // Coefficients derived from least squares regression
+  Result.a := 0.0128;  // x² coefficient
+  Result.b := 0.1502;  // x coefficient
+  Result.c := 0.4245;  // constant term
+  Result.R2 := 0.9426; // R² = 94.26% (very good fit)
+end;
 
+function TRSGiantsFoundryRefinement.ReachedTemperatureTargetAction(): Boolean;
+begin
+  Result := False;
+  if Self.TemperatureBar.Target.CurrentAction >= Self.TemperatureBar.Target.ActionsNeeded then
+    Result := True;
+end;
 
-function TRSGiantsFoundryRefinement.StepsToTargetTemperature(targetTemperature: Double): Integer;
+function TRSGiantsFoundryRefinement.ReachedTemperatureTargetPercent(): Boolean;
+begin
+  Result := False;
+
+end;
+
+function TRSGiantsFoundryRefinement.StepsToTargetTemperature(): Integer;
 var
-  currentTemp, increment: Double;
+  currentTemp, targetTemperature, increment: Double;
   step, maxsteps: Integer;
   coeffs: TQuadraticCoefficients;
-  heating: Boolean;
 begin
-  currentTemp := Self.GetTemperaturePercent();
-
-  // Get coefficients based on direction
-  coeffs := Self.GetCoolingQuadratic();
-  if targetTemperature > currentTemp then
-  begin
-    heating := True;
-    // Flip signs for heating
-    coeffs.a := -coeffs.a;
-    coeffs.b := -coeffs.b;
-    coeffs.c := -coeffs.c;
-  end;
+  currentTemp := Self.TemperatureBar.Target.StartPercent;
+  targetTemperature := Self.TemperatureBar.Target.TargetTemperaturePercent;
+  coeffs := Self.TemperatureBar.Target.Forumula;
 
   step := 0;
   maxSteps := 100; // Safety limit
@@ -320,7 +334,7 @@ begin
     increment := coeffs.a * Sqr(step) + coeffs.b * step + coeffs.c;
     currentTemp := currentTemp + increment;
 
-    if not heating then
+    if Self.TemperatureBar.Target.Direction = ETemperatureDirection.COOL then
     begin
       if currentTemp <= targetTemperature then
         Break;
@@ -330,11 +344,81 @@ begin
         Break;
     end;
   end;
-  Self.TemperatureBar.Target.ActionsNeeded := step;
   Result := step;
+end;
+(*
+TTemperatureTarget = record
+    TargetTemperaturePercent, TemperatureChange, ActionChange,
+    StartPercent: Double;
+    ActionsNeeded, CurrentAction: Integer;
+    Direction: ETemperatureDirection;
+
+  end;
+*)
+procedure TRSGiantsFoundryRefinement.CreateTemperatureTarget(targetTemperature, startPercent: Double);
+begin
+  Self.TemperatureBar.Target.TargetTemperaturePercent := targetTemperature;
+  Self.TemperatureBar.Target.StartPercent := startPercent;
+  Self.TemperatureBar.Target.TemperatureChange := Self.TemperatureBar.Target.TargetTemperaturePercent - Self.TemperatureBar.Target.StartPercent;
+
+
+  Self.TemperatureBar.Target.CurrentAction := 0;
+
+  if targetTemperature > startPercent then
+  begin
+    Self.TemperatureBar.Target.Direction := ETemperatureDirection.Heat;
+    Self.TemperatureBar.Target.Forumula := Self.GetHeatingQuadratic;
+  end else
+  begin
+    Self.TemperatureBar.Target.Direction := ETemperatureDirection.COOL;
+    Self.TemperatureBar.Target.Forumula := Self.GetCoolingQuadratic();
+  end;
+
+  Self.TemperatureBar.Target.ActionsNeeded := Self.StepsToTargetTemperature();
+
+  writeln(Self.TemperatureBar.Target);
+end;
+
+procedure TRSGiantsFoundryRefinement.TrackTemperatureAction();
+var
+  currentPercent, percentChange: Double;
+  currentTime: Int64;
+begin
+  currentPercent := Self.GetTemperaturePercent();
+  currentTime := GetTimeRunning;
+  // Check if there was a significant change (threshold of 0.3%)
+  percentChange := Abs(currentPercent - Self.TemperatureBar.Cursor.PositionPercent);
+  if percentChange > 0.3 then
+  begin
+    Inc(Self.TemperatureBar.Target.CurrentAction);
+    Self.TemperatureBar.Target.ActionChange := currentPercent - Self.TemperatureBar.Cursor.PositionPercent;
+
+    if Self.TemperatureBar.Target.Direction = ETemperatureDirection.HEAT then
+      if Self.TemperatureBar.Target.ActionChange > 0 then
+        Writeln('Heating!');
+
+    if Self.TemperatureBar.Target.Direction = ETemperatureDirection.COOL then
+      if Self.TemperatureBar.Target.ActionChange < 0 then
+        Writeln('Cooling!');
+
+    // Update tracking variables
+    Self.TemperatureBar.Cursor.PositionPercent := currentPercent;
+    Self.TemperatureBar.Cursor.LastUpdateTime := currentTime;
+  end;
+  if (Self.TemperatureBar.Cursor.LastUpdateTime + 2000 < currentTime) and (Self.TemperatureBar.Target.CurrentAction > 0) then
+  begin
+    Self.ResetTemperatureTracker();
+  end;
+  Self.TemperatureBar.Cursor.PositionPercent := currentPercent;
 
 end;
 
+procedure TRSGiantsFoundryRefinement.ExecuteTemperatureActions();
+begin
+
+
+
+end;
 // Track when an increment occurs
 procedure TRSGiantsFoundryRefinement.TrackTemperatureIncrement();
 var
@@ -349,25 +433,22 @@ begin
   percentChange := Abs(currentPercent - Self.TemperatureBar.Cursor.PositionPercent);
   if percentChange > 0.3 then
   begin
+    Inc(Self.TemperatureBar.Target.CurrentAction);
     timeDiff := currentTime - Self.TemperatureBar.Cursor.LastUpdateTime;
     Self.TemperatureBar.Target.ActionChange := currentPercent - Self.TemperatureBar.Cursor.PositionPercent;
 
     // Check if change was positive (heating) or negative (cooling)
     if Self.TemperatureBar.Target.ActionChange > 0 then
-      WriteLn('[Tracker] Heating ', Self.TemperatureBar.Target.CurrentAction, ': +',
-              Self.TemperatureBar.Target.ActionsNeeded, ': +',
-              Self.TemperatureBar.Target.ActionChange, '% (', currentPercent,
-              '%) - Time: ', timeDiff, 'ms')
+      WriteLn('[Tracker] Heating: ', Self.TemperatureBar.Target.CurrentAction, ': +',
+              Self.TemperatureBar.Target.ActionsNeeded)
     else
       WriteLn('[Tracker] Cooling: ', Self.TemperatureBar.Target.CurrentAction, ': +',
-              Self.TemperatureBar.Target.ActionsNeeded, ': +',
-              Self.TemperatureBar.Target.ActionChange, '% (', currentPercent,
-              '%) - Time: ', timeDiff, 'ms');
+              Self.TemperatureBar.Target.ActionsNeeded);
 
     // Update tracking variables
     Self.TemperatureBar.Cursor.PositionPercent := currentPercent;
     Self.TemperatureBar.Cursor.LastUpdateTime := currentTime;
-    Inc(Self.TemperatureBar.Target.CurrentAction);
+
   end;
 
   if (Self.TemperatureBar.Cursor.LastUpdateTime + 2000 < currentTime) and (Self.TemperatureBar.Target.CurrentAction > 0) then
@@ -379,6 +460,10 @@ end;
 procedure TRSGiantsFoundryRefinement.ResetTemperatureTracker();
 begin
   Self.TemperatureBar.Target.CurrentAction := 0;
+  Self.TemperatureBar.Target.ActionsNeeded := -1;
+  Self.TemperatureBar.Target.StartPercent := -1;
+  Self.TemperatureBar.Target.TargetTemperaturePercent := -1;
+  Self.TemperatureBar.Target.TemperatureChange := 0;
   Self.TemperatureBar.Cursor.PositionPercent := Self.GetTemperaturePercent();
   Self.TemperatureBar.Cursor.LastUpdateTime := GetTimeRunning;
   WriteLn('[Tracker] Reset');
@@ -415,6 +500,8 @@ begin
   // Clamp to 0-100 range
   if Result < 0 then Result := 0
   else if Result > 100 then Result := 100;
+
+  //Self.TemperatureBar.Cursor.PositionPercent := Result;
 end;
 
 
@@ -552,10 +639,8 @@ begin
   //writeln(Self.TemperatureBar.Temperatures);
   // Cursor Init
   Self.TemperatureBar.Cursor.BarBounds := Self.TemperatureBar.Bounds;
-  Self.UpdateTemperatureCursor;
+  //Self.UpdateTemperatureCursor;
   Self.InitTemperatureTracker();
-
-
 end;
 
 
@@ -673,7 +758,6 @@ begin
     begin
       Self.TaskBar.Tasks[i].Active := True;
       Result := Self.TaskBar.Tasks[i];
-      Self.TaskBar.CurrentTask := Result;
     end;
   end;
 end;
