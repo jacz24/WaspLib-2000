@@ -286,6 +286,31 @@ begin
 end;
 
 (*
+## TRSGrandExchangeSlot.Progress
+```pascal
+property TRSGrandExchangeSlot.Progress: Integer;
+```
+Returns the progress percentage of the slot.
+
+Example:
+```pascal
+WriteLn GrandExchange.Slots[2].Progress;
+```
+*)
+property TRSGrandExchangeSlot.Progress: Integer;
+var
+  tpa: TPointArray;
+begin
+  tpa := Target.FindColor($1964A8, 0, Self.StatusBox);
+  if not (tpa = []) then
+    Result := Round(tpa.Bounds.Width() / 105 * 100)
+  else if Target.HasColor($004A00, 0, 1, Self.StatusBox) then
+    Result := 100
+  else
+    Result := -1;
+end;
+
+(*
 ## TRSGrandExchangeSlot.Open
 ```pascal
 function TRSGrandExchangeSlot.Open(): Boolean;
