@@ -303,7 +303,7 @@ begin
   if Self.Find(item, bounds) then
   begin
     Mouse.Click(bounds, EMouseButton.LEFT);
-    Result := SleepUntil(Self.IsOpen(), 200, 2400);
+    Result := SleepUntil(not Self.IsOpen(), 200, 2400);
   end;
 end;
 
