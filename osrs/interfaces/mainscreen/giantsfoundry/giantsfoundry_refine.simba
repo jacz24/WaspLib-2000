@@ -96,8 +96,12 @@ const
   RedColours: TIntegerArray = [2969828, 9617142, 1975224, 3810928];
   GreenColours: TIntegerArray = [11266515, 6737800, 4621632, 4482857];
   YellowColours: TIntegerArray = [6148603, 763374, 1927902, 11398142];
+
+
+
   WhiteColour: Integer = 16777215;
   BlackColour: Integer = 65536;
+  TrueBlackColour: Integer = 0;
   GreyColour: Integer = 2763306;
 
 function TRSGiantsFoundryRefinement.FindCursor(cursor: TRSRefinementCursor): TBox;
@@ -355,7 +359,28 @@ TTemperatureTarget = record
 
   end;
 *)
-procedure TRSGiantsFoundryRefinement.CreateTemperatureTarget(targetTemperature, startPercent: Double);
+function TRSGiantsFoundryRefinement.CreateTemperatureTarget(targetTemperature, startPercent: Double): TTemperatureTarget;
+begin
+  Result.TargetTemperaturePercent := targetTemperature;
+  Result.StartPercent := startPercent;
+  Result.TemperatureChange := Result.TargetTemperaturePercent - Result.StartPercent;
+
+  Result.CurrentAction := 0;
+
+  if targetTemperature > startPercent then
+  begin
+    Result.Direction := ETemperatureDirection.Heat;
+    Result.Forumula := Self.GetHeatingQuadratic;
+  end else
+  begin
+    Result.Direction := ETemperatureDirection.COOL;
+    Result.Forumula := Self.GetCoolingQuadratic();
+  end;
+
+  Result.ActionsNeeded := Self.StepsToTargetTemperature();
+end;
+
+procedure TRSGiantsFoundryRefinement.UpdateTemperatureTarget(targetTemperature, startPercent: Double);
 begin
   Self.TemperatureBar.Target.TargetTemperaturePercent := targetTemperature;
   Self.TemperatureBar.Target.StartPercent := startPercent;
@@ -757,8 +782,9 @@ begin
     if Target.GetColor(Self.TaskBar.Tasks[i].TaskBounds.TopLeft.Offset(0,1)) = WhiteColour then
     begin
       Self.TaskBar.Tasks[i].Active := True;
-      Result := Self.TaskBar.Tasks[i];
-    end;
+      Exit(Self.TaskBar.Tasks[i]);
+    end else
+      Self.TaskBar.Tasks[i].Refining := ETaskState.COMPLETE;
   end;
 end;
 
@@ -766,7 +792,7 @@ end;
 
 function TRSGiantsFoundryRefinement.FindTaskBoundaries(): TRefineTaskBarArray;
 var
-  tpa, redPoints, greenPoints, yellowPoints, whitePoints, line: TPointArray;
+  tpa, redPoints, greenPoints, yellowPoints, whitePoints, completePoints, line: TPointArray;
   atpa: T2DPointArray;
   b, searchBox, tempBox: TBox;
   i, x, y: Integer;
@@ -806,7 +832,9 @@ begin
         yellowPoints += Point(x, y)
       // Check white outline
       else if colour = WhiteColour then
-        whitePoints += Point(x, y);
+        whitePoints += Point(x, y)
+      else
+        completePoints += Point(x,y);
 
     end;
 
@@ -867,12 +895,30 @@ begin
     end;
   end;
 
+  // Process Bar If Complete
+  if completePoints <> [] then
+  begin
+    atpa := completePoints.Cluster(3, 1);
+    for tpa in atpa do
+    begin
+      b := tpa.Bounds();
+      temptask.Refining := ETaskState.COMPLETE;
+      temptask.TaskBounds := [b.X1, Self.TaskBar.Bounds.Y1, b.X2, Self.TaskBar.Bounds.Y2];
+      Result += temptask;
+    end;
+  end;
   Self.SortTasksByX1(Result);
   for i := 0 to High(Result) do
   begin
     Result[i].Idx := i;
   end;
   Self.TaskBar.Tasks := Result;
+
+end;
+
+function TRSGiantsFoundryRefinement.IsOpen(): Boolean;
+begin
+  Result := Target.GetColor([Self.TemperatureBar.Bounds.X1, Self.TemperatureBar.Bounds.Y1]) = TrueBlackColour;
 end;
 
 procedure TRSGiantsFoundryRefinement.InitTaskBar();
