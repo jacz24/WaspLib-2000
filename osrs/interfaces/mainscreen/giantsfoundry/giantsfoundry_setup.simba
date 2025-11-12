@@ -481,8 +481,8 @@ begin
 
     // Scroll down or up
     repeat
-      if down then next := Result - 2
-      else next := Result + 2;
+      if down then next := Result - Random(1,3)
+      else next := Result + Random(1,3);
 
       Result := Self.Scroll.SetLevel(next);
       Biometrics.Sleep(300, 500);
@@ -498,8 +498,8 @@ begin
     // Try opposite direction
     down := not down;
     repeat
-      if down then next := Result - 2
-      else next := Result + 2;
+      if down then next := Result - Random(1,3)
+      else next := Result + Random(1,3);
 
       Result := Self.Scroll.SetLevel(next);
       Biometrics.Sleep(300, 500); // Wait for scroll to complete
@@ -699,34 +699,6 @@ begin
   Result := OCR.Recognize(attribute.Bounds, Self.GiantsFoundryRegularFont, [RSFonts.ORANGE], 0).ExtractInteger();
 end;
 
-
-
-procedure TRSGiantsFoundrySetup.Draw(img: TImage);
-var
-  i: Integer;
-begin
-  //if not Self.IsOpen() then Exit;
-
-  img.DrawColor := $00FFFF;
-  img.DrawBox(Self.Bounds);
-  //img.DrawBoxArray(Self.MouldSlots, False);
-  img.DrawBoxArray(Self.FindMouldBoundaries, False);
-  img.DrawBox(Self.SetMouldButton.Bounds);
-  img.DrawBox(Self.ResetMouldButton.Bounds);
-  img.DrawBox(Self.CommissionArea);
-  img.DrawBox(Self.MouldsArea);
-  img.DrawColor := $854F31;
-
-  img.DrawBox(Self.Atrribute1.Bounds);
-  img.DrawBox(Self.Atrribute2.Bounds);
-  img.DrawBox(Self.Title.Bounds);
-  img.DrawBox(Self.Title.CloseButton);
-  Self.Scroll.Draw(img);
-  for i := 0 to High(Self.MouldTypeButtons) do
-    Self.MouldTypeButtons[i].Draw(img);
-
-end;
-
 (*
 ## TRSGiantsFoundrySetup.GetMouldScore
 ```pascal
@@ -834,10 +806,37 @@ begin
           Result.Blade := blade;
           Result.Tip := tip;
           Result.TotalScore.AttributeTotalScore := bestScore;
-          Result.TotalScore.Attribute := commission.Attribute1; // Primary attribute
+          Result.TotalScore.Attribute := commission.Attribute1;
         end;
       end;
 end;
+
+procedure TRSGiantsFoundrySetup.Draw(img: TImage);
+var
+  i: Integer;
+begin
+  //if not Self.IsOpen() then Exit;
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
+  //img.DrawBoxArray(Self.MouldSlots, False);
+  img.DrawBoxArray(Self.FindMouldBoundaries, False);
+  img.DrawBox(Self.SetMouldButton.Bounds);
+  img.DrawBox(Self.ResetMouldButton.Bounds);
+  img.DrawBox(Self.CommissionArea);
+  img.DrawBox(Self.MouldsArea);
+  img.DrawColor := $854F31;
+
+  img.DrawBox(Self.Atrribute1.Bounds);
+  img.DrawBox(Self.Atrribute2.Bounds);
+  img.DrawBox(Self.Title.Bounds);
+  img.DrawBox(Self.Title.CloseButton);
+  Self.Scroll.Draw(img);
+  for i := 0 to High(Self.MouldTypeButtons) do
+    Self.MouldTypeButtons[i].Draw(img);
+
+end;
+
 procedure TRSGiantsFoundrySetup.ShowOnTarget();
 var
   img: TImage;
