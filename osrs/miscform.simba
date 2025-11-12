@@ -23,6 +23,10 @@ mentioned on this page because they are internal methods you shouldn't touch.
 Do feel free to read the source code though if you so desire.
 *)
   TMiscFormHelper = record
+    LoginPanel, ClientPanel: TLazPanel;
+    EmailEdit, PasswordEdit: TLazEdit;
+    RecorderLength: TLazSpinEdit;
+    RecorderLengthLbl1, RecorderLengthLbl2: TLazLabel;
     Config: TConfigJSON;
   end;
 
@@ -30,6 +34,163 @@ procedure TMiscFormHelper.Setup();
 begin
   Self.Config.Setup('misc' + PATH_SEP + ToStr(ProfileIndex));
 end;
+
+
+procedure TMiscFormHelper.OnLogin(sender: TLazObject);
+begin
+  WaspClient.Login(Self.EmailEdit.Text, Self.PasswordEdit.Text);
+
+  if WaspClient.LoggedIn then
+    TLazButton(sender).Parent.Hide();
+end;
+
+procedure TMiscFormHelper.OnLogout(sender: TLazObject);
+begin
+  WaspClient.Login(Self.EmailEdit.Text, Self.PasswordEdit.Text);
+
+  if WaspClient.LoggedIn then
+    TLazButton(sender).Parent.Hide();
+end;
+
+
+procedure TMiscFormHelper.SetupLoginPanel(parent: TLazComponent);
+var
+  panel: TLazPanel;
+  info: TLazLabel;
+  btn: TLazButton;
+begin
+  Self.LoginPanel := TLazPanel.CreateEx(parent, TLazTabSheet(parent).Width div 2 - 240, 20, 480, 220);
+  Self.LoginPanel.BevelWidth := 0;
+
+  info := TLazLabel.CreateEx(Self.LoginPanel, '', '', 60, 20, 0, 90);
+  info.Caption := 'You are currently not logged into WaspScripts.' + LINE_SEP + LINE_SEP +
+                  'To submit stats you can either login below' + LINE_SEP +
+                  'or relaunch the script from wasp-launcher.';
+  info.Alignment := ELazAlignment.Center;
+  info.Font.Name := 'Courier New';
+
+  Self.EmailEdit := TLazEdit.CreateEx(Self.LoginPanel, 'Email:', 'Username to login to WaspScripts', 20, info.Bottom + 20, 200);
+  Self.PasswordEdit := TLazEdit.CreateEx(Self.LoginPanel, 'Password:', 'Password to login to WaspScripts', Self.EmailEdit.Right + 20, Self.EmailEdit.Top, 200);
+  Self.PasswordEdit.PasswordChar := '*';
+
+  btn := TLazButton.CreateEx(Self.LoginPanel, 'Login', '', Self.LoginPanel.Width div 2 - 100, Self.EmailEdit.Bottom + 20, 200);
+  btn.OnClick := @Self.OnLogin;
+
+  if WaspClient.LoggedIn then
+    Self.LoginPanel.Hide();
+end;
+
+procedure TMiscFormHelper.SetupClientPanel(parent: TLazComponent);
+var
+  panel: TLazPanel;
+  info: TLazLabel;
+  btn: TLazButton;
+begin
+  Self.ClientPanel := TLazPanel.CreateEx(parent, TLazTabSheet(parent).Width div 2 - 240, 20, 480, 220);
+  Self.ClientPanel.BevelWidth := 0;
+
+  info := TLazLabel.CreateEx(Self.ClientPanel, 'You are logged in as ' + WaspClient.User.Username, '', 60, 20, 0, 90);
+  info.Alignment := ELazAlignment.Center;
+  info.Font.Name := 'Courier New';
+
+  btn := TLazButton.CreateEx(Self.LoginPanel, 'Login', '', Self.LoginPanel.Width div 2 - 100, Self.EmailEdit.Bottom + 20, 200);
+  btn.OnClick := @Self.OnLogout;
+
+  if WaspClient.LoggedIn then
+    Self.LoginPanel.Hide();
+end;
+
+
+
+procedure TMiscFormHelper.OnRecorderEnabledChange(sender: TLazObject);
+begin
+  if TLazCheckBox(sender).IsChecked() then
+  begin
+    SimbaRecorder.Enabled := True;
+    Self.RecorderLengthLbl1.Enabled := True;
+    Self.RecorderLength.Enabled := True;
+    Self.RecorderLengthLbl2.Enabled := True;
+    SimbaRecorder.BufferSeconds := Self.RecorderLength.Value;
+  end
+  else
+  begin
+    SimbaRecorder.Enabled := False;
+    Self.RecorderLengthLbl1.Enabled := False;
+    Self.RecorderLength.Enabled := False;
+    Self.RecorderLengthLbl2.Enabled := False;
+  end;
+
+  if Self.Config.Data.Has('recorder_enabled') then
+    Self.Config.Data.Item['recorder_enabled'].AsBool := SimbaRecorder.Enabled
+  else
+    Self.Config.Data.AddBool('recorder_enabled', SimbaRecorder.Enabled);
+  Self.Config.Save();
+end;
+
+procedure TMiscFormHelper.OnRecorderLengthChange(sender: TLazObject);
+begin
+  SimbaRecorder.BufferSeconds := TLazSpinEdit(sender).Value;
+  if Self.Config.Data.Has('recorder_length') then
+    Self.Config.Data.Item['recorder_length'].AsInt := SimbaRecorder.BufferSeconds
+  else
+    Self.Config.Data.AddInt('recorder_length', SimbaRecorder.BufferSeconds);
+  Self.Config.Save();
+end;
+
+
+procedure TMiscFormHelper.SetupRecorderPanel(parent: TLazComponent);
+var
+  panel: TLazPanel;
+  check: TLazCheckBox;
+begin
+  panel := TLazPanel.CreateEx(parent, TLazTabSheet(parent).Width div 2 - 120, 320, 240, 100);
+  panel.BevelWidth := 0;
+
+  check := TLazCheckBox.CreateEx(panel, 'Record crashes', '', 20, 0);
+  check.Hint := 'Simba recorder records the last X seconds of a script running.' + LINE_SEP +
+                'This is great to analyze crashes and issues that shut down scripts' + LINE_SEP +
+                'but uses a lot of RAM and will use more the longer the recording is.';
+  check.ShowHint := True;
+  check.OnChange := @Self.OnRecorderEnabledChange;
+
+  Self.RecorderLengthLbl1 := TLazLabel.CreateEx(panel, 'Record last', '', 20, 40);
+  Self.RecorderLength := TLazSpinEdit.CreateEx(panel);
+  Self.RecorderLength.AnchorHorizontally(Self.RecorderLengthLbl1, 10);
+  Self.RecorderLength.Hint := check.Hint;
+  Self.RecorderLength.ShowHint := True;
+  Self.RecorderLength.Increment := 5;
+  if Self.Config.Data.Has('recorder_length') then
+  begin
+    SimbaRecorder.BufferSeconds := Self.Config.Data.Item['recorder_length'].AsInt;
+    Self.RecorderLength.Value := Self.Config.Data.Item['recorder_length'].AsInt;
+  end
+  else
+  begin
+    SimbaRecorder.BufferSeconds := 30;
+    Self.RecorderLength.Value := 30;
+  end;
+  Self.RecorderLength.MinValue := 10;
+  Self.RecorderLength.OnChange := @Self.OnRecorderLengthChange;
+
+  Self.RecorderLengthLbl2 := TLazLabel.CreateEx(panel, 'seconds');
+  Self.RecorderLengthLbl2.AnchorHorizontally(Self.RecorderLength, 10);
+
+  if Self.Config.Data.Has('recorder_enabled')  then
+  begin
+    check.SetChecked(Self.Config.Data.Item['recorder_enabled'].AsBool);
+    Self.RecorderLengthLbl1.Enabled := Self.Config.Data.Item['recorder_enabled'].AsBool;
+    Self.RecorderLength.Enabled     := Self.Config.Data.Item['recorder_enabled'].AsBool;
+    Self.RecorderLengthLbl2.Enabled := Self.Config.Data.Item['recorder_enabled'].AsBool;
+  end
+  else
+  begin
+    check.SetChecked(False);
+    Self.RecorderLengthLbl1.Enabled := False;
+    Self.RecorderLength.Enabled     := False;
+    Self.RecorderLengthLbl2.Enabled := False;
+  end;
+end;
+
 
 var
 (*
@@ -64,5 +225,8 @@ function TScriptForm.CreateMiscTab(): TLazTabSheet;
 begin
   Result := Self.CreateTab('Misc');
 
+  MiscForm.Setup();
+  MiscForm.SetupLoginPanel(Result);
+  MiscForm.SetupRecorderPanel(Result);
   MiscForm.Setup();
 end;

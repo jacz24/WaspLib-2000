@@ -32,10 +32,10 @@ begin
 end;
 ```
 *)
-  TRSWalkerEvent            = procedure(walker: PRSWalker; position, destination: TPoint) of object;
+  TRSWalkerEvent          = procedure(walker: PRSWalker; position, destination: TPoint) of object;
   TWalkerPositionFunction = function (): TPoint of object;
   TWalkerHeightFunction   = function (pt: TPoint = [0,0]; global: Boolean = True): Single of object;
-  TWalkerGetLocalFunction  = function (pt: TPoint; offset: TPoint = [0,0]): TPoint of object;
+  TWalkerGetLocalFunction = function (pt: TPoint; offset: TPoint = [0,0]): TPoint of object;
 
 (*
 ## TRSWalker
