@@ -35,6 +35,17 @@ Record representing Kovac's commission requirements.
     Commission: TRSGiantsFoundryCommission;
   end;
 
+
+function TRSGiantsFoundry.IsCommissionValid(): Boolean;
+begin
+  Result := not ((Self.Commission.Attribute1 = ERSGiantsFoundryAttribute.HEAVY) and (Self.Commission.Attribute2 = ERSGiantsFoundryAttribute.HEAVY));
+end;
+
+function TRSGiantsFoundry.IsCommissionValid(commission: TRSGiantsFoundryCommission): Boolean; overload;
+begin
+  Result := not ((commission.Attribute1 = ERSGiantsFoundryAttribute.HEAVY) and (commission.Attribute2 = ERSGiantsFoundryAttribute.HEAVY));
+end;
+
 (*
 ## GiantsFoundrySetup._AttributeToString
 ```pascal
