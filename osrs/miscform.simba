@@ -55,7 +55,6 @@ end;
 
 procedure TMiscFormHelper.SetupLoginPanel(parent: TLazComponent);
 var
-  panel: TLazPanel;
   info: TLazLabel;
   btn: TLazButton;
 begin
@@ -82,7 +81,6 @@ end;
 
 procedure TMiscFormHelper.SetupClientPanel(parent: TLazComponent);
 var
-  panel: TLazPanel;
   info: TLazLabel;
   btn: TLazButton;
 begin
