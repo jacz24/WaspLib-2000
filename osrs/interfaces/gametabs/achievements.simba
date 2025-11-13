@@ -254,7 +254,7 @@ var
   slot: TRSDiarySlot;
 begin
   for slot in Self.GetSlots() do
-    if OCR.Locate(slot.Name, Self.Names[diary], [RSFonts.RED, RSFonts.YELLOW, RSFonts.GREEN, RSFonts.WHITE], 0, RSFonts.PLAIN_11) > 0.9 then
+    if OCR.Locate(slot.Name, Self.Names[diary], [RSFonts.RED, RSFonts.YELLOW, RSFonts.LIGHT_GREEN, RSFonts.WHITE], 0, RSFonts.PLAIN_11) > 0.9 then
       Exit(slot);
 end;
 
