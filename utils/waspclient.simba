@@ -72,8 +72,10 @@ type
 
 procedure TWaspClient.Free();
 begin
+  if not Self.IsSetup then Exit;
   Self.IsSetup := False;
   Async.ScheduleStop('WaspClient-RefreshToken');
+  Self.Lock.Free();
 end;
 
 
@@ -152,6 +154,8 @@ procedure TWaspClient.Setup();
 var
   refreshToken: String;
 begin
+  if Self.IsSetup then
+    Exit;
   {$IFDEF WASP_LOCAL_DEVELOPMENT}
   Self.Server := 'http://localhost:3000/';
   {$ELSE}
@@ -192,9 +196,9 @@ begin
   Self.Payload.AddInt('runtime', 0);
 
   Self.Lock := TLock.Create();
-  AddOnTerminate(@Self.Lock.Free);
-  Self.Client.RequestHeader['RefreshToken'] := refreshToken;
   AddOnTerminate(@Self.Free);
+
+  Self.Client.RequestHeader['RefreshToken'] := refreshToken;
   Self.Timer.Start(5 * ONE_MINUTE);
   Self.TimeRunning.Start();
   if refreshToken <> '' then
