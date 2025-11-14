@@ -1,6 +1,8 @@
 (*
 # Music
 Music is resposible for the track handling in the Music gametab.
+```{figure} ../../images/music.png
+```
 *)
 
 {$DEFINE WL_MUSIC_INCLUDED}
