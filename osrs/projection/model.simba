@@ -13,6 +13,7 @@ type
     Materials: TColorArray;
     Alphas: TByteArray;
     Width, Depth, Height: Single;
+    Center: TVector3;
   end;
 
 procedure TModel.LoadMTL(fileName: string);
@@ -127,6 +128,7 @@ begin
   Self.Width := x2-x1;
   Self.Depth := y2-y1;
   Self.Height := z2-z1;
+  Self.Center := [x1+Self.Width/2, y1+Self.Depth/2, z1+Self.Height/2];
 end;
 
 
@@ -135,6 +137,37 @@ begin
   if mtlFile <> '' then
     Result.LoadMTL(mtlFile);
   Result.LoadOBJ(objFile);
+end;
+
+
+procedure TModel.Scale(factor: Single);
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self.Vertices) do
+  begin
+    Self.Vertices[i].X := Self.Vertices[i].X * factor;
+    Self.Vertices[i].Y := Self.Vertices[i].Y * factor;
+    Self.Vertices[i].Z := Self.Vertices[i].Z * factor;
+  end;
+
+  Self.Width := Self.Width * factor;
+  Self.Depth := Self.Depth * factor;
+  Self.Height := Self.Height * factor;
+
+  Self.Center.X := Self.Center.X * factor;
+  Self.Center.Y := Self.Center.Y * factor;
+  Self.Center.Z := Self.Center.Z * factor;
+end;
+
+procedure TModel.Rotate(radians: Single);
+var
+  i: Integer;
+  center: TVector2;
+begin
+  center := Self.Center.ToVec2();
+  for i := 0 to High(Self.Vertices) do
+    Self.Vertices[i] := Self.Vertices[i].Rotate(radians, center);
 end;
 
 
