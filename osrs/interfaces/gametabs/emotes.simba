@@ -1,31 +1,32 @@
+(*
+# Emotes
+Methods to interact with the emotes gametab.
+
+TODO:
+```{figure} ../../images/emotes.png
+```
+*)
 {$DEFINE WL_EMOTES_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
-const
-  ERSEmoteUpText: TStringArray =[ 
-    'Yes','No','Bow','Angry',
-    'Think','Wave','Shrug','Cheer',
-    'Beckon','Laugh','Jump for Joy','Yawn',
-    'Dance','Jig','Spin','Headbang',
-    'Cry','Blow Kiss','Panic','Raspberry',
-    'Clap','Salute','Goblin Bow','Goblin Salute',
-    'Glass Box','Climb Rope','Lean','Glass Wall',
-    'Idea','Stamp','Flap','Slap Head',
-    'Zombie Walk','Zombie Dance','Scared','Rabbit Hop',
-    'Sit up','Push up','Star jump','Jog',
-    'Flex','Zombie Hand','Hypermobile Drinker','Skill Cape',
-    'Air Guitar','Uri transform','Smooth dance','Crazy dance',
-    'Premier Shield','Explore','Relic unlock','Party',
-    'Trick','Fortis Salute','Sit down','Crab dance'
-  ];
-
 type
+(*
+## TRSEmotes
+Main record responsible with handling the emotes gametab.
+*)
   TRSEmotes = record
     Scroll: TRSScrollBar;
     Slots: TBoxArray;
   end;
 
-  ERSEmote = (
+(*
+## ERSEmote
+```pascal
+ERSEmote = enum(YES, NO, BOW, ANGRY, ..., FORTIS_SALUTE, SIT_DOWN, CRAB_DANCE);
+```
+Enum representing all the available emotes in the game.
+*)
+  ERSEmote = enum(
     YES, NO, BOW, ANGRY,
     THINK, WAVE, SHRUG, CHEER,
     BECKON, LAUGH, JUMP_FOR_JOY, YAWN,
@@ -108,6 +109,23 @@ WriteLn Emotes.UseEmote(ERSEmote.DANCE);
 ```
 *)
 function TRSEmotes.UseEmote(emote: ERSEmote): Boolean;
+const
+  EMOTE_NAMES: TStringArray =[
+    'Yes','No','Bow','Angry',
+    'Think','Wave','Shrug','Cheer',
+    'Beckon','Laugh','Jump for Joy','Yawn',
+    'Dance','Jig','Spin','Headbang',
+    'Cry','Blow Kiss','Panic','Raspberry',
+    'Clap','Salute','Goblin Bow','Goblin Salute',
+    'Glass Box','Climb Rope','Lean','Glass Wall',
+    'Idea','Stamp','Flap','Slap Head',
+    'Zombie Walk','Zombie Dance','Scared','Rabbit Hop',
+    'Sit up','Push up','Star jump','Jog',
+    'Flex','Zombie Hand','Hypermobile Drinker','Skill Cape',
+    'Air Guitar','Uri transform','Smooth dance','Crazy dance',
+    'Premier Shield','Explore','Relic unlock','Party',
+    'Trick','Fortis Salute','Sit down','Crab dance'
+  ];
 var
   scrollLevel: Integer;
   box: TBox;
@@ -117,7 +135,7 @@ begin
   Result := False;
   if not Self.Open() then Exit;
 
-  upText := ERSEmoteUpText[emote];
+  upText := EMOTE_NAMES[emote];
   if upText = '' then Exit;
 
   scrollLevel := Round((Ord(emote) div 4) / 13.0 * 100);
@@ -153,4 +171,8 @@ begin
 end;
 
 var
+(*
+## Emotes variable
+Global {ref}`TRSEmotes` variable.
+*)
   Emotes: TRSEmotes;
