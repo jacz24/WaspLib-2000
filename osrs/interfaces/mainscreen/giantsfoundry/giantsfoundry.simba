@@ -36,6 +36,7 @@ Record representing Kovac's commission requirements.
   end;
 
 
+
 function TRSGiantsFoundry.IsCommissionValid(): Boolean;
 begin
   Result := not ((Self.Commission.Attribute1 = ERSGiantsFoundryAttribute.HEAVY) and (Self.Commission.Attribute2 = ERSGiantsFoundryAttribute.HEAVY));
@@ -93,7 +94,7 @@ end;
 function TRSGiantsFoundry.GetCommission(): TRSGiantsFoundryCommission;
 var
   request: TRSChatOption;
-  tmp: TStringArray;
+  tmp, split: TStringArray;
 begin
   Writeln('Getting Commission From Kovic');
   if not Self.IsKovicOpen then Exit;
@@ -101,9 +102,17 @@ begin
   for request in Chat.GetOptions(Chat.GetColors([ERSChatColor.RED])) do
     tmp += request.Text;
 
-  Writeln(tmp);
-  Result.Attribute1 := Self._StringToAttribute(tmp[0]);
-  Result.Attribute2 := Self._StringToAttribute(tmp[1]);
+  if tmp.Length = 2 then
+  begin
+    Result.Attribute1 := Self._StringToAttribute(tmp[0]);
+    Result.Attribute2 := Self._StringToAttribute(tmp[1]);
+  end else
+  begin
+    split := tmp[0].Split(' ');
+    Result.Attribute1 := Self._StringToAttribute(split[0]);
+    Result.Attribute2 := Self._StringToAttribute(split[1]);
+  end;;
+
   //Result := tmp;
 end;
 

@@ -430,7 +430,7 @@ begin
     Self.TemperatureBar.Cursor.PositionPercent := currentPercent;
     Self.TemperatureBar.Cursor.LastUpdateTime := currentTime;
   end;
-  if (Self.TemperatureBar.Cursor.LastUpdateTime + 2000 < currentTime) and (Self.TemperatureBar.Target.CurrentAction > 0) then
+  if (Self.TemperatureBar.Cursor.LastUpdateTime + 4000 < currentTime) and (Self.TemperatureBar.Target.CurrentAction > 0) then
   begin
     Self.ResetTemperatureTracker();
   end;
@@ -775,9 +775,11 @@ end;
 function TRSGiantsFoundryRefinement.FindCurrentTask(): TRefineTask;
 var
   i: Integer;
+  currentTask: TRefineTask;
 begin
   for i := 0 to High(Self.TaskBar.Tasks) do
   begin
+
     Self.TaskBar.Tasks[i].Active := False;
     if Target.GetColor(Self.TaskBar.Tasks[i].TaskBounds.TopLeft.Offset(0,1)) = WhiteColour then
     begin
@@ -785,7 +787,10 @@ begin
       Exit(Self.TaskBar.Tasks[i]);
     end else
       Self.TaskBar.Tasks[i].Refining := ETaskState.COMPLETE;
+
+    currentTask := Self.TaskBar.Tasks[i];
   end;
+  Result := currentTask;
 end;
 
 
