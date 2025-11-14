@@ -116,6 +116,8 @@ begin
     raise GetDebugLn('WaspLib', 'Failed to create path: ' + WLEnv.LogsDir);
   if not DirCreate(WLEnv.AssetsDir) then
     raise GetDebugLn('WaspLib', 'Failed to create path: ' + WLEnv.AssetsDir);
+  if not DirCreate(WLEnv.VideosDir) then
+    raise GetDebugLn('WaspLib', 'Failed to create path: ' + WLEnv.VideosDir);
 
   WaspClient.Setup();
   WLAssets.Update();

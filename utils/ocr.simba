@@ -101,10 +101,11 @@ type
     Timeout: TCountDown;
 
     const WHITE: TColor        = $FFFFFF;
-    const BLACK: TColor        = $0;
+    const BLACK: TColor        = $000000;
     const ORANGE: TColor       = $1F98FF;
     const GREY: TColor         = $9F9F9F;
-    const GREEN: TColor        = $0DC10D;
+    const GREEN: TColor        = $00FF00;
+    const LIGHT_GREEN: TColor  = $0DC10D;
     const YELLOW: TColor       = $00FFFF;
     const RED: TColor          = $0000FF;
     const BLUE: TColor         = $FF0000;

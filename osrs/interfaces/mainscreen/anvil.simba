@@ -67,7 +67,7 @@ var
   i: Integer;
 begin
   for i := 0 to High(Self.SlotBoxes) do
-    if Target.HasColor($00FF00, 0, 1, Self.SlotBoxes[i]) or Target.HasColor($1F98FF, 0, 1, Self.SlotBoxes[i]) then
+    if Target.HasColor(RSFonts.GREEN, 0, 1, Self.SlotBoxes[i]) or Target.HasColor(RSFonts.ORANGE, 0, 1, Self.SlotBoxes[i]) then
       Result += Self.SlotBoxes[i];
 end;
 
@@ -100,9 +100,9 @@ begin
   Self.SlotsArea.X2 := Self.Bounds.X2 - 50;
   Self.SlotsArea.Y2 := Self.Bounds.Y2 - 4;
 
-  Self.SlotBoxes := TBoxArray.Create(Self.Bounds.TopLeft + [10, 36], 6, 5, 54, 54, [26, 1]);
+  Self.SlotBoxes := TBoxArray.Create(Self.Bounds.TopLeft + [6, 36], 6, 5, 75, 54, [1, 1]);
   for i in [5, 11, 17, 23, 29] do
-    Self.SlotBoxes[i] := Self.SlotBoxes[i].Offset([-15, 0]);
+    Self.SlotBoxes[i].X2 := Self.SlotBoxes[i].X1 + 67;
 
   Self.Slots.Setup('Anvil.Slots', Self.SlotBoxes, @Self.GetSlotBoxes);
   Self.Items.Setup('Anvil.Items', @Self.Slots, [0, 0]);

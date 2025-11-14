@@ -50,7 +50,10 @@ function TImageCompareUtils.Compare(image: TImage; slot: TBox; out similarity: S
 var
   template: TImage;
 begin
-  template := Target.GetImage([slot.X1, slot.Y1, slot.X1 + 36, slot.Y2]);
+  if slot.Width < 37 then
+    slot.X2 := slot.X1 + 36;
+
+  template := Target.GetImage(slot);
   Result := Self.Compare(image, template, similarity);
 end;
 

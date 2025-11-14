@@ -499,7 +499,7 @@ begin
   Result.Parent := TLazComponent(owner);
 end;
 
-function TLazPanel.CreateEx(owner: Pointer; top, left, width, height: Integer): TLazPanel; static; overload;
+function TLazPanel.CreateEx(owner: Pointer; left, top, width, height: Integer): TLazPanel; static; overload;
 begin
   Result := TLazPanel.CreateEx(owner);
 
@@ -516,7 +516,7 @@ begin
   Result.Parent := TLazComponent(owner);
 end;
 
-function TLazPageControl.CreateEx(owner: Pointer; top, left, width, height: Integer): TLazPageControl; static; overload;
+function TLazPageControl.CreateEx(owner: Pointer; left, top, width, height: Integer): TLazPageControl; static; overload;
 begin
   Result := TLazPageControl.CreateEx(owner);
 
