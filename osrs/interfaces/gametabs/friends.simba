@@ -2,15 +2,346 @@
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
+(*
+## Friends Button Enum
+```pascal
+ERSFriendsButton = enum (ADD, DEL, FRIENDS, IGNORE);
+```
+
+Represents the buttons in the friends tab.
+*)
+  ERSFriendsButton = enum (ADD, DEL, FRIENDS, IGNORE);
+
+(*
+## Friend Record
+```pascal
+type
+  TRSFriend = record
+    Name: String;
+    World: Integer;
+    Bounds: TBox;
+  end;
+```
+
+Represents a friend/ignore in the friends tab.
+*)
+  TRSFriend = record
+    Name: String;
+    World: Integer;
+    Bounds: TBox;
+  end;
+
+  TRSFriendArray = array of TRSFriend;
+
   TRSFriends = record
     Scroll: TRSScrollBar;
-    Toggle, Add, Del: TBox;
+    Buttons: array [ERSFriendsButton] of TRSButton;
   end;
 
 procedure TRSFriends.SetupGameTab();
 begin
-  //TODO...
+  with GameTab.Bounds do
+  begin
+    Self.Scroll.Area.X1 := X1 + 5;
+    Self.Scroll.Area.Y1 := Y1 + 38;
+    Self.Scroll.Area.X2 := X2 - 21;
+    Self.Scroll.Area.Y2 := Y2 - 42;
+
+    Self.Buttons[ERSFriendsButton.ADD].Bounds.X1 := X1 + 19;
+    Self.Buttons[ERSFriendsButton.ADD].Bounds.Y1 := Y1 + 230;
+    Self.Buttons[ERSFriendsButton.ADD].Bounds.X2 := X1 + 82;
+    Self.Buttons[ERSFriendsButton.ADD].Bounds.Y2 := Y1 + 257;
+
+    Self.Buttons[ERSFriendsButton.DEL].Bounds.X1 := X1 + 101;
+    Self.Buttons[ERSFriendsButton.DEL].Bounds.Y1 := Y1 + 230;
+    Self.Buttons[ERSFriendsButton.DEL].Bounds.X2 := X1 + 164;
+    Self.Buttons[ERSFriendsButton.DEL].Bounds.Y2 := Y1 + 257;
+
+    Self.Buttons[ERSFriendsButton.FRIENDS].Bounds.X1 := X1 + 170;
+    Self.Buttons[ERSFriendsButton.FRIENDS].Bounds.Y1 := Y1 + 5;
+    Self.Buttons[ERSFriendsButton.FRIENDS].Bounds.X2 := X1 + 181;
+    Self.Buttons[ERSFriendsButton.FRIENDS].Bounds.Y2 := Y1 + 16;
+    Self.Buttons[ERSFriendsButton.FRIENDS].EnabledColors := [[$233EFB, 0], [$2C41B3, 0]];
+
+    Self.Buttons[ERSFriendsButton.IGNORE].Bounds.X1 := X1 + 170;
+    Self.Buttons[ERSFriendsButton.IGNORE].Bounds.Y1 := Y1 + 5;
+    Self.Buttons[ERSFriendsButton.IGNORE].Bounds.X2 := X1 + 181;
+    Self.Buttons[ERSFriendsButton.IGNORE].Bounds.Y2 := Y1 + 16;
+    Self.Buttons[ERSFriendsButton.IGNORE].EnabledColors := [[$3AC8FF, 0], [$3791B6, 0]];
+  end;
+
+  Self.Scroll.Setup();
+end;
+
+(*
+## Friends.IsOpen
+```pascal
+function TRSFriends.IsOpen(): Boolean;
+```
+Returns true if the friends tab is open.
+
+Example:
+```pascal
+WriteLn Friends.IsOpen();
+```
+*)
+function TRSFriends.IsOpen(): Boolean;
+begin
+  Result := GameTabs.IsOpen(ERSGameTab.FRIENDS);
+end;
+
+(*
+## Friends.Open
+```pascal
+function TRSFriends.Open(): Boolean;
+```
+
+Attempts to open the friends gametab.
+
+Example:
+```pascal
+WriteLn Friends.Open();
+```
+*)
+function TRSFriends.Open(): Boolean;
+begin
+  Result := GameTabs.Open(ERSGameTab.FRIENDS);
+end;
+
+(*
+## Friends.GetFriends
+```pascal
+function TRSFriends.GetFriends(): TRSFriendArray;
+```
+Returns an array of all friends/ignores currently visible in the friends tab.
+
+Example:
+```pascal
+var
+  friend: TRSFriend;
+  friends: TRSFriendArray;
+begin
+  friends := Friends.GetFriends();
+  for friend in friends do
+    WriteLn('Friend: ' + friend.Name + ' World: ' + IntToStr(friend.World));
+end;
+*)
+function TRSFriends.GetFriends(): TRSFriendArray;
+var
+  tpa : TPointArray;
+  atpa : T2DPointArray;
+  friend: TRSFriend;
+begin
+  if not Self.Open() then Exit;
+
+  tpa := Target.FindColor($FFFFFF, 0, Self.Scroll.Area);
+  atpa := tpa.Cluster(20, 1.5);
+  for tpa in atpa do
+    with tpa.Bounds() do
+    begin
+      friend.Name := OCR.Recognize([X1, Y1, X2, Y2], RSFonts.PLAIN_12, [$FFFFFF], 0);
+      friend.World := OCR.RecognizeNumber([X2, Y1, Self.Scroll.Area.X2, Y2], RSFonts.PLAIN_12, [$0DC10D, $00FFFF], 0);
+      friend.Bounds := tpa.Bounds();
+
+      if friend.Name <> '' then
+        Result += friend;
+    end;
+end;
+
+(*
+## Friends.Find
+```pascal
+function TRSFriends.Find(name: String): TRSFriend;
+```
+
+Searches for a friend/ignore by name in the friends tab.
+
+Example:
+```pascal
+var
+  friend: TRSFriend;
+begin
+  friend := Friends.Find('SomePlayer');
+  if friend <> Default(TRSFriend) then
+    WriteLn('Found friend: ' + friend.Name + ' World: ' + IntToStr(friend.World))
+  else
+    WriteLn('Friend not found.');
+end;
+*)
+function TRSFriends.Find(name: String): TRSFriend;
+var
+  timeout: TCountDown;
+  friend: TRSFriend;
+  friends: TRSFriendArray;
+begin
+  Result := Default(TRSFriend);
+  if not Self.Open() then Exit;
+
+  timeout.Start(10 * ONE_SECOND);
+
+  Self.Scroll.SetLevel(0);
+
+  repeat
+    friends := Self.GetFriends();
+    if friends = [] then
+      Exit;
+
+    for friend in friends do
+    begin
+      if friend.Name.Equals(name, False) then
+        Exit(friend);
+    end;
+
+    Self.Scroll.Scroll(1, True);
+  until timeout.IsFinished;
+end;
+
+(*
+## Friends.AddFriend
+```pascal
+function TRSFriends.AddFriend(name: String): Boolean;
+```
+
+Attempts to add a friend to the friends list.
+
+Example:
+```pascal
+WriteLn Friends.AddFriend('SomePlayer');
+```
+*)
+function TRSFriends.AddFriend(name: String): Boolean;
+begin
+  if not Self.Open() then Exit;
+  if not Self.Buttons[ERSFriendsButton.FRIENDS].Enable() then Exit;
+
+  Self.Buttons[ERSFriendsButton.ADD].Click(EMouseButton.LEFT);
+  Result := Chat.AnswerQuery('Enter name of friend to add to list', name, 2000, 250);
+end;
+
+(*
+## Friends.DeleteFriend
+```pascal
+function TRSFriends.DeleteFriend(name: String): Boolean;
+```
+
+Attempts to delete a friend from the friends list.
+
+Example:
+```pascal
+WriteLn Friends.DeleteFriend('SomePlayer');
+```
+*)
+function TRSFriends.DeleteFriend(name: String): Boolean;
+var
+  friend: TRSFriend;
+begin
+  if not Self.Open() then Exit;
+  if not Self.Buttons[ERSFriendsButton.FRIENDS].Enable() then Exit;
+
+  if Biometrics.RandomBoolean() then
+  begin
+    friend := Self.Find(name);
+    if friend = Default(TRSFriend) then Exit;
+
+    Mouse.Click(friend.Bounds, EMouseButton.Right);
+    if not ChooseOption.WaitOpen(2000, 250) then Exit;
+
+    Result := ChooseOption.Select('Delete ' + friend.Name);
+  end
+  else
+  begin
+    Self.Buttons[ERSFriendsButton.DEL].Click(EMouseButton.LEFT);
+    Result := Chat.AnswerQuery('Enter name of friend to delete from list', name, 2000, 250);
+  end;
+end;
+
+(*
+## Friends.SendMessage
+```pascal
+function TRSFriends.SendMessage(name, message: String): Boolean;
+```
+
+Attempts to send a message to a friend.
+
+Example:
+```pascal
+WriteLn Friends.SendMessage('SomePlayer', 'Hello there!');
+```
+*)
+function TRSFriends.SendMessage(name, message: String): Boolean;
+var
+  friend: TRSFriend;
+begin
+  if not Self.Open() then Exit;
+
+  friend := Self.Find(name);
+  if friend = Default(TRSFriend) then Exit;
+  if friend.World = -1 then Exit;
+
+  Mouse.Click(friend.Bounds, EMouseButton.LEFT);
+  Result := Chat.AnswerQuery('Enter message to send to ' + name, message, 2000, 250);
+end;
+
+(*
+## Friends.AddIgnore
+```pascal
+function TRSFriends.AddIgnore(name: String): Boolean;
+```
+
+Attempts to add a player to the ignore list.
+
+Example:
+```pascal
+WriteLn Friends.AddIgnore('SomePlayer');
+```
+*)
+function TRSFriends.AddIgnore(name: String): Boolean;
+begin
+  if not Self.Open() then Exit;
+  if not Self.Buttons[ERSFriendsButton.IGNORE].Enable() then Exit;
+
+  Self.Buttons[ERSFriendsButton.ADD].Click(EMouseButton.LEFT);
+  Result := Chat.AnswerQuery('Enter name of player to add to list', name, 2000, 250);
+end;
+
+(*
+## Friends.DeleteIgnore
+```pascal
+function TRSFriends.DeleteIgnore(name: String): Boolean;
+```
+
+Attempts to delete a player from the ignore list.
+
+Example:
+```pascal
+WriteLn Friends.DeleteIgnore('SomePlayer');
+```
+*)
+function TRSFriends.DeleteIgnore(name: String): Boolean;
+var
+  friend: TRSFriend;
+begin
+  if not Self.Open() then Exit;
+  if not Self.Buttons[ERSFriendsButton.IGNORE].Enable() then Exit;
+
+  if Biometrics.RandomBoolean() then
+  begin
+    friend := Self.Find(name);
+    if friend = Default(TRSFriend) then Exit;
+
+    Mouse.Click(friend.Bounds, EMouseButton.Right);
+    if not ChooseOption.WaitOpen(2000, 250) then Exit;
+
+    Result := ChooseOption.Select('Delete ' + friend.Name);
+  end
+  else
+  begin
+    Self.Buttons[ERSFriendsButton.DEL].Click(EMouseButton.LEFT);
+    Result := Chat.AnswerQuery('Enter name of player to delete from list', name, 2000, 250);
+  end;
 end;
 
 var
   Friends: TRSFriends;
+
+
