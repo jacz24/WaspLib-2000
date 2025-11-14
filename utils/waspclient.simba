@@ -65,32 +65,30 @@ type
 
     Payload: TJSONObject;
     Lock: TLock;
-    IsSetup: Boolean;
+    IsSetup, LoggedIn: Boolean;
     Timer: TCountDown;
     TimeRunning: TStopwatch;
   end;
 
 procedure TWaspClient.Free();
 begin
+  if not Self.IsSetup then Exit;
   Self.IsSetup := False;
   Async.ScheduleStop('WaspClient-RefreshToken');
+  Self.Lock.Free();
 end;
 
 
-procedure TWaspClient.RefreshSession();
+procedure TWaspClient.LoginEx(grantType, payload: String);
 var
-  payload, response: String;
+  response: String;
   json: TJSONParser;
 begin
   if not Self.Lock.TryEnter() then Exit;
   if not Self.IsSetup then Exit;
 
-  payload := '{"refresh_token": "' + Self.Client.RequestHeader['RefreshToken'] + '"}';
-
   try
-    response := Self.Client.Post(
-      Self.Database + 'auth/v1/token?grant_type=refresh_token', payload
-    );
+    response := Self.Client.Post(Self.Database + 'auth/v1/token?grant_type=' + grantType, payload);
   except
     WriteLn GetDebugLn('WaspClient', GetExceptionMessage());
     Self.IsSetup := False;
@@ -101,10 +99,12 @@ begin
   if not InRange(Self.Client.ResponseStatus.AsInteger, 200, 299) then
   begin
     WriteLn GetDebugLn('WaspClient', response);
-    Self.IsSetup := False;
+    Self.LoggedIn := False;
     Self.Lock.Leave();
     Exit;
   end;
+
+  Self.LoggedIn := True;
 
   json := new TJSONParser();
   json.Parse(response);
@@ -125,10 +125,37 @@ begin
   Self.Lock.Leave();
 end;
 
+
+procedure TWaspClient.RefreshSession();
+var
+  payload: String;
+begin
+  payload := '{"refresh_token": "' + Self.Client.RequestHeader['RefreshToken'] + '"}';
+  Self.LoginEx('refresh_token', payload);
+end;
+
+procedure TWaspClient.AsyncRefreshSession();
+begin
+  Async.ScheduleEvery('WaspClient-RefreshToken', @Self.RefreshSession, 5 * ONE_MINUTE);
+end;
+
+procedure TWaspClient.Login(email, password: String);
+var
+  payload: String;
+begin
+  payload := '{"email": "' + email + '", "password": "' + password + '"}';
+  Self.LoginEx('password', payload);
+  if Self.LoggedIn then
+    Self.AsyncRefreshSession();
+end;
+
+
 procedure TWaspClient.Setup();
 var
   refreshToken: String;
 begin
+  if Self.IsSetup then
+    Exit;
   {$IFDEF WASP_LOCAL_DEVELOPMENT}
   Self.Server := 'http://localhost:3000/';
   {$ELSE}
@@ -150,17 +177,11 @@ begin
   refreshToken := GetEnvVar('WASP_REFRESH_TOKEN');
   {$ENDIF}
 
-  if refreshToken = '' then
-    Exit;
-
   {$IFDEF SCRIPT_ID}
   Self.Script.ID := {$MACRO SCRIPT_ID};
   {$ELSE}
   Self.Script.ID := GetEnvVar('SCRIPT_ID');
   {$ENDIF}
-
-  if Self.Script.ID = '' then
-    Exit;
 
   {$IFDEF SCRIPT_REVISION}
   Self.Script.Revision := StrToInt({$MACRO SCRIPT_REVISION}, 0);
@@ -175,12 +196,13 @@ begin
   Self.Payload.AddInt('runtime', 0);
 
   Self.Lock := TLock.Create();
-  AddOnTerminate(@Self.Lock.Free);
-  Self.Client.RequestHeader['RefreshToken'] := refreshToken;
-  Async.ScheduleEvery('WaspClient-RefreshToken', @Self.RefreshSession, 5 * ONE_MINUTE);
   AddOnTerminate(@Self.Free);
+
+  Self.Client.RequestHeader['RefreshToken'] := refreshToken;
   Self.Timer.Start(5 * ONE_MINUTE);
   Self.TimeRunning.Start();
+  if refreshToken <> '' then
+    Self.AsyncRefreshSession();
 end;
 
 function TWaspClient.SetSchema(schema: String = 'public'): Boolean;

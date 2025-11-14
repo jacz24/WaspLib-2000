@@ -495,13 +495,13 @@ end;
 (*
 ## RSObject._UpTextCheck
 ```pascal
-function TRSObject._UpTextCheck(out shouldExit: Boolean): Boolean;
+function TRSObject._UpTextCheck(out shouldExit: Boolean; action: TStringArray): Boolean;
 ```
 Internal `TRSObject` helper method that is used by all hovering methods.
 
 You probably don't need to use this directly.
 *)
-function TRSObject._UpTextCheck(out shouldExit: Boolean): Boolean;
+function TRSObject._UpTextCheck(out shouldExit: Boolean; action: TStringArray): Boolean;
 var
   text: String;
 begin
@@ -515,7 +515,7 @@ begin
 
   text := MainScreen.UpText;
 
-  if text.Contains('>') and not Self.Walker^.ActionUpText.Contains(['>']) then
+  if text.Contains('>') and not action.Contains(['>']) then
   begin
     ChooseOption.Close();
     Exit;
@@ -565,9 +565,6 @@ not.
 *)
 function TRSObject._ClickHelper(leftClick: Boolean): Boolean;
 begin
-  Self.Walker^.TargetUpText := [];
-  Self.Walker^.ActionUpText := [];
-
   if Self.Walker^.RedClicked then
   begin
     Self.Walker^.RedClicked := False;
@@ -667,7 +664,7 @@ begin
   //TODO:
   //if not Self.Walker^.MakePointVisible(Self.Coordinates) then Exit;
 
-  Result := Self._UpTextCheck(shouldExit);
+  Result := Self._UpTextCheck(shouldExit, action);
   if shouldExit then
     Exit;
 
@@ -757,69 +754,74 @@ begin
     hasPath := True;
   end;
 
-  if Self.UpText <> [] then
-    Self.Walker^.TargetUpText := Copy(Self.UpText);
+
+  Self.Walker^.TargetUpText := Copy(Self.UpText);
   Self.Walker^.ActionUpText := action;
 
+  try
   //check if doors need to be passed to reach target
-  if hasPath or Self.Walker^.WebGraph^.WalkableClusters.InSameTPA(me, closest) then
-  begin
-    if not Self.Walker^.MakePointVisible(closest) and not Self.Walker^.WebWalkEx(me, closest, 32, 0.33) then
+    if hasPath or Self.Walker^.WebGraph^.WalkableClusters.InSameTPA(me, closest) then
+    begin
+      if not Self.Walker^.MakePointVisible(closest) and not Self.Walker^.WebWalkEx(me, closest, 32, 0.33) then
+        Exit;
+    end
+    else
+    if not Self.Walker^.WebWalk(closest, 32, 0.33) then
       Exit;
-  end
-  else
-  if not Self.Walker^.WebWalk(closest, 32, 0.33) then
-    Exit;
 
-  Result := Self._UpTextCheck(shouldExit) or Self.Walker^.RedClicked;
-  if shouldExit then Exit;
+    Result := Self._UpTextCheck(shouldExit, action) or Self.Walker^.RedClicked;
+    if shouldExit then Exit;
 
-  for attempt := 0 to attempts do
-  begin
-    if Self.Find(coordinates, atpa) then
+    for attempt := 0 to attempts do
     begin
-      if attempt < 2 then i := 0
-      else if Length(atpa) > (attempt - 2) then i := attempt - 2
-      else i := Random(Low(atpa), High(atpa));
+      if Self.Find(coordinates, atpa) then
+      begin
+        if attempt < 2 then i := 0
+        else if Length(atpa) > (attempt - 2) then i := attempt - 2
+        else i := Random(Low(atpa), High(atpa));
 
-      tpa := atpa[i];
-      Self.LastCoordinate := coordinates[i];
+        tpa := atpa[i];
+        Self.LastCoordinate := coordinates[i];
 
-      Mouse.Move(tpa.RandomMean());
+        Mouse.Move(tpa.RandomMean());
 
-      if Self.UpText = [] then
+        if Self.UpText = [] then
+          Exit(True);
+        Sleep(50); //give uptext 1~ frame time to update
+      end;
+
+      if MainScreen.IsUpText(Self.UpText + action) then
         Exit(True);
-      Sleep(50); //give uptext 1~ frame time to update
-    end;
 
-    if MainScreen.IsUpText(Self.UpText + action) then
-      Exit(True);
+      me := Self.Walker^.Position();
+      closest := Self.Walker^.GetClosestPoint(me, Self.Coordinates, path);
 
-    me := Self.Walker^.Position();
-    closest := Self.Walker^.GetClosestPoint(me, Self.Coordinates, path);
-
-    if path = [] then
-    begin
-      path := Self.Walker^.WebGraph^.PathToNear(me, closest, 0.33);
       if path = [] then
-        raise GetDebugLn('TRSObject', 'Can''t path to object.');
+      begin
+        path := Self.Walker^.WebGraph^.PathToNear(me, closest, 0.33);
+        if path = [] then
+          raise GetDebugLn('TRSObject', 'Can''t path to object.');
+      end;
+
+      if me.DistanceTo(closest) > 50 then
+      begin
+        Self.Walker^.WebWalkEx(me, closest, 30, 0.15);
+        Continue;
+      end;
+
+      if attempt <> (attempts - 1) then Continue;
+
+      if me.DistanceTo(closest) > 25 then
+      begin
+        Self.Walker^.WebWalkEx(me, closest, 25, 0.15);
+        Continue;
+      end;
+
+      Minimap.CompassRadians := Minimap.CompassRadians + PI/3.6 * Random(-1,1);
     end;
-
-    if me.DistanceTo(closest) > 50 then
-    begin
-      Self.Walker^.WebWalkEx(me, closest, 30, 0.15);
-      Continue;
-    end;
-
-    if attempt <> (attempts - 1) then Continue;
-
-    if me.DistanceTo(closest) > 25 then
-    begin
-      Self.Walker^.WebWalkEx(me, closest, 25, 0.15);
-      Continue;
-    end;
-
-    Minimap.CompassRadians := Minimap.CompassRadians + PI/3.6 * Random(-1,1);
+  finally
+    Self.Walker^.TargetUpText := [];
+    Self.Walker^.ActionUpText := [];
   end;
 end;
 
@@ -884,10 +886,7 @@ end.
 *)
 function TRSObject.Interact(action: TStringArray; attempts: Integer = 2): Boolean;
 begin
-  Self.Walker^.ActionUpText := action;
   Result := Self.Hover(action, attempts) and Self._SelectHelper(action);
-  Self.Walker^.TargetUpText := [];
-  Self.Walker^.ActionUpText := [];
 end;
 
 
@@ -926,7 +925,6 @@ begin
     raise GetDebugLn('TRSObject', 'Coordinates and Rotations don''t match.');
 
   Result := Self.WalkHover([], attempts) and Self._ClickHelper(leftClick);
-  Self.Walker^.TargetUpText := [];
 end;
 
 (*
@@ -969,9 +967,6 @@ begin
 
   Result := Self.WalkHover(action, attempts);
   Result := Result and Self._SelectHelper(action);
-
-  Self.Walker^.TargetUpText := [];
-  Self.Walker^.ActionUpText := [];
 end;
 
 
