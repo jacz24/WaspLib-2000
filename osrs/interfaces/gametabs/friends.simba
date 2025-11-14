@@ -1,28 +1,24 @@
+(*
+# Friends
+Methods to interact with the friends gametab.
+```{figure} ../../images/friends.png
+```
+*)
 {$DEFINE WL_FRIENDS_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
 (*
-## Friends Button Enum
+## ERSFriendsButton
 ```pascal
-ERSFriendsButton = enum (ADD, DEL, FRIENDS, IGNORE);
+ERSFriendsButton = enum(ADD, DEL, FRIENDS, IGNORE);
 ```
-
 Represents the buttons in the friends tab.
 *)
-  ERSFriendsButton = enum (ADD, DEL, FRIENDS, IGNORE);
+  ERSFriendsButton = enum(ADD, DEL, FRIENDS, IGNORE);
 
 (*
-## Friend Record
-```pascal
-type
-  TRSFriend = record
-    Name: String;
-    World: Integer;
-    Bounds: TBox;
-  end;
-```
-
+## TRSFriend Record
 Represents a friend/ignore in the friends tab.
 *)
   TRSFriend = record
@@ -33,6 +29,10 @@ Represents a friend/ignore in the friends tab.
 
   TRSFriendArray = array of TRSFriend;
 
+(*
+## TRSFriends Record
+Main record responsible with handling the friends gametab.
+*)
   TRSFriends = record
     Scroll: TRSScrollBar;
     Buttons: array [ERSFriendsButton] of TRSButton;
@@ -243,7 +243,7 @@ begin
     friend := Self.Find(name);
     if friend = Default(TRSFriend) then Exit;
 
-    Mouse.Click(friend.Bounds, EMouseButton.Right);
+    Mouse.Click(friend.Bounds, EMouseButton.RIGHT);
     if not ChooseOption.WaitOpen(2000, 250) then Exit;
 
     Result := ChooseOption.Select('Delete ' + friend.Name);
@@ -342,6 +342,8 @@ begin
 end;
 
 var
+(*
+## Friends variable
+Global {ref}`TRSFriends` variable.
+*)
   Friends: TRSFriends;
-
-
