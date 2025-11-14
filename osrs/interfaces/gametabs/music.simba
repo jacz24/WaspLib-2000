@@ -1,15 +1,250 @@
+(*
+# Music
+Music is resposible for the track handling in the Music gametab.
+*)
+
 {$DEFINE WL_MUSIC_INCLUDED}
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
+(*
+## ERSMusicButton
+```pascal
+ERSMusicButton = enum(AREA, MANUAL, RANDOM);
+```
+Enum representing the music configuration buttons.
+*)
+  ERSMusicButton = enum(AREA, MANUAL, RANDOM);
+
+(*
+## TRSMusic
+Main record that interacts with the {ref}`Music` gametab.
+*)
   TRSMusic = record
-    Slots: TBoxArray;
+    Scroll: TRSScrollBar;
+    Buttons: TRSButtonArray;
   end;
 
+(*
+## TRSMusicTrack
+Helper record for {ref}`TRSMusic`.
+*)
+  TRSMusicTrack = record
+    Name: String;
+    Available: Boolean;
+    Bounds: TBox;
+  end;
+
+(*
+## TRSMusicTrackArray
+Helper type for {ref}`TRSMusic`.
+*)
+  TRSMusicTrackArray = array of TRSMusicTrack;
+
+(*
+## TRSMusic.SetupGameTab
+```pascal
+procedure TRSMusic.SetupGameTab();
+```
+Interal method used to setup the {ref}`TRSMusic` coordinates.
+
+This is automatically called for you on the {ref}`Music variable`.
+*)
 procedure TRSMusic.SetupGameTab();
 begin
-  //TODO...
+  with GameTab.Bounds do
+  begin
+    Self.Scroll.Area.X1 := X1 + 5;
+    Self.Scroll.Area.Y1 := Y1 + 59;
+    Self.Scroll.Area.X2 := X2 - 21;
+    Self.Scroll.Area.Y2 := Y2 - 19;
+
+    Self.Buttons := TRSButtonArray.Create([[$1D1F81, 0], [$181A6C, 0], [$1A1C74, 0], [$20238D, 0]], TBoxArray.Create([X1+61, Y1+7], 3, 1, 35, 24, [7, 0]));
+  end;
+
+  Self.Scroll.Setup();
 end;
 
+(*
+## Music.IsOpen
+```pascal
+function TRSMusic.IsOpen(): Boolean;
+```
+Returns true if the music gametab is open.
+
+Example:
+```pascal
+WriteLn Music.IsOpen();
+```
+*)
+function TRSMusic.IsOpen() : Boolean;
+begin
+  Result := GameTabs.IsOpen(ERSGameTab.MUSIC);
+end;
+
+(*
+## Music.Open
+```pascal
+function TRSMusic.Open(): Boolean;
+```
+Attempts to open the Music gametab.
+
+Example:
+```pascal
+WriteLn Music.Open();
+```
+*)
+function TRSMusic.Open() : Boolean;
+begin
+  Result := GameTabs.Open(ERSGameTab.MUSIC);
+end;
+
+(*
+## Music.ActiveTrack
+```pascal
+property TRSMusic.ActiveTrack : String;
+```
+Returns the currently playing track.
+
+Example:
+```pascal
+WriteLn Music.ActiveTrack;
+```
+*)
+property TRSMusic.ActiveTrack : String;
+begin
+  if not Self.Open() then Exit;
+  with GameTab.Bounds do
+  begin
+      Result := OCR.Recognize([X1, Y1 + 35, X2, Y1 + 51], RSFonts.PLAIN_12, [RSFonts.LIGHT_GREEN], 0);
+  end;
+end;
+
+(*
+## Music.GetTracks
+```pascal
+function TRSMusic.GetTracks() : TRSMusicTrackArray;
+```
+Returns the currently visible {ref}`TRSMusicTrackArray`.
+
+Example:
+```pascal
+WriteLn Music.GetTracks();
+```
+*)
+function TRSMusic.GetTracks() : TRSMusicTrackArray;
+var
+  tpa : TPointArray;
+  atpa : T2DPointArray;
+  track: TRSMusicTrack;
+  weights: TIntegerArray;
+begin
+  if not Self.Open() then Exit;
+
+  if Target.HasColor(RSFonts.WHITE, 0, 1, Self.Scroll.Area) then
+    Mouse.Move(Self.Scroll.Area.NearestEdge(Mouse.Position));
+
+  tpa := Target.FindColor(RSFonts.LIGHT_GREEN, 0, Self.Scroll.Area) + Target.FindColor(RSFonts.RED, 0, Self.Scroll.Area);
+  atpa := tpa.Cluster(10, 1.5);
+  for tpa in atpa do
+    with tpa.Bounds() do
+    begin
+      track.Name := OCR.Recognize([X1, Y1, X2, Y2], RSFonts.PLAIN_12, [RSFonts.LIGHT_GREEN, RSFonts.RED], 0);
+
+      if track.Name = '' then Continue;
+
+      track.Available := Target.HasColor(RSFonts.LIGHT_GREEN, 0, 1, [X1, Y1, X2, Y2]);
+      track.Bounds := [X1, Y1, X2, Y2];
+
+        weights += Y1;
+        Result += track;
+    end;
+
+    Result.Sort(Weights, True);
+end;
+
+(*
+## Music.FindTrack
+```pascal
+function TRSMusic.FindTrack(trackName: String) : TRSMusicTrack;
+```
+Returns a {ref}`TRSMusicTrack` if it was found in the playlist.
+
+Example:
+```pascal
+var
+  track: TRSMusicTrack;
+begin
+  track := Music.FindTrack('Sea Shanty 2');
+  if track <> Default(TRSMusicTrack) then
+    WriteLn track.Available;
+end.
+```
+*)
+function TRSMusic.FindTrack(trackName: String) : TRSMusicTrack;
+var
+  track: TRSMusicTrack;
+  trackIndex: Integer;
+  page: String;
+  matchArray: TRegExprMatchArray;
+  timeout: TCountDown;
+begin
+  if not Self.Open() then Exit;
+
+  HTTPClient.Reset();
+  page := HTTPClient.Get('https://oldschool.runescape.wiki/w/Music');
+  matchArray := page.RegExprFindAll('data-music-track-name="(.*?)"');
+  for trackIndex := 0 to High(matchArray) do
+  begin
+    if matchArray[trackIndex].Groups[0].Match.Equals(trackName, False) then
+     break;
+  end;
+
+  timeout.Start(10 * ONE_SECOND);
+
+  Self.Scroll.SetLevel(((trackIndex * 100) div high(matchArray))-1);
+
+  repeat
+    for track in Self.GetTracks() do
+      if track.Name.Equals(trackName, false) then
+        Exit(track);
+
+    Self.Scroll.Scroll(1, true);
+    Biometrics.Sleep(600);
+  until timeout.IsFinished;
+end;
+
+(*
+## Music.PlayTrack
+```pascal
+function TRSMusic.PlayTrack(trackName: String; force: Boolean = false) : Boolean;
+```
+Attempts to play the given track, if the track is already playing it can be clicked again by using the force parameter.
+Returns true if successful.
+
+Example:
+```pascal
+WriteLn Music.PlayTrack('Sea Shanty 2');
+```
+*)
+function TRSMusic.PlayTrack(trackName: String; force: Boolean = false) : Boolean;
+var
+  track: TRSMusicTrack;
+begin
+  if not Self.Open() then Exit;
+  if (Self.ActiveTrack.Equals(trackName, false) and not force) then Exit(True);
+
+  track := Self.FindTrack(trackName);
+  if track = Default(TRSMusicTrack) then Exit;
+  if not track.Available then Exit;
+
+  Mouse.Click(track.Bounds, EMouseButton.LEFT);
+  Result := SleepUntil(Self.ActiveTrack.Equals(trackName, False), 250, 2000);
+end;
+
+(*
+## Music variable
+Global {ref}`TRSMusic` variable.
+*)
 var
   Music: TRSMusic;
