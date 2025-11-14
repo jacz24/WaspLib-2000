@@ -108,7 +108,7 @@ begin
   Self.Items.Setup('Anvil.Items', @Self.Slots, [0, 0]);
 
   with Self.Bounds do
-    boxes := TBoxArray.Create([X2-46, Y1+36], 1, 6, 36, 36, [0,9]);
+    boxes := TBoxArray.Create([X2-43, Y1+36], 1, 6, 36, 36, [0,9]);
 
   SetLength(Self.QuantityButtons, 6);
   for i := 0 to High(boxes) do
@@ -257,10 +257,11 @@ begin
   slot := Self.Items.IndexOf([item]);
   if slot = -1 then Exit;
 
-  if not Target.HasColor($00FF00, 0, 1, Self.Slots.Box(slot)) then
+  if not Target.HasColor(RSFonts.GREEN, 0, 1, Self.Slots.Box(slot)) then
     Exit;
 
-  if not Self.SetQuantity(quantity) then Exit;
+  if not Self.SetQuantity(quantity) then
+    Exit;
 
   if keyboardProbability < 0 then
     keyboardProbability := Biometrics.RandomDouble(0.5);
