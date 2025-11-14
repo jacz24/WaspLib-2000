@@ -247,6 +247,7 @@ var
   vector: TVector2;
   dots: TPointArray;
 begin
+  coordinates.Clear();
   if radians = $FFFF then
     radians := Minimap.CompassRadians;
 
