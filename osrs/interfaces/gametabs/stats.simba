@@ -32,7 +32,8 @@ Enum representing all skills in oldschool runescape.
     PRAYER, CRAFTING, FIREMAKING,
     MAGIC, FLETCHING, WOODCUTTING,
     RUNECRAFTING, SLAYER, FARMING,
-    CONSTRUCTION, HUNTER, TOTAL
+    CONSTRUCTION, HUNTER, SAILING,
+    TOTAL
   );
 
 (*
@@ -40,10 +41,7 @@ Enum representing all skills in oldschool runescape.
 Helper record to read skill information when you hover them in the {ref}`Stats` gametab.
 *)
   TRSSkillInfo = record
-    Level:     Integer;
-    XP:        Integer;
-    Next:      Integer;
-    Remainder: Integer;
+    Level, XP, Next, Remainder: Integer;
   end;
 
 (*
@@ -66,7 +64,11 @@ This is automatically called for you on the {ref}`Stats variable`.
 *)
 procedure TRSStats.SetupGameTab();
 begin
-  Self.Skills := TBoxArray.Create(GameTab.TopLeft.Offset(2, 6), 3, 8, 53, 23, [10, 9]);
+  with GameTab.Bounds do
+  begin
+    Self.Skills := TBoxArray.Create([X1, Y1+4], 3, 8, 57, 26, [6, 4]);
+    Self.Skills += TBox.Create(X1, Y2-18, X2, Y2-2);
+  end;
 end;
 
 (*
@@ -219,6 +221,8 @@ WriteLn Stats.GetLevel(ERSSkill.HITPOINTS);
 ```
 *)
 function TRSStats.GetLevel(skill: ERSSkill; useCache: Boolean = True): Integer;
+var
+  b: TBox;
 begin
   if useCache then
   begin
@@ -228,8 +232,12 @@ begin
 
   if not Self.Open() then Exit(-1);
 
-  with Self.Skills[skill] do
-    Result := OCR.RecognizeNumber([X1, Y2 - (Height div 2), X2, Y2], RSFonts.PLAIN_11, [ERSStack.YELLOW.Color], 0);
+  if skill = ERSSkill.TOTAL then
+    b := Self.Skills[skill]
+  else
+    with Self.Skills[skill] do b := [X1, Y2 - (Height div 2), X2, Y2];
+
+  Result := OCR.RecognizeNumber(b, RSFonts.PLAIN_11, [ERSStack.YELLOW.Color], 0);
 
   if Result > 0 then
     Self.Levels[skill] := Result;

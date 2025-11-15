@@ -173,7 +173,7 @@ Example:
 Antiban.AddBreak(30 * ONE_MINUTE, 5 * ONE_MINUTE); //Every 30 minutes the script will take a 5 minute break, subject to variance from the randomness variable.
 ```
 *)
-procedure TAntiban.AddBreak(length, interval: Double; randomness: Double = 0.2; logoutChance: Double = 0.33);
+procedure TAntiban.AddBreak(interval, length: Double; randomness: Double = 0.2; logoutChance: Double = 0.33);
 var
   len: Integer;
 begin

@@ -155,7 +155,6 @@ begin
   for i := 0 to High(unique) do
   begin
     best := GetBestColor(EColorSpace.HSL, unique[i]);
-    WriteLn best;
     Result.Finder.Colors += [best.Color, best.Tolerance*1.5, EColorSpace.HSL, [best.Mods[0]*1.5, best.Mods[1]*1.5, best.Mods[2]*1.5]];
   end;
 
@@ -177,10 +176,10 @@ Example:
 {$I WaspLib/osrs.simba}
 
 var
-  objs: TRSObjectArray;
+  entities: TRSEntityArray;
 begin
   Map.Setup([ERSChunk.VARROCK]);
-  objs := TRSObject.Create(ObjectsJSON.GetByName('bank'));
+  entities := TRSEntityArray.Create(NPCsJSON.GetByName('Banker')); 
 end;
 ```
 *)
@@ -248,6 +247,7 @@ var
   vector: TVector2;
   dots: TPointArray;
 begin
+  coordinates := [];
   if radians = $FFFF then
     radians := Minimap.CompassRadians;
 
@@ -323,25 +323,27 @@ begin
     Exit;
   end;
 
+  if Self.Model <> nil then
+    Exit(boundsArray);
+
   for i := 0 to High(boundsArray) do
-    Result += TPointArray(boundsArray[i]).ShapeFill();
+    Result += TPointArray(boundsArray[i]).Connect().ShapeFill();
 end;
 
 (*
-## TRSEntityV2.Find
+## TRSEntity.FindEx
 ```pascal
-function TRSEntityV2.FindEx(out cuboids: TCuboidArray; out atpa: T2DPointArray): Boolean;
-function TRSEntityV2.Find(out atpa: T2DPointArray): Boolean;
-function TRSEntityV2.FindFromPosition(me: TPoint; out atpa: T2DPointArray): Boolean;
+function TRSEntity.FindEx(me: TPoint; out boundsArray: TPolygonArray; out coordinates: TPointArray; out atpa: T2DPointArray): Boolean;
 ```
-TRSEntityV2 method used to find a {ref}`TRSEntityV2`. If found returns true, if not returns false.
-The "extended" method in particular is mostly meant for debugging and is the one used when you call `Debug(TRSEntity)`.
+Internal {ref}`TRSEntity` method used to find a {ref}`RSEntity`.
 
-Example:
-```pascal
-WriteLn RSObjects.GEBank.Find(atpa); //Be in ge and with a walker setup there.
-Debug(atpa);
-```
+You also have {ref}`RSEntity.Find` to find entities, this version of the method
+is internal because it returns extra information about the found entities for
+internal use, like it's `cuboids` for example.
+
+This also returns an `atpa` containing the colors of the object that were found
+assuming the object has a {ref}`TColorFinder` setup.
+If not, the cuboids area are returned as the match.
 *)
 function TRSEntity.FindEx(me: TPoint; out boundsArray: TPolygonArray; out coordinates: TPointArray; out atpa: T2DPointArray): Boolean;
 begin
@@ -353,12 +355,34 @@ begin
 end;
 
 
+(*
+## RSEntity.Find
+```pascal
+function TRSEntity.Find(out coordinates: TPointArray; out atpa: T2DPointArray): Boolean;
+function TRSEntity.Find(out atpa: T2DPointArray): Boolean; overload;
+```
+{ref}`TRSEntity` method used to find a {ref}`RSEntity`.
+This returns True/False if the entity was found and it's `atpa` which cointains
+the colors of it that were found.
+
+For more information on this refer to {ref}`TRSEntity.FindEx`, it's an internal
+function but is used within this one and will go into more detail.
+*)
 function TRSEntity.Find(out coordinates: TPointArray; out atpa: T2DPointArray): Boolean;
 var
   boundsArray: TPolygonArray;
 begin
   Result := Self.FindEx(Self.Walker^.Position(), boundsArray, coordinates, atpa);
 end;
+
+function TRSEntity.Find(out atpa: T2DPointArray): Boolean; overload;
+var
+  coordinates: TPointArray;
+  boundsArray: TPolygonArray;
+begin
+  Result := Self.FindEx(Self.Walker^.Position(), boundsArray, coordinates, atpa);
+end;
+
 
 function TRSEntity.FindFrom(position: TPoint; out atpa: T2DPointArray): Boolean;
 var
@@ -371,12 +395,12 @@ end;
 (*
 ## TRSEntity._UpTextCheck
 ```pascal
-function TRSEntity._UpTextCheck(out shouldExit: Boolean): Boolean;
+function TRSEntity._UpTextCheck(out shouldExit: Boolean; action: TStringArray): Boolean;
 ```
 Internal TRSEntity helper method that is used by all hovering methods.
 You probably don't need to use this directly.
 *)
-function TRSEntity._UpTextCheck(out shouldExit: Boolean): Boolean;
+function TRSEntity._UpTextCheck(out shouldExit: Boolean; action: TStringArray): Boolean;
 var
   text: String;
 begin
@@ -390,7 +414,7 @@ begin
 
   text := MainScreen.UpText;
 
-  if text.Contains('>') and not Self.Walker^.ActionUpText.Contains(['>']) then
+  if text.Contains('>') and not action.Contains(['>']) then
   begin
     ChooseOption.Close();
     Exit;
@@ -405,19 +429,19 @@ end;
 (*
 ## TRSEntity._HoverHelper
 ```pascal
-function TRSEntity._HoverHelper(attempts: Integer; trackTarget: Boolean): Boolean;
+function TRSEntity._HoverHelper(action: TStringArray; attempts: Integer): Boolean;
 ```
 Internal helper method used to hover a TRSEntity target.
 You should not use this directly.
 *)
-function TRSEntity._HoverHelper(attempts: Integer): Boolean;
+function TRSEntity._HoverHelper(action: TStringArray; attempts: Integer): Boolean;
 var
   shouldExit: Boolean;
   attempt, i: Integer;
   atpa: T2DPointArray;
   coordinates, tpa: TPointArray;
 begin
-  Result := Self._UpTextCheck(shouldExit);
+  Result := Self._UpTextCheck(shouldExit, action);
   if shouldExit then Exit;
 
   for attempt := 0 to attempts do
@@ -451,14 +475,14 @@ end;
 (*
 ## TRSEntity._WalkHoverHelper
 ```pascal
-function TRSEntity._WalkHoverHelper(attempts: Integer; trackTarget: Boolean): Boolean;
+function TRSEntity._WalkHoverHelper(action: TStringArray; attempts: Integer): Boolean;
 ```
 Internal helper method used to walk and hover a TRSEntity target.
 You should not use this directly.
 
 This is responsible for deciding wether we should walk to a TRSEntity target or not before attempting to hover it.
 *)
-function TRSEntity._WalkHoverHelper(attempts: Integer): Boolean;
+function TRSEntity._WalkHoverHelper(action: TStringArray; attempts: Integer): Boolean;
 var
   shouldExit: Boolean;
   attempt, i: Integer;
@@ -467,7 +491,7 @@ var
   path: TGraphNodeArray;
   me, closest: TPoint;
 begin
-  Result := Self._UpTextCheck(shouldExit) or Self.Walker^.RedClicked;
+  Result := Self._UpTextCheck(shouldExit, action) or Self.Walker^.RedClicked;
   if shouldExit then Exit;
 
   for attempt := 0 to attempts do
@@ -553,9 +577,6 @@ This is what's responsible for deciding if we click a target we are hovering or 
 *)
 function TRSEntity._ClickHelper(leftClick: Boolean): Boolean;
 begin
-  Self.Walker^.TargetUpText := [];
-  Self.Walker^.ActionUpText := [];
-
   if Self.Walker^.RedClicked then
   begin
     Self.Walker^.RedClicked := False;
@@ -588,9 +609,6 @@ This is what is responsible for deciding if we just left click a target we are h
 *)
 function TRSEntity._SelectHelper(action: TStringArray): Boolean;
 begin
-  Self.Walker^.TargetUpText := [];
-  Self.Walker^.ActionUpText := [];
-
   if Self.Walker^.RedClicked then
   begin
     Self.Walker^.RedClicked := False;
@@ -610,18 +628,16 @@ end;
 (*
 ## TRSEntity.Hover
 ```pascal
-function TRSEntity.Hover(attempts: Integer = 2; trackTarget: Boolean = TRSEntity.TrackTarget): Boolean;
+function TRSEntity.Hover(action: TStringArray = []; attempts: Integer = 2): Boolean;
 ```
 Method used to hover a TRSEntity target if it's found on the mainscreen.
-It can update the target position while the mouse moves with **trackTarget**.
 
 Example:
 ```pascal
-RSW.WebWalk(WaspWeb.LOCATION_VARROCK);
-RSObjects.GEBank.Hover(); //Be in GE with a walker setup there.
+//TODO...
 ```
 *)
-function TRSEntity.Hover(attempts: Integer = 2): Boolean;
+function TRSEntity.Hover(action: TStringArray = []; attempts: Integer = 2): Boolean;
 begin
   if ChooseOption.IsOpen() then
   begin
@@ -638,25 +654,22 @@ begin
   //TODO:
   //if not Self.Walker^.MakePointVisible(Self.Coordinates) then Exit;
 
-  Result := Self._HoverHelper(attempts);
+  Result := Self._HoverHelper(action, attempts);
 end;
 
 (*
 ## TRSEntity.WalkHover
 ```pascal
-function TRSEntity.WalkHover(attempts: Integer = 2; trackTarget: Boolean = TRSEntity.TrackTarget): Boolean;
+function TRSEntity.WalkHover(action: TStringArray = []; attempts: Integer = 2): Boolean;
 ```
 Method used to walk and hover a TRSEntity target if it's found on the mainscreen after walking.
-It can update the target position while the mouse moves with **trackTarget**.
 
 Example:
 ```pascal
-//Be in varrock with a varrock map loaded.
-RSW.WebWalk(WaspWeb.LOCATION_VARROCK);
-RSObjects.GEBank.WalkHover();
+//TODO...
 ```
 *)
-function TRSEntity.WalkHover(attempts: Integer = 2): Boolean;
+function TRSEntity.WalkHover(action: TStringArray = []; attempts: Integer = 2): Boolean;
 var
   me, closest: TPoint;
   path: TGraphNodeArray;
@@ -668,9 +681,6 @@ begin
       Exit(True);
     ChooseOption.Close();
   end;
-
-  if Self.UpText <> [] then
-    Self.Walker^.TargetUpText := Copy(Self.UpText);
 
   me :=  Self.Walker^.Position();
   closest := Self.Walker^.GetClosestPoint(me, Self.Coordinates, path);
@@ -684,17 +694,25 @@ begin
     hasPath := True;
   end;
 
-  // check if doors need to be passed to reach target
-  if hasPath or Self.Walker^.WebGraph^.WalkableClusters.InSameTPA(me, closest) then
-  begin
-    if not Self.Walker^.MakePointVisible(closest) and not Self.Walker^.WebWalkEx(me, closest, 30, 0.15) then
-      Exit;
-  end
-  else
-  if not Self.Walker^.WebWalk(closest, 30, 0.15) then
-    Exit;
+  Self.Walker^.TargetUpText := Copy(Self.UpText);
+  Self.Walker^.ActionUpText := action;
 
-  Result := Self._WalkHoverHelper(attempts);
+  try
+  // check if doors need to be passed to reach target
+    if hasPath or Self.Walker^.WebGraph^.WalkableClusters.InSameTPA(me, closest) then
+    begin
+      if not Self.Walker^.MakePointVisible(closest) and not Self.Walker^.WebWalkEx(me, closest, 30, 0.15) then
+        Exit;
+    end
+    else
+    if not Self.Walker^.WebWalk(closest, 30, 0.15) then
+      Exit;
+
+    Result := Self._WalkHoverHelper(action, attempts);
+  finally
+    Self.Walker^.TargetUpText := [];
+    Self.Walker^.ActionUpText := [];
+  end;
 end;
 
 
@@ -713,7 +731,7 @@ WriteLn RSObjects.GEBank.Click();
 *)
 function TRSEntity.Click(leftClick: Boolean = True; attempts: Integer = 2): Boolean;
 begin
-  Result := Self.Hover(attempts) and Self._ClickHelper(leftClick);
+  Result := Self.Hover([], attempts) and Self._ClickHelper(leftClick);
 end;
 
 (*
@@ -725,9 +743,7 @@ Method used to select an option on a TRSEntity target if it's found on the mains
 *)
 function TRSEntity.Interact(action: TStringArray; attempts: Integer = 2): Boolean;
 begin
-  Self.Walker^.ActionUpText := action;
-  Result := Self.Hover(attempts) and Self._SelectHelper(action);
-  Self.Walker^.ActionUpText := [];
+  Result := Self.Hover(action, attempts) and Self._SelectHelper(action);
 end;
 
 (*
@@ -750,8 +766,7 @@ begin
   if Self.Coordinates = [] then
     raise GetDebugLn('TRSEntity', 'FindFrom requires the object to have coordinates.');
 
-  Result := Self.WalkHover(attempts) and Self._ClickHelper(leftClick);
-  Self.Walker^.TargetUpText := [];
+  Result := Self.WalkHover([], attempts) and Self._ClickHelper(leftClick);
 end;
 
 (*
@@ -768,12 +783,7 @@ begin
   if Self.Coordinates = [] then
     raise GetDebugLn('TRSEntity', 'FindFrom requires the object to have coordinates.');
 
-  Self.Walker^.ActionUpText := action;
-
-  Result := Self.WalkHover(attempts) and Self._SelectHelper(action);
-
-  Self.Walker^.TargetUpText := [];
-  Self.Walker^.ActionUpText := [];
+  Result := Self.WalkHover(action, attempts) and Self._SelectHelper(action);
 end;
 
 
@@ -853,12 +863,38 @@ begin
     Self.DrawTPA(boundsArray[i].Connect());
 end;
 
+(*
+## ShowOnTarget TRSEntity
+```pascal
+procedure ShowOnTarget(entity: TRSEntity); overload;
+```
+Shows an image of the target with the `TRSEntity` drawn on it.
+*)
 procedure ShowOnTarget(entity: TRSEntity); overload;
 var
   img: TImage;
 begin
   img := Target.GetImage();
   img.DrawEntity(entity);
+  img.Show();
+end;
+
+(*
+## ShowOnTarget TRSEntityArray
+```pascal
+procedure ShowOnTarget(entities: TRSEntityArray); overload;
+```
+Shows an image of the target with the `TRSEntityArray` drawn on it.
+*)
+
+procedure ShowOnTarget(entities: TRSEntityArray); overload;
+var
+  img: TImage;
+  i: Integer;
+begin
+  img := Target.GetImage();
+  for i := 0 to High(entities) do
+    img.DrawEntity(entities[i]);
   img.Show();
 end;
 

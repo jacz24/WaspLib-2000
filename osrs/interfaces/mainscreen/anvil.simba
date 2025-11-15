@@ -67,7 +67,7 @@ var
   i: Integer;
 begin
   for i := 0 to High(Self.SlotBoxes) do
-    if Target.HasColor($00FF00, 0, 1, Self.SlotBoxes[i]) or Target.HasColor($1F98FF, 0, 1, Self.SlotBoxes[i]) then
+    if Target.HasColor(RSFonts.GREEN, 0, 1, Self.SlotBoxes[i]) or Target.HasColor(RSFonts.ORANGE, 0, 1, Self.SlotBoxes[i]) then
       Result += Self.SlotBoxes[i];
 end;
 
@@ -100,15 +100,15 @@ begin
   Self.SlotsArea.X2 := Self.Bounds.X2 - 50;
   Self.SlotsArea.Y2 := Self.Bounds.Y2 - 4;
 
-  Self.SlotBoxes := TBoxArray.Create(Self.Bounds.TopLeft + [10, 36], 6, 5, 54, 54, [26, 1]);
+  Self.SlotBoxes := TBoxArray.Create(Self.Bounds.TopLeft + [6, 36], 6, 5, 75, 54, [1, 1]);
   for i in [5, 11, 17, 23, 29] do
-    Self.SlotBoxes[i] := Self.SlotBoxes[i].Offset([-15, 0]);
+    Self.SlotBoxes[i].X2 := Self.SlotBoxes[i].X1 + 67;
 
   Self.Slots.Setup('Anvil.Slots', Self.SlotBoxes, @Self.GetSlotBoxes);
   Self.Items.Setup('Anvil.Items', @Self.Slots, [0, 0]);
 
   with Self.Bounds do
-    boxes := TBoxArray.Create([X2-46, Y1+36], 1, 6, 36, 36, [0,9]);
+    boxes := TBoxArray.Create([X2-43, Y1+36], 1, 6, 36, 36, [0,9]);
 
   SetLength(Self.QuantityButtons, 6);
   for i := 0 to High(boxes) do
@@ -183,7 +183,8 @@ begin
     if Target.HasColor(RSFonts.BLACK, 0,  1, Self.QuantityButtons[i].Bounds) then
       btns += Self.QuantityButtons[i];
 
-  if btns = [] then Exit;
+  if btns = [] then
+    Exit;
 
   case value of
     -1, 0: str := 'All';
@@ -256,10 +257,11 @@ begin
   slot := Self.Items.IndexOf([item]);
   if slot = -1 then Exit;
 
-  if not Target.HasColor($00FF00, 0, 1, Self.Slots.Box(slot)) then
+  if not Target.HasColor(RSFonts.GREEN, 0, 1, Self.Slots.Box(slot)) then
     Exit;
 
-  if not Self.SetQuantity(quantity) then Exit;
+  if not Self.SetQuantity(quantity) then
+    Exit;
 
   if keyboardProbability < 0 then
     keyboardProbability := Biometrics.RandomDouble(0.5);
@@ -344,7 +346,7 @@ begin
     Exit;
 
   obj.Walker^.WaitMoving();
-  Result := Self.WaitOpen(3000);
+  Result := Self.WaitOpen(6*TICK);
 end;
 
 function TRSAnvil.Open(walk: Boolean = True): Boolean; overload;

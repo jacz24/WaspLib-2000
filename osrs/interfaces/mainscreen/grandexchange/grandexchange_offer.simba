@@ -845,6 +845,63 @@ begin
   Result := SleepUntil(not Self.HasItems(), 200, 2000);
 end;
 
+(*
+## GrandExchangeOffer.CreateBuyOffer
+```pascal
+function TRSGrandExchangeOffer.CreateBuyOffer(itemName : String; price, quantity : Integer = -1) : Boolean;
+```
+
+Attempts to create a buy offer for the specified `itemName`, `price` and `quantity`.
+
+Example:
+```pascal
+if GrandExchangeOffer.CreateBuyOffer('Abyssal whip', 1500000, 1) then
+  WriteLn('Buy offer created successfully!');
+```
+*)
+function TRSGrandExchangeOffer.CreateBuyOffer(itemName: String; price, quantity: Integer = -1) : Boolean;
+begin
+  if not Self.IsOpen() then Exit;
+  if (Self.OfferInterface <> EGEOfferInterface.SETUP) or (Self.OfferType <> EGEOfferType.BUY) then Exit;
+
+  if not GrandExchangeChat.WaitOpen(2000, 250) then Exit;
+  if not GrandExchangeChat.SearchText[itemName] then Exit;
+  if not GrandExchangeChat.Click(itemName) then Exit;
+  if not SleepUntil(Self.Item.ToLower() = itemName.ToLower(), 250, 2000) then Exit;
+
+  if (quantity <> -1) and not Self.Quantity[quantity] then Exit;
+  if (price <> -1) and not Self.Price[price] then Exit;
+
+  Result := Self.Confirm();
+end;
+
+(*
+## GrandExchangeOffer.CreateSellOffer
+```pascal
+function TRSGrandExchangeOffer.CreateSellOffer(itemName : String; price, quantity : Integer = -1) : Boolean;
+```
+
+Attempts to create a sell offer for the specified `itemName`, `price` and `quantity`.
+
+Example:
+```pascal
+if GrandExchangeOffer.CreateSellOffer('Abyssal whip', 1500000, 1) then
+  WriteLn('Sell offer created successfully!');
+```
+*)
+function TRSGrandExchangeOffer.CreateSellOffer(itemName: String; price, quantity: Integer = -1) : Boolean;
+begin
+  if not Self.IsOpen() then Exit;
+  if (Self.OfferInterface <> EGEOfferInterface.SETUP) or (Self.OfferType <> EGEOfferType.SELL) then Exit;
+
+  if not Inventory.Items.Click(itemName) then Exit;
+  if not SleepUntil(Self.Item.ToLower() = itemName.ToLower(), 250, 2000) then Exit;
+
+  if (quantity <> -1) and not Self.Quantity[quantity] then Exit;
+  if (price <> -1) and not Self.Price[price] then Exit;
+
+  Result := Self.Confirm();
+end;
 
 var
 (*

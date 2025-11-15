@@ -101,6 +101,7 @@ ShowOnTarget(RSClient._Bounds());
 function TRSClient._Bounds(img: TImage): TBox;
 var
   x1, x2, y2: Integer;
+  win: TWindowHandle;
 begin
   if img.Pixel[0, img.Height-1] <> $0 then
     Exit(Target.Bounds);
@@ -115,8 +116,9 @@ begin
 
   if img.Height-1 < 503 then
   begin
-    with GetSimbaTargetWindow().GetBounds() do
-      GetSimbaTargetWindow().SetBounds([X1, Y1, X2, Y1+503]);
+    win := GetSimbaTargetWindow().GetRootWindow();
+    with win.GetBounds() do
+      win.SetBounds([X1, Y1, X2, Y1+535]);
     Result := [x1, 0, x2, 503];
   end
   else

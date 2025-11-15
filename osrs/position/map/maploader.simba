@@ -316,7 +316,6 @@ If no .bmp file exists, the .png file is loaded instead, it's saved as .bmp for 
 function TRSMapLoader.GetFile(chunk: TPoint; plane: Integer; map: ERSMap): TImage;
 var
   filename, cachename: String;
-  created: Boolean;
 begin
   filename := ToStr(chunk.X) + '-' + ToStr(chunk.Y);
   Result := new TImage();
@@ -331,12 +330,13 @@ begin
   begin
     if not FileExists(cachename + '.png') then
     begin
-      created := True;
       Result.SetSize(RSTranslator.Map.ChunkSide, RSTranslator.Map.ChunkSide);
-    end;
-
-    if not created then
+      if not DirCreate(PathExtractDir(cachename)) then
+        raise GetDebugLn('MapLoader', 'Failed to create path: ' + PathExtractDir(cachename));
+    end
+    else
       Result.Load(cachename + '.png');
+
     Result.Save(cachename + '.bmp');
     FileDelete(cachename + '.png');
     Exit;

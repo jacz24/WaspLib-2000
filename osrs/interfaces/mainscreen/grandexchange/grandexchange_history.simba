@@ -204,6 +204,25 @@ begin
   Result := Self.WaitOpen(2000);
 end;
 
+(*
+## GrandExchangeHistory.Back
+```pascal
+function TRSGrandExchangeHistory.Back(): Boolean;
+```
+Attempts to click the back button: to return to the main Grand Exchange interface, returns `True` on success.
+
+Example:
+```pascal
+WriteLn GrandExchangeHistory.Back();
+```
+*)
+function TRSGrandExchangeHistory.Back(): Boolean;
+begin
+  if not Self.IsOpen() then Exit;
+  Mouse.Click(Self.ExchangeButton, EMouseButton.LEFT);
+  Result := GrandExchange.WaitOpen(2000);
+end;
+
 var
 (*
 ## GrandExchangeHistory variable

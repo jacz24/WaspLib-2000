@@ -152,6 +152,7 @@ type
     EDGEVILLE,
     FALADOR,
     FOSSIL_ISLAND,
+    GUARDIANS_OF_THE_RIFT,
     HOSIDIUS_KITCHEN,
     ICEBERG,
     LUMBRIDGE,
@@ -162,6 +163,7 @@ type
     PRIFDDINAS,
     ROGUES_DEN,
     RUINS_OF_UNKAH,
+    RUNECRAFTING_ALTARS,
     SEERS_VILLAGE,
     STRONGHOLD_SLAYER_CAVE,
     TEMPOROSS_COVE,
@@ -185,8 +187,9 @@ begin
     ERSChunk.EDGEVILLE              : Result := Chunk(Box(48,54,48,54), 0);
     ERSChunk.FALADOR                : Result := Chunk(Box(45,53,47,51), 0);
     ERSChunk.FOSSIL_ISLAND          : Result := Chunk(Box(56,61,60,57), [0,1]);
-    ERSChunk.ICEBERG                : Result := Chunk(Box(40,64,42,61), [0,1]);
+    ERSChunk.GUARDIANS_OF_THE_RIFT  : Result := Chunk(Box(55,149,57,147), 0);
     ERSChunk.HOSIDIUS_KITCHEN       : Result := Chunk(Box(25,56,26,56), 0);
+    ERSChunk.ICEBERG                : Result := Chunk(Box(40,64,42,61), [0,1]);
     ERSChunk.LUMBRIDGE              : Result := Chunk(Box(49,51,50,49), [0,1,2]);
     ERSChunk.LUNAR_ISLE             : Result := Chunk(Box(32,61,33,60), 0);
     ERSChunk.MINING_GUILD           : Result := Chunk(Box(46,152,47,151), 0);
@@ -195,6 +198,7 @@ begin
     ERSChunk.PRIFDDINAS             : Result := Chunk(Box(50,95,51,94), 0);
     ERSChunk.ROGUES_DEN             : Result := Chunk(Box(46,79,47,77), 1);
     ERSChunk.RUINS_OF_UNKAH         : Result := Chunk(Box(48,44,49,44), 0);
+    ERSChunk.RUNECRAFTING_ALTARS    : Result := Chunk(Box(31,76,51,74), 0);
     ERSChunk.SEERS_VILLAGE          : Result := Chunk(Box(41,55,43,53), [0,2]);
     ERSChunk.STRONGHOLD_SLAYER_CAVE : Result := Chunk(Box(37,153,38,152), 0);
     ERSChunk.TEMPOROSS_COVE         : Result := Chunk(Box(47,46,47,46), 0);
