@@ -621,19 +621,17 @@ You will probably never need to call this directly.
 function TRSWalker.IsWalkable(mapPoint, me: TPoint; out mmPoint: TPoint; radians: Double): Boolean;
 var
   tile: TPointArray;
-  count: Integer;
 begin
   mmPoint := Self.Point2MM(me, mapPoint, radians);
   if not Self.ScreenWalk then
     Exit(Minimap.Polygon.Expand(-1).Contains(mmPoint));
 
   tile := Self.GetQuadMS(me, mapPoint, [0.9,0.9], radians).Corners.Connect().ShapeFill();
-  count := Length(tile);
 
   tile := tile.ExtractBox(MainScreen.Bounds);
   if tile = [] then Exit;
 
-  Result := (Length(tile) / count * 100) > 50;
+  Result := MainScreen.IsVisible(tile.Mean);
 end;
 
 function TRSWalker._WalkStepHelper(me, mapPoint: TPoint; randomness: Integer; out minimapPoint: TPoint; out shouldExit: Boolean): Boolean;
