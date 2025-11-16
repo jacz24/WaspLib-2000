@@ -353,6 +353,27 @@ WriteLn GrandExchange.Slots[2].Sell();
 *)
 function TRSGrandExchangeSlot.Sell(): Boolean; forward;
 
+(*
+## TRSGrandExchangeSlot.Abort
+```pascal
+function TRSGrandExchangeSlot.Abort(): Boolean;
+```
+
+Attempts to abort an ongoing offer in the slot.
+
+Example:
+```pascal
+WriteLn GrandExchange.Slots[3].Abort();
+```
+*)
+function TRSGrandExchangeSlot.Abort(): Boolean;
+begin
+  if Self.Status = EGEOfferStatus.ABORTED then Exit(True);
+
+  Mouse.Move(Self.Bounds);
+  if ChooseOption.Select('Abort offer') then
+    Result := SleepUntil(Self.Status = EGEOfferStatus.ABORTED, 250, 2000);
+end;
 
 type
 (*
