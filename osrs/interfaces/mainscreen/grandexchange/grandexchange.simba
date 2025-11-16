@@ -284,6 +284,47 @@ begin
 end;
 
 (*
+## TRSGrandExchangeSlot.TotalValue
+```pascal
+property TRSGrandExchangeSlot.TotalValue: Integer;
+```
+
+Returns the total value of the offer slot.
+Taking into account the Grand Exchange tax for sell offers.
+
+Example:
+```pascal
+WriteLn GrandExchange.Slots[5].TotalValue;
+```
+*)
+property TRSGrandExchangeSlot.TotalValue: Integer;
+var
+  postTaxValue, tax: Integer;
+begin
+  Result := Self.Value * Self.Quantity;
+
+  if Self.GetType() = EGESlotType.BUY then Exit;
+
+  case ItemData.GetTradeableID(Self.Item) of
+      '8011', '365', '2309', '882', '806', '1891', '8010', '1755', '28824',
+      '2140', '2142', '8009', '5325', '1785', '2347', '347', '884', '807',
+      '28790', '379', '8008', '355', '2327', '558', '1733', '13190', '233',
+      '351', '5341', '2552', '329', '8794', '5329', '5343', '1735', '315',
+      '952', '886', '808', '8013', '361', '8007', '5331': Exit;
+  end;
+
+  if Self.Value >= 250000000 then
+    postTaxValue := Self.Value - 5000000
+  else
+  begin
+    tax := Floor(Self.Value * 0.02);
+    postTaxValue := Self.Value - tax;
+  end;
+
+  Result := postTaxValue * Self.Quantity;
+end;
+
+(*
 ## TRSGrandExchangeSlot.Status
 ```pascal
 property TRSGrandExchangeSlot.Status: EGEOfferStatus;
