@@ -586,10 +586,9 @@ WriteLn GrandExchange.Collect();
 *)
 function TRSGrandExchange.Collect(): Boolean;
 begin
-  if OCR.Locate(Self.CollectButton, 'Collect', [RSFonts.WHITE], 0, RSFonts.PLAIN_11) < 0.85 then
-    Exit(False);
+  if not Target.HasColor(RSFonts.WHITE, 0, 1, Self.CollectButton) then Exit(False);
   Mouse.Click(Self.CollectButton, EMouseButton.LEFT);
-  Result := SleepUntil(OCR.Locate(Self.CollectButton, 'Collect', [RSFonts.WHITE], 0, RSFonts.PLAIN_11) = 0,200, 2000);
+  Result := SleepUntil(not Target.HasColor(RSFonts.WHITE, 0, 1, Self.CollectButton),200, 2000);
 end; 
 
 var
