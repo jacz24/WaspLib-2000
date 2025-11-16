@@ -262,6 +262,28 @@ begin
 end;
 
 (*
+## TRSGrandExchangeSlot.Quantity
+```pascal
+property TRSGrandExchangeSlot.Quantity: Integer;
+```
+
+Returns the quantity text in the offer slot as an `Integer`.
+
+Example:
+```pascal
+WriteLn GrandExchange.Slots[4].Quantity;
+```
+*)
+property TRSGrandExchangeSlot.Quantity: Integer;
+var
+  str: String;
+begin
+  if (Self.GetType() = EGESlotType.EMPTY) or (Self.GetType() = EGESlotType.UNAVAILABLE) then Exit(-1);
+  str := OCR.Recognize(Self.ItemBox, RSFonts.PLAIN_11, [RSFonts.YELLOW], 0);
+  Result := str.ExtractInteger(1);
+end;
+
+(*
 ## TRSGrandExchangeSlot.Status
 ```pascal
 property TRSGrandExchangeSlot.Status: EGEOfferStatus;
