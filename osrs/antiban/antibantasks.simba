@@ -307,6 +307,53 @@ begin
   Bank.OpenTab(tab);
 end;
 
+// GrandExchange antibans
+procedure TAntiban.CheckHistory();
+begin
+  if not GrandExchange.IsOpen() then Exit;
+  if not GrandExchangeHistory.Open() then Exit;
+
+  WriteLn GetDebugLn('Antiban', 'Checking GE trade history');
+
+  GrandExchangeHistory.Scroll.SetLevel(Biometrics.RandomModeInteger(25, 0, 100));
+  Biometrics.Sleep(TICK, 5 * TICK);
+  Mouse.Move(GrandExchangeHistory.Slots.Random());
+  Biometrics.Sleep(5 * TICK, 10 * TICK);
+
+  if not GrandExchangeHistory.Back() then
+    GrandExchangeHistory.Close()
+  else
+    Biometrics.Sleep(2 * TICK, 3 * TICK);
+end;
+
+procedure TAntiban.RandomOffer();
+var
+  geSlot: TRSGrandExchangeSlot;
+  validSlots: array of TRSGrandExchangeSlot;
+  i: Int32;
+begin
+  if not GrandExchange.IsOpen() then Exit;
+
+  WriteLn GetDebugLn('Antiban', 'Opening random GE slot');
+
+  for i := 0 to High(GrandExchange.Slots) do
+  begin
+    if (GrandExchange.Slots[i].GetType() = EGESlotType.BUY) or
+       (GrandExchange.Slots[i].GetType() = EGESlotType.SELL) then
+      validSlots += GrandExchange.Slots[i];
+  end;
+
+  if Length(validSlots) = 0 then Exit;
+
+  geSlot := validSlots.Random();
+
+  if geSlot.Open() and GrandExchangeOffer.WaitOpen(2000) then
+  begin
+    Biometrics.Sleep(5 * TICK, 10 * TICK);
+    GrandExchangeOffer.Back();
+  end;
+end;
+
 
 procedure TAntiban.RandomRightClick();
 begin
@@ -621,11 +668,18 @@ procedure TAntiban.RandomBankTask();
 begin
   case Random(0, 12) of
     0..2: Self.RandomBankTab;
-    1..8: Self.ToggleBankTab;
+    3..9: Self.ToggleBankTab;
+    10..11: Self.BankScrolling;
   end;
 end;
 
-
+procedure TAntiban.RandomGETask();
+begin
+  case Random(0, 10) of
+    0..2: Self.CheckHistory();
+    3..9: Self.RandomOffer();
+  end;
+end;
 
 (* TODO:
 procedure TAntiban.MoveItems(items: TRSItemArray);
@@ -842,6 +896,8 @@ const
     ['BankScrolling',         @Antiban.BankScrolling],
     ['RandomBankTab',         @Antiban.RandomBankTab],
     ['ToggleBankTab',         @Antiban.ToggleBankTab],
+    ['CheckHistory',          @Antiban.CheckHistory],
+    ['RandomOffer',           @Antiban.RandomOffer],
     ['RandomRightClick',      @Antiban.RandomRightClick],
     ['AdjustZoom',            @Antiban.AdjustZoom],
     ['Swivel',                @Antiban.Swivel],
@@ -854,5 +910,6 @@ const
     ['RandomMouseTask',       @Antiban.RandomMouseTask],
     ['RandomGameTabTask',     @Antiban.RandomGameTabTask],
     ['RandomChatTask',        @Antiban.RandomChatTask],
-    ['RandomBankTask',        @Antiban.RandomBankTask]
+    ['RandomBankTask',        @Antiban.RandomBankTask],
+    ['RandomGETask',          @Antiban.RandomGETask]
   ];
