@@ -129,14 +129,14 @@ function TRSTranslator.Height2Color(height: Single): Integer;
 const
   H_VALUE := Self.MaxHeight / $FFFFFF;
 begin
-  Result := Round((height / H_VALUE) * 29.14);
+  Result := Round((height / H_VALUE) / 4 * 128);
 end;
 
 function TRSTranslator.Color2Height(color: Integer): Single;
 const
   H_VALUE := Self.MaxHeight / $FFFFFF;
 begin
-  Result := color * H_VALUE / 29.14;
+  Result := color * H_VALUE * 4 / 128;
 end;
 
 

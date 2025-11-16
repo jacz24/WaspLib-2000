@@ -368,6 +368,9 @@ WriteLn Map.Height();
 ```
 *)
 function TRSMap.Height(pt: TPoint = [0,0]; global: Boolean = True): Single;
+var
+  neighbours: TPointArray;
+  p: TPoint;
 begin
   if Self.DisableHeightmap or not Assigned(Self.Loader.Heightmap) then
     Exit(0.0);
@@ -382,11 +385,52 @@ begin
   if global then
     pt := Self.Loader.GetLocal(Self.RegionIndex, pt);
 
-  Result := RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[pt.X,pt.Y]) +
-            RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[pt.X,pt.Y + 1]) +
-            RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[pt.X + 1,pt.Y]) +
-            RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[pt.X + 1,pt.Y + 1]);
-  Result := Result/4;
+  neighbours := [
+    pt, pt.Offset(-1,-1), pt.Offset(1,-1), pt.Offset(-1,1),  pt.Offset(1,1)
+  ];
+
+  for p in neighbours do
+  begin
+    if Self.Loader.Heightmap.InImage(p.X, p.Y) then
+      Result += RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[p.X,p.Y])
+    else if Self.Loader.Heightmap.InImage(pt.X, pt.Y) then
+      Result += RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[pt.X,pt.Y]);
+  end;
+
+  Result := Result/Length(neighbours);
+end;
+
+
+function TRSMap.GetQuad(me, pt: TPoint; angle: Single = $FFFF): TQuad;
+var
+  vector: TVector2;
+  corners: TVector3Array;
+  h: Single;
+  currLoc: TPoint;
+  arr: TPointArray;
+begin
+  if angle = $FFFF then angle := Minimap.CompassRadians;
+  vector := Self.Walker.Point2MMVec(me, pt, angle);
+  pt := vector.ToPoint();
+
+  if not Minimap.PointOnZoomQuad(pt) then Exit;
+
+  vector := Minimap.NormalizeEx(vector, angle);
+  me := Self.Loader.GetLocal(me);
+
+  h := Self.Height(me, False);
+
+  currLoc := me + vector.ToPoint() - Minimap.Center;
+
+  corners := [
+    [vector.X-2, vector.Y-2, Self.Height(currLoc + [-1,-1], False) - h],
+    [vector.X+2, vector.Y-2, Self.Height(currLoc + [1,-1],  False) - h],
+    [vector.X+2, vector.Y+2, Self.Height(currLoc + [1,1],   False) - h],
+    [vector.X-2, vector.Y+2, Self.Height(currLoc + [-1,1],  False) - h]
+  ];
+
+  arr := Projection.Run(corners, angle);
+  Result := [arr[0], arr[1], arr[2], arr[3]];
 end;
 
 
@@ -541,13 +585,11 @@ begin
   angle := Minimap.CompassRadians;
 
   img.DrawColor := $00FF00;
-  img.DrawAlpha := $77;
+  img.DrawAlpha := $FF;
 
   Self.Position();
   loc := Self.Cache.LocalPosition;
-  h := Self.Height(loc - [1,3], False) + Self.Height(loc + [3,-3], False) +
-       Self.Height(loc + [3,1], False) + Self.Height(loc - [1,1], False);
-  h := h/4;
+  h := RSTranslator.Color2Height(Self.Loader.Heightmap.Pixel[loc.X,loc.Y]);
 
   for x := Minimap.Center.X - 120 to Minimap.Center.X + 120 with 4 do
     for y := Minimap.Center.Y - 120 to Minimap.Center.Y + 120 with 4 do
@@ -566,10 +608,10 @@ begin
       currLoc := loc + Point(x,y) - Minimap.Center;
 
       corners := [
-        [vector.X-2, vector.Y-2, Self.Height(currLoc - [1,3],  False) - h],
-        [vector.X+2, vector.Y-2, Self.Height(currLoc + [3,-3], False) - h],
-        [vector.X+2, vector.Y+2, Self.Height(currLoc + [3,1],  False) - h],
-        [vector.X-2, vector.Y+2, Self.Height(currLoc - [1,1],  False) - h]
+        [vector.X-2, vector.Y-2, Self.Height(currLoc + [-1,-1], False) - h],
+        [vector.X+2, vector.Y-2, Self.Height(currLoc + [1,-1],  False) - h],
+        [vector.X+2, vector.Y+2, Self.Height(currLoc + [1,1],   False) - h],
+        [vector.X-2, vector.Y+2, Self.Height(currLoc + [-1,1],  False) - h]
       ];
 
       arr := Projection.Run(corners, angle);
@@ -623,39 +665,6 @@ begin
   img.Show();
 end;
 
-function TRSMap.GetQuad(me, pt: TPoint; angle: Single = $FFFF): TQuad;
-var
-  vector: TVector2;
-  corners: TVector3Array;
-  h: Single;
-  currLoc: TPoint;
-  arr: TPointArray;
-begin
-  if angle = $FFFF then angle := Minimap.CompassRadians;
-  vector := Self.Walker.Point2MMVec(me, pt, angle);
-  pt := vector.ToPoint();
-
-  if not Minimap.PointOnZoomQuad(pt) then Exit;
-
-  vector := Minimap.NormalizeEx(vector, angle);
-  me := Self.Loader.GetLocal(me);
-
-  h := Self.Height(me - [1,3], False) + Self.Height(me + [3,-3], False) +
-       Self.Height(me + [3,1], False) + Self.Height(me - [1,1], False);
-  h := h/4;
-
-  currLoc := me + vector.ToPoint() - Minimap.Center;
-
-  corners := [
-    [vector.X-2, vector.Y-2, Self.Height(currLoc - [1,3],  False) - h],
-    [vector.X+2, vector.Y-2, Self.Height(currLoc + [3,-3], False) - h],
-    [vector.X+2, vector.Y+2, Self.Height(currLoc + [3,1],  False) - h],
-    [vector.X-2, vector.Y+2, Self.Height(currLoc - [1,1],  False) - h]
-  ];
-
-  arr := Projection.Run(corners, angle);
-  Result := [arr[0], arr[1], arr[2], arr[3]];
-end;
 
 var
 (*
