@@ -285,6 +285,8 @@ function TItemData.GetPrice(item: TRSItem): Integer;
 var
   priceData: TItemPriceData;
 begin
+  if item.SimplifyName().ToLower() = 'coins') then Exit(1);
+
   priceData := Self.GetPriceData(item);
 
   if priceData = Default(TItemPriceData) then Exit;
