@@ -556,7 +556,7 @@ begin
 
     quad := Self.GetQuadMS(me, pt, [0.9,0.9], Minimap.CompassRadians);
     tile := quad.Corners.Connect().ShapeFill();
-    tile := tile.ExtractBox(MainScreen.Bounds);
+    tile := MainScreen.Filter(tile);
     if tile = [] then Exit;
 
     Mouse.Move(tile.RandomMean());
@@ -610,12 +610,12 @@ end;
 (*
 ## Walker.IsWalkable
 ```pascal
-function TRSWalker.IsWalkable(mapPoint: TPoint; me: TPoint; out mmPoint: TPoint; radians: Double): Boolean;
+function TRSWalker.IsWalkable(mapPoint: TPoint; me: TPoint; out mmPoint: TPoint; radians: Single): Boolean;
 ```
 Internal method used by walker to decide if the destination point is within 1 click reach.
 You will probably never need to call this directly.
 *)
-function TRSWalker.IsWalkable(mapPoint, me: TPoint; out mmPoint: TPoint; radians: Double): Boolean;
+function TRSWalker.IsWalkable(mapPoint, me: TPoint; out mmPoint: TPoint; radians: Single): Boolean;
 var
   tile: TPointArray;
   count: Integer;
@@ -627,10 +627,10 @@ begin
   tile := Self.GetQuadMS(me, mapPoint, [0.9,0.9], radians).Corners.Connect().ShapeFill();
   count := Length(tile);
 
-  tile := tile.ExtractBox(MainScreen.Bounds);
+  tile := MainScreen.Filter(tile);
   if tile = [] then Exit;
 
-  Result := (Length(tile) / count * 100) > 50;
+  Result := (Length(tile) / count * 100) > 35; //tile is 35% visible
 end;
 
 function TRSWalker._WalkStepHelper(me, mapPoint: TPoint; randomness: Integer; out minimapPoint: TPoint; out shouldExit: Boolean): Boolean;
