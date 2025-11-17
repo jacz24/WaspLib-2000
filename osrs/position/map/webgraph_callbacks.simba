@@ -1,0 +1,58 @@
+(*
+# WebGraph Callbacks
+Several callbacks to handle special webwalking nodes.
+*)
+
+{$DEFINE WL_WEBGRAPH_CALLBACKS_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+  TWebGraphCallbacks = record
+    Position: TWalkerPositionFunction;
+  end;
+
+function TWebGraphCallbacks.TeleportGrandExchange(): Boolean;
+begin
+  if Magic.CastSpell(ERSSpell.VARROCK_TELEPORT, 'Grand Exchange') then
+    Result := SleepUntil(Self.Position().InRange([8565, 36522], 60), 300, 5000);
+end;
+
+function TWebGraphCallbacks.TeleportVarrock(): Boolean;
+begin
+  if Magic.CastSpell(ERSSpell.VARROCK_TELEPORT, 'Cast') then
+    Result := SleepUntil(Self.Position().InRange([8752, 36716], 60), 300, 5000);
+end;
+
+
+procedure TWebGraphCallbacks.AddTeleports(graph: PWebGraph; chunk: TPoint);
+begin
+  case chunk of
+    [49,54]:
+    begin
+      if Achievements.Diaries.GetLevel(ERSAchievementDiary.VARROCK) > 1 then
+        graph^.AddTeleport([8565, 36522], @Self.TeleportGrandExchange);
+    end;
+    [50,53]: graph^.AddTeleport([8752, 36716], @Self.TeleportVarrock);
+  end;
+end;
+
+procedure TWebGraphCallbacks.Setup(position: TWalkerPositionFunction; mapLoader: PRSMapLoader);
+var
+  chunk: TPoint;
+  region: TRSMapRegion;
+begin
+  Self.Position := @position;
+  if not RSClient.IsLoggedIn() then
+    raise GetDebugLn('WebGraphCallbacks', 'Account has to be logged in to setup TWebGraphCallbacks.');
+
+  for region in mapLoader^.Regions do
+    for chunk in region.Chunks do
+    begin
+      Self.AddTeleports(@mapLoader^.Graph, chunk);
+      //Self.AddShortcuts(graph, chunk);
+      //Self.AddWhatever(graph, chunk);
+    end;
+end;
+
+var
+  WebGraphCallbacks: TWebGraphCallbacks;

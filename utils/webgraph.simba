@@ -29,10 +29,10 @@ Enum representing the type of nodes in a `TWebGraph`.
   TGraphNode = record
     Node: TPoint;
     Typ: EGraphNode;
-    Handle: function (): Boolean;
+    Handle: function (): Boolean of object;
   end;
 
-function TGraphNode.Create(pt: TPoint; typ: EGraphNode = EGraphNode.NORMAL; handle: function (): Boolean = nil): TGraphNode; static;
+function TGraphNode.Create(pt: TPoint; typ: EGraphNode = EGraphNode.NORMAL; handle: function (): Boolean  of object = nil): TGraphNode; static;
 begin
   Result.Node := pt;
   Result.Typ := typ;
@@ -409,7 +409,7 @@ begin
 end;
 
 
-procedure TWebGraph.AddLink(a, b: TPoint; typ: EGraphNode; handle: function (): Boolean);
+procedure TWebGraph.AddLink(a, b: TPoint; typ: EGraphNode; handle: function (): Boolean of object);
 var
   i, j, n: Integer;
   tpa: TPointArray;
@@ -447,7 +447,7 @@ begin
   end;
 end;
 
-procedure TWebGraph.AddLink(a, b: TPoint; typ: EGraphNode; handleA, handleB: function (): Boolean); overload;
+procedure TWebGraph.AddLink(a, b: TPoint; typ: EGraphNode; handleA, handleB: function (): Boolean of object); overload;
 var
   i, j, n: Integer;
   tpa: TPointArray;
@@ -485,7 +485,7 @@ begin
   end;
 end;
 
-procedure TWebGraph.AddLink(pt, a, b: TPoint; typ: EGraphNode; handle: function (): Boolean); overload;
+procedure TWebGraph.AddLink(pt, a, b: TPoint; typ: EGraphNode; handle: function (): Boolean of object); overload;
 var
   i, j, n: Integer;
   tpa: TPointArray;
@@ -521,13 +521,14 @@ begin
   Self.Nodes[i] := TGraphNode.Create(pt, typ, @handle);
 end;
 
-procedure TWebGraph.AddTeleport(pt: TPoint; handle: function (): Boolean);
+procedure TWebGraph.AddTeleport(pt: TPoint; handle: function (): Boolean of object);
 var
   i, j, n: Integer;
   tpa: TPointArray;
 begin
   i := Length(Self.Nodes);
   Self.Nodes += [pt, EGraphNode.TELEPORT, @handle];
+  SetLength(Self.Paths, Length(Self.Nodes));
 
   tpa := Self.Tree.KNearest(pt, 12);
   for j := 0 to High(tpa) do
@@ -556,6 +557,7 @@ var
 begin
   i := Length(Self.Nodes);
   Self.Nodes += [pt, EGraphNode.FAIRYRING, nil];
+  SetLength(Self.Paths, Length(Self.Nodes));
 
   tpa := Self.Tree.KNearest(pt, 8);
   for j := 0 to High(tpa) do
@@ -607,8 +609,10 @@ begin
 
   img.DrawColor := $00EAEA;
   for i := 0 to High(Self.Paths) do
-    for j := 0 to High(Self.Paths[i]) do
-      img.DrawLine(Self.Nodes[i].Node, Self.Nodes[Self.Paths[i, j]].Node);
+    if Self.Nodes[i].Typ <> EGraphNode.TELEPORT then
+      for j := 0 to High(Self.Paths[i]) do
+        if Self.Nodes[Self.Paths[i, j]].Typ <> EGraphNode.TELEPORT then
+          img.DrawLine(Self.Nodes[i].Node, Self.Nodes[Self.Paths[i, j]].Node);
 
   for i := 0 to High(Self.Nodes) do
   begin
@@ -631,11 +635,13 @@ begin
   if Self.Nodes = [] then Exit;
 
   for i := 0 to High(Self.Paths) do
-    for j := 0 to High(Self.Paths[i]) do
-    begin
-      if Self.Paths[i, j] > High(Self.Nodes) then Continue;
-      canvas.DrawLine(Self.Nodes[i].Node, Self.Nodes[Self.Paths[i, j]].Node, $00EAEA);
-    end;
+    if Self.Nodes[i].Typ <> EGraphNode.TELEPORT then
+      for j := 0 to High(Self.Paths[i]) do
+        if Self.Nodes[Self.Paths[i, j]].Typ <> EGraphNode.TELEPORT then
+        begin
+          if Self.Paths[i, j] > High(Self.Nodes) then Continue;
+          canvas.DrawLine(Self.Nodes[i].Node, Self.Nodes[Self.Paths[i, j]].Node, $00EAEA);
+        end;
 
   for i := 0 to High(Self.Nodes) do
   begin

@@ -138,6 +138,7 @@ Helper record used to interact with the {ref]`Achievements` gametab "Diaries" ta
   TRSDiaryList = record
     Names: TStringArray;
     Scroll: TRSScrollBar;
+    Cache: array [ERSAchievementDiary] of Integer;
   end;
 
 (*
@@ -298,9 +299,8 @@ WriteLn Achievements.Diaries.GetLevel(ERSAchievementDiary.ARDOUGNE);
 ```
 *)
   TRSAchievements = record
-    TabsArea: TBox;
+    TabsArea, TabTitle: TBox;
     Tabs: TBoxArray;
-
     Summary: TRSAchievementsSummary;
     Quests: TRSQuestList;
     Diaries: TRSDiaryList;
@@ -320,6 +320,7 @@ begin
   with GameTab.Bounds do
   begin
     Self.TabsArea := [X1, Y1 + 5, X2, Y1 + 22];
+    Self.TabTitle := [X1, Y1 + 25, X2, Y1 + 48];
 
     Self.Summary.SetupGameTab();
     Self.Quests.SetupGameTab();
@@ -413,7 +414,7 @@ WriteLn Achievements.GetTab();
 *)
 function TRSAchievements.GetTab(): ERSAchievementTab;
 var
-  i: Integer;
+  title: String;
 begin
   if Self.Tabs = [] then
   begin
@@ -421,10 +422,14 @@ begin
     Self.SetupTabs();
   end;
 
-  for i := 0 to High(Self.Tabs) do
-    if not Target.HasColor($48585D, 0, 100, Self.Tabs[i]) and
-      not Target.HasColor($1E2528, 0, 100, Self.Tabs[i]) then
-      Exit(ERSAchievementTab(i));
+  title := OCR.Recognize(Self.TabTitle, RSFonts.BOLD_SHADOW, [RSFonts.ORANGE, $3399FF], 3);
+
+  case title of
+    'Quest List': Result := ERSAchievementTab.QUESTS;
+    'Achievement Diaries': Result := ERSAchievementTab.DIARIES;
+    'Click here to see all': Result := ERSAchievementTab.ADVENTURE_PATHS;
+    else Result := ERSAchievementTab.SUMMARY;
+  end;
 end;
 
 (*
@@ -487,13 +492,21 @@ var
   i: Integer;
   slot: TRSDiarySlot;
 begin
+  if Self.Cache[diary] > 0 then
+    Exit(Self.Cache[diary]-1);
+
   if not Achievements.OpenTab(ERSAChievementTab.DIARIES) then Exit(-1);
   Self.ScrollTo(diary);
   slot := Self.GetSlot(diary);
+
+  if slot = Default(TRSDiarySlot) then
+    Exit;
 
   for i := 0 to 3 do
   begin
     if not Target.HasColor($14B537, 0, 1, slot.Levels[i]) then Break;
     Result += 1;
   end;
+
+  Self.Cache[diary] := Result+1;
 end;
