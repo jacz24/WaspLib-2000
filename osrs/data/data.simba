@@ -84,7 +84,7 @@ Enum representing item definition keys.
 Record responsible for holding item price data.
 *)
   TItemPriceData = record
-    high, highTime, low, lowTime: Integer;
+    High, HighTime, Low, LowTime: Integer;
   end;
 
 procedure TItemData.UpdateFile();
@@ -263,10 +263,10 @@ begin
   if Self.Disabled then Exit;
   if not Self.PricesJSON.Item[0].GetObject(id, json) then Exit;
 
-  Result.high := json.Item['high'].AsInt;
-  Result.highTime := json.Item['highTime'].AsInt;
-  Result.low := json.Item['low'].AsInt;
-  Result.lowTime := json.Item['lowTime'].AsInt;
+  Result.High := json.Item['high'].AsInt;
+  Result.HighTime := json.Item['highTime'].AsInt;
+  Result.Low := json.Item['low'].AsInt;
+  Result.LowTime := json.Item['lowTime'].AsInt;
 end;
 
 (*
@@ -285,7 +285,10 @@ function TItemData.GetPrice(item: TRSItem): Integer;
 var
   priceData: TItemPriceData;
 begin
-  if item.SimplifyName().Equals('coins', False) then Exit(1);
+  case item of
+    'coins', 'Coins', '995', '996', '997', '998',
+    '999', '1000', '1001', '1002', '1003', '1004': Exit(1);
+  end;
 
   priceData := Self.GetPriceData(item);
 
