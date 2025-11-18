@@ -29,10 +29,19 @@ begin
   case chunk of
     [49,54]:
     begin
-      if Achievements.Diaries.GetLevel(ERSAchievementDiary.VARROCK) > 1 then
-        graph^.AddTeleport([8565, 36522], @Self.TeleportGrandExchange);
+      if Stats.GetLevel(ERSSkill.MAGIC) < 25 then
+        Exit;
+      if Achievements.Diaries.GetLevel(ERSAchievementDiary.VARROCK) < 2 then
+        Exit;
+
+      //graph^.AddTeleport([8565, 36522], @Self.TeleportGrandExchange);
     end;
-    [50,53]: graph^.AddTeleport([8752, 36716], @Self.TeleportVarrock);
+    [50,53]:
+    begin
+      if Stats.GetLevel(ERSSkill.MAGIC) < 25 then
+        Exit;
+      graph^.AddTeleport([8752, 36716], @Self.TeleportVarrock);
+    end;
   end;
 end;
 

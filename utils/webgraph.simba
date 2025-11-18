@@ -26,13 +26,15 @@ Enum representing the type of nodes in a `TWebGraph`.
     BLOCKED
   );
 
+  TGraphNodeHandler = function (): Boolean  of object;
+
   TGraphNode = record
     Node: TPoint;
     Typ: EGraphNode;
-    Handle: function (): Boolean of object;
+    Handle: TGraphNodeHandler;
   end;
 
-function TGraphNode.Create(pt: TPoint; typ: EGraphNode = EGraphNode.NORMAL; handle: function (): Boolean  of object = nil): TGraphNode; static;
+function TGraphNode.Create(pt: TPoint; typ: EGraphNode = EGraphNode.NORMAL; handle: TGraphNodeHandler  = nil): TGraphNode; static;
 begin
   Result.Node := pt;
   Result.Typ := typ;
@@ -216,9 +218,11 @@ begin
         node.Indices := current.Indices + pathIdx;
 
         hyp := Hypot(p.X-q.X, p.Y-q.Y);
-        node.Score := current.Score + hyp + (hyp*Random()*Rnd-Rnd/2);
-        if Self.Nodes[pathIdx].Typ <> EGraphNode.NORMAL then
-          node.Score += 10;
+        case Self.Nodes[pathIdx].Typ of
+          EGraphNode.NORMAL: node.Score := current.Score + hyp + (hyp*Random()*rnd-rnd/2) + 1;
+          EGraphNode.TELEPORT, EGraphNode.FAIRYRING: node.Score := current.Score + hyp*0.9 + 5;
+          else node.Score := current.Score + hyp + (hyp*Random()*rnd-rnd/2) + 10;
+        end;
         queue += node;
       end;
     end;
@@ -409,7 +413,7 @@ begin
 end;
 
 
-procedure TWebGraph.AddLink(a, b: TPoint; typ: EGraphNode; handle: function (): Boolean of object);
+procedure TWebGraph.AddLink(a, b: TPoint; typ: EGraphNode; handle: TGraphNodeHandler);
 var
   i, j, n: Integer;
   tpa: TPointArray;
@@ -447,7 +451,7 @@ begin
   end;
 end;
 
-procedure TWebGraph.AddLink(a, b: TPoint; typ: EGraphNode; handleA, handleB: function (): Boolean of object); overload;
+procedure TWebGraph.AddLink(a, b: TPoint; typ: EGraphNode; handleA, handleB: TGraphNodeHandler); overload;
 var
   i, j, n: Integer;
   tpa: TPointArray;
@@ -485,7 +489,7 @@ begin
   end;
 end;
 
-procedure TWebGraph.AddLink(pt, a, b: TPoint; typ: EGraphNode; handle: function (): Boolean of object); overload;
+procedure TWebGraph.AddLink(pt, a, b: TPoint; typ: EGraphNode; handle: TGraphNodeHandler); overload;
 var
   i, j, n: Integer;
   tpa: TPointArray;
@@ -521,7 +525,7 @@ begin
   Self.Nodes[i] := TGraphNode.Create(pt, typ, @handle);
 end;
 
-procedure TWebGraph.AddTeleport(pt: TPoint; handle: function (): Boolean of object);
+procedure TWebGraph.AddTeleport(pt: TPoint; handle: TGraphNodeHandler);
 var
   i, j, n: Integer;
   tpa: TPointArray;

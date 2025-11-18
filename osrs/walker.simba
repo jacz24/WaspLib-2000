@@ -850,6 +850,12 @@ begin
   //Self._Path += path.First;
   for i := 0 to High(path)-1 do
   begin
+    if path[i+1].Typ = EGraphNode.TELEPORT then
+    begin
+      Self._Path += path[i+1];
+      Continue;
+    end;
+
     line := TPointArray.CreateFromLine(path[i].Node, path[i+1].Node);
 
     if path[i].Typ <> EGraphNode.NORMAL then
@@ -889,7 +895,15 @@ begin
   previous := index;
 
   nearest := Self._Path.NearestIndex(me);
+
   Self._Index := nearest;
+
+  if Self._Path[Self._Index].Typ = EGraphNode.TELEPORT then
+  begin
+    index := Self._Index;
+    Self._Node := EGraphNode.TELEPORT;
+    Exit(nearest > previous);
+  end;
 
   while (nearest < High(Self._Path)) and not Self.IsWalkable(Self._Path[nearest+1].Node, me, tmp, angle) do
     Inc(nearest);
@@ -977,7 +991,7 @@ Walker.WalkPath([[100,100],[120,120],[140,140],[160,160],[180,180]]);
 function TRSWalker.WalkPath(path: TGraphNodeArray; minDist: Integer = 0; debug: Boolean = False): Boolean;
 var
   me: TPoint;
-  idx, fails: Integer;
+  i, idx, fails: Integer;
   radians: Double;
 begin
   Self._WalkPathSetup(path);
