@@ -898,25 +898,48 @@ begin
 
   Self._Index := nearest;
 
-  if Self._Path[Self._Index].Typ = EGraphNode.TELEPORT then
+  while nearest < High(Self._Path) do
   begin
-    index := Self._Index;
-    Self._Node := EGraphNode.TELEPORT;
-    Exit(nearest > previous);
-  end;
+    if Self._Path[nearest].Typ = EGraphNode.TELEPORT then
+    begin
+      index := nearest;
+      Self._Node := EGraphNode.TELEPORT;
+      Exit(nearest > previous);
+    end;
 
-  while (nearest < High(Self._Path)) and not Self.IsWalkable(Self._Path[nearest+1].Node, me, tmp, angle) do
+    if Self.IsWalkable(Self._Path[nearest+1].Node, me, tmp, angle) then
+      Break;
     Inc(nearest);
+  end;
 
   furthest := nearest;
   if Self._Path[furthest].Typ = EGraphNode.NORMAL then
   begin
-    while (furthest < High(Self._Path)) and Self.IsWalkable(Self._Path[furthest+1].Node, me, tmp, angle) do
+    while furthest < High(Self._Path) do
+    begin
+      if Self._Path[furthest].Typ = EGraphNode.TELEPORT then
+      begin
+        index := furthest;
+        Self._Node := EGraphNode.TELEPORT;
+        Exit(nearest > previous);
+      end;
+
+      if Self._Path[furthest+1].Typ = EGraphNode.TELEPORT then
+      begin
+        index := furthest+1;
+        Self._Node := EGraphNode.TELEPORT;
+        Exit(nearest > previous);
+      end;
+
+      if not Self.IsWalkable(Self._Path[furthest+1].Node, me, tmp, angle) then
+        Break;
+
       if (Self._Path[Inc(furthest)].Typ <> EGraphNode.NORMAL) then
       begin
         Self._Node := Self._Path[furthest].Typ;
         Break;
       end;
+    end;
   end
   else
     Self._Node := Self._Path[furthest].Typ;
@@ -991,7 +1014,7 @@ Walker.WalkPath([[100,100],[120,120],[140,140],[160,160],[180,180]]);
 function TRSWalker.WalkPath(path: TGraphNodeArray; minDist: Integer = 0; debug: Boolean = False): Boolean;
 var
   me: TPoint;
-  i, idx, fails: Integer;
+  idx, fails: Integer;
   radians: Double;
 begin
   Self._WalkPathSetup(path);

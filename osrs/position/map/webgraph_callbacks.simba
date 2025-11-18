@@ -11,13 +11,27 @@ type
     Position: TWalkerPositionFunction;
   end;
 
-function TWebGraphCallbacks.TeleportGrandExchange(): Boolean;
+function TWebGraphCallbacks.CheckTeleportGrandExchange(): Boolean;
+begin
+  if Stats.GetLevel(ERSSkill.MAGIC) < 25 then Exit;
+  if Achievements.Diaries.GetLevel(ERSAchievementDiary.VARROCK) < 2 then Exit;
+  Result := Magic.ContainsSpell(ERSSpell.VARROCK_TELEPORT);
+end;
+
+function TWebGraphCallbacks.DoTeleportGrandExchange(): Boolean;
 begin
   if Magic.CastSpell(ERSSpell.VARROCK_TELEPORT, 'Grand Exchange') then
     Result := SleepUntil(Self.Position().InRange([8565, 36522], 60), 300, 5000);
 end;
 
-function TWebGraphCallbacks.TeleportVarrock(): Boolean;
+function TWebGraphCallbacks.CheckTeleportVarrock(): Boolean;
+begin
+  if Stats.GetLevel(ERSSkill.MAGIC) < 25 then Exit;
+  Result := Magic.Open() and Magic.ContainsSpell(ERSSpell.VARROCK_TELEPORT);
+end;
+
+
+function TWebGraphCallbacks.DoTeleportVarrock(): Boolean;
 begin
   if Magic.CastSpell(ERSSpell.VARROCK_TELEPORT, 'Cast') then
     Result := SleepUntil(Self.Position().InRange([8752, 36716], 60), 300, 5000);
@@ -29,18 +43,11 @@ begin
   case chunk of
     [49,54]:
     begin
-      if Stats.GetLevel(ERSSkill.MAGIC) < 25 then
-        Exit;
-      if Achievements.Diaries.GetLevel(ERSAchievementDiary.VARROCK) < 2 then
-        Exit;
-
-      //graph^.AddTeleport([8565, 36522], @Self.TeleportGrandExchange);
+      //graph^.AddTeleport([8565, 36522], @Self.CheckTeleportGrandExchange, @Self.DoTeleportGrandExchange);
     end;
     [50,53]:
     begin
-      if Stats.GetLevel(ERSSkill.MAGIC) < 25 then
-        Exit;
-      graph^.AddTeleport([8752, 36716], @Self.TeleportVarrock);
+      graph^.AddTeleport([8752, 36716], @Self.CheckTeleportVarrock, @Self.DoTeleportVarrock);
     end;
   end;
 end;

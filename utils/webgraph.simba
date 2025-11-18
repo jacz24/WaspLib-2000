@@ -9,7 +9,7 @@ but it was written from scratch by Torwent.
 {$DEFINE WL_WEBGRAPH_INCLUDED}
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
-{$R+}
+{$R-}
 type
 (*
 ## EGraphNode
@@ -26,18 +26,19 @@ Enum representing the type of nodes in a `TWebGraph`.
     BLOCKED
   );
 
-  TGraphNodeHandler = function (): Boolean  of object;
+  TGraphNodeFunction = function (): Boolean  of object;
 
   TGraphNode = record
     Node: TPoint;
     Typ: EGraphNode;
-    Handle: TGraphNodeHandler;
+    Check, Handle: TGraphNodeFunction;
   end;
 
-function TGraphNode.Create(pt: TPoint; typ: EGraphNode = EGraphNode.NORMAL; handle: TGraphNodeHandler  = nil): TGraphNode; static;
+function TGraphNode.Create(pt: TPoint; typ: EGraphNode = EGraphNode.NORMAL; check, handle: TGraphNodeFunction = nil): TGraphNode; static;
 begin
   Result.Node := pt;
   Result.Typ := typ;
+  Result.Check := @check;
   Result.Handle := @handle;
 end;
 
@@ -165,7 +166,7 @@ begin
   Result.Sort(weights, True);
 end;
 
-{$R+}
+{.$R+}
 
 function TWebGraph.FindPath(start, finish: Integer; rnd: Double = 0): TIntegerArray;
 type TNode = record Indices: TIntegerArray; Score: Double; end;
@@ -212,19 +213,36 @@ begin
     p := Self.Nodes[cIdx].Node;
     for pathIdx in Self.Paths[cIdx] do
     begin
-      if not visited[pathIdx] then
-      begin
-        q := Self.Nodes[pathIdx].Node;
-        node.Indices := current.Indices + pathIdx;
+      if visited[pathIdx] then
+        Continue;
 
-        hyp := Hypot(p.X-q.X, p.Y-q.Y);
+      q := Self.Nodes[pathIdx].Node;
+      node.Indices := current.Indices + pathIdx;
+
+      hyp := Hypot(p.X-q.X, p.Y-q.Y);
+
+      if @Self.Nodes[pathIdx].Check = nil then
+      begin
         case Self.Nodes[pathIdx].Typ of
           EGraphNode.NORMAL: node.Score := current.Score + hyp + (hyp*Random()*rnd-rnd/2) + 1;
+          EGraphNode.DOOR:   node.Score := current.Score + hyp + (hyp*Random()*rnd-rnd/2) + 10;
+          else node.Score := current.Score + hyp + (hyp*Random()*rnd-rnd/2) + 100;
+        end;
+        queue += node;
+        Continue;
+      end;
+
+      if not Self.Nodes[pathIdx].Check() then
+        node.Score := current.Score + hyp + (hyp*Random()*rnd-rnd/2) + 100
+      else
+      begin
+        case Self.Nodes[pathIdx].Typ of
+          EGraphNode.DOOR: node.Score := current.Score + hyp + (hyp*Random()*rnd-rnd/2) + 10;
           EGraphNode.TELEPORT, EGraphNode.FAIRYRING: node.Score := current.Score + hyp*0.9 + 5;
           else node.Score := current.Score + hyp + (hyp*Random()*rnd-rnd/2) + 10;
         end;
-        queue += node;
       end;
+      queue += node;
     end;
   end;
 end;
@@ -244,7 +262,6 @@ begin
 
   if nS[0] = nG[0] then
     Exit([nodeA, nodeB]);
-
 
   if (Length(nG) = 1) and (Self.Paths[nG[0]] = []) then
     raise GetDebugLn('WebGraph', 'Points ' + ToStr(a) + ' and ' + ToStr(b) + ' don''t connect! No paths available.');
@@ -413,7 +430,7 @@ begin
 end;
 
 
-procedure TWebGraph.AddLink(a, b: TPoint; typ: EGraphNode; handle: TGraphNodeHandler);
+procedure TWebGraph.AddLink(a, b: TPoint; typ: EGraphNode; handle: TGraphNodeFunction);
 var
   i, j, n: Integer;
   tpa: TPointArray;
@@ -451,7 +468,7 @@ begin
   end;
 end;
 
-procedure TWebGraph.AddLink(a, b: TPoint; typ: EGraphNode; handleA, handleB: TGraphNodeHandler); overload;
+procedure TWebGraph.AddLink(a, b: TPoint; typ: EGraphNode; handleA, handleB: TGraphNodeFunction); overload;
 var
   i, j, n: Integer;
   tpa: TPointArray;
@@ -489,7 +506,7 @@ begin
   end;
 end;
 
-procedure TWebGraph.AddLink(pt, a, b: TPoint; typ: EGraphNode; handle: TGraphNodeHandler); overload;
+procedure TWebGraph.AddLink(pt, a, b: TPoint; typ: EGraphNode; handle: TGraphNodeFunction); overload;
 var
   i, j, n: Integer;
   tpa: TPointArray;
@@ -525,13 +542,13 @@ begin
   Self.Nodes[i] := TGraphNode.Create(pt, typ, @handle);
 end;
 
-procedure TWebGraph.AddTeleport(pt: TPoint; handle: TGraphNodeHandler);
+procedure TWebGraph.AddTeleport(pt: TPoint; check, handle: TGraphNodeFunction);
 var
   i, j, n: Integer;
   tpa: TPointArray;
 begin
   i := Length(Self.Nodes);
-  Self.Nodes += [pt, EGraphNode.TELEPORT, @handle];
+  Self.Nodes += TGraphNode.Create(pt, EGraphNode.TELEPORT, @check, @handle);
   SetLength(Self.Paths, Length(Self.Nodes));
 
   tpa := Self.Tree.KNearest(pt, 12);
@@ -560,7 +577,7 @@ var
   tpa: TPointArray;
 begin
   i := Length(Self.Nodes);
-  Self.Nodes += [pt, EGraphNode.FAIRYRING, nil];
+  Self.Nodes += TGraphNode.Create(pt, EGraphNode.FAIRYRING, nil);
   SetLength(Self.Paths, Length(Self.Nodes));
 
   tpa := Self.Tree.KNearest(pt, 8);
