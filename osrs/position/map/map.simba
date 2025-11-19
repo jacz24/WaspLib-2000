@@ -118,6 +118,7 @@ begin
       @Self.Loader.Graph, Self.Loader.Map
     );
     Self.Walker.Name := 'Map.Walker';
+
     Self.IsSetup := True;
   end;
 end;

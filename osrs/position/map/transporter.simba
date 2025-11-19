@@ -1,0 +1,147 @@
+(*
+# Transporter
+Responsible for transporting you from one place to another.
+This is not meant to be used directly but through {ref}`TRSWalker` WebWalking.
+*)
+
+{$DEFINE WL_TRANSPORTER_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+{.$DEFINE WL_TRANSPORTER_DEBUG}
+
+type
+(*
+## TTransporter type
+Main record responsible for transporting the player from one place to another.
+*)
+  TTransporter = record
+    Position: TWalkerPositionFunction;
+  end;
+
+function TTransporter.CheckTeleportGrandExchange(): Boolean;
+begin
+  {$IFDEF WL_TRANSPORTER_DEBUG}
+  WriteLn GetDebugLn('Transporter', 'Checking teleport to Grand Exchange spell.');
+  {$ENDIF}
+  if Stats.GetLevel(ERSSkill.MAGIC) < 25 then Exit;
+  if Achievements.Diaries.GetLevel(ERSAchievementDiary.VARROCK) < 2 then Exit;
+  Result := Magic.ContainsSpell(ERSSpell.VARROCK_TELEPORT);
+end;
+
+function TTransporter.DoTeleportGrandExchange(): Boolean;
+begin
+  {$IFDEF WL_TRANSPORTER_DEBUG}
+  WriteLn GetDebugLn('Transporter', 'Casting teleport to Grand Exchange.');
+  {$ENDIF}
+  if Magic.CastSpell(ERSSpell.VARROCK_TELEPORT, 'Grand Exchange') then
+    Result := SleepUntil(Self.Position().InRange([8565, 36522], 60), 300, 5000);
+end;
+
+
+function TTransporter.CheckTeleportVarrock(): Boolean;
+begin
+  {$IFDEF WL_TRANSPORTER_DEBUG}
+  WriteLn GetDebugLn('Transporter', 'Checking teleport to Varrock spell.');
+  {$ENDIF}
+  if Stats.GetLevel(ERSSkill.MAGIC) < 25 then Exit;
+  Result := Magic.Open() and Magic.ContainsSpell(ERSSpell.VARROCK_TELEPORT);
+end;
+
+function TTransporter.DoTeleportVarrock(): Boolean;
+begin
+  {$IFDEF WL_TRANSPORTER_DEBUG}
+  WriteLn GetDebugLn('Transporter', 'Casting teleport to Varrock.');
+  {$ENDIF}
+  if Magic.CastSpell(ERSSpell.VARROCK_TELEPORT, 'Cast') then
+    Result := SleepUntil(Self.Position().InRange([8752, 36716], 60), 300, 5000);
+end;
+
+
+function TTransporter.CheckTeleportLumbridge(): Boolean;
+begin
+  {$IFDEF WL_TRANSPORTER_DEBUG}
+  WriteLn GetDebugLn('Transporter', 'Checking teleport to Lumbridge spell.');
+  {$ENDIF}
+  if Stats.GetLevel(ERSSkill.MAGIC) < 31 then Exit;
+  Result := Magic.Open() and Magic.ContainsSpell(ERSSpell.LUMBRIDGE_TELEPORT);
+end;
+
+function TTransporter.DoTeleportLumbridge(): Boolean;
+begin
+  {$IFDEF WL_TRANSPORTER_DEBUG}
+  WriteLn GetDebugLn('Transporter', 'Casting teleport to Lumbridge.');
+  {$ENDIF}
+  if Magic.CastSpell(ERSSpell.LUMBRIDGE_TELEPORT, 'Cast') then
+    Result := SleepUntil(Self.Position().InRange([8752, 36716], 60), 300, 5000);
+end;
+
+
+function TTransporter.CheckTeleportFalador(): Boolean;
+begin
+  {$IFDEF WL_TRANSPORTER_DEBUG}
+  WriteLn GetDebugLn('Transporter', 'Checking teleport to Falador spell.');
+  {$ENDIF}
+  if Stats.GetLevel(ERSSkill.MAGIC) < 31 then Exit;
+  Result := Magic.Open() and Magic.ContainsSpell(ERSSpell.FALADOR_TELEPORT);
+end;
+
+function TTransporter.DoTeleportFalador(): Boolean;
+begin
+  {$IFDEF WL_TRANSPORTER_DEBUG}
+  WriteLn GetDebugLn('Transporter', 'Casting teleport to Falador.');
+  {$ENDIF}
+  if Magic.CastSpell(ERSSpell.FALADOR_TELEPORT, 'Cast') then
+    Result := SleepUntil(Self.Position().InRange([8752, 36716], 60), 300, 5000);
+end;
+
+
+
+procedure TTransporter.AddTeleports(graph: PWebGraph; chunk: TPoint);
+begin
+  case chunk of
+    [46,52]:
+    begin
+      graph^.AddTeleport([7764, 36906], @Self.CheckTeleportFalador, @Self.DoTeleportFalador);
+    end;
+
+    [49,54]:
+    begin
+      graph^.AddTeleport([8565, 36522], @Self.CheckTeleportGrandExchange, @Self.DoTeleportGrandExchange);
+    end;
+
+    [50,50]:
+    begin
+      graph^.AddTeleport([8792, 37554], @Self.CheckTeleportLumbridge, @Self.DoTeleportLumbridge);
+    end;
+
+    [50,53]:
+    begin
+      graph^.AddTeleport([8752, 36716], @Self.CheckTeleportVarrock, @Self.DoTeleportVarrock);
+    end;
+  end;
+end;
+
+procedure TTransporter.Setup(position: TWalkerPositionFunction; mapLoader: PRSMapLoader);
+var
+  chunk: TPoint;
+  region: TRSMapRegion;
+begin
+  Self.Position := @position;
+
+  for region in mapLoader^.Regions do
+    for chunk in region.Chunks do
+    begin
+      Self.AddTeleports(@mapLoader^.Graph, chunk);
+      //Self.AddShortcuts(graph, chunk);
+      //Self.AddWhatever(graph, chunk);
+    end;
+end;
+
+{$H-}
+var
+(*
+## Transporter variable
+Global {ref}`TTransporter` variable.
+*)
+  Transporter: TTransporter;
+{$H+}

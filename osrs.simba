@@ -17,6 +17,7 @@ less confusing way.
 {$DEFINE WL_DEBUG_UPTEXT}
 {$DEFINE WL_DEBUG_INTERFACES}
 {$DEFINE WL_GENERATE_GRAPH_ALWAYS}
+{$DEFINE WL_TRANSPORTER_DEBUG}
 ```
 These are the main compiler directives available in the library.
 
@@ -162,7 +163,7 @@ Summary: It includes this file until the current file is reached.
 {$IFNDEF WL_INVENTORY_FORM_INCLUDED}        {$INCLUDE_ONCE osrs/interfaces/handlers/inventory_form.simba}
 {$IFNDEF WL_PRAYER_FORM_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/handlers/prayer_form.simba}
 {$IFNDEF WL_CONSUMABLES_INCLUDED}           {$INCLUDE_ONCE osrs/interfaces/handlers/consumables.simba}
-{$IFNDEF WL_WEBGRAPH_CALLBACKS_INCLUDED}    {$INCLUDE_ONCE osrs/position/map/webgraph_callbacks.simba}
+{$IFNDEF WL_TRANSPORTER_INCLUDED}           {$INCLUDE_ONCE osrs/position/map/transporter.simba}
 
 
 {$IFNDEF WL_ANTIBAN_TASKS_INCLUDED}         {$INCLUDE_ONCE osrs/antiban/antibantasks.simba}

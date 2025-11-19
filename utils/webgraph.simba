@@ -10,6 +10,13 @@ but it was written from scratch by Torwent.
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
 {$R-}
+
+{$IFDEF RANGECHECKS}
+begin
+  WriteLn GetDebugLn('WebGraph', 'Range checks are enabled for webgraphs, these should be disabled in production!', ELogLevel.WARN);
+end;
+{$ENDIF}
+
 type
 (*
 ## EGraphNode
@@ -166,7 +173,6 @@ begin
   Result.Sort(weights, True);
 end;
 
-{.$R+}
 
 function TWebGraph.FindPath(start, finish: Integer; rnd: Double = 0): TIntegerArray;
 type TNode = record Indices: TIntegerArray; Score: Double; end;
@@ -187,7 +193,7 @@ var queue: array of TNode;
   end;
 
 var
-  visited: TBooleanArray;
+  visited, checked: TBooleanArray;
   cIdx, pathIdx, i: Integer;
   current, node: TNode;
   p, q: TPoint;
@@ -195,6 +201,7 @@ var
 begin
   queue   := [[[start],0]];
   SetLength(visited, Length(Self.Nodes));
+  SetLength(checked, Length(Self.Nodes));
 
   for i := 0 to High(Self.Nodes) do
     visited[i] := Self.Nodes[i].Typ = EGraphNode.BLOCKED;
@@ -203,14 +210,17 @@ begin
   begin
     current := GetNextShortest();
     cIdx := current.Indices[High(current.Indices)];
+
     if visited[cIdx] then
       Continue;
+
     visited[cIdx] := True;
 
-    if (cIdx = finish) then
+    if cIdx = finish then
       Exit(current.Indices);
 
     p := Self.Nodes[cIdx].Node;
+
     for pathIdx in Self.Paths[cIdx] do
     begin
       if visited[pathIdx] then
@@ -232,17 +242,19 @@ begin
         Continue;
       end;
 
-      if not Self.Nodes[pathIdx].Check() then
-        node.Score := current.Score + hyp + (hyp*Random()*rnd-rnd/2) + 100
-      else
+      if checked[pathIdx] or Self.Nodes[pathIdx].Check() then
       begin
+        checked[pathIdx] := True;
         case Self.Nodes[pathIdx].Typ of
           EGraphNode.DOOR: node.Score := current.Score + hyp + (hyp*Random()*rnd-rnd/2) + 10;
-          EGraphNode.TELEPORT, EGraphNode.FAIRYRING: node.Score := current.Score + hyp*0.9 + 5;
+          EGraphNode.TELEPORT, EGraphNode.FAIRYRING: node.Score := current.Score + hyp*0.8 + 5;
           else node.Score := current.Score + hyp + (hyp*Random()*rnd-rnd/2) + 10;
         end;
+        queue += node;
+        Continue;
       end;
-      queue += node;
+
+      visited[pathIdx] := True;
     end;
   end;
 end;
@@ -621,7 +633,6 @@ begin
   Self.ObjectClusters   += graph.ObjectClusters;
 end;
 
-{$R-}
 procedure TWebGraph.Draw(img: TImage);
 var
   i,j: Integer;
