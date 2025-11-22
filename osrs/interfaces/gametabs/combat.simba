@@ -106,7 +106,7 @@ type
 Main record responsible with handling the combat gametab.
 *)
   TRSCombat = record
-    AutoRetaliateBox, SpecialAttackBox,
+    SailingBox, AutoRetaliateBox, SpecialAttackBox,
     CategoryBox, _StylesBox: TBox;
     _StyleBoxes: array [0..2] of TBoxArray;
   end;
@@ -115,25 +115,11 @@ procedure TRSCombat.SetupGameTab();
 begin
   with GameTab.TopLeft do
   begin
-    Self.AutoRetaliateBox.X1 := X+18;
-    Self.AutoRetaliateBox.Y1 := Y+155;
-    Self.AutoRetaliateBox.X2 := X+165;
-    Self.AutoRetaliateBox.Y2 := Y+196;
-
-    Self.SpecialAttackBox.X1 := X+18;
-    Self.SpecialAttackBox.Y1 := Y+206;
-    Self.SpecialAttackBox.X2 := X+165;
-    Self.SpecialAttackBox.Y2 := Y+229;
-
-    Self.CategoryBox.X1 := X+22;
-    Self.CategoryBox.Y1 := Y+235;
-    Self.CategoryBox.X2 := X+161;
-    Self.CategoryBox.Y2 := Y+255;
-
-    Self._StylesBox.X1 := X+18;
-    Self._StylesBox.Y1 := Y+47;
-    Self._StylesBox.X2 := X+165;
-    Self._StylesBox.Y2 := Y+148;
+    Self.SailingBox := [X-3, Y+1, X+22, Y+26];
+    Self.AutoRetaliateBox := [X+18, Y+155, X+165, Y+196];
+    Self.SpecialAttackBox := [X+18, Y+206, X+165, Y+229];
+    Self.CategoryBox := [X+22, Y+235, X+161, Y+255];
+    Self._StylesBox := [X+18, Y+47, X+165, Y+148];
 
     Self._StyleBoxes[0] := TBoxArray.Create([X+18,Y+47], 2, 2, 68, 44, [11, 10]);
     Self._StyleBoxes[1] := Copy(Self._StyleBoxes[0], 0, 3);
@@ -157,7 +143,7 @@ WriteLn Combat.IsOpen();
 *)
 function TRSCombat.IsOpen(): Boolean;
 begin
-  Result := GameTabs.IsOpen(ERSGameTab.COMBAT);
+  Result := GameTabs.IsOpen(ERSGameTab.COMBAT) and not Sailing.IsOpen();
 end;
 
 (*
@@ -175,6 +161,11 @@ WriteLn Combat.Open();
 function TRSCombat.Open(): Boolean;
 begin
   Result := GameTabs.Open(ERSGameTab.COMBAT);
+  if Result and not Self.IsOpen() then
+  begin
+    Mouse.Click(Self.SailingBox, EMouseButton.LEFT);
+    Result := SleepUntil(Self.IsOpen(), RandomMode(100, 50, 1500), 4*TICK);
+  end;
 end;
 
 

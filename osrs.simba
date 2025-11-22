@@ -90,6 +90,7 @@ Summary: It includes this file until the current file is reached.
 {$IFNDEF WL_SLOT_INTERFACE_INCLUDED}        {$INCLUDE_ONCE osrs/interfaces/slotinterface.simba}
 {$IFNDEF WL_ITEM_INTERFACE_INCLUDED}        {$INCLUDE_ONCE osrs/interfaces/iteminterface.simba}
 
+{$IFNDEF WL_SAILING_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/gametabs/sailing.simba}
 {$IFNDEF WL_COMBAT_INCLUDED}                {$INCLUDE_ONCE osrs/interfaces/gametabs/combat.simba}
 {$IFNDEF WL_STATS_INCLUDED}                 {$INCLUDE_ONCE osrs/interfaces/gametabs/stats.simba}
 {$IFNDEF WL_ACHIEVEMENTS_INCLUDED}          {$INCLUDE_ONCE osrs/interfaces/gametabs/achievements.simba}
@@ -183,4 +184,4 @@ Summary: It includes this file until the current file is reached.
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
-{$ENDIF}{$ENDIF}
+{$ENDIF}{$ENDIF}{$ENDIF}

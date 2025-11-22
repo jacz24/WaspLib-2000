@@ -24,7 +24,7 @@ end;
 
 type
 (*
-## TWebGraphGenerator
+## TWebGraphGenerator type
 Record responsible for generating webgraphs from collision map images.
 *)
   TWebGraphGenerator = record

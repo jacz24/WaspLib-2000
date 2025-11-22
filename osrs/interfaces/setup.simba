@@ -16,6 +16,7 @@ begin
   GameTabs.SetupInterface(); //Has to be before gametab
   GameTab.SetupInterface();  //Has to be before all gametabs
 
+  Sailing.SetupGameTab();
   Combat.SetupGameTab();
   Stats.SetupGameTab();
   Achievements.SetupGameTab();

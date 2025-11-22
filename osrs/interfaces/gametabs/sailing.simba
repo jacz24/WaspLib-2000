@@ -1,0 +1,153 @@
+(*
+# Sailing
+Methods to interact with the sailing gametab:
+```{figure} ../../images/sailingtab.png
+```
+*)
+{$DEFINE WL_SAILING_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+(*
+## ERSSailingTab
+```pascal
+ERSSailingTab = enum(FACILITIES, STATS, CREW);
+```
+Enum represinting the available sailing tabs.
+*)
+  ERSSailingTab = enum(FACILITIES, STATS, CREW);
+
+(*
+## TRSSailing
+Main record responsible with handling the Sailing gametab.
+*)
+  TRSSailing = record
+    CombatBox, ShipNameBox, ShipHealthBox, TabTitle: TBox;
+    Tabs: TBoxArray;
+  end;
+
+procedure TRSSailing.SetupGameTab();
+begin
+  with GameTab.Bounds do
+  begin
+    Self.CombatBox := [X1-3, Y1+1, X1+22, Y1+26];
+    Self.ShipNameBox := [X1+26, Y1+4, X2-2, Y1+26];
+    Self.ShipHealthBox := [X1+8, Y1+30, X2-6, Y1+42];
+
+    Self.Tabs := TBoxArray.Create([X1+2, Y1+46], 3, 1, 55, 20, [7,0]);
+    Self.TabTitle := [X1+32, Y1+68, X2-32, Y1+82];
+  end;
+end;
+
+(*
+## Sailing.IsOpen
+```pascal
+function TRSSailing.IsOpen(): Boolean;
+```
+Returns true/false if the sailing tab is open.
+
+Example:
+```pascal
+WriteLn Sailing.IsOpen();
+```
+*)
+function TRSSailing.IsOpen(): Boolean;
+begin
+  Result := Target.HasColor([$1ABD1A, 7, EColorSpace.RGB, [1.247, 0.507, 1.247]], 1, Self.ShipHealthBox);
+end;
+
+(*
+## Sailing.Open
+```pascal
+function TRSSailing.Open(): Boolean;
+```
+Attempts to open the sailing gametab.
+
+Example:
+```pascal
+WriteLn Sailing.Open();
+```
+*)
+function TRSSailing.Open(): Boolean;
+begin
+  Result := GameTabs.Open(ERSGameTab.COMBAT);
+  if Result and not Self.IsOpen() then
+  begin
+    Mouse.Click(Self.CombatBox, EMouseButton.LEFT);
+    Result := SleepUntil(Self.IsOpen(), RandomMode(100, 50, 1500), 4*TICK);
+  end;
+end;
+
+
+property TRSSailing.ShipName: String;
+begin
+  Result := OCR.Recognize(Self.ShipNameBox, RSFonts.BOLD_SHADOW, [RSFonts.ORANGE], 0);
+end;
+
+property TRSSailing.ShipHealth: Integer;
+var
+  str: String;
+begin
+  str := OCR.Recognize(Self.ShipHealthBox, RSFonts.PLAIN_11, [RSFonts.WHITE], 0);
+  Result := str.Before('/').ExtractInteger();
+end;
+
+(*
+## Sailing.GetTab
+```pascal
+function TRSSailing.GetTab():  ERSSailingTab;
+```
+Returns the currently active {ref}`ERSSailingTab`.
+
+Example:
+```pascal
+WriteLn Sailing.GetTab();
+```
+*)
+function TRSSailing.GetTab(): ERSSailingTab;
+var
+  title: String;
+begin
+  title := OCR.Recognize(Self.TabTitle, RSFonts.PLAIN_12, [RSFonts.ORANGE], 0);
+
+  WriteLn title;
+  case title of
+    'Facilities': Result := ERSSailingTab.FACILITIES;
+    'Stats': Result := ERSSailingTab.STATS;
+    'Crew': Result := ERSSailingTab.CREW;
+  end;
+end;
+
+(*
+## Sailing.OpenTab
+```pascal
+function TRSSailing.OpenTab(tab:  ERSSailingTab): Boolean;
+```
+Attempts to open the specified `tab` {ref}`ERSSailingTab`.
+
+Example:
+```pascal
+WriteLn Sailing.OpenTab(ERSSailingTab.CREW);
+```
+*)
+function TRSSailing.OpenTab(tab: ERSSailingTab): Boolean;
+var
+  b: TBox;
+begin
+  if not Self.Open() then
+    Exit;
+  if tab = Self.GetTab() then
+    Exit(True);
+
+  b := Self.Tabs[tab];
+
+  Mouse.Click(b, EMouseButton.LEFT);
+  Result := SleepUntil(Self.GetTab() = tab, RandomMode(100, 50, 1500), 4*TICK);
+end;
+
+var
+(*
+## Sailing variable
+Global {ref}`TRSSailing` variable.
+*)
+  Sailing: TRSSailing;
