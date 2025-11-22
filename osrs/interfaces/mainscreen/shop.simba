@@ -436,11 +436,3 @@ var
 Global {ref}`TRSShop` variable.
 *)
   Shop: TRSShop;
-
-
-function TRSGameTabs.GetCurrent(): ERSGameTab; override;
-begin
-  Result := inherited;
-  if (Result = ERSGameTab.NONE) and Shop.IsOpen() then
-    Result := ERSGameTab.INVENTORY;
-end;

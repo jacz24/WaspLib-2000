@@ -95,6 +95,8 @@ begin
 
   if Bank.IsOpen() then Exit(ERSGameTab.INVENTORY);
 
+  if Shop.IsOpen() then Exit(ERSGameTab.INVENTORY);
+
   if not HouseOptions.IsOpen() then Exit;
   Result := ERSGameTab.OPTIONS;
   if RSMouseZoom.SettingChecked then Exit;

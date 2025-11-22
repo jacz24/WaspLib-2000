@@ -76,8 +76,14 @@ begin
       if Self.Path <> [] then
       begin
         for i := 0 to High(Self.Path)-1 do
-          tpa += TPointArray.CreateFromLine(Self.Path[i].Node, Self.Path[i+1].Node);
-        canvas.DrawPoints(tpa, $FF0000);
+        begin
+          tpa := TPointArray.CreateFromLine(Self.Path[i].Node, Self.Path[i+1].Node);
+          case Self.Path[i+1].Typ of
+            EGraphNode.TELEPORT: canvas.DrawPoints(tpa.Grow(1), $3388FF);
+            else canvas.DrawPoints(tpa, $FF0000);
+          end;
+        end;
+
       end;
     end;
   end;
@@ -101,7 +107,7 @@ begin
   Self.Coordinate.Caption := Format('[%d, %d]', [g.X, g.Y]);
 
   Self.Path := [];
-  if (shift = [ELazShiftStates.Shift]) and (Self.Selected > -1) then
+  if (ELazShiftStates.Shift in shift) and (Self.Selected > -1) then
   begin
     i := Self.Graph.Nodes.NearestIndex(pt);
 

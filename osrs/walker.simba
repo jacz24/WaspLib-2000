@@ -212,9 +212,7 @@ begin
   vector := vector.Rotate(-radians, Minimap.Center.ToVec2());
   me := Self.GetLocal(me);
 
-  h := Self.Height(me - [1,3], False) + Self.Height(me + [3,-3], False) +
-       Self.Height(me + [3,1], False) + Self.Height(me - [1,1], False);
-  h := h/4;
+  h := Self.Height(me, False);
 
   currLoc := me + vector.ToPoint() - Minimap.Center;
 
@@ -222,10 +220,10 @@ begin
   size.Y := size.Y*2;
 
   corners := [
-    [vector.X-size.X, vector.Y-size.Y, Self.Height(currLoc - [1,3],  False) - h],
-    [vector.X+size.X, vector.Y-size.Y, Self.Height(currLoc + [3,-3], False) - h],
-    [vector.X+size.X, vector.Y+size.Y, Self.Height(currLoc + [3,1],  False) - h],
-    [vector.X-size.X, vector.Y+size.Y, Self.Height(currLoc - [1,1],  False) - h]
+    [vector.X-size.X, vector.Y-size.Y, Self.Height(currLoc + [-1,-1], False) - h],
+    [vector.X+size.X, vector.Y-size.Y, Self.Height(currLoc + [1,-1],  False) - h],
+    [vector.X+size.X, vector.Y+size.Y, Self.Height(currLoc + [1,1],   False) - h],
+    [vector.X-size.X, vector.Y+size.Y, Self.Height(currLoc + [-1,1],  False) - h]
   ];
 
   arr := Projection.Run(corners, radians);
@@ -247,9 +245,7 @@ begin
   vector := vector.Rotate(-radians, Minimap.Center.ToVec2());
   me := Self.GetLocal(me);
 
-  h := Self.Height(me - [1,3], False) + Self.Height(me + [3,-3], False) +
-       Self.Height(me + [3,1], False) + Self.Height(me - [1,1], False);
-  h := h/4;
+  h := Self.Height(me, False);
 
   currLoc := me + vector.ToPoint() - Minimap.Center;
 
@@ -257,14 +253,15 @@ begin
   size.Y := size.Y*2;
 
   corners := [
-    [vector.X-size.X, vector.Y-size.Y, Self.Height(currLoc - [1,3],  False) - h],
-    [vector.X+size.X, vector.Y-size.Y, Self.Height(currLoc + [3,-3], False) - h],
-    [vector.X+size.X, vector.Y+size.Y, Self.Height(currLoc + [3,1],  False) - h],
-    [vector.X-size.X, vector.Y+size.Y, Self.Height(currLoc - [1,1],  False) - h],
-    [vector.X-size.X, vector.Y-size.Y, Self.Height(currLoc - [1,3],  False) - h+size.Z],
-    [vector.X+size.X, vector.Y-size.Y, Self.Height(currLoc + [3,-3], False) - h+size.Z],
-    [vector.X+size.X, vector.Y+size.Y, Self.Height(currLoc + [3,1],  False) - h+size.Z],
-    [vector.X-size.X, vector.Y+size.Y, Self.Height(currLoc - [1,1],  False) - h+size.Z]
+    [vector.X-size.X, vector.Y-size.Y, Self.Height(currLoc + [-1,-1], False) - h],
+    [vector.X+size.X, vector.Y-size.Y, Self.Height(currLoc + [1,-1],  False) - h],
+    [vector.X+size.X, vector.Y+size.Y, Self.Height(currLoc + [1,1],   False) - h],
+    [vector.X-size.X, vector.Y+size.Y, Self.Height(currLoc + [-1,1],  False) - h],
+
+    [vector.X-size.X, vector.Y-size.Y, Self.Height(currLoc + [-1,-1], False) - h + size.Z],
+    [vector.X+size.X, vector.Y-size.Y, Self.Height(currLoc + [1,-1],  False) - h + size.Z],
+    [vector.X+size.X, vector.Y+size.Y, Self.Height(currLoc + [1,1],   False) - h + size.Z],
+    [vector.X-size.X, vector.Y+size.Y, Self.Height(currLoc + [-1,1],  False) - h + size.Z]
   ];
 
   arr := Projection.Run(corners, radians);
@@ -559,7 +556,7 @@ begin
 
     quad := Self.GetQuadMS(me, pt, [0.9,0.9], Minimap.CompassRadians);
     tile := quad.Corners.Connect().ShapeFill();
-    tile := tile.ExtractBox(MainScreen.Bounds);
+    tile := MainScreen.Filter(tile);
     if tile = [] then Exit;
 
     Mouse.Move(tile.RandomMean());
@@ -613,12 +610,12 @@ end;
 (*
 ## Walker.IsWalkable
 ```pascal
-function TRSWalker.IsWalkable(mapPoint: TPoint; me: TPoint; out mmPoint: TPoint; radians: Double): Boolean;
+function TRSWalker.IsWalkable(mapPoint: TPoint; me: TPoint; out mmPoint: TPoint; radians: Single): Boolean;
 ```
 Internal method used by walker to decide if the destination point is within 1 click reach.
 You will probably never need to call this directly.
 *)
-function TRSWalker.IsWalkable(mapPoint, me: TPoint; out mmPoint: TPoint; radians: Double): Boolean;
+function TRSWalker.IsWalkable(mapPoint, me: TPoint; out mmPoint: TPoint; radians: Single): Boolean;
 var
   tile: TPointArray;
   count: Integer;
@@ -630,10 +627,10 @@ begin
   tile := Self.GetQuadMS(me, mapPoint, [0.9,0.9], radians).Corners.Connect().ShapeFill();
   count := Length(tile);
 
-  tile := tile.ExtractBox(MainScreen.Bounds);
+  tile := MainScreen.Filter(tile);
   if tile = [] then Exit;
 
-  Result := (Length(tile) / count * 100) > 50;
+  Result := (Length(tile) / count * 100) > 35; //tile is 35% visible
 end;
 
 function TRSWalker._WalkStepHelper(me, mapPoint: TPoint; randomness: Integer; out minimapPoint: TPoint; out shouldExit: Boolean): Boolean;
@@ -853,6 +850,12 @@ begin
   //Self._Path += path.First;
   for i := 0 to High(path)-1 do
   begin
+    if path[i+1].Typ = EGraphNode.TELEPORT then
+    begin
+      Self._Path += path[i+1];
+      Continue;
+    end;
+
     line := TPointArray.CreateFromLine(path[i].Node, path[i+1].Node);
 
     if path[i].Typ <> EGraphNode.NORMAL then
@@ -892,20 +895,51 @@ begin
   previous := index;
 
   nearest := Self._Path.NearestIndex(me);
+
   Self._Index := nearest;
 
-  while (nearest < High(Self._Path)) and not Self.IsWalkable(Self._Path[nearest+1].Node, me, tmp, angle) do
+  while nearest < High(Self._Path) do
+  begin
+    if Self._Path[nearest].Typ = EGraphNode.TELEPORT then
+    begin
+      index := nearest;
+      Self._Node := EGraphNode.TELEPORT;
+      Exit(nearest > previous);
+    end;
+
+    if Self.IsWalkable(Self._Path[nearest+1].Node, me, tmp, angle) then
+      Break;
     Inc(nearest);
+  end;
 
   furthest := nearest;
   if Self._Path[furthest].Typ = EGraphNode.NORMAL then
   begin
-    while (furthest < High(Self._Path)) and Self.IsWalkable(Self._Path[furthest+1].Node, me, tmp, angle) do
+    while furthest < High(Self._Path) do
+    begin
+      if Self._Path[furthest].Typ = EGraphNode.TELEPORT then
+      begin
+        index := furthest;
+        Self._Node := EGraphNode.TELEPORT;
+        Exit(nearest > previous);
+      end;
+
+      if Self._Path[furthest+1].Typ = EGraphNode.TELEPORT then
+      begin
+        index := furthest+1;
+        Self._Node := EGraphNode.TELEPORT;
+        Exit(nearest > previous);
+      end;
+
+      if not Self.IsWalkable(Self._Path[furthest+1].Node, me, tmp, angle) then
+        Break;
+
       if (Self._Path[Inc(furthest)].Typ <> EGraphNode.NORMAL) then
       begin
         Self._Node := Self._Path[furthest].Typ;
         Break;
       end;
+    end;
   end
   else
     Self._Node := Self._Path[furthest].Typ;

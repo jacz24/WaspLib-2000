@@ -24,11 +24,11 @@ begin
   filename := PATH_SEP + ToStr(chunk.X) + '-' + ToStr(chunk.Y) + '.json';
   cachename := Map.Loader.CacheDir + 'objects' + PATH_SEP + ToStr(plane) + filename;
 
-  if FileExists(cachename) then
-  begin
-    Result := new TJSONParser();
-    Result.Load(cachename);
-  end;
+  if not FileExists(cachename) then
+    Exit(nil);
+
+  Result := new TJSONParser();
+  Result.Load(cachename);
 end;
 
 (*

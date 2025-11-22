@@ -49,7 +49,7 @@ Main record used to interact with the {ref}`Minimap`.
 
     Compass: record
       Circle: TCircle;
-      Accuracy: Double;
+      Accuracy: Single;
     end;
 
     Mask: TPointArray;
@@ -300,12 +300,12 @@ begin
     Result := Result + TAU;
 end;
 
-property TRSMinimap.CompassRadians(radians: Double): Boolean;
+property TRSMinimap.CompassRadians(radians: Single): Boolean;
 const
-  RAD_PER_PIXEL: Double = 162.2004206;
+  RAD_PER_PIXEL: Single = 162.2004206;
 var
   available: TBox;
-  remain, oneDeg: Double;
+  remain, oneDeg: Single;
   clockwise: Boolean;
   destination: TPoint;
   pixels: Integer;

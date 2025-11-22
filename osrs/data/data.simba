@@ -78,6 +78,14 @@ Enum representing item definition keys.
     PLACEHOLDER_TEMPLATE_ID,
     PARAMS
   );
+  
+(*
+## TItemPriceData
+Record responsible for holding item price data.
+*)
+  TItemPriceData = record
+    High, HighTime, Low, LowTime: Integer;
+  end;
 
 procedure TItemData.UpdateFile();
 var
@@ -226,6 +234,40 @@ begin
   end;
 end;
 
+(*
+## ItemData.GetPriceData
+```pascal
+function TItemData.GetPriceData(item: TRSItem): TItemPriceData;
+```
+Method used to return the price data of the specified `item`.
+
+Example:
+```pascal
+var
+  priceData: TItemPriceData;
+begin
+  priceData := ItemData.GetPriceData('Abyssal whip');
+  WriteLn('High: ' + ToStr(priceData.high) + ' Low: ' + ToStr(priceData.low));
+end;
+```
+*)
+function TItemData.GetPriceData(item: TRSItem): TItemPriceData;
+var
+  id: String;
+  json: TJSONItem;
+begin
+  id := Self.GetTradeableID(item);
+  if id = '' then Exit;
+
+  Self.Reload();
+  if Self.Disabled then Exit;
+  if not Self.PricesJSON.Item[0].GetObject(id, json) then Exit;
+
+  Result.High := json.Item['high'].AsInt;
+  Result.HighTime := json.Item['highTime'].AsInt;
+  Result.Low := json.Item['low'].AsInt;
+  Result.LowTime := json.Item['lowTime'].AsInt;
+end;
 
 (*
 ## ItemData.GetPrice
@@ -241,30 +283,22 @@ WriteLn ItemData.GetPrice('Abyssal whip');
 *)
 function TItemData.GetPrice(item: TRSItem): Integer;
 var
-  id: String;
-  json: TJSONItem;
-  lo, hi: Integer;
+  priceData: TItemPriceData;
 begin
-  id := Self.GetTradeableID(item);
-  if id = '' then Exit;
-
   case item of
-    '995', '996', '997', '998', '999',
-    '1000', '1001', '1002', '1003', '1004': Exit(1);
+    'coins', 'Coins', '995', '996', '997', '998',
+    '999', '1000', '1001', '1002', '1003', '1004': Exit(1);
   end;
 
-  Self.Reload();
-  if Self.Disabled then Exit;
-  if not Self.PricesJSON.Item[0].GetObject(id, json) then Exit;
+  priceData := Self.GetPriceData(item);
 
-  hi := json.Item[0].AsInt; //"high" key
-  lo := json.Item[2].AsInt; //"lo" key
+  if priceData = Default(TItemPriceData) then Exit;
 
-  if lo = hi then Exit(lo);
-  if lo = 0 then Exit(hi);
-  if hi = 0 then Exit(lo);
+  if priceData.low = priceData.high then Exit(priceData.low);
+  if priceData.low = 0 then Exit(priceData.high);
+  if priceData.high = 0 then Exit(priceData.low);
 
-  Result := (hi + lo) div 2;
+  Result := (priceData.high + priceData.low) div 2;
 end;
 
 

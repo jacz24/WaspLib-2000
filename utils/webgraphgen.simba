@@ -12,7 +12,14 @@ script **BEFORE INCLUDING WASPLIB**:
 
 {$DEFINE WL_WEBGRAPHGEN_INCLUDED}
 {$INCLUDE_ONCE WaspLib/utils.simba}
+
 {$R-}
+{$IFDEF RANGECHECKS}
+begin
+  WriteLn GetDebugLn('WebGraphGenerator', 'Range checks are enabled for webgraph generator, these should be disabled in production!', ELogLevel.WARN);
+end;
+{$ENDIF}
+
 {.$DEFINE WL_GENERATE_GRAPH_ALWAYS}
 
 type

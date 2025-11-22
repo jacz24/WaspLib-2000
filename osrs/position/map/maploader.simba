@@ -78,6 +78,8 @@ This is an internal type. Don't use it if you don't know what you are doing.
     Timeout: TCountDown;
   end;
 
+  PRSMapLoader = ^TRSMapLoader;
+
 (*
 ## Points Translation
 This might be the only thing you need to use from time to time from the
