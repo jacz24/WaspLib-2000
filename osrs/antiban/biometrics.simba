@@ -24,7 +24,7 @@ EBiometric = enum(
   RATING, LIKES, DISLIKES
 );
 ```
-Enum that represent biometrics affected by the user user unique player seed.
+Enum that represent biometrics affected by the user unique player seed.
 *)
   EBiometric = enum(
     MULTIPLIER,
