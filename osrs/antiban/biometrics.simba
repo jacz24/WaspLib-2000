@@ -52,7 +52,7 @@ Record responsible for biometrics and beiometric behaviour.
 ```pascal
 property TBiometrics.Hash: TByteArray;
 ```
-Get the current unique hash generated to the for the current {ref}`TProfile` being used.
+Get the current unique hash generated for the current {ref}`TProfile` being used.
 
 Changing {ref}`ProfileIndex`, will reset the hash.
 
