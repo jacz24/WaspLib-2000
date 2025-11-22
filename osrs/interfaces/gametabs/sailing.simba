@@ -24,6 +24,7 @@ Main record responsible with handling the Sailing gametab.
   TRSSailing = record
     CombatBox, ShipNameBox, ShipHealthBox, TabTitle: TBox;
     Tabs: TBoxArray;
+    Scrolls: array [ERSSailingTab] of TRSScrollBar;
   end;
 
 procedure TRSSailing.SetupGameTab();
@@ -36,7 +37,15 @@ begin
 
     Self.Tabs := TBoxArray.Create([X1+2, Y1+46], 3, 1, 55, 20, [7,0]);
     Self.TabTitle := [X1+32, Y1+68, X2-32, Y1+82];
+
+    Self.Scrolls[ERSSailingTab.FACILITIES].Area := [X1+3, Y1+88, X2-19, Y2-6];
+    Self.Scrolls[ERSSailingTab.STATS].Area := [X1+3, Y1+88, X2-19, Y2-6];
+    Self.Scrolls[ERSSailingTab.CREW].Area := [X1+3, Y1+108, X2-19, Y2-28];
   end;
+
+  Self.Scrolls[ERSSailingTab.FACILITIES].Setup();
+  Self.Scrolls[ERSSailingTab.STATS].Setup();
+  Self.Scrolls[ERSSailingTab.CREW].Setup();
 end;
 
 (*
