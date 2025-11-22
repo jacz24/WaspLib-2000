@@ -8,6 +8,79 @@ Methods to interact with the sailing gametab:
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
+  ESailingFacility = enum(HELM, REPAIR, CANNON, HOOK);
+
+  ERSCrewAsignee = enum(NONE, ME, CREW);
+
+  TSailingFacilitySlot = record
+    Bounds, InfoBox, AssigneeBox: TBox;
+    Buttons: TBoxArray;
+  end;
+
+  TSailingFacilitySlotArray = array of TSailingFacilitySlot;
+
+function TSailingFacilitySlot.Create(borders: TPointArray; area: TBox): TSailingFacilitySlot; static;
+var
+  b: TBox;
+  isHelm: Boolean;
+begin
+  b := borders.Bounds;
+
+  case b.Height of
+    30:
+    begin
+      b.Y1 := Max(b.Y1-2,area.Y1);
+      b.Y2 := Min(b.Y2+2, area.Y2);
+    end;
+    45, 61:
+    begin
+      b.Y2 := b.Y1+65;
+      b.Y1 := Max(b.Y1-4,area.Y1);
+      isHelm := True;
+    end;
+    else Exit;
+  end;
+
+  Result.Bounds := [area.X1, b.Y1, area.X2, b.Y2];
+
+  with Result.Bounds do
+  begin
+    Result.InfoBox := [X1, Y1, X2-41, Y2];
+    Result.AssigneeBox.X1 := X2 - 33;
+    if isHelm then
+      Result.AssigneeBox.Y1 := Y1 + 19
+    else
+      Result.AssigneeBox.Y1 := Y1 + 2;
+    Result.AssigneeBox.X2 := X2-4;
+  end;
+
+  Result.AssigneeBox.Y2 := Result.AssigneeBox.Y1+29;
+end;
+
+property TSailingFacilitySlot.Facility: ESailingFacility;
+var
+  count: Integer;
+begin
+  count := Target.CountColor(TRSInterface.BORDER, 0, Self.InfoBox);
+
+  case count of
+    372, 691: Result := ESailingFacility.HELM;
+    0: Result := ESailingFacility.REPAIR;
+    82: Result := ESailingFacility.HOOK;
+    else Result := ESailingFacility.CANNON;
+  end;
+end;
+
+property TSailingFacilitySlot.Assignee: ERSCrewAsignee;
+begin
+  case Target.CountColor(TRSInterface.BORDER, 0, Self.AssigneeBox) of
+    170: Result := ERSCrewAsignee.NONE;
+    174: Result := ERSCrewAsignee.ME;
+    else Result := ERSCrewAsignee.CREW;
+  end;
+end;
+
+type
 (*
 ## ERSSailingTab
 ```pascal
@@ -119,7 +192,6 @@ var
 begin
   title := OCR.Recognize(Self.TabTitle, RSFonts.PLAIN_12, [RSFonts.ORANGE], 0);
 
-  WriteLn title;
   case title of
     'Facilities': Result := ERSSailingTab.FACILITIES;
     'Stats': Result := ERSSailingTab.STATS;
@@ -152,6 +224,29 @@ begin
 
   Mouse.Click(b, EMouseButton.LEFT);
   Result := SleepUntil(Self.GetTab() = tab, RandomMode(100, 50, 1500), 4*TICK);
+end;
+
+
+function TRSSailing.GetFacilitySlots(): TSailingFacilitySlotArray;
+var
+  tpa: TPointArray;
+  atpa: T2DPointArray;
+  area: TBox;
+  slot: TSailingFacilitySlot;
+begin
+  if Self.GetTab() <> ERSSailingTab.FACILITIES then
+    Exit;
+
+  area := Self.Scrolls[ERSSailingTab.FACILITIES].Area;
+  tpa := Target.FindColor(TRSInterface.BORDER, 0, area);
+  atpa := tpa.Cluster(100, 4);
+
+  for tpa in atpa do
+  begin
+    slot := TSailingFacilitySlot.Create(tpa, area);
+    if slot <> Default(TSailingFacilitySlot) then
+      Result += slot;
+  end;
 end;
 
 var
