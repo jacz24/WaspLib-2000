@@ -31,6 +31,7 @@ Enum representing item definition keys.
   EItemDataKey = enum(
     ID,
     NAME,
+    EXAMINE,
     RESIZE_X,
     RESIZE_Y,
     RESIZE_Z,
@@ -376,7 +377,10 @@ begin
   for id in ids do
   begin
     json := Self.GetDefinition(id);
-    stackable := json.Item[Ord(EItemDataKey.STACKABLE)].AsBool;
+    case json.Item[Ord(EItemDataKey.STACKABLE)].AsInt of
+      0: stackable := False;
+      1: stackable := True;
+    end;
     if stackable then
       Exit(stackable);
   end;
