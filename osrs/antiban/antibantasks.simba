@@ -162,7 +162,7 @@ procedure TAntiban.HoverMakeItem();
 var
   boxes: TBoxArray;
 begin
-  if not Bank.IsOpen() then Exit;
+  if not Make.IsOpen() then Exit;
   WriteLn GetDebugLn('Antiban', 'Hovering a random make item button');
   boxes := Make.GetItemBoxes();
   Mouse.Move(boxes.Random());
