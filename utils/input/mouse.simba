@@ -58,76 +58,18 @@ Main record used to interact with the {ref}`Mouse`.
 
 {$IFDEF WL_DEBUG_MOUSE}
 procedure TMouse._Debug();
-var
-  p: TPoint;
-  i,x,y,wid,hei: Integer;
-  clr, tol,heat: Integer;
-  hue,sat: Double;
-  m: TSingleMatrix;
-  mats: array of TSingleMatrix;
-  tmp,ClientBitmap, DebugBitmap: TImage;
-  TPA: TPointArray;
-  function AlphaColor(A,B: TColor; Weight: Double): TColor;
-  var R1,R2,G1,G2,B1,B2: Integer;
-  begin
-    ColorToRGB(A, R1,G1,B1);
-    ColorToRGB(A, R1,G1,B1);
-    Result := RGBtoColor(Round(R1*weight+R2*(1-Weight)), Round(G1*weight+G2*(1-Weight)), Round(B1*weight+B2*(1-Weight)))
-  end;
 begin
-  self.DebugLn('Generating a heatmap from clicks and movements...');
-
-  ClientBitmap := Target.GetImage();
-  DebugBitmap := ClientBitmap.Copy();
-  wid := DebugBitmap.GetWidth();
-  hei := DebugBitmap.GetHeight();
-  DebugBitmap.SetSize(wid*2, hei);
-  ClientBitmap.DrawTransparent(wid, 0, DebugBitmap);
-
-  mats := [Self.DebugClicks, Self.DebugMovement];
-  for i:=0 to High(mats) do
-  begin
-    SetLength(m, 0);
-    SetLength(m, Length(mats[i]));
-    for x:=0 to High(m) do m[x] := Copy(mats[i][x]);
-    for 0 to 2 do m.Smoothen(3);
-    if Length(m) = 0 then
-	  continue;
-
-    tmp.Init();
-    tmp.DrawMatrix(m, 1);
-
-    for y:=0 to tmp.GetHeight() - 1 do
-      for x:=0 to tmp.GetWidth() - 1 do
-        if tmp.GetPixel(x,y) <> 0 then
-        begin
-          heat := tmp.GetPixel(x,y);
-          ACA([0,heat], 1, clr, tol, hue, sat);
-
-          if tol < 20 then DebugBitmap.SetPixel(x+wid*i,y, AlphaColor(ClientBitmap.GetPixel(x,y), heat, 1-tol/20))
-          else             DebugBitmap.SetPixel(x+wid*i,y,tmp.GetPixel(x,y));
-        end;
-    tmp.Free();
-  end;
-
-  ShowBitmap(DebugBitmap);
-  ClientBitmap.Free();
-  DebugBitmap.Free();
+  WriteLn 'TODO...';
 end;
 
-procedure TMouse._DebugCallback(Sender: PMouse; X, Y: Integer); static;
-var
-  w,h: Integer;
+procedure TMouse._DebugTeleport(sender: TTarget; data: TTargetEventData);
 begin
-  GetClientDimensions(W,H);
-  if Sender^.DebugMovement = nil then
-  begin
-    Sender^.DebugMovement.SetSize(W,H);
-    AddOnTerminate(@Sender^._Debug);
-  end;
+  WriteLn 'TODO...';
+end;
 
-  if InRange(x,0,W-1) and InRange(y,0,H-1) then
-    Sender^.DebugMovement[y,x] += 1;
+procedure TMouse._DebugClick(sender: TTarget; data: TTargetEventData);
+begin
+  WriteLn 'TODO...';
 end;
 {$ENDIF}
 
@@ -152,7 +94,9 @@ begin
   Self.CanIdle := True;
 
   {$IFDEF WL_DEBUG_MOUSE}
-  Self.OnTeleport := @Self._DebugCallback;
+  Target.AddEvent(ETargetEvent.MOUSE_TELEPORT, @Self._DebugTeleport);
+  Target.AddEvent(ETargetEvent.MOUSE_TELEPORT, @Self._DebugClick);
+  AddOnTerminate(@Self._Debug);
   {$ENDIF}
 end;
 
