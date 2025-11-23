@@ -312,6 +312,29 @@ end;
 
 
 (*
+### Make.GetCurrentTab
+```pascal
+function TRSMake.GetCurrentQuantity(): Integer;
+```
+Get the current active make quantity button.
+
+Example:
+```pascal
+current := Make.GetCurrentQuantity();
+WritLn current;
+ShowOnTarget(Make.QuantityButtons[current]);
+```
+*)
+function TRSMake.GetCurrentQuantity(): Integer;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self.QuantityButtons) do
+    if Self.IsQuantitySelected(i) then
+      Exit(i);
+end;
+
+(*
 ### Make.SetQuantity
 ```pascal
 function TRSMake.SetQuantity(amount: Integer): Boolean;

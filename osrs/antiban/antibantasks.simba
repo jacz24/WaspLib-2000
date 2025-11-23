@@ -168,6 +168,26 @@ begin
   Mouse.Move(boxes.Random());
 end;
 
+procedure TAntiban.HoverMakeButton();
+begin
+  if not Make.IsOpen() then Exit;
+  WriteLn GetDebugLn('Antiban', 'Hovering a random make quantity button');
+  Mouse.Move(Make.QuantityButtons.Random());
+end;
+
+procedure TAntiban.ToggleMakeButton();
+var
+  current: Integer;
+begin
+  if not Make.IsOpen() then Exit;
+  WriteLn GetDebugLn('Antiban', 'Toggling quantity buttons');
+  current := Make.GetCurrentQuantity();
+  //Mouse.Move(Make.QuantityButtons.Random();
+
+end;
+
+
+
 //Chatbox antiban
 procedure TAntiban.ChatScrolling();
 begin
