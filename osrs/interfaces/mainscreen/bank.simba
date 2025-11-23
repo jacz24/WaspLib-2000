@@ -10,7 +10,7 @@ Methods to interact with the bank interface:
 
 type
 (*
-## ERSBankButtons
+## ERSBankButtons enum
 ```pascal
 ERSBankButtons = enum(WORN, MENU);
 ```
@@ -19,7 +19,7 @@ Enum representing the 2 top buttons of the {ref}`Bank` interface.
   ERSBankButtons = enum(WORN, MENU);
 
 (*
-## ERSBankArrangement
+## ERSBankArrangement enum
 ```pascal
 ERSBankArrangement = enum(SWAP, INSERT);
 ```
@@ -28,7 +28,7 @@ Enum representing the 2 arrangement buttons of the {ref}`Bank` interface.
   ERSBankArrangement = enum(SWAP, INSERT);
 
 (*
-## ERSWithdrawMode
+## ERSWithdrawMode enum
 ```pascal
 ERSWithdrawMode = enum(ITEM, NOTE);
 ```
@@ -37,7 +37,7 @@ Enum representing the 2 withdraw mode buttons of the {ref}`Bank` interface.
   ERSWithdrawMode = enum(ITEM, NOTE);
 
 (*
-## ERSBankDynamicButtons
+## ERSBankDynamicButtons enum
 ```pascal
 ERSBankDynamicButtons = enum(PLACEHOLDERS, SEARCH, DEPOSIT_INVENTORY, DEPOSIT_WORN);
 ```
@@ -47,7 +47,7 @@ These buttons are dynamic because they can be enabled/disabled and shift places.
   ERSBankDynamicButtons = enum(PLACEHOLDERS, SEARCH, DEPOSIT_INVENTORY, DEPOSIT_WORN);
 
 (*
-## ERSBankInteraction
+## ERSBankInteraction enum
 ```pascal
 ERSBankInteraction = enum(WITHDRAW, DEPOSIT);
 ```
@@ -56,7 +56,7 @@ Enum representing 2 core actions you can perform on the {ref}`Bank` interface.
   ERSBankInteraction = enum(WITHDRAW, DEPOSIT);
 
 (*
-## TBankPosition
+## TBankPosition type
 Helper record to cache items positions on the {ref}`Bank` interface.
 *)
   TBankPosition = record
@@ -66,7 +66,7 @@ Helper record to cache items positions on the {ref}`Bank` interface.
   end;
 
 (*
-## TRSBank
+## TRSBank type
 Record responsible to handle the {ref}`Bank` interface.
 *)
   TRSBank = record
@@ -391,12 +391,12 @@ end;
 function TRSBank.Close(escape: Boolean): Boolean;
 function TRSBank.Close(escapeProbability: Single = 0): Boolean; overload;
 ```
-Closes the bank, Depending on `escape` or `escapeProbability the function will
+Closes the bank, depending on `escape` or `escapeProbability the function will
 either click the button or press escape key.
 
 Example:
 ```pascal
- WriteLn Bank.Close();
+WriteLn Bank.Close();
 ```
 *)
 function TRSBank.Close(escape: Boolean): Boolean;
