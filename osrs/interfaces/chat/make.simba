@@ -312,26 +312,61 @@ end;
 
 
 (*
-### Make.GetCurrentTab
+### Make.GetCurrentQuantityButton
 ```pascal
-function TRSMake.GetCurrentQuantity(): Integer;
+function TRSMake.GetCurrentQuantityButton(): Integer;
 ```
 Get the current active make quantity button.
 
 Example:
 ```pascal
-current := Make.GetCurrentQuantity();
+current := Make.GetCurrentQuantityButton();
 WritLn current;
 ShowOnTarget(Make.QuantityButtons[current]);
 ```
 *)
-function TRSMake.GetCurrentQuantity(): Integer;
+function TRSMake.GetCurrentQuantityButton(): Integer;
 var
   i: Integer;
 begin
   for i := 0 to High(Self.QuantityButtons) do
     if Self.IsQuantitySelected(i) then
       Exit(i);
+end;
+
+(*
+### Make.GetCurrentQuantity
+```pascal
+function TRSMake.GetCurrentQuantity(): Integer;
+```
+Get the current active make quantity.
+
+Example:
+```pascal
+current := Make.GetCurrentQuantity();
+WritLn current;
+```
+*)
+function TRSMake.GetCurrentQuantity(): Integer;
+var
+  hintPt: TPoint;
+  current: Integer;
+begin
+  if Self.HasHint() then
+  begin
+    hintPt := Self.GetHintBox().TopRight;
+    if (hintPt.Y <= Self.QuantityButtons[5].Y2) and (hintPt.X >= Self.QuantityButtons[5].X1) then
+
+    if not Self.CloseHint() then
+      raise GetDebugLn('Make', 'Failed to close the tooltip which is covering the quanitty buttons');
+  end;
+
+  current := Self.GetCurrentQuantityButton();
+
+  if current = 0 then
+    Exit(-1);
+
+  Result := OCR.RecognizeNumber(Self.QuantityButtons[current], RSFonts.PLAIN_11, [Self.TEXT_COLOR, RSFonts.WHITE], 0);
 end;
 
 (*
