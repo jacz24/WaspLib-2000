@@ -57,6 +57,7 @@ begin
   GrandExchangeOffer.SetupInterface();
   FairyRing.SetupInterface();
   Shop.SetupInterface();
+  CargoHold.SetupInterface();
 
   {$IFDEF WL_DEBUG_INTERFACES}
   WriteLn GetDebugLn('RSClient', 'Interface setup took ' + ToStr(Time()-t) + ' ms to calculate.');

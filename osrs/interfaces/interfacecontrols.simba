@@ -8,7 +8,7 @@ These can be buttons, scrollbars, dropdowns, checkboxes, etc.
 
 type
 (*
-## TRSButton
+## TRSButton type
 RuneScape has several types of buttons, {ref}`TRSButton` can be used for
 several of them but it's made specifically for buttons that have an
 "enabled" and "disabled" state:
@@ -184,7 +184,7 @@ end;
 
 type
 (*
-## TRSSlider
+## TRSSlider type
 A record meant to handle sliders in the game interfaces:
 ```{figure} ../../images/sliders.png
 ```
@@ -258,7 +258,7 @@ end;
 
 type
 (*
-## TRSScrollBar
+## TRSScrollBar type
 Record to handle the game interface's scrollbars:
 ```{figure} ../../images/scrollbar.png
 ```
@@ -272,7 +272,7 @@ Record to handle the game interface's scrollbars:
 (*
 ### TRSScrollBar.Setup
 ```pascal
-procedure TRSScrollBar.Setup();
+procedure TRSScrollBar.Setup(rightSide: Boolean = True);
 ```
 Method used to setup several {ref}`TRSScrollBar` internal variables.
 When creating a {ref}`TRSScrollBar` you should first setup it's `Area` variable
@@ -287,13 +287,17 @@ scroll.Area.Y2 := Bank.Bounds.Y2 - 44;
 scroll.Setup();
 ```
 *)
-procedure TRSScrollBar.Setup();
+procedure TRSScrollBar.Setup(rightSide: Boolean = True);
 begin
   if Self.Area = Default(TBox) then
     raise GetDebugLn('ScrollBar', 'You need to set a Area to use the TRSScrollBar.Setup() method.');
 
-  Self.Bounds.X1 := Self.Area.X2 + 1;
-  Self.Bounds.Y1 := Self.Area.Y1 + 16;
+  if rightSide then
+    Self.Bounds.X1 := Self.Area.X2 + 1
+  else
+    Self.Bounds.X1 := Self.Area.X1 - 16;
+
+  Self.Bounds.Y1 := Self.Area.Y1 + 16; 
   Self.Bounds.X2 := Self.Bounds.X1 + 15;
   Self.Bounds.Y2 := Self.Area.Y2 - 16;
 
@@ -543,7 +547,7 @@ end;
 
 type
 (*
-## TRSDropDownOption
+## TRSDropDownOption type
 Helper record to handle {ref}`TRSDropDown` options.
 *)
   TRSDropDownOption = record
@@ -553,7 +557,7 @@ Helper record to handle {ref}`TRSDropDown` options.
   end;
 
 (*
-## TRSDropDown
+## TRSDropDown type
 Record to handle drop downs in the game interfaces:
 ```{figure} ../../images/dropdowns.png
 ```

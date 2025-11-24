@@ -94,7 +94,7 @@ begin
   if Result <> ERSGameTab.NONE then Exit;
 
   if Bank.IsOpen() then Exit(ERSGameTab.INVENTORY);
-
+  if CargoHold.IsOpen() then Exit(ERSGameTab.INVENTORY);
   if Shop.IsOpen() then Exit(ERSGameTab.INVENTORY);
 
   if not HouseOptions.IsOpen() then Exit;

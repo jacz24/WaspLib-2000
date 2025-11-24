@@ -149,7 +149,7 @@ end;
 
 function TRSInterfaceArea.CreateBounds(offset: TBox; width, height: Integer = 0): TBox;
 var
-  center, half, halfMax: Single;
+  center, half, halfMax: Integer;
 begin
   offset.X1 += Self.Bounds.X1;
   offset.Y1 += Self.Bounds.Y1;
@@ -158,12 +158,12 @@ begin
 
   if width > 0 then
   begin
-    half := (offset.X2 - offset.X1) / 2;
+    half := (offset.X2 - offset.X1) div 2;
     center := offset.X1 + half;
-    halfMax := (width - 1) / 2;
+    halfMax := (width - 1) div 2;
 
-    Result.X1 := Max(Floor(center - half), Floor(center - halfMax));
-    Result.X2 := Min(Floor(center + half), Floor(center + halfMax));
+    Result.X1 := Max(center - half, center - halfMax);
+    Result.X2 := Min(center + half, center + halfMax);
   end
   else
   begin
@@ -173,12 +173,12 @@ begin
 
   if height > 0 then
   begin
-    half := (offset.Y2 - offset.Y1) / 2;
+    half := (offset.Y2 - offset.Y1) div 2;
     center := offset.Y1 + half;
-    halfMax := (height - 1) / 2;
+    halfMax := (height - 1) div 2;
 
-    Result.Y1 := Max(Floor(center - half), Floor(center - halfMax));
-    Result.Y2 := Min(Floor(center + half), Floor(center + halfMax));
+    Result.Y1 := Max(center - half, center - halfMax);
+    Result.Y2 := Min(center + half, center + halfMax);
   end
   else
   begin

@@ -1,0 +1,196 @@
+(*
+# CargoHold
+Methods to interact with the cargo hold interface.
+```{figure} ../../images/cargohold_interface.png
+```
+*)
+
+{$DEFINE WL_CARGOHOLD_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+type
+  ECargoDeposit = enum(CARGO, SALVAGE, INVENTORY);
+  ECargoMode = enum(STACKED, UNSTACKED);
+
+(*
+## TRSCargoHold type
+Main record to interact with the {ref}`CargoHold` interface.
+*)
+  TRSCargoHold = record
+    Title: TRSInterfaceTitle;
+    Bounds, ToolArea: TBox;
+    CargoSlots, ToolSlots: TRSSlotInterface;
+    CargoItems, ToolItems: TRSItemInterface;
+    DepositButtons, QuantityButtons: TBoxArray;
+    Scroll: TRSScrollBar;
+  end;
+
+(*
+## CargoHold.FindCargoBoundaries
+```pascal
+function TRSCargoHold.FindCargoBoundaries(): TBoxArray;
+```
+Finds item boundaries and returns them as a TBoxArray.
+*)
+function TRSCargoHold.FindCargoBoundaries(): TBoxArray;
+var
+  tpa, final: TPointArray;
+  atpa: T2DPointArray;
+  b: TBox;
+  stack: ERSStack;
+begin
+  final := Target.FindColor(ITEM_BORDER, 1, Self.Scroll.Area);
+  if final = [] then Exit;
+
+  for stack := Low(ERSStack) to High(ERSStack) do
+  begin
+    tpa := Target.FindColor(stack.Color, 0, Self.Scroll.Area);
+    if tpa <> [] then
+      final += tpa;
+  end;
+
+  atpa := final.Cluster(4, 3);
+
+  for tpa in atpa do
+  begin
+    b := tpa.Bounds();
+    if b.Height <= 5 then Continue;
+    if b.Width <= 5 then Continue;
+    Result += b.Expand(1);
+  end;
+end;
+
+(*
+## CargoHold.FindToolBoundaries
+```pascal
+function TRSCargoHold.FindToolBoundaries(): TBoxArray;
+```
+Finds item boundaries and returns them as a TBoxArray.
+*)
+function TRSCargoHold.FindToolBoundaries(): TBoxArray;
+var
+  tpa, final: TPointArray;
+  atpa: T2DPointArray;
+  b: TBox;
+  stack: ERSStack;
+begin
+  final := Target.FindColor(ITEM_BORDER, 1, Self.ToolArea);
+  if final = [] then Exit;
+
+  for stack := Low(ERSStack) to High(ERSStack) do
+  begin
+    tpa := Target.FindColor(stack.Color, 0, Self.ToolArea);
+    if tpa <> [] then
+      final += tpa;
+  end;
+
+  atpa := final.Cluster(4, 3);
+
+  for tpa in atpa do
+  begin
+    b := tpa.Bounds();
+    if b.Height <= 5 then Continue;
+    if b.Width <= 5 then Continue;
+    Result += b.Expand(1);
+  end;
+end;
+
+(*
+## CargoHold.SetupInterface
+```pascal
+procedure TRSCargoHold.SetupInterface();
+```
+Internal method used to setup the {ref}`TRSCargoHold` coordinates.
+This is automatically called for you on the {ref}`CargoHold variable`.
+*)
+procedure TRSCargoHold.SetupInterface();
+begin
+  case RSClient.Mode of
+    ERSMode.FIXED: Self.Bounds := MSInterface.CreateBounds([0, 0, 0, 0], 507, 321);
+    ERSMode.RESIZABLE, ERSMode.MODERN_COMPACT, ERSMode.MODERN_WIDE:
+      Self.Bounds := MSInterface.CreateBounds([-1, -1, 0, 0], 507, 321);
+  end;
+
+  with Self.Bounds do
+  begin
+    Self.Scroll.Area := [X1+29, Y1+77, X2-55, Y2-53];
+    Self.ToolArea := [X1+52, Y2 - 45, X1 + 259, Y2-12];
+    Self.QuantityButtons := TBoxArray.Create([X2-235, Y2-47], 5, 1, 37, 37, [10,0]);
+    Self.DepositButtons := TBoxArray.Create([X2-49, Y1+75], 1, 3, 39, 39, [0,26]);
+  end;
+
+  Self.Title.Setup(Self.Bounds);
+  Self.Scroll.Setup(False);
+
+  Self.CargoSlots.Setup('CargoHull.CargoSlots', [], @Self.FindCargoBoundaries, nil);
+  Self.CargoItems.Setup('CargoHull.CargoItems', @Self.CargoSlots, [0,0], nil);
+  Self.ToolSlots.Setup('CargoHull.ToolSlots', [], @Self.FindToolBoundaries, nil);
+  Self.ToolItems.Setup('CargoHull.ToolItems', @Self.ToolSlots, [0,0], nil);
+end;
+
+(*
+## CargoHold.IsOpen
+```pascal
+function TRSCargoHold.IsOpen(): Boolean;
+```
+Returns true if the CargoHold pin is open.
+
+Example:
+```pascal
+WriteLn CargoHold.IsOpen();
+```
+*)
+function TRSCargoHold.IsOpen(): Boolean;
+begin
+  Result := Self.Title.IsTitle('Cargo Hold:');
+end;
+
+(*
+## CargoHold.WaitOpen
+```pascal
+function TRSCargoHold.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
+```
+Returns true if the CargoHold pin opens within `time` milliseconds..
+
+Example:
+```pascal
+WriteLn CargoHold.WaitOpen();
+```
+*)
+function TRSCargoHold.WaitOpen(time: Integer = 600; interval: Integer = -1): Boolean;
+begin
+  if interval < 0 then interval := RandomMode(100, 50, 1500);
+  Result := SleepUntil(Self.IsOpen(), interval, time);
+end;
+
+
+(*
+## CargoHold.Close
+```pascal
+function TRSCargoHold.Close(escape: Boolean): Boolean;
+function TRSCargoHold.Close(escapeProbability: Single = 0): Boolean; overload;
+```
+Closes the CargoHold, depending on `escape` or `escapeProbability the function
+will either click the button or press escape key.
+
+Example:
+```pascal
+WriteLn CargoHold.Close();
+```
+*)
+function TRSCargoHold.Close(escape: Boolean): Boolean;
+begin
+  Result := Self.Title.Close(escape);
+end;
+
+function TRSCargoHold.Close(escapeProbability: Single = -1): Boolean; overload;
+begin
+  Result := Self.Title.Close(escapeProbability);
+end;
+
+var
+(*
+## CargoHold variable
+Global {ref}`TRSCargoHold` variable.
+*)
+  CargoHold: TRSCargoHold;
