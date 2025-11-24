@@ -47,15 +47,19 @@ You have 2 ways of getting the shop item slots, a static one:
 ```pascal
 ShowOnTarget(Shop.SlotBoxes);
 ```
-
+```{figure} ../../images/shop_static_slots.png
+The shop static slots.
+```
 
 And a dynamic one:
 ```pascal
 ShowOnTarget(Shop.FindItemBoundaries());
 ```
+```{figure} ../../images/shop_item_boundaries.png
+The shop "dynamic" slots.
+```
 
 There are use cases for both, internally, `Shop.FindItemBoundaries` is usually used.
-
 *)
 function TRSShop.FindItemBoundaries(): TBoxArray;
 var
@@ -118,7 +122,6 @@ begin
 
   Self.SlotBoxes := TBoxArray.Create(Self.Bounds.TopLeft.Offset(61, 40), 8, 5, 35, 32, [12,15]);
   Self.SlotsArea := Self.SlotBoxes.Merge();
-  //Self.SlotBoxes := TBoxArray.Create(Self.SlotsArea.TopLeft, 4, 2, 47, 47, [4, 4]);
   Self.Slots.Setup('Shop.Slots', Self.SlotBoxes, @Self.FindItemBoundaries);
   Self.Items.Setup('Shop.Items', @Self.Slots, [0, 1], @Self.IsOpen);
 
@@ -129,7 +132,6 @@ begin
 
   with Self.Bounds do
     boxes := TBoxArray.Create([X2-196, Y2-37], 4, 1, 29, 29, [11,0]); // This is the whole button
-    //boxes := TBoxArray.Create([X2-192, Y2-33], 4, 1, 21, 21, [19,0]); // This is just for the inside of the button;
 
   for quantity := Low(ERSShopQuantity) to High(ERSShopQuantity) do
     begin
