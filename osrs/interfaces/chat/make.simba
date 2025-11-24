@@ -10,6 +10,18 @@ craft certain items in OldSchool RuneScape.
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
+
+(*
+## ERSMakeQuantity
+```pascal
+ERSMakeQuantity = enum(ONE, FIVE, TEN, FIFTY);
+```
+Enum representing the make quantity buttons.
+*)
+  ERSMakeQuantity = enum(ONE, FIVE, TEN, CUSTOM, X, ALL);
+
+
+
 (*
 ## TRSMakeItem
 Helper record used to cache make menu items.
@@ -18,19 +30,22 @@ Helper record used to cache make menu items.
     Item: String;
     Index, Quantity: Integer;
   end;
-
 (*
 ## TRSMake
 Main record used to interact with the {ref}`Make` menu.
 *)
   TRSMake = record
     Items: array of TRSMakeItem;
+    QuantityDynamicButtons: array [ERSMakeQuantity] of TRSButton;
     QuantityButtons: TBoxArray;
     SelectedQuantity: Integer;
-    {%codetools on}
+    QuantityArea: TBox;
+    {%codetools off}
     _IsOpenHelper, _ItemsHelper: TBox;
     {%codetools on}
+
     const TEXT_COLOR: TColor = $203040;
+    const BORDER_COLOR: TColorTolerance = [$080707, 5, EColorSpace.RGB, [1.000, 1.000, 1.000]];
   end;
 
 (*
@@ -53,11 +68,12 @@ begin
 
     Self.QuantityButtons := TBoxArray.Create([X2-228, Y1+15], 6, 1, 29, 29, [6,0]).Reversed();
     Self.QuantityButtons[0].X2 += 5;
+    Self.QuantityArea := Self.QuantityButtons.Merge();
 
     Self._ItemsHelper.X1 := X1 + 8;
     Self._ItemsHelper.Y1 := Y1 + 51;
     Self._ItemsHelper.X2 := X2 - 8;
-    Self._ItemsHelper.Y2 := Y2 - 19;
+    Self._ItemsHelper.Y2 := Y2 - 14;
   end;
 end;
 
@@ -98,6 +114,45 @@ end;
 
 
 (*
+## Make.GetQuantityBoxes
+```pascal
+function TRSMake.GetQuantityBoxes(): TBoxArray;
+```
+Finds quantity button boundaries and returns them as a TBoxArray.
+
+You have 2 ways of getting the quantity boxes, a static one:
+```pascal
+ShowOnTarget(Make.QuantityButtons);
+```
+```{figure} ../../images/make_static_quantity_boxes.png
+The make static boxes.
+```
+
+And a dynamic one:
+```pascal
+ShowOnTarget(Make.GetQuantityBoxes());
+```
+```{figure} ../../images/make_quantity_boxes.png
+The make "dynamic" boxes.
+```
+
+There are use cases for both, internally, `Make.GetQuantityBoxes` is usually used.
+*)
+function TRSMake.GetQuantityBoxes(): TBoxArray;
+var
+  tpa: TPointArray;
+  b: TBox;
+begin
+  tpa := Target.FindColor(Self.BORDER_COLOR, Self.QuantityArea);
+  for tpa in tpa.Cluster(1.5) do
+  begin
+    b := tpa.Bounds();
+    if InRange(b.Height, 20, 40) and InRange(b.Width, 20, 40) then
+      Result += b;
+  end;
+end;
+
+(*
 ## Make.GetItemBoxes
 ```pascal
 function TRSMake.GetItemBoxes(): TBoxArray;
@@ -117,7 +172,7 @@ var
   tpa: TPointArray;
   b: TBox;
 begin
-  tpa := Target.FindColor($080707, 5, Self._ItemsHelper);
+  tpa := Target.FindColor(Self.BORDER_COLOR, Self._ItemsHelper);
   for tpa in tpa.Cluster(1.5) do
   begin
     b := tpa.Bounds();
@@ -126,6 +181,102 @@ begin
   end;
 end;
 
+(*
+## Make.GetQuantityButton
+```pascal
+function TRSMake.GetQuantityButton(): array [ERSMakeQuantity] of TRSButton;
+```
+Returns the available quantity buttons as a array [ERSMakeQuantity] of TRSButton.
+
+Example:
+```pascal
+Writeln (Make.GetQuantityButton());
+```
+
+```
+*)
+
+function TRSMake.GetDynamicQuantityButtons(): array [ERSMakeQuantity] of TRSButton;
+var
+  boxes: TBoxArray;
+  i: Integer;
+begin
+  boxes := Self.GetQuantityBoxes();
+
+  for i := 0 to High(boxes) do
+  begin
+    Writeln OCR.Recognize(boxes[i], RSFonts.PLAIN_11, [Self.TEXT_COLOR, RSFonts.WHITE], 0);
+  end;
+end;
+
+function ERSMakeQuantity.Integer2Quantity(quantity: Integer): ERSMakeQuantity; static;
+begin
+  case quantity of
+    1:     Result := ERSMakeQuantity.ONE;
+    5:     Result := ERSMakeQuantity.FIVE;
+    10:    Result := ERSMakeQuantity.TEN;
+    0, -1: Result := ERSMakeQuantity.ALL;
+    else   Result := ERSMakeQuantity.CUSTOM;
+  end;
+end;
+
+(*
+### Make.GetCurrentQuantityButton
+```pascal
+function TRSMake.GetCurrentQuantityButton(): Integer;
+```
+Get the current active make quantity button.
+
+Example:
+```pascal
+current := Make.GetCurrentQuantityButton();
+WritLn current;
+ShowOnTarget(Make.QuantityButtons[current]);
+```
+*)
+function TRSMake.GetCurrentQuantityButton(): Integer;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self.QuantityButtons) do
+    if Self.IsQuantitySelected(i) then
+      Exit(i);
+end;
+
+(*
+### Make.GetCurrentQuantity
+```pascal
+function TRSMake.GetCurrentQuantity(): Integer;
+```
+Get the current active make quantity.
+
+Example:
+```pascal
+current := Make.GetCurrentQuantity();
+WritLn current;
+```
+*)
+function TRSMake.GetCurrentQuantity(): Integer;
+var
+  hintPt: TPoint;
+  current: Integer;
+begin
+  if Self.HasHint() then
+  begin
+    hintPt := Self.GetHintBox().TopRight;
+    if (hintPt.Y <= Self.QuantityButtons[5].Y2) and (hintPt.X >= Self.QuantityButtons[5].X1) then
+
+    if not Self.CloseHint() then
+      raise GetDebugLn('Make', 'Failed to close the tooltip which is covering the quanitty buttons');
+  end;
+
+  current := Self.GetCurrentQuantityButton();
+
+  if current = 0 then
+    Exit(-1);
+
+  Result := OCR.RecognizeNumber(Self.QuantityButtons[current], RSFonts.PLAIN_11, [Self.TEXT_COLOR, RSFonts.WHITE], 0);
+end;
 
 (*
 ## Make.HasHint
@@ -310,65 +461,6 @@ begin
   Result := Target.HasColor(RSFonts.WHITE, 0, 1, Self.QuantityButtons[idx]);
 end;
 
-
-(*
-### Make.GetCurrentQuantityButton
-```pascal
-function TRSMake.GetCurrentQuantityButton(): Integer;
-```
-Get the current active make quantity button.
-
-Example:
-```pascal
-current := Make.GetCurrentQuantityButton();
-WritLn current;
-ShowOnTarget(Make.QuantityButtons[current]);
-```
-*)
-function TRSMake.GetCurrentQuantityButton(): Integer;
-var
-  i: Integer;
-begin
-  for i := 0 to High(Self.QuantityButtons) do
-    if Self.IsQuantitySelected(i) then
-      Exit(i);
-end;
-
-(*
-### Make.GetCurrentQuantity
-```pascal
-function TRSMake.GetCurrentQuantity(): Integer;
-```
-Get the current active make quantity.
-
-Example:
-```pascal
-current := Make.GetCurrentQuantity();
-WritLn current;
-```
-*)
-function TRSMake.GetCurrentQuantity(): Integer;
-var
-  hintPt: TPoint;
-  current: Integer;
-begin
-  if Self.HasHint() then
-  begin
-    hintPt := Self.GetHintBox().TopRight;
-    if (hintPt.Y <= Self.QuantityButtons[5].Y2) and (hintPt.X >= Self.QuantityButtons[5].X1) then
-
-    if not Self.CloseHint() then
-      raise GetDebugLn('Make', 'Failed to close the tooltip which is covering the quanitty buttons');
-  end;
-
-  current := Self.GetCurrentQuantityButton();
-
-  if current = 0 then
-    Exit(-1);
-
-  Result := OCR.RecognizeNumber(Self.QuantityButtons[current], RSFonts.PLAIN_11, [Self.TEXT_COLOR, RSFonts.WHITE], 0);
-end;
-
 (*
 ### Make.SetQuantity
 ```pascal
@@ -496,7 +588,6 @@ begin
   end;
 end;
 
-
 procedure TRSMake.Draw(img: TImage);
 begin
   if not Self.IsOpen() then Exit;
@@ -505,6 +596,8 @@ begin
   img.DrawBox(Chat.Bounds);
   img.DrawColor := $FFFFFF;
   img.DrawBoxArray(Self.QuantityButtons, False);
+  img.DrawColor := $0000FF;
+  img.DrawBoxArray(Self.GetQuantityBoxes(), False);
   img.DrawColor := $00FF00;
   img.DrawBoxArray(Self.GetItemBoxes(), False);
   img.DrawColor := $FF0000;
