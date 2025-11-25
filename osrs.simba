@@ -77,6 +77,7 @@ Summary: It includes this file until the current file is reached.
 {$IFNDEF WL_CHOOSEOPTION_INCLUDED}          {$INCLUDE_ONCE osrs/interfaces/chooseoption.simba}
 {$IFNDEF WL_MAINSCREEN_INCLUDED}            {$INCLUDE_ONCE osrs/interfaces/mainscreen/mainscreen.simba}
 {$IFNDEF WL_MINIMAP_INCLUDED}               {$INCLUDE_ONCE osrs/interfaces/minimap.simba}
+{$IFNDEF WL_SAILING_MINIMAP_INCLUDED}       {$INCLUDE_ONCE osrs/interfaces/sailing_minimap.simba}
 
 {$IFNDEF WL_OVERHEADFINDER_INCLUDED}        {$INCLUDE_ONCE osrs/finders/overheadfinder.simba}
 
@@ -185,4 +186,4 @@ Summary: It includes this file until the current file is reached.
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
-{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
+{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
