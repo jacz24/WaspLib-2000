@@ -10,7 +10,7 @@ switcher in the {ref}`Logout` gametab.
 
 type
 (*
-## ERSWorldSwitcherButton
+## ERSWorldSwitcherButton enum
 ```pascal
 ERSWorldSwitcherButton = enum(CONFIGURE, CLOSE, LOGOUT);
 ```
@@ -19,7 +19,7 @@ Enum representing the world switcher buttons.
   ERSWorldSwitcherButton = enum(CONFIGURE, CLOSE, LOGOUT);
 
 (*
-## TRSWorld
+## TRSWorld type
 Helper record for {ref}`TRSworldSwitcher`.
 *)
   TRSWorld = record
@@ -27,7 +27,7 @@ Helper record for {ref}`TRSworldSwitcher`.
     Bounds: TBox;
   end;
 (*
-## TRSWorldArray
+## TRSWorldArray type
 Helper type for {ref}`TRSworldSwitcher`.
 *)
   TRSWorldArray = array of TRSWorld;
@@ -51,7 +51,7 @@ end;
 
 type
 (*
-## TRSWorldSwitcher
+## TRSWorldSwitcher type
 Main record that interacts with the {ref}`WorldSwitcher`.
 *)
   TRSWorldSwitcher = record
@@ -416,16 +416,12 @@ begin
 end;
 
 (*
-## WorldSwitcher.World
+## WorldSwitcher.World property
 ```pascal
 property TRSWorldSwitcher.World: Integer;
-property TRSWorldSwitcher.World(world: Integer): Boolean;
-property TRSWorldSwitcher.World(worlds: TIntegerArray): Boolean;
+property TRSWorldSwitcher.World(next: Integer): Boolean;
 ```
 Returns or sets the current world we are on.
-
-When setting, if there's multiple worlds available we will hop to the next on
-the list available.
 
 Setting a new world will only happen if `TRSWorldSwitcher.Cooldown` is finished,
 which is a cooldown that starts everytime you change worlds.
@@ -434,8 +430,6 @@ Example:
 ```pascal
 WriteLn WorldSwitcher.World;
 WorldSwitcher.World := 311;
-WriteLn WorldSwitcher.World;
-WorldSwitcher.World[[311,312,313]];
 WriteLn WorldSwitcher.World;
 ```
 *)
@@ -456,26 +450,114 @@ begin
   Result := Self._Hop(next);
 end;
 
-property TRSWorldSwitcher.World(worlds: TIntegerArray): Boolean;
+(*
+## WorldSwitcher.Next
+```pascal
+function TRSWorldSwitcher.Next(): Boolean;
+```
+Hops to the world that follows our current world according to the contents of
+`Profiles[ProfileIndex].Worlds`.
+
+Example:
+```pascal
+WriteLn WorldSwitcher.World;
+WorldSwitcher.Next();
+WriteLn WorldSwitcher.World;
+```
+*)
+function TRSWorldSwitcher.Next(): Boolean;
 var
   current, next: Integer;
 begin
   if not Self.Cooldown.IsFinished or not Self.Open() then
     Exit;
 
-  if worlds = [] then
-    raise GetDebugLn('WorldSwitcher', 'worlds parameter is empty.');
+  if Profiles[ProfileIndex].Worlds = [] then
+    raise GetDebugLn('WorldSwitcher', 'Current profile has no worlds saved.');
 
   current := Self.World;
-  if worlds = [current] then
+  if Profiles[ProfileIndex].Worlds = [current] then
     Exit(True);
 
-  next := worlds.IndexOf(current);
-  if Inc(next) > High(worlds) then
+  next := Profiles[ProfileIndex].Worlds.IndexOf(current);
+  if Inc(next) > High(Profiles[ProfileIndex].Worlds) then
     next := 0;
 
-  Result := Self._Hop(worlds[next]);
+  Result := Self._Hop(Profiles[ProfileIndex].Worlds[next]);
 end;
+
+(*
+## WorldSwitcher.Previous
+```pascal
+function TRSWorldSwitcher.Previous(): Boolean;
+```
+Hops to the world that comes before our current world according to the contents
+of `Profiles[ProfileIndex].Worlds`.
+
+Example:
+```pascal
+WriteLn WorldSwitcher.World;
+WorldSwitcher.Previous();
+WriteLn WorldSwitcher.World;
+```
+*)
+function TRSWorldSwitcher.Previous(): Boolean;
+var
+  current, prev: Integer;
+begin
+  if not Self.Cooldown.IsFinished or not Self.Open() then
+    Exit;
+
+  if Profiles[ProfileIndex].Worlds = [] then
+    raise GetDebugLn('WorldSwitcher', 'Current profile has no worlds saved.');
+
+  current := Self.World;
+  if Profiles[ProfileIndex].Worlds = [current] then
+    Exit(True);
+
+  prev := Profiles[ProfileIndex].Worlds.IndexOf(current);
+  if Dec(prev) < 0 then
+    prev := High(Profiles[ProfileIndex].Worlds);
+
+  Result := Self._Hop(Profiles[ProfileIndex].Worlds[prev]);
+end;
+
+(*
+## WorldSwitcher.Random
+```pascal
+function TRSWorldSwitcher.Random(): Boolean;
+```
+Hops to a random world that's in `Profiles[ProfileIndex].Worlds` and is not our
+current world.
+
+Example:
+```pascal
+WriteLn WorldSwitcher.World;
+WorldSwitcher.Random();
+WriteLn WorldSwitcher.World;
+```
+*)
+function TRSWorldSwitcher.Random(): Boolean;
+var
+  current, rnd: Integer;
+begin
+  if not Self.Cooldown.IsFinished or not Self.Open() then
+    Exit;
+
+  if Profiles[ProfileIndex].Worlds = [] then
+    raise GetDebugLn('WorldSwitcher', 'Current profile has no worlds saved.');
+
+  current := Self.World;
+  if Profiles[ProfileIndex].Worlds = [current] then
+    Exit(True);
+
+  repeat
+    rnd := Profiles[ProfileIndex].Worlds.Random();
+  until rnd <> current;
+
+  Result := Self._Hop(rnd);
+end;
+
 
 (*
 ## WorldSwitcher.WaitSwitch
