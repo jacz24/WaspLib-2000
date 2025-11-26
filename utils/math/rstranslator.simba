@@ -27,7 +27,7 @@ that can be used by Simba and back.
     Map: record
       const ChunkSide: Integer = 256;
       const Dimensions: TPoint = [2560, 5120];
-      const Scope: TBox = [4096, 4864, 16896, 50176];
+      const Scope: TBox = [3840, 4864, 16896, 50176];
     end;
   end;
 
