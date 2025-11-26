@@ -277,9 +277,6 @@ begin
   if not Self.IsOpen() then
     Exit;
 
-  if Self.HasHint() then
-    Exit;
-
   Self.DynamicQuantityButtons := Self.CreateDynamicQuantityButtons();
 end;
 
