@@ -370,19 +370,15 @@ var
   ids: TStringArray;
   id: String;
   json: TJSONItem;
-  stackable: Boolean;
 begin
   if item.IsNumeric then ids := [item]
   else ids := ItemFinder.Database.GetAll(item.ToLower(), 'item', 'id');
+
   for id in ids do
   begin
     json := Self.GetDefinition(id);
-    case json.Item[Ord(EItemDataKey.STACKABLE)].AsInt of
-      0: stackable := False;
-      1: stackable := True;
-    end;
-    if stackable then
-      Exit(stackable);
+    if json.Item[Ord(EItemDataKey.STACKABLE)].AsInt <> 0 then
+      Exit(True);
   end;
 end;
 
