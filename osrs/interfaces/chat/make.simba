@@ -10,6 +10,26 @@ craft certain items in OldSchool RuneScape.
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
+
+(*
+## ERSMakeQuantity
+```pascal
+ERSMakeQuantity = enum(ONE, FIVE, TEN, CUSTOM, X, ALL);
+```
+Enum representing the make quantity buttons.
+*)
+  ERSMakeQuantity = enum(ONE, FIVE, TEN, CUSTOM, X, ALL);
+
+(*
+## TRSMakeQuantityButton
+Helper record used to cache make menu buttons.
+*)
+  TRSMakeQuantityButton = record
+    ButtonType: ERSMakeQuantity;
+    Button: TRSButton;
+    QuantityUpText: String;
+  end;
+
 (*
 ## TRSMakeItem
 Helper record used to cache make menu items.
@@ -18,19 +38,22 @@ Helper record used to cache make menu items.
     Item: String;
     Index, Quantity: Integer;
   end;
-
 (*
 ## TRSMake
 Main record used to interact with the {ref}`Make` menu.
 *)
   TRSMake = record
     Items: array of TRSMakeItem;
+    DynamicQuantityButtons: array of TRSMakeQuantityButton;
     QuantityButtons: TBoxArray;
     SelectedQuantity: Integer;
-    {%codetools on}
+    QuantityArea: TBox;
+    {%codetools off}
     _IsOpenHelper, _ItemsHelper: TBox;
     {%codetools on}
+
     const TEXT_COLOR: TColor = $203040;
+    const BORDER_COLOR: TColorTolerance = [$080707, 5, EColorSpace.RGB, [1.000, 1.000, 1.000]];
   end;
 
 (*
@@ -53,11 +76,12 @@ begin
 
     Self.QuantityButtons := TBoxArray.Create([X2-228, Y1+15], 6, 1, 29, 29, [6,0]).Reversed();
     Self.QuantityButtons[0].X2 += 5;
+    Self.QuantityArea := Self.QuantityButtons.Merge();
 
     Self._ItemsHelper.X1 := X1 + 8;
     Self._ItemsHelper.Y1 := Y1 + 51;
     Self._ItemsHelper.X2 := X2 - 8;
-    Self._ItemsHelper.Y2 := Y2 - 19;
+    Self._ItemsHelper.Y2 := Y2 - 14;
   end;
 end;
 
@@ -96,7 +120,6 @@ begin
   Result := SleepUntil(Self.IsOpen(), interval, time);
 end;
 
-
 (*
 ## Make.GetItemBoxes
 ```pascal
@@ -117,7 +140,7 @@ var
   tpa: TPointArray;
   b: TBox;
 begin
-  tpa := Target.FindColor($080707, 5, Self._ItemsHelper);
+  tpa := Target.FindColor(Self.BORDER_COLOR, Self._ItemsHelper);
   for tpa in tpa.Cluster(1.5) do
   begin
     b := tpa.Bounds();
@@ -126,6 +149,190 @@ begin
   end;
 end;
 
+(*
+## Make.GetQuantityBoxes
+```pascal
+function TRSMake.GetQuantityBoxes(): TBoxArray;
+```
+Finds quantity button boundaries and returns them as a TBoxArray.
+
+You have 2 ways of getting the quantity boxes, a static one:
+```pascal
+ShowOnTarget(Make.QuantityButtons);
+```
+```{figure} ../../images/make_static_quantity_boxes.png
+The make static boxes.
+```
+
+And a dynamic one:
+```pascal
+ShowOnTarget(Make.GetQuantityBoxes());
+```
+```{figure} ../../images/make_quantity_boxes.png
+The make "dynamic" boxes.
+```
+
+There are use cases for both, internally, `Make.GetQuantityBoxes` is usually used.
+*)
+function TRSMake.GetQuantityBoxes(): TBoxArray;
+var
+  tpa: TPointArray;
+  b: TBox;
+begin
+  tpa := Target.FindColor(Self.BORDER_COLOR, Self.QuantityArea);
+  for tpa in tpa.Cluster(1.5) do
+  begin
+    b := tpa.Bounds();
+    if InRange(b.Height, 20, 40) and InRange(b.Width, 20, 40) then
+      Result += b;
+  end;
+  Result := Result.SortByX(True);
+end;
+
+(*
+## Make.CreateDynamicQuantityButtons
+```pascal
+function TRSMake.CreateDynamicQuantityButtons(): array [ERSMakeQuantity] of TRSButton;
+```
+Returns the visible quantity buttons as a array of TRSMakeQuantityButton.
+
+Example:
+```pascal
+Writeln (Make.CreateDynamicQuantityButtons());
+```
+
+```
+*)
+
+function TRSMake.CreateDynamicQuantityButtons(): array of TRSMakeQuantityButton;
+var
+  boxes: TBoxArray;
+  i: Integer;
+  quantityStr: String;
+  btn: TRSMakeQuantityButton;
+begin
+  boxes := Self.GetQuantityBoxes();
+  SetLength(Result, Length(boxes));
+
+  for i := 0 to High(boxes) do
+  begin
+    quantityStr := OCR.Recognize(boxes[i], RSFonts.PLAIN_11, [Self.TEXT_COLOR, RSFonts.WHITE], 0);
+
+    btn.ButtonType := ERSMakeQuantity.String2Quantity(quantityStr);
+    btn.Button.Bounds := boxes[i];
+    btn.Button.EnabledColors := [[RSFonts.WHITE, 0]];
+
+    if quantityStr.Equals('X', True) then
+      btn.QuantityUpText := 'Other'
+    else
+      btn.QuantityUpText := quantityStr;
+
+    Result[i] := btn;
+  end;
+end;
+
+(*
+### ERSMakeQuantity.String2Quantity
+```pascal
+function ERSMakeQuantity.String2Quantity(quantity: String): ERSMakeQuantity; static;
+```
+Internal helper function to convert a string quantity into a ERSMakeQuantity.
+
+Example:
+```pascal
+WriteLn ERSMakeQuantity.String2Quantity('5');
+WriteLn ERSMakeQuantity.String2Quantity('All');
+```
+*)
+
+function ERSMakeQuantity.String2Quantity(quantity: String): ERSMakeQuantity; static;
+begin
+  case quantity of
+    '1'  :   Result := ERSMakeQuantity.ONE;
+    '5'  :   Result := ERSMakeQuantity.FIVE;
+    '10' :   Result := ERSMakeQuantity.TEN;
+    'All':   Result := ERSMakeQuantity.ALL;
+    'X'  :   Result := ERSMakeQuantity.X;
+    else     Result := ERSMakeQuantity.CUSTOM;
+  end;
+end;
+
+(*
+## Make.FindDynamicQuantityButtons
+```pascal
+function TRSMake.FindDynamicQuantityButtons(): Boolean;
+```
+Updates and caches the dynamic quantity buttons. Only works when the interface is open and no hints are open.
+Returns True if successfully updated.
+
+Example:
+```pascal
+if Make.FindDynamicQuantityButtons() then
+  WriteLn('Cached ', Length(Make.FindDynamicQuantityButtons), ' quantity buttons');
+```
+*)
+function TRSMake.FindDynamicQuantityButtons(): Boolean;
+begin
+  Result := False;
+  if not Self.IsOpen() then
+    Exit;
+
+  Self.DynamicQuantityButtons := Self.CreateDynamicQuantityButtons();
+end;
+
+(*
+### Make.GetCurrentQuantityButton
+```pascal
+function TRSMake.GetCurrentQuantityButton(): Integer;
+```
+Get the current active make quantity button.
+
+Example:
+```pascal
+current := Make.GetCurrentQuantityButton();
+WritLn current;
+ShowOnTarget(current.Button.Bounds);
+```
+*)
+function TRSMake.GetCurrentQuantityButton(): TRSMakeQuantityButton;
+var
+  i: Integer;
+begin
+  Result := [];
+  for i := 0 to High(Self.DynamicQuantityButtons) do
+    if Self.DynamicQuantityButtons[i].Button.Enabled then
+      Exit(Self.DynamicQuantityButtons[i]);
+end;
+
+(*
+### Make.GetCurrentQuantity
+```pascal
+function TRSMake.GetCurrentQuantity(): Integer;
+```
+Get the current active make quantity as an integer.
+If All button is current then returns -1.
+
+Example:
+```pascal
+current := Make.GetCurrentQuantityButton();
+WritLn current;
+ShowOnTarget(current.Button.Bounds);
+```
+*)
+function TRSMake.GetCurrentQuantity(): Integer;
+var
+  current: TRSMakeQuantityButton;
+begin
+  current := Self.GetCurrentQuantityButton();
+
+  if current.Button.Bounds.Area = 0 then
+    raise GetDebugLn('Make', 'Failed to get current quantity button');
+
+  if current.QuantityUpText.Equals('All', True) then
+    Exit(-1);
+
+  Result := StrToInt(current.QuantityUpText);
+end;
 
 (*
 ## Make.HasHint
@@ -310,7 +517,6 @@ begin
   Result := Target.HasColor(RSFonts.WHITE, 0, 1, Self.QuantityButtons[idx]);
 end;
 
-
 (*
 ### Make.SetQuantity
 ```pascal
@@ -438,7 +644,6 @@ begin
   end;
 end;
 
-
 procedure TRSMake.Draw(img: TImage);
 begin
   if not Self.IsOpen() then Exit;
@@ -447,6 +652,8 @@ begin
   img.DrawBox(Chat.Bounds);
   img.DrawColor := $FFFFFF;
   img.DrawBoxArray(Self.QuantityButtons, False);
+  img.DrawColor := $0000FF;
+  img.DrawBoxArray(Self.GetQuantityBoxes(), False);
   img.DrawColor := $00FF00;
   img.DrawBoxArray(Self.GetItemBoxes(), False);
   img.DrawColor := $FF0000;
