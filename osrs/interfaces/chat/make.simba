@@ -10,22 +10,12 @@ craft certain items in OldSchool RuneScape.
 {$INCLUDE_ONCE WaspLib/osrs.simba}
 
 type
-
 (*
-## ERSMakeQuantity
-```pascal
-ERSMakeQuantity = enum(ONE, FIVE, TEN, CUSTOM, X, ALL);
-```
-Enum representing the make quantity buttons.
-*)
-  ERSMakeQuantity = enum(ONE, FIVE, TEN, CUSTOM, X, ALL);
-
-(*
-## TRSMakeQuantityButton
+## TRSMakeQuantityButton type
 Helper record used to cache make menu buttons.
 *)
   TRSMakeQuantityButton = record
-    ButtonType: ERSMakeQuantity;
+    Quantity: ERSItemQuantity;
     Button: TRSButton;
     QuantityUpText: String;
   end;
@@ -192,24 +182,20 @@ end;
 (*
 ## Make.CreateDynamicQuantityButtons
 ```pascal
-function TRSMake.CreateDynamicQuantityButtons(): array [ERSMakeQuantity] of TRSButton;
+function TRSMake.CreateDynamicQuantityButtons(): array of TRSMakeQuantityButton;
 ```
 Returns the visible quantity buttons as a array of TRSMakeQuantityButton.
 
 Example:
 ```pascal
-Writeln (Make.CreateDynamicQuantityButtons());
-```
-
+WriteLn Make.CreateDynamicQuantityButtons();
 ```
 *)
-
-function TRSMake.CreateDynamicQuantityButtons(): array of TRSMakeQuantityButton;
+function TRSMake.GetQuantityButtons(): array of TRSMakeQuantityButton;
 var
   boxes: TBoxArray;
   i: Integer;
   quantityStr: String;
-  btn: TRSMakeQuantityButton;
 begin
   boxes := Self.GetQuantityBoxes();
   SetLength(Result, Length(boxes));
@@ -218,44 +204,17 @@ begin
   begin
     quantityStr := OCR.Recognize(boxes[i], RSFonts.PLAIN_11, [Self.TEXT_COLOR, RSFonts.WHITE], 0);
 
-    btn.ButtonType := ERSMakeQuantity.String2Quantity(quantityStr);
-    btn.Button.Bounds := boxes[i];
-    btn.Button.EnabledColors := [[RSFonts.WHITE, 0]];
+    Result[i].Quantity := ERSItemQuantity.Integer2Quantity(StrToInt(quantityStr));
+    Result[i].Button.Bounds := boxes[i];
+    Result[i].Button.EnabledColors := [[RSFonts.WHITE, 0]];
 
     if quantityStr.Equals('X', True) then
-      btn.QuantityUpText := 'Other'
+      Result[i].QuantityUpText := 'Other'
     else
-      btn.QuantityUpText := quantityStr;
-
-    Result[i] := btn;
+      Result[i].QuantityUpText := quantityStr;
   end;
 end;
 
-(*
-### ERSMakeQuantity.String2Quantity
-```pascal
-function ERSMakeQuantity.String2Quantity(quantity: String): ERSMakeQuantity; static;
-```
-Internal helper function to convert a string quantity into a ERSMakeQuantity.
-
-Example:
-```pascal
-WriteLn ERSMakeQuantity.String2Quantity('5');
-WriteLn ERSMakeQuantity.String2Quantity('All');
-```
-*)
-
-function ERSMakeQuantity.String2Quantity(quantity: String): ERSMakeQuantity; static;
-begin
-  case quantity of
-    '1'  :   Result := ERSMakeQuantity.ONE;
-    '5'  :   Result := ERSMakeQuantity.FIVE;
-    '10' :   Result := ERSMakeQuantity.TEN;
-    'All':   Result := ERSMakeQuantity.ALL;
-    'X'  :   Result := ERSMakeQuantity.X;
-    else     Result := ERSMakeQuantity.CUSTOM;
-  end;
-end;
 
 (*
 ## Make.FindDynamicQuantityButtons
