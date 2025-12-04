@@ -180,15 +180,15 @@ begin
 end;
 
 (*
-## Make.CreateDynamicQuantityButtons
+## Make.GetQuantityButtons()
 ```pascal
-function TRSMake.CreateDynamicQuantityButtons(): array of TRSMakeQuantityButton;
+function TRSMake.GetQuantityButtons(): array of TRSMakeQuantityButton;
 ```
 Returns the visible quantity buttons as a array of TRSMakeQuantityButton.
 
 Example:
 ```pascal
-WriteLn Make.CreateDynamicQuantityButtons();
+WriteLn Make.GetQuantityButtons();
 ```
 *)
 function TRSMake.GetQuantityButtons(): array of TRSMakeQuantityButton;
@@ -235,7 +235,7 @@ var
 begin
   buttons := Make.FindQuantityButtons();
   for i := 0 to High(buttons) do
-    WriteLn('Button ', i, ' bounds: ', buttons[i].Bounds);
+    WriteLn('Button ', i, ' bounds: ', buttons[i].Button.Bounds);
 end;
 ```
 *)
