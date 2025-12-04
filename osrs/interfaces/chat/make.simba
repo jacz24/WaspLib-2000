@@ -221,11 +221,22 @@ end;
 ```pascal
 function TRSMake.FindQuantityButtons(): array of TRSMakeQuantityButton;
 ```
-TODO..
+Attempts to find and return all quantity buttons in the Make interface.
+This is a safe wrapper around `GetQuantityButtons()` that first verifies
+the Make interface is open before attempting to locate the buttons.
+
+Returns an empty array if the Make interface is not currently open.
 
 Example:
 ```pascal
-TODO
+var
+  buttons: array of TRSMakeQuantityButton;
+  i: Integer;
+begin
+  buttons := Make.FindQuantityButtons();
+  for i := 0 to High(buttons) do
+    WriteLn('Button ', i, ' bounds: ', buttons[i].Bounds);
+end;
 ```
 *)
 function TRSMake.FindQuantityButtons(): array of TRSMakeQuantityButton;
@@ -255,6 +266,9 @@ var
   i: Integer;
 begin
   btns := Self.FindQuantityButtons();
+  if Length(btns) = 0 then
+    Exit;
+
   for i := 0 to High(btns) do
     if btns[i].Button.Enabled() then
       Exit(btns[i]);
@@ -280,6 +294,8 @@ var
   current: TRSMakeQuantityButton;
 begin
   current := Self.GetCurrentQuantityButton();
+  if current = [] then
+    Exit;
 
   if current.Button.Bounds.Area = 0 then
     raise GetDebugLn('Make', 'Failed to get current quantity button');
