@@ -204,7 +204,7 @@ begin
   begin
     quantityStr := OCR.Recognize(boxes[i], RSFonts.PLAIN_11, [Self.TEXT_COLOR, RSFonts.WHITE], 0);
 
-    Result[i].Quantity := ERSItemQuantity.Integer2Quantity(StrToInt(quantityStr));
+    Result[i].Quantity := ERSItemQuantity.String2Quantity(quantityStr);
     Result[i].Button.Bounds := boxes[i];
     Result[i].Button.EnabledColors := [[RSFonts.WHITE, 0]];
 
