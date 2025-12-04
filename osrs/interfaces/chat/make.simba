@@ -180,15 +180,15 @@ begin
 end;
 
 (*
-## Make.CreateDynamicQuantityButtons
+## Make.GetQuantityButtons()
 ```pascal
-function TRSMake.CreateDynamicQuantityButtons(): array of TRSMakeQuantityButton;
+function TRSMake.GetQuantityButtons(): array of TRSMakeQuantityButton;
 ```
 Returns the visible quantity buttons as a array of TRSMakeQuantityButton.
 
 Example:
 ```pascal
-WriteLn Make.CreateDynamicQuantityButtons();
+WriteLn Make.GetQuantityButtons();
 ```
 *)
 function TRSMake.GetQuantityButtons(): array of TRSMakeQuantityButton;
@@ -221,11 +221,22 @@ end;
 ```pascal
 function TRSMake.FindQuantityButtons(): array of TRSMakeQuantityButton;
 ```
-TODO..
+Attempts to find and return all quantity buttons in the Make interface.
+This is a safe wrapper around `GetQuantityButtons()` that first verifies
+the Make interface is open before attempting to locate the buttons.
+
+Returns an empty array if the Make interface is not currently open.
 
 Example:
 ```pascal
-TODO
+var
+  buttons: array of TRSMakeQuantityButton;
+  i: Integer;
+begin
+  buttons := Make.FindQuantityButtons();
+  for i := 0 to High(buttons) do
+    WriteLn('Button ', i, ' bounds: ', buttons[i].Button.Bounds);
+end;
 ```
 *)
 function TRSMake.FindQuantityButtons(): array of TRSMakeQuantityButton;
@@ -255,6 +266,9 @@ var
   i: Integer;
 begin
   btns := Self.FindQuantityButtons();
+  if Length(btns) = 0 then
+    Exit;
+
   for i := 0 to High(btns) do
     if btns[i].Button.Enabled() then
       Exit(btns[i]);
@@ -280,6 +294,8 @@ var
   current: TRSMakeQuantityButton;
 begin
   current := Self.GetCurrentQuantityButton();
+  if current = [] then
+    Exit;
 
   if current.Button.Bounds.Area = 0 then
     raise GetDebugLn('Make', 'Failed to get current quantity button');
@@ -411,27 +427,38 @@ are visible which you can do easily through the next methods.
 *)
 
 (*
-### Make.IndexOfQuantity
+### Make.FindQuantityButton
 ```pascal
-function TRSMake.IndexOfQuantity(amount: Integer): Integer;
+function TRSMake.FindQuantityButton(amount: Integer): TRSMakeQuantityButton;
 ```
-Finds the index of a quantity button by the specified `amount`.
-If the `amount` we are looking for, the custom quantity button is returned,
-otherwise the result is `-1`.
+Finds and returns the TRSMakeQuantityButton matching the specified `amount`.
+
+For standard quantities (1, 5, 10, All), returns the corresponding button directly.
+For custom amounts, prioritizes a button already set to that value, otherwise
+returns the "Other" (X) button which will prompt for manual entry.
+
+Returns an empty record if no matching button is found or the Make interface is not open.
+
+Note: Automatically closes any tooltip that may be covering the quantity buttons.
 
 Example:
 ```pascal
-WriteLn Make.IndexOfQuantity(Make.QUANTITY_ALL);
+var
+  btn: TRSMakeQuantityButton;
+begin
+  btn := Make.FindQuantityButton(5);
+  if btn <> [] then
+    WriteLn('Found button: ', btn);
+end;
 ```
 *)
-function TRSMake.IndexOfQuantity(amount: Integer): Integer;
+function TRSMake.FindQuantityButton(amount: Integer): TRSMakeQuantityButton;
 var
   hintPt: TPoint;
-  i: Integer;
+  idx: Integer;
   quantity: ERSItemQuantity;
+  quantitybtns: array of TRSMakeQuantityButton;
 begin
-  if amount <= 0 then Exit(0);
-
   if Self.HasHint() then
   begin
     hintPt := Self.GetHintBox().TopRight;
@@ -441,19 +468,25 @@ begin
       raise GetDebugLn('Make', 'Failed to close the tooltip which is covering the quanitty buttons');
   end;
 
+  quantitybtns := Self.FindQuantityButtons();
   quantity := ERSItemQuantity.Integer2Quantity(amount);
 
-  if quantity = ERSItemQuantity.CUSTOM then
+  for idx := 0 to High(quantitybtns) do
   begin
-    if amount = OCR.RecognizeNumber(Self.QuantityButtonBoxes[2], RSFonts.PLAIN_11, [Self.TEXT_COLOR, RSFonts.WHITE], 0) then
-      Exit(2);
-    Exit(1);
+    if quantitybtns[idx].Quantity = quantity then
+    begin
+      if quantity = ERSItemQuantity.CUSTOM then
+      begin
+        if quantitybtns[idx].UpText = IntToStr(amount) then
+        Exit(quantitybtns[idx]);
+        if quantitybtns[idx].UpText = 'Other' then
+          Exit(quantitybtns[idx]);
+      end
+      else
+        Exit(quantitybtns[idx]);
+    end;
   end;
-
-  for i := 1 to High(Self.QuantityButtonBoxes) do
-    if amount = OCR.RecognizeNumber(Self.QuantityButtonBoxes[i], RSFonts.PLAIN_11, [Self.TEXT_COLOR, RSFonts.WHITE], 0) then
-      Exit(i);
-  Result := -1;
+ Result := [];
 end;
 
 (*
@@ -487,18 +520,19 @@ WriteLn Make.SetQuantity(Make.QUANTITY_ALL);
 *)
 function TRSMake.SetQuantity(amount: Integer): Boolean;
 var
-  idx: Integer;
+  quantityButton: TRSMakeQuantityButton;
   done: Boolean;
 begin
-  idx := Self.IndexOfQuantity(amount);
-  if idx < 0 then
+  quantityButton := Self.FindQuantityButton(amount);
+  if quantityButton = [] then
     raise GetDebugLn('Make', 'Quantity button for "' + ToStr(amount) + '" is not available.');
 
-  if Self.IsQuantitySelected(idx) then Exit(True);
+  if quantityButton.Button.Enabled() then Exit(True);
 
-  Mouse.Click(Self.QuantityButtonBoxes[idx], EMouseButton.LEFT);
+  quantityButton.Button.Click(EMouseButton.LEFT);
+
   Result := SleepUntil(
-              (done := Self.IsQuantitySelected(idx)) or
+              (done := quantityButton.Button.Enabled()) or
               Chat.FindQuery('Enter amount', True), RandomMode(100, 50, 1500), 600
             );
   if done then Exit;
@@ -531,7 +565,7 @@ begin
   boxes[index].Y1 := boxes[index].Y2 + 1;
   boxes[index].Y2 += 15;
 
-  if OCR.Locate(boxes[index], 'Space', [Self.TEXT_COLOR], 0, RSFonts.PLAIN_11) < 0.95 then
+  if OCR.Locate(boxes[index], 'Space', [Self.TEXT_COLOR], 0, RSFonts.PLAIN_11) >= 0.95 then
     Keyboard.KeyPress(EKeyCode.SPACE)
   else
     Keyboard.KeyPress(EKeyCode(Ord(EKeyCode.NUM_1) + index));
