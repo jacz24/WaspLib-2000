@@ -455,7 +455,7 @@ end;
 function TRSMake.FindQuantityButton(amount: Integer): TRSMakeQuantityButton;
 var
   hintPt: TPoint;
-  i, idx: Integer;
+  idx: Integer;
   quantity: ERSItemQuantity;
   quantitybtns: array of TRSMakeQuantityButton;
 begin
@@ -565,7 +565,7 @@ begin
   boxes[index].Y1 := boxes[index].Y2 + 1;
   boxes[index].Y2 += 15;
 
-  if OCR.Locate(boxes[index], 'Space', [Self.TEXT_COLOR], 0, RSFonts.PLAIN_11) < 0.95 then
+  if OCR.Locate(boxes[index], 'Space', [Self.TEXT_COLOR], 0, RSFonts.PLAIN_11) >= 0.95 then
     Keyboard.KeyPress(EKeyCode.SPACE)
   else
     Keyboard.KeyPress(EKeyCode(Ord(EKeyCode.NUM_1) + index));
