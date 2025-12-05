@@ -243,16 +243,6 @@ begin
     Make.SetQuantity(currentBtn);
 end;
 
-procedure TAntiban.RandomMakeTask();
-begin
-  case Random(0, 10) of
-    0..3:  Self.HoverMakeItem();
-    4..6:  Self.HoverMakeQuantity();
-    7..8:  Self.ReadMakeItemHint();
-    9..10: Self.ToggleMakeQuantity();
-  end;
-end;
-
 //Chatbox antiban
 procedure TAntiban.ChatScrolling();
 begin
@@ -736,6 +726,16 @@ begin
     4..9:   Self.ToggleTab();
     //TODO: 10..11: Self.ToggleAchievementTabs();
     //TODO: 12:     Self.CheckCharges();
+  end;
+end;
+
+procedure TAntiban.RandomMakeTask();
+begin
+  case Random(0, 10) of
+    0..3:  Self.HoverMakeItem();
+    4..6:  Self.HoverMakeQuantity();
+    7..8:  Self.ReadMakeItemHint();
+    9..10: Self.ToggleMakeQuantity();
   end;
 end;
 
