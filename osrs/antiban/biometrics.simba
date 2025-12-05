@@ -24,7 +24,7 @@ EBiometric = enum(
   RATING, LIKES, DISLIKES
 );
 ```
-Enum that represent biometrics affected by the user user unique player seed.
+Enum that represents biometrics affected by the user's unique player seed.
 *)
   EBiometric = enum(
     MULTIPLIER,
@@ -40,7 +40,7 @@ Enum that represent biometrics affected by the user user unique player seed.
 
 (*
 ## TBiometrics
-Record responsible for biometrics and beiometric behaviour.
+Record responsible for biometrics and biometric behaviour.
 *)
   TBiometrics = record
     Index: Integer;
@@ -52,11 +52,11 @@ Record responsible for biometrics and beiometric behaviour.
 ```pascal
 property TBiometrics.Hash: TByteArray;
 ```
-Get the current unique hash generated to the for the current {ref}`TProfile` being used.
+Get the current unique hash generated for the current {ref}`TProfile` being used.
 
 Changing {ref}`ProfileIndex`, will reset the hash.
 
-If there's no {ref}`Profiles` availble WaspLib will use a random hash.
+If there's no {ref}Profiles available WaspLib will use a random hash.
 
 Example:
 ```pascal
