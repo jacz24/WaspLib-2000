@@ -409,6 +409,33 @@ begin
 end;
 
 (*
+## Make.ClearQuantityHint
+```pascal
+function TRSMake.ClearQuantityHint(): Boolean;
+```
+Checks if a hint tooltip is covering the quantity buttons and closes it if so.
+Returns True if the quantity buttons are accessible (no hint, or hint was closed).
+Example:
+```pascal
+if not Make.ClearQuantityHint() then
+  WriteLn('Failed to clear hint covering quantity buttons');
+```
+*)
+function TRSMake.ClearQuantityHint(): Boolean;
+var
+  hintPt: TPoint;
+begin
+  if not Self.HasHint() then
+    Exit(True);
+
+  hintPt := Self.GetHintBox().TopRight;
+  if (hintPt.Y > Self.QuantityButtonBoxes[5].Y2) or (hintPt.X < Self.QuantityButtonBoxes[5].X1) then
+    Exit(True);
+
+  Result := Self.CloseHint();
+end;
+
+(*
 ## Make.QuantityButtons
 The quantity buttons are dynamic there can be anywhere from 1 to 6 available.
 
@@ -454,19 +481,12 @@ end;
 *)
 function TRSMake.FindQuantityButton(amount: Integer): TRSMakeQuantityButton;
 var
-  hintPt: TPoint;
   idx: Integer;
   quantity: ERSItemQuantity;
   quantitybtns: array of TRSMakeQuantityButton;
 begin
-  if Self.HasHint() then
-  begin
-    hintPt := Self.GetHintBox().TopRight;
-    if (hintPt.Y <= Self.QuantityButtonBoxes[5].Y2) and (hintPt.X >= Self.QuantityButtonBoxes[5].X1) then
-
-    if not Self.CloseHint() then
-      raise GetDebugLn('Make', 'Failed to close the tooltip which is covering the quanitty buttons');
-  end;
+  if not Self.ClearQuantityHint() then
+    raise GetDebugLn('Make', 'Failed to close the tooltip which is covering the quantity buttons');
 
   quantitybtns := Self.FindQuantityButtons();
   quantity := ERSItemQuantity.Integer2Quantity(amount);

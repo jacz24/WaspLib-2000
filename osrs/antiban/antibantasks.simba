@@ -162,10 +162,95 @@ procedure TAntiban.HoverMakeItem();
 var
   boxes: TBoxArray;
 begin
-  if not Bank.IsOpen() then Exit;
-  WriteLn GetDebugLn('Antiban', 'Hovering a random make item button');
+  if not Make.IsOpen() then Exit;
+  WriteLn GetDebugLn('Antiban', 'Hovering a random make item');
   boxes := Make.GetItemBoxes();
+  if boxes = [] then Exit;
   Mouse.Move(boxes.Random());
+end;
+
+procedure TAntiban.HoverMakeQuantity();
+var
+  boxes: TBoxArray;
+begin
+  if not Make.IsOpen() then Exit;
+  if not Make.ClearQuantityHint() then Exit;
+  WriteLn GetDebugLn('Antiban', 'Hovering a random make quantity button');
+  boxes := Make.GetQuantityBoxes();
+  if boxes = [] then Exit;
+  Mouse.Move(boxes.Random());
+  Biometrics.Sleep(500, 2000, ERandomDir.LEFT);
+end;
+
+procedure TAntiban.ReadMakeItemHint();
+var
+  boxes: TBoxArray;
+begin
+  if not Make.IsOpen() then Exit;
+  WriteLn GetDebugLn('Antiban', 'Reading a random make item hint');
+  boxes := Make.GetItemBoxes();
+  if boxes = [] then Exit;
+  Mouse.Move(boxes.Random());
+  if Make.WaitHint(2000) then
+  begin
+    Biometrics.Sleep(1000, 3000, ERandomDir.LEFT);
+    Make.CloseHint();
+  end;
+end;
+
+procedure TAntiban.ToggleMakeQuantity();
+var
+  randomBtn: TRSMakeQuantityButton;
+  quantityBtns: array of TRSMakeQuantityButton;
+  currentBtn, customQuantity, i: Integer;
+begin
+  if not Make.IsOpen() then Exit;
+  if not Make.ClearQuantityHint() then Exit;
+  WriteLn GetDebugLn('Antiban', 'Toggling make quantity buttons');
+
+  quantityBtns := Make.FindQuantityButtons;
+  if quantityBtns = [] then Exit;
+  currentBtn := Make.GetCurrentQuantity();
+  randomBtn := quantityBtns[Random(Length(quantityBtns))];
+
+  if randomBtn.UpText = 'Other' then
+  begin
+    for i := 0 to High(quantityBtns) do
+      if (quantityBtns[i].Quantity = ERSItemQuantity.CUSTOM)
+         and (quantityBtns[i].UpText <> 'Other') then
+      begin
+        customQuantity := StrToInt(quantityBtns[i].UpText);
+      end;
+
+    Make.SetQuantity(Random(1, 27));
+    Biometrics.Sleep(1000, 3000, ERandomDir.LEFT);
+
+    if customQuantity > 0 then
+    begin
+      Make.SetQuantity(customQuantity);
+      Biometrics.Sleep(1000, 3000, ERandomDir.LEFT);
+    end;
+  end
+  else
+  begin
+    // Just click the random button
+    randomBtn.Button.Enable();
+    Biometrics.Sleep(1000, 3000, ERandomDir.LEFT);
+  end;
+
+  // Restore original
+  if Make.IsOpen() then
+    Make.SetQuantity(currentBtn);
+end;
+
+procedure TAntiban.RandomMakeTask();
+begin
+  case Random(0, 10) of
+    0..3:  Self.HoverMakeItem();
+    4..6:  Self.HoverMakeQuantity();
+    7..8:  Self.ReadMakeItemHint();
+    9..10: Self.ToggleMakeQuantity();
+  end;
 end;
 
 //Chatbox antiban
@@ -893,6 +978,10 @@ const
     ['HoverSkills',           @Antiban.HoverSkills],
     ['OpenSkills',            @Antiban.OpenSkills],
     ['HoverMakeItem',         @Antiban.HoverMakeItem],
+    ['HoverMakeQuantity',     @Antiban.HoverMakeQuantity],
+    ['ReadMakeItemHint',      @Antiban.ReadMakeItemHint],
+    ['ToggleMakeQuantity',    @Antiban.ToggleMakeQuantity],
+    ['RandomMakeTask',        @Antiban.RandomMakeTask],
     ['ChatScrolling',         @Antiban.ChatScrolling],
     ['RandomChatTab',         @Antiban.RandomChatTab],
     ['ToggleChatTab',         @Antiban.ToggleChatTab],
