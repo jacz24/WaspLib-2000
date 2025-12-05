@@ -1,0 +1,56 @@
+(*
+## Make Tests
+Tests the integrity of several Make interface methods.
+*)
+{$DEFINE WL_TEST}
+{$I WaspLib/osrs.simba}
+{$ASSERTIONS ON}
+
+const
+  PATH: String = {$MACRO DIR} + 'imgs' + PATH_SEP;
+  MODES: TStringArray = ['fixed', 'resizable_classic', 'resizable_modern_small', 'resizable_modern_large'];
+  FILENAME: String := PATH_SEP + PathExtractNameWithoutExt(SCRIPT_FILE);
+var
+  mode: String;
+  img: TImage;
+begin
+  for mode in MODES do
+  begin
+    // Test 004.png - Basic Make interface with 5 items, 6 quantity buttons, 6 selected
+    img := new TImage(PATH + mode + FILENAME + '.png');
+    Target.SetImage(img);
+    WaspLibSetup();
+
+    Assert(Make.IsOpen());
+    Assert(Length(Make.GetItemBoxes()) = 5);
+
+    Assert(Length(Make.GetQuantityBoxes()) = 6);
+    Assert(Length(Make.FindQuantityButtons) = 6);
+    Assert(Make.GetCurrentQuantity() = 6);
+    Assert(Make.HasHint() = False);
+
+    // Test 004-1.png - Make interface with hint tooltip showing
+    img := new TImage(PATH + mode + FILENAME + '-1.png');
+    Target.SetImage(img);
+
+    WaspLibSetup();
+
+    Assert(Make.IsOpen());
+    Assert(Make.HasHint());
+    Assert(Make.ReadHint().Contains('Willow longbow'));
+    Assert(Length(Make.GetItemBoxes()) = 5);
+
+    // Test 004-2.png - Different Make interface with 1 item, 3 quantity buttons
+    img := new TImage(PATH + mode + FILENAME + '-2.png');
+    Target.SetImage(img);
+
+    WaspLibSetup();
+
+    Assert(Make.IsOpen());
+    Assert(Length(Make.GetItemBoxes()) = 1);
+    Assert(Length(Make.GetQuantityBoxes()) = 3);
+    Assert(Length(Make.FindQuantityButtons) = 3);
+    Assert(Make.GetCurrentQuantity() = 10);
+    Assert(Make.HasHint() = False);
+  end;
+end;
