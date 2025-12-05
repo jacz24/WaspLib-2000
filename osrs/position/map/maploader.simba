@@ -332,7 +332,7 @@ begin
   begin
     if not FileExists(cachename + '.png') then
     begin
-      Result.SetSize(RSTranslator.Map.ChunkSide, RSTranslator.Map.ChunkSide);
+      Result.SetSize(RSTranslator.MapChunkSide, RSTranslator.MapChunkSide);
       if not DirCreate(PathExtractDir(cachename)) then
         raise GetDebugLn('MapLoader', 'Failed to create path: ' + PathExtractDir(cachename));
     end
@@ -379,7 +379,7 @@ begin
     hi := [Max(x, hi.X), Max(y, hi.Y)];
   end;
 
-  n := RSTranslator.Map.ChunkSide;
+  n := RSTranslator.MapChunkSide;
 
   Result := new TImage((hi.X-lo.X) * n + 1 + n, (hi.Y-lo.Y) * n + 1 + n);
 

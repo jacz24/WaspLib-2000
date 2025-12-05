@@ -21,14 +21,10 @@ that can be used by Simba and back.
     RSMap: record
       const ChunkSide: Integer = 64;
       const Dimensions: TPoint = [100,200];
-      const Scope: TBox = [15, 19, 66, 196];
+      const Scope: TBox = [0, 19, 99, 196];
     end;
 
-    Map: record
-      const ChunkSide: Integer = 256;
-      const Dimensions: TPoint = [2560, 5120];
-      const Scope: TBox = [3840, 4864, 16896, 50176];
-    end;
+    const MapChunkSide: Integer = 256;
   end;
 
 (*
@@ -45,7 +41,7 @@ WriteLn RSTranslator.MapWidth;
 *)
 property TRSTranslator.MapWidth: Integer;
 begin
-  Result := Self.RSMap.Scope.Width * Self.Map.ChunkSide;
+  Result := Self.RSMap.Scope.Width * Self.MapChunkSide;
 end;
 
 (*
@@ -62,7 +58,7 @@ WriteLn RSTranslator.MapHeight;
 *)
 property TRSTranslator.MapHeight: Integer;
 begin
-  Result := Self.RSMap.Scope.Height * Self.Map.ChunkSide;
+  Result := Self.RSMap.Scope.Height * Self.MapChunkSide;
 end;
 
 
@@ -82,8 +78,8 @@ WriteLn RSTranslator.Global2Chunk(Point(2000, 2000));
 function TRSTranslator.Global2Chunk(p: TPoint): TPoint;
 begin
   while p.X > Self.MapWidth do p.X -= Self.MapWidth;
-  Result.X := Self.RSMap.Scope.X1 + Floor(p.X / Self.Map.ChunkSide);
-  Result.Y := Self.RSMap.Scope.Y2 - Floor(p.Y / Self.Map.ChunkSide);
+  Result.X := Self.RSMap.Scope.X1 + Floor(p.X / Self.MapChunkSide);
+  Result.Y := Self.RSMap.Scope.Y2 - Floor(p.Y / Self.MapChunkSide);
 end;
 
 function TRSTranslator.Global2Chunk(b: TBox): TBox; overload;
@@ -111,8 +107,8 @@ WriteLn RSTranslator.Chunk2Coordinate(Point(53, 50));
 *)
 function TRSTranslator.Chunk2Coordinate(p: TPoint): TPoint;
 begin
-  Result.X := p.X * Self.Map.ChunkSide - Self.Map.Scope.X1;
-  Result.Y := Self.Map.Scope.Y2 - p.Y * Self.Map.ChunkSide;
+  Result.X := p.X * Self.MapChunkSide;
+  Result.Y := (Self.RSMap.Scope.Y2 - p.Y) * Self.MapChunkSide;
 end;
 
 function TRSTranslator.Chunk2Coordinate(b: TBox): TBox; overload;
