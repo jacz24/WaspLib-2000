@@ -1,6 +1,6 @@
 (*
 # Login Tests
-Tests the integrety of several login methods.
+Tests the integrity of several login methods.
 *)
 {$DEFINE WL_TEST}
 {$I WaspLib/osrs.simba}
