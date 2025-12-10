@@ -173,8 +173,11 @@ procedure TAntiban.HoverMakeQuantity();
 var
   boxes: TBoxArray;
 begin
-  if not Make.IsOpen() then Exit;
-  if not Make.ClearQuantityHint() then Exit;
+  if not Make.IsOpen() then
+    Exit;
+  if not Make.CloseHint() then
+    Exit;
+
   WriteLn GetDebugLn('Antiban', 'Hovering a random make quantity button');
   boxes := Make.GetQuantityBoxes();
   if boxes = [] then Exit;
@@ -204,8 +207,11 @@ var
   quantityBtns: array of TRSMakeQuantityButton;
   currentBtn, customQuantity, i: Integer;
 begin
-  if not Make.IsOpen() then Exit;
-  if not Make.ClearQuantityHint() then Exit;
+  if not Make.IsOpen() then
+    Exit;
+  if not Make.CloseHint() then
+    Exit;
+
   WriteLn GetDebugLn('Antiban', 'Toggling make quantity buttons');
 
   quantityBtns := Make.FindQuantityButtons;
