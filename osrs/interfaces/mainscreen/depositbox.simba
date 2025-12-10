@@ -255,7 +255,6 @@ Example:
 DepositBox.DepositItem('Lobster', True);
 ```
 *)
-
 function TRSDepositBox.DepositItem(item: TRSBankItem; useQuantityButtons: Boolean): Boolean;
 var
   ba: TBoxArray;

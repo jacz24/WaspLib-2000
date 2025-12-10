@@ -12,12 +12,25 @@ compiler directive:
 
 {$IFDEF WL_DEBUG_INTERFACES}
 
-procedure TRSInterface.Draw(img: TImage);
-begin
-  img.DrawColor := $00FFFF;
-  img.DrawBox(Self.Bounds);
-end;
+(*
+## Button.Draw
+```pascal
+procedure TRSButton.Draw(img: TImage; color: Integer = $00FFFF);
+```
+Draws the current {ref}`TRSButton` on the `img` passed in.
 
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  Bank.Buttons[ERSBankButtons.MENU].Draw(img);
+  img.Show();
+end;
+```
+*)
 procedure TRSButton.Draw(img: TImage; color: Integer = $00FFFF);
 var
   oldColor: Integer;
@@ -28,6 +41,25 @@ begin
   img.DrawColor := oldColor;
 end;
 
+(*
+## ButtonArray.Draw
+```pascal
+procedure TRSButtonArray.Draw(img: TImage; color: Integer = $00FFFF);
+```
+Draws the current {ref}`TRSButtonArray` on the `img` passed in.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  Bank.Buttons.Draw(img);
+  img.Show();
+end;
+```
+*)
 procedure TRSButtonArray.Draw(img: TImage; color: Integer = $00FFFF);
 var
   oldColor: Integer;
@@ -42,6 +74,25 @@ begin
   img.DrawColor := oldColor;
 end;
 
+(*
+## ScrollBar.Draw
+```pascal
+procedure TRSScrollBar.Draw(img: TImage);
+```
+Draws the current {ref}`TRSScrollBar` on the `img` passed in.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  Bank.Scroll.Draw(img);
+  img.Show();
+end;
+```
+*)
 procedure TRSScrollBar.Draw(img: TImage);
 var
   bounds: TBox;
@@ -66,6 +117,25 @@ begin
   img.DrawBoxArray([Self.Up, Self.Down], False);
 end;
 
+(*
+## DropDown.Draw
+```pascal
+procedure TRSDropDown.Draw(img: TImage);
+```
+Draws the current {ref}`TRSDropDown` on the `img` passed in.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  Options.DropDowns[ERSOptionsDropDown.CLIENT_MODE].Draw(img);
+  img.Show();
+end;
+```
+*)
 procedure TRSDropDown.Draw(img: TImage);
 var
   i: Integer;
@@ -85,6 +155,47 @@ begin
 end;
 
 
+(*
+## Interface.Draw
+```pascal
+procedure TRSInterface.Draw(img: TImage);
+procedure TRSGameTabs.Draw(img: TImage);
+procedure TRSChat.Draw(img: TImage);
+procedure TRSMake.Draw(img: TImage);
+procedure TRSBank.Draw(img: TImage);
+procedure TRSBankPin.Draw(img: TImage);
+procedure TRSCollectionBox.Draw(img: TImage);
+procedure TRSDepositBox.Draw(img: TImage);
+procedure TRSShop.Draw(img: TImage);
+procedure TRSGoldScreen.Draw(img: TImage);
+procedure TRSSilverScreen.Draw(img: TImage);
+```
+Draws several parts of the interface on a {ref}`TImage`
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  GoldScreen.Draw(img);
+  img.Show();
+end;
+```
+*)
+procedure TRSInterface.Draw(img: TImage);
+begin
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
+end;
+
+procedure TRSGameTabs.Draw(img: TImage);
+begin
+img.DrawBox(Self.Bounds);
+img.DrawBoxArray(Self.Tabs, False);
+end;
+
 procedure TRSChat.Draw(img: TImage);
 var
   tab: TRSChatTab;
@@ -103,6 +214,22 @@ begin
   Self.Scroll.Draw(img);
   for tab in Self.Tabs.Tabs do
     tab.Button.Draw(img);
+end;
+
+procedure TRSMake.Draw(img: TImage);
+begin
+  if not Self.IsOpen() then Exit;
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Chat.Bounds);
+  img.DrawColor := $FFFFFF;
+  img.DrawBoxArray(Self.QuantityButtonBoxes, False);
+  img.DrawColor := $0000FF;
+  img.DrawBoxArray(Self.GetQuantityBoxes(), False);
+  img.DrawColor := $00FF00;
+  img.DrawBoxArray(Self.GetItemBoxes(), False);
+  img.DrawColor := $FF0000;
+  img.DrawBox(Self.GetHintBox());
 end;
 
 procedure TRSBank.Draw(img: TImage);
@@ -131,6 +258,17 @@ begin
 
   for i := 0 to 3 do
     Self.DynamicButtons[i].Draw(img);
+end;
+
+procedure TRSBankPin.Draw(img: TImage);
+begin
+  if not Self.IsOpen() then Exit;
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
+
+  img.DrawColor := $FFFFFF;
+  img.DrawBoxArray(Self.Buttons, False);
 end;
 
 procedure TRSCollectionBox.Draw(img: TImage);
@@ -192,12 +330,6 @@ begin
   end;
 end;
 
-procedure TRSGameTabs.Draw(img: TImage);
-begin
-img.DrawBox(Self.Bounds);
-img.DrawBoxArray(Self.Tabs, False);
-end;
-
 procedure TRSShop.Draw(img: TImage);
 var
   i: Integer;
@@ -224,67 +356,19 @@ begin
     Self.QuantityButtons[i].Draw(img);
 end;
 
-procedure TRSBankPin.Draw(img: TImage);
+procedure TRSGoldScreen.Draw(img: TImage);
 begin
-  if not Self.IsOpen() then Exit;
-
-  img.DrawColor := $00FFFF;
   img.DrawBox(Self.Bounds);
-
-  img.DrawColor := $FFFFFF;
-  img.DrawBoxArray(Self.Buttons, False);
+  img.DrawBoxArray(Self.ItemBoxes, False);
+  Self.GetButtons().Draw(img);
 end;
 
-(*
-## GoldScreen.Draw
-```pascal
-procedure TRSGoldScreen.Draw(Bmp: TMufasaBitmap);
-```
-Debug‑draws bounds, item slots, and quantity buttons on `Bmp`.
-*)
-procedure TRSGoldScreen.Draw();
-var
-  btn: TRSButton;
-  allBoxes: TBoxArray;
+procedure TRSSilverScreen.Draw(img: TImage);
 begin
-  allBoxes += Self.Bounds;
-  allBoxes += Self.ItemBoxes;
-
-  for btn in Self.GetButtons() do
-    allBoxes += btn.Bounds;
-
-  ShowOnTarget(allBoxes);
-end;
-
-procedure TRSSilverScreen.Draw();
-var
-  btn      : TRSButton;
-  allBoxes : TBoxArray;
-begin
-  allBoxes += Self.Bounds;
-  allBoxes += Self.SlotBoxes;
-  allBoxes += Self.ClickBoxes;
-
-  for btn in Self.GetButtons do
-    allBoxes += btn.Bounds;
-
-  ShowOnTarget(allBoxes);
-end;
-
-procedure TRSMake.Draw(img: TImage);
-begin
-  if not Self.IsOpen() then Exit;
-
-  img.DrawColor := $00FFFF;
-  img.DrawBox(Chat.Bounds);
-  img.DrawColor := $FFFFFF;
-  img.DrawBoxArray(Self.QuantityButtonBoxes, False);
-  img.DrawColor := $0000FF;
-  img.DrawBoxArray(Self.GetQuantityBoxes(), False);
-  img.DrawColor := $00FF00;
-  img.DrawBoxArray(Self.GetItemBoxes(), False);
-  img.DrawColor := $FF0000;
-  img.DrawBox(Self.GetHintBox());
+  img.DrawBox(Self.Bounds);
+  img.DrawBoxArray(Self.SlotBoxes, False);
+  img.DrawBoxArray(Self.ClickBoxes, False);
+  Self.GetButtons().Draw(img);
 end;
 
 
@@ -324,7 +408,6 @@ begin
   dropdown.Draw(img);
   img.Show();
 end;
-
 
 procedure ShowOnTarget(chat: TRSChat); overload;
 var
