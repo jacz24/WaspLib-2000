@@ -38,9 +38,7 @@ Main record used to interact with the {ref}`Make` menu.
     QuantityButtonBoxes: TBoxArray;
     SelectedQuantity: Integer;
     QuantityArea: TBox;
-    {%codetools off}
     _IsOpenHelper, _ItemsHelper: TBox;
-    {%codetools on}
 
     const TEXT_COLOR: TColor = $203040;
     const BORDER_COLOR: TColorTolerance = [$080707, 5, EColorSpace.RGB, [1.000, 1.000, 1.000]];
