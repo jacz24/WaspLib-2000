@@ -1,6 +1,8 @@
 (*
 # DepositBox
 DepositBox interface.
+```{figure} ../../images/deposit_box_interface.png
+```
 *)
 
 {$DEFINE WL_DEPOSITBOX_INCLUDED}
@@ -29,6 +31,20 @@ Main record to interact with the {ref}`DepositBox` interface.
     DepositButtons: array [ERSDepositButtons] of TRSButton;
     QuantityButtons: array [ERSItemQuantity] of TRSButton;
   end;
+
+(*
+## DepositBox.FindItemBoundaries
+```pascal
+function TRSDepositBox.FindItemBoundaries(): TBoxArray;
+```
+Finds and returns the bounding boxes of items currently visible in the deposit box slots.
+Used internally by the slot interface for item detection.
+
+Example:
+```pascal
+WriteLn DepositBox.FindItemBoundaries();
+```
+*)
 
 function TRSDepositBox.FindItemBoundaries(): TBoxArray;
 var
@@ -225,6 +241,21 @@ begin
   end;
 end;
 
+(*
+## DepositBox.DepositItem
+```pascal
+function TRSDepositBox.DepositItem(item: TRSBankItem; useQuantityButtons: Boolean): Boolean;
+function TRSDepositBox.DepositItem(item: TRSItem; useQuantityButtons: Boolean): Boolean; overload;
+```
+Deposits the specified item into the deposit box.
+If useQuantityButton is False it will use {ref}`ChooseOption`
+
+Example:
+```pascal
+DepositBox.DepositItem('Lobster', True);
+```
+*)
+
 function TRSDepositBox.DepositItem(item: TRSBankItem; useQuantityButtons: Boolean): Boolean;
 var
   ba: TBoxArray;
@@ -237,6 +268,21 @@ function TRSDepositBox.DepositItem(Item: TRSItem; useQuantityButtons: Boolean): 
 begin
   Result := Self.DepositItem(new TRSBankItem(item), useQuantityButtons);
 end;
+
+(*
+## DepositBox.DepositItemArray
+```pascal
+function TRSDepositBox.DepositItemArray(items: array of TRSBankItem; useQuantityButtons: Boolean): Boolean;
+function TRSDepositBox.DepositItemArray(items: TRSItemArray; useQuantityButtons: Boolean): Boolean; overload;
+```
+Deposits an array of items into the deposit box. Returns `True` if all items were successfully deposited.
+If useQuantityButton is False it will use {ref}`ChooseOption`
+
+Example:
+```pascal
+DepositBox.DepositItemArray(['Lobster', 'Swordfish'], True);
+```
+*)
 
 function TRSDepositBox.DepositItemArray(items: array of TRSBankItem; useQuantityButtons: Boolean): Boolean;
 var
@@ -258,11 +304,37 @@ begin
       Result := False;
 end;
 
+(*
+## DepositBox.DepositInventory
+```pascal
+procedure TRSDepositBox.DepositInventory();
+```
+Clicks the deposit inventory button to deposit all inventory items at once.
+
+Example:
+```pascal
+DepositBox.DepositInventory();
+```
+*)
+
 procedure TRSDepositBox.DepositInventory();
 begin
   if Self.IsOpen then
     Self.DepositButtons[ERSDepositButtons.INVENTORY].Click;
 end;
+
+(*
+## DepositBox.DepositLootBag
+```pascal
+procedure TRSDepositBox.DepositLootBag();
+```
+Clicks the deposit loot bag button to deposit all items from the looting bag.
+
+Example:
+```pascal
+DepositBox.DepositLootBag();
+```
+*)
 
 procedure TRSDepositBox.DepositLootBag();
 begin
@@ -270,10 +342,62 @@ begin
     Self.DepositButtons[ERSDepositButtons.LOOT].Click;
 end;
 
+(*
+## DepositBox.DepositEquipment
+```pascal
+procedure TRSDepositBox.DepositEquipment();
+```
+Clicks the deposit worn items button to deposit all currently equipped items.
+
+Example:
+```pascal
+DepositBox.DepositEquipment();
+```
+*)
+
 procedure TRSDepositBox.DepositEquipment();
 begin
   if Self.IsOpen then
     Self.DepositButtons[ERSDepositButtons.WORN].Click;
+end;
+
+procedure TRSDepositBox.Draw(img: TImage);
+var
+  i: Integer;
+  items: TBoxArray;
+begin
+  if not Self.IsOpen() then Exit;
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
+  img.DrawColor := $FFFFFF;
+  img.DrawBox(Self.SlotsArea);
+  img.DrawColor := $00FF00;
+  img.DrawBoxArray(Self.InvSlotBoxes, False);
+  img.DrawColor := $FF0000;
+  img.DrawBoxArray(Self.EquipSlotBoxes, False);
+  img.DrawColor := $FFFF00;
+  img.DrawBoxArray(Self.FindItemBoundaries(), False);
+  img.DrawColor := $00FF00;
+
+  for i := 0 to 4 do
+  begin
+    Self.QuantityButtons[i].Draw(img);
+  end;
+
+  for i := 0 to 2 do
+  begin
+    Self.DepositButtons[i].Draw(img);
+  end;
+end;
+
+procedure ShowOnTarget(depositBox: TRSDepositBox); overload;
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  depositBox.Draw(img);
+  img.Show();
 end;
 
 var
