@@ -306,6 +306,7 @@ begin
   Result := StrToInt(current.UpText);
 end;
 
+
 (*
 ## Make.HasHint
 ```pascal
@@ -362,7 +363,8 @@ var
   tpa: TPointArray;
 begin
   tpa := Target.FindColor($A0FFFF, 0, Chat.Bounds);
-  if tpa <> [] then Result := tpa.Bounds();
+  if tpa <> [] then
+    Result := tpa.Bounds();
 end;
 
 (*
@@ -399,6 +401,9 @@ var
   tpa: TPointArray;
   b: TBox;
 begin
+  if not Self.HasHint() then
+    Exit(True);
+
   tpa := TPointArray.CreateFromBox(Chat.Bounds, True);
   for b in Self.GetItemBoxes() do
     tpa := tpa.ExcludeBox(b.Expand(1));
@@ -454,19 +459,12 @@ end;
 *)
 function TRSMake.FindQuantityButton(amount: Integer): TRSMakeQuantityButton;
 var
-  hintPt: TPoint;
   idx: Integer;
   quantity: ERSItemQuantity;
   quantitybtns: array of TRSMakeQuantityButton;
 begin
-  if Self.HasHint() then
-  begin
-    hintPt := Self.GetHintBox().TopRight;
-    if (hintPt.Y <= Self.QuantityButtonBoxes[5].Y2) and (hintPt.X >= Self.QuantityButtonBoxes[5].X1) then
-
-    if not Self.CloseHint() then
-      raise GetDebugLn('Make', 'Failed to close the tooltip which is covering the quanitty buttons');
-  end;
+  if not Self.CloseHint() then
+    raise GetDebugLn('Make', 'Failed to close the tooltip which could be covering the quantity buttons');
 
   quantitybtns := Self.FindQuantityButtons();
   quantity := ERSItemQuantity.Integer2Quantity(amount);
