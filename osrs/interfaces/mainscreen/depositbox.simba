@@ -361,45 +361,6 @@ begin
     Self.DepositButtons[ERSDepositButtons.WORN].Click;
 end;
 
-procedure TRSDepositBox.Draw(img: TImage);
-var
-  i: Integer;
-  items: TBoxArray;
-begin
-  if not Self.IsOpen() then Exit;
-
-  img.DrawColor := $00FFFF;
-  img.DrawBox(Self.Bounds);
-  img.DrawColor := $FFFFFF;
-  img.DrawBox(Self.SlotsArea);
-  img.DrawColor := $00FF00;
-  img.DrawBoxArray(Self.InvSlotBoxes, False);
-  img.DrawColor := $FF0000;
-  img.DrawBoxArray(Self.EquipSlotBoxes, False);
-  img.DrawColor := $FFFF00;
-  img.DrawBoxArray(Self.FindItemBoundaries(), False);
-  img.DrawColor := $00FF00;
-
-  for i := 0 to 4 do
-  begin
-    Self.QuantityButtons[i].Draw(img);
-  end;
-
-  for i := 0 to 2 do
-  begin
-    Self.DepositButtons[i].Draw(img);
-  end;
-end;
-
-procedure ShowOnTarget(depositBox: TRSDepositBox); overload;
-var
-  img: TImage;
-begin
-  img := Target.GetImage();
-  depositBox.Draw(img);
-  img.Show();
-end;
-
 var
 (*
 ## DepositBox variable

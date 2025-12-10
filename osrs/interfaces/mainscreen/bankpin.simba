@@ -250,27 +250,6 @@ begin
   Result := SleepUntil(_IsUnlocked(), 300, 3000) or Self.Enter(pin, Dec(attempts));
 end;
 
-
-procedure TRSBankPin.Draw(img: TImage);
-begin
-  if not Self.IsOpen() then Exit;
-
-  img.DrawColor := $00FFFF;
-  img.DrawBox(Self.Bounds);
-
-  img.DrawColor := $FFFFFF;
-  img.DrawBoxArray(Self.Buttons, False);
-end;
-
-procedure ShowOnTarget(bankPin: TRSBankPin); overload;
-var
-  img: TImage;
-begin
-  img := Target.GetImage();
-  bankPin.Draw(img);
-  img.Show();
-end;
-
 var
 (*
 ## BankPin variable

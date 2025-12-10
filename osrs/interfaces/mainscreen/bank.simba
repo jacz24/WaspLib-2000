@@ -1439,44 +1439,6 @@ begin
   Result := Self.Open(npc, walk);
 end;
 
-
-procedure TRSBank.Draw(img: TImage);
-var
-  i: Integer;
-begin
-  if not Self.IsOpen() then Exit;
-
-  for i := 0 to 1 do
-  begin
-    Self.Buttons[i].Draw(img);
-    Self.ArrangementButtons[i].Draw(img);
-    Self.WithdrawModeButtons[i].Draw(img);
-  end;
-
-  img.DrawColor := $FFFFFF;
-  for i := 0 to Self.CountTabs() do
-    img.DrawBox(Self.Tabs[i]);
-
-  img.DrawColor := $FFFF00;
-  img.DrawBoxArray(Self.FindItemBoundaries(), False);
-  Self.Scroll.Draw(img);
-
-  for i := 0 to 4 do
-    Self.QuantityButtons[i].Draw(img);
-
-  for i := 0 to 3 do
-    Self.DynamicButtons[i].Draw(img);
-end;
-
-procedure TRSBank.ShowOnTarget();
-var
-  img: TImage;
-begin
-  img := Target.GetImage();
-  Self.Draw(img);
-  img.Show();
-end;
-
 var
 (*
 ## Bank variable

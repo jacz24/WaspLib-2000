@@ -21,12 +21,6 @@ Core record for `Interfaces` with a lot of interface coordinate data.
 
   PRSInterface = ^TRSInterface;
 
-procedure TRSInterface.Draw(img: TImage);
-begin
-  img.DrawColor := $00FFFF;
-  img.DrawBox(Self.Bounds);
-end;
-
 type
   TRSInterfaceTitle = record
     Bounds, CloseButton: TBox;

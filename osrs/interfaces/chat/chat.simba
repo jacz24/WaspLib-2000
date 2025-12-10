@@ -519,36 +519,6 @@ begin
   Result := Target.HasColor(Self.Colors[ERSChatColor.BLUE], 0, 15, Self.InputLine);
 end;
 
-
-procedure TRSChat.Draw(img: TImage);
-var
-  tab: TRSChatTab;
-begin
-  if not Self.IsOpen() then Exit;
-
-  img.DrawColor := $00FFFF;
-  img.DrawBox(Self.Bounds);
-  img.DrawColor := $FFFFFF;
-  img.DrawBoxArray(Self.MessageLines, False);
-  img.DrawColor := $00FF00;
-  img.DrawBox(Self.InputLine);
-  img.DrawColor := $FF0000;
-  img.DrawBox(Self.InputLine);
-
-  Self.Scroll.Draw(img);
-  for tab in Self.Tabs.Tabs do
-    tab.Button.Draw(img);
-end;
-
-procedure ShowOnTarget(chat: TRSChat); overload;
-var
-  img: TImage;
-begin
-  img := Target.GetImage();
-  chat.Draw(img);
-  img.Show();
-end;
-
 var
 (*
 ## Chat variable

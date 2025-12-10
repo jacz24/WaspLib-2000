@@ -259,20 +259,5 @@ begin
     Mouse.Click(box, EMouseButton.LEFT);
 end;
 
-procedure TRSSilverScreen.Draw();
-var
-  btn      : TRSButton;
-  allBoxes : TBoxArray;
-begin
-  allBoxes += Self.Bounds;
-  allBoxes += Self.SlotBoxes;
-  allBoxes += Self.ClickBoxes;
-  
-  for btn in Self.GetButtons do
-    allBoxes += btn.Bounds;
-
-  ShowOnTarget(allBoxes);
-end;
-
 var
   SilverScreen: TRSSilverScreen;

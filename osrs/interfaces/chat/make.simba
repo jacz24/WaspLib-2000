@@ -630,31 +630,6 @@ begin
   end;
 end;
 
-procedure TRSMake.Draw(img: TImage);
-begin
-  if not Self.IsOpen() then Exit;
-
-  img.DrawColor := $00FFFF;
-  img.DrawBox(Chat.Bounds);
-  img.DrawColor := $FFFFFF;
-  img.DrawBoxArray(Self.QuantityButtonBoxes, False);
-  img.DrawColor := $0000FF;
-  img.DrawBoxArray(Self.GetQuantityBoxes(), False);
-  img.DrawColor := $00FF00;
-  img.DrawBoxArray(Self.GetItemBoxes(), False);
-  img.DrawColor := $FF0000;
-  img.DrawBox(Self.GetHintBox());
-end;
-
-procedure ShowOnTarget(make: TRSMake); overload;
-var
-  img: TImage;
-begin
-  img := Target.GetImage();
-  make.Draw(img);
-  img.Show();
-end;
-
 var
 (*
 ## Make variable

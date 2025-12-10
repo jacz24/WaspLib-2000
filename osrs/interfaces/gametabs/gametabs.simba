@@ -279,11 +279,7 @@ begin
 end;
 
 
-procedure TRSGameTabs.Draw(img: TImage);
-begin
-  img.DrawBox(Self.Bounds);
-  img.DrawBoxArray(Self.Tabs, False);
-end;
+
 
 var
 (*

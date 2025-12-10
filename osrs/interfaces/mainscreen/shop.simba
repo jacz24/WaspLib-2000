@@ -395,41 +395,6 @@ begin
   Result := Self.WaitOpen(3000);
 end;
 
-procedure TRSShop.Draw(img: TImage);
-var
-  i: Integer;
-begin
-  if not Self.IsOpen() then Exit;
-
-  img.DrawColor := $00FFFF;
-  img.DrawBox(Self.Bounds);
-
-  img.DrawColor := $0000FF;
-  img.DrawBox(Self.SlotsArea);
-  img.DrawBox(Self._IsOpenHelper);
-
-  img.DrawColor := Colors.AQUA;
-  img.DrawBox(Self.ValueButton.Bounds);
-
-  img.DrawColor := $FFFFFF;
-  img.DrawBoxArray(Self.SlotBoxes, False);
-
-  img.DrawColor := $00FF00;
-  img.DrawBoxArray(Self.FindItemBoundaries(), False);
-
-  for i := 0 to High(Self.QuantityButtons) do
-    Self.QuantityButtons[i].Draw(img);
-end;
-
-procedure TRSShop.ShowOnTarget();
-var
-  img: TImage;
-begin
-  img := Target.GetImage();
-  Self.Draw(img);
-  img.Show();
-end;
-
 var
 (*
 ## Shop variable

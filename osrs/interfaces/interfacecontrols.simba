@@ -131,54 +131,12 @@ begin
 end;
 
 
-procedure TRSButton.Draw(img: TImage; color: Integer = $00FFFF);
-var
-  oldColor: Integer;
-begin
-  oldColor := img.DrawColor;
-  img.DrawColor := color;
-  img.DrawBox(Self.Bounds);
-  img.DrawColor := oldColor;
-end;
-
-procedure ShowOnTarget(button: TRSButton); overload;
-var
-  img: TImage;
-begin
-  img := Target.GetImage();
-  button.Draw(img);
-  img.Show();
-end;
-
-procedure TRSButtonArray.Draw(img: TImage; color: Integer = $00FFFF);
-var
-  oldColor: Integer;
-  button: TRSButton;
-begin
-  oldColor := img.DrawColor;
-  img.DrawColor := color;
-
-  for button in Self do
-    img.DrawBox(button.Bounds);
-
-  img.DrawColor := oldColor;
-end;
-
 function TRSButtonArray.Create(enabledColors: array of record Color: TColor; Tolerance: Single; end; boxes: TBoxArray): TRSButtonArray; static;
 var
   b: TBox;
 begin
   for b in boxes do
     Result += [enabledColors, b];
-end;
-
-procedure ShowOnTarget(buttons: TRSButtonArray); overload;
-var
-  img: TImage;
-begin
-  img := Target.GetImage();
-  buttons.Draw(img);
-  img.Show();
 end;
 
 
@@ -511,40 +469,6 @@ begin
 end;
 
 
-procedure TRSScrollBar.Draw(img: TImage);
-var
-  bounds: TBox;
-begin
-  img.DrawColor := $00FF00;
-  img.DrawBox(Self.Area);
-
-  img.DrawColor := $FFFF00;
-  img.DrawBox(Self.Bounds);
-
-  img.DrawColor := $FFFFFF;
-  bounds := Self.Slider;
-  img.DrawBox(bounds);
-
-  img.DrawColor := $FF;
-  img.FontSize := 12;
-  bounds.X2 := bounds.X1 - 2;
-  bounds.X1 -= 30;
-  img.DrawText(ToStr(Self.GetLevel()), bounds, [EImageTextAlign.CENTER]);
-
-  img.DrawColor := $00FFFF;
-  img.DrawBoxArray([Self.Up, Self.Down], False);
-end;
-
-procedure ShowOnTarget(scroll: TRSScrollBar); overload;
-var
-  img: TImage;
-begin
-  img := Target.GetImage();
-  scroll.Draw(img);
-  img.Show();
-end;
-
-
 type
 (*
 ## TRSDropDownOption type
@@ -772,33 +696,5 @@ begin
   for idx := 0 to High(Self.Options) do
     if Self.Options[idx].Text.Contains(option) then
       Exit(Self.Select(idx));
-end;
-
-
-procedure TRSDropDown.Draw(img: TImage);
-var
-  i: Integer;
-begin
-  img.DrawColor := $00FF00;
-  img.DrawBox(Self.Bounds);
-
-  img.DrawColor := $FFFF00;
-  img.DrawBox(Self.Arrow);
-
-  if Self.IsOpen() then
-  begin
-    img.DrawColor := $FFFFFF;
-    for i := 0 to High(Self.Options) do
-      img.DrawBox(Self.Options[i].Bounds);
-  end;
-end;
-
-procedure ShowOnTarget(dropdown: TRSDropDown); overload;
-var
-  img: TImage;
-begin
-  img := Target.GetImage();
-  dropdown.Draw(img);
-  img.Show();
 end;
 

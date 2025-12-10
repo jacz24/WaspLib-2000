@@ -119,7 +119,6 @@ begin
 end;
 
 
-
 (*
 ## CollectionBox.IsOpen
 ```pascal
@@ -273,7 +272,6 @@ begin
 end;
 
 
-
 function TRSCollectionBox.Hover(walk: Boolean = True): Boolean;
 var
   obj: TRSObject;
@@ -344,49 +342,6 @@ begin
   npc.Walker^.WaitMoving();
   Result := Self.WaitOpen(3000);
 end;
-
-
-
-
-procedure TRSCollectionBox.Draw(img: TImage);
-var
-  i: Integer;
-begin
-  if not Self.IsOpen() then Exit;
-
-  img.DrawColor := $00FFFF;
-  img.DrawBox(Self.Bounds);
-
-  Self.Buttons[ERSCollectButton.INVENTORY].Draw(img);
-  Self.Buttons[ERSCollectButton.BANK].Draw(img);
-
-  for i := 0 to High(Self.SlotBoxes) do
-  begin
-    img.DrawColor := $0000FF;
-    img.DrawBox(Self.SlotBoxes[i].Bounds);
-
-    img.DrawColor := $FF0000;
-    img.DrawBox(Self.SlotBoxes[i].Slots[ERSCollectSlots.STATUS]);
-    img.DrawColor := $FFFF00;
-    img.DrawBox(Self.SlotBoxes[i].Slots[ERSCollectSlots.OPERATION]);
-    img.DrawColor := $FF00FF;
-    img.DrawBox(Self.SlotBoxes[i].Slots[ERSCollectSlots.THUMBNAIL]);
-    img.DrawColor := $00FFFF;
-    img.DrawBox(Self.SlotBoxes[i].Slots[ERSCollectSlots.ITEM]);
-    img.DrawColor := $FFFFFF;
-    img.DrawBox(Self.SlotBoxes[i].Slots[ERSCollectSlots.CHANGE]);
-  end;
-end;
-
-procedure ShowOnTarget(collectionBox: TRSCollectionBox); overload;
-var
-  img: TImage;
-begin
-  img := Target.GetImage();
-  CollectionBox.Draw(img);
-  img.Show();
-end;
-
 
 var
 (*

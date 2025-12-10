@@ -1,0 +1,410 @@
+(*
+# Interface Debugging
+Methods and utilities to debug interfaces.
+These are disabled by default, to enable them you must define the following
+compiler directive:
+```pascal
+{$DEFINE WL_DEBUG_INTERFACES}
+```
+*)
+{$DEFINE WL_INTERFACE_DEBUGGING_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+{$IFDEF WL_DEBUG_INTERFACES}
+
+procedure TRSInterface.Draw(img: TImage);
+begin
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
+end;
+
+procedure TRSButton.Draw(img: TImage; color: Integer = $00FFFF);
+var
+  oldColor: Integer;
+begin
+  oldColor := img.DrawColor;
+  img.DrawColor := color;
+  img.DrawBox(Self.Bounds);
+  img.DrawColor := oldColor;
+end;
+
+procedure TRSButtonArray.Draw(img: TImage; color: Integer = $00FFFF);
+var
+  oldColor: Integer;
+  button: TRSButton;
+begin
+  oldColor := img.DrawColor;
+  img.DrawColor := color;
+
+  for button in Self do
+    img.DrawBox(button.Bounds);
+
+  img.DrawColor := oldColor;
+end;
+
+procedure TRSScrollBar.Draw(img: TImage);
+var
+  bounds: TBox;
+begin
+  img.DrawColor := $00FF00;
+  img.DrawBox(Self.Area);
+
+  img.DrawColor := $FFFF00;
+  img.DrawBox(Self.Bounds);
+
+  img.DrawColor := $FFFFFF;
+  bounds := Self.Slider;
+  img.DrawBox(bounds);
+
+  img.DrawColor := $FF;
+  img.FontSize := 12;
+  bounds.X2 := bounds.X1 - 2;
+  bounds.X1 -= 30;
+  img.DrawText(ToStr(Self.GetLevel()), bounds, [EImageTextAlign.CENTER]);
+
+  img.DrawColor := $00FFFF;
+  img.DrawBoxArray([Self.Up, Self.Down], False);
+end;
+
+procedure TRSDropDown.Draw(img: TImage);
+var
+  i: Integer;
+begin
+  img.DrawColor := $00FF00;
+  img.DrawBox(Self.Bounds);
+
+  img.DrawColor := $FFFF00;
+  img.DrawBox(Self.Arrow);
+
+  if Self.IsOpen() then
+  begin
+    img.DrawColor := $FFFFFF;
+    for i := 0 to High(Self.Options) do
+      img.DrawBox(Self.Options[i].Bounds);
+  end;
+end;
+
+
+procedure TRSChat.Draw(img: TImage);
+var
+  tab: TRSChatTab;
+begin
+  if not Self.IsOpen() then Exit;
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
+  img.DrawColor := $FFFFFF;
+  img.DrawBoxArray(Self.MessageLines, False);
+  img.DrawColor := $00FF00;
+  img.DrawBox(Self.InputLine);
+  img.DrawColor := $FF0000;
+  img.DrawBox(Self.InputLine);
+
+  Self.Scroll.Draw(img);
+  for tab in Self.Tabs.Tabs do
+    tab.Button.Draw(img);
+end;
+
+procedure TRSBank.Draw(img: TImage);
+var
+  i: Integer;
+begin
+  if not Self.IsOpen() then Exit;
+
+  for i := 0 to 1 do
+  begin
+    Self.Buttons[i].Draw(img);
+    Self.ArrangementButtons[i].Draw(img);
+    Self.WithdrawModeButtons[i].Draw(img);
+  end;
+
+  img.DrawColor := $FFFFFF;
+  for i := 0 to Self.CountTabs() do
+    img.DrawBox(Self.Tabs[i]);
+
+  img.DrawColor := $FFFF00;
+  img.DrawBoxArray(Self.FindItemBoundaries(), False);
+  Self.Scroll.Draw(img);
+
+  for i := 0 to 4 do
+    Self.QuantityButtons[i].Draw(img);
+
+  for i := 0 to 3 do
+    Self.DynamicButtons[i].Draw(img);
+end;
+
+procedure TRSCollectionBox.Draw(img: TImage);
+var
+  i: Integer;
+begin
+  if not Self.IsOpen() then Exit;
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
+
+  Self.Buttons[ERSCollectButton.INVENTORY].Draw(img);
+  Self.Buttons[ERSCollectButton.BANK].Draw(img);
+
+  for i := 0 to High(Self.SlotBoxes) do
+  begin
+    img.DrawColor := $0000FF;
+    img.DrawBox(Self.SlotBoxes[i].Bounds);
+
+    img.DrawColor := $FF0000;
+    img.DrawBox(Self.SlotBoxes[i].Slots[ERSCollectSlots.STATUS]);
+    img.DrawColor := $FFFF00;
+    img.DrawBox(Self.SlotBoxes[i].Slots[ERSCollectSlots.OPERATION]);
+    img.DrawColor := $FF00FF;
+    img.DrawBox(Self.SlotBoxes[i].Slots[ERSCollectSlots.THUMBNAIL]);
+    img.DrawColor := $00FFFF;
+    img.DrawBox(Self.SlotBoxes[i].Slots[ERSCollectSlots.ITEM]);
+    img.DrawColor := $FFFFFF;
+    img.DrawBox(Self.SlotBoxes[i].Slots[ERSCollectSlots.CHANGE]);
+  end;
+end;
+
+procedure TRSDepositBox.Draw(img: TImage);
+var
+  i: Integer;
+begin
+  if not Self.IsOpen() then Exit;
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
+  img.DrawColor := $FFFFFF;
+  img.DrawBox(Self.SlotsArea);
+  img.DrawColor := $00FF00;
+  img.DrawBoxArray(Self.InvSlotBoxes, False);
+  img.DrawColor := $FF0000;
+  img.DrawBoxArray(Self.EquipSlotBoxes, False);
+  img.DrawColor := $FFFF00;
+  img.DrawBoxArray(Self.FindItemBoundaries(), False);
+  img.DrawColor := $00FF00;
+
+  for i := 0 to 4 do
+  begin
+    Self.QuantityButtons[i].Draw(img);
+  end;
+
+  for i := 0 to 2 do
+  begin
+    Self.DepositButtons[i].Draw(img);
+  end;
+end;
+
+procedure TRSGameTabs.Draw(img: TImage);
+begin
+img.DrawBox(Self.Bounds);
+img.DrawBoxArray(Self.Tabs, False);
+end;
+
+procedure TRSShop.Draw(img: TImage);
+var
+  i: Integer;
+begin
+  if not Self.IsOpen() then Exit;
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
+
+  img.DrawColor := $0000FF;
+  img.DrawBox(Self.SlotsArea);
+  img.DrawBox(Self._IsOpenHelper);
+
+  img.DrawColor := Colors.AQUA;
+  img.DrawBox(Self.ValueButton.Bounds);
+
+  img.DrawColor := $FFFFFF;
+  img.DrawBoxArray(Self.SlotBoxes, False);
+
+  img.DrawColor := $00FF00;
+  img.DrawBoxArray(Self.FindItemBoundaries(), False);
+
+  for i := 0 to High(Self.QuantityButtons) do
+    Self.QuantityButtons[i].Draw(img);
+end;
+
+procedure TRSBankPin.Draw(img: TImage);
+begin
+  if not Self.IsOpen() then Exit;
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Self.Bounds);
+
+  img.DrawColor := $FFFFFF;
+  img.DrawBoxArray(Self.Buttons, False);
+end;
+
+(*
+## GoldScreen.Draw
+```pascal
+procedure TRSGoldScreen.Draw(Bmp: TMufasaBitmap);
+```
+Debug‑draws bounds, item slots, and quantity buttons on `Bmp`.
+*)
+procedure TRSGoldScreen.Draw();
+var
+  btn: TRSButton;
+  allBoxes: TBoxArray;
+begin
+  allBoxes += Self.Bounds;
+  allBoxes += Self.ItemBoxes;
+
+  for btn in Self.GetButtons() do
+    allBoxes += btn.Bounds;
+
+  ShowOnTarget(allBoxes);
+end;
+
+procedure TRSSilverScreen.Draw();
+var
+  btn      : TRSButton;
+  allBoxes : TBoxArray;
+begin
+  allBoxes += Self.Bounds;
+  allBoxes += Self.SlotBoxes;
+  allBoxes += Self.ClickBoxes;
+
+  for btn in Self.GetButtons do
+    allBoxes += btn.Bounds;
+
+  ShowOnTarget(allBoxes);
+end;
+
+procedure TRSMake.Draw(img: TImage);
+begin
+  if not Self.IsOpen() then Exit;
+
+  img.DrawColor := $00FFFF;
+  img.DrawBox(Chat.Bounds);
+  img.DrawColor := $FFFFFF;
+  img.DrawBoxArray(Self.QuantityButtonBoxes, False);
+  img.DrawColor := $0000FF;
+  img.DrawBoxArray(Self.GetQuantityBoxes(), False);
+  img.DrawColor := $00FF00;
+  img.DrawBoxArray(Self.GetItemBoxes(), False);
+  img.DrawColor := $FF0000;
+  img.DrawBox(Self.GetHintBox());
+end;
+
+
+
+procedure ShowOnTarget(button: TRSButton); overload;
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  button.Draw(img);
+  img.Show();
+end;
+
+procedure ShowOnTarget(buttons: TRSButtonArray); overload;
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  buttons.Draw(img);
+  img.Show();
+end;
+
+procedure ShowOnTarget(scroll: TRSScrollBar); overload;
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  scroll.Draw(img);
+  img.Show();
+end;
+
+procedure ShowOnTarget(dropdown: TRSDropDown); overload;
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  dropdown.Draw(img);
+  img.Show();
+end;
+
+
+procedure ShowOnTarget(chat: TRSChat); overload;
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  chat.Draw(img);
+  img.Show();
+end;
+
+procedure ShowOnTarget(bank: TRSBank); overload;
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  bank.Draw(img);
+  img.Show();
+end;
+
+procedure ShowOnTarget(collectionBox: TRSCollectionBox); overload;
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  CollectionBox.Draw(img);
+  img.Show();
+end;
+
+procedure ShowOnTarget(depositBox: TRSDepositBox); overload;
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  depositBox.Draw(img);
+  img.Show();
+end;
+
+procedure ShowOnTarget(shop: TRSShop); overload;
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  shop.Draw(img);
+  img.Show();
+end;
+
+procedure ShowOnTarget(bankPin: TRSBankPin); overload;
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  bankPin.Draw(img);
+  img.Show();
+end;
+
+procedure ShowOnTarget(goldscreen: TRSGoldScreen); overload;
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  goldscreen.Draw(img);
+  img.Show();
+end;
+
+procedure ShowOnTarget(silverscreen: TRSSilverScreen); overload;
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  silverscreen.Draw(img);
+  img.Show();
+end;
+
+procedure ShowOnTarget(make: TRSMake); overload;
+var
+  img: TImage;
+begin
+  img := Target.GetImage();
+  make.Draw(img);
+  img.Show();
+end;
+
+{$ENDIF}

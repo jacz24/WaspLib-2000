@@ -333,30 +333,9 @@ begin
     Mouse.Click(Self.ItemBoxes[Item], EMouseButton.LEFT);
 end;
 
-(*
-## GoldScreen.Draw
-```pascal
-procedure TRSGoldScreen.Draw(Bmp: TMufasaBitmap);
-```
-Debug‑draws bounds, item slots, and quantity buttons on `Bmp`.
-*)
-procedure TRSGoldScreen.Draw();
 var
-  btn: TRSButton;
-  allBoxes: TBoxArray;
-begin
-  allBoxes += Self.Bounds;
-  allBoxes += Self.ItemBoxes;
-
-  for btn in Self.GetButtons() do
-    allBoxes += btn.Bounds;
-
-  ShowOnTarget(allBoxes);
-end;
-
 (*
 ## GoldScreen variable
 Global {ref}`TRSGoldScreen` variable.
 *)
-var
   GoldScreen: TRSGoldScreen;
