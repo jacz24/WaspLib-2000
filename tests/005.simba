@@ -1,0 +1,49 @@
+(*
+## DepositBox Tests
+Tests the integrity of several DepositBox interface methods.
+*)
+{$DEFINE WL_TEST}
+{$I WaspLib/osrs.simba}
+{$ASSERTIONS ON}
+
+const
+  PATH: String = {$MACRO DIR} + 'imgs' + PATH_SEP;
+  MODES: TStringArray = ['fixed', 'resizable_classic', 'resizable_modern_small', 'resizable_modern_large'];
+  FILENAME: String := PATH_SEP + PathExtractNameWithoutExt(SCRIPT_FILE);
+var
+  mode: String;
+  img: TImage;
+begin
+  for mode in MODES do
+  begin
+    // Test 005.png - DepositBox interface open with items
+    img := new TImage(PATH + mode + FILENAME + '.png');
+    Target.SetImage(img);
+    WaspLibSetup();
+
+    Assert(DepositBox.IsOpen());
+    (*
+    Assert(DepositBox.Equipment.Contains('Smiths gloves (i)'));
+    Assert(DepositBox.Equipment.Contains('Graceful hood'));
+    Assert(DepositBox.Equipment.Contains('Smithing cape(t)'));
+    Assert(DepositBox.Equipment.Contains('Smiths tunic'));
+    Assert(DepositBox.Equipment.Contains('Smiths trousers'));
+    Assert(DepositBox.Equipment.Contains('Smiths boots'));
+    *)
+
+    // Test slots - should have 28 slot boxes
+    Assert(Length(DepositBox.InvSlotBoxes) = 28);
+
+    // Test equipment slots - should have 11 slot boxes
+    Assert(Length(DepositBox.EquipSlotBoxes) = 11);
+
+    // Test quantity buttons - should have 5 buttons (ONE, FIVE, TEN, CUSTOM, ALL)
+    Assert(Length(DepositBox.QuantityButtons) = 5);
+
+    // Test deposit buttons - should have 3 buttons (WORN, LOOT, INVENTORY)
+    Assert(Length(DepositBox.DepositButtons) = 3);
+
+    // Test that ISlots can count items in deposit box
+    Assert(DepositBox.ISlots.Count() > 0);
+  end;
+end;
