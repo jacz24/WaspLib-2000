@@ -12,7 +12,7 @@ Credits to Flight and Skunkworks
 
 type
 (*
-## ERSSilverItem
+## ERSSilverItem enum
 ```pascal
 ERSSilverItem = enum(OPAL_RING..TOPAZ_BRACELET);
 ```
@@ -26,11 +26,10 @@ Enum representing the silver jewelry that can be crafted.
   );
 
 (*
-## TRSSilverScreen
+## TRSSilverScreen type
 Main record to interact with the {ref}`SilverScreen` interface.
 *)
   TRSSilverScreen = record
-    {── static GUI description ──}
     Title     : TRSInterfaceTitle;
     Slots     : TRSSlotInterface;
     Items     : TRSItemInterface;
@@ -39,37 +38,12 @@ Main record to interact with the {ref}`SilverScreen` interface.
     Bounds    : TBox;
     SlotBoxes : TBoxArray;
     Buttons   : array[ERSItemQuantity] of TRSButton;
-
-    {── internal helpers ──}
-    //procedure SetupInterface;
-    //function  GetButtons : TRSButtonArray;
-    //function  GetButton  (B : ERSSilverScreenButton) : TRSButton;
-
-    {── public API ──}
-    //function  IsOpen     : Boolean;
-    //function  WaitOpen   (time : Int32 = 600; interval : Int32 = -1) : Boolean;
-    //
-    //function  Close      (PressEscape : Boolean = False) : Boolean;
-    //
-    //function  SetQuantity     (Amount : Int32) : Boolean;
-    //function  CanCraftItem    (Item   : TRSItem; out Box : TBox) : Boolean;
-    //function  IsItemHighlighted(Item   : TRSItem) : Boolean;
-    //function  CraftItem       (Item   : TRSItem; Quantity : Int32;
-    //                           UseSpaceBar : Boolean = False) : Boolean;
-    //
-    //procedure Draw(Bmp : TMufasaBitmap);
   end;
 
-{=====================================================================
-  IMPLEMENTATION
-=====================================================================}
-
-{―― internal helpers ―――――――――――――――――――――――――――――――――――――――――――}
 function TRSSilverScreen.GetButtons(): TRSButtonArray;
 var
   buttonGrid : TBoxArray;
 begin
-  { cache empty? ➜ build the static grid }
   if Self.Buttons[0].Bounds.Area = 1 then
   begin
     buttonGrid := TBoxArray.Create(
@@ -149,8 +123,6 @@ begin
     for i := 0 to High(btns) do
       Self.Buttons[ERSItemQuantity(i)] := btns[i];
 end;
-
-{―― public API ―――――――――――――――――――――――――――――――――――――――――――――――}
 
 (*
 ## SilverScreen.IsOpen
@@ -364,9 +336,9 @@ begin
     Mouse.Click(box, EMouseButton.LEFT);
 end;
 
+var
 (*
 ## SilverScreen variable
 Global {ref}`TRSSilverScreen` variable.
 *)
-var
   SilverScreen: TRSSilverScreen;
