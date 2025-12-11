@@ -1,0 +1,588 @@
+(*
+# Profile Form
+This page is about {ref}`Profile` dedicated `TLazForm` utilities.
+
+This form is meant to be used with {ref}`TScriptForm` with
+{ref}`TScriptForm.CreateProfileTab` and will setup a `TLazTabSheet` on it
+with several controls to manage character profiles including:
+- Quest completion tracking
+- Skill level management
+- Equipment/gear configuration
+- Profile-specific settings that update during runtime
+
+The profile data is stored in a unified JSON config that persists across sessions.
+This allows the bot to make intelligent decisions about which activities to perform
+based on the character's current capabilities.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  form: TScriptForm;
+begin
+  form.Setup();
+  form.CreateProfileTab();
+  form.Run();
+end.
+```
+*)
+{$DEFINE WL_PROFILE_FORM_INCLUDED}
+{$INCLUDE_ONCE WaspLib/osrs.simba}
+
+const
+  // OSRS Skills - 25 Total
+  SKILLS: array of String := ['Attack', 'Defence', 'Strength', 'Hitpoints', 'Ranged',
+                               'Prayer', 'Magic', 'Cooking', 'Woodcutting', 'Fletching',
+                               'Fishing', 'Firemaking', 'Crafting', 'Smithing', 'Mining',
+                               'Herblore', 'Agility', 'Thieving', 'Slayer', 'Farming',
+                               'Runecrafting', 'Hunter', 'Construction', 'Summoning', 'Dungeoneering'];
+
+  // Common quests for example (can be expanded)
+  QUESTS: array of String := ['Cooks Assistant', 'Demon Slayer', 'Dragon Slayer',
+                               'Priest In Peril', 'The Lost City', 'Waterfall Quest',
+                               'Monkey Madness', 'Recipe for Disaster', 'Monkey Madness II',
+                               'Royal Trouble', 'Lunar Diplomacy', 'Desert Treasure'];
+
+type
+(*
+## TProfileFormHelper
+Helper type for managing the Profile Configuration Form.
+Handles all profile data management, skill tracking, quest logging, and config persistence.
+*)
+  TProfileFormHelper = record
+    // Main components
+    MainPanel: TLazPanel;
+    NotebookTabs: TLazNotebook;
+
+    // Profile Section
+    ProfilePanel: TLazPanel;
+    ProfileNameEdit: TLazEdit;
+    ProfileAccountEdit: TLazEdit;
+    NewProfileBtn, DeleteProfileBtn, LoadProfileBtn: TLazButton;
+    ProfileListBox: TLazListBox;
+
+    // Skills Section
+    SkillsPanel: TLazPanel;
+    SkillEdits: array of TLazSpinEdit;
+    SkillLabels: array of TLazLabel;
+
+    // Quests Section
+    QuestsPanel: TLazPanel;
+    QuestListBox: TLazListBox;
+    QuestCheckBoxes: array of TLazCheckBox;
+    AddQuestEdit: TLazEdit;
+    AddQuestBtn: TLazButton;
+
+    // Config Management
+    Config: TConfigJSON;
+    CurrentProfile: String;
+    ProfileDirectory: String;
+  end;
+
+// ==================== Profile Management ====================
+
+procedure TProfileFormHelper.Setup();
+begin
+  Self.ProfileDirectory := AppPath + 'Profiles' + PATH_SEP;
+  if not DirectoryExists(Self.ProfileDirectory) then
+    CreateDirectory(Self.ProfileDirectory);
+
+  // Load profile list
+  Self.RefreshProfileList();
+end;
+
+procedure TProfileFormHelper.RefreshProfileList();
+var
+  files: TStringArray;
+  i: Integer;
+begin
+  Self.ProfileListBox.Clear();
+  files := GetFiles(Self.ProfileDirectory, '*.json');
+
+  for i := 0 to High(files) do
+    Self.ProfileListBox.AddItem(ExtractFileNameWithoutExt(files[i]), nil);
+end;
+
+procedure TProfileFormHelper.SaveProfile();
+begin
+  if Self.CurrentProfile = '' then
+    Exit;
+
+  // Save basic profile info
+  if Self.Config.Data.Has('name') then
+    Self.Config.Data.Item['name'].AsStr := Self.ProfileNameEdit.Text
+  else
+    Self.Config.Data.AddString('name', Self.ProfileNameEdit.Text);
+
+  if Self.Config.Data.Has('account') then
+    Self.Config.Data.Item['account'].AsStr := Self.ProfileAccountEdit.Text
+  else
+    Self.Config.Data.AddString('account', Self.ProfileAccountEdit.Text);
+
+  if Self.Config.Data.Has('created') then
+  else
+    Self.Config.Data.AddString('created', DateTimeToStr(Now()));
+
+  if Self.Config.Data.Has('last_updated') then
+    Self.Config.Data.Item['last_updated'].AsStr := DateTimeToStr(Now())
+  else
+    Self.Config.Data.AddString('last_updated', DateTimeToStr(Now()));
+
+  Self.Config.Save();
+end;
+
+procedure TProfileFormHelper.LoadProfile(profileName: String);
+var
+  i: Integer;
+begin
+  if profileName = '' then
+    Exit;
+
+  Self.CurrentProfile := profileName;
+  Self.Config.Setup(Self.ProfileDirectory + profileName + '.json');
+
+  // Load basic info
+  if Self.Config.Data.Has('name') then
+    Self.ProfileNameEdit.Text := Self.Config.Data.Item['name'].AsStr
+  else
+    Self.ProfileNameEdit.Text := profileName;
+
+  if Self.Config.Data.Has('account') then
+    Self.ProfileAccountEdit.Text := Self.Config.Data.Item['account'].AsStr
+  else
+    Self.ProfileAccountEdit.Text := '';
+
+  // Load skills
+  Self.LoadSkills();
+
+  // Load quests
+  Self.LoadQuests();
+end;
+
+// ==================== Skill Management ====================
+
+procedure TProfileFormHelper.LoadSkills();
+var
+  i: Integer;
+  skillKey: String;
+begin
+  for i := 0 to High(SKILLS) do
+  begin
+    skillKey := LowerCase(SKILLS[i]);
+
+    if Self.Config.Data.Has('skills') then
+      if Self.Config.Data.Item['skills'].Has(skillKey) then
+      begin
+        Self.SkillEdits[i].Value := Self.Config.Data.Item['skills'].Item[skillKey].AsInt;
+        Continue;
+      end;
+
+    // Default to level 1 if not found
+    Self.SkillEdits[i].Value := 1;
+  end;
+end;
+
+procedure TProfileFormHelper.SaveSkills();
+var
+  i: Integer;
+  skillKey: String;
+  skillObj: TJSONObject;
+begin
+  if not Self.Config.Data.Has('skills') then
+    Self.Config.Data.AddObject('skills');
+
+  skillObj := Self.Config.Data.Item['skills'].AsObject();
+
+  for i := 0 to High(SKILLS) do
+  begin
+    skillKey := LowerCase(SKILLS[i]);
+
+    if skillObj.Has(skillKey) then
+      skillObj.Item[skillKey].AsInt := Self.SkillEdits[i].Value
+    else
+      skillObj.AddInt(skillKey, Self.SkillEdits[i].Value);
+  end;
+
+  Self.Config.Save();
+end;
+
+procedure TProfileFormHelper.OnSkillChange(sender: TLazObject);
+begin
+  Self.SaveSkills();
+end;
+
+// ==================== Quest Management ====================
+
+procedure TProfileFormHelper.LoadQuests();
+var
+  i: Integer;
+  questObj: TJSONObject;
+begin
+  if not Self.Config.Data.Has('quests') then
+    Self.Config.Data.AddObject('quests');
+
+  questObj := Self.Config.Data.Item['quests'].AsObject();
+
+  Self.QuestListBox.Clear();
+
+  for i := 0 to High(QUESTS) do
+  begin
+    Self.QuestListBox.AddItem(QUESTS[i], nil);
+
+    if questObj.Has(LowerCase(QUESTS[i])) then
+      if questObj.Item[LowerCase(QUESTS[i])].AsBool then
+        Self.QuestListBox.Selected[i] := True;
+  end;
+end;
+
+procedure TProfileFormHelper.SaveQuests();
+var
+  i: Integer;
+  questKey: String;
+  questObj: TJSONObject;
+begin
+  if not Self.Config.Data.Has('quests') then
+    Self.Config.Data.AddObject('quests');
+
+  questObj := Self.Config.Data.Item['quests'].AsObject();
+
+  for i := 0 to High(QUESTS) do
+  begin
+    questKey := LowerCase(QUESTS[i]);
+
+    if questObj.Has(questKey) then
+      questObj.Item[questKey].AsBool := Self.QuestListBox.Selected[i]
+    else
+      questObj.AddBool(questKey, Self.QuestListBox.Selected[i]);
+  end;
+
+  Self.Config.Save();
+end;
+
+procedure TProfileFormHelper.OnQuestToggle(sender: TLazObject);
+begin
+  Self.SaveQuests();
+end;
+
+procedure TProfileFormHelper.OnAddQuest(sender: TLazObject);
+var
+  questName: String;
+begin
+  questName := Self.AddQuestEdit.Text;
+  if questName = '' then
+    Exit;
+
+  // Add to list if not already present
+  if Self.QuestListBox.Items.IndexOf(questName) = -1 then
+  begin
+    Self.QuestListBox.AddItem(questName, nil);
+    Self.SaveQuests();
+    Self.AddQuestEdit.Clear();
+  end;
+end;
+
+// ==================== UI Setup ====================
+
+procedure TProfileFormHelper.SetupProfilePanel(parent: TLazComponent);
+var
+  leftPanel, rightPanel: TLazPanel;
+  btnPanel: TLazPanel;
+begin
+  Self.ProfilePanel := TLazPanel.CreateEx(parent, 10, 10, TLazTabSheet(parent).Width - 20, 150);
+  Self.ProfilePanel.BevelWidth := 1;
+
+  // Profile Name and Account
+  Self.ProfileNameEdit := TLazEdit.CreateEx(Self.ProfilePanel, 'Profile Name:', 'Character profile name', 10, 10, 200);
+  Self.ProfileAccountEdit := TLazEdit.CreateEx(Self.ProfilePanel, 'Account Name:', 'Associated account name', Self.ProfileNameEdit.Right + 20, 10, 200);
+
+  // Buttons
+  btnPanel := TLazPanel.CreateEx(Self.ProfilePanel, 10, Self.ProfileNameEdit.Bottom + 10, Self.ProfilePanel.Width - 20, 40);
+  btnPanel.BevelWidth := 0;
+
+  Self.NewProfileBtn := TLazButton.CreateEx(btnPanel, 'New Profile', '', 10, 0, 100);
+  Self.NewProfileBtn.OnClick := @Self.OnNewProfile;
+
+  Self.LoadProfileBtn := TLazButton.CreateEx(btnPanel, 'Load', '', Self.NewProfileBtn.Right + 10, 0, 100);
+  Self.LoadProfileBtn.OnClick := @Self.OnLoadProfile;
+
+  Self.DeleteProfileBtn := TLazButton.CreateEx(btnPanel, 'Delete', '', Self.LoadProfileBtn.Right + 10, 0, 100);
+  Self.DeleteProfileBtn.OnClick := @Self.OnDeleteProfile;
+end;
+
+procedure TProfileFormHelper.SetupSkillsPanel(parent: TLazComponent);
+var
+  scrollPanel: TLazScrollBox;
+  i, x, y: Integer;
+  skillKey: String;
+begin
+  Self.SkillsPanel := TLazPanel.CreateEx(parent, 10, 170, TLazTabSheet(parent).Width - 20, 350);
+  Self.SkillsPanel.BevelWidth := 1;
+
+  scrollPanel := TLazScrollBox.Create(Self.SkillsPanel);
+  scrollPanel.Parent := Self.SkillsPanel;
+  scrollPanel.Align := ELazAlign.Client;
+
+  SetLength(Self.SkillEdits, Length(SKILLS));
+  SetLength(Self.SkillLabels, Length(SKILLS));
+
+  for i := 0 to High(SKILLS) do
+  begin
+    x := 10 + (i mod 3) * 200;
+    y := 10 + (i div 3) * 30;
+
+    Self.SkillLabels[i] := TLazLabel.CreateEx(scrollPanel, SKILLS[i] + ':', '', x, y);
+
+    Self.SkillEdits[i] := TLazSpinEdit.CreateEx(scrollPanel);
+    Self.SkillEdits[i].Parent := scrollPanel;
+    Self.SkillEdits[i].SetBounds(Self.SkillLabels[i].Left + 100, y, 70, 25);
+    Self.SkillEdits[i].MinValue := 1;
+    Self.SkillEdits[i].MaxValue := 99;
+    Self.SkillEdits[i].Value := 1;
+    Self.SkillEdits[i].OnChange := @Self.OnSkillChange;
+  end;
+end;
+
+procedure TProfileFormHelper.SetupQuestsPanel(parent: TLazComponent);
+var
+  topPanel: TLazPanel;
+begin
+  Self.QuestsPanel := TLazPanel.CreateEx(parent, 10, 530, TLazTabSheet(parent).Width - 20, 200);
+  Self.QuestsPanel.BevelWidth := 1;
+
+  // Add quest panel
+  topPanel := TLazPanel.CreateEx(Self.QuestsPanel, 10, 10, Self.QuestsPanel.Width - 20, 35);
+  topPanel.BevelWidth := 0;
+
+  Self.AddQuestEdit := TLazEdit.CreateEx(topPanel, 'Quest Name:', '', 10, 0, 200);
+  Self.AddQuestBtn := TLazButton.CreateEx(topPanel, 'Add Quest', '', Self.AddQuestEdit.Right + 10, 5, 100);
+  Self.AddQuestBtn.OnClick := @Self.OnAddQuest;
+
+  // Quest list
+  Self.QuestListBox := TLazListBox.Create(Self.QuestsPanel);
+  Self.QuestListBox.Parent := Self.QuestsPanel;
+  Self.QuestListBox.SetBounds(10, topPanel.Height + 20, Self.QuestsPanel.Width - 20, Self.QuestsPanel.Height - topPanel.Height - 30);
+  Self.QuestListBox.Style := ELazListBoxStyle.lbStandard;
+  Self.QuestListBox.OnClick := @Self.OnQuestToggle;
+end;
+
+// ==================== Button Callbacks ====================
+
+procedure TProfileFormHelper.OnNewProfile(sender: TLazObject);
+var
+  profileName: String;
+begin
+  profileName := Self.ProfileNameEdit.Text;
+  if profileName = '' then
+  begin
+    WriteLn('Profile name cannot be empty');
+    Exit;
+  end;
+
+  Self.CurrentProfile := profileName;
+  Self.Config.Setup(Self.ProfileDirectory + profileName + '.json');
+  Self.SaveProfile();
+  Self.SaveSkills();
+  Self.SaveQuests();
+  Self.RefreshProfileList();
+end;
+
+procedure TProfileFormHelper.OnLoadProfile(sender: TLazObject);
+var
+  idx: Integer;
+begin
+  idx := Self.ProfileListBox.ItemIndex;
+  if idx >= 0 then
+    Self.LoadProfile(Self.ProfileListBox.Items[idx]);
+end;
+
+procedure TProfileFormHelper.OnDeleteProfile(sender: TLazObject);
+var
+  idx: Integer;
+  profilePath: String;
+begin
+  idx := Self.ProfileListBox.ItemIndex;
+  if idx >= 0 then
+  begin
+    profilePath := Self.ProfileDirectory + Self.ProfileListBox.Items[idx] + '.json';
+    if FileExists(profilePath) then
+    begin
+      DeleteFile(profilePath);
+      Self.RefreshProfileList();
+      Self.CurrentProfile := '';
+      WriteLn('Profile deleted: ' + Self.ProfileListBox.Items[idx]);
+    end;
+  end;
+end;
+
+// ==================== Runtime Utility Functions ====================
+
+(*
+## GetSkillLevel
+Returns the current skill level from the active profile config.
+Used by the bot during runtime to validate activity requirements.
+
+```pascal
+function GetSkillLevel(skillName: String): Integer;
+```
+*)
+function TProfileFormHelper.GetSkillLevel(skillName: String): Integer;
+var
+  skillKey: String;
+begin
+  if Self.CurrentProfile = '' then
+    Exit(1);
+
+  skillKey := LowerCase(skillName);
+
+  if Self.Config.Data.Has('skills') then
+    if Self.Config.Data.Item['skills'].Has(skillKey) then
+      Exit(Self.Config.Data.Item['skills'].Item[skillKey].AsInt);
+
+  Result := 1;
+end;
+
+(*
+## IsQuestComplete
+Checks if a quest is marked as complete in the profile config.
+
+```pascal
+function IsQuestComplete(questName: String): Boolean;
+```
+*)
+function TProfileFormHelper.IsQuestComplete(questName: String): Boolean;
+var
+  questKey: String;
+begin
+  if Self.CurrentProfile = '' then
+    Exit(False);
+
+  questKey := LowerCase(questName);
+
+  if Self.Config.Data.Has('quests') then
+    if Self.Config.Data.Item['quests'].Has(questKey) then
+      Exit(Self.Config.Data.Item['quests'].Item[questKey].AsBool);
+
+  Result := False;
+end;
+
+(*
+## UpdateSkillLevel
+Updates a skill level during runtime and persists to config.
+Called by the bot as it progresses through sessions.
+
+```pascal
+procedure UpdateSkillLevel(skillName: String; newLevel: Integer);
+```
+*)
+procedure TProfileFormHelper.UpdateSkillLevel(skillName: String; newLevel: Integer);
+var
+  skillKey: String;
+  skillObj: TJSONObject;
+begin
+  if Self.CurrentProfile = '' then
+    Exit;
+
+  skillKey := LowerCase(skillName);
+
+  if not Self.Config.Data.Has('skills') then
+    Self.Config.Data.AddObject('skills');
+
+  skillObj := Self.Config.Data.Item['skills'].AsObject();
+
+  if skillObj.Has(skillKey) then
+    skillObj.Item[skillKey].AsInt := newLevel
+  else
+    skillObj.AddInt(skillKey, newLevel);
+
+  // Update UI if visible
+  for var i := 0 to High(SKILLS) do
+    if LowerCase(SKILLS[i]) = skillKey then
+      if i < Length(Self.SkillEdits) then
+        Self.SkillEdits[i].Value := newLevel;
+
+  Self.Config.Save();
+end;
+
+(*
+## CompleteQuest
+Marks a quest as complete during runtime.
+
+```pascal
+procedure CompleteQuest(questName: String);
+```
+*)
+procedure TProfileFormHelper.CompleteQuest(questName: String);
+var
+  questKey: String;
+  questObj: TJSONObject;
+begin
+  if Self.CurrentProfile = '' then
+    Exit;
+
+  questKey := LowerCase(questName);
+
+  if not Self.Config.Data.Has('quests') then
+    Self.Config.Data.AddObject('quests');
+
+  questObj := Self.Config.Data.Item['quests'].AsObject();
+
+  if questObj.Has(questKey) then
+    questObj.Item[questKey].AsBool := True
+  else
+    questObj.AddBool(questKey, True);
+
+  Self.Config.Save();
+end;
+
+var
+(*
+## ProfileForm variable
+Global {ref}`TProfileFormHelper` variable.
+*)
+  ProfileForm: TProfileFormHelper;
+
+(*
+## TScriptForm.CreateProfileTab
+```pascal
+function TScriptForm.CreateProfileTab(): TLazTabSheet;
+```
+Sets up a `TLazTabSheet` on your `TScriptForm` to manage character profiles.
+
+This includes:
+- Profile creation, loading, and deletion
+- Skill level tracking for all OSRS skills
+- Quest completion logging
+- Runtime profile updates as the bot progresses
+
+The profile data persists across sessions and can be queried at runtime
+to make intelligent decisions about which activities the character can perform.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+var
+  form: TScriptForm;
+  level: Integer;
+begin
+  form.Setup();
+  form.CreateProfileTab();
+  form.CreateScriptForm();
+
+  // Later in script:
+  level := ProfileForm.GetSkillLevel('Fishing');
+  if level >= 20 then
+    // Fish something harder
+  else
+    // Fish shrimp instead
+end.
+```
+*)
+function TScriptForm.CreateProfileTab(): TLazTabSheet;
+begin
+  Result := Self.CreateTab('Profile');
+
+  ProfileForm.Setup();
+  ProfileForm.SetupProfilePanel(Result);
+  ProfileForm.SetupSkillsPanel(Result);
+  ProfileForm.SetupQuestsPanel(Result);
+end;
