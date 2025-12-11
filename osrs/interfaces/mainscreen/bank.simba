@@ -1439,6 +1439,31 @@ begin
   Result := Self.Open(npc, walk);
 end;
 
+(*
+## Bank.IsSlotLocked
+```pascal
+function TRSBank.IsSlotLocked(slot: Integer): Boolean;
+```
+Checks if an inventory slot is locked.
+This assumes that the bank interface is open as locked slots are only visible with the bank open.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+begin
+  if Bank.IsSlotLocked(0) then
+    WriteLn('Slot 0 is locked');
+end.
+```
+*)
+function TRSBank.IsSlotLocked(slot: Integer): Boolean;
+var
+  box: TBox;
+begin
+  box := Inventory.Slots.Box(slot);
+  Result := Target.FindColor($0000ff, 4, box.Expand(2, 1)).Intersection(box.Expand(1, 0).Corners).Length = 4;
+end;
+
 var
 (*
 ## Bank variable
