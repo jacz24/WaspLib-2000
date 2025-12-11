@@ -1,0 +1,333 @@
+(*
+Profile Form Example
+This script demonstrates how to use the Profile Configuration Form
+to manage character profiles, track skills, and log quests.
+
+The bot uses profile data to make intelligent decisions about which
+activities to perform based on the character's current capabilities.
+*)
+
+{$I WaspLib/osrs.simba}
+{$I WaspLib/osrs/profileform.simba}
+
+var
+  form: TScriptForm;
+  activeProfile: String;
+
+(*
+## Example 1: Basic Setup with Profile Form
+
+Shows how to add the Profile Configuration Tab to your bot form.
+*)
+procedure SetupForm();
+begin
+  form.Setup();
+  
+  // Add profile management tab
+  form.CreateProfileTab();
+  
+  // Add other standard tabs
+  form.CreateMiscTab();
+  form.CreateScriptForm();
+  
+  // Display and wait for user input
+  form.Run();
+end;
+
+(*
+## Example 2: Check Skill Level Before Activity
+
+Demonstrates how to query profile data and make decisions.
+*)
+procedure ActivitySelector();
+var
+  fishingLevel, miningLevel, wc_level, cookingLevel: Integer;
+begin
+  // Load the last used profile
+  if ProfileForm.CurrentProfile <> '' then
+  begin
+    WriteLn('Using profile: ' + ProfileForm.CurrentProfile);
+    WriteLn('Current skill levels:');
+    
+    fishingLevel := ProfileForm.GetSkillLevel('Fishing');
+    miningLevel := ProfileForm.GetSkillLevel('Mining');
+    wc_level := ProfileForm.GetSkillLevel('Woodcutting');
+    cookingLevel := ProfileForm.GetSkillLevel('Cooking');
+    
+    WriteLn('  Fishing: ' + ToStr(fishingLevel));
+    WriteLn('  Mining: ' + ToStr(miningLevel));
+    WriteLn('  Woodcutting: ' + ToStr(wc_level));
+    WriteLn('  Cooking: ' + ToStr(cookingLevel));
+  end
+  else
+  begin
+    WriteLn('ERROR: No profile loaded!');
+    Exit;
+  end;
+end;
+
+(*
+## Example 3: Determine Optimal Activity
+
+Selects activities based on skill levels.
+*)
+procedure DetermineOptimalActivity();
+var
+  fishingLevel, wc_level, miningLevel: Integer;
+begin
+  fishingLevel := ProfileForm.GetSkillLevel('Fishing');
+  wc_level := ProfileForm.GetSkillLevel('Woodcutting');
+  miningLevel := ProfileForm.GetSkillLevel('Mining');
+  
+  // Select activity with lowest level (needs most training)
+  if (fishingLevel <= wc_level) and (fishingLevel <= miningLevel) then
+  begin
+    WriteLn('Starting Fishing Bot...');
+    WriteLn('Current level: ' + ToStr(fishingLevel));
+    
+    // Decide what to fish based on level
+    if fishingLevel < 10 then
+      WriteLn('Fishing: Shrimp (level 1)')  // Shrimp
+    else if fishingLevel < 20 then
+      WriteLn('Fishing: Anchovies (level 10)')  // Anchovies
+    else if fishingLevel < 30 then
+      WriteLn('Fishing: Trout/Salmon (level 20)')  // Trout/Salmon
+    else if fishingLevel < 35 then
+      WriteLn('Fishing: Tuna/Swordfish (level 30)')  // Tuna/Swordfish
+    else if fishingLevel < 40 then
+      WriteLn('Fishing: Monkfish (level 40)')  // Monkfish
+    else
+      WriteLn('Fishing: Sharks (level 40+)');
+  end
+  else if (wc_level <= fishingLevel) and (wc_level <= miningLevel) then
+  begin
+    WriteLn('Starting Woodcutting Bot...');
+    WriteLn('Current level: ' + ToStr(wc_level));
+  end
+  else
+  begin
+    WriteLn('Starting Mining Bot...');
+    WriteLn('Current level: ' + ToStr(miningLevel));
+  end;
+end;
+
+(*
+## Example 4: Quest-Based Activity Gating
+
+Use quest completion to unlock advanced activities.
+*)
+procedure QuestBasedProgression();
+var
+  hasWaterfallQuest: Boolean;
+  hasDragonSlayer: Boolean;
+  hasDiaryRequirements: Boolean;
+begin
+  hasWaterfallQuest := ProfileForm.IsQuestComplete('Waterfall Quest');
+  hasDragonSlayer := ProfileForm.IsQuestComplete('Dragon Slayer');
+  hasDiaryRequirements := ProfileForm.IsQuestComplete('Desert Treasure');
+  
+  WriteLn('Quest Progression Status:');
+  WriteLn('  Waterfall Quest: ' + BoolToStr(hasWaterfallQuest, 'DONE', 'TODO'));
+  WriteLn('  Dragon Slayer: ' + BoolToStr(hasDragonSlayer, 'DONE', 'TODO'));
+  WriteLn('  Desert Treasure: ' + BoolToStr(hasDiaryRequirements, 'DONE', 'TODO'));
+  
+  if hasWaterfallQuest then
+    WriteLn('Can use advanced combat gear')
+  else
+    WriteLn('Complete Waterfall Quest to use better gear');
+  
+  if hasDragonSlayer then
+    WriteLn('Can use Dragon weapons')
+  else
+    WriteLn('Complete Dragon Slayer to use Dragon weapons');
+end;
+
+(*
+## Example 5: Update Profile During Runtime
+
+Simulates bot detecting a level-up and updating profile.
+*)
+procedure SimulateSessionProgress();
+var
+  currentLevel, newLevel: Integer;
+  skillName: String;
+begin
+  skillName := 'Fishing';
+  currentLevel := ProfileForm.GetSkillLevel(skillName);
+  
+  WriteLn('=== Session Simulation ===');
+  WriteLn('Skill: ' + skillName);
+  WriteLn('Starting level: ' + ToStr(currentLevel));
+  
+  // Simulate 2-3 hour session
+  newLevel := currentLevel + Random(2) + 1;  // Gain 1-2 levels
+  if newLevel > 99 then
+    newLevel := 99;
+  
+  WriteLn('Ending level: ' + ToStr(newLevel));
+  WriteLn('Level ups gained: ' + ToStr(newLevel - currentLevel));
+  
+  // Update profile with new level
+  ProfileForm.UpdateSkillLevel(skillName, newLevel);
+  WriteLn('Profile updated!');
+end;
+
+(*
+## Example 6: Quest Completion Tracking
+
+Track when bot completes a quest and update profile.
+*)
+procedure OnQuestCompletion(questName: String);
+begin
+  WriteLn('=== Quest Completed ===');
+  WriteLn('Quest: ' + questName);
+  WriteLn('Marking as complete in profile...');
+  
+  ProfileForm.CompleteQuest(questName);
+  
+  WriteLn('Profile updated!');
+end;
+
+(*
+## Example 7: Create New Profile
+
+Demonstrates profile creation workflow.
+*)
+procedure CreateNewCharacterProfile();
+var
+  profileName, accountEmail: String;
+begin
+  WriteLn('Creating new character profile...');
+  
+  profileName := 'My Fishing Bot';
+  accountEmail := 'myaccount@example.com';
+  
+  WriteLn('Profile Name: ' + profileName);
+  WriteLn('Account: ' + accountEmail);
+  WriteLn('Creating JSON config file...');
+  
+  // In actual use, this would be done via form UI
+  // But you can also programmatically create profiles:
+  ProfileForm.CurrentProfile := profileName;
+  ProfileForm.Config.Setup(ProfileForm.ProfileDirectory + profileName + '.json');
+  
+  WriteLn('Profile created successfully!');
+  WriteLn('Location: Profiles/' + profileName + '.json');
+end;
+
+(*
+## Example 8: Multi-Profile Management
+
+Managing multiple character profiles for different bots.
+*)
+procedure ManageMultipleProfiles();
+var
+  profiles: array of String;
+  i: Integer;
+begin
+  WriteLn('=== Managing Multiple Profiles ===');
+  WriteLn('');
+  
+  // Load first profile
+  WriteLn('Profile 1: Fishing Account');
+  ProfileForm.LoadProfile('Fishing Bot');
+  WriteLn('  Fishing: ' + ToStr(ProfileForm.GetSkillLevel('Fishing')));
+  WriteLn('  Cooking: ' + ToStr(ProfileForm.GetSkillLevel('Cooking')));
+  WriteLn('');
+  
+  // Load second profile
+  WriteLn('Profile 2: Combat Account');
+  ProfileForm.LoadProfile('Combat Bot');
+  WriteLn('  Attack: ' + ToStr(ProfileForm.GetSkillLevel('Attack')));
+  WriteLn('  Defence: ' + ToStr(ProfileForm.GetSkillLevel('Defence')));
+  WriteLn('  Strength: ' + ToStr(ProfileForm.GetSkillLevel('Strength')));
+  WriteLn('');
+  
+  WriteLn('You can easily switch between profiles for different activities!');
+end;
+
+(*
+## Example 9: Advanced Decision Engine
+
+Complex activity selection based on multiple factors.
+*)
+procedure AdvancedActivityDecision();
+var
+  attackLevel, defenceLevel, strengthLevel: Integer;
+  slayerLevel, slayerXp: Integer;
+  attackXp, defenceXp: Integer;
+begin
+  WriteLn('=== Advanced Activity Selection ===');
+  
+  attackLevel := ProfileForm.GetSkillLevel('Attack');
+  defenceLevel := ProfileForm.GetSkillLevel('Defence');
+  strengthLevel := ProfileForm.GetSkillLevel('Strength');
+  slayerLevel := ProfileForm.GetSkillLevel('Slayer');
+  
+  WriteLn('Current Stats:');
+  WriteLn('  Attack: ' + ToStr(attackLevel));
+  WriteLn('  Defence: ' + ToStr(defenceLevel));
+  WriteLn('  Strength: ' + ToStr(strengthLevel));
+  WriteLn('  Slayer: ' + ToStr(slayerLevel));
+  WriteLn('');
+  
+  if slayerLevel >= 60 then
+    WriteLn('Can do high-level slayer tasks - use Slayer bot')
+  else if slayerLevel >= 30 then
+    WriteLn('Can do mid-level slayer tasks')
+  else if slayerLevel >= 10 then
+    WriteLn('Can do early slayer tasks')
+  else
+    WriteLn('Complete early slayer tasks to progress');
+  
+  if (attackLevel + defenceLevel + strengthLevel) >= 150 then
+    WriteLn('Stats high enough for bossing!')
+  else if (attackLevel + defenceLevel + strengthLevel) >= 100 then
+    WriteLn('Ready for mid-level content')
+  else
+    WriteLn('Focus on combat training first');
+end;
+
+(*
+## Main Script - Ties Everything Together
+*)
+begin
+  WriteLn('');
+  WriteLn('=== WaspLib Profile Configuration System ===');
+  WriteLn('Example Script Demonstrating All Features');
+  WriteLn('');
+  
+  // Step 1: Setup the form with Profile Tab
+  WriteLn('Step 1: Setting up form with Profile Configuration Tab...');
+  SetupForm();
+  WriteLn('Form closed. Profile loaded: ' + ProfileForm.CurrentProfile);
+  WriteLn('');
+  
+  // Step 2: Display current stats
+  WriteLn('Step 2: Displaying current profile stats...');
+  ActivitySelector();
+  WriteLn('');
+  
+  // Step 3: Show quest status
+  WriteLn('Step 3: Checking quest completion status...');
+  QuestBasedProgression();
+  WriteLn('');
+  
+  // Step 4: Determine best activity
+  WriteLn('Step 4: Determining optimal activity...');
+  DetermineOptimalActivity();
+  WriteLn('');
+  
+  // Step 5: Simulate progress
+  WriteLn('Step 5: Simulating bot session with skill gains...');
+  SimulateSessionProgress();
+  WriteLn('');
+  
+  // Step 6: Mark quest complete
+  WriteLn('Step 6: Marking quest as complete...');
+  OnQuestCompletion('Cooks Assistant');
+  WriteLn('');
+  
+  WriteLn('=== Example Complete ===');
+  WriteLn('The Profile Configuration System is now ready to use in your bots!');
+end.
