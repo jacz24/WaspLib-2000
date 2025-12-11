@@ -388,6 +388,63 @@ begin
   Bank.OpenTab(tab);
 end;
 
+// DepositBox antibans
+procedure TAntiban.HoverDepositItem();
+var
+  boxes: TBoxArray;
+begin
+  if not DepositBox.IsOpen() then Exit;
+  WriteLn GetDebugLn('Antiban', 'Hovering a random deposit box item');
+  boxes := DepositBox.ISlots.Boxes();
+  if boxes = [] then Exit;
+  Mouse.Move(boxes.Random());
+  Biometrics.Sleep(500, 2000, ERandomDir.LEFT);
+end;
+
+procedure TAntiban.HoverDepositQuantity();
+var
+  btn: TRSButton;
+begin
+  if not DepositBox.IsOpen() then Exit;
+  WriteLn GetDebugLn('Antiban', 'Hovering a random deposit box quantity button');
+  btn := DepositBox.QuantityButtons[ERSItemQuantity(Random(0, Length(DepositBox.QuantityButtons)-1))];
+  Mouse.Move(btn.Bounds);
+  Biometrics.Sleep(500, 2000, ERandomDir.LEFT);
+end;
+
+procedure TAntiban.HoverDepositButton();
+var
+  btn: TRSButton;
+begin
+  if not DepositBox.IsOpen() then Exit;
+  WriteLn GetDebugLn('Antiban', 'Hovering a random deposit box button');
+  btn := DepositBox.DepositButtons[ERSDepositButtons(Random(0, Length(DepositBox.DepositButtons)-1))];
+  Mouse.Move(btn.Bounds);
+  Biometrics.Sleep(500, 2000, ERandomDir.LEFT);
+end;
+
+procedure TAntiban.ToggleDepositQuantity();
+var
+  currentIdx, newIdx, totalButtons: Integer;
+begin
+  if not DepositBox.IsOpen() then Exit;
+  WriteLn GetDebugLn('Antiban', 'Toggling deposit box quantity buttons');
+
+  totalButtons := Length(DepositBox.QuantityButtons);
+
+  for currentIdx := 0 to totalButtons-1 do
+    if DepositBox.QuantityButtons[ERSItemQuantity(currentIdx)].Enabled() then
+      Break;
+
+  newIdx := (currentIdx + Random(1, totalButtons-1)) mod totalButtons;
+
+  DepositBox.QuantityButtons[ERSItemQuantity(newIdx)].Click();
+  Biometrics.Sleep(1000, 3000, ERandomDir.LEFT);
+
+  if DepositBox.IsOpen() then
+    DepositBox.QuantityButtons[ERSItemQuantity(currentIdx)].Click();
+end;
+
 // GrandExchange antibans
 procedure TAntiban.CheckHistory();
 begin
@@ -764,6 +821,16 @@ begin
   end;
 end;
 
+procedure TAntiban.RandomDepositTask();
+begin
+  case Random(0, 10) of
+    0..3:  Self.HoverDepositItem();
+    4..6:  Self.HoverDepositQuantity();
+    7..8:  Self.HoverDepositButton();
+    9..10: Self.ToggleDepositQuantity();
+  end;
+end;
+
 procedure TAntiban.RandomGETask();
 begin
   case Random(0, 10) of
@@ -998,6 +1065,11 @@ const
     ['BankScrolling',         @Antiban.BankScrolling],
     ['RandomBankTab',         @Antiban.RandomBankTab],
     ['ToggleBankTab',         @Antiban.ToggleBankTab],
+    ['HoverDepositItem',      @Antiban.HoverDepositItem],
+    ['HoverDepositQuantity',  @Antiban.HoverDepositQuantity],
+    ['HoverDepositButton',    @Antiban.HoverDepositButton],
+    ['ToggleDepositQuantity', @Antiban.ToggleDepositQuantity],
+    ['RandomDepositTask',     @Antiban.RandomDepositTask],
     ['CheckHistory',          @Antiban.CheckHistory],
     ['RandomOffer',           @Antiban.RandomOffer],
     ['RandomRightClick',      @Antiban.RandomRightClick],
