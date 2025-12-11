@@ -73,16 +73,15 @@ begin
   end;
 end;
 
+function TRSDepositBox.IsOpen(): Boolean; forward;
+
 (*
 ## DepositBox.SetupInterface
 ```pascal
 procedure TRSDepositBox.SetupInterface;
 ```
-Initializes depositbox variables.
-
-```{note}
-This is automatically called on the **DepositBox** variable.
-```
+Internal method used to setup the {ref}`TRSDepositBox` coordinates.
+This is automatically called for you on the {ref}`DepositBox variable`.
 *)
 procedure TRSDepositBox.SetupInterface();
 var
@@ -100,7 +99,7 @@ begin
   Self.InvSlotBoxes := TBoxArray.Create([Self.SlotsArea.X1,Self.SlotsArea.Y1], 4, 7, 32, 32, [10, 4]);
 
   Self.ISlots.Setup('DepositBox.ISlots', Self.InvSlotBoxes, @Self.FindItemBoundaries);
-  Self.Items.Setup('DepositBox.Items', @Self.ISlots, [0,1]);
+  Self.Items.Setup('DepositBox.Items', @Self.ISlots, [0,1], @Self.IsOpen);
 
   Self.EquipSlotBoxes := [
     Box(77,54,110,88), Box(36,93,69,127),      // Helm, Cape
