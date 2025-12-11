@@ -50,15 +50,19 @@ You have 2 ways of getting the shop item slots, a static one:
 ```pascal
 ShowOnTarget(Shop.SlotBoxes);
 ```
-
+```{figure} ../../images/shop_static_slots.png
+The shop static slots.
+```
 
 And a dynamic one:
 ```pascal
 ShowOnTarget(Shop.FindItemBoundaries());
 ```
+```{figure} ../../images/shop_item_boundaries.png
+The shop "dynamic" slots.
+```
 
 There are use cases for both, internally, `Shop.FindItemBoundaries` is usually used.
-
 *)
 function TRSShop.FindItemBoundaries(): TBoxArray;
 var
