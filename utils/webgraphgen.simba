@@ -32,10 +32,13 @@ Record responsible for generating webgraphs from collision map images.
     MaxDoorConnections: Integer;
     Skeletonize: Boolean;
     Disabled: Boolean;
+    FastMode: Boolean;  //Skip expensive operations for dynamic loading
 
     WhiteClusters: T2DPointArray;
     Doors: T2DPointArray;
     Matrix: TIntegerMatrix;
+    _WalkableMatrix: TBooleanMatrix;  //Fast O(1) lookup for walkable points
+    _WalkableBounds: TBox;
   end;
 
 function TWebGraphGenerator.Hash(): String;
@@ -83,18 +86,119 @@ begin
   Self.Skeletonize := skeletonize;
 end;
 
+(*
+## WebGraphGenerator._HasLineOfSight
+Fast check if there's a direct walkable line between two points.
+Uses Bresenham's line algorithm - much faster than AStar for simple cases.
+*)
+function TWebGraphGenerator._HasLineOfSight(p1, p2: TPoint; cluster: TPointArray): Boolean;
+var
+  dx, dy, sx, sy, err, e2: Integer;
+  x, y: Integer;
+  moveX, moveY: Boolean;
+begin
+  //Set step directions
+  if p1.X < p2.X then sx := 1 else sx := -1;
+  if p1.Y < p2.Y then sy := 1 else sy := -1;
+  dx := Abs(p2.X - p1.X);
+  dy := Abs(p2.Y - p1.Y);
+
+  //Use the walkable matrix for O(1) lookups if available
+  if Length(Self._WalkableMatrix) > 0 then
+  begin
+    x := p1.X;
+    y := p1.Y;
+    err := dx - dy;
+
+    while True do
+    begin
+      //Check bounds and walkability
+      if not Self._WalkableBounds.Contains([x, y]) then
+        Exit(False);
+      if not Self._WalkableMatrix[y, x] then
+        Exit(False);
+
+      if (x = p2.X) and (y = p2.Y) then
+        Exit(True);
+
+      e2 := 2 * err;
+      moveX := e2 > -dy;
+      moveY := e2 < dx;
+
+      //When moving diagonally, also check the two adjacent pixels
+      //This prevents stepping over thin (1-pixel) fences at corners
+      if moveX and moveY then
+      begin
+        if Self._WalkableBounds.Contains([x + sx, y]) and not Self._WalkableMatrix[y, x + sx] then
+          Exit(False);
+        if Self._WalkableBounds.Contains([x, y + sy]) and not Self._WalkableMatrix[y + sy, x] then
+          Exit(False);
+      end;
+
+      if moveX then
+      begin
+        err -= dy;
+        x += sx;
+      end;
+      if moveY then
+      begin
+        err += dx;
+        y += sy;
+      end;
+    end;
+  end;
+
+  //Fallback to cluster.Contains (slower but works without matrix)
+  x := p1.X;
+  y := p1.Y;
+  err := dx - dy;
+
+  while True do
+  begin
+    if not cluster.Contains([x, y]) then
+      Exit(False);
+
+    if (x = p2.X) and (y = p2.Y) then
+      Exit(True);
+
+    e2 := 2 * err;
+    moveX := e2 > -dy;
+    moveY := e2 < dx;
+
+    //When moving diagonally, also check the two adjacent pixels
+    if moveX and moveY then
+    begin
+      if not cluster.Contains([x + sx, y]) then
+        Exit(False);
+      if not cluster.Contains([x, y + sy]) then
+        Exit(False);
+    end;
+
+    if moveX then
+    begin
+      err -= dy;
+      x += sx;
+    end;
+    if moveY then
+    begin
+      err += dx;
+      y += sy;
+    end;
+  end;
+end;
+
 function TWebGraphGenerator.GetDoorDirection(center: TPoint; img: TImage): TPoint;
 var
   imgBounds: TBox;
-  
+
   function SafePixelCheck(x, y: Integer): Boolean;
   begin
     Result := imgBounds.Contains([x, y]) and (img.Pixel[x, y] = $0000FF);
   end;
-  
+
 begin
   imgBounds := [0, 0, img.Width - 1, img.Height - 1];
-  
+
   if SafePixelCheck(center.X+1, center.Y) or SafePixelCheck(center.X-1, center.Y) then
     Exit([0,1]);
 
@@ -124,7 +228,7 @@ begin
   for i := 1 to 5 do
   begin
     testPoint := Point(center.X, center.Y) + (inverted*i);
-    
+
     if imgBounds.Contains(testPoint) then
     begin
       case img.Pixel[testPoint.X, testPoint.Y] of
@@ -164,7 +268,7 @@ begin
   for i := 1 to 5 do
   begin
     testPoint := Point(center.X, center.Y) - (inverted * i);
-    
+
     if imgBounds.Contains(testPoint) then
     begin
       case img.Pixel[testPoint.X, testPoint.Y] of
@@ -213,7 +317,7 @@ var
   centerPt, testPt1, testPt2: TPoint;
 begin
   imgBounds := [0, 0, img.Width - 1, img.Height - 1];
-  
+
   for i := 0 to High(doors) do
   begin
     case Length(doors[i]) of
@@ -227,10 +331,10 @@ begin
 
     testPt1 := Point(centerPt.X + direction.X, centerPt.Y + direction.Y);
     testPt2 := Point(centerPt.X - direction.X, centerPt.Y - direction.Y);
-    
+
     if not imgBounds.Contains(testPt1) or not imgBounds.Contains(testPt2) then
       Continue;
-      
+
     if (img.Pixel[testPt1.X, testPt1.Y] <> $FFFFFF) or
        (img.Pixel[testPt2.X, testPt2.Y] <> $FFFFFF) then
       Continue;
@@ -311,31 +415,63 @@ end;
 function TWebGraphGenerator.SplitNodes(idx: Integer): TPointArray;
 var
   tpa: TPointArray;
+  spacing: Integer;
+  clusterSize: Integer;
 begin
   tpa := Self.WhiteClusters[idx].Erode(1);
+  clusterSize := Length(Self.WhiteClusters[idx]);
 
+  //Dynamic spacing based on cluster size - larger clusters need more spacing
+  //to keep node count reasonable and processing time manageable
+  if Self.FastMode then
+    spacing := Self.Spacing * 2
+  else if clusterSize > 500000 then
+    spacing := Round(Self.Spacing * 1.5)  //Very large clusters: 1.5x spacing
+  else
+    spacing := Self.Spacing;
+
+  //Always skeletonize if enabled - it creates better paths along natural routes
   if Self.Skeletonize then
     tpa := tpa.Skeleton(2, 6);
 
-  for tpa in tpa.Partition(Self.Spacing) do
+  for tpa in tpa.Partition(spacing) do
     Result += tpa.Cluster(1.5).Means();
 end;
 
-procedure TWebGraphGenerator.PreProcessCluster(constref tree: TKDPointTree; out connectMap: array of TIntegerMatrix; idx, treeIdx: Integer);
+procedure TWebGraphGenerator.PreProcessCluster(constref tree: TKDPointTree; out connectMap: array of TIntegerMatrix; idx, treeIdx, spacing: Integer);
 var
   p, q: TPoint;
   tpa: TPointArray;
   i: Integer;
+  dist: Double;
 begin
   p := tree.Data[treeIdx].Split;
   for q in tree.KNearest(p, Self.MaxConnections*2, True) do
   begin
-    if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > Self.Spacing * 2 then
+    if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > spacing * 2 then
       Continue;
 
-    tpa := Self.WhiteClusters[idx].ExtractBox(TBox.Create(p, q).Expand(Self.Spacing div 2));
+    dist := p.DistanceTo(q);
+
+    //Fast path: only use line-of-sight for short distances (< 30 pixels)
+    //Longer distances are more likely to have obstacles that need pathing around
+    if (dist < 30) and Self._HasLineOfSight(p, q, []) then
+    begin
+      connectMap[q.Y,q.X] += treeIdx;
+      if Inc(i) > Self.MaxConnections then
+        Break;
+      Continue;
+    end;
+
+    //Use AStar for longer distances or when line-of-sight fails
+    tpa := Self.WhiteClusters[idx].ExtractBox(TBox.Create(p, q).Expand(spacing div 2));
     tpa := tpa.AStar(p, q, False);
     if (tpa = []) or (Length(tpa) > 80) then
+      Continue;
+
+    //Skip if path is significantly longer than direct distance (indicates obstacle)
+    //Path > 2x direct distance suggests going around something
+    if Length(tpa) > dist * 2 then
       Continue;
 
     connectMap[q.Y,q.X] += treeIdx;
@@ -369,11 +505,12 @@ begin
   end;
 end;
 
-procedure TWebGraphGenerator.ConnectLastDoors(out graph: TWebGraph; idx, door: Integer; constref tree: TKDPointTree);
+procedure TWebGraphGenerator.ConnectLastDoors(out graph: TWebGraph; idx, door, spacing: Integer; constref tree: TKDPointTree);
 var
   p, q: TPoint;
   i, j: Integer;
   cluster, tpa: TPointArray;
+  dist: Double;
 begin
   p := Self.Doors[door,0];
   i := Self.Matrix[p.Y, p.X];
@@ -382,12 +519,29 @@ begin
 
   for q in tree.KNearest(p, Self.MaxDoorConnections, True) do
   begin
-    if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > Self.Spacing * 2 then
+    if Max(Abs(p.X - q.X), Abs(p.Y - q.Y)) > spacing * 2 then
       Continue;
 
-    tpa := cluster.ExtractBox(TBox.Create(p, q).Expand(Self.Spacing div 2));
+    dist := p.DistanceTo(q);
+
+    //Fast path: only use line-of-sight for short distances (< 30 pixels)
+    //Longer distances are more likely to have obstacles that need pathing around
+    if (dist < 30) and Self._HasLineOfSight(p, q, []) then
+    begin
+      j := Self.Matrix[q.Y, q.X];
+      graph.Paths[i] += [j];
+      graph.Paths[j] += i;
+      Continue;
+    end;
+
+    //Slow path: use AStar for complex paths
+    tpa := cluster.ExtractBox(TBox.Create(p, q).Expand(spacing div 2));
     tpa := tpa.AStar(p, q, False);
     if (tpa = []) or (Length(tpa) > 80) then
+      Continue;
+
+    //Skip if path is significantly longer than direct distance (indicates obstacle)
+    if Length(tpa) > dist * 2 then
       Continue;
 
     j := Self.Matrix[q.Y, q.X];
@@ -439,7 +593,7 @@ As a bonus you can also see the resulting webgraph!
 *)
 function TWebGraphGenerator._BuildGraph(map: TImage; white, red: TPointArray): TWebGraph;
 var
-  i, j, n, len, minLen: Integer;
+  i, j, n, len, minLen, clusterSize, spacing: Integer;
   nodes: TPointArray;
   pt: TPoint;
   tree: TKDPointTree;
@@ -453,6 +607,12 @@ begin
 
   Self.WhiteClusters := white.Cluster(1).SortBySize(True);
   Self.Doors := Self.FindDoors(red.Cluster(1.5), map);
+
+  //Build walkable matrix for O(1) lookups in line-of-sight checks
+  Self._WalkableBounds := white.Bounds();
+  SetLength(Self._WalkableMatrix, Self._WalkableBounds.Y2 + 1, Self._WalkableBounds.X2 + 1);
+  for pt in white do
+    Self._WalkableMatrix[pt.Y, pt.X] := True;
 
   SetLength(connectA, Length(Self.Doors));
   SetLength(connectB, Length(Self.Doors));
@@ -484,16 +644,33 @@ begin
   begin
     if timer.IsFinished or (i = 0) or (i = High(Self.WhiteClusters)) then
     begin
-      WriteLn GetDebugLn('Generating webgraph part ' + ToStr(i) + ' of ' + ToStr(High(Self.WhiteClusters)));
+      WriteLn GetDebugLn('Generating webgraph part ' + ToStr(i) + ' of ' + ToStr(High(Self.WhiteClusters)) +
+                         ' (cluster size: ' + ToStr(Length(Self.WhiteClusters[i])) + ')');
       timer.Restart();
     end;
+
+    //Skip very small clusters
+    clusterSize := Length(Self.WhiteClusters[i]);
+    if clusterSize < minLen then
+      Continue;
+
+    //Check if this cluster should be processed as a small cluster (single node)
+    with Self.WhiteClusters[i].Bounds() do
+      minRadius := Max(Width, Height) >= Self.NodeRadius;
 
     if not minRadius then
     begin
       Self.ProcessSmallCluster(Result, minRadius, doorMapA[i], doorMapB[i], i, minLen, connectA, connectB);
-      if not minRadius then
-        Continue;
+      Continue;
     end;
+
+    //Calculate spacing based on cluster size (must match SplitNodes logic)
+    if Self.FastMode then
+      spacing := Self.Spacing * 2
+    else if clusterSize > 500000 then
+      spacing := Round(Self.Spacing * 1.5)
+    else
+      spacing := Self.Spacing;
 
     nodes := Self.SplitNodes(i);
     if nodes = [] then
@@ -506,16 +683,17 @@ begin
     SetLength(Result.Paths, Length(Result.Nodes));
 
     for j := 0 to High(tree.Data) do
-      Self.PreProcessCluster(tree, connectMap, i, j);
+      Self.PreProcessCluster(tree, connectMap, i, j, spacing);
 
     for j := 0 to High(tree.Data) do
       Self.ProcessCluster(Result, tree, connectMap, j, len);
 
     for j in doorMapA[i] + doorMapB[i] do
-      Self.ConnectLastDoors(Result, i, j, tree);
+      Self.ConnectLastDoors(Result, i, j, spacing, tree);
   end;
 
   Self.Matrix := [];
+  Self._WalkableMatrix := [];
 end;
 
 function TWebGraphGenerator.BuildGraph(name: String; map: TImage): TWebGraph;
@@ -523,7 +701,7 @@ var
   white, red, gray, merged, graySubset: TPointArray;
   grayClusters, mergedClusters: T2DPointArray;
   i, j: Integer;
-  t: UInt64;
+  t, t2: UInt64;
 begin
   WriteLn GetDebugLn('Generating webgraph: ' + name + ' this can take a few seconds.');
   t := GetTimeRunning();
@@ -533,8 +711,12 @@ begin
   gray := map.FindColor($333333, 0);
 
   Result := Self._BuildGraph(map, white, red);
-  grayClusters := gray.Cluster(1);
 
+  t2 := GetTimeRunning();
+  grayClusters := gray.Cluster(1);
+  WriteLn GetDebugLn('WebGraphGenerator', 'Gray clustering took ' + ToStr(GetTimeRunning()-t2) + 'ms');
+
+  t2 := GetTimeRunning();
   for i := 0 to High(Self.WhiteClusters) do
   begin
     if Length(Self.WhiteClusters[i]) <= 6 then
@@ -551,6 +733,7 @@ begin
         Break;
       end;
   end;
+  WriteLn GetDebugLn('WebGraphGenerator', 'WalkableClusters creation took ' + ToStr(GetTimeRunning()-t2) + 'ms for ' + ToStr(Length(Self.WhiteClusters)) + ' clusters');
 
   Result.WalkableSpace  := white + gray;
   Result.ObjectClusters := grayClusters;
@@ -673,3 +856,4 @@ Global {ref}`TWebGraphGenerator` variable.
 *)
   WebGraphGenerator: TWebGraphGenerator;
 {$R+}
+

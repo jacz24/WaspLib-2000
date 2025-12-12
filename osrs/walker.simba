@@ -1041,7 +1041,16 @@ begin
   end;
 
   if fails = 10 then
+  begin
     WriteLn GetDebugLn(Self.Name, 'Failed to advance path', ELogLevel.WARN);
+    WriteLn GetDebugLn(Self.Name, '  Current pos: ' + ToStr(me) + ', path idx: ' + ToStr(idx) + '/' + ToStr(High(Self._Path)), ELogLevel.WARN);
+    if idx < Length(Self._Path) then
+      WriteLn GetDebugLn(Self.Name, '  Target node: ' + ToStr(Self._Path[idx].Node) + ', dist=' + ToStr(Round(me.DistanceTo(Self._Path[idx].Node))), ELogLevel.WARN);
+    if idx > 0 then
+      WriteLn GetDebugLn(Self.Name, '  Prev node: ' + ToStr(Self._Path[idx-1].Node) + ', dist=' + ToStr(Round(me.DistanceTo(Self._Path[idx-1].Node))), ELogLevel.WARN);
+    //Show nearest node in path to current position
+    WriteLn GetDebugLn(Self.Name, '  Nearest path idx: ' + ToStr(Self._Path.NearestIndex(me)) + ' at ' + ToStr(Self._Path[Self._Path.NearestIndex(me)].Node), ELogLevel.WARN);
+  end;
 end;
 
 (*
@@ -1147,14 +1156,28 @@ Web walks to the destination point on the loaded map. Does **not** handle any ob
 function TRSWalker.WebWalkEx(me, destination: TPoint; minDist: Integer = 0; randomness: Double = 0; debug: Boolean = False): Boolean;
 var
   path: TGraphNodeArray;
+  attempts: Integer;
 begin
   if not System.InRange(randomness, 0, 1) then
     raise GetDebugLn(Self.Name, 'WebWalk `randomness` must be between 0.0 an 1.0');
 
   if me.InRange(destination, 3) then
     Exit(True);
-  path := Self.GetPath(me, destination, randomness);
-  Result := Self.WalkPath(path, minDist, debug);
+
+  //Allow re-pathing attempts when player goes off course (e.g., game pathfinder went around obstacle)
+  for attempts := 0 to 2 do
+  begin
+    path := Self.GetPath(me, destination, randomness);
+    if Self.WalkPath(path, minDist, debug) then
+      Exit(True);
+
+    //Re-path from current position
+    me := Self.Position();
+    if me.InRange(destination, Max(minDist, 3)) then
+      Exit(True);
+
+    WriteLn GetDebugLn(Self.Name, 'Re-pathing from ' + ToStr(me) + ' (attempt ' + ToStr(attempts+1) + '/3)');
+  end;
 end;
 
 function TRSWalker.WebWalk(destination: TPoint; minDist: Integer = 0; randomness: Double = 0; debug: Boolean = False): Boolean;
@@ -1166,6 +1189,7 @@ function TRSWalker.WebWalk(destinations: TPointArray; minDist: Integer = 0; rand
 var
   me, destination: TPoint;
   path: TGraphNodeArray;
+  attempts: Integer;
 begin
   if not System.InRange(randomness, 0, 1) then
     raise GetDebugLn(Self.Name, 'WebWalk `randomness` must be between 0.0 an 1.0');
@@ -1176,7 +1200,20 @@ begin
   if me.InRange(destination, 3) then
     Exit(True);
 
-  Result := Self.WalkPath(path, minDist, debug);
+  //Allow re-pathing attempts when player goes off course (e.g., game pathfinder went around obstacle)
+  for attempts := 0 to 2 do
+  begin
+    if Self.WalkPath(path, minDist, debug) then
+      Exit(True);
+
+    //Re-path from current position
+    me := Self.Position();
+    destination := Self.GetClosestPoint(me, destinations, path);
+    if me.InRange(destination, Max(minDist, 3)) then
+      Exit(True);
+
+    WriteLn GetDebugLn(Self.Name, 'Re-pathing from ' + ToStr(me) + ' (attempt ' + ToStr(attempts+1) + '/3)');
+  end;
 end;
 
 (*
@@ -1196,3 +1233,4 @@ function TRSWalker.MakePointVisible(pt: TPoint): Boolean; overload;
 begin
   Result := Self.MakePointVisible(Self.Position(), pt);
 end;
+

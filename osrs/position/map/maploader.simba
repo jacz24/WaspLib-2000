@@ -543,6 +543,7 @@ var
   boxes, oldRegions: TBoxArray;
   newMap, newHeightmap, newCollision: TImage;
   oldMapBox: TBox;
+  cachePath: String;
 begin
   if Self.Downscale <> downscale then
     raise GetDebugLn('MapLoader', 'Cannot add chunks with different downscale value');
@@ -637,8 +638,29 @@ begin
   Self.Collision := newCollision;
 
   Self.HalfMap := Self.Map.Downsample(2);
+  //Always regenerate downscaled map during Add - map content has changed
+  //Don't use cache here since chunks may have been added dynamically
   Self.DownscaledMap := Self.Map.Downsample(Self.Downscale);
+  (*
+  //Cache downscaled map for faster repeated loading
+  with Self.Regions[0] do
+  begin
+    cachePath := Self.CacheDir + 'downscaled' + PATH_SEP +
+                     Name + '_' + ToStr(Self.Downscale) + '.bmp';
 
+    if FileExists(cachePath) then
+    begin
+      Self.DownscaledMap := new TImage();
+      Self.DownscaledMap.Load(cachePath);
+    end
+    else
+    begin
+      Self.DownscaledMap := Self.Map.Downsample(Self.Downscale);
+      DirCreate(PathExtractDir(cachePath));
+      Self.DownscaledMap.Save(cachePath);
+    end;
+  end;
+  *)
   if WebGraphGenerator.Disabled then Exit;
 
   for i := 0 to regionCount - 1 do

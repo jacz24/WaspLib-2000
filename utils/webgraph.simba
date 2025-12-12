@@ -613,6 +613,120 @@ begin
 end;
 
 
+procedure TWebGraph._MergeAdjacentClusters();
+var
+  i, j, k: Integer;
+  merged: Boolean;
+  boundsA, boundsB, overlapBox: TBox;
+  borderA, borderB: TPointArray;
+  matrix: TBooleanMatrix;
+  pt: TPoint;
+  matrixW, matrixH: Integer;
+begin
+  //Merge walkable clusters that are adjacent or overlapping
+  //This is needed when loading multiple chunks - their clusters need to be combined
+  if Length(Self.WalkableClusters) < 2 then Exit;
+
+  repeat
+    merged := False;
+    for i := High(Self.WalkableClusters) downto 1 do
+    begin
+      if Self.WalkableClusters[i] = [] then Continue;
+      boundsA := Self.WalkableClusters[i].Bounds();
+
+      for j := i - 1 downto 0 do
+      begin
+        if Self.WalkableClusters[j] = [] then Continue;
+        boundsB := Self.WalkableClusters[j].Bounds();
+
+        //Quick bounds check - if boxes don't overlap when expanded by 2, clusters aren't adjacent
+        if not boundsA.Expand(2).Overlap(boundsB) then Continue;
+
+        //Get the overlap region
+        overlapBox := [
+          Max(boundsA.X1, boundsB.X1) - 2,
+          Max(boundsA.Y1, boundsB.Y1) - 2,
+          Min(boundsA.X2, boundsB.X2) + 2,
+          Min(boundsA.Y2, boundsB.Y2) + 2
+        ];
+
+        //Skip if overlap box is invalid or too large (sanity check)
+        matrixW := overlapBox.Width + 1;
+        matrixH := overlapBox.Height + 1;
+        if (matrixW <= 0) or (matrixH <= 0) or (matrixW > 10000) or (matrixH > 10000) then
+          Continue;
+
+        //Extract points from both clusters in the overlap region
+        borderA := Self.WalkableClusters[i].ExtractBox(overlapBox);
+        borderB := Self.WalkableClusters[j].ExtractBox(overlapBox);
+
+        if (borderA = []) or (borderB = []) then Continue;
+
+        //Build a matrix for O(1) lookups of cluster j's border points
+        SetLength(matrix, matrixH, matrixW);
+        for pt in borderB do
+          if overlapBox.Contains(pt) then
+            matrix[pt.Y - overlapBox.Y1, pt.X - overlapBox.X1] := True;
+
+        //Check if any point from cluster i is adjacent to cluster j
+        for k := 0 to High(borderA) do
+        begin
+          pt := borderA[k];
+          if not overlapBox.Contains(pt) then Continue;
+
+          //Check the point and its 4 neighbors
+          if matrix[pt.Y - overlapBox.Y1, pt.X - overlapBox.X1] or
+             ((pt.X + 1 <= overlapBox.X2) and matrix[pt.Y - overlapBox.Y1, pt.X + 1 - overlapBox.X1]) or
+             ((pt.X - 1 >= overlapBox.X1) and matrix[pt.Y - overlapBox.Y1, pt.X - 1 - overlapBox.X1]) or
+             ((pt.Y + 1 <= overlapBox.Y2) and matrix[pt.Y + 1 - overlapBox.Y1, pt.X - overlapBox.X1]) or
+             ((pt.Y - 1 >= overlapBox.Y1) and matrix[pt.Y - 1 - overlapBox.Y1, pt.X - overlapBox.X1]) then
+          begin
+            //Merge cluster i into cluster j
+            Self.WalkableClusters[j] += Self.WalkableClusters[i];
+            Delete(Self.WalkableClusters, i, 1);
+            merged := True;
+            Break(2);
+          end;
+        end;
+      end;
+    end;
+  until not merged;
+end;
+
+procedure TWebGraph._ConnectBoundaryNodes(existingCount: Integer);
+var
+  i, j: Integer;
+  dist: Double;
+  maxDist: Double;
+begin
+  //Connect nodes from the newly added graph to existing nodes if they're close
+  //This bridges gaps between chunks at their boundaries
+  maxDist := 40;  //Maximum distance to auto-connect nodes (about 2 tiles)
+
+  for i := existingCount to High(Self.Nodes) do
+  begin
+    if Self.Nodes[i].Typ = EGraphNode.BLOCKED then Continue;
+
+    for j := 0 to existingCount - 1 do
+    begin
+      if Self.Nodes[j].Typ = EGraphNode.BLOCKED then Continue;
+
+      dist := Self.Nodes[i].Node.DistanceTo(Self.Nodes[j].Node);
+      if dist > maxDist then Continue;
+
+      //Check if they're in the same walkable cluster
+      if not Self.WalkableClusters.InSameTPA(Self.Nodes[i].Node, Self.Nodes[j].Node) then
+        Continue;
+
+      //Connect them if not already connected
+      if not Self.Paths[i].Contains(j) then
+        Self.Paths[i] += j;
+      if not Self.Paths[j].Contains(i) then
+        Self.Paths[j] += i;
+    end;
+  end;
+end;
+
 procedure TWebGraph.Merge(graph: TWebGraph);
 var
   i, j, len: Integer;
@@ -631,6 +745,22 @@ begin
   Self.WalkableSpace    += graph.WalkableSpace;
   Self.WalkableClusters += graph.WalkableClusters;
   Self.ObjectClusters   += graph.ObjectClusters;
+end;
+
+(*
+## TWebGraph.FinalizeMerge
+Called after all graphs have been merged to merge adjacent walkable clusters
+across chunk boundaries. This should be called once after all Merge() calls
+are complete.
+*)
+procedure TWebGraph.FinalizeMerge();
+var
+  t: UInt64;
+begin
+  t := GetTimeRunning();
+  WriteLn GetDebugLn('WebGraph', 'FinalizeMerge: starting with ' + ToStr(Length(Self.WalkableClusters)) + ' clusters');
+  Self._MergeAdjacentClusters();
+  WriteLn GetDebugLn('WebGraph', 'FinalizeMerge: done, now ' + ToStr(Length(Self.WalkableClusters)) + ' clusters, took ' + ToStr(Round((GetTimeRunning()-t)/1000, 2)) + 's');
 end;
 
 procedure TWebGraph.Draw(img: TImage);
@@ -687,3 +817,4 @@ begin
   end;
 end;
 {$R+}
+

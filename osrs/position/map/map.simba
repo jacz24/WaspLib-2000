@@ -59,6 +59,17 @@ Record responsible for positioning.
     Filters: TBoxFilterArray;
 
     IsSetup, DisableHeightmap: Boolean;
+
+    //Dynamic loading
+    DynamicLoading: record
+      Enabled: Boolean;
+      EdgeThreshold: Integer;  //Pixels from edge to trigger loading
+      ChunkRadius: Integer;    //Chunks to load around current position
+      LastExpansion: TPoint;   //Last chunk we expanded from
+      Loading: Boolean;        //Currently loading chunks
+      Preloading: Boolean;     //Currently preloading path
+      PreviousOnWalkEvent: TRSWalkerEvent;
+    end;
   end;
 
   PRSMap = ^TRSMap;
@@ -210,6 +221,373 @@ begin
   for echunk in echunks do
     chunks += echunk.Get();
   Self.Add(chunks, downscale);
+end;
+
+
+(*
+## Map.AutoSetup
+```pascal
+function TRSMap.AutoSetup(minSimilarity: Single = 0.2; downscale: UInt32 = 8): Boolean;
+```
+Automatically detects the player's position on the overworld (plane 0) using a two-phase approach:
+1. Loads large surface regions at high downscale for quick approximate positioning
+2. Refines to the specific chunk for precise positioning
+
+Returns True if position is found with similarity >= minSimilarity.
+For dungeons and other planes, use AutoSetupEx instead.
+
+Example:
+```pascal
+if Map.AutoSetup() then
+  WriteLn('Found position: ', Map.Position())
+else
+  WriteLn('Could not detect position');
+```
+*)
+(*
+## Map.AutoSetup
+```pascal
+function TRSMap.AutoSetup(minSimilarity: Single = 0.2; downscale: UInt32 = 8): Boolean;
+```
+Automatically detects the player's position using a two-phase approach:
+1. Loads a large surface region at high downscale for quick approximate positioning
+2. Refines to the specific chunk for precise positioning
+
+Returns True if position is found with similarity >= minSimilarity.
+
+Example:
+```pascal
+if Map.AutoSetup() then
+  WriteLn('Found position: ', Map.Position())
+else
+  WriteLn('Could not detect position');
+```
+*)
+function TRSMap.AutoSetup(Regions: TBoxArray = [[14,66,63,31]];minSimilarity: Single = 0.3; downscale: UInt32 = 8): Boolean;
+const
+  PHASE1_DOWNSCALE = 16;
+var
+  approxPos, chunkCoord: TPoint;
+  chunkBox, region: TBox;
+  graphWasDisabled: Boolean;
+  bestSimilarity: Single;
+  bestPos: TPoint;
+begin
+  //Disable graph generation during auto-detection for speed
+  graphWasDisabled := WebGraphGenerator.Disabled;
+  WebGraphGenerator.Disabled := True;
+  bestSimilarity := 0;
+
+  //Phase 1: Scan regions to find approximate position
+  for region in Regions do
+  begin
+    WriteLn GetDebugLn('Map', 'AutoSetup Phase 1: Scanning region ' + ToStr(region) + '...');
+    Self.Loader.Free();
+    Self.IsSetup := False;
+
+
+    Self.SetupEx([region], [0], PHASE1_DOWNSCALE);
+
+    approxPos := Self.Position();
+
+    //Continue;
+
+
+    WriteLn GetDebugLn('Map', 'AutoSetup region similarity: ' + ToStr(Round(Self.Similarity, 3)));
+
+    if Self.Similarity > bestSimilarity then
+    begin
+      bestSimilarity := Self.Similarity;
+      bestPos := approxPos;
+    end;
+
+    //Early exit if we found a good match
+    if Self.Similarity >= minSimilarity then
+      Break;
+  end;
+
+  if bestSimilarity < minSimilarity / 2 then
+  begin
+    WriteLn GetDebugLn('Map', 'AutoSetup could not find approximate position.', ELogLevel.WARN);
+    WebGraphGenerator.Disabled := graphWasDisabled;
+    Exit(False);
+  end;
+
+  //Phase 2: Convert to chunk coordinates and load specific area
+  chunkCoord := RSTranslator.Global2Chunk(bestPos);
+  WriteLn GetDebugLn('Map', 'AutoSetup Phase 2: Refining at chunk ' + ToStr(chunkCoord));
+
+  //Create a 3x3 chunk box around the found position
+  chunkBox := [chunkCoord.X - 1, chunkCoord.Y - 1, chunkCoord.X + 1, chunkCoord.Y + 1];
+
+  Self.Loader.Free();
+  Self.IsSetup := False;
+
+  //Restore graph setting for final setup so walker works
+  WebGraphGenerator.Disabled := graphWasDisabled;
+
+  try
+    Self.SetupEx([chunkBox], [0], downscale);
+    Self.Position();
+  except
+    WriteLn GetDebugLn('Map', 'AutoSetup Phase 2 failed: ' + GetExceptionMessage(), ELogLevel.WARN);
+    Exit(False);
+  end;
+
+  WriteLn GetDebugLn('Map', 'AutoSetup Phase 2 similarity: ' + ToStr(Round(Self.Similarity, 3)));
+
+  if Self.Similarity >= minSimilarity then
+  begin
+    WriteLn GetDebugLn('Map', 'AutoSetup found position at ' + ToStr(Self.Position()));
+    Result := True;
+  end
+  else
+  begin
+    WriteLn GetDebugLn('Map', 'AutoSetup similarity below threshold.', ELogLevel.WARN);
+    Result := False;
+  end;
+end;
+
+
+(*
+## Map.NeedsExpansion
+```pascal
+function TRSMap.NeedsExpansion(position: TPoint): Boolean;
+```
+Checks if the current position is near the edge of loaded map regions
+and expansion is needed.
+*)
+function TRSMap.NeedsExpansion(position: TPoint): Boolean;
+var
+  localPos: TPoint;
+  bounds: TBox;
+  threshold: Integer;
+begin
+  if not Self.DynamicLoading.Enabled then Exit(False);
+  if Self.DynamicLoading.Loading then Exit(False);
+  if Self.DynamicLoading.Preloading then Exit(False);
+  if Length(Self.Loader.Regions) = 0 then Exit(False);
+
+  threshold := Self.DynamicLoading.EdgeThreshold;
+  localPos := Self.Loader.GetLocal(Self.RegionIndex, position);
+  bounds := Self.Loader.MapBox;
+
+  //Check if near any edge
+  Result := (localPos.X < bounds.X1 + threshold) or
+            (localPos.X > bounds.X2 - threshold) or
+            (localPos.Y < bounds.Y1 + threshold) or
+            (localPos.Y > bounds.Y2 - threshold);
+end;
+
+(*
+## Map.ExpandMap
+```pascal
+procedure TRSMap.ExpandMap(position: TPoint);
+```
+Expands the loaded map around the current position by loading adjacent chunks.
+*)
+procedure TRSMap.ExpandMap(position: TPoint);
+var
+  chunkCoord: TPoint;
+  expandBox: TBox;
+  radius: Integer;
+  graphWasDisabled: Boolean;
+begin
+  if Self.DynamicLoading.Loading then Exit;
+
+  Self.DynamicLoading.Loading := True;
+  radius := Self.DynamicLoading.ChunkRadius;
+
+  chunkCoord := RSTranslator.Global2Chunk(position);
+
+  //Skip if we already expanded from this chunk
+  if chunkCoord = Self.DynamicLoading.LastExpansion then
+  begin
+    Self.DynamicLoading.Loading := False;
+    Exit;
+  end;
+
+  expandBox := [
+    chunkCoord.X - radius,
+    chunkCoord.Y - radius,
+    chunkCoord.X + radius,
+    chunkCoord.Y + radius
+  ];
+
+  //Disable graph generation during expansion for speed
+  graphWasDisabled := WebGraphGenerator.Disabled;
+  WebGraphGenerator.Disabled := True;
+
+  try
+    Self.AddEx([expandBox], [Self.Region.Plane], Self.Loader.Downscale);
+    Self.DynamicLoading.LastExpansion := chunkCoord;
+  except
+    WriteLn GetDebugLn('Map', 'Map expansion failed: ' + GetExceptionMessage(), ELogLevel.WARN);
+  end;
+
+  WebGraphGenerator.Disabled := graphWasDisabled;
+  Self.DynamicLoading.Loading := False;
+end;
+
+(*
+## Map._DynamicLoadingWalkEvent
+Internal callback for dynamic loading during walking.
+*)
+procedure TRSMap._DynamicLoadingWalkEvent(walker: PRSWalker; position, destination: TPoint);
+begin
+  //Call previous event if exists
+  if @Self.DynamicLoading.PreviousOnWalkEvent <> nil then
+    Self.DynamicLoading.PreviousOnWalkEvent(walker, position, destination);
+
+  //Check and expand if needed
+  if Self.NeedsExpansion(position) then
+    Self.ExpandMap(position);
+end;
+
+(*
+## Map.EnableDynamicLoading
+```pascal
+procedure TRSMap.EnableDynamicLoading(edgeThreshold: Integer = 200; chunkRadius: Integer = 2);
+```
+Enables dynamic map loading during walking. When the player approaches the edge
+of the currently loaded map, adjacent chunks are automatically loaded.
+
+Parameters:
+- edgeThreshold: Distance in pixels from edge to trigger loading (default 200)
+- chunkRadius: Number of chunks to load around current position (default 2)
+
+Example:
+```pascal
+Map.AutoSetup();
+Map.EnableDynamicLoading();
+Map.Walker.WebWalk(destination);
+```
+*)
+procedure TRSMap.EnableDynamicLoading(edgeThreshold: Integer = 200; chunkRadius: Integer = 2);
+begin
+  Self.DynamicLoading.Enabled := True;
+  Self.DynamicLoading.EdgeThreshold := edgeThreshold;
+  Self.DynamicLoading.ChunkRadius := chunkRadius;
+  Self.DynamicLoading.Loading := False;
+  Self.DynamicLoading.Preloading := False;
+  Self.DynamicLoading.LastExpansion := [-1, -1];
+
+  //Save and replace walk event
+  @Self.DynamicLoading.PreviousOnWalkEvent := @Self.Walker.OnWalkEvent;
+  @Self.Walker.OnWalkEvent := @Self._DynamicLoadingWalkEvent;
+end;
+
+(*
+## Map.DisableDynamicLoading
+```pascal
+procedure TRSMap.DisableDynamicLoading();
+```
+Disables dynamic map loading.
+*)
+procedure TRSMap.DisableDynamicLoading();
+begin
+  Self.DynamicLoading.Enabled := False;
+
+  //Restore previous walk event
+  @Self.Walker.OnWalkEvent := @Self.DynamicLoading.PreviousOnWalkEvent;
+  @Self.DynamicLoading.PreviousOnWalkEvent := nil;
+end;
+
+(*
+## Map.PreloadDirection
+```pascal
+procedure TRSMap.PreloadDirection(position, destination: TPoint);
+```
+Preloads chunks in the direction of travel. Call this before walking
+to preload the path ahead while you're still setting up.
+*)
+procedure TRSMap.PreloadDirection(position, destination: TPoint);
+var
+  chunkPos, chunkDest: TPoint;
+  preloadBox: TBox;
+  plane: Integer;
+  downscale: UInt32;
+begin
+  Self.DynamicLoading.Preloading := True;
+
+  chunkPos := RSTranslator.Global2Chunk(position);
+  chunkDest := RSTranslator.Global2Chunk(destination);
+
+  //Create box covering path from current to destination
+  preloadBox := [
+    Min(chunkPos.X, chunkDest.X) - 1,
+    Min(chunkPos.Y, chunkDest.Y) - 1,
+    Max(chunkPos.X, chunkDest.X) + 1,
+    Max(chunkPos.Y, chunkDest.Y) + 1
+  ];
+
+  WriteLn GetDebugLn('Map', 'PreloadDirection: pos=' + ToStr(position) + ' chunk=' + ToStr(chunkPos));
+  WriteLn GetDebugLn('Map', 'PreloadDirection: dest=' + ToStr(destination) + ' chunk=' + ToStr(chunkDest));
+  WriteLn GetDebugLn('Map', 'PreloadDirection: loading box=' + ToStr(preloadBox));
+
+  //Save current settings before reload
+  plane := Self.Region.Plane;
+  downscale := Self.Loader.Downscale;
+
+  //Free and reload everything fresh with webgraph enabled
+  //This is needed because AutoSetup loads chunks without webgraph,
+  //and AddEx skips already-loaded chunks
+  Self.Loader.Free();
+  Self.IsSetup := False;
+
+  try
+    Self.SetupEx([preloadBox], [plane], downscale);
+    Self.DynamicLoading.LastExpansion := chunkPos;
+    WriteLn GetDebugLn('Map', 'PreloadDirection: loaded successfully, graph nodes=' + ToStr(Length(Self.Loader.Graph.Nodes)) +
+                       ', clusters=' + ToStr(Length(Self.Loader.Graph.WalkableClusters)));
+  except
+    WriteLn GetDebugLn('Map', 'Preload failed: ' + GetExceptionMessage(), ELogLevel.WARN);
+  end;
+
+  Self.DynamicLoading.Preloading := False;
+end;
+
+(*
+## Map.WalkAndLoad
+```pascal
+function TRSMap.WalkAndLoad(destination: TPoint; minDist: Integer = 0): Boolean;
+```
+Walks to destination while dynamically loading chunks as needed.
+Combines EnableDynamicLoading with WebWalk for convenience.
+
+Example:
+```pascal
+Map.AutoSetup();
+Map.WalkAndLoad([12500, 11800]);
+```
+*)
+function TRSMap.WalkAndLoad(destination: TPoint; minDist: Integer = 0): Boolean;
+var
+  wasEnabled: Boolean;
+  startPos: TPoint;
+begin
+  WriteLn GetDebugLn('Map', 'WalkAndLoad: starting, destination=' + ToStr(destination));
+
+  wasEnabled := Self.DynamicLoading.Enabled;
+
+  if not wasEnabled then
+    Self.EnableDynamicLoading();
+
+  WriteLn GetDebugLn('Map', 'WalkAndLoad: getting position...');
+  startPos := Self.Position();
+  WriteLn GetDebugLn('Map', 'WalkAndLoad: position=' + ToStr(startPos));
+
+  //Preload the path ahead with fast graph generation
+  Self.PreloadDirection(startPos, destination);
+
+  WriteLn GetDebugLn('Map', 'WalkAndLoad: calling WebWalkEx...');
+  //Use WebWalkEx with known startPos - don't call Position() again after map expansion
+  //as the expanded map might cause template matching to find wrong position
+  Result := Self.Walker.WebWalkEx(startPos, destination, minDist);
+  WriteLn GetDebugLn('Map', 'WalkAndLoad: WebWalkEx returned ' + ToStr(Result));
+
+  if not wasEnabled then
+    Self.DisableDynamicLoading();
 end;
 
 
@@ -673,3 +1051,4 @@ var
 Global {ref}`TRSMap` variable.
 *)
   Map: TRSMap;
+
