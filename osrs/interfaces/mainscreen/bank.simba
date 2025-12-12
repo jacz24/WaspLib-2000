@@ -1464,6 +1464,51 @@ begin
   Result := Target.FindColor($0000ff, 4, box.Expand(2, 1)).Intersection(box.Expand(1, 0).Corners).Length = 4;
 end;
 
+
+(*
+## Bank.LockSlot
+```pascal
+function TRSBank.LockSlot(slot: Integer): Boolean;
+```
+Locks an inventory slot and returns confirmation the slot was locked.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+begin
+  if Bank.LockSlot(0) then
+    WriteLn('Slot 0 has been locked');
+end.
+```
+*)
+function TRSBank.LockSlot(slot: Integer): Boolean;
+begin
+  if Self.IsSlotLocked(slot) then Exit(True);
+  Result := Self.Slots.Interact(slot, 'Lock-slot') and SleepUntil(Self.IsSlotLocked(slot), Random(100, 300), 1200);
+end;
+
+(*
+## Bank.LockSlot
+```pascal
+function TRSBank.UnlockSlot(slot: Integer): Boolean;
+```
+Unlocks an inventory slot and returns confirmation the slot was unlocked.
+
+Example:
+```pascal
+{$I WaspLib/osrs.simba}
+begin
+  if Bank.UnlockSlot(0) then
+    WriteLn('Slot 0 has been unlocked');
+end.
+```
+*)
+function TRSBank.UnlockSlot(slot: Integer): Boolean;
+begin
+  if not Self.IsSlotLocked(slot) then Exit(True);
+  Result := Self.Slots.Interact(slot, 'Unlock-slot') and SleepUntil(not Self.IsSlotLocked(slot), Random(100, 300), 1200);
+end;
+
 var
 (*
 ## Bank variable
