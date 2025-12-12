@@ -62,6 +62,10 @@ begin
   TJSONParser(Self.Data).Save(Self.Path, [EJSONFormatOption.USE_TABS, EJSONFormatOption.SINGLE_LINE_ARR], 1);
 end;
 
+(*
+## TConfigINI
+Type responsible for dealing with INI configuration files.
+*)
 type
   TConfigINI  = record
     Path: String;
