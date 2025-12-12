@@ -14,6 +14,10 @@ use for this botting session.
   ProfileIndex: Integer;
 
 type
+(*
+## TProfile
+Record holding account credentials and world preferences.
+*)
   TProfile = record
     Name, Username, Password, Pin: String;
     Worlds: TIntegerArray;
@@ -43,6 +47,14 @@ begin
   Self += [name, user, pass, pin, worlds, true];
 end;
 
+(*
+## TProfileArray.NextPlayer
+```pascal
+procedure TProfileArray.NextPlayer(disableCurrent: Boolean);
+```
+Switches to the next active profile. If `disableCurrent` is True, the current
+profile is marked inactive.
+*)
 procedure TProfileArray.NextPlayer(disableCurrent: Boolean);
 
   function _Next(): Integer;
