@@ -12,7 +12,7 @@ Credits to Flight and Skunkworks
 
 type
 (*
-## ERSSilverItem
+## ERSSilverItem enum
 ```pascal
 ERSSilverItem = enum(OPAL_RING..TOPAZ_BRACELET);
 ```
@@ -26,11 +26,10 @@ Enum representing the silver jewelry that can be crafted.
   );
 
 (*
-## TRSSilverScreen
+## TRSSilverScreen type
 Main record to interact with the {ref}`SilverScreen` interface.
 *)
   TRSSilverScreen = record
-    {── static GUI description ──}
     Title     : TRSInterfaceTitle;
     Slots     : TRSSlotInterface;
     Items     : TRSItemInterface;
@@ -39,37 +38,12 @@ Main record to interact with the {ref}`SilverScreen` interface.
     Bounds    : TBox;
     SlotBoxes : TBoxArray;
     Buttons   : array[ERSItemQuantity] of TRSButton;
-
-    {── internal helpers ──}
-    //procedure SetupInterface;
-    //function  GetButtons : TRSButtonArray;
-    //function  GetButton  (B : ERSSilverScreenButton) : TRSButton;
-
-    {── public API ──}
-    //function  IsOpen     : Boolean;
-    //function  WaitOpen   (time : Int32 = 600; interval : Int32 = -1) : Boolean;
-    //
-    //function  Close      (PressEscape : Boolean = False) : Boolean;
-    //
-    //function  SetQuantity     (Amount : Int32) : Boolean;
-    //function  CanCraftItem    (Item   : TRSItem; out Box : TBox) : Boolean;
-    //function  IsItemHighlighted(Item   : TRSItem) : Boolean;
-    //function  CraftItem       (Item   : TRSItem; Quantity : Int32;
-    //                           UseSpaceBar : Boolean = False) : Boolean;
-    //
-    //procedure Draw(Bmp : TMufasaBitmap);
   end;
 
-{=====================================================================
-  IMPLEMENTATION
-=====================================================================}
-
-{―― internal helpers ―――――――――――――――――――――――――――――――――――――――――――}
 function TRSSilverScreen.GetButtons(): TRSButtonArray;
 var
   buttonGrid : TBoxArray;
 begin
-  { cache empty? ➜ build the static grid }
   if Self.Buttons[0].Bounds.Area = 1 then
   begin
     buttonGrid := TBoxArray.Create(
@@ -88,6 +62,16 @@ begin
   Result := Self.Buttons[b];
 end;
 
+function TRSSilverScreen.IsOpen(): Boolean; forward;
+
+(*
+## SilverScreen.SetupInterface
+```pascal
+procedure TRSSilverScreen.SetupInterface();
+```
+Internal method used to setup the {ref}`TRSSilverScreen` coordinates.
+This is automatically called for you on the {ref}`SilverScreen variable`.
+*)
 procedure TRSSilverScreen.SetupInterface();
 var
   leftSlots, rightSlots : TBoxArray;
@@ -132,7 +116,7 @@ begin
   Self.SlotBoxes := leftSlots + rightSlots;
 
   Self.Slots.Setup('SilverScreen.Slots', Self.SlotBoxes);
-  Self.Items.Setup('SilverScreen.Items', @Self.Slots, [0,10]);
+  Self.Items.Setup('SilverScreen.Items', @Self.Slots, [0,10], @Self.IsOpen);
 
   btns := Self.GetButtons();
   if Length(btns) = Length(ERSItemQuantity) then
@@ -140,8 +124,18 @@ begin
       Self.Buttons[ERSItemQuantity(i)] := btns[i];
 end;
 
-{―― public API ―――――――――――――――――――――――――――――――――――――――――――――――}
+(*
+## SilverScreen.IsOpen
+```pascal
+function TRSSilverScreen.IsOpen(): Boolean;
+```
+Returns true if the SilverScreen interface is open.
 
+Example:
+```pascal
+WriteLn SilverScreen.IsOpen();
+```
+*)
 function TRSSilverScreen.IsOpen(): Boolean;
 begin
   try
@@ -151,6 +145,18 @@ begin
   end;
 end;
 
+(*
+## SilverScreen.WaitOpen
+```pascal
+function TRSSilverScreen.WaitOpen(time, interval: Int32): Boolean;
+```
+Returns true if the SilverScreen interface opens within `time` milliseconds.
+
+Example:
+```pascal
+WriteLn SilverScreen.WaitOpen(5000);
+```
+*)
 function TRSSilverScreen.WaitOpen(time, interval : Int32) : Boolean;
 begin
   if interval < 0 then
@@ -158,6 +164,19 @@ begin
   Result := SleepUntil(Self.IsOpen, interval, time);
 end;
 
+(*
+## SilverScreen.Close
+```pascal
+function TRSSilverScreen.Close(PressEscape: Boolean): Boolean;
+```
+Attempts to close the {ref}`SilverScreen` interface. If `PressEscape` is true, the escape key is
+pressed to close, otherwise the close button is clicked.
+
+Example:
+```pascal
+WriteLn SilverScreen.Close(True);
+```
+*)
 function TRSSilverScreen.Close(PressEscape : Boolean) : Boolean;
 begin
   if not Self.IsOpen then
@@ -173,6 +192,21 @@ begin
                          Random(1500,2000));
 end;
 
+(*
+## SilverScreen.SetQuantity
+```pascal
+function TRSSilverScreen.SetQuantity(Amount: Int32): Boolean;
+```
+Sets the quantity to craft. Pass -1 for "All". If a preset button (1, 5, 10, All)
+matches the amount, it will be clicked. Otherwise, the "X" button is used to
+enter a custom amount.
+
+Example:
+```pascal
+SilverScreen.SetQuantity(10);
+SilverScreen.SetQuantity(-1); // All
+```
+*)
 function TRSSilverScreen.SetQuantity(Amount: Int32): Boolean;
 const
   ENABLED_COLOR  = $FFFFFF;   // white (active button)
@@ -208,6 +242,21 @@ begin
     end;
 end;
 
+(*
+## SilverScreen.CanCraftItem
+```pascal
+function TRSSilverScreen.CanCraftItem(Item: TRSItem; out Box: TBox): Boolean;
+```
+Checks if the specified item can be crafted. Returns true if the item is found
+and craftable, and outputs the click box for the item.
+
+Example:
+```pascal
+var box: TBox;
+if SilverScreen.CanCraftItem('Opal ring', box) then
+  WriteLn 'Can craft opal ring';
+```
+*)
 function TRSSilverScreen.CanCraftItem(Item : TRSItem; out Box : TBox) : Boolean;
 const
   READY_GOLD  = $1F98FF;  // gold text (craftable)
@@ -227,6 +276,21 @@ begin
   Result := TPA.Length > 0;
 end;
 
+
+(*
+## SilverScreen.IsItemHighlighted
+```pascal
+function TRSSilverScreen.IsItemHighlighted(Item: TRSItem): Boolean;
+```
+Returns true if the specified item is currently highlighted/selected in the interface.
+You probably won't need to work with this directly
+
+Example:
+```pascal
+if SilverScreen.IsItemHighlighted('Opal ring') then
+  Keyboard.KeyPress(EKeyCode.SPACE);
+```
+*)
 function TRSSilverScreen.IsItemHighlighted(Item : TRSItem) : Boolean;
 var
   highlight : TColor := 4807018;
@@ -239,6 +303,19 @@ begin
   Result := TPA.Length > 0;
 end;
 
+(*
+## SilverScreen.CraftItem
+```pascal
+function TRSSilverScreen.CraftItem(Item: TRSItem; Quantity: Int32; UseSpaceBar: Boolean): Boolean;
+```
+Crafts the specified item with the given quantity. If `UseSpaceBar` is true and the
+item is already highlighted, spacebar will be pressed instead of clicking.
+
+Example:
+```pascal
+SilverScreen.CraftItem('Opal ring', 10, True);
+```
+*)
 function TRSSilverScreen.CraftItem(Item : TRSItem; Quantity : Int32;
                                    UseSpaceBar : Boolean) : Boolean;
 var
@@ -260,4 +337,8 @@ begin
 end;
 
 var
+(*
+## SilverScreen variable
+Global {ref}`TRSSilverScreen` variable.
+*)
   SilverScreen: TRSSilverScreen;
