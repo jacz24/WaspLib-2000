@@ -7,10 +7,21 @@ This page is about WaspLib's OCR.
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
 type
+(*
+## TOCR
+Record wrapping TPixelOCR with convenience methods for text recognition.
+*)
   TOCR = record
     Engine: TPixelOCR;
   end;
 
+(*
+## OCR.RecognizeStatic
+```pascal
+function TOCR.RecognizeStatic(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): String;
+```
+Recognizes static text (non-moving) within bounds using specified font and colors.
+*)
 function TOCR.RecognizeStatic(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): String;
 var
   img: TImage;
@@ -20,6 +31,13 @@ begin
   Result := Self.Engine.Recognize(img, font, [0,0]);
 end;
 
+(*
+## OCR.RecognizeStaticInvert
+```pascal
+function TOCR.RecognizeStaticInvert(bounds: TBox; font: TPixelFont; colors: TColorArray): String;
+```
+Recognizes static text with inverted colors (background becomes text).
+*)
 function TOCR.RecognizeStaticInvert(bounds: TBox; font: TPixelFont; colors: TColorArray): String;
 var
   img: TImage;
@@ -29,6 +47,13 @@ begin
   Result := Self.Engine.Recognize(img, font, [0,0]);
 end;
 
+(*
+## OCR.Recognize
+```pascal
+function TOCR.Recognize(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): String;
+```
+Recognizes text within bounds using specified font and colors.
+*)
 function TOCR.Recognize(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): String;
 var
   img: TImage;
@@ -38,6 +63,13 @@ begin
   Result := Self.Engine.Recognize(img, Font);
 end;
 
+(*
+## OCR.RecognizeLines
+```pascal
+function TOCR.RecognizeLines(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): TStringArray;
+```
+Recognizes multiple lines of text, returning each line as a separate string.
+*)
 function TOCR.RecognizeLines(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): TStringArray;
 var
   img: TImage;
@@ -47,6 +79,13 @@ begin
   Result := Self.Engine.RecognizeLines(img, font);
 end;
 
+(*
+## OCR.RecognizeShadow
+```pascal
+function TOCR.RecognizeShadow(bounds: TBox; font: TPixelFont; tolerance: Single): String;
+```
+Recognizes text by detecting shadow pixels and finding adjacent text colors.
+*)
 function TOCR.RecognizeShadow(bounds: TBox; font: TPixelFont; tolerance: Single): String;
 var
   img: TImage;
@@ -63,6 +102,13 @@ begin
   Result := Self.Engine.Recognize(img, font);
 end;
 
+(*
+## OCR.RecognizeNumber
+```pascal
+function TOCR.RecognizeNumber(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): Integer;
+```
+Recognizes and extracts an integer from text within bounds.
+*)
 function TOCR.RecognizeNumber(bounds: TBox; font: TPixelFont; colors: TColorArray; tolerance: Single): Integer;
 begin
   Result := Self.Recognize(bounds, font, colors, tolerance).ExtractInteger();
@@ -87,9 +133,17 @@ begin
 end;
 
 var
+(*
+## OCR variable
+Global {ref}`TOCR` variable.
+*)
   OCR: TOCR;
 
 type
+(*
+## TRSFonts
+Record containing pre-loaded RuneScape fonts and common text colors.
+*)
   TRSFonts = record
     PLAIN_11:       TPixelFont;
     PLAIN_12:       TPixelFont;

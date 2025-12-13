@@ -6,6 +6,10 @@ Responsible for managing assets that WaspLib requires to run.
 {$INCLUDE_ONCE WaspLib/utils.simba}
 
 type
+(*
+## TWLAssets
+Record for managing WaspLib asset downloads and updates.
+*)
   TWLAssets = record
     JSON: TJSONObject;
     Queue: TStringArray;

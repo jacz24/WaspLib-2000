@@ -147,7 +147,14 @@ begin
       Exit(True);
 end;
 
-
+(*
+## TImage.ColorsInLineEx
+```pascal
+function TImage.ColorsInLineEx(start, stop: TPoint; colors: TIntegerArray): Boolean;
+```
+Checks if any of the specified `colors` exist on the line between `start` and `stop`.
+Uses horizontal and vertical line checking.
+*)
 function TImage.ColorsInLineEx(start, stop: TPoint; colors: TIntegerArray): Boolean;
 var
   x, y: Integer;
@@ -170,10 +177,16 @@ begin
   Result := (pXCross and pYCross) or (qXCross and qYCross);
 end;
 
+(*
+## TImage.ColorsInLine
+```pascal
+function TImage.ColorsInLine(start, stop: TPoint; colors: TIntegerArray): Boolean;
+```
+Checks if any of the specified `colors` exist on the line between `start` and `stop`.
+Uses Bresenham's line algorithm for pixel-accurate line tracing.
 
-
-
-//credits: Simba1400/Source/MML/simba.tpa.pas#L2440C10-L2440C21
+Credits: Simba1400/Source/MML/simba.tpa.pas
+*)
 function TImage.ColorsInLine(start, stop: TPoint; colors: TIntegerArray): Boolean;
 var
   Xinc, YInc: Integer;
@@ -234,7 +247,14 @@ begin
   until (current.Y = stop.Y);
 end;
 
-
+(*
+## SaveScreenshotEx
+```pascal
+function SaveScreenshotEx(folder: String; bounds: TBox = [-1,-1,-1,-1]): String;
+```
+Saves a screenshot to a subfolder of Simba's screenshots directory.
+Returns the file path on success, empty string on failure.
+*)
 function SaveScreenshotEx(folder: String; bounds: TBox = [-1,-1,-1,-1]): String;
 var
   path: String;
