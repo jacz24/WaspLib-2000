@@ -183,9 +183,78 @@ begin
       Result += [x,y];
 end;
 
+
+(*
+## RSTranslator.RSCoordToPixel
+```pascal
+function TRSTranslator.RSCoordToPixel(rsTile: TPoint; plane: Integer = 0): TPoint;
+function TRSTranslator.RSCoordToPixel(rsX, rsY: Integer; plane: Integer = 0): TPoint; overload;
+```
+Converts internal OSRS tile coordinates to WaspLib pixel coordinates.
+
+OSRS uses tile-based coordinates where each tile is a game square.
+WaspLib uses pixel coordinates where each tile is 4 pixels wide.
+The Y-axis is also inverted (OSRS Y increases northward, pixels increase downward).
+Different planes are stored side-by-side in WaspLib maps, offset by MapWidth.
+
+Example:
+```pascal
+WriteLn RSTranslator.RSCoordToPixel(3213, 3424); //Varrock center (plane 0)
+//Output: {X = 12852, Y = 36736}
+
+WriteLn RSTranslator.RSCoordToPixel(3050, 4962, 1); //Plane 1 location
+//Output: {X = 37800, Y = 30582}
+```
+*)
+function TRSTranslator.RSCoordToPixel(rsTile: TPoint; plane: Integer = 0): TPoint;
+begin
+  Result.X := rsTile.X * Self.TileSize + plane * Self.MapWidth;
+  Result.Y := ((Self.RSMap.Scope.Y2 + 1) * Self.RSMap.ChunkSide - rsTile.Y) * Self.TileSize - (Self.TileSize div 2);
+end;
+
+function TRSTranslator.RSCoordToPixel(rsX, rsY: Integer; plane: Integer = 0): TPoint; overload;
+begin
+  Result := Self.RSCoordToPixel([rsX, rsY], plane);
+end;
+
+
+(*
+## RSTranslator.PixelToRSCoord
+```pascal
+function TRSTranslator.PixelToRSCoord(pixel: TPoint): TPoint;
+function TRSTranslator.PixelToRSCoord(pixel: TPoint; out plane: Integer): TPoint; overload;
+```
+Converts WaspLib pixel coordinates to internal OSRS tile coordinates.
+The overload with `plane` output parameter also returns which plane the coordinate is on.
+
+Example:
+```pascal
+WriteLn RSTranslator.PixelToRSCoord([12852, 36736]); //Varrock center
+//Output: {X = 3213, Y = 3424}
+
+var p: Integer;
+WriteLn RSTranslator.PixelToRSCoord([37800, 30582], p); //Plane 1 location
+//Output: {X = 3050, Y = 4962}, p = 1
+```
+*)
+function TRSTranslator.PixelToRSCoord(pixel: TPoint): TPoint;
+begin
+  Result.X := (pixel.X mod Self.MapWidth) div Self.TileSize;
+  Result.Y := (Self.RSMap.Scope.Y2 + 1) * Self.RSMap.ChunkSide - ((pixel.Y + (Self.TileSize div 2)) div Self.TileSize);
+end;
+
+function TRSTranslator.PixelToRSCoord(pixel: TPoint; out plane: Integer): TPoint; overload;
+begin
+  plane := pixel.X div Self.MapWidth;
+  Result.X := (pixel.X mod Self.MapWidth) div Self.TileSize;
+  Result.Y := (Self.RSMap.Scope.Y2 + 1) * Self.RSMap.ChunkSide - ((pixel.Y + (Self.TileSize div 2)) div Self.TileSize);
+end;
+
+
 var
 (*
 ## RSTranslator variable
 Global {ref}`TRSTranslator` variable.
 *)
   RSTranslator: TRSTranslator;
+

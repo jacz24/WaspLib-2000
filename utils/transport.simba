@@ -1,0 +1,706 @@
+(*
+# Transport
+Data-driven transportation system that parses transport data from TSV files.
+Supports stairs, ladders, boats, fairy rings, teleports, and other transport methods.
+*)
+
+{$DEFINE WL_TRANSPORT_INCLUDED}
+{$INCLUDE_ONCE WaspLib/utils.simba}
+
+type
+(*
+## ERSTransportType
+Enum representing different types of transportation.
+*)
+  ERSTransportType = (
+    TRANSPORT,           // Generic - stairs, ladders, doors, etc.
+    AGILITY_SHORTCUT,
+    BOAT,
+    CANOE,
+    CHARTER_SHIP,
+    FAIRY_RING,
+    GNOME_GLIDER,
+    HOT_AIR_BALLOON,
+    MAGIC_CARPET,
+    MAGIC_MUSHTREE,
+    MINECART,
+    QUETZAL,
+    SHIP,
+    SPIRIT_TREE,
+    TELEPORT_ITEM,
+    TELEPORT_LEVER,
+    TELEPORT_MINIGAME,
+    TELEPORT_PORTAL,
+    TELEPORT_POH,
+    TELEPORT_SPELL,
+    WILDERNESS_OBELISK
+  );
+
+(*
+## TRSTransport
+Record representing a single transport connection between two points.
+*)
+  TRSTransport = record
+    Origin: TPoint;           // WaspLib pixel coordinates
+    Destination: TPoint;      // WaspLib pixel coordinates
+    OriginPlane: Integer;
+    DestinationPlane: Integer;
+    MenuOption: String;       // e.g., "Climb-up", "Enter", "Board"
+    MenuTarget: String;       // e.g., "Ladder", "Cave entrance"
+    ObjectID: Integer;
+    Duration: Integer;        // Travel time in game ticks
+    TransportType: ERSTransportType;
+
+    // Requirements (parsed as strings for now, can be expanded)
+    SkillReqs: TStringArray;  // e.g., ["82 Agility", "70 Strength"]
+    ItemReqs: TStringArray;   // e.g., ["Coins", "Dramen staff"]
+    QuestReqs: TStringArray;  // e.g., ["Lost City", "Fairy Tale II"]
+    VarbitReqs: TStringArray; // e.g., ["538=1", "4070>0"]
+  end;
+
+  TRSTransportArray = array of TRSTransport;
+
+(*
+## TRSTransportLoader
+Loader for parsing TSV transport data files.
+*)
+  TRSTransportLoader = record
+    Transports: TRSTransportArray;
+    CacheDir: String;
+    Loaded: Boolean;
+  end;
+
+(*
+## TRSTransportLoader.ParseRSCoord
+Parses an OSRS coordinate string "X Y Z" into a WaspLib pixel point and plane.
+*)
+procedure TRSTransportLoader.ParseRSCoord(coord: String; out pt: TPoint; out plane: Integer); static;
+var
+  parts: TStringArray;
+  rsX, rsY: Integer;
+begin
+  pt := [0, 0];
+  plane := 0;
+
+  parts := coord.Trim().Split(' ');
+  if Length(parts) < 2 then Exit;
+
+  // Check if first two parts are numeric
+  if not parts[0].IsInteger or not parts[1].IsInteger then Exit;
+
+  rsX := StrToInt(parts[0]);
+  rsY := StrToInt(parts[1]);
+
+  if (Length(parts) >= 3) and parts[2].IsInteger then
+    plane := StrToInt(parts[2]);
+
+  // Convert with plane offset
+  pt := RSTranslator.RSCoordToPixel(rsX, rsY, plane);
+end;
+
+(*
+## TRSTransportLoader.ParseTSVLine
+Parses a single TSV line into a TRSTransport record.
+Format: Origin | Destination | MenuOption MenuTarget ObjectID | Skills | Items | Quests | Varbits | VarPlayers | Duration | Display
+*)
+function TRSTransportLoader.ParseTSVLine(line: String): TRSTransport; static;
+var
+  fields: TStringArray;
+  menuParts: TStringArray;
+begin
+  Result := Default(TRSTransport);
+
+  // Split by tab
+  fields := line.Split(#9);
+  if Length(fields) < 3 then Exit;
+
+  // Parse origin (field 0)
+  TRSTransportLoader.ParseRSCoord(fields[0], Result.Origin, Result.OriginPlane);
+
+  // Parse destination (field 1)
+  TRSTransportLoader.ParseRSCoord(fields[1], Result.Destination, Result.DestinationPlane);
+
+  // Parse menu option, target, object ID (field 2)
+  menuParts := fields[2].Trim().Split(' ');
+  if Length(menuParts) >= 1 then
+    Result.MenuOption := menuParts[0];
+  if Length(menuParts) >= 2 then
+    Result.MenuTarget := menuParts[1];
+  if (Length(menuParts) >= 3) and menuParts[High(menuParts)].IsInteger then
+    Result.ObjectID := StrToInt(menuParts[High(menuParts)]);
+
+  // Parse requirements (fields 3-7)
+  if Length(fields) > 3 then
+    Result.SkillReqs := fields[3].Trim().Split('&&');
+  if Length(fields) > 4 then
+    Result.ItemReqs := fields[4].Trim().Split('&&');
+  if Length(fields) > 5 then
+    Result.QuestReqs := fields[5].Trim().Split('&&');
+  if Length(fields) > 6 then
+    Result.VarbitReqs := fields[6].Trim().Split('&&');
+
+  // Parse duration (field 8)
+  if (Length(fields) > 8) and fields[8].Trim().IsInteger then
+    Result.Duration := StrToInt(fields[8].Trim());
+
+  Result.TransportType := ERSTransportType.TRANSPORT;
+end;
+
+(*
+## TRSTransportLoader.LoadFromTSV
+Loads transport data from a TSV file.
+*)
+procedure TRSTransportLoader.LoadFromTSV(filename: String; transportType: ERSTransportType = ERSTransportType.TRANSPORT);
+var
+  lines: TStringArray;
+  i: Integer;
+  transport: TRSTransport;
+begin
+  if not FileExists(filename) then
+  begin
+    WriteLn GetDebugLn('TransportLoader', 'File not found: ' + filename);
+    Exit;
+  end;
+
+  lines := FileReadLines(filename);
+
+  for i := 0 to High(lines) do
+  begin
+    if lines[i].Trim() = '' then Continue;
+    if lines[i].StartsWith('#') then Continue;  // Skip comments
+
+    transport := TRSTransportLoader.ParseTSVLine(lines[i]);
+    if (transport.Origin <> [0, 0]) and (transport.Destination <> [0, 0]) then
+    begin
+      transport.TransportType := transportType;
+      Self.Transports += transport;
+    end;
+  end;
+
+  WriteLn GetDebugLn('TransportLoader', 'Loaded ' + ToStr(Length(Self.Transports)) + ' transports from ' + PathExtractName(filename));
+end;
+
+(*
+## TRSTransportLoader.LoadFromURL
+Loads transport data from a URL (raw TSV file).
+*)
+procedure TRSTransportLoader.LoadFromURL(url: String; transportType: ERSTransportType = ERSTransportType.TRANSPORT);
+var
+  content: String;
+  lines: TStringArray;
+  i: Integer;
+  transport: TRSTransport;
+begin
+  try
+    content := HTTPClient.Get(url);
+  except
+    WriteLn GetDebugLn('TransportLoader', 'Failed to fetch: ' + url);
+    Exit;
+  end;
+
+  if not InRange(HTTPClient.ResponseStatus.AsInteger, 200, 299) then
+  begin
+    WriteLn GetDebugLn('TransportLoader', 'HTTP error fetching: ' + url);
+    Exit;
+  end;
+
+  lines := content.Split(#10);
+
+  for i := 0 to High(lines) do
+  begin
+    if lines[i].Trim() = '' then Continue;
+    if lines[i].StartsWith('#') then Continue;
+
+    transport := TRSTransportLoader.ParseTSVLine(lines[i]);
+    if (transport.Origin <> [0, 0]) and (transport.Destination <> [0, 0]) then
+    begin
+      transport.TransportType := transportType;
+      Self.Transports += transport;
+    end;
+  end;
+
+  WriteLn GetDebugLn('TransportLoader', 'Loaded ' + ToStr(Length(Self.Transports)) + ' transports from URL');
+end;
+
+(*
+## TRSTransportLoader.GetTransportsInRange
+Returns all transports with origin within range of the given point.
+*)
+function TRSTransportLoader.GetTransportsInRange(pt: TPoint; maxDist: Double = 100): TRSTransportArray;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self.Transports) do
+    if Self.Transports[i].Origin.DistanceTo(pt) <= maxDist then
+      Result += Self.Transports[i];
+end;
+
+(*
+## TRSTransportLoader.GetTransportsTo
+Returns all transports that lead to a destination within range of the given point.
+*)
+function TRSTransportLoader.GetTransportsTo(destination: TPoint; maxDist: Double = 100): TRSTransportArray;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self.Transports) do
+    if Self.Transports[i].Destination.DistanceTo(destination) <= maxDist then
+      Result += Self.Transports[i];
+end;
+
+(*
+## TRSTransportLoader.Clear
+Clears all loaded transports.
+*)
+procedure TRSTransportLoader.Clear();
+begin
+  Self.Transports := [];
+  Self.Loaded := False;
+end;
+
+(*
+## TRSTransportLoader.Setup
+Initializes the cache directory for transport data.
+*)
+procedure TRSTransportLoader.Setup();
+begin
+  Self.CacheDir := WLEnv.CacheDir + 'transports' + PATH_SEP;
+  if not DirExists(Self.CacheDir) then
+    DirCreate(Self.CacheDir);
+end;
+
+(*
+## TRSTransportLoader.SaveToCache
+Saves the current transports to a local cache file.
+*)
+procedure TRSTransportLoader.SaveToCache();
+var
+  json: TJSONArray;
+  obj: TJSONObject;
+  i: Integer;
+  t: TRSTransport;
+begin
+  if Self.CacheDir = '' then Self.Setup();
+
+  json := new TJSONArray();
+
+  for i := 0 to High(Self.Transports) do
+  begin
+    t := Self.Transports[i];
+    obj := new TJSONObject();
+    obj.AddInt('ox', t.Origin.X);
+    obj.AddInt('oy', t.Origin.Y);
+    obj.AddInt('dx', t.Destination.X);
+    obj.AddInt('dy', t.Destination.Y);
+    obj.AddInt('op', t.OriginPlane);
+    obj.AddInt('dp', t.DestinationPlane);
+    obj.AddString('mo', t.MenuOption);
+    obj.AddString('mt', t.MenuTarget);
+    obj.AddInt('oid', t.ObjectID);
+    obj.AddInt('dur', t.Duration);
+    obj.AddInt('typ', Ord(t.TransportType));
+    obj.AddString('skills', t.SkillReqs.Join('|'));
+    obj.AddString('items', t.ItemReqs.Join('|'));
+    obj.AddString('quests', t.QuestReqs.Join('|'));
+    obj.AddString('varbits', t.VarbitReqs.Join('|'));
+    json.AddObject('', obj);
+  end;
+
+  TJSONParser(json).Save(Self.CacheDir + 'transports.json');
+  WriteLn GetDebugLn('TransportLoader', 'Saved ' + ToStr(Length(Self.Transports)) + ' transports to cache');
+end;
+
+(*
+## TRSTransportLoader.LoadFromCache
+Loads transports from local cache. Returns True if cache exists and was loaded.
+*)
+function TRSTransportLoader.LoadFromCache(): Boolean;
+var
+  parser: TJSONParser;
+  json: TJSONArray;
+  obj: TJSONObject;
+  i: Integer;
+  t: TRSTransport;
+  skillStr, itemStr, questStr, varbitStr: String;
+begin
+  if Self.CacheDir = '' then Self.Setup();
+
+  if not FileExists(Self.CacheDir + 'transports.json') then
+    Exit(False);
+
+  parser := new TJSONParser();
+  try
+    parser.Load(Self.CacheDir + 'transports.json');
+  except
+    WriteLn GetDebugLn('TransportLoader', 'Failed to load cache: ' + GetExceptionMessage());
+    Exit(False);
+  end;
+
+  json := parser;
+  Self.Transports := [];
+
+  for i := 0 to json.Count - 1 do
+  begin
+    obj := json.Item[i];
+    t := Default(TRSTransport);
+
+    t.Origin.X := obj.Item['ox'].AsInt;
+    t.Origin.Y := obj.Item['oy'].AsInt;
+    t.Destination.X := obj.Item['dx'].AsInt;
+    t.Destination.Y := obj.Item['dy'].AsInt;
+    t.OriginPlane := obj.Item['op'].AsInt;
+    t.DestinationPlane := obj.Item['dp'].AsInt;
+    t.MenuOption := obj.Item['mo'].AsString;
+    t.MenuTarget := obj.Item['mt'].AsString;
+    t.ObjectID := obj.Item['oid'].AsInt;
+    t.Duration := obj.Item['dur'].AsInt;
+    t.TransportType := ERSTransportType(obj.Item['typ'].AsInt);
+
+    skillStr := obj.Item['skills'].AsString;
+    itemStr := obj.Item['items'].AsString;
+    questStr := obj.Item['quests'].AsString;
+    varbitStr := obj.Item['varbits'].AsString;
+
+    if skillStr <> '' then t.SkillReqs := skillStr.Split('|');
+    if itemStr <> '' then t.ItemReqs := itemStr.Split('|');
+    if questStr <> '' then t.QuestReqs := questStr.Split('|');
+    if varbitStr <> '' then t.VarbitReqs := varbitStr.Split('|');
+
+    Self.Transports += t;
+  end;
+
+  Self.Loaded := True;
+  WriteLn GetDebugLn('TransportLoader', 'Loaded ' + ToStr(Length(Self.Transports)) + ' transports from cache');
+  Result := True;
+end;
+
+(*
+## TRSTransportLoader.CacheAge
+Returns the age of the cache file in hours. Returns -1 if no cache exists.
+*)
+function TRSTransportLoader.CacheAge(): Double;
+var
+  cacheFile: String;
+  fileTime: TDateTime;
+begin
+  if Self.CacheDir = '' then Self.Setup();
+  cacheFile := Self.CacheDir + 'transports.json';
+
+  if not FileExists(cacheFile) then
+    Exit(-1);
+
+  fileTime := FileCreationTime(cacheFile);
+  Result := (TDateTime.CreateFromSystem() - fileTime) * 24;  // Convert days to hours
+end;
+
+(*
+## TRSTransportLoader.LoadAllFromGitHub
+Loads all transport TSV files from the shortest-path GitHub repository.
+Uses local cache if available and less than maxCacheHours old.
+*)
+procedure TRSTransportLoader.LoadAllFromGitHub(maxCacheHours: Double = 168);
+const
+  BASE_URL = 'https://raw.githubusercontent.com/Skretzo/shortest-path/master/src/main/resources/transports/';
+
+  TSV_FILES: array of record
+    Filename: String;
+    TransportType: ERSTransportType;
+  end = [
+    ['transports.tsv', ERSTransportType.TRANSPORT],
+    ['agility_shortcuts.tsv', ERSTransportType.AGILITY_SHORTCUT],
+    ['boats.tsv', ERSTransportType.BOAT],
+    ['canoes.tsv', ERSTransportType.CANOE],
+    ['charter_ships.tsv', ERSTransportType.CHARTER_SHIP],
+    ['fairy_rings.tsv', ERSTransportType.FAIRY_RING],
+    ['gnome_gliders.tsv', ERSTransportType.GNOME_GLIDER],
+    ['hot_air_balloons.tsv', ERSTransportType.HOT_AIR_BALLOON],
+    ['magic_carpets.tsv', ERSTransportType.MAGIC_CARPET],
+    ['magic_mushtrees.tsv', ERSTransportType.MAGIC_MUSHTREE],
+    ['minecarts.tsv', ERSTransportType.MINECART],
+    ['quetzals.tsv', ERSTransportType.QUETZAL],
+    ['ships.tsv', ERSTransportType.SHIP],
+    ['spirit_trees.tsv', ERSTransportType.SPIRIT_TREE],
+    ['teleportation_items.tsv', ERSTransportType.TELEPORT_ITEM],
+    ['teleportation_levers.tsv', ERSTransportType.TELEPORT_LEVER],
+    ['teleportation_minigames.tsv', ERSTransportType.TELEPORT_MINIGAME],
+    ['teleportation_portals.tsv', ERSTransportType.TELEPORT_PORTAL],
+    ['teleportation_portals_poh.tsv', ERSTransportType.TELEPORT_POH],
+    ['teleportation_spells.tsv', ERSTransportType.TELEPORT_SPELL],
+    ['wilderness_obelisks.tsv', ERSTransportType.WILDERNESS_OBELISK]
+  ];
+var
+  i: Integer;
+  cacheAge: Double;
+begin
+  if Self.Loaded then Exit;
+
+  // Check if cache is valid
+  cacheAge := Self.CacheAge();
+  if (cacheAge >= 0) and (cacheAge < maxCacheHours) then
+  begin
+    WriteLn GetDebugLn('TransportLoader', 'Cache is ' + ToStr(Round(cacheAge, 1)) + ' hours old, using cached data');
+    if Self.LoadFromCache() then
+      Exit;
+  end;
+
+  // Fetch from GitHub
+  WriteLn GetDebugLn('TransportLoader', 'Fetching transport data from GitHub...');
+
+  for i := 0 to High(TSV_FILES) do
+    Self.LoadFromURL(BASE_URL + TSV_FILES[i].Filename, TSV_FILES[i].TransportType);
+
+  WriteLn GetDebugLn('TransportLoader', 'Finished loading. Total transports: ' + ToStr(Length(Self.Transports)));
+
+  // Save to cache
+  Self.SaveToCache();
+  Self.Loaded := True;
+end;
+
+(*
+## TRSTransportLoader.GetByType
+Returns all transports of a specific type.
+*)
+function TRSTransportLoader.GetByType(transportType: ERSTransportType): TRSTransportArray;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self.Transports) do
+    if Self.Transports[i].TransportType = transportType then
+      Result += Self.Transports[i];
+end;
+
+(*
+## TRSTransportLoader.GetByMenuOption
+Returns all transports with matching menu option (e.g., "Climb-up", "Enter").
+*)
+function TRSTransportLoader.GetByMenuOption(option: String): TRSTransportArray;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self.Transports) do
+    if Self.Transports[i].MenuOption.Contains(option) then
+      Result += Self.Transports[i];
+end;
+
+(*
+## TRSTransportLoader.GetStats
+Returns statistics about loaded transports.
+*)
+function TRSTransportLoader.GetStats(): String;
+var
+  counts: array[ERSTransportType] of Integer;
+  t: ERSTransportType;
+  i: Integer;
+begin
+  for i := 0 to High(Self.Transports) do
+    Inc(counts[Self.Transports[i].TransportType]);
+
+  Result := 'Transport Statistics:' + #10;
+  for t := Low(ERSTransportType) to High(ERSTransportType) do
+    if counts[t] > 0 then
+      Result += '  ' + ToStr(t) + ': ' + ToStr(counts[t]) + #10;
+
+  Result += 'Total: ' + ToStr(Length(Self.Transports));
+end;
+
+(*
+## TRSTransportLoader.TransportTypeToGraphNode
+Converts an ERSTransportType to the appropriate EGraphNode type.
+*)
+function TRSTransportLoader.TransportTypeToGraphNode(transportType: ERSTransportType): EGraphNode; static;
+begin
+  case transportType of
+    ERSTransportType.FAIRY_RING: Result := EGraphNode.FAIRYRING;
+    ERSTransportType.TELEPORT_ITEM, ERSTransportType.TELEPORT_LEVER,
+    ERSTransportType.TELEPORT_MINIGAME, ERSTransportType.TELEPORT_PORTAL,
+    ERSTransportType.TELEPORT_POH, ERSTransportType.TELEPORT_SPELL,
+    ERSTransportType.WILDERNESS_OBELISK: Result := EGraphNode.TELEPORT;
+    ERSTransportType.AGILITY_SHORTCUT: Result := EGraphNode.SHORTCUT;
+    else Result := EGraphNode.TRANSPORT;
+  end;
+end;
+
+(*
+## TRSTransportLoader.AddToWebGraph
+Adds all loaded transports to a webgraph as connected nodes.
+Each transport creates two nodes (origin and destination) connected to each other
+and to nearby walkable nodes.
+*)
+procedure TRSTransportLoader.AddToWebGraph(var graph: TWebGraph);
+var
+  i, j, n, originIdx, destIdx: Integer;
+  transport: TRSTransport;
+  graphNodeType: EGraphNode;
+  tpa: TPointArray;
+begin
+  if not Self.Loaded then
+  begin
+    WriteLn GetDebugLn('TransportLoader', 'No transports loaded. Call LoadAllFromGitHub first.');
+    Exit;
+  end;
+
+  for i := 0 to High(Self.Transports) do
+  begin
+    transport := Self.Transports[i];
+    graphNodeType := TRSTransportLoader.TransportTypeToGraphNode(transport.TransportType);
+
+    // Skip if origin or destination is invalid
+    if (transport.Origin = [0, 0]) or (transport.Destination = [0, 0]) then
+      Continue;
+
+    // Add origin node
+    originIdx := Length(graph.Nodes);
+    SetLength(graph.Nodes, originIdx + 1);
+    SetLength(graph.Paths, originIdx + 1);
+    graph.Nodes[originIdx] := TGraphNode.Create(transport.Origin, graphNodeType, nil);
+
+    // Add destination node
+    destIdx := Length(graph.Nodes);
+    SetLength(graph.Nodes, destIdx + 1);
+    SetLength(graph.Paths, destIdx + 1);
+    graph.Nodes[destIdx] := TGraphNode.Create(transport.Destination, graphNodeType, nil);
+
+    // Connect origin to destination (one-way transport connection)
+    graph.Paths[originIdx] += destIdx;
+
+    // For fairy rings, connect bidirectionally (you can travel both ways)
+    if transport.TransportType = ERSTransportType.FAIRY_RING then
+      graph.Paths[destIdx] += originIdx;
+
+    // Connect origin to nearby walkable nodes
+    if Length(graph.Nodes) > 0 then
+    begin
+      tpa := graph.Tree.KNearest(transport.Origin, 8);
+      for j := 0 to High(tpa) do
+      begin
+        if tpa[j] = transport.Destination then Continue;
+        if not graph.WalkableClusters.InSameTPA(transport.Origin, tpa[j]) then Continue;
+
+        n := graph.Nodes.IndexOf(tpa[j]);
+        if n = -1 then Continue;
+        graph.Paths[originIdx] += n;
+        graph.Paths[n] += originIdx;
+      end;
+
+      // Connect destination to nearby walkable nodes
+      tpa := graph.Tree.KNearest(transport.Destination, 8);
+      for j := 0 to High(tpa) do
+      begin
+        if tpa[j] = transport.Origin then Continue;
+        if not graph.WalkableClusters.InSameTPA(transport.Destination, tpa[j]) then Continue;
+
+        n := graph.Nodes.IndexOf(tpa[j]);
+        if n = -1 then Continue;
+        graph.Paths[destIdx] += n;
+        graph.Paths[n] += destIdx;
+      end;
+    end;
+  end;
+
+  WriteLn GetDebugLn('TransportLoader', 'Added ' + ToStr(Length(Self.Transports)) + ' transports to webgraph');
+end;
+
+(*
+## TRSTransportLoader.GetTransportsInArea
+Returns all transports with origin within a specified area (box).
+*)
+function TRSTransportLoader.GetTransportsInArea(area: TBox): TRSTransportArray;
+var
+  i: Integer;
+begin
+  for i := 0 to High(Self.Transports) do
+    if area.Contains(Self.Transports[i].Origin) then
+      Result += Self.Transports[i];
+end;
+
+(*
+## TRSTransportLoader.AddTransportsInAreaToWebGraph
+Adds only transports within a specified area to the webgraph.
+Useful for loading transports for specific map regions.
+*)
+procedure TRSTransportLoader.AddTransportsInAreaToWebGraph(var graph: TWebGraph; area: TBox);
+var
+  i, j, n, originIdx, destIdx: Integer;
+  transport: TRSTransport;
+  graphNodeType: EGraphNode;
+  tpa: TPointArray;
+  added: Integer;
+begin
+  if not Self.Loaded then
+  begin
+    WriteLn GetDebugLn('TransportLoader', 'No transports loaded. Call LoadAllFromGitHub first.');
+    Exit;
+  end;
+
+  added := 0;
+  for i := 0 to High(Self.Transports) do
+  begin
+    transport := Self.Transports[i];
+
+    // Only add transports with origin in the area
+    if not area.Contains(transport.Origin) then
+      Continue;
+
+    graphNodeType := TRSTransportLoader.TransportTypeToGraphNode(transport.TransportType);
+
+    // Skip if origin or destination is invalid
+    if (transport.Origin = [0, 0]) or (transport.Destination = [0, 0]) then
+      Continue;
+
+    // Add origin node
+    originIdx := Length(graph.Nodes);
+    SetLength(graph.Nodes, originIdx + 1);
+    SetLength(graph.Paths, originIdx + 1);
+    graph.Nodes[originIdx] := TGraphNode.Create(transport.Origin, graphNodeType, nil);
+
+    // Add destination node
+    destIdx := Length(graph.Nodes);
+    SetLength(graph.Nodes, destIdx + 1);
+    SetLength(graph.Paths, destIdx + 1);
+    graph.Nodes[destIdx] := TGraphNode.Create(transport.Destination, graphNodeType, nil);
+
+    // Connect origin to destination
+    graph.Paths[originIdx] += destIdx;
+
+    // For fairy rings and spirit trees, connect bidirectionally
+    if transport.TransportType in [ERSTransportType.FAIRY_RING, ERSTransportType.SPIRIT_TREE] then
+      graph.Paths[destIdx] += originIdx;
+
+    // Connect origin to nearby walkable nodes
+    if Length(graph.Nodes) > 0 then
+    begin
+      tpa := graph.Tree.KNearest(transport.Origin, 8);
+      for j := 0 to High(tpa) do
+      begin
+        if tpa[j] = transport.Destination then Continue;
+        if not graph.WalkableClusters.InSameTPA(transport.Origin, tpa[j]) then Continue;
+
+        n := graph.Nodes.IndexOf(tpa[j]);
+        if n = -1 then Continue;
+        graph.Paths[originIdx] += n;
+        graph.Paths[n] += originIdx;
+      end;
+
+      // Connect destination to nearby walkable nodes
+      tpa := graph.Tree.KNearest(transport.Destination, 8);
+      for j := 0 to High(tpa) do
+      begin
+        if tpa[j] = transport.Origin then Continue;
+        if not graph.WalkableClusters.InSameTPA(transport.Destination, tpa[j]) then Continue;
+
+        n := graph.Nodes.IndexOf(tpa[j]);
+        if n = -1 then Continue;
+        graph.Paths[destIdx] += n;
+        graph.Paths[n] += destIdx;
+      end;
+    end;
+
+    Inc(added);
+  end;
+
+  WriteLn GetDebugLn('TransportLoader', 'Added ' + ToStr(added) + ' transports in area ' + ToStr(area) + ' to webgraph');
+end;
+
+var
+  TransportLoader: TRSTransportLoader;
+
