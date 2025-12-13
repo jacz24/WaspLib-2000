@@ -673,8 +673,11 @@ begin
       spacing := Self.Spacing;
 
     nodes := Self.SplitNodes(i);
+
+    //If no nodes were generated (e.g., thin/irregular cluster), create at least one at median
+    //This ensures every cluster has a node and can connect through doors
     if nodes = [] then
-      Continue;
+      nodes := [Self.WhiteClusters[i].Median()];
 
     tree := TKDPointTree.Create(nodes);
 
@@ -690,6 +693,30 @@ begin
 
     for j in doorMapA[i] + doorMapB[i] do
       Self.ConnectLastDoors(Result, i, j, spacing, tree);
+  end;
+
+  //Final pass: connect any isolated nodes (with 0 connections) to nearby nodes
+  for i := 0 to High(Result.Nodes) do
+  begin
+    if Length(Result.Paths[i]) > 0 then
+      Continue;  //Already connected
+
+    //Find nearest nodes and connect
+    for j := 0 to High(Result.Nodes) do
+    begin
+      if i = j then Continue;
+      if Result.Nodes[j].Typ = EGraphNode.BLOCKED then Continue;
+      if Result.Nodes[i].Node.DistanceTo(Result.Nodes[j].Node) > 60 then Continue;
+
+      //Connect them
+      Result.Paths[i] += j;
+      Result.Paths[j] += i;
+      if Length(Result.Paths[i]) >= 3 then
+        Break;  //Found enough connections
+    end;
+
+    if Length(Result.Paths[i]) = 0 then
+      WriteLn GetDebugLn('WebGraphGenerator', 'Warning: isolated node at ' + ToStr(Result.Nodes[i].Node));
   end;
 
   Self.Matrix := [];

@@ -263,8 +263,8 @@ end;
 function TWebGraph.PathBetween(a, b: TPoint; rnd: Double = 0; attempts: Integer = 3): TGraphNodeArray;
 var
   nodeA, nodeB: TGraphNode;
-  i, j: Integer;
-  nS, nG, indices: TIntegerArray;
+  i, j, k, doorIdx: Integer;
+  nS, nG, indices, indicesToDoor, indicesFromDoor: TIntegerArray;
 begin
   nS := Self.NearNodesIndices(a, attempts);
   nG := Self.NearNodesIndices(b, attempts);
@@ -272,12 +272,13 @@ begin
   nodeA := [a, EGraphNode.NORMAL];
   nodeB := [b, EGraphNode.NORMAL];
 
-  if nS[0] = nG[0] then
+  if (Length(nS) > 0) and (Length(nG) > 0) and (nS[0] = nG[0]) then
     Exit([nodeA, nodeB]);
 
   if (Length(nG) = 1) and (Self.Paths[nG[0]] = []) then
     raise GetDebugLn('WebGraph', 'Points ' + ToStr(a) + ' and ' + ToStr(b) + ' don''t connect! No paths available.');
 
+  //Try direct pathfinding first
   for i := 0 to High(nS) do
   begin
     if nS[i] = -1 then
@@ -294,8 +295,73 @@ begin
     end;
   end;
 
+  //If direct path failed, try to find path through door nodes
+  k := 0;
   if Length(indices) = 0 then
+  begin
+    for doorIdx := 0 to High(Self.Nodes) do
+    begin
+      if Self.Nodes[doorIdx].Typ <> EGraphNode.DOOR then
+        Continue;
+      Inc(k);
+
+      //Try to path: start -> door
+      indicesToDoor := [];
+      for i := 0 to High(nS) do
+      begin
+        if nS[i] = -1 then Continue;
+        indicesToDoor := Self.FindPath(nS[i], doorIdx, rnd);
+        if Length(indicesToDoor) > 0 then
+          Break;
+      end;
+
+      if Length(indicesToDoor) = 0 then
+        Continue;
+
+      //Try to path: door -> goal
+      indicesFromDoor := [];
+      for j := 0 to High(nG) do
+      begin
+        if nG[j] = -1 then Continue;
+        indicesFromDoor := Self.FindPath(doorIdx, nG[j], rnd);
+        if Length(indicesFromDoor) > 0 then
+          Break;
+      end;
+
+      if Length(indicesFromDoor) > 0 then
+      begin
+        //Combine paths (remove duplicate door index)
+        indices := indicesToDoor;
+        for i := 1 to High(indicesFromDoor) do
+          indices += indicesFromDoor[i];
+        Break;
+      end;
+    end;
+  end;
+
+  if Length(indices) = 0 then
+  begin
+    WriteLn GetDebugLn('WebGraph', 'Pathfinding failed! Debug info:');
+    WriteLn GetDebugLn('WebGraph', '  Start: ' + ToStr(a) + ', near nodes: ' + ToStr(nS));
+    WriteLn GetDebugLn('WebGraph', '  Goal: ' + ToStr(b) + ', near nodes: ' + ToStr(nG));
+    WriteLn GetDebugLn('WebGraph', '  Total nodes: ' + ToStr(Length(Self.Nodes)) + ', doors checked: ' + ToStr(k));
+
+    //Show connections of start node
+    if Length(nS) > 0 then
+    begin
+      i := nS[0];
+      WriteLn GetDebugLn('WebGraph', '  Node ' + ToStr(i) + ' type: ' + ToStr(Ord(Self.Nodes[i].Typ)) + ', pos: ' + ToStr(Self.Nodes[i].Node));
+      WriteLn GetDebugLn('WebGraph', '  Node ' + ToStr(i) + ' connections: ' + ToStr(Self.Paths[i]));
+      //Show what the connected nodes connect to
+      for j := 0 to Min(High(Self.Paths[i]), 2) do
+      begin
+        doorIdx := Self.Paths[i][j];
+        WriteLn GetDebugLn('WebGraph', '    -> Node ' + ToStr(doorIdx) + ' type: ' + ToStr(Ord(Self.Nodes[doorIdx].Typ)) + ', connections: ' + ToStr(Length(Self.Paths[doorIdx])));
+      end;
+    end;
+
     raise GetDebugLn('WebGraph', 'Points ' + ToStr(a) + ' and ' + ToStr(b) + ' don''t connect!');
+  end;
 
   Result += nodeA;
   for i in indices do
@@ -693,23 +759,25 @@ begin
   until not merged;
 end;
 
-procedure TWebGraph._ConnectBoundaryNodes(existingCount: Integer);
+procedure TWebGraph._ConnectBoundaryNodes();
 var
-  i, j: Integer;
-  dist: Double;
-  maxDist: Double;
+  i, j, connected: Integer;
+  dist, maxDist: Double;
 begin
-  //Connect nodes from the newly added graph to existing nodes if they're close
-  //This bridges gaps between chunks at their boundaries
-  maxDist := 40;  //Maximum distance to auto-connect nodes (about 2 tiles)
+  //Connect nearby unconnected nodes that are in the same walkable cluster
+  //This bridges gaps between chunks at their boundaries after merging
+  maxDist := 50;  //Maximum distance to auto-connect nodes
+  connected := 0;
 
-  for i := existingCount to High(Self.Nodes) do
+  for i := 0 to High(Self.Nodes) do
   begin
     if Self.Nodes[i].Typ = EGraphNode.BLOCKED then Continue;
+    if Length(Self.Paths[i]) >= 6 then Continue;  //Already well-connected
 
-    for j := 0 to existingCount - 1 do
+    for j := i + 1 to High(Self.Nodes) do
     begin
       if Self.Nodes[j].Typ = EGraphNode.BLOCKED then Continue;
+      if Self.Paths[i].Contains(j) then Continue;  //Already connected
 
       dist := Self.Nodes[i].Node.DistanceTo(Self.Nodes[j].Node);
       if dist > maxDist then Continue;
@@ -718,13 +786,15 @@ begin
       if not Self.WalkableClusters.InSameTPA(Self.Nodes[i].Node, Self.Nodes[j].Node) then
         Continue;
 
-      //Connect them if not already connected
-      if not Self.Paths[i].Contains(j) then
-        Self.Paths[i] += j;
-      if not Self.Paths[j].Contains(i) then
-        Self.Paths[j] += i;
+      //Connect them
+      Self.Paths[i] += j;
+      Self.Paths[j] += i;
+      Inc(connected);
     end;
   end;
+
+  if connected > 0 then
+    WriteLn GetDebugLn('WebGraph', '_ConnectBoundaryNodes: created ' + ToStr(connected) + ' new connections');
 end;
 
 procedure TWebGraph.Merge(graph: TWebGraph);
@@ -758,8 +828,14 @@ var
   t: UInt64;
 begin
   t := GetTimeRunning();
-  WriteLn GetDebugLn('WebGraph', 'FinalizeMerge: starting with ' + ToStr(Length(Self.WalkableClusters)) + ' clusters');
+  WriteLn GetDebugLn('WebGraph', 'FinalizeMerge: starting with ' + ToStr(Length(Self.WalkableClusters)) + ' clusters, ' + ToStr(Length(Self.Nodes)) + ' nodes');
+
+  //First merge adjacent walkable clusters across chunk boundaries
   Self._MergeAdjacentClusters();
+
+  //Then connect nodes near chunk boundaries that are in the same (now merged) cluster
+  Self._ConnectBoundaryNodes();
+
   WriteLn GetDebugLn('WebGraph', 'FinalizeMerge: done, now ' + ToStr(Length(Self.WalkableClusters)) + ' clusters, took ' + ToStr(Round((GetTimeRunning()-t)/1000, 2)) + 's');
 end;
 

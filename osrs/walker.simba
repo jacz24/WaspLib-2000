@@ -747,15 +747,28 @@ begin
       cuboid := Self.GetCuboidMS(Self.Position(), Self._Path[index].Node, [0.6,0.6,4], radians);
       if MainScreen.Interact(cuboid.ShapeFill().RandomMean(), ['Open']) then
       begin
-        Self.WaitMoving(Self._Path[index].Node, 3);
-        Sleep(600, 1200);
+        Minimap.WaitFlag();  //Wait for player to reach the door
+        Sleep(300, 600);     //Brief pause for door animation
+        Self.WaitMoving(Self._Path[index].Node, 3);  //Wait for player to walk through
         Break;
       end;
     end;
     WriteLn GetDebugLn(Self.Name, 'Door should now be open.');
   end;
 
-  Result := Self.CrossDoor(Self.Position(), index, Dec(attempts));
+  //After opening, click past the door to ensure we walk through
+  me := Self.Position();
+  if (index < High(Self._Path)) and Self.IsWalkable(Self._Path[index+1].Node, me, tmp, radians) then
+  begin
+    mapPt := Self._Path[index+1].Node;
+    if Self._WalkStepHelper(me, mapPt, 0, minimapPt, shouldExit) and not shouldExit then
+    begin
+      Minimap.WaitFlag();
+      Self.WaitMoving(mapPt, 3);
+    end;
+  end;
+
+  Result := True;
 end;
 
 function TRSWalker.UseStairs(me: TPoint; index: Integer): Boolean;
