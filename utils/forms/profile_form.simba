@@ -523,6 +523,21 @@ begin
   // Filter to ONLY include worlds matching checked activities
   j := 0;
   for i := 0 to High(Self.FilteredWorlds) do
+  begin
+    // Handle worlds with no specific activity - match against empty Hint checkbox
+    if (Self.FilteredWorlds[i].ActivityString = '') or (Self.FilteredWorlds[i].ActivityString = '-') then
+    begin
+      for checkboxIndex := 0 to High(Self.ActivityCheckboxes) do
+        if (Self.ActivityCheckboxes[checkboxIndex].Hint = '') and
+           Self.ActivityCheckboxes[checkboxIndex].IsChecked() then
+        begin
+          Self.FilteredWorlds[j] := Self.FilteredWorlds[i];
+          Inc(j);
+          Break;
+        end;
+      Continue;
+    end;
+
     for checkboxIndex := 0 to High(Self.ActivityCheckboxes) do
       if (Self.ActivityCheckboxes[checkboxIndex].Hint = Self.FilteredWorlds[i].ActivityString) and
          Self.ActivityCheckboxes[checkboxIndex].IsChecked() then
@@ -531,6 +546,7 @@ begin
         Inc(j);
         Break;
       end;
+  end;
 
   SetLength(Self.FilteredWorlds, j);
 end;
@@ -761,6 +777,21 @@ begin
 
     Self.ActivityCheckboxes += checkbox;
   end;
+
+  // Add "Normal" checkbox for worlds with no specific activity
+  checkbox := TLazCheckBox.Create(Self.SpecificActivityPanel);
+  checkbox.Parent := Self.SpecificActivityPanel;
+  checkbox.Caption := 'Normal (no activity)';
+  checkbox.SetBounds(5, 25 + (Length(activities) * 20), 180, 18);
+  checkbox.SetChecked(Self.SelectAllActivitiesCheckbox.IsChecked());
+  for j := 0 to High(previousStates) do
+    if previousStates[j].Activity = '' then
+    begin
+      checkbox.SetChecked(previousStates[j].Checked);
+      Break;
+    end;
+  checkbox.Hint := '';
+  Self.ActivityCheckboxes += checkbox;
 end;
 
 
