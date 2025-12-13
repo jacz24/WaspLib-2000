@@ -125,7 +125,7 @@ end;
 (*
 ### MainScreen._IsUpText
 ```pascal
-function TRSMainScreen._IsUpText(strings: TStringArray; caseSensitive: Boolean; similarity: Single): Boolean;
+function TRSMainScreen._IsUpText(out upText: String; strings: TStringArray; caseSensitive: Boolean; similarity: Single): Boolean;
 ```
 Internal helper method used in {ref}`MainScreen.IsUpText`.
 
@@ -133,9 +133,9 @@ Internal helper method used in {ref}`MainScreen.IsUpText`.
 
 You probably won't ever need to call this method directly.
 *)
-function TRSMainScreen._IsUpText(strings: TStringArray; caseSensitive: Boolean; similarity: Single): Boolean;
+function TRSMainScreen._IsUpText(out upText: String; strings: TStringArray; caseSensitive: Boolean; similarity: Single): Boolean;
 var
-  upText, str: String;
+  str: String;
   i: Integer;
   match: Double;
 begin
@@ -173,7 +173,6 @@ begin
   end;
 end;
 
-
 (*
 ### MainScreen.IsUpText
 ```pascal
@@ -199,7 +198,7 @@ function TRSMainScreen.IsUpText(strings: TStringArray; caseSensitive: Boolean = 
 var
   timeout: TCountDown;
   strs: TStringArray;
-  str: String;
+  txt, str: String;
 begin
   if time = -1 then
     time := Round(RandomMode(100, 85, 250));
@@ -215,10 +214,10 @@ begin
   end;
 
   repeat
-    if Self._IsUpText(strings, caseSensitive, similarity) then
+    if Self._IsUpText(txt, strings, caseSensitive, similarity) then
     begin
       Sleep(50);
-      if Self._IsUpText(strings, caseSensitive, similarity) then
+      if Self._IsUpText(txt, strings, caseSensitive, similarity) then
         Exit(True);
     end;
 
