@@ -23,11 +23,11 @@ begin
 end;
 
 (*
-## String.IsURL
+## String.IsEmail
 ```pascal
-function String.IsURL(): Boolean;
+function String.IsEmail(): Boolean;
 ```
-Checks if a string is a valid "URL" with some predefined regex patterns.
+Checks if a string is a valid email address with some predefined regex patterns.
 *)
 function String.IsEmail(): Boolean;
 const
@@ -37,11 +37,11 @@ begin
 end;
 
 (*
-## String.IsEmail
+## String.IsTime
 ```pascal
-function String.IsEmail(): Boolean;
+function String.IsTime(): Boolean;
 ```
-Checks if a string is a valid email address with some predefined regex patterns.
+Checks if a string is a valid time format with some predefined regex patterns.
 *)
 function String.IsTime(): Boolean;
 const

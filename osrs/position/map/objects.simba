@@ -100,7 +100,7 @@ begin
   begin
     Result.Size.X := Item[0].AsInt * 0.8;
     Result.Size.Y := Item[1].AsInt * 0.8;
-    Result.Size.Z := Item[2].AsInt / 40;
+    Result.Size.Z := Item[2].AsInt / 128;
   end;
 
   if Abs(Result.Size.Z) < 0.05 then

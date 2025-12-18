@@ -552,7 +552,7 @@ end;
 (*
 ## Bank.SetQuantity
 ```pascal
-function TRSBank.SetQuantity(quantity: ERSItemQuantity): Boolean;
+function TRSBank.SetQuantity(quantity: ERSItemQuantity; amount: Integer = 0): Boolean;
 ```
 Attempts to set the bank quantity to `quantity`, returns true if we succeed.
 
@@ -561,11 +561,19 @@ Example:
 WriteLn Bank.SetQuantity(ERSItemQuantity.FIVE);
 ```
 *)
-function TRSBank.SetQuantity(quantity: ERSItemQuantity): Boolean;
+function TRSBank.SetQuantity(quantity: ERSItemQuantity; amount: Integer = 0): Boolean;
 begin
   if Self.QuantityButtons[quantity].Enabled() then Exit(True);
   Result := Self.QuantityButtons[quantity].Enable();
-  if Result then Sleep(600, 800);
+
+  if Result or (quantity <> ERSItemQuantity.CUSTOM) then
+    Exit;
+
+  if Chat.AnswerQuery('Enter amount', ToString(amount), RandomLeft(1400, 2400)) then
+  begin
+    Self._Cache.Quantity := amount;
+    Result := Self.QuantityButtons[quantity].Enabled();
+  end;
 end;
 
 
@@ -943,6 +951,7 @@ function TRSBank._InteractionHelper(mode: ERSBankInteraction; slot: TBox; amount
 var
   quantity: ERSItemQuantity;
   amountStr, modeStr, upText: String;
+  timeout: TCountDown;
 begin
   amountStr := ToString(amount);
   quantity := ERSItemQuantity.Integer2Quantity(amount);
@@ -954,7 +963,7 @@ begin
 
   if useQuantityButton then
   begin
-    if not Self.SetQuantity(quantity) then
+    if not Self.SetQuantity(quantity, amount) then
       Exit;
 
     Mouse.Move(slot);
@@ -970,9 +979,21 @@ begin
       Exit(True);
     end;
 
-    upText := MainScreen.UpText;
-    if not upText.Contains(modeStr) then
-      Exit;
+    timeout.Start(Round(RandomMode(100, 85, 250)));
+
+    repeat
+      if MainScreen._IsUpText(upText, [modeStr], True, 0.85) then
+      begin
+        Sleep(50);
+        if MainScreen._IsUpText(upText, [modeStr], True, 0.85) then
+          Break;
+      end;
+
+      if timeout.IsFinished then
+        Exit;
+      Sleep(25);
+    until False;
+
 
     upText := upText.Between(modeStr, ' ');
 
